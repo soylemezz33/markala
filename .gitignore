@@ -70,3 +70,9 @@ backup_*.sql
 
 # Sentry
 .sentryclirc
+
+# Service account keys (GA4, GSC, Cloudflare R2 vb.) — ASLA commit etme
+.secrets/
+*-service-account*.json
+*-credentials*.json
+markala-mcp*.json
