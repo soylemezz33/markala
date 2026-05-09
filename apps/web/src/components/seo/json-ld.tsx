@@ -1,0 +1,284 @@
+import type { Product, Category, FaqItem } from "@markala/types";
+
+const SITE = "https://markala.com.tr";
+
+/** Organizasyon ve WebSite — kök layout'a yerleştirilir. */
+export function OrganizationJsonLd() {
+  const data = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${SITE}/#organization`,
+        name: "Markala",
+        legalName: "324 Ajans · Markala",
+        alternateName: ["Markala Matbaa", "markala.com.tr"],
+        url: SITE,
+        logo: `${SITE}/api/mockup?theme=ink&w=512&h=512`,
+        description:
+          "Markala, 324 Ajans çatısı altında matbaa ve reklam ürünleri e-ticareti yapan butik markadır.",
+        foundingDate: "2024-01-01",
+        parentOrganization: {
+          "@type": "Organization",
+          name: "324 Ajans",
+          url: "https://324ajans.com",
+        },
+        sameAs: [
+          "https://www.instagram.com/markala.com.tr",
+          "https://www.linkedin.com/company/324ajans",
+          "https://324ajans.com",
+        ],
+        address: {
+          "@type": "PostalAddress",
+          addressCountry: "TR",
+          addressRegion: "Mersin",
+          addressLocality: "Yenişehir",
+          postalCode: "33060",
+        },
+        contactPoint: [
+          {
+            "@type": "ContactPoint",
+            contactType: "customer service",
+            email: "info@markala.com.tr",
+            telephone: "+90-324-000-0000",
+            areaServed: "TR",
+            availableLanguage: ["Turkish"],
+          },
+        ],
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${SITE}/#website`,
+        url: SITE,
+        name: "Markala — Matbaa & Reklam Ürünleri",
+        publisher: { "@id": `${SITE}/#organization` },
+        inLanguage: "tr-TR",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${SITE}/urunler?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/** Tek ürün için Product + Offer + AggregateRating + FAQPage birleşik graph. */
+export function ProductJsonLd({
+  product,
+  category,
+}: {
+  product: Product;
+  category?: Category;
+}) {
+  const productUrl = `${SITE}/urun/${product.slug}`;
+  const startingPrice = product.startingPrice ?? product.basePrice;
+
+  const productNode: Record<string, unknown> = {
+    "@type": "Product",
+    "@id": `${productUrl}#product`,
+    name: product.name,
+    description: product.shortDescription,
+    sku: product.sku ?? product.slug,
+    mpn: product.sku ?? product.slug,
+    url: productUrl,
+    image: product.images.length > 0
+      ? product.images.map((img) => img.startsWith("http") ? img : `${SITE}${img}`)
+      : [`${SITE}/api/mockup?slug=${product.slug}&w=1200&h=800`],
+    brand: {
+      "@type": "Brand",
+      name: product.brand ?? "Markala",
+    },
+    category: category?.name,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: "TRY",
+      price: startingPrice,
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@type": "Organization", name: "Markala", url: SITE },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "TR",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 7,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/FreeReturn",
+      },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: { "@type": "MonetaryAmount", value: 0, currency: "TRY" },
+        shippingDestination: { "@type": "DefinedRegion", addressCountry: "TR" },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 5, unitCode: "DAY" },
+          transitTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 3, unitCode: "DAY" },
+        },
+      },
+    },
+  };
+
+  if (product.rating) {
+    productNode.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: product.rating.average,
+      reviewCount: product.rating.count,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+
+  const graph: Record<string, unknown>[] = [productNode];
+
+  if (product.faqs && product.faqs.length > 0) {
+    graph.push({
+      "@type": "FAQPage",
+      "@id": `${productUrl}#faq`,
+      mainEntity: product.faqs.map((f: FaqItem) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    });
+  }
+
+  const data = {
+    "@context": "https://schema.org",
+    "@graph": graph,
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/** Breadcrumb schema — kategori veya ürün sayfasında kullan. */
+export function BreadcrumbJsonLd({
+  items,
+}: {
+  items: Array<{ name: string; href: string }>;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      item: it.href.startsWith("http") ? it.href : `${SITE}${it.href}`,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/**
+ * LocalBusiness — Mersin merkezli işletme. Google Business Profile ile uyumlu.
+ * Adres, telefon, çalışma saatleri ve görseller burada tanımlanır.
+ * Yereli SEO (mersin matbaa, mersin baskı) için kritik.
+ */
+export function LocalBusinessJsonLd() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": `${SITE}/#localbusiness`,
+    name: "Markala — Matbaa & Reklam Ürünleri",
+    image: `${SITE}/api/mockup?theme=brand&w=1200&h=800`,
+    url: SITE,
+    telephone: "+90-324-433-3351",
+    email: "info@markala.com.tr",
+    priceRange: "₺₺",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Yenişehir",
+      addressLocality: "Mersin",
+      addressRegion: "Mersin",
+      postalCode: "33060",
+      addressCountry: "TR",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 36.812061,
+      longitude: 34.641482,
+    },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        opens: "09:00",
+        closes: "18:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Saturday",
+        opens: "10:00",
+        closes: "16:00",
+      },
+    ],
+    areaServed: [
+      { "@type": "Country", name: "Türkiye" },
+      { "@type": "City", name: "Mersin" },
+      { "@type": "City", name: "Adana" },
+      { "@type": "City", name: "İstanbul" },
+      { "@type": "City", name: "Ankara" },
+      { "@type": "City", name: "İzmir" },
+    ],
+    paymentAccepted: ["Kredi Kartı", "Havale/EFT", "Kapıda Ödeme"],
+    currenciesAccepted: "TRY",
+    sameAs: [
+      "https://www.instagram.com/markala.com.tr",
+      "https://www.linkedin.com/company/324ajans",
+      "https://324ajans.com",
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/** Kategori sayfası için CollectionPage. */
+export function CategoryJsonLd({ category, products }: { category: Category; products: Product[] }) {
+  const url = `${SITE}/kategori/${category.slug}`;
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${url}#collection`,
+    url,
+    name: category.name,
+    description: category.shortDescription,
+    inLanguage: "tr-TR",
+    isPartOf: { "@id": `${SITE}/#website` },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: products.length,
+      itemListElement: products.slice(0, 24).map((p, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `${SITE}/urun/${p.slug}`,
+        name: p.name,
+      })),
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}

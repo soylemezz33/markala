@@ -1,0 +1,455 @@
+// Markala — Prisma şeması
+// Database: PostgreSQL
+// Migrations: pnpm --filter @markala/api prisma:migrate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// === Kullanıcılar ===
+
+enum AccountType {
+  individual
+  corporate
+}
+
+enum UserRole {
+  customer
+  admin
+  super_admin
+}
+
+enum CorporateStatus {
+  none
+  pending
+  approved
+  rejected
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  fullName     String      @map("full_name")
+  phone        String?
+  accountType  AccountType @default(individual) @map("account_type")
+  role         UserRole    @default(customer)
+
+  // Kurumsal alanlar (B2B)
+  companyName       String?         @map("company_name")
+  taxOffice         String?         @map("tax_office")
+  taxNumber         String?         @map("tax_number")
+  corporateStatus   CorporateStatus @default(none) @map("corporate_status")
+  corporateApprovedAt DateTime?     @map("corporate_approved_at")
+  corporateDiscount Decimal?        @map("corporate_discount") @db.Decimal(5, 2)
+  corporateCreditLimit Decimal?     @map("corporate_credit_limit") @db.Decimal(12, 2)
+
+  // 2FA
+  twoFactorEnabled Boolean  @default(false) @map("two_factor_enabled")
+  twoFactorSecret  String?  @map("two_factor_secret")
+  twoFactorBackupCodes String[] @default([]) @map("two_factor_backup_codes")
+
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  addresses             Address[]
+  orders                Order[]
+  designUploads         DesignUpload[]
+  corporateApplications CorporateApplication[]
+
+  @@index([role])
+  @@index([corporateStatus])
+  @@map("users")
+}
+
+model CorporateApplication {
+  id            String          @id @default(cuid())
+  userId        String?         @map("user_id")
+
+  companyName   String          @map("company_name")
+  taxOffice     String          @map("tax_office")
+  taxNumber     String          @map("tax_number")
+  sector        String?
+  annualVolume  String?         @map("annual_volume")
+
+  contactName   String          @map("contact_name")
+  contactRole   String?         @map("contact_role")
+  email         String
+  phone         String
+  address       String          @db.Text
+  notes         String?         @db.Text
+
+  taxCertificateUrl   String? @map("tax_certificate_url")
+  signatureCircularUrl String? @map("signature_circular_url")
+
+  status        CorporateStatus @default(pending)
+  reviewedById  String?         @map("reviewed_by_id")
+  reviewedAt    DateTime?       @map("reviewed_at")
+  reviewNote    String?         @map("review_note") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@map("corporate_applications")
+}
+
+model Address {
+  id          String  @id @default(cuid())
+  userId      String  @map("user_id")
+  label       String
+  fullName    String  @map("full_name")
+  phone       String
+  city        String
+  district    String
+  fullAddress String  @map("full_address")
+  zipCode     String? @map("zip_code")
+  isDefault   Boolean @default(false) @map("is_default")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders   Order[] @relation("ShippingAddress")
+  billingOrders    Order[] @relation("BillingAddress")
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// === Katalog ===
+
+model Category {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  shortDescription String   @map("short_description")
+  longDescription  String   @map("long_description")
+  imageUrl         String   @map("image_url")
+  accentColor      String?  @map("accent_color")
+  startingPrice    Decimal  @map("starting_price") @db.Decimal(10, 2)
+  productionTime   String   @map("production_time")
+  sortOrder        Int      @default(0) @map("sort_order")
+  isActive         Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([isActive, sortOrder])
+  @@map("categories")
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  categoryId       String   @map("category_id")
+  shortDescription String   @map("short_description")
+  description      String   @db.Text
+  basePrice        Decimal  @map("base_price") @db.Decimal(10, 2)
+  startingPrice    Decimal? @map("starting_price") @db.Decimal(10, 2)
+  productionTime   String   @map("production_time")
+  sizeLabel        String?  @map("size_label")
+  images           String[]
+  badges           String[] @default([])
+  bestseller       Boolean  @default(false)
+  ratingAverage    Decimal? @map("rating_average") @db.Decimal(3, 2)
+  ratingCount      Int      @default(0) @map("rating_count")
+  isActive         Boolean  @default(true) @map("is_active")
+  /// Konfigüratör parametreleri JSON: { id, label, kind, options, ... }
+  parameters       Json     @default("[]")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  category Category   @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+
+  @@index([categoryId, isActive])
+  @@index([bestseller, isActive])
+  @@map("products")
+}
+
+// === Sipariş ===
+
+enum OrderStatus {
+  siparis_alindi      @map("siparis-alindi")
+  tasarim_bekleniyor  @map("tasarim-bekleniyor")
+  tasarim_onayindi    @map("tasarim-onayindi")
+  uretimde
+  kargoya_verildi     @map("kargoya-verildi")
+  teslim_edildi       @map("teslim-edildi")
+  iptal_edildi        @map("iptal-edildi")
+}
+
+enum PaymentStatus {
+  beklemede
+  basarili
+  basarisiz
+  iade_edildi @map("iade-edildi")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique @map("order_number")
+  userId      String?     @map("user_id")
+  email       String
+  phone       String
+
+  status        OrderStatus   @default(siparis_alindi)
+  paymentStatus PaymentStatus @default(beklemede) @map("payment_status")
+
+  subtotal    Decimal @db.Decimal(10, 2)
+  shippingFee Decimal @map("shipping_fee") @db.Decimal(10, 2)
+  discount    Decimal @default(0) @db.Decimal(10, 2)
+  vat         Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  shippingAddressId String  @map("shipping_address_id")
+  billingAddressId  String  @map("billing_address_id")
+
+  // iyzico referansları
+  iyzicoPaymentId       String? @map("iyzico_payment_id")
+  iyzicoConversationId  String? @map("iyzico_conversation_id")
+
+  // Kargo takibi
+  trackingNumber  String? @map("tracking_number")
+  trackingCarrier String? @map("tracking_carrier")
+  shippedAt       DateTime? @map("shipped_at")
+  deliveredAt     DateTime? @map("delivered_at")
+
+  // Paraşüt e-fatura
+  parasutInvoiceId String? @map("parasut_invoice_id")
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user            User?       @relation(fields: [userId], references: [id])
+  shippingAddress Address     @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress  Address     @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  items           OrderItem[]
+  designUploads   DesignUpload[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@index([orderNumber])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String  @map("order_id")
+  productId String  @map("product_id")
+
+  productSlug          String  @map("product_slug")
+  productName          String  @map("product_name")
+  productImage         String  @map("product_image")
+  configurationSummary String  @map("configuration_summary")
+  /// Konfigüratör seçimleri (snapshot)
+  configuration        Json
+  unitPrice            Decimal @map("unit_price") @db.Decimal(10, 2)
+  quantity             Int
+  lineTotal            Decimal @map("line_total") @db.Decimal(10, 2)
+
+  needsDesignSupport Boolean @default(false) @map("needs_design_support")
+  uploadedFileName   String? @map("uploaded_file_name")
+  uploadedFileUrl    String? @map("uploaded_file_url")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// === Tasarım yüklemeleri (R2 storage) ===
+
+model DesignUpload {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  orderId   String?  @map("order_id")
+  fileName  String   @map("file_name")
+  fileSize  Int      @map("file_size")
+  fileUrl   String   @map("file_url")
+  mimeType  String   @map("mime_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([orderId])
+  @@map("design_uploads")
+}
+
+// === Kuponlar ===
+
+enum CouponType {
+  percentage
+  fixed_amount @map("fixed-amount")
+  free_shipping @map("free-shipping")
+}
+
+model Coupon {
+  id              String     @id @default(cuid())
+  code            String     @unique
+  type            CouponType
+  value           Decimal    @db.Decimal(10, 2)
+  minOrderAmount  Decimal?   @map("min_order_amount") @db.Decimal(10, 2)
+  maxUses         Int?       @map("max_uses")
+  usedCount       Int        @default(0) @map("used_count")
+  validFrom       DateTime?  @map("valid_from")
+  validUntil      DateTime?  @map("valid_until")
+  isActive        Boolean    @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("coupons")
+}
+
+// === Yorumlar ===
+
+model Review {
+  id          String  @id @default(cuid())
+  productId   String  @map("product_id")
+  orderItemId String? @unique @map("order_item_id")
+  userName    String  @map("user_name")
+  userCompany String? @map("user_company")
+  rating      Int
+  comment     String  @db.Text
+  isApproved  Boolean @default(false) @map("is_approved")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([productId, isApproved])
+  @@map("reviews")
+}
+
+// === Blog ===
+
+enum BlogStatus {
+  draft
+  published
+  archived
+}
+
+model BlogCategory {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String? @db.Text
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  posts BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  excerpt     String     @db.Text
+  content     String     @db.Text
+  coverImage  String?    @map("cover_image")
+  authorName  String     @map("author_name")
+  authorRole  String?    @map("author_role")
+  categoryId  String?    @map("category_id")
+  tags        String[]   @default([])
+  status      BlogStatus @default(draft)
+
+  // SEO
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  ogImage        String?  @map("og_image")
+
+  readingTime  Int?     @map("reading_time")
+  viewCount    Int      @default(0) @map("view_count")
+
+  publishedAt  DateTime? @map("published_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  category BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([status, publishedAt])
+  @@index([categoryId, status])
+  @@map("blog_posts")
+}
+
+// === A/B Testing ===
+
+model AbTest {
+  id          String   @id @default(cuid())
+  testKey     String   @unique @map("test_key")
+  name        String
+  description String?  @db.Text
+  variants    Json     // [{ id: "A", weight: 50 }, { id: "B", weight: 50 }]
+  isActive    Boolean  @default(true) @map("is_active")
+  startedAt   DateTime @default(now()) @map("started_at")
+  endedAt     DateTime? @map("ended_at")
+
+  events AbTestEvent[]
+
+  @@map("ab_tests")
+}
+
+model AbTestEvent {
+  id        String   @id @default(cuid())
+  testId    String   @map("test_id")
+  variant   String
+  eventType String   @map("event_type") // exposure | conversion
+  eventName String?  @map("event_name")
+  userId    String?  @map("user_id")
+  uid       String   // anonymous cookie ID
+  metadata  Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  test AbTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId, eventType, createdAt])
+  @@index([uid])
+  @@map("ab_test_events")
+}
+
+// === Bildirimler ===
+
+enum NotificationChannel {
+  email
+  sms
+  push
+}
+
+model NotificationLog {
+  id        String              @id @default(cuid())
+  userId    String?             @map("user_id")
+  channel   NotificationChannel
+  template  String              // Örn: "order-shipped", "corporate-approved"
+  recipient String              // email veya telefon
+  subject   String?
+  body      String              @db.Text
+  status    String              // sent | failed | bounced
+  metadata  Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([template, status])
+  @@map("notification_logs")
+}

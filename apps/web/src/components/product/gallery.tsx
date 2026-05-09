@@ -1,0 +1,44 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
+import { cn } from "@markala/ui";
+
+export function Gallery({ images, alt }: { images: string[]; alt: string }) {
+  const [active, setActive] = useState(0);
+  const safeImages = images.length > 0 ? images : [""];
+
+  return (
+    <div>
+      <div className="relative aspect-square bg-paper-100 rounded-lg overflow-hidden">
+        <Image
+          src={safeImages[active] ?? ""}
+          alt={alt}
+          fill unoptimized
+          priority
+          sizes="(min-width:1024px) 50vw, 100vw"
+          className="object-cover"
+        />
+      </div>
+      {safeImages.length > 1 && (
+        <div className="mt-3 grid grid-cols-5 gap-2">
+          {safeImages.map((src, i) => (
+            <button
+          key={src + i}
+              type="button"
+              onClick={() => setActive(i)}
+              aria-label={`${alt} görsel ${i + 1}`}
+              className={cn(
+                "relative aspect-square bg-paper-100 rounded-md overflow-hidden border transition-all",
+                i === active ? "border-ink-900 ring-2 ring-ink-900/10" : "border-paper-200 hover:border-ink-300",
+              )}
+            >
+              <Image src={src} alt="" fill unoptimized
+              sizes="100px" className="object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

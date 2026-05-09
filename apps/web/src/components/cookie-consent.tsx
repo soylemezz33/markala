@@ -1,0 +1,212 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, ShieldCheck, Cookie } from "@phosphor-icons/react";
+
+const COOKIE_NAME = "markala_cookie_consent";
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 yıl
+
+interface ConsentState {
+  necessary: true; // her zaman aktif
+  analytics: boolean;
+  marketing: boolean;
+  timestamp: number;
+}
+
+function readConsent(): ConsentState | null {
+  if (typeof document === "undefined") return null;
+  const m = document.cookie.match(new RegExp(`(?:^|; )${COOKIE_NAME}=([^;]+)`));
+  if (!m || !m[1]) return null;
+  try {
+    return JSON.parse(decodeURIComponent(m[1]));
+  } catch {
+    return null;
+  }
+}
+
+function writeConsent(state: ConsentState): void {
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+}
+
+/**
+ * KVKK & GDPR uyumlu çerez onay banner'ı.
+ * Sadece consent verilmediyse gösterilir.
+ *
+ * Detay seçimi: kullanıcı analytics/marketing'i ayrı ayrı kapatabilir.
+ * Onay sonrası 1 yıl gösterilmez.
+ */
+export function CookieConsent() {
+  const [show, setShow] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [analytics, setAnalytics] = useState(true);
+  const [marketing, setMarketing] = useState(true);
+
+  useEffect(() => {
+    const existing = readConsent();
+    if (!existing) {
+      // İlk yüklemede 800ms bekle, page jank'ı önle
+      const t = setTimeout(() => setShow(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
+  function acceptAll() {
+    writeConsent({ necessary: true, analytics: true, marketing: true, timestamp: Date.now() });
+    setShow(false);
+  }
+
+  function rejectOptional() {
+    writeConsent({ necessary: true, analytics: false, marketing: false, timestamp: Date.now() });
+    setShow(false);
+  }
+
+  function saveCustom() {
+    writeConsent({ necessary: true, analytics, marketing, timestamp: Date.now() });
+    setShow(false);
+  }
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed bottom-4 inset-x-4 md:inset-x-auto md:left-6 md:right-6 lg:left-auto lg:right-6 lg:max-w-lg z-[60]"
+          role="dialog"
+          aria-labelledby="cookie-consent-title"
+        >
+          <div className="bg-paper-50 rounded-2xl shadow-2xl border border-paper-200 overflow-hidden">
+            <div className="p-5 md:p-6">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-brand-100 text-brand-700 grid place-items-center shrink-0">
+                  <Cookie size={18} weight="fill" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2
+                    id="cookie-consent-title"
+                    className="font-semibold text-ink-900 text-base"
+                  >
+                    Çerez tercihlerin
+                  </h2>
+                  <p className="mt-1 text-sm text-ink-700 leading-relaxed">
+                    Site deneyimini iyileştirmek, ölçümleme yapmak ve sana uygun
+                    içerik göstermek için çerez kullanıyoruz.{" "}
+                    <Link
+                      href="/yasal/cerez"
+                      className="text-brand-700 hover:underline font-medium"
+                    >
+                      Çerez politikası
+                    </Link>
+                  </p>
+                </div>
+              </div>
+
+              {showDetails && (
+                <div className="mt-4 pt-4 border-t border-paper-200 space-y-3">
+                  <ConsentToggle
+                    label="Zorunlu çerezler"
+                    desc="Sepet, oturum, güvenlik. Devre dışı bırakılamaz."
+                    checked
+                    disabled
+                  />
+                  <ConsentToggle
+                    label="Analitik çerezler"
+                    desc="Google Analytics, Microsoft Clarity. Anonim trafik ölçümü."
+                    checked={analytics}
+                    onChange={setAnalytics}
+                  />
+                  <ConsentToggle
+                    label="Pazarlama çerezleri"
+                    desc="Kampanya hedefleme, sosyal medya entegrasyonları."
+                    checked={marketing}
+                    onChange={setMarketing}
+                  />
+                </div>
+              )}
+
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={acceptAll}
+                  className="flex-1 min-w-[140px] px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-md text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <ShieldCheck size={14} weight="bold" /> Tümünü kabul et
+                </button>
+                {showDetails ? (
+                  <button
+                    onClick={saveCustom}
+                    className="flex-1 min-w-[120px] px-4 py-2.5 bg-ink-900 text-paper-50 rounded-md text-sm font-semibold hover:bg-ink-700 transition-colors"
+                  >
+                    Tercihleri kaydet
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowDetails(true)}
+                    className="px-4 py-2.5 border border-paper-200 hover:border-ink-300 text-ink-900 rounded-md text-sm font-medium transition-colors"
+                  >
+                    Tercihler
+                  </button>
+                )}
+                <button
+                  onClick={rejectOptional}
+                  className="px-3 py-2 text-sm text-ink-500 hover:text-ink-900 transition-colors"
+                >
+                  Sadece zorunlu
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function ConsentToggle({
+  label,
+  desc,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  desc: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange?: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex items-start gap-3 cursor-pointer">
+      <button
+        type="button"
+        onClick={() => !disabled && onChange?.(!checked)}
+        disabled={disabled}
+        role="switch"
+        aria-checked={checked}
+        className={`relative w-9 h-5 rounded-full transition-colors shrink-0 mt-0.5 ${
+          checked ? "bg-success" : "bg-paper-200"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+      >
+        <span
+          className={`absolute top-0.5 w-4 h-4 rounded-full bg-paper-50 shadow-sm transition-transform ${
+            checked ? "translate-x-4" : "translate-x-0.5"
+          }`}
+        />
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-ink-900">{label}</div>
+        <div className="text-xs text-ink-500 mt-0.5">{desc}</div>
+      </div>
+    </label>
+  );
+}
+
+/** Helper: bir consent kategorisi onaylı mı kontrol et — Analytics component'i bunu kullanabilir */
+export function hasConsent(category: "analytics" | "marketing"): boolean {
+  const c = readConsent();
+  if (!c) return false;
+  return c[category];
+}

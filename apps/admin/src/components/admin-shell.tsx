@@ -1,0 +1,264 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import {
+  ChartLineUp, Package, Storefront, ShoppingCart, Users, Tag, FileText,
+  Gear, SignOut, Sliders, ImageSquare, Bell, MagnifyingGlass, List, X,
+  PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
+  ChatCircle, CurrencyCircleDollar, Receipt, Buildings,
+} from "@phosphor-icons/react";
+import { cn } from "@markala/ui";
+
+interface CurrentUser {
+  email: string;
+  name: string;
+  role: "super_admin" | "admin";
+}
+
+const navGroups: Array<{
+  title: string;
+  links: Array<{ href: string; label: string; icon: typeof ChartLineUp; badge?: string }>;
+}> = [
+  {
+    title: "Genel",
+    links: [
+      { href: "/", label: "Dashboard", icon: ChartLineUp },
+      { href: "/siparisler", label: "Siparişler", icon: ShoppingCart, badge: "12" },
+      { href: "/musteriler", label: "Müşteriler", icon: Users },
+      { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings, badge: "2" },
+    ],
+  },
+  {
+    title: "Katalog",
+    links: [
+      { href: "/urunler", label: "Ürünler", icon: Package },
+      { href: "/urunler/fiyat-toplu", label: "Toplu Fiyat Güncelleme", icon: CurrencyCircleDollar },
+      { href: "/kategoriler", label: "Kategoriler", icon: Storefront },
+      { href: "/kuponlar", label: "Kuponlar", icon: Tag },
+      { href: "/kampanya-paketleri", label: "Kampanya Paketleri", icon: ImageIcon },
+    ],
+  },
+  {
+    title: "İçerik & Medya",
+    links: [
+      { href: "/slider", label: "Anasayfa Slider", icon: Sliders },
+      { href: "/banner", label: "Banner Yönetimi", icon: ImageSquare },
+      { href: "/blog", label: "Blog Yazıları", icon: FileText },
+      { href: "/yorumlar", label: "Yorumlar", icon: ChatCircle },
+      { href: "/sss", label: "SSS Yönetimi", icon: Translate },
+    ],
+  },
+  {
+    title: "Sistem",
+    links: [
+      { href: "/yasal", label: "Yasal Sayfalar", icon: Receipt },
+      { href: "/ayarlar/genel", label: "Genel Ayarlar", icon: Gear },
+      { href: "/ayarlar/api", label: "API & Entegrasyonlar", icon: Plug },
+      { href: "/ayarlar/seo", label: "SEO Ayarları", icon: PaintBrush },
+      { href: "/ayarlar/bildirim", label: "Bildirim Tercihleri", icon: Bell },
+    ],
+  },
+];
+
+export function AdminShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<CurrentUser | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : { user: null }))
+      .then((d) => {
+        if (!cancelled) setUser(d.user);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/giris");
+    router.refresh();
+  }
+
+  return (
+    <div className="min-h-screen flex bg-paper-100">
+      {/* Sidebar — Desktop */}
+      <aside className="hidden lg:flex w-64 bg-ink-900 text-paper-100 flex-col fixed inset-y-0 left-0 z-30">
+        <SidebarContent pathname={pathname} onNavigate={() => {}} onLogout={logout} />
+      </aside>
+
+      {/* Sidebar — Mobile slide-in */}
+      {mobileOpen && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 bg-ink-900/60 backdrop-blur-sm z-40"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="lg:hidden fixed inset-y-0 left-0 w-72 bg-ink-900 text-paper-100 z-50 flex flex-col">
+            <SidebarContent
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+              onLogout={logout}
+            />
+          </aside>
+        </>
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        {/* Top bar */}
+        <header className="sticky top-0 z-20 bg-paper-50 border-b border-paper-200 px-4 md:px-6 py-3 flex items-center gap-3">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="lg:hidden p-2 -ml-2 rounded-md text-ink-700 hover:bg-paper-100"
+            aria-label="Menü"
+          >
+            <List size={20} />
+          </button>
+
+          <div className="hidden md:flex flex-1 max-w-md items-center gap-2 px-3 py-2 bg-paper-100 border border-paper-200 rounded-lg">
+            <MagnifyingGlass size={16} className="text-ink-500" />
+            <input
+              type="search"
+              placeholder="Ürün, sipariş, müşteri ara..."
+              className="flex-1 bg-transparent outline-none text-sm text-ink-900"
+            />
+            <kbd className="hidden lg:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono text-ink-500 bg-paper-50 border border-paper-200">
+              ⌘K
+            </kbd>
+          </div>
+
+          <div className="flex-1 md:hidden" />
+
+          <a
+            href="https://markala.com.tr"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden sm:inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-ink-900 px-2 py-1 rounded hover:bg-paper-100"
+          >
+            <ArrowSquareOut size={12} /> Siteyi Aç
+          </a>
+
+          <button className="relative p-2 rounded-md text-ink-700 hover:bg-paper-100" aria-label="Bildirimler">
+            <Bell size={18} />
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-error" />
+          </button>
+
+          <div className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-paper-100">
+            <span className="w-8 h-8 rounded-full bg-brand-500 text-ink-900 grid place-items-center font-bold text-sm">
+              {user?.name?.[0]?.toUpperCase() ?? "?"}
+            </span>
+            <div className="hidden md:block leading-tight">
+              <div className="text-sm font-medium text-ink-900">{user?.name ?? "..."}</div>
+              <div className="text-[11px] text-ink-500">
+                {user?.role === "super_admin" ? "Süper Admin" : user?.role ?? ""}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto">{children}</main>
+
+        {/* Footer */}
+        <footer className="border-t border-paper-200 bg-paper-50 px-6 py-4 text-xs text-ink-500 flex flex-wrap items-center justify-between gap-2">
+          <span>Markala Admin v0.9 · 324 Ajans</span>
+          <span>Sistem durumu: <span className="text-success font-medium">● Operasyonel</span></span>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function SidebarContent({
+  pathname,
+  onNavigate,
+  onLogout,
+}: {
+  pathname: string;
+  onNavigate: () => void;
+  onLogout: () => void;
+}) {
+  return (
+    <>
+      <div className="p-5 border-b border-white/10 flex items-center justify-between">
+        <Link href="/" onClick={onNavigate} className="text-xl font-semibold text-paper-50">
+          Markala<span className="text-brand-400">.</span>
+          <span className="ml-2 text-xs text-paper-100/60 font-normal">admin</span>
+        </Link>
+        <button
+          onClick={onNavigate}
+          className="lg:hidden p-1.5 -mr-1 rounded text-paper-100/70 hover:text-paper-50 hover:bg-white/5"
+          aria-label="Kapat"
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
+        {navGroups.map((group) => (
+          <div key={group.title}>
+            <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-paper-100/40">
+              {group.title}
+            </div>
+            <div className="mt-1 space-y-0.5">
+              {group.links.map((l) => {
+                const isActive =
+                  l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center justify-between gap-2 px-3 py-2 rounded text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-brand-500 text-ink-900"
+                        : "text-paper-100/80 hover:bg-white/5 hover:text-paper-50",
+                    )}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <l.icon size={16} weight={isActive ? "fill" : "regular"} />
+                      {l.label}
+                    </span>
+                    {l.badge && (
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                          isActive
+                            ? "bg-ink-900/15 text-ink-900"
+                            : "bg-error text-paper-50",
+                        )}
+                      >
+                        {l.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-3 border-t border-white/10">
+        <button
+          className="w-full px-3 py-2 rounded text-sm font-medium text-paper-100/70 hover:bg-white/5 hover:text-paper-50 flex items-center gap-2"
+          onClick={() => {
+            onNavigate();
+            onLogout();
+          }}
+        >
+          <SignOut size={16} /> Çıkış Yap
+        </button>
+      </div>
+    </>
+  );
+}
