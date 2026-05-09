@@ -1,0 +1,72 @@
+# Build artifacts
+**/node_modules
+**/.next
+**/dist
+**/build
+**/out
+**/.turbo
+**/coverage
+**/.cache
+
+# Source control
+.git
+.gitignore
+.github
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Env (kesinlikle image'a girmez)
+.env
+.env.local
+.env.*.local
+.env.production
+**/.env*
+
+# Docs
+docs
+*.md
+!README.md
+!apps/*/README.md
+
+# Tests
+**/__tests__
+**/__mocks__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+
+# Prisma
+**/migrations/dev.db*
+
+# Service account / secrets
+.secrets
+**/*-credentials*.json
+**/*-service-account*.json
+
+# Docker
+docker-compose*.yml
+**/Dockerfile*
+
+# CI
+.github
+scripts
+nginx
+monitoring
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Storybook
+.storybook
+storybook-static

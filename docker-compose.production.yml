@@ -1,0 +1,168 @@
+# Markala — Production stack
+# Hetzner VPS üzerinde çalıştırılır.
+# Komutlar:
+#   docker compose -f docker-compose.production.yml up -d
+#   docker compose -f docker-compose.production.yml logs -f web
+#   docker compose -f docker-compose.production.yml pull && docker compose -f docker-compose.production.yml up -d --no-build
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: markala-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-markala}
+      POSTGRES_USER: ${POSTGRES_USER:-markala}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=tr_TR.UTF-8"
+      TZ: Europe/Istanbul
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-markala}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - markala
+    # Sadece Docker network'te erişilebilir, dış dünyaya açma
+    expose:
+      - "5432"
+
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY:-soylemezz33/markala}/api:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: markala-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-markala}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-markala}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      # Integrations
+      IYZICO_API_KEY: ${IYZICO_API_KEY}
+      IYZICO_SECRET: ${IYZICO_SECRET}
+      PARASUT_CLIENT_ID: ${PARASUT_CLIENT_ID}
+      PARASUT_CLIENT_SECRET: ${PARASUT_CLIENT_SECRET}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      NETGSM_USERNAME: ${NETGSM_USERNAME}
+      NETGSM_PASSWORD: ${NETGSM_PASSWORD}
+      DHL_API_KEY: ${DHL_API_KEY}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET: ${R2_BUCKET:-markala-uploads}
+      TZ: Europe/Istanbul
+    networks:
+      - markala
+    expose:
+      - "4000"
+
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY:-soylemezz33/markala}/web:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: markala-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: https://api.markala.com.tr
+      NEXT_PUBLIC_GA4_ID: ${NEXT_PUBLIC_GA4_ID}
+      NEXT_PUBLIC_CLARITY_ID: ${NEXT_PUBLIC_CLARITY_ID}
+      NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION}
+      NEXT_PUBLIC_BING_VERIFICATION: ${NEXT_PUBLIC_BING_VERIFICATION}
+      NEXT_PUBLIC_YANDEX_VERIFICATION: ${NEXT_PUBLIC_YANDEX_VERIFICATION}
+      NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID}
+      NEXT_PUBLIC_APP_VERSION: ${TAG:-latest}
+      TZ: Europe/Istanbul
+    networks:
+      - markala
+    expose:
+      - "3000"
+
+  admin:
+    image: ghcr.io/${GITHUB_REPOSITORY:-soylemezz33/markala}/admin:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: markala-admin
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_NAME: ${ADMIN_NAME}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET}
+      NEXT_PUBLIC_API_URL: https://api.markala.com.tr
+      TZ: Europe/Istanbul
+    networks:
+      - markala
+    expose:
+      - "3001"
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: markala-nginx
+    restart: unless-stopped
+    depends_on:
+      - web
+      - admin
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+      - nginx-logs:/var/log/nginx
+    networks:
+      - markala
+
+  # Otomatik backup — günlük postgres dump (retention: 30 gün)
+  backup:
+    image: postgres:16-alpine
+    container_name: markala-backup
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-markala}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-markala}
+      TZ: Europe/Istanbul
+      RETENTION_DAYS: 30
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup-postgres.sh:/usr/local/bin/backup.sh:ro
+    networks:
+      - markala
+    entrypoint: ["sh", "-c"]
+    command: ["while true; do sh /usr/local/bin/backup.sh; sleep 86400; done"]
+
+volumes:
+  postgres-data:
+    driver: local
+  nginx-cache:
+    driver: local
+  nginx-logs:
+    driver: local
+
+networks:
+  markala:
+    driver: bridge

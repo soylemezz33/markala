@@ -82,26 +82,40 @@ Marketing surface'lar (anasayfa, kategoriler, tasarım desteği, hakkımızda) *
 
 Bekleniyor — bkz. `~/.claude/projects/c--Users-Hasan-Projects-baskisitesi/memory/hosting.md`. Önerilen: **Hetzner CX22 (~4€/ay) + Cloudflare** (DNS + R2). Alternatif: 324 Ajans ESXi sunucusunda yeni VM.
 
-## Deploy (FAZ 4'te aktif)
+## Deploy
 
-**Production checklist:**
-1. PostgreSQL 16+ instance (örn. Hetzner managed veya VM)
-2. Cloudflare R2 bucket (`markala-uploads`) + token
-3. iyzico merchant hesabı + API key
-4. Paraşüt API erişimi
-5. SendGrid (transactional mail)
-6. NetGSM (SMS)
-7. HepsiJet kurumsal hesap
-8. `markala.com.tr` DNS Cloudflare'e geçirilmeli
+Production deploy hazır — Hetzner VPS + Cloudflare + GitHub Actions stack.
 
-**Deploy adımları:**
+**Detaylı rehberler:**
+
+- 📘 [`docs/DEPLOY.md`](docs/DEPLOY.md) — A'dan Z'ye ilk kurulum
+- 🔧 [`docs/RUNBOOK.md`](docs/RUNBOOK.md) — Operasyon ve incident yönetimi
+
+**Hızlı deploy (mevcut VPS'de):**
 ```bash
-# Sunucuda
-docker compose -f docker-compose.prod.yml up -d
-# CI/CD (GitHub Actions): main'e push → build → deploy
+ssh markala@<VPS_IP>
+cd /opt/markala
+./scripts/deploy.sh
 ```
 
-(Detaylı production Docker compose ve nginx config FAZ 4'te eklenecek.)
+**CI/CD:** `main` branch'e her push → GitHub Actions otomatik build + deploy.
+
+**Production stack:**
+
+| Bileşen | Versiyon | Port |
+| --- | --- | --- |
+| Web (Next.js standalone) | 14 | 3000 |
+| Admin (Next.js standalone) | 14 | 3001 |
+| API (NestJS + Prisma) | 10 | 4000 |
+| PostgreSQL | 16 | 5432 (internal) |
+| Nginx (reverse proxy + SSL) | 1.27 | 80/443 |
+
+**Önkoşullar:**
+
+- ✅ Hetzner CX22+ VPS (4 vCPU, 8GB RAM, ~€5/ay)
+- ✅ Cloudflare hesap (Free plan yeterli)
+- ✅ Domain `markala.com.tr` (registered)
+- ⚠️ iyzico, Paraşüt, SendGrid, NetGSM, DHL, R2 hesapları (üretim kullanımı için)
 
 ## Geliştirici Notları
 

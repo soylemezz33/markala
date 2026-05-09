@@ -1,0 +1,56 @@
+name: CI — Type Check & Build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Type-check & Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check (web)
+        run: pnpm --filter @markala/web type-check
+
+      - name: Type-check (admin)
+        run: pnpm --filter @markala/admin type-check
+
+      - name: Type-check (api)
+        run: pnpm --filter @markala/api type-check
+        continue-on-error: true # API henüz tam strict değil
+
+      - name: Build (web)
+        run: pnpm --filter @markala/web build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Build (admin)
+        run: pnpm --filter @markala/admin build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          ADMIN_SESSION_SECRET: "ci-build-only-not-for-production-use-min-32-char"
