@@ -26,9 +26,10 @@ export function generateMetadata({ params }: Props): Metadata {
   const city = getCityBySlug(params.city);
   if (!city) return { title: "Şehir bulunamadı" };
 
+  // Layout zaten "%s · Markala" template ekliyor — burada "| Markala" duplikasyonu olmasın
   const title = `${city.name} Matbaa & Baskı — ${
     city.deliveryDays.min === 0 ? "Aynı Gün Üretim" : `${city.deliveryDays.min}-${city.deliveryDays.max} Gün Teslim`
-  } | Markala`;
+  }`;
 
   const description = city.intro.slice(0, 158);
 

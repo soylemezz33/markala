@@ -20,7 +20,10 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const cat = getCategoryBySlug(params.slug);
   if (!cat) return {};
-  const seoTitle = cat.seo?.title ?? `${cat.name} Baskı — ${cat.startingPrice ? cat.startingPrice + " TL'den" : ""} | Markala`;
+  // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
+  const seoTitle =
+    cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
+    `${cat.name} Baskı${cat.startingPrice ? ` — ${cat.startingPrice} TL'den` : ""}`;
   const seoDesc = cat.seo?.description ?? cat.longDescription;
   const url = `/kategori/${cat.slug}`;
   const ogImage = `/api/mockup?category=${cat.slug}&w=1200&h=630`;

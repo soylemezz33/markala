@@ -28,9 +28,10 @@ export function generateMetadata({ params }: Props): Metadata {
   const district = getDistrictBySlug(params.city, params.district);
   if (!city || !district) return { title: "Bulunamadı" };
 
+  // Layout "%s · Markala" template ekliyor — duplikasyon önle
   const title = `${district.name} ${city.name} Matbaa & Baskı — ${
     district.sameDayDelivery ? "Aynı Gün Motor Kurye" : "1 İş Günü Teslim"
-  } | Markala`;
+  }`;
 
   return {
     title,

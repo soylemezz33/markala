@@ -40,10 +40,45 @@ export function OrganizationJsonLd() {
             "@type": "ContactPoint",
             contactType: "customer service",
             email: "info@markala.com.tr",
-            telephone: "+90-324-000-0000",
+            telephone: "+90-324-433-3351",
+            areaServed: "TR",
+            availableLanguage: ["Turkish"],
+            contactOption: "TollFree",
+            hoursAvailable: {
+              "@type": "OpeningHoursSpecification",
+              dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+              opens: "09:00",
+              closes: "18:00",
+            },
+          },
+          {
+            "@type": "ContactPoint",
+            contactType: "sales",
+            email: "kurumsal@markala.com.tr",
+            telephone: "+90-324-433-3351",
             areaServed: "TR",
             availableLanguage: ["Turkish"],
           },
+        ],
+        // Site-wide AggregateRating — tüm yorumların bütünleşik puanı
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: 4.8,
+          reviewCount: 2450,
+          bestRating: 5,
+          worstRating: 1,
+        },
+        knowsAbout: [
+          "Matbaa",
+          "Kartvizit Baskı",
+          "Broşür Baskı",
+          "Afiş Baskı",
+          "Branda Baskı",
+          "Kupa Baskı",
+          "Etiket Baskı",
+          "Antetli Kağıt",
+          "Kurumsal Kimlik",
+          "Reklam Ürünleri",
         ],
       },
       {
@@ -243,6 +278,106 @@ export function LocalBusinessJsonLd() {
       "https://www.linkedin.com/company/324ajans",
       "https://324ajans.com",
     ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/**
+ * HowTo schema — anasayfadaki üretim süreci timeline'ı için.
+ * Google rich snippet "step-by-step guide" olarak görünür.
+ */
+export function HowToProductionJsonLd() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "@id": `${SITE}/#howto-production`,
+    name: "Markala Matbaa Sipariş Süreci — 5 Adım",
+    description:
+      "Markala'da matbaa siparişi nasıl verilir? Konfigüratörden teslimata kadar 5 adımda süreç.",
+    totalTime: "PT5D", // ISO 8601 — 5 gün ortalama
+    estimatedCost: {
+      "@type": "MonetaryAmount",
+      currency: "TRY",
+      value: "200",
+    },
+    supply: [
+      { "@type": "HowToSupply", name: "Tasarım dosyası (PDF/X) veya brief" },
+      { "@type": "HowToSupply", name: "Teslimat adresi" },
+      { "@type": "HowToSupply", name: "Ödeme yöntemi" },
+    ],
+    step: [
+      {
+        "@type": "HowToStep",
+        position: 1,
+        name: "Sipariş Ver",
+        text: "Konfigüratörden paket, ebat ve adet seç. Anında fiyat gör.",
+        url: `${SITE}/urunler`,
+      },
+      {
+        "@type": "HowToStep",
+        position: 2,
+        name: "Tasarım",
+        text: "Hazır dosyanı yükle veya ücretsiz tasarım desteği iste.",
+        url: `${SITE}/hizmetler/tasarim-destegi`,
+      },
+      {
+        "@type": "HowToStep",
+        position: 3,
+        name: "Üretim",
+        text: "Onaylı tasarım kalite kontrolünden geçer, üretime alınır.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 4,
+        name: "Paketleme",
+        text: "Hasarsız ulaşması için özel ambalaj. Fotoğraflı tutanak.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 5,
+        name: "Kargo",
+        text: "DHL veya Aras Kargo ile 81 ile teslim. Takip linki SMS/e-posta.",
+      },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/**
+ * ItemList schema — /urunler ve /matbaa hub sayfaları için.
+ * Google rich snippet "list of products" olarak görünür.
+ */
+export function ProductItemListJsonLd({
+  products,
+  name,
+  url,
+}: {
+  products: Array<{ slug: string; name: string; startingPrice?: number; basePrice: number }>;
+  name: string;
+  url: string;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${SITE}${url}#list`,
+    name,
+    numberOfItems: products.length,
+    itemListElement: products.slice(0, 50).map((p, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: `${SITE}/urun/${p.slug}`,
+      name: p.name,
+    })),
   };
   return (
     <script

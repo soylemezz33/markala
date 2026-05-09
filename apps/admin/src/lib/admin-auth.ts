@@ -44,7 +44,7 @@ function b64urlDecode(str: string): Uint8Array {
 async function hmac(data: string): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
-    getSecret(),
+    getSecret() as BufferSource,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -97,7 +97,7 @@ export async function hashPassword(password: string, salt?: string): Promise<str
     ["deriveBits"],
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: saltBytes, iterations: 100_000, hash: "SHA-256" },
+    { name: "PBKDF2", salt: saltBytes as BufferSource, iterations: 100_000, hash: "SHA-256" },
     key,
     256,
   );

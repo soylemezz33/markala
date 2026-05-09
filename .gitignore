@@ -68,6 +68,9 @@ backup_*.sql
 # Cloudflare wrangler
 .wrangler
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Sentry
 .sentryclirc
 

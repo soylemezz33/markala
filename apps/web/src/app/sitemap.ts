@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { products, categories, getAllLegalSlugs } from "@markala/mock-data";
 import { blogPosts, blogCategories } from "@/lib/blog";
 import { cities, getAllDistrictParams } from "@/lib/cities";
+import { services } from "@/lib/services";
 
 const SITE = "https://markala.com.tr";
 
@@ -12,6 +13,9 @@ const STATIC_ROUTES = [
   { path: "/kampanyalar", priority: 0.9, freq: "weekly" as const },
   { path: "/blog", priority: 0.85, freq: "weekly" as const },
   { path: "/matbaa", priority: 0.95, freq: "weekly" as const },
+  { path: "/hizmetler", priority: 0.9, freq: "monthly" as const },
+  { path: "/sozluk", priority: 0.8, freq: "monthly" as const },
+  { path: "/fiyat-listesi", priority: 0.95, freq: "weekly" as const },
   { path: "/kurumsal", priority: 0.85, freq: "monthly" as const },
   { path: "/yardim", priority: 0.7, freq: "weekly" as const },
   { path: "/referanslar", priority: 0.6, freq: "monthly" as const },
@@ -86,10 +90,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }),
   );
 
+  // Hizmet sayfaları
+  const serviceEntries: MetadataRoute.Sitemap = services.map((s) => ({
+    url: `${SITE}/hizmetler/${s.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.85,
+  }));
+
   return [
     ...staticEntries,
     ...cityEntries,
     ...districtEntries,
+    ...serviceEntries,
     ...categoryEntries,
     ...productEntries,
     ...blogEntries,

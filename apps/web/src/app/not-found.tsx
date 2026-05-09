@@ -1,9 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
   House, MagnifyingGlass, ArrowRight, Package,
   Question, ChatCircle,
 } from "@phosphor-icons/react/dist/ssr";
+
+export const metadata: Metadata = {
+  title: "Sayfa Bulunamadı (404)",
+  description: "Aradığınız sayfa kaldırılmış veya adres yanlış olabilir.",
+  robots: { index: false, follow: true },
+};
 
 export default function NotFound() {
   return (

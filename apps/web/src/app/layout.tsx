@@ -40,7 +40,10 @@ export const metadata: Metadata = {
   category: "business",
   alternates: {
     canonical: "/",
-    languages: { "tr-TR": "/" },
+    languages: {
+      "tr-TR": "/",
+      "x-default": "/",
+    },
   },
   openGraph: {
     type: "website",
@@ -70,7 +73,14 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
     nocache: false,
-    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+      noimageindex: false,
+    },
   },
   formatDetection: { telephone: true, email: true, address: true },
   verification: {

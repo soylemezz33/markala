@@ -6,6 +6,7 @@ import { CategoryGrid } from "@/components/home/category-grid";
 import { TrustedBy } from "@/components/home/trusted-by";
 import { CustomerReviews } from "@/components/home/customer-reviews";
 import { ProcessTimeline } from "@/components/home/process-timeline";
+import { HowToProductionJsonLd } from "@/components/seo/json-ld";
 
 export default function HomePage() {
   // Çok satılanlar (bestseller flag)
@@ -21,6 +22,7 @@ export default function HomePage() {
 
   return (
     <>
+      <HowToProductionJsonLd />
       <HeroCarousel />
       <TrustBadges />
 

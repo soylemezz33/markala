@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Container } from "@markala/ui";
 import { ArrowLeft, ArrowRight, CaretRight, ChatCircle } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 interface HelpArticle {
   slug: string;
@@ -142,6 +143,13 @@ export default async function HelpArticlePage({ params }: Props) {
 
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Anasayfa", href: "/" },
+          { name: "Yardım Merkezi", href: "/yardim" },
+          { name: article.title, href: `/yardim/${article.slug}` },
+        ]}
+      />
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-8 md:py-12 max-w-3xl">
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-ink-500 mb-4">
