@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { WhatsappLogo, Phone, X, ChatCircleText } from "@phosphor-icons/react";
 
 const WHATSAPP_NUMBER = "903244333351";
@@ -20,12 +20,23 @@ const QUICK_MESSAGE = "Merhaba, Markala'dan bilgi almak istiyorum.";
 export function FloatingActions() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     // 600ms gecikmeli görün, page jank'ı önle
     const t = setTimeout(() => setMounted(true), 600);
     return () => clearTimeout(t);
   }, []);
+
+  // Escape key → panel kapat (WCAG 2.1.2 No Keyboard Trap)
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   if (!mounted) return null;
 
@@ -41,12 +52,18 @@ export function FloatingActions() {
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="bg-paper-50 rounded-2xl shadow-2xl border border-paper-200 overflow-hidden w-72 mb-1"
             role="dialog"
-            aria-label="İletişim seçenekleri"
+            aria-modal="true"
+            aria-labelledby="floating-actions-title"
           >
             <div className="px-5 py-4 bg-ink-900 text-paper-50">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-sm">Markala Destek</div>
+                  <h2
+                    id="floating-actions-title"
+                    className="font-semibold text-sm"
+                  >
+                    Markala Destek
+                  </h2>
                   <div className="text-[11px] text-paper-100/70">
                     09:00 - 18:00 · Pzt-Cum
                   </div>
@@ -138,8 +155,8 @@ export function FloatingActions() {
           )}
         </AnimatePresence>
 
-        {/* Pulse ring */}
-        {!open && (
+        {/* Pulse ring — prefers-reduced-motion'da durdur (WCAG 2.3.3) */}
+        {!open && !shouldReduceMotion && (
           <span className="absolute inset-0 rounded-full bg-[#25D366] opacity-40 animate-ping" />
         )}
       </button>

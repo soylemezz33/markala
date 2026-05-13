@@ -11,10 +11,24 @@ import { JwtStrategy } from "./jwt.strategy";
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>("JWT_SECRET") ?? "dev-secret",
-        signOptions: { expiresIn: config.get<string>("JWT_EXPIRES_IN") ?? "7d" },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>("JWT_SECRET");
+        // SECURITY: dev-secret fallback'ı kaldırıldı; bootstrap fail-fast garantili.
+        if (!secret || secret.length < 32) {
+          throw new Error("JWT_SECRET must be set and at least 32 characters");
+        }
+        return {
+          secret,
+          // Default 15dk — service tarafında JWT_ACCESS_EXPIRES_IN ile override edilebilir.
+          // Eski JWT_EXPIRES_IN env'i geri uyumluluk için fallback olarak okunur.
+          signOptions: {
+            expiresIn:
+              config.get<string>("JWT_ACCESS_EXPIRES_IN") ??
+              config.get<string>("JWT_EXPIRES_IN") ??
+              "15m",
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

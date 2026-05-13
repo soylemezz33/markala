@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, cloneElement, isValidElement, ReactElement } from "react";
+import Link from "next/link";
 import { Container, Button } from "@markala/ui";
 import {
   Phone, EnvelopeSimple, MapPin, WhatsappLogo, Clock, ArrowRight,
@@ -58,6 +59,7 @@ export default function ContactPage() {
     subject: "",
     message: "",
   });
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
 
   function update<K extends keyof typeof form>(key: K, val: string) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -65,6 +67,10 @@ export default function ContactPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!kvkkAccepted) {
+      setError("KVKK aydınlatma metnini onaylamadan mesaj gönderemezsiniz.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
@@ -159,14 +165,18 @@ export default function ContactPage() {
                 </div>
               </div>
             ) : (
-              <form onSubmit={onSubmit} className="p-6 md:p-8 bg-paper-50 border border-paper-200 rounded-xl space-y-4">
+              <form onSubmit={onSubmit} className="p-6 md:p-8 bg-paper-50 border border-paper-200 rounded-xl space-y-4" noValidate>
                 {error && (
-                  <div className="px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
+                  <div
+                    role="alert"
+                    aria-live="polite"
+                    className="px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm"
+                  >
                     {error}
                   </div>
                 )}
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Field label="Ad Soyad" required>
+                  <Field id="iletisim-name" label="Ad Soyad" required>
                     <input
                       className={inputClass}
                       required
@@ -174,7 +184,7 @@ export default function ContactPage() {
                       onChange={(e) => update("name", e.target.value)}
                     />
                   </Field>
-                  <Field label="E-posta" required>
+                  <Field id="iletisim-email" label="E-posta" required>
                     <input
                       type="email"
                       className={inputClass}
@@ -184,7 +194,7 @@ export default function ContactPage() {
                     />
                   </Field>
                 </div>
-                <Field label="Telefon">
+                <Field id="iletisim-phone" label="Telefon">
                   <input
                     type="tel"
                     className={inputClass}
@@ -193,7 +203,7 @@ export default function ContactPage() {
                     onChange={(e) => update("phone", e.target.value)}
                   />
                 </Field>
-                <Field label="Konu" required>
+                <Field id="iletisim-subject" label="Konu" required>
                   <select
                     required
                     className={inputClass}
@@ -209,7 +219,7 @@ export default function ContactPage() {
                     <option>Diğer</option>
                   </select>
                 </Field>
-                <Field label="Mesaj" required>
+                <Field id="iletisim-message" label="Mesaj" required>
                   <textarea
                     required
                     rows={5}
@@ -219,16 +229,22 @@ export default function ContactPage() {
                     onChange={(e) => update("message", e.target.value)}
                   />
                 </Field>
-                <Button type="submit" size="lg" disabled={submitting}>
+                <label className="flex items-start gap-2 text-xs text-ink-700">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={kvkkAccepted}
+                    onChange={(e) => setKvkkAccepted(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <Link href="/yasal/kvkk" className="underline hover:text-ink-900">KVKK aydınlatma metnini</Link> okudum,
+                    kişisel verilerimin yalnızca bu talepte değerlendirilmek üzere işlenmesine onay veriyorum.
+                  </span>
+                </label>
+                <Button type="submit" size="lg" disabled={submitting || !kvkkAccepted}>
                   {submitting ? "Gönderiliyor..." : "Gönder"} <ArrowRight size={16} weight="bold" />
                 </Button>
-                <p className="text-xs text-ink-500">
-                  Bilgileriniz KVKK kapsamında işlenir, sadece talebinizle ilgilenmek için
-                  kullanılır.{" "}
-                  <a href="/yasal/kvkk" className="underline hover:text-ink-900">
-                    Detay
-                  </a>
-                </p>
               </form>
             )}
           </section>
@@ -277,13 +293,35 @@ export default function ContactPage() {
   );
 }
 
-function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
+function Field({
+  id,
+  label,
+  children,
+  required,
+}: {
+  id: string;
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  // children = tek bir input/select/textarea → id ve aria-required inject et
+  const control = isValidElement(children)
+    ? cloneElement(children as ReactElement<Record<string, unknown>>, {
+        id,
+        "aria-required": required ? "true" : undefined,
+      })
+    : children;
   return (
-    <label className="block">
-      <span className="text-sm font-medium text-ink-900">
-        {label}{required && <span className="text-error ml-0.5">*</span>}
-      </span>
-      <div className="mt-1.5">{children}</div>
-    </label>
+    <div className="block">
+      <label htmlFor={id} className="text-sm font-medium text-ink-900">
+        {label}
+        {required && (
+          <span className="text-error ml-0.5" aria-hidden="true">
+            *
+          </span>
+        )}
+      </label>
+      <div className="mt-1.5">{control}</div>
+    </div>
   );
 }

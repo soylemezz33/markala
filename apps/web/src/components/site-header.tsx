@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -194,32 +195,82 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+  const pathname = usePathname();
 
   const itemCount = useCartStore((s) => s.itemCount());
   const openCart = useCartStore((s) => s.open);
   const user = useAuthStore((s) => s.user);
 
-  useEffect(() => setMounted(true), []);
-
+  // Effect 1: mounted flag — hidrasyon-sonrası client-only render gate
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    setMounted(true);
   }, []);
 
-  // ⌘K / Ctrl+K — search aç
+  // Effect 2: scroll (rAF debounced) + keyboard (Cmd+K aç, Escape kapat)
   useEffect(() => {
+    let rafId = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => setScrolled(window.scrollY > 80));
+    };
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setSearchOpen(true);
       }
+      // "/" skip-to-search (Twitter/GitHub paterni) — input/textarea focus'unda devre dışı
+      if (
+        e.key === "/" &&
+        !(e.target instanceof HTMLInputElement) &&
+        !(e.target instanceof HTMLTextAreaElement)
+      ) {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
       if (e.key === "Escape") setSearchOpen(false);
     };
+
+    // Mount anında mevcut scroll pozisyonunu yakala
+    setScrolled(window.scrollY > 80);
+
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("keydown", onKey);
+    };
   }, []);
+
+  // Effect 3: route değişince mobil menüyü kapat
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // Effect 4: Search modal return-focus (WCAG 2.4.3 Focus Order)
+  // Modal açılırken tetikleyen element kaydedilir; kapanırken oraya geri odaklan.
+  useEffect(() => {
+    if (searchOpen) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    } else {
+      previouslyFocusedRef.current?.focus();
+    }
+  }, [searchOpen]);
+
+  // Effect 5: Mobile drawer veya search modal açıkken body scroll kilidi
+  // (basit focus/scroll containment — ek trap'e gerek yok)
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const locked = menuOpen || searchOpen;
+    const prev = document.body.style.overflow;
+    if (locked) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen, searchOpen]);
 
   return (
     <>
@@ -393,7 +444,13 @@ export function SiteHeader() {
                     Kategoriler
                   </div>
                   {MAIN_NAV.map((n) => (
-                    <MobileNavGroup key={n.label} nav={n} onClose={() => setMenuOpen(false)} />
+                    // key'e menuOpen durumunu ekleyerek drawer kapanınca remount → nested
+                    // submenu state'i (açık/kapalı) otomatik reset.
+                    <MobileNavGroup
+                      key={`${n.label}-${menuOpen ? "open" : "closed"}`}
+                      nav={n}
+                      onClose={() => setMenuOpen(false)}
+                    />
                   ))}
 
                   <div className="border-t border-paper-200 my-3" />
@@ -776,11 +833,80 @@ function CartButton({
   );
 }
 
+const SEARCH_HISTORY_KEY = "markala_search_history";
+
+function loadSearchHistory(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+    const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(parsed) ? parsed.filter((q): q is string => typeof q === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSearch(query: string) {
+  if (typeof window === "undefined") return;
+  const trimmed = query.trim();
+  if (!trimmed) return;
+  try {
+    const history = loadSearchHistory();
+    const next = [trimmed, ...history.filter((q) => q !== trimmed)].slice(0, 5);
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(next));
+  } catch {
+    // sessizce yut — localStorage quota / SSR
+  }
+}
+
 function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const modalRef = useRef<HTMLDivElement>(null);
 
+  // Açılırken query reset + ilk inputa odaklan + history yükle
   useEffect(() => {
-    if (!open) setQuery("");
+    if (!open) {
+      setQuery("");
+      return;
+    }
+    setHistory(loadSearchHistory());
+    const firstInput = document.querySelector<HTMLInputElement>("[data-search-input]");
+    firstInput?.focus();
+  }, [open]);
+
+  // Enter ile aramayı kaydet
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    saveSearch(query);
+    setHistory(loadSearchHistory());
+  };
+
+  // Focus trap — Tab tuşu modal içinde dönsün
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const container = modalRef.current;
+      if (!container) return;
+      const focusable = container.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!first || !last) return;
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
   if (!open) return null;
@@ -798,30 +924,75 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
         className="fixed inset-0 bg-ink-900/50 backdrop-blur-sm z-50 grid items-start pt-[10vh] px-4"
       >
         <motion.div
+          ref={modalRef}
           initial={{ opacity: 0, y: -10, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.98 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
           className="w-full max-w-2xl mx-auto bg-paper-50 rounded-xl shadow-2xl overflow-hidden"
+          role="dialog"
+          aria-modal="true"
         >
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-paper-200">
+          <form onSubmit={onSubmit} className="flex items-center gap-3 px-5 py-4 border-b border-paper-200">
             <MagnifyingGlass size={20} className="text-ink-500" />
             <input
-              autoFocus
+              data-search-input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ne bastırmak istiyorsunuz? (kartvizit, branda, kupa...)"
               className="flex-1 bg-transparent outline-none text-base text-ink-900 placeholder:text-ink-500"
+              aria-label="Site içi arama"
             />
             <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-ink-500 bg-paper-100 border border-paper-200">
               ESC
             </kbd>
-          </div>
+          </form>
 
           {!query && (
             <div className="p-5">
+              {history.length > 0 && (
+                <div className="mb-5 pb-5 border-b border-paper-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+                      Son Aramalar
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          localStorage.removeItem(SEARCH_HISTORY_KEY);
+                        } catch {
+                          // no-op
+                        }
+                        setHistory([]);
+                      }}
+                      className="text-[11px] text-ink-500 hover:text-error transition-colors"
+                    >
+                      Temizle
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {history.map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => {
+                          setQuery(q);
+                          saveSearch(q);
+                          setHistory(loadSearchHistory());
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-paper-100 hover:bg-brand-100 text-ink-700 hover:text-brand-900 text-sm transition-colors"
+                      >
+                        <MagnifyingGlass size={12} />
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-3">
                 Popüler Kategoriler
               </div>

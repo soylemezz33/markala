@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Query } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Query, Headers } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { CreateOrderDto, UpdateOrderStatusDto } from "./orders.dto";
 import type { Request } from "express";
 
 @ApiTags("orders")
@@ -13,13 +14,17 @@ export class OrdersController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  create(@Req() req: Request & { user: { sub: string } }, @Body() body: any) {
-    return this.service.create({ ...body, userId: req.user.sub });
+  create(
+    @Req() req: Request & { user: { sub: string } },
+    @Body() dto: CreateOrderDto,
+    @Headers("idempotency-key") idempotencyKey?: string,
+  ) {
+    return this.service.create({ ...dto, userId: req.user.sub, idempotencyKey });
   }
 
   @Post("guest")
-  createGuest(@Body() body: any) {
-    return this.service.create(body);
+  createGuest(@Body() dto: CreateOrderDto, @Headers("idempotency-key") idempotencyKey?: string) {
+    return this.service.create({ ...dto, idempotencyKey });
   }
 
   @Get("mine")
@@ -56,10 +61,10 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
   @ApiBearerAuth()
-  updateStatus(@Param("id") id: string, @Body() body: { status: string; trackingNumber?: string; trackingCarrier?: string }) {
-    return this.service.updateStatus(id, body.status, {
-      trackingNumber: body.trackingNumber,
-      trackingCarrier: body.trackingCarrier,
+  updateStatus(@Param("id") id: string, @Body() dto: UpdateOrderStatusDto) {
+    return this.service.updateStatus(id, dto.status, {
+      trackingNumber: dto.trackingNumber,
+      trackingCarrier: dto.trackingCarrier,
     });
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { toast } from "@/components/toast";
 import { PaintBrush, FloppyDisk, Globe, ShieldCheck, ChartLine, Robot } from "@phosphor-icons/react";
 
 export default function SeoSettingsPage() {
@@ -105,7 +106,7 @@ export default function SeoSettingsPage() {
 
       <div className="mt-6 flex items-center justify-end gap-2">
         <button
-          onClick={() => alert("Mock: SEO ayarları kaydedildi. Sayfa metadatası ve sitemap güncellenecek.")}
+          onClick={() => toast.success("SEO ayarları kaydedildi (mock). Sitemap yenilenecek.")}
           className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-5 py-2 rounded-md text-sm font-semibold hover:bg-ink-700"
         >
           <FloppyDisk size={14} weight="bold" /> Kaydet & Sitemap Yenile

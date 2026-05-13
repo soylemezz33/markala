@@ -20,6 +20,8 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
@@ -29,7 +31,11 @@ export default function RegisterPage() {
       setError("Kullanım koşullarını kabul etmelisiniz.");
       return;
     }
-    const res = await register({ email, password, fullName, phone });
+    if (!kvkkAccepted) {
+      setError("KVKK aydınlatma metnini onaylamanız gerekiyor.");
+      return;
+    }
+    const res = await register({ email, password, fullName, phone, marketingConsent: marketingOptIn });
     if (res.ok) router.replace("/hesabim");
     else setError(res.error ?? "Kayıt başarısız.");
   }
@@ -60,12 +66,26 @@ export default function RegisterPage() {
             </Field>
 
             <label className="flex items-start gap-2 text-sm text-ink-700 mt-3">
-              <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="rounded border-paper-200 mt-0.5" />
+              <input type="checkbox" required checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="rounded border-paper-200 mt-0.5" />
               <span>
                 <Link href="/yasal/kullanim-kosullari" className="underline hover:text-ink-900">Kullanım Koşulları</Link>
-                {" "}ve{" "}
-                <Link href="/yasal/kvkk" className="underline hover:text-ink-900">KVKK Aydınlatma Metni</Link>
-                'ni okudum, kabul ediyorum.
+                {"'nı okudum, kabul ediyorum."}
+              </span>
+            </label>
+
+            <label className="flex items-start gap-2 text-xs text-ink-700">
+              <input type="checkbox" required checked={kvkkAccepted} onChange={(e) => setKvkkAccepted(e.target.checked)} className="mt-0.5" />
+              <span>
+                <Link href="/yasal/kvkk" className="underline hover:text-ink-900">KVKK aydınlatma metnini</Link> okudum,
+                kişisel verilerimin işlenmesine onay veriyorum.
+              </span>
+            </label>
+
+            <label className="flex items-start gap-2 text-xs text-ink-700">
+              <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} className="mt-0.5" />
+              <span>
+                Markala kampanya, indirim ve yeniliklerinden e-posta/SMS ile haberdar olmak istiyorum.{" "}
+                <span className="text-ink-500">(Opsiyonel — istediğin zaman ayarlardan kapatabilirsin.)</span>
               </span>
             </label>
 

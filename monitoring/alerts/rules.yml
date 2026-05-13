@@ -1,0 +1,83 @@
+# Markala — Prometheus alert rules
+# Validate: promtool check rules monitoring/alerts/rules.yml
+# Reload  : curl -X POST http://localhost:9090/-/reload
+#
+# Severity sınıflandırması:
+#   critical → derhal müdahale (page/SMS)
+#   warning  → günlük takip (email/Slack)
+
+groups:
+  - name: markala-critical
+    interval: 30s
+    rules:
+      - alert: HighCPU
+        expr: (1 - rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.85
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CPU >85% for 5m"
+          description: "{{ $labels.instance }} CPU kullanımı 5 dakikadır %85 üzerinde."
+
+      - alert: HighMemory
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Memory >90% for 5m"
+          description: "{{ $labels.instance }} bellek kullanımı 5 dakikadır %90 üzerinde."
+
+      - alert: DiskNearFull
+        expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk >85% full"
+          description: "{{ $labels.instance }} {{ $labels.mountpoint }} disk kullanımı %85 üzerinde."
+
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Nginx down"
+          description: "nginx-exporter scrape başarısız — Nginx servis erişilemez."
+
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Postgres down"
+          description: "postgres-exporter scrape başarısız — Postgres servis erişilemez."
+
+      - alert: PostgresConnectionsSaturation
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Postgres connections >80%"
+          description: "Postgres aktif bağlantı sayısı max_connections değerinin %80 üzerinde."
+
+      - alert: BackupStaleness
+        expr: time() - markala_backup_last_success_timestamp_seconds > 25 * 3600
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup >25 hours stale"
+          description: "Son başarılı Postgres backup 25 saatten eski — günlük cron çalışmıyor olabilir."
+
+      - alert: Http5xxSpike
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "5xx rate >5%"
+          description: "Nginx 5xx oranı 5 dakikadır 0.05 req/s üzerinde."

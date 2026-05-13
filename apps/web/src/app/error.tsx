@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { Container } from "@markala/ui";
 import { Warning, ArrowClockwise, House, ChatCircle } from "@phosphor-icons/react";
 
@@ -12,7 +13,7 @@ interface Props {
 
 export default function GlobalError({ error, reset }: Props) {
   useEffect(() => {
-    // Production'da Sentry/Logflare gibi bir error tracker'a gönderilir
+    Sentry.captureException(error);
     console.error("[Markala Error Boundary]", error);
   }, [error]);
 

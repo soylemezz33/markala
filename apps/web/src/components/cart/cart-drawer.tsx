@@ -11,17 +11,25 @@ import { useEffect } from "react";
 export function CartDrawer() {
   const { items, isOpen, close, removeItem, updateQuantity, subtotal, itemCount } = useCartStore();
 
-  // Body scroll lock
+  // Body scroll lock — sadece açılışta set, kapanışta restore (race condition önleme)
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [isOpen]);
+
+  // Escape key → drawer kapat (WCAG 2.1.2)
+  useEffect(() => {
+    if (!isOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen, close]);
 
   return (
     <AnimatePresence>
@@ -33,25 +41,30 @@ export function CartDrawer() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
             onClick={close}
+            aria-hidden="true"
             className="fixed inset-0 bg-ink-900/50 backdrop-blur-sm z-50"
           />
           <motion.aside
           initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 320, damping: 35 }}
+            transition={{ type: "spring", stiffness: 300, damping: 40, mass: 1.0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-drawer-title"
+            data-testid="cart-drawer"
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-paper-50 z-50 flex flex-col shadow-2xl"
           >
             <header className="flex items-center justify-between p-5 border-b border-paper-200">
               <div className="flex items-center gap-2">
                 <ShoppingBagOpen size={20} weight="regular" className="text-ink-900" />
-                <h2 className="font-medium text-ink-900">
+                <h2 id="cart-drawer-title" className="font-medium text-ink-900">
                   Sepetim {itemCount() > 0 && <span className="text-ink-500">({itemCount()})</span>}
                 </h2>
               </div>
               <button
           onClick={close}
-                className="p-2 rounded hover:bg-paper-100 text-ink-700"
+                className="w-11 h-11 grid place-items-center rounded hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 text-ink-700 tap-target"
                 aria-label="Kapat"
               >
                 <X size={20} />
@@ -98,7 +111,7 @@ export function CartDrawer() {
                       </div>
                       <button
           onClick={() => removeItem(item.id)}
-                        className="text-ink-500 hover:text-error p-1 self-start"
+                        className="w-11 h-11 grid place-items-center text-ink-500 hover:text-error active:scale-[0.97] active:bg-paper-100 rounded self-start tap-target"
                         aria-label="Sil"
                       >
                         <Trash size={16} />
@@ -143,18 +156,18 @@ function QtyControl({ value, onChange }: { value: number; onChange: (n: number) 
       <button
           onClick={() => onChange(value - 1)}
         disabled={value <= 1}
-        className="w-7 h-7 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30"
+        className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 rounded-l tap-target"
         aria-label="Azalt"
       >
-        <Minus size={12} />
+        <Minus size={14} />
       </button>
-      <span className="w-8 text-center text-sm tabular-nums">{value}</span>
+      <span className="w-10 text-center text-sm tabular-nums">{value}</span>
       <button
           onClick={() => onChange(value + 1)}
-        className="w-7 h-7 grid place-items-center text-ink-700 hover:bg-paper-100"
+        className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 rounded-r tap-target"
         aria-label="Arttır"
       >
-        <Plus size={12} />
+        <Plus size={14} />
       </button>
     </div>
   );

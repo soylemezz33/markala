@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { toast } from "@/components/toast";
 import {
   Plug, CheckCircle, Warning, Eye, EyeSlash, FloppyDisk,
   CreditCard, Receipt, EnvelopeSimple, ChatCircle, Truck, Cloud,
@@ -291,13 +292,13 @@ function IntegrationForm({ integration }: { integration: Integration }) {
 
         <div className="flex items-center gap-2 pt-3 border-t border-paper-200">
           <button
-            onClick={() => alert("Mock: ayarlar kaydedildi (backend bağlandığında PUT /api/admin/settings/integrations)")}
+            onClick={() => toast.success("Ayarlar kaydedildi (mock). Backend: PUT /api/admin/settings/integrations")}
             className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-4 py-2 rounded-md text-sm font-semibold hover:bg-ink-700"
           >
             <FloppyDisk size={14} weight="bold" /> Kaydet
           </button>
           <button
-            onClick={() => alert("Mock: bağlantı testi yapılıyor...")}
+            onClick={() => toast.info("Bağlantı testi yapılıyor... (mock)")}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100"
           >
             <CheckCircle size={14} weight="bold" /> Bağlantı Testi

@@ -183,3 +183,52 @@ export function getInstallmentAmount(total: number, count = 3): number {
 export function findParameter(product: Product, id: string): ProductParameter | undefined {
   return product.parameters.find((p) => p.id === id);
 }
+
+/**
+ * Sepet satırı / sipariş için insanca okunabilir konfigürasyon özeti.
+ * "Lak Mat · 1.000 adet · Tasarım desteği isteniyor" gibi.
+ */
+export function buildSummary(
+  product: Product,
+  state: ConfigState,
+  needsDesign: boolean,
+): string {
+  const parts: string[] = [];
+  for (const param of product.parameters) {
+    const sel = state.selections[param.id];
+    if ((param.kind === "radio" || param.kind === "select") && typeof sel === "string") {
+      const opt = param.options?.find((o) => o.id === sel);
+      if (opt) parts.push(opt.label);
+    } else if (param.kind === "checkbox-group" && Array.isArray(sel) && sel.length > 0) {
+      const labels = sel
+        .map((id) => param.options?.find((o) => o.id === id)?.label)
+        .filter(Boolean);
+      if (labels.length > 0) parts.push(labels.join(", "));
+    } else if (param.kind === "quantity" && typeof sel === "number") {
+      parts.push(`${sel.toLocaleString("tr-TR")} adet`);
+    } else if (param.kind === "dimension" && isDimensionValue(sel)) {
+      parts.push(`${sel.width} × ${sel.height} cm`);
+      if (sel.extras.length > 0) {
+        const labels = sel.extras
+          .map((id) => param.extras?.find((e) => e.id === id)?.label)
+          .filter(Boolean);
+        if (labels.length > 0) parts.push(labels.join(", "));
+      }
+    } else if (param.kind === "matrix" && typeof sel === "string") {
+      const cell = param.cells?.find((c) => c.id === sel);
+      if (cell) {
+        const row = param.rows?.find((r) => r.id === cell.rowId);
+        const col = param.cols?.find((c) => c.id === cell.colId);
+        const segments: string[] = [];
+        if (row?.label) {
+          segments.push(row.sublabel ? `${row.label} (${row.sublabel})` : row.label);
+        }
+        if (col?.label) segments.push(col.label);
+        if (cell.code) segments.unshift(cell.code);
+        parts.push(segments.join(" · "));
+      }
+    }
+  }
+  if (needsDesign) parts.push("Tasarım desteği isteniyor");
+  return parts.join(" · ");
+}

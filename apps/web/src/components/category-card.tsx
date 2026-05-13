@@ -14,7 +14,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Link
       href={`/kategori/${category.slug}`}
-      className="group relative flex flex-col rounded-lg overflow-hidden bg-paper-50 border border-paper-200 transition-all duration-200 ease-out hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5"
+      className="group relative flex flex-col rounded-lg overflow-hidden bg-paper-50 border border-paper-200 transition-all duration-200 ease-out hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-paper-100">
         <Image

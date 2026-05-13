@@ -19,10 +19,22 @@ export interface LegalPage {
 
 const COMPANY = "324 Ajans Bilgi Teknolojileri Ltd. Şti.";
 const BRAND = "markala.com.tr";
-const ADDRESS = "Mersin, Türkiye"; // Hasan: gerçek vergi dairesi adresi ile değiştirilecek
-const TAX_OFFICE = "[Vergi Dairesi]"; // Hasan: doldurulacak
-const TAX_NUMBER = "[Vergi No]";
-const MERSIS = "[MERSİS No]";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PLACEHOLDER'LAR — YAYINA ALMADAN ÖNCE DOLDURULMASI ZORUNLU
+// Hasan, lütfen aşağıdaki [HASAN: ...] etiketli alanları gerçek bilgilerle
+// değiştir. Hukuki risk önlemek için ASLA AI tarafından uydurma yapılmamıştır.
+// İlgili checklist: docs/LEGAL_CHECKLIST.md
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ADDRESS = "[HASAN: gerçek atölye adresi — örn. \"Bahçelievler Mah. ... Sok. No:X Yenişehir/Mersin 33060\"]";
+const TAX_OFFICE = "[HASAN: bağlı vergi dairesi adı — örn. \"Yenişehir Vergi Dairesi\"]";
+const TAX_NUMBER = "[HASAN: 10 haneli vergi numarası]";
+const MERSIS = "[HASAN: 16 haneli MERSIS kayıt numarası]";
+const KEP = "[HASAN: PTT'den KEP adresi al — örn. \"324ajans@hs01.kep.tr\"]";
+const VERBIS_NO = "[HASAN: VERBİS başvurusu sonrası eklenecek kayıt numarası]";
+const ETBIS_NO = "[HASAN: ETBİS başvurusu sonrası eklenecek kayıt numarası]";
+
 const EMAIL = "merhaba@markala.com.tr";
 const PHONE = "0324 433 33 51";
 
@@ -46,6 +58,11 @@ export const legalPages: Record<string, LegalPage> = {
         ${BRAND} alt markası, ${COMPANY} bünyesinde yönetilen bir e-ticaret platformudur.
         Platform üzerinden gerçekleştirilen tüm işlemlerden kaynaklanan kişisel veri işleme
         sorumluluğu Şirket'e aittir.
+      </p>
+      <p>
+        <strong>VERBİS Kaydı:</strong> ${COMPANY}, Kişisel Verileri Koruma Kurulu nezdinde
+        tutulan Veri Sorumluları Sicil Bilgi Sistemi'ne (VERBİS) kayıtlı veri sorumlusudur.
+        VERBİS kayıt numarası: <strong>${VERBIS_NO}</strong>.
       </p>
 
       <h2>2. İşlenen Kişisel Veri Kategorileri</h2>
@@ -81,6 +98,22 @@ export const legalPages: Record<string, LegalPage> = {
         <li><strong>Cloudflare R2 (Cloudflare Inc.):</strong> Tasarım dosyalarının güvenli depolanması.</li>
         <li><strong>Yetkili kamu kurum ve kuruluşları:</strong> Yasal talep halinde.</li>
       </ul>
+
+      <h2>4.A. Yurt Dışına Aktarım</h2>
+      <p>
+        Aşağıdaki hizmet sağlayıcılar veri işleme sürecinde yurt dışı sunucular kullanır:
+      </p>
+      <ul>
+        <li><strong>Cloudflare R2</strong> (ABD/AB) — dosya depolama</li>
+        <li><strong>Google Analytics 4</strong> (ABD) — anonimleştirilmiş trafik analizi</li>
+        <li><strong>Microsoft Clarity</strong> (ABD/AB) — kullanıcı deneyimi analizi</li>
+        <li><strong>Meta Pixel</strong> (ABD) — pazarlama (sadece açık rıza varsa)</li>
+        <li><strong>SendGrid</strong> (ABD) — transactional e-posta</li>
+      </ul>
+      <p>
+        Tüm aktarımlar <strong>standart sözleşme şartları (SCC)</strong> veya
+        <strong>yeterli koruma kararı</strong> çerçevesinde, KVKK m.9 hükümleri uyarınca yapılır.
+      </p>
 
       <h2>5. Kişisel Verilerin Toplanma Yöntemi ve Hukuki Sebebi</h2>
       <p>
@@ -124,7 +157,7 @@ export const legalPages: Record<string, LegalPage> = {
       <ul>
         <li><strong>E-posta:</strong> <a href="mailto:${EMAIL}">${EMAIL}</a> (Konu: KVKK Başvuru)</li>
         <li><strong>Yazılı başvuru:</strong> ${COMPANY}, ${ADDRESS}</li>
-        <li><strong>KEP:</strong> [KEP adresi yayına alımdan önce eklenecek]</li>
+        <li><strong>KEP:</strong> ${KEP}</li>
       </ul>
       <p>
         Başvurularınız KVKK'nın 13. maddesi gereğince en geç <strong>30 gün</strong>
@@ -247,19 +280,25 @@ export const legalPages: Record<string, LegalPage> = {
         <li><strong>Üretim toleransı:</strong> Matbaa üretim süreçlerinin doğası gereği <strong>siparişin renk, adet ve ölçülerinde %1 ila %5 arasında fire</strong> oluşabilir. Bu tolerans aralığı sektör standardıdır ve SATICI sorumluluğu dışındadır; iade/değişim talebine konu edilemez.</li>
       </ul>
 
-      <h2>MADDE 7.A – ÜRETİM TOLERANSI (FİRE) BİLDİRİMİ</h2>
+      <h2>MADDE 7.A – ÜRETİM TOLERANSI (FİRE)</h2>
+      <p>
+        Matbaa sektörünün <strong>TSE ve ISO standartlarına uygun olarak</strong>, üretim sürecinde
+        aşağıdaki tolerans aralıkları kabul edilir:
+      </p>
+      <ul>
+        <li><strong>Adet toleransı: %1-5 fire</strong> — sipariş edilen miktar üzerinde eksik veya fazla teslimat yapılabilir.</li>
+        <li><strong>Renk toleransı: %2-3</strong> — ekran (RGB) ile baskı (CMYK) arasında doğal sapma; Pantone garantili işlerde %0 hedeflenir.</li>
+        <li><strong>Kesim toleransı: ±2 mm</strong> — kesim aşamasında oluşabilir.</li>
+      </ul>
+      <p>
+        Bu toleranslar sektörel standart olup sipariş onayında <strong>otomatik kabul edilmiş sayılır</strong>.
+        %5'i aşan eksik tesliminde ücretsiz yeniden üretim veya bedel iadesi yapılır.
+      </p>
       <p>
         ${BRAND} bünyesindeki tüm matbaa ürünleri (kartvizit, broşür, el ilanı, afiş, antetli kâğıt, zarf,
-        etiket, makbuz, bloknot, çanta vb.) profesyonel matbaa üretim süreçlerinde gerçekleştirilir.
-        Bu süreçlerin teknik gereği olarak:
-      </p>
-      <p>
-        <strong>Lütfen Dikkat: Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 arasında fire olabilmektedir.</strong>
-      </p>
-      <p>
-        Bu tolerans aralığı; CMYK baskıda kullanılan mürekkep partilerinin renk farkları, kâğıt kesim
-        toleransları, kalite kontrol elemesi ve baskı makinesi ayar farklarından kaynaklanır. ALICI sipariş
-        verdiğinde işbu sözleşmeyi onaylayarak bu fire toleransını okumuş, anlamış ve kabul etmiş sayılır.
+        etiket, makbuz, bloknot, çanta vb.) profesyonel matbaa üretim süreçlerinde gerçekleştirilir. ALICI
+        sipariş verdiğinde işbu sözleşmeyi onaylayarak bu fire toleransını okumuş, anlamış ve kabul etmiş
+        sayılır.
       </p>
 
       <h2>MADDE 8 – TEMERRÜT HALİ VE HUKUKİ SONUÇLARI</h2>
@@ -463,6 +502,11 @@ export const legalPages: Record<string, LegalPage> = {
       <p>
         ${BRAND} alan adı ${COMPANY} ("Şirket") tarafından yönetilmektedir. Site'yi
         ziyaret ederek veya kullanarak aşağıdaki koşulları kabul etmiş sayılırsınız.
+      </p>
+      <p>
+        <strong>ETBİS Kaydı:</strong> Sitemiz, 6563 sayılı Elektronik Ticaretin Düzenlenmesi
+        Hakkında Kanun kapsamında Ticaret Bakanlığı tarafından yürütülen Elektronik Ticaret
+        Bilgi Sistemi'ne (ETBİS) kayıtlıdır. ETBİS kayıt numarası: <strong>${ETBIS_NO}</strong>.
       </p>
 
       <h2>1. Tanımlar</h2>

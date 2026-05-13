@@ -47,6 +47,8 @@ export default function CheckoutPage() {
   const [cardCvv, setCardCvv] = useState("");
   const [installments, setInstallments] = useState(1);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedTolerance, setAcceptedTolerance] = useState(false);
+  const [acceptedKvkk, setAcceptedKvkk] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   const sub = subtotal();
@@ -81,7 +83,8 @@ export default function CheckoutPage() {
   }
 
   function handlePay() {
-    if (!acceptedTerms || cardNumber.length < 16 || cardCvv.length < 3) return;
+    if (!acceptedTerms || !acceptedTolerance || !acceptedKvkk) return;
+    if (cardNumber.length < 16 || cardCvv.length < 3) return;
     setProcessing(true);
 
     // Mock 3D secure latency
@@ -278,18 +281,50 @@ export default function CheckoutPage() {
                 </select>
               </div>
 
-              <label className="flex items-start gap-2 text-sm text-ink-700 mt-4 pt-4 border-t border-paper-200">
-                <input
-          type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
-                  className="rounded border-paper-200 mt-0.5"
-                />
-                <span>
-                  <Link href="/yasal/mesafeli-satis" className="underline hover:text-ink-900">Mesafeli Satış Sözleşmesi</Link> ve{" "}
-                  <Link href="/yasal/on-bilgilendirme" className="underline hover:text-ink-900">Ön Bilgilendirme Formu</Link>'nu okudum, kabul ediyorum.
-                </span>
-              </label>
+              <div className="mt-4 pt-4 border-t border-paper-200 space-y-3">
+                <label className="flex items-start gap-2 text-sm text-ink-700">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="rounded border-paper-200 mt-0.5"
+                  />
+                  <span>
+                    <Link href="/yasal/mesafeli-satis" className="underline hover:text-ink-900">Mesafeli Satış Sözleşmesi</Link> ve{" "}
+                    <Link href="/yasal/on-bilgilendirme" className="underline hover:text-ink-900">Ön Bilgilendirme Formu</Link>'nu okudum, kabul ediyorum.
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 text-xs text-ink-700">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={acceptedTolerance}
+                    onChange={(e) => setAcceptedTolerance(e.target.checked)}
+                    className="rounded border-paper-200 mt-0.5"
+                  />
+                  <span>
+                    <strong>Üretim toleransı (%1-5 fire)</strong> sektör standardını ve renk profili (CMYK)
+                    nedeniyle ekran-baskı farkı olabileceğini kabul ediyorum.{" "}
+                    <Link href="/yasal/mesafeli-satis" className="underline hover:text-ink-900">Detay</Link>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-2 text-xs text-ink-700">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={acceptedKvkk}
+                    onChange={(e) => setAcceptedKvkk(e.target.checked)}
+                    className="rounded border-paper-200 mt-0.5"
+                  />
+                  <span>
+                    <Link href="/yasal/kvkk" className="underline hover:text-ink-900">KVKK aydınlatma metnini</Link> okudum,
+                    sipariş ve faturalama amacıyla kişisel verilerimin işlenmesine onay veriyorum.
+                  </span>
+                </label>
+              </div>
             </div>
           </Section>
 
@@ -299,7 +334,7 @@ export default function CheckoutPage() {
                 Devam Et <ArrowRight size={18} weight="bold" />
               </Button>
             ) : (
-              <Button size="lg" onClick={handlePay} disabled={!acceptedTerms || cardNumber.length < 16 || processing}>
+              <Button size="lg" onClick={handlePay} disabled={!acceptedTerms || !acceptedTolerance || !acceptedKvkk || cardNumber.length < 16 || processing}>
                 {processing ? "İşleniyor..." : (
                   <>
                     <Lock size={18} weight="bold" /> {`${total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ₺ Öde`}

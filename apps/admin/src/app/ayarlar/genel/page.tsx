@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { toast } from "@/components/toast";
 import { Buildings, EnvelopeSimple, Phone, MapPin, Globe, FloppyDisk, CurrencyCircleDollar, Truck } from "@phosphor-icons/react";
 
 export default function GeneralSettingsPage() {
@@ -73,7 +74,7 @@ export default function GeneralSettingsPage() {
       <div className="mt-6 flex items-center justify-end gap-2">
         <button className="px-4 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">İptal</button>
         <button
-          onClick={() => alert("Mock: ayarlar kaydedildi.")}
+          onClick={() => toast.success("Ayarlar kaydedildi (mock).")}
           className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-5 py-2 rounded-md text-sm font-semibold hover:bg-ink-700"
         >
           <FloppyDisk size={14} weight="bold" /> Tüm Ayarları Kaydet

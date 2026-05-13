@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { toast } from "@/components/toast";
 import { Plus, MagnifyingGlass, Eye, PencilSimple, Trash, Package, ArrowsDownUp } from "@phosphor-icons/react";
 import { products, categories } from "@markala/mock-data";
 
@@ -139,7 +140,7 @@ export default function ProductsAdminPage() {
                         <button
                           className="p-1.5 rounded text-ink-500 hover:bg-error/10 hover:text-error"
                           title="Sil"
-                          onClick={() => alert(`"${p.name}" silinecek (mock)`)}
+                          onClick={() => toast.info(`"${p.name}" silinecek (mock)`)}
                         >
                           <Trash size={14} />
                         </button>

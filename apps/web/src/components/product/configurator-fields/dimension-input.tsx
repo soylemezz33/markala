@@ -14,7 +14,7 @@ interface Props {
 /**
  * Vinilturk tarzı en+boy input + canlı alan/çevre tablosu + ek seçenekler.
  */
-export function DimensionField({ param, value, onChange }: Props) {
+export function DimensionInput({ param, value, onChange }: Props) {
   const min = param.minDimension ?? 30;
   const max = param.maxDimension ?? 500;
   const w = value.width;

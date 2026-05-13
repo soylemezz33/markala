@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
+import { toast } from "@/components/toast";
 import { ArrowLeft, FloppyDisk, Eye, Trash, Plus, ArrowsClockwise } from "@phosphor-icons/react";
 import { products, categories, getProductBySlug } from "@markala/mock-data";
 
@@ -55,7 +56,7 @@ export default function ProductEditPage({ params }: Props) {
             <Eye size={14} /> Sitede Gör
           </Link>
           <button
-            onClick={() => alert("Mock: değişiklikler kaydedildi (backend bağlandığında PATCH /api/products/:id)")}
+            onClick={() => toast.success("Değişiklikler kaydedildi (mock). Backend: PATCH /api/products/:id")}
             className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-4 py-2 rounded-md text-sm font-medium hover:bg-ink-700"
           >
             <FloppyDisk size={14} weight="bold" /> Kaydet

@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Post, Delete, Body, Param, UseGuards, Req } fro
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
+import { CreateAddressDto, UpdateAddressDto, UpdateProfileDto } from "./users.dto";
 import type { Request } from "express";
 
 @ApiTags("users")
@@ -12,8 +13,8 @@ export class UsersController {
   constructor(private service: UsersService) {}
 
   @Patch()
-  updateProfile(@Req() req: Request & { user: { sub: string } }, @Body() body: any) {
-    return this.service.updateProfile(req.user.sub, body);
+  updateProfile(@Req() req: Request & { user: { sub: string } }, @Body() dto: UpdateProfileDto) {
+    return this.service.updateProfile(req.user.sub, dto);
   }
 
   @Get("addresses")
@@ -22,13 +23,17 @@ export class UsersController {
   }
 
   @Post("addresses")
-  createAddress(@Req() req: Request & { user: { sub: string } }, @Body() body: any) {
-    return this.service.createAddress(req.user.sub, body);
+  createAddress(@Req() req: Request & { user: { sub: string } }, @Body() dto: CreateAddressDto) {
+    return this.service.createAddress(req.user.sub, dto);
   }
 
   @Patch("addresses/:id")
-  updateAddress(@Req() req: Request & { user: { sub: string } }, @Param("id") id: string, @Body() body: any) {
-    return this.service.updateAddress(req.user.sub, id, body);
+  updateAddress(
+    @Req() req: Request & { user: { sub: string } },
+    @Param("id") id: string,
+    @Body() dto: UpdateAddressDto,
+  ) {
+    return this.service.updateAddress(req.user.sub, id, dto);
   }
 
   @Delete("addresses/:id")

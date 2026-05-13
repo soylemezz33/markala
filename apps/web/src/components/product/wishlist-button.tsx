@@ -40,7 +40,7 @@ export function WishlistButton({
     return variant === "icon" ? (
       <span
         aria-hidden
-        className={`w-9 h-9 rounded-full bg-paper-50/90 ${className}`}
+        className={`w-11 h-11 rounded-full bg-paper-50/90 ${className}`}
       />
     ) : null;
   }
@@ -52,7 +52,7 @@ export function WishlistButton({
         type="button"
         aria-label={active ? "Favorilerden çıkar" : "Favorilere ekle"}
         aria-pressed={active}
-        className={`w-9 h-9 rounded-full bg-paper-50/90 backdrop-blur grid place-items-center transition-all hover:scale-105 active:scale-95 ${
+        className={`w-11 h-11 rounded-full bg-paper-50/90 backdrop-blur grid place-items-center transition-all hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2 ${
           active ? "text-error" : "text-ink-700 hover:text-error"
         } ${className}`}
       >

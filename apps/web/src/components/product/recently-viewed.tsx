@@ -83,7 +83,7 @@ export function RecentlyViewedRail({
                   alt={p.name}
                   fill
                   unoptimized
-                  sizes="180px"
+                  sizes="(max-width: 640px) 160px, 180px"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { toast } from "@/components/toast";
 import { Bell, FloppyDisk, EnvelopeSimple, ChatCircle, DeviceMobile } from "@phosphor-icons/react";
 
 interface NotifRow {
@@ -106,7 +107,7 @@ export default function NotificationSettingsPage() {
 
       <div className="mt-6 flex items-center justify-end">
         <button
-          onClick={() => alert("Bildirim tercihleri kaydedildi (mock).")}
+          onClick={() => toast.success("Bildirim tercihleri kaydedildi (mock).")}
           className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-5 py-2 rounded-md text-sm font-semibold hover:bg-ink-700"
         >
           <FloppyDisk size={14} weight="bold" /> Kaydet

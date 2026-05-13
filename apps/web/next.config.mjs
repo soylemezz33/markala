@@ -1,3 +1,10 @@
+import { withSentryConfig } from "@sentry/nextjs";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
 /** @type {import('next').NextConfig} */
 const securityHeaders = [
   // XSS protection (older browsers)
@@ -104,4 +111,22 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry wrapper — kaynak haritalarını upload eder, hata izlemeyi etkinleştirir.
+// SENTRY_AUTH_TOKEN env değişkeni build sırasında set edilmezse upload sessizce
+// atlanır ve build kırılmaz (silent: true).
+const sentryWebpackPluginOptions = {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+  disableLogger: true,
+  // SENTRY_AUTH_TOKEN yoksa upload aşamasını atla — local build kırılmasın
+  dryRun: !process.env.SENTRY_AUTH_TOKEN,
+};
+
+// Bundle analyzer → Sentry wrapper sırası: önce analyzer, sonra Sentry
+// ANALYZE=true pnpm build ile çalıştır
+export default withBundleAnalyzer(
+  withSentryConfig(nextConfig, sentryWebpackPluginOptions),
+);

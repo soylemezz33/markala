@@ -29,6 +29,7 @@ export function ProductCard({ product }: ProductCardProps) {
         "group flex flex-col rounded-lg overflow-hidden bg-paper-50 border border-paper-200",
         "transition-all duration-200 ease-out",
         "hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2",
       )}
     >
       <div className="relative aspect-square overflow-hidden bg-paper-100">
@@ -59,8 +60,8 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
 
-        {/* Wishlist butonu — sağ üst köşe */}
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+        {/* Wishlist butonu — sağ üst köşe. Mobile/tablet'te sürekli görünür, lg+ hover-only. */}
+        <div className="absolute top-3 right-3 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100 transition-opacity">
           <WishlistButton slug={product.slug} variant="icon" />
         </div>
       </div>

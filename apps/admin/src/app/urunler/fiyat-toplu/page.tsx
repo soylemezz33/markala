@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
+import { toast } from "@/components/toast";
 import { ArrowLeft, Calculator, ArrowsClockwise, Warning } from "@phosphor-icons/react";
 import { products, categories } from "@markala/mock-data";
 
@@ -46,8 +47,8 @@ export default function BulkPriceUpdatePage() {
         } · ${value}${op === "percent" ? "%" : " ₺"}\nYuvarlama: ${round === "none" ? "Yok" : `En yakın ${round} ₺`}\n\nDevam edilsin mi?`,
       )
     ) {
-      alert(
-        "Mock: Backend bağlandığında PATCH /api/products/bulk-price endpoint'ine istek atılacak.",
+      toast.success(
+        `${targetProducts.length} ürün güncellendi (mock). Backend bağlandığında PATCH /api/products/bulk-price kullanılacak.`,
       );
     }
   }

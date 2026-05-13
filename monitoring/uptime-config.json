@@ -1,0 +1,92 @@
+{
+  "_comment": "UptimeRobot manuel kurulum referansı — bu dosya programatik import edilmez; uptimerobot.com Dashboard'da manuel oluştur. Hasan için checklist niteliğindedir.",
+  "_docs": "https://uptimerobot.com/api/",
+
+  "account": {
+    "tier": "free",
+    "limits": {
+      "monitors": 50,
+      "min_interval_minutes": 5,
+      "ssl_monitoring": true,
+      "public_status_page": true
+    }
+  },
+
+  "monitors": [
+    {
+      "name": "Markala — Web (https)",
+      "type": "HTTPS",
+      "url": "https://markala.com.tr",
+      "interval_seconds": 300,
+      "timeout_seconds": 30,
+      "alert_contacts": ["email-primary", "slack-webhook"],
+      "keyword_check": {
+        "type": "exists",
+        "value": "Markala"
+      }
+    },
+    {
+      "name": "Markala — API Health",
+      "type": "HTTPS",
+      "url": "https://markala.com.tr/api/health",
+      "interval_seconds": 300,
+      "timeout_seconds": 15,
+      "alert_contacts": ["email-primary", "slack-webhook"],
+      "keyword_check": {
+        "type": "exists",
+        "value": "\"status\":\"ok\""
+      }
+    },
+    {
+      "name": "Markala — Admin Login",
+      "type": "HTTPS",
+      "url": "https://admin.markala.com.tr/giris",
+      "interval_seconds": 300,
+      "timeout_seconds": 30,
+      "alert_contacts": ["email-primary"]
+    },
+    {
+      "name": "Markala — SSL Cert",
+      "type": "SSL",
+      "url": "https://markala.com.tr",
+      "alert_days_before_expiry": [30, 14, 7, 1],
+      "alert_contacts": ["email-primary"]
+    },
+    {
+      "name": "Markala — Sitemap reachable",
+      "type": "HTTPS",
+      "url": "https://markala.com.tr/sitemap.xml",
+      "interval_seconds": 900,
+      "alert_contacts": ["email-primary"]
+    }
+  ],
+
+  "alert_contacts": [
+    {
+      "id": "email-primary",
+      "type": "email",
+      "value": "hasansylemezz@gmail.com",
+      "notify_on": ["down", "up", "ssl_expiry"]
+    },
+    {
+      "id": "slack-webhook",
+      "type": "webhook",
+      "value_env": "SLACK_WEBHOOK_URL",
+      "notify_on": ["down", "up"],
+      "_note": "Slack Incoming Webhook URL — UptimeRobot Alert Contacts → Webhook tipinde ekle"
+    }
+  ],
+
+  "status_page": {
+    "enabled": true,
+    "name": "Markala Status",
+    "url_suggestion": "https://stats.uptimerobot.com/markala",
+    "custom_domain_phase2": "status.markala.com.tr",
+    "show_monitors": ["all"]
+  },
+
+  "maintenance_windows": {
+    "_note": "Deploy sırasında downtime alarmlarını susturmak için: CI/CD pipeline'da UptimeRobot API ile maintenance window oluştur (action=editMonitor + status=0).",
+    "example_cron": "Deploy script: scripts/deploy.sh içine UptimeRobot pause/resume çağrısı entegre edilebilir."
+  }
+}

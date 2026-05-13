@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { CreateCategoryDto, UpdateCategoryDto } from "./categories.dto";
 
 @Injectable()
 export class CategoriesService {
@@ -21,21 +23,35 @@ export class CategoriesService {
     return cat;
   }
 
-  create(data: {
-    slug: string;
-    name: string;
-    shortDescription: string;
-    longDescription: string;
-    imageUrl: string;
-    accentColor?: string;
-    startingPrice: number;
-    productionTime: string;
-    sortOrder?: number;
-  }) {
+  create(dto: CreateCategoryDto) {
+    const data: Prisma.CategoryCreateInput = {
+      slug: dto.slug,
+      name: dto.name,
+      shortDescription: dto.shortDescription,
+      longDescription: dto.longDescription,
+      imageUrl: dto.imageUrl,
+      ...(dto.accentColor !== undefined && { accentColor: dto.accentColor }),
+      startingPrice: new Prisma.Decimal(dto.startingPrice),
+      productionTime: dto.productionTime,
+      ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+      ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+    };
     return this.prisma.category.create({ data });
   }
 
-  update(id: string, data: Partial<Parameters<this["create"]>[0]> & { isActive?: boolean }) {
+  update(id: string, dto: UpdateCategoryDto) {
+    const data: Prisma.CategoryUpdateInput = {
+      ...(dto.slug !== undefined && { slug: dto.slug }),
+      ...(dto.name !== undefined && { name: dto.name }),
+      ...(dto.shortDescription !== undefined && { shortDescription: dto.shortDescription }),
+      ...(dto.longDescription !== undefined && { longDescription: dto.longDescription }),
+      ...(dto.imageUrl !== undefined && { imageUrl: dto.imageUrl }),
+      ...(dto.accentColor !== undefined && { accentColor: dto.accentColor }),
+      ...(dto.startingPrice !== undefined && { startingPrice: new Prisma.Decimal(dto.startingPrice) }),
+      ...(dto.productionTime !== undefined && { productionTime: dto.productionTime }),
+      ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+      ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+    };
     return this.prisma.category.update({ where: { id }, data });
   }
 

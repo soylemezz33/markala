@@ -133,7 +133,8 @@ services:
     networks:
       - markala
 
-  # Otomatik backup — günlük postgres dump (retention: 30 gün)
+  # Otomatik backup — günlük postgres dump (local 30 gün + R2 remote)
+  # Image: postgres-alpine + aws-cli (R2 upload için) — entrypoint'te kuruluyor
   backup:
     image: postgres:16-alpine
     container_name: markala-backup
@@ -147,13 +148,100 @@ services:
       PGDATABASE: ${POSTGRES_DB:-markala}
       TZ: Europe/Istanbul
       RETENTION_DAYS: 30
+      # Remote backup (Cloudflare R2) — credentials yoksa upload sessizce atlanır
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_BACKUP_ACCESS_KEY_ID:-${R2_ACCESS_KEY_ID}}
+      R2_SECRET_ACCESS_KEY: ${R2_BACKUP_SECRET_ACCESS_KEY:-${R2_SECRET_ACCESS_KEY}}
+      R2_BUCKET: ${R2_BACKUP_BUCKET:-markala-backups}
+      R2_PREFIX: postgres-backups
     volumes:
       - ./backups:/backups
       - ./scripts/backup-postgres.sh:/usr/local/bin/backup.sh:ro
+      - ./scripts/restore-postgres.sh:/usr/local/bin/restore.sh:ro
+      - ./scripts/r2-upload-backup.sh:/usr/local/bin/r2-upload.sh:ro
     networks:
       - markala
     entrypoint: ["sh", "-c"]
-    command: ["while true; do sh /usr/local/bin/backup.sh; sleep 86400; done"]
+    # aws-cli kurulumu (idempotent — apk cache'lenir), sonra sonsuz backup loop
+    command:
+      - |
+        apk add --no-cache aws-cli >/dev/null 2>&1 || true
+        while true; do
+          sh /usr/local/bin/backup.sh || echo "[$(date)] Backup hata aldı, döngü devam ediyor"
+          sleep 86400
+        done
+
+  # ---------------------------------------------------------------------------
+  # Monitoring stack (opsiyonel — Phase 1: yalnızca node-exporter + prometheus)
+  # Kaldırmak için tüm bu blok silinebilir; ana stack etkilenmez.
+  # ---------------------------------------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: markala-node-exporter
+    restart: unless-stopped
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.textfile.directory=/var/lib/node_exporter/textfile_collector'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+      - ./backups/metrics:/var/lib/node_exporter/textfile_collector:ro
+    networks:
+      - markala
+    expose:
+      - "9100"
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.3
+    container_name: markala-nginx-exporter
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    command:
+      - '--nginx.scrape-uri=http://nginx:8080/stub_status'
+    networks:
+      - markala
+    expose:
+      - "9113"
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: markala-postgres-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER:-markala}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-markala}?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - markala
+    expose:
+      - "9187"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: markala-prometheus
+    restart: unless-stopped
+    depends_on:
+      - node-exporter
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts:/etc/prometheus/alerts:ro
+      - ./backups:/var/lib/markala-backups:ro
+      - prometheus-data:/prometheus
+    networks:
+      - markala
+    expose:
+      - "9090"
+    # Prod'da nginx üzerinden basic-auth ile expose et — şimdilik kapalı
 
 volumes:
   postgres-data:
@@ -161,6 +249,8 @@ volumes:
   nginx-cache:
     driver: local
   nginx-logs:
+    driver: local
+  prometheus-data:
     driver: local
 
 networks:

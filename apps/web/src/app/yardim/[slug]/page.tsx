@@ -3,7 +3,25 @@ import { notFound } from "next/navigation";
 import { Container } from "@markala/ui";
 import { ArrowLeft, ArrowRight, CaretRight, ChatCircle } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
-import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+
+/**
+ * Şehir/konu eşleşmesi — yardım makalelerinin sonunda gösterilecek hub linkleri.
+ * Sadece konu ile mantıklı eşleşen yardım makalesi için link basılır (spam değil).
+ */
+const articleCityLinks: Record<string, Array<{ label: string; href: string }>> = {
+  "dosya-hazirlama": [
+    { label: "Mersin'de baskı hizmetimiz", href: "/matbaa/mersin" },
+    { label: "Adana matbaa & baskı", href: "/matbaa/adana" },
+  ],
+  "kargo": [
+    { label: "İstanbul'a baskı kargosu", href: "/matbaa/istanbul" },
+    { label: "Ankara'ya baskı kargosu", href: "/matbaa/ankara" },
+  ],
+  "siparis": [
+    { label: "Mersin matbaa siparişi", href: "/matbaa/mersin" },
+  ],
+};
 
 interface HelpArticle {
   slug: string;
@@ -141,8 +159,16 @@ export default async function HelpArticlePage({ params }: Props) {
   const article = articles[slug];
   if (!article) notFound();
 
+  const cityLinks = articleCityLinks[article.slug];
+
   return (
     <>
+      <ArticleJsonLd
+        title={article.title}
+        description={article.description}
+        url={`/yardim/${article.slug}`}
+        datePublished="2026-01-01T00:00:00Z"
+      />
       <BreadcrumbJsonLd
         items={[
           { name: "Anasayfa", href: "/" },
@@ -218,6 +244,27 @@ export default async function HelpArticlePage({ params }: Props) {
               ))}
           </div>
         </section>
+
+        {/* Şehir/konu silo linkleri — sadece mantıklı eşleşmelerde */}
+        {cityLinks && cityLinks.length > 0 && (
+          <section className="mt-10">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-ink-500 mb-3">
+              Şehrinizdeki Hizmetlerimiz
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {cityLinks.map((c) => (
+                <Link
+                  key={c.href}
+                  href={c.href}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 text-sm text-ink-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
+                >
+                  {c.label}
+                  <ArrowRight size={11} weight="bold" />
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Hâlâ yardım gerekiyorsa */}
         <div className="mt-10 p-5 bg-paper-100 border border-paper-200 rounded-xl flex items-start gap-3">

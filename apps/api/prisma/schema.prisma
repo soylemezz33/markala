@@ -49,24 +49,53 @@ model User {
   corporateDiscount Decimal?        @map("corporate_discount") @db.Decimal(5, 2)
   corporateCreditLimit Decimal?     @map("corporate_credit_limit") @db.Decimal(12, 2)
 
-  // 2FA
+  // 2FA — secret artık AES-256-GCM ile şifreli saklanır (EncryptionService).
+  // DB kolonu mevcut secret'a göre yeniden adlandırıldı: two_factor_secret_encrypted.
   twoFactorEnabled Boolean  @default(false) @map("two_factor_enabled")
-  twoFactorSecret  String?  @map("two_factor_secret")
-  twoFactorBackupCodes String[] @default([]) @map("two_factor_backup_codes")
+  twoFactorSecret  String?  @map("two_factor_secret_encrypted")
+  // Backup kodları artık bcrypt ile hash'lenmiş tutulur (string array yerine kodun kendisi DB'de aranabilir değildir).
+  twoFactorBackupCodesHashed String[] @default([]) @map("two_factor_backup_codes_hashed")
+
+  // KVKK — pazarlama izni (açık rıza)
+  marketingConsent       Boolean   @default(false) @map("marketing_consent")
+  marketingConsentAt     DateTime? @map("marketing_consent_at")
+  marketingConsentSource String?   @map("marketing_consent_source")
 
   emailVerifiedAt DateTime? @map("email_verified_at")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
 
   addresses             Address[]
   orders                Order[]
   designUploads         DesignUpload[]
   corporateApplications CorporateApplication[]
+  refreshTokens         RefreshToken[]
+  notifications         NotificationLog[]
+  consentLogs           ConsentLog[]
 
   @@index([role])
   @@index([corporateStatus])
+  @@index([deletedAt])
   @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique @map("token_hash")
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  userAgent String?  @map("user_agent")
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 model CorporateApplication {
@@ -101,6 +130,7 @@ model CorporateApplication {
 
   @@index([status, createdAt])
   @@index([email])
+  @@index([userId])
   @@map("corporate_applications")
 }
 
@@ -176,6 +206,7 @@ model Product {
 
   category Category   @relation(fields: [categoryId], references: [id])
   orderItems OrderItem[]
+  reviews    Review[]
 
   @@index([categoryId, isActive])
   @@index([bestseller, isActive])
@@ -211,11 +242,12 @@ model Order {
   status        OrderStatus   @default(siparis_alindi)
   paymentStatus PaymentStatus @default(beklemede) @map("payment_status")
 
-  subtotal    Decimal @db.Decimal(10, 2)
+  // Kuruş hassasiyeti için (12, 4); ara toplam/KDV/toplam yuvarlama hatasını azaltır.
+  subtotal    Decimal @db.Decimal(12, 4)
   shippingFee Decimal @map("shipping_fee") @db.Decimal(10, 2)
   discount    Decimal @default(0) @db.Decimal(10, 2)
-  vat         Decimal @db.Decimal(10, 2)
-  total       Decimal @db.Decimal(10, 2)
+  vat         Decimal @db.Decimal(12, 4)
+  total       Decimal @db.Decimal(12, 4)
 
   shippingAddressId String  @map("shipping_address_id")
   billingAddressId  String  @map("billing_address_id")
@@ -237,6 +269,8 @@ model Order {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  // KVKK & Türk Ticaret Kanunu — mali kayıt 10 yıl saklanır; soft delete.
+  deletedAt DateTime? @map("deleted_at")
 
   user            User?       @relation(fields: [userId], references: [id])
   shippingAddress Address     @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
@@ -246,7 +280,9 @@ model Order {
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
-  @@index([orderNumber])
+  @@index([paymentStatus, createdAt])
+  @@index([iyzicoConversationId])
+  @@index([deletedAt])
   @@map("orders")
 }
 
@@ -273,6 +309,7 @@ model OrderItem {
   product Product @relation(fields: [productId], references: [id])
 
   @@index([orderId])
+  @@index([productId])
   @@map("order_items")
 }
 
@@ -319,6 +356,7 @@ model Coupon {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([code, isActive])
   @@map("coupons")
 }
 
@@ -336,7 +374,9 @@ model Review {
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@index([productId, isApproved])
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, isApproved, createdAt])
   @@map("reviews")
 }
 
@@ -449,7 +489,51 @@ model NotificationLog {
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([userId, createdAt])
   @@index([template, status])
   @@map("notification_logs")
+}
+
+// === KVKK — Rıza & Audit kayıtları ===
+
+/// Açık rıza kayıtları — KVKK uyum için tüm onaylar (kayıt, pazarlama, çerez)
+/// burada zaman damgalı, IP/UA'lı saklanır. İspat yükümlülüğü için silinmez.
+model ConsentLog {
+  id          String   @id @default(cuid())
+  userId      String?  @map("user_id")
+  email       String?
+  consentType String   @map("consent_type") // 'kvkk' | 'marketing' | 'cookies-analytics' | 'cookies-marketing'
+  granted     Boolean
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  version     String?  // policy version
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([email])
+  @@index([consentType, createdAt])
+  @@map("consent_logs")
+}
+
+/// Hassas varlık değişiklikleri (kullanıcı, sipariş, ürün) için tam izleme.
+/// KVKK 12. madde "veri güvenliği" ve admin işlemlerinin denetlenebilirliği için.
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?  @map("user_id")
+  actorId    String?  @map("actor_id") // admin yapıyorsa
+  entityType String   @map("entity_type") // 'User', 'Order', 'Product'
+  entityId   String   @map("entity_id")
+  action     String   // 'create', 'update', 'delete', 'status_change'
+  diff       Json?    // before/after
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([userId])
+  @@map("audit_logs")
 }

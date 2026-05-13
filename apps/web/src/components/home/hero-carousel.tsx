@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, CaretLeft, CaretRight, Sparkle } from "@phosphor-icons/react";
@@ -9,6 +10,29 @@ import { heroSlides, type HeroSlide } from "@markala/mock-data";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 
 const AUTOPLAY_MS = 6000;
+
+// Eşit boyutlu placeholder (visual yüklenirken layout shift olmasın)
+const VisualPlaceholder = () => (
+  <div className="relative w-full max-w-[440px] h-[440px] md:h-[480px] mx-auto" aria-hidden="true" />
+);
+
+// 4 visual variant — dynamic import (ssr: false ile bundle'dan çıkarılır)
+const DesignStackVisual = dynamic(
+  () => import("./hero-visuals/design-stack").then((m) => m.DesignStackVisual),
+  { loading: () => <VisualPlaceholder />, ssr: false },
+);
+const CardStackVisual = dynamic(
+  () => import("./hero-visuals/card-stack").then((m) => m.CardStackVisual),
+  { loading: () => <VisualPlaceholder />, ssr: false },
+);
+const MugVisual = dynamic(
+  () => import("./hero-visuals/mug").then((m) => m.MugVisual),
+  { loading: () => <VisualPlaceholder />, ssr: false },
+);
+const BannerDisplayVisual = dynamic(
+  () => import("./hero-visuals/banner-display").then((m) => m.BannerDisplayVisual),
+  { loading: () => <VisualPlaceholder />, ssr: false },
+);
 
 const themeStyles: Record<HeroSlide["theme"], {
   bg: string;
@@ -223,7 +247,6 @@ export function HeroCarousel() {
                         src={slide.productImage}
                         alt={slide.title}
                         fill
-                        unoptimized
                         priority
                         sizes="(min-width:1024px) 50vw, 100vw"
                         className="object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
@@ -316,270 +339,5 @@ function SplitTitle({ title, highlight, themeName }: { title: string; highlight:
       <span className={highlightCls}>{match}</span>
       {after}
     </>
-  );
-}
-
-// ============================================================
-// VISUAL COMPONENTS — slide.visualType'a göre sağ tarafta render
-// ============================================================
-
-/** Tüm visual'lar için ortak container — eşit boyut, center hizalı */
-const visualFrame =
-  "relative w-full max-w-[440px] h-[440px] md:h-[480px] mx-auto";
-
-/** "Tasarım desteği" slide'ı için 3 katlı kart yığını (BRIEF / TASLAK / ONAYLANDI) */
-function DesignStackVisual() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className={visualFrame}
-    >
-      {/* Arka kart — krem, brief */}
-      <div className="absolute top-0 right-0 w-64 md:w-72 aspect-[3/4] rounded-2xl bg-paper-100 rotate-[8deg] shadow-2xl">
-        <div className="p-5 h-full flex flex-col">
-          <span className="text-[10px] uppercase tracking-wider text-ink-500 font-semibold">Brief</span>
-          <div className="mt-3 space-y-1.5">
-            <div className="h-1.5 rounded bg-ink-700/20 w-full" />
-            <div className="h-1.5 rounded bg-ink-700/20 w-5/6" />
-            <div className="h-1.5 rounded bg-ink-700/20 w-4/6" />
-            <div className="h-1.5 rounded bg-ink-700/20 w-full" />
-            <div className="h-1.5 rounded bg-ink-700/20 w-3/6" />
-          </div>
-          <div className="mt-auto"><div className="h-2 rounded bg-brand-500/40 w-1/3" /></div>
-        </div>
-      </div>
-
-      {/* Orta kart — beyaz, taslak v1 */}
-      <div className="absolute top-8 right-10 w-64 md:w-72 aspect-[3/4] rounded-2xl bg-paper-50 -rotate-[3deg] shadow-2xl">
-        <div className="p-5 h-full flex flex-col">
-          <span className="text-[10px] uppercase tracking-wider text-ink-500 font-semibold">Taslak v1</span>
-          <div className="mt-3 flex-1 grid grid-cols-3 gap-2">
-            <div className="bg-paper-100 rounded" />
-            <div className="bg-brand-500 rounded" />
-            <div className="bg-paper-100 rounded" />
-          </div>
-          <div className="mt-3 space-y-1.5">
-            <div className="h-2 rounded bg-ink-900/10 w-full" />
-            <div className="h-2 rounded bg-ink-900/10 w-2/3" />
-          </div>
-        </div>
-      </div>
-
-      {/* Ön kart — sarı, onaylandı */}
-      <motion.div
-        animate={{ rotate: [6, 4, 6], y: [0, -4, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 right-20 w-64 md:w-72 aspect-[3/4] rounded-2xl bg-brand-500 shadow-2xl"
-      >
-        <div className="p-5 h-full flex flex-col text-ink-900">
-          <span className="text-[10px] uppercase tracking-wider font-semibold">Onaylandı ✓</span>
-          <div className="mt-4 text-2xl md:text-3xl font-bold leading-tight">Markanız<br />ön plana</div>
-          <div className="mt-2 text-xs opacity-70">Premium kartvizit · 1.000 adet</div>
-          <div className="mt-auto flex items-center justify-between">
-            <div className="text-xs font-mono opacity-80">markala.com.tr</div>
-            <span className="w-5 h-5 rounded-full bg-ink-900 text-brand-500 grid place-items-center text-[10px] font-bold">✓</span>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Floating badge */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-        className="absolute bottom-2 left-0 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-paper-50 text-ink-900 text-xs font-medium shadow-xl"
-      >
-        <Sparkle size={14} weight="fill" className="text-brand-500" />
-        Ortalama 18 saatte tamamlanır
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/** Kartvizit slide'ı için 3 izole kart yığını (sarı zeminde beyaz kartlar) */
-function CardStackVisual() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className={visualFrame}
-    >
-      {/* Glow halka */}
-      <div className="absolute inset-0 rounded-full blur-3xl opacity-30" style={{ background: "radial-gradient(circle, white 0%, transparent 70%)" }} />
-
-      {/* Arka kart — koyu */}
-      <div className="absolute bottom-12 right-4 w-64 md:w-72 aspect-[3/2] rounded-xl bg-ink-900 rotate-[-8deg] shadow-2xl p-5 flex flex-col">
-        <span className="text-[10px] uppercase tracking-wider text-brand-400 font-semibold">Kartvizit</span>
-        <div className="mt-auto space-y-1.5">
-          <div className="h-1 rounded bg-paper-50/30 w-3/4" />
-          <div className="h-1 rounded bg-paper-50/20 w-2/3" />
-        </div>
-      </div>
-
-      {/* Orta kart — beyaz */}
-      <div className="absolute top-12 right-16 w-64 md:w-72 aspect-[3/2] rounded-xl bg-paper-50 rotate-[4deg] shadow-2xl p-5 flex flex-col">
-        <div className="text-[10px] uppercase tracking-wider text-ink-500 font-semibold">Markanız</div>
-        <div className="mt-auto">
-          <div className="text-base md:text-lg font-semibold text-ink-900">Hasan Söylemez</div>
-          <div className="text-xs text-ink-500 mt-0.5">Kurumsal İletişim Yöneticisi</div>
-          <div className="mt-2 h-px bg-brand-500 w-12" />
-          <div className="mt-2 text-[10px] font-mono text-ink-700">+90 324 433 33 51</div>
-        </div>
-      </div>
-
-      {/* Ön kart — beyaz, logolu */}
-      <motion.div
-        animate={{ rotate: [-2, 0, -2], y: [0, -3, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-2 left-12 w-64 md:w-72 aspect-[3/2] rounded-xl bg-paper-50 shadow-2xl p-5 flex flex-col items-center justify-center"
-      >
-        <div className="text-2xl md:text-3xl font-semibold text-ink-900">
-          markala<span className="ml-0.5 px-1.5 py-0.5 rounded bg-brand-500 text-ink-900 text-[10px] font-bold">.com.tr</span>
-        </div>
-        <div className="mt-2 text-[10px] uppercase tracking-widest text-ink-500">Türkiye'nin matbaası</div>
-      </motion.div>
-
-      {/* Floating badge */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-        className="absolute top-4 right-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-ink-900 text-brand-400 text-xs font-medium shadow-xl"
-      >
-        Üretim bittiği gün kargoda
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/** Kupa slide'ı için 3D kupa illustrasyon */
-function MugVisual() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className={`${visualFrame} flex items-center justify-center`}
-    >
-      {/* Yer gölgesi */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-72 h-6 rounded-full bg-ink-900/15 blur-xl" />
-
-      <motion.div
-        animate={{ rotate: [-2, 2, -2], y: [0, -4, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="relative"
-      >
-        {/* Kulp */}
-        <div className="absolute top-12 right-[-32px] w-16 h-24 border-[12px] border-paper-50 rounded-r-full" style={{ borderLeftColor: "transparent" }} />
-
-        {/* Gövde */}
-        <div className="relative w-56 h-64 rounded-b-3xl rounded-t-md bg-paper-50 shadow-2xl border border-paper-200 overflow-hidden">
-          {/* Üst ağız ellipsi */}
-          <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-paper-100 to-transparent" />
-          <div className="absolute top-2 left-3 right-3 h-4 rounded-full bg-ink-900/15" />
-
-          {/* Logo gövde üzerinde */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 text-center">
-            <div className="text-3xl font-bold text-ink-900 tracking-tight">
-              markala
-              <div className="inline-block ml-0.5 px-1.5 py-0.5 rounded bg-brand-500 text-[9px] font-bold align-middle">.com.tr</div>
-            </div>
-            <div className="mt-2 text-[10px] uppercase tracking-widest text-ink-500">Kurumsal hediye</div>
-          </div>
-
-          {/* Alt taban gölge */}
-          <div className="absolute bottom-0 left-4 right-4 h-2 bg-ink-900/10 rounded-full" />
-        </div>
-      </motion.div>
-
-      {/* Floating badge */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-        className="absolute top-8 right-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500 text-ink-900 text-xs font-semibold shadow-xl"
-      >
-        Sublime baskı
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.5 }}
-        className="absolute bottom-12 left-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper-50 text-ink-900 text-xs font-medium shadow-xl border border-paper-200"
-      >
-        330 ml · seramik
-      </motion.div>
-    </motion.div>
-  );
-}
-
-/** Branda/Afiş slide'ı için bina cephe + asılı banner */
-function BannerDisplayVisual() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.92, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className={visualFrame}
-    >
-      {/* Bina arkaplanı — şehir silüet */}
-      <div className="absolute inset-0 flex items-end gap-1 opacity-20">
-        <div className="flex-1 h-3/4 bg-paper-50 rounded-t-sm" />
-        <div className="flex-1 h-full bg-paper-50 rounded-t-md" />
-        <div className="flex-1 h-2/3 bg-paper-50 rounded-t-sm" />
-        <div className="flex-1 h-4/5 bg-paper-50 rounded-t-md" />
-      </div>
-
-      {/* Asılı banner */}
-      <motion.div
-        animate={{ rotate: [-1, 1, -1], y: [0, -2, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-8 left-1/2 -translate-x-1/2 w-72 md:w-80"
-      >
-        {/* İp/halka */}
-        <div className="flex justify-between px-4 mb-1">
-          <div className="w-3 h-3 rounded-full bg-ink-900" />
-          <div className="w-3 h-3 rounded-full bg-ink-900" />
-        </div>
-
-        {/* Banner kendisi */}
-        <div className="relative bg-brand-500 rounded-md shadow-2xl overflow-hidden aspect-[5/6]">
-          {/* Üst alan — logo */}
-          <div className="absolute top-6 left-0 right-0 text-center">
-            <div className="text-xl font-bold text-ink-900">
-              markala<span className="ml-0.5 px-1 py-0.5 rounded bg-ink-900 text-brand-500 text-[8px] font-bold">.com.tr</span>
-            </div>
-          </div>
-
-          {/* Orta — büyük başlık */}
-          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 text-center">
-            <div className="text-2xl md:text-3xl font-bold text-ink-900 leading-tight">
-              AÇILIŞA<br />ÖZEL
-            </div>
-            <div className="mt-2 inline-block px-3 py-1 bg-ink-900 text-brand-400 text-xs font-bold rounded">
-              %25 İNDİRİM
-            </div>
-          </div>
-
-          {/* Alt — telefon */}
-          <div className="absolute bottom-4 left-0 right-0 text-center">
-            <div className="text-sm font-mono font-bold text-ink-900">0324 433 33 51</div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Floating badge */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.5 }}
-        className="absolute bottom-8 right-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper-50 text-ink-900 text-xs font-semibold shadow-xl"
-      >
-        UV dayanıklı · 440 gr
-      </motion.div>
-    </motion.div>
   );
 }

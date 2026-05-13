@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import {
@@ -7,6 +9,7 @@ import {
   TwitterLogo,
   WhatsappLogo,
 } from "@phosphor-icons/react/dist/ssr";
+import { openCookieSettings } from "@/components/cookie-consent";
 
 export function SiteFooter() {
   return (
@@ -83,6 +86,13 @@ export function SiteFooter() {
             <Link href="/yasal/mesafeli-satis" className="hover:text-ink-900">Mesafeli Satış</Link>
             <Link href="/yasal/on-bilgilendirme" className="hover:text-ink-900">Ön Bilgilendirme</Link>
             <Link href="/yasal/cerez" className="hover:text-ink-900">Çerez Politikası</Link>
+            <button
+              type="button"
+              onClick={openCookieSettings}
+              className="text-ink-500 hover:text-ink-900 underline underline-offset-2 cursor-pointer"
+            >
+              Çerez Tercihlerim
+            </button>
             <Link href="/yasal/iade" className="hover:text-ink-900">İade & İptal</Link>
             <Link href="/yasal/kargo" className="hover:text-ink-900">Kargolama</Link>
           </div>

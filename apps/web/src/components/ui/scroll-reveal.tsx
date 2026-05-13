@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, type Variants } from "framer-motion";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 
 const baseVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
@@ -11,6 +11,21 @@ const baseVariants: Variants = {
     transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
   },
 };
+
+const reducedVariants: Variants = {
+  hidden: { opacity: 1, y: 0 },
+  visible: { opacity: 1, y: 0 },
+};
+
+/** prefers-reduced-motion aktifse animasyonu devre dışı bırak */
+function useMotionVariants(): Variants {
+  return useMemo(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return reducedVariants;
+    }
+    return baseVariants;
+  }, []);
+}
 
 interface ScrollRevealProps {
   children: ReactNode;
@@ -30,13 +45,14 @@ export function ScrollReveal({
   as = "div",
 }: ScrollRevealProps) {
   const MotionTag = motion[as];
+  const variants = useMotionVariants();
   return (
     <MotionTag
       className={className}
       initial="hidden"
       whileInView="visible"
       viewport={{ once, margin: "-80px" }}
-      variants={baseVariants}
+      variants={variants}
       transition={{ delay }}
     >
       {children}
@@ -74,8 +90,9 @@ export function StaggerReveal({
 }
 
 export function StaggerItem({ children, className }: { children: ReactNode; className?: string }) {
+  const variants = useMotionVariants();
   return (
-    <motion.div className={className} variants={baseVariants}>
+    <motion.div className={className} variants={variants}>
       {children}
     </motion.div>
   );

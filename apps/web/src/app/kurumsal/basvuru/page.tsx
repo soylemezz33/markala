@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, cloneElement, isValidElement, ReactElement } from "react";
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import {
@@ -28,6 +28,7 @@ export default function KurumsalBasvuruPage() {
 
   const [vergiLevha, setVergiLevha] = useState<File | null>(null);
   const [imzaSirku, setImzaSirku] = useState<File | null>(null);
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
 
   function update<K extends keyof typeof form>(key: K, val: string) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -35,6 +36,10 @@ export default function KurumsalBasvuruPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!kvkkAccepted) {
+      setError("KVKK aydınlatma metnini onaylamadan başvuru gönderilemez.");
+      return;
+    }
     setError(null);
     setSubmitting(true);
 
@@ -91,9 +96,13 @@ export default function KurumsalBasvuruPage() {
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-8">
+      <form onSubmit={onSubmit} className="space-y-8" noValidate>
         {error && (
-          <div className="px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
+          <div
+            role="alert"
+            aria-live="polite"
+            className="px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm"
+          >
             {error}
           </div>
         )}
@@ -101,7 +110,7 @@ export default function KurumsalBasvuruPage() {
         {/* Şirket bilgileri */}
         <fieldset className="space-y-4">
           <legend className="text-sm font-semibold text-ink-900 mb-2">Şirket Bilgileri</legend>
-          <Field label="Şirket adı (unvan)" required>
+          <Field id="kb-companyName" label="Şirket adı (unvan)" required>
             <input
               type="text"
               required
@@ -112,7 +121,7 @@ export default function KurumsalBasvuruPage() {
             />
           </Field>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Vergi dairesi" required>
+            <Field id="kb-taxOffice" label="Vergi dairesi" required>
               <input
                 type="text"
                 required
@@ -122,7 +131,7 @@ export default function KurumsalBasvuruPage() {
                 className={inputCls}
               />
             </Field>
-            <Field label="Vergi numarası" required>
+            <Field id="kb-taxNumber" label="Vergi numarası" required>
               <input
                 type="text"
                 required
@@ -135,7 +144,7 @@ export default function KurumsalBasvuruPage() {
             </Field>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Sektör">
+            <Field id="kb-sector" label="Sektör">
               <select
                 value={form.sector}
                 onChange={(e) => update("sector", e.target.value)}
@@ -152,7 +161,7 @@ export default function KurumsalBasvuruPage() {
                 <option>Diğer</option>
               </select>
             </Field>
-            <Field label="Yıllık matbaa harcamanız (yaklaşık)">
+            <Field id="kb-annualVolume" label="Yıllık matbaa harcamanız (yaklaşık)">
               <select
                 value={form.annualVolume}
                 onChange={(e) => update("annualVolume", e.target.value)}
@@ -166,7 +175,7 @@ export default function KurumsalBasvuruPage() {
               </select>
             </Field>
           </div>
-          <Field label="Faturalama adresi" required>
+          <Field id="kb-address" label="Faturalama adresi" required>
             <textarea
               required
               rows={3}
@@ -181,7 +190,7 @@ export default function KurumsalBasvuruPage() {
         <fieldset className="space-y-4">
           <legend className="text-sm font-semibold text-ink-900 mb-2">Yetkili Kişi</legend>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Ad soyad" required>
+            <Field id="kb-contactName" label="Ad soyad" required>
               <input
                 type="text"
                 required
@@ -190,7 +199,7 @@ export default function KurumsalBasvuruPage() {
                 className={inputCls}
               />
             </Field>
-            <Field label="Görev / Pozisyon">
+            <Field id="kb-contactRole" label="Görev / Pozisyon">
               <input
                 type="text"
                 value={form.contactRole}
@@ -201,7 +210,7 @@ export default function KurumsalBasvuruPage() {
             </Field>
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="E-posta" required>
+            <Field id="kb-email" label="E-posta" required>
               <input
                 type="email"
                 required
@@ -210,7 +219,7 @@ export default function KurumsalBasvuruPage() {
                 className={inputCls}
               />
             </Field>
-            <Field label="Telefon" required>
+            <Field id="kb-phone" label="Telefon" required>
               <input
                 type="tel"
                 required
@@ -227,6 +236,7 @@ export default function KurumsalBasvuruPage() {
         <fieldset className="space-y-4">
           <legend className="text-sm font-semibold text-ink-900 mb-2">Belgeler</legend>
           <FileField
+            id="kb-vergiLevha"
             label="Vergi levhası (PDF veya görsel)"
             accept="application/pdf,image/*"
             file={vergiLevha}
@@ -234,6 +244,7 @@ export default function KurumsalBasvuruPage() {
             required
           />
           <FileField
+            id="kb-imzaSirku"
             label="İmza sirküleri"
             accept="application/pdf,image/*"
             file={imzaSirku}
@@ -241,7 +252,7 @@ export default function KurumsalBasvuruPage() {
           />
         </fieldset>
 
-        <Field label="Notlar (opsiyonel)">
+        <Field id="kb-notes" label="Notlar (opsiyonel)">
           <textarea
             rows={3}
             value={form.notes}
@@ -251,8 +262,8 @@ export default function KurumsalBasvuruPage() {
           />
         </Field>
 
-        <div className="pt-4 border-t border-paper-200">
-          <p className="text-xs text-ink-500 mb-4">
+        <div className="pt-4 border-t border-paper-200 space-y-4">
+          <p className="text-xs text-ink-500">
             Bilgileriniz KVKK kapsamında işlenir. Yalnızca kurumsal hesap onay sürecinde
             ve sonrasında muhasebe entegrasyonunda kullanılır.{" "}
             <Link href="/yasal/kvkk" className="underline">
@@ -260,9 +271,22 @@ export default function KurumsalBasvuruPage() {
             </Link>
             .
           </p>
+          <label className="flex items-start gap-2 text-xs text-ink-700">
+            <input
+              type="checkbox"
+              required
+              checked={kvkkAccepted}
+              onChange={(e) => setKvkkAccepted(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              <Link href="/yasal/kvkk" className="underline">KVKK aydınlatma metnini</Link> okudum,
+              şirketime ve yetkili kişiye ait kişisel verilerin kurumsal hesap onayı ile muhasebe süreçleri için işlenmesine onay veriyorum.
+            </span>
+          </label>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !kvkkAccepted}
             className="w-full sm:w-auto px-8 py-3 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-lg text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2"
           >
             {submitting ? (
@@ -283,31 +307,46 @@ const inputCls =
   "w-full px-3 py-2.5 bg-paper-50 border border-paper-200 rounded-md text-sm text-ink-900 outline-none focus:border-brand-500";
 
 function Field({
+  id,
   label,
   required,
   children,
 }: {
+  id: string;
   label: string;
   required?: boolean;
   children: React.ReactNode;
 }) {
+  const control = isValidElement(children)
+    ? cloneElement(children as ReactElement<Record<string, unknown>>, {
+        id,
+        "aria-required": required ? "true" : undefined,
+      })
+    : children;
   return (
-    <label className="block">
-      <span className="block text-xs font-medium text-ink-700 mb-1.5">
-        {label} {required && <span className="text-error">*</span>}
-      </span>
-      {children}
-    </label>
+    <div className="block">
+      <label htmlFor={id} className="block text-xs font-medium text-ink-700 mb-1.5">
+        {label}{" "}
+        {required && (
+          <span className="text-error" aria-hidden="true">
+            *
+          </span>
+        )}
+      </label>
+      {control}
+    </div>
   );
 }
 
 function FileField({
+  id,
   label,
   accept,
   file,
   onChange,
   required,
 }: {
+  id: string;
   label: string;
   accept: string;
   file: File | null;
@@ -315,23 +354,33 @@ function FileField({
   required?: boolean;
 }) {
   return (
-    <label className="block cursor-pointer">
-      <span className="block text-xs font-medium text-ink-700 mb-1.5">
-        {label} {required && <span className="text-error">*</span>}
-      </span>
-      <div className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-paper-200 rounded-lg hover:border-brand-500 hover:bg-paper-100 transition-colors">
-        <Upload size={18} className="text-ink-500" />
+    <div className="block">
+      <label htmlFor={id} className="block text-xs font-medium text-ink-700 mb-1.5 cursor-pointer">
+        {label}{" "}
+        {required && (
+          <span className="text-error" aria-hidden="true">
+            *
+          </span>
+        )}
+      </label>
+      <label
+        htmlFor={id}
+        className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-paper-200 rounded-lg hover:border-brand-500 hover:bg-paper-100 transition-colors cursor-pointer"
+      >
+        <Upload size={18} className="text-ink-500" aria-hidden="true" />
         <span className="text-sm text-ink-700 flex-1 truncate">
           {file ? file.name : "Dosya seç..."}
         </span>
         <input
+          id={id}
           type="file"
           accept={accept}
           required={required}
+          aria-required={required ? "true" : undefined}
           onChange={(e) => onChange(e.target.files?.[0] ?? null)}
           className="sr-only"
         />
-      </div>
-    </label>
+      </label>
+    </div>
   );
 }

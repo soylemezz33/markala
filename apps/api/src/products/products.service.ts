@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { CreateProductDto, UpdateProductDto } from "./products.dto";
 
 @Injectable()
 export class ProductsService {
@@ -28,11 +30,43 @@ export class ProductsService {
     return product;
   }
 
-  create(data: any) {
+  create(dto: CreateProductDto) {
+    const data: Prisma.ProductCreateInput = {
+      slug: dto.slug,
+      name: dto.name,
+      shortDescription: dto.shortDescription,
+      description: dto.description,
+      basePrice: new Prisma.Decimal(dto.basePrice),
+      ...(dto.startingPrice !== undefined && { startingPrice: new Prisma.Decimal(dto.startingPrice) }),
+      productionTime: dto.productionTime,
+      ...(dto.sizeLabel !== undefined && { sizeLabel: dto.sizeLabel }),
+      images: dto.images,
+      ...(dto.badges !== undefined && { badges: dto.badges }),
+      ...(dto.bestseller !== undefined && { bestseller: dto.bestseller }),
+      ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      ...(dto.parameters !== undefined && { parameters: dto.parameters as Prisma.InputJsonValue }),
+      category: { connect: { id: dto.categoryId } },
+    };
     return this.prisma.product.create({ data });
   }
 
-  update(id: string, data: any) {
+  update(id: string, dto: UpdateProductDto) {
+    const data: Prisma.ProductUpdateInput = {
+      ...(dto.slug !== undefined && { slug: dto.slug }),
+      ...(dto.name !== undefined && { name: dto.name }),
+      ...(dto.shortDescription !== undefined && { shortDescription: dto.shortDescription }),
+      ...(dto.description !== undefined && { description: dto.description }),
+      ...(dto.basePrice !== undefined && { basePrice: new Prisma.Decimal(dto.basePrice) }),
+      ...(dto.startingPrice !== undefined && { startingPrice: new Prisma.Decimal(dto.startingPrice) }),
+      ...(dto.productionTime !== undefined && { productionTime: dto.productionTime }),
+      ...(dto.sizeLabel !== undefined && { sizeLabel: dto.sizeLabel }),
+      ...(dto.images !== undefined && { images: dto.images }),
+      ...(dto.badges !== undefined && { badges: dto.badges }),
+      ...(dto.bestseller !== undefined && { bestseller: dto.bestseller }),
+      ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      ...(dto.parameters !== undefined && { parameters: dto.parameters as Prisma.InputJsonValue }),
+      ...(dto.categoryId !== undefined && { category: { connect: { id: dto.categoryId } } }),
+    };
     return this.prisma.product.update({ where: { id }, data });
   }
 

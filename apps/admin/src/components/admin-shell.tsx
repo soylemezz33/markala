@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ChartLineUp, Package, Storefront, ShoppingCart, Users, Tag, FileText,
   Gear, SignOut, Sliders, ImageSquare, Bell, MagnifyingGlass, List, X,
   PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
-  ChatCircle, CurrencyCircleDollar, Receipt, Buildings,
+  ChatCircle, CurrencyCircleDollar, Receipt, Buildings, CaretDown, UserCircle,
 } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
+import { ToastContainer } from "@/components/toast";
 
 interface CurrentUser {
   email: string;
@@ -62,11 +63,16 @@ const navGroups: Array<{
   },
 ];
 
+// Mock — gerçek backend gelince /api/admin/notifications üzerinden dynamic gelecek
+const MOCK_NOTIFICATION_COUNT = 3;
+
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +86,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // Dropdown dışına tıklayınca kapan
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    function handler(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [userMenuOpen]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -146,21 +164,69 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <ArrowSquareOut size={12} /> Siteyi Aç
           </a>
 
-          <button className="relative p-2 rounded-md text-ink-700 hover:bg-paper-100" aria-label="Bildirimler">
+          <button
+            className="relative p-2 rounded-md text-ink-700 hover:bg-paper-100"
+            aria-label={`Bildirimler${MOCK_NOTIFICATION_COUNT > 0 ? ` (${MOCK_NOTIFICATION_COUNT} yeni)` : ""}`}
+          >
             <Bell size={18} />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-error" />
+            {MOCK_NOTIFICATION_COUNT > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-paper-50 text-[10px] font-bold grid place-items-center leading-none">
+                {MOCK_NOTIFICATION_COUNT > 9 ? "9+" : MOCK_NOTIFICATION_COUNT}
+              </span>
+            )}
           </button>
 
-          <div className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-paper-100">
-            <span className="w-8 h-8 rounded-full bg-brand-500 text-ink-900 grid place-items-center font-bold text-sm">
-              {user?.name?.[0]?.toUpperCase() ?? "?"}
-            </span>
-            <div className="hidden md:block leading-tight">
-              <div className="text-sm font-medium text-ink-900">{user?.name ?? "..."}</div>
-              <div className="text-[11px] text-ink-500">
-                {user?.role === "super_admin" ? "Süper Admin" : user?.role ?? ""}
+          {/* User dropdown */}
+          <div ref={userMenuRef} className="relative">
+            <button
+              onClick={() => setUserMenuOpen((v) => !v)}
+              className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-paper-100"
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+            >
+              <span className="w-8 h-8 rounded-full bg-brand-500 text-ink-900 grid place-items-center font-bold text-sm">
+                {user?.name?.[0]?.toUpperCase() ?? "?"}
+              </span>
+              <div className="hidden md:block leading-tight text-left">
+                <div className="text-sm font-medium text-ink-900">{user?.name ?? "..."}</div>
+                <div className="text-[11px] text-ink-500">
+                  {user?.role === "super_admin" ? "Süper Admin" : user?.role ?? ""}
+                </div>
               </div>
-            </div>
+              <CaretDown size={12} className="hidden md:block text-ink-500" />
+            </button>
+
+            {userMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1 w-60 bg-paper-50 border border-paper-200 rounded-lg shadow-lg overflow-hidden z-30"
+              >
+                <div className="px-4 py-3 border-b border-paper-200">
+                  <div className="text-sm font-semibold text-ink-900 truncate">
+                    {user?.name ?? "..."}
+                  </div>
+                  <div className="text-xs text-ink-500 truncate">{user?.email ?? ""}</div>
+                </div>
+                <Link
+                  href="/ayarlar/genel"
+                  onClick={() => setUserMenuOpen(false)}
+                  role="menuitem"
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-ink-700 hover:bg-paper-100"
+                >
+                  <UserCircle size={16} /> Hesap Ayarları
+                </Link>
+                <button
+                  role="menuitem"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-error hover:bg-error/10 border-t border-paper-200"
+                >
+                  <SignOut size={16} /> Çıkış Yap
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
@@ -173,6 +239,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <span>Sistem durumu: <span className="text-success font-medium">● Operasyonel</span></span>
         </footer>
       </div>
+
+      {/* Global toast notifications */}
+      <ToastContainer />
     </div>
   );
 }

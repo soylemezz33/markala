@@ -19,6 +19,8 @@ interface AuthState {
     password: string;
     fullName: string;
     phone?: string;
+    /** KVKK: pazarlama amaçlı veri işleme açık rızası (opt-in). false ise sadece zorunlu işlemler. */
+    marketingConsent?: boolean;
   }) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
   updateProfile: (patch: Partial<User>) => void;
@@ -47,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
         return { ok: true };
       },
 
-      register: async ({ email, fullName, phone }) => {
+      register: async ({ email, fullName, phone, marketingConsent }) => {
         set({ isLoading: true });
         await new Promise((r) => setTimeout(r, 800));
         if (!email.includes("@") || fullName.length < 2) {
@@ -61,6 +63,21 @@ export const useAuthStore = create<AuthState>()(
           phone,
           accountType: "individual",
         };
+        // KVKK: pazarlama açık rızası ayrı bir kayıt (mock — FAZ 3'te backend'e taşınacak)
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem(
+              "markala-marketing-consent",
+              JSON.stringify({
+                email,
+                granted: Boolean(marketingConsent),
+                timestamp: Date.now(),
+              }),
+            );
+          } catch {
+            // localStorage erişimi reddedilirse sessizce devam et
+          }
+        }
         set({ user, isLoading: false });
         return { ok: true };
       },

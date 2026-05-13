@@ -9,6 +9,7 @@ import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/seo/json-l
 import { Analytics } from "@/components/analytics";
 import { CookieConsent } from "@/components/cookie-consent";
 import { FloatingActions } from "@/components/floating-actions";
+import { WebVitals } from "@/components/web-vitals";
 import "./globals.css";
 
 const fontSans = DM_Sans({
@@ -105,10 +106,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr" className={fontSans.variable}>
       <head>
+        <link
+          rel="preload"
+          as="image"
+          href="/api/mockup?theme=brand&w=1200&h=630"
+          fetchPriority="high"
+        />
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
       </head>
       <body className="min-h-screen bg-paper-50 flex flex-col">
+        {/* Skip-to-content link — WCAG 2.4.1 Bypass Blocks */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-brand-500 focus:text-ink-900 focus:px-4 focus:py-2 focus:rounded focus:font-semibold focus:shadow-lg"
+        >
+          Ana içeriğe atla
+        </a>
+
         <ThemeBody />
 
         {/* Site wrapper — sabit max genişlik (1440), kenarlarda görsel ayrım YOK */}
@@ -117,7 +132,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           style={{ maxWidth: "1440px" }}
         >
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main id="main" className="flex-1">{children}</main>
         </div>
 
         {/* CTA Banner — FULL WIDTH (footer öncesi conversion booster) */}
@@ -130,6 +145,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <FloatingActions />
         <CookieConsent />
         <Analytics />
+        <WebVitals />
       </body>
     </html>
   );

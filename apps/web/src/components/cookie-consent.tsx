@@ -3,16 +3,26 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ShieldCheck, Cookie } from "@phosphor-icons/react";
+import { ShieldCheck, Cookie } from "@phosphor-icons/react";
 
 const COOKIE_NAME = "markala_cookie_consent";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 yıl
+const REOPEN_EVENT = "markala:open-cookie-settings";
+
+/**
+ * Consent şemasının sürümü. KVKK/GDPR gereği üçüncü taraf çerez setine veya
+ * aktarım kapsamına dokunan her değişiklikte artırın — eski sürüme sahip
+ * kullanıcıların banner'ı yeniden onaylaması gerekir.
+ */
+const CONSENT_VERSION = "1.0";
 
 interface ConsentState {
   necessary: true; // her zaman aktif
   analytics: boolean;
   marketing: boolean;
   timestamp: number;
+  /** v1.0'dan itibaren zorunlu — eski kayıtlarda undefined olabilir. */
+  version?: string;
 }
 
 function readConsent(): ConsentState | null {
@@ -45,25 +55,48 @@ export function CookieConsent() {
 
   useEffect(() => {
     const existing = readConsent();
-    if (!existing) {
-      // İlk yüklemede 800ms bekle, page jank'ı önle
+    const isStale = !existing || existing.version !== CONSENT_VERSION;
+    if (isStale) {
+      // İlk yüklemede ya da consent şeması güncellendiyse banner'ı tekrar göster.
       const t = setTimeout(() => setShow(true), 800);
+      // Eski tercihleri pre-fill yap ki kullanıcı tekrar onay verirken zorlanmasın
+      if (existing) {
+        setAnalytics(existing.analytics);
+        setMarketing(existing.marketing);
+      }
       return () => clearTimeout(t);
+    } else {
+      // Mevcut tercihleri form state'e yükle (re-open için)
+      setAnalytics(existing.analytics);
+      setMarketing(existing.marketing);
     }
+
+    // "Çerez Tercihleri" linki herhangi bir yerden tetiklenebilsin
+    function reopen() {
+      const c = readConsent();
+      if (c) {
+        setAnalytics(c.analytics);
+        setMarketing(c.marketing);
+      }
+      setShowDetails(true);
+      setShow(true);
+    }
+    window.addEventListener(REOPEN_EVENT, reopen);
+    return () => window.removeEventListener(REOPEN_EVENT, reopen);
   }, []);
 
   function acceptAll() {
-    writeConsent({ necessary: true, analytics: true, marketing: true, timestamp: Date.now() });
+    writeConsent({ necessary: true, analytics: true, marketing: true, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
   function rejectOptional() {
-    writeConsent({ necessary: true, analytics: false, marketing: false, timestamp: Date.now() });
+    writeConsent({ necessary: true, analytics: false, marketing: false, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
   function saveCustom() {
-    writeConsent({ necessary: true, analytics, marketing, timestamp: Date.now() });
+    writeConsent({ necessary: true, analytics, marketing, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
@@ -77,6 +110,7 @@ export function CookieConsent() {
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="fixed bottom-4 inset-x-4 md:inset-x-auto md:left-6 md:right-6 lg:left-auto lg:right-6 lg:max-w-lg z-[60]"
           role="dialog"
+          aria-modal="true"
           aria-labelledby="cookie-consent-title"
         >
           <div className="bg-paper-50 rounded-2xl shadow-2xl border border-paper-200 overflow-hidden">
@@ -109,19 +143,19 @@ export function CookieConsent() {
                 <div className="mt-4 pt-4 border-t border-paper-200 space-y-3">
                   <ConsentToggle
                     label="Zorunlu çerezler"
-                    desc="Sepet, oturum, güvenlik. Devre dışı bırakılamaz."
+                    desc="Sepet, oturum, CSRF ve güvenlik amaçlı çerezler. Site çalışması için zorunludur, devre dışı bırakılamaz."
                     checked
                     disabled
                   />
                   <ConsentToggle
                     label="Analitik çerezler"
-                    desc="Google Analytics, Microsoft Clarity. Anonim trafik ölçümü."
+                    desc="Google Analytics (GA4) ve Microsoft Clarity ile anonimleştirilmiş trafik, sayfa görüntüleme ve oturum kayıtları. Kişisel kimlik bilgisi toplanmaz."
                     checked={analytics}
                     onChange={setAnalytics}
                   />
                   <ConsentToggle
                     label="Pazarlama çerezleri"
-                    desc="Kampanya hedefleme, sosyal medya entegrasyonları."
+                    desc="Facebook (Meta) Pixel, Google Ads remarketing ve kişiselleştirilmiş reklam etiketleri. Reklam ağlarıyla paylaşılabilir."
                     checked={marketing}
                     onChange={setMarketing}
                   />
@@ -209,4 +243,23 @@ export function hasConsent(category: "analytics" | "marketing"): boolean {
   const c = readConsent();
   if (!c) return false;
   return c[category];
+}
+
+/**
+ * Cookie consent banner'ını yeniden açan helper.
+ * Footer veya başka herhangi bir yerden çağrılabilir:
+ *   <button onClick={openCookieSettings}>Çerez Tercihleri</button>
+ */
+export function openCookieSettings(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(REOPEN_EVENT));
+}
+
+/**
+ * Hook formu: aynı işlevi React component içinde kullanmak için.
+ *   const open = useCookieSettings();
+ *   <button onClick={open}>Çerez Tercihleri</button>
+ */
+export function useCookieSettings(): () => void {
+  return openCookieSettings;
 }

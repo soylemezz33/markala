@@ -61,6 +61,8 @@ export function OrganizationJsonLd() {
           },
         ],
         // Site-wide AggregateRating — tüm yorumların bütünleşik puanı
+        // TODO: Production'da prisma.review.aggregate({ _avg, _count })'tan dinamik gelmeli
+        // (bkz. fetchSiteRating() fonksiyonu — bu dosyanın alt kısmında)
         aggregateRating: {
           "@type": "AggregateRating",
           ratingValue: 4.8,
@@ -378,6 +380,205 @@ export function ProductItemListJsonLd({
       url: `${SITE}/urun/${p.slug}`,
       name: p.name,
     })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/**
+ * Article schema — yardım merkezi makaleleri ve içerik sayfaları için.
+ * Google "Article" rich result için uygun (haber/blog değil; rehber/yardım için).
+ */
+export function ArticleJsonLd({
+  title,
+  description,
+  url,
+  datePublished,
+  dateModified,
+  image,
+}: {
+  title: string;
+  description: string;
+  url: string;
+  datePublished: string;
+  dateModified?: string;
+  image?: string; // Google rich result için zorunlu — verilmezse brand mockup fallback
+}) {
+  const resolvedImage = image
+    ? image.startsWith("http")
+      ? image
+      : `${SITE}${image}`
+    : `${SITE}/api/mockup?theme=brand&w=1200&h=630`;
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description,
+    image: resolvedImage,
+    url: `${SITE}${url}`,
+    datePublished,
+    dateModified: dateModified ?? datePublished,
+    author: { "@type": "Organization", name: "Markala", url: SITE },
+    publisher: {
+      "@type": "Organization",
+      name: "Markala",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE}/api/mockup?theme=ink&w=512&h=512`,
+      },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}${url}` },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/**
+ * VideoObject schema — gelecekteki tanıtım/eğitim videoları için hazır component.
+ * Şu an kullanılmıyor; ürün konfigüratör tanıtımı veya tutorial videolar için ileride.
+ */
+export function VideoObjectJsonLd({
+  name,
+  description,
+  thumbnailUrl,
+  uploadDate,
+  contentUrl,
+  duration,
+}: {
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  uploadDate: string;
+  contentUrl: string;
+  duration?: string; // ISO 8601 — örn. "PT1M30S"
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    name,
+    description,
+    thumbnailUrl: thumbnailUrl.startsWith("http") ? thumbnailUrl : `${SITE}${thumbnailUrl}`,
+    uploadDate,
+    contentUrl: contentUrl.startsWith("http") ? contentUrl : `${SITE}${contentUrl}`,
+    ...(duration ? { duration } : {}),
+    publisher: {
+      "@type": "Organization",
+      name: "Markala",
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE}/api/mockup?theme=ink&w=512&h=512`,
+      },
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
+/**
+ * Site-wide aggregate rating fetcher — şu an mock değer döner.
+ *
+ * TODO(prisma): Production'da Prisma'dan dinamik veri çek. Mock kalırsa
+ * Google "hardcoded review count" olarak yakalayıp structured data ihlali
+ * raporlayabilir. Bağlandıktan sonra aşağıdaki imzayla doldur:
+ *
+ *   const agg = await prisma.review.aggregate({
+ *     _avg: { rating: true },
+ *     _count: { _all: true },
+ *     where: { status: "APPROVED" },
+ *   });
+ *   return { average: agg._avg.rating ?? 0, count: agg._count._all };
+ */
+export async function fetchSiteRating(): Promise<{ average: number; count: number }> {
+  // TODO(prisma): mock — gerçek review tablosuna bağla
+  return { average: 4.8, count: 2450 };
+}
+
+/**
+ * Per-product aggregate rating fetcher.
+ *
+ * TODO(prisma): Bağlandığında aşağıdaki query'yi aç:
+ *   const result = await prisma.review.aggregate({
+ *     where: { product: { slug }, isApproved: true },
+ *     _avg: { rating: true },
+ *     _count: { _all: true },
+ *   });
+ *   return result._count._all > 0
+ *     ? { average: result._avg.rating!, count: result._count._all }
+ *     : null;
+ *
+ * Mock değer dönmüyoruz — Google, hardcoded review sayısını "yapay
+ * AggregateRating" olarak işaretler. Gerçek veri yoksa null dön → component
+ * AggregateRating bloğunu hiç render etmesin.
+ */
+export async function fetchProductRating(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  slug: string,
+): Promise<{ average: number; count: number } | null> {
+  return null;
+}
+
+/**
+ * Per-product HowTo schema — "X nasıl tasarlanır" rich snippet.
+ * Ürün detay sayfasında ProductJsonLd ile beraber render edilir.
+ * Google "How-to" rich result açılır (CMYK/dpi/taşma payı/upload akışı).
+ */
+export function HowToProductJsonLd({
+  product,
+  slug,
+}: {
+  product: { name: string };
+  slug: string;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "@id": `${SITE}/urun/${slug}#howto`,
+    name: `${product.name} nasıl tasarlanır`,
+    description: `${product.name} için adım adım tasarım hazırlama rehberi.`,
+    step: [
+      {
+        "@type": "HowToStep",
+        position: 1,
+        name: "Tasarım dosyasını hazırla",
+        text: "CMYK renk profilinde, 300 dpi çözünürlükte PDF/X-1a olarak.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 2,
+        name: "Taşma payı bırak",
+        text: "Her kenardan 2-3 mm taşma payı.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 3,
+        name: "Markala'ya yükle",
+        text: `${SITE}/urun/${slug} sayfasında konfigüratörden seç ve dosyanı yükle.`,
+      },
+      {
+        "@type": "HowToStep",
+        position: 4,
+        name: "Onay sonrası üretim",
+        text: "1-2 iş günü içinde basılır.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 5,
+        name: "Kargo ile teslim",
+        text: "DHL ile 1-3 iş günü içinde Türkiye geneli.",
+      },
+    ],
   };
   return (
     <script
