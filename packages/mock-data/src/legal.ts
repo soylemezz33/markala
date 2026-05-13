@@ -17,23 +17,23 @@ export interface LegalPage {
   body: string;
 }
 
-const COMPANY = "324 Ajans Bilgi Teknolojileri Ltd. Şti.";
+const COMPANY = "324 Ajans Bilgi Teknolojileri Reklam Pazarlama ve Tic. Ltd. Şti.";
 const BRAND = "markala.com.tr";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PLACEHOLDER'LAR — YAYINA ALMADAN ÖNCE DOLDURULMASI ZORUNLU
-// Hasan, lütfen aşağıdaki [HASAN: ...] etiketli alanları gerçek bilgilerle
-// değiştir. Hukuki risk önlemek için ASLA AI tarafından uydurma yapılmamıştır.
-// İlgili checklist: docs/LEGAL_CHECKLIST.md
+// 324 Ajans BT resmi bilgileri — galagoai dökümanlarından doğrulandı (2026-05).
+// Kaynak: c:\Users\Hasan\Projects\galagoai\docs\legal\KVKK-AYDINLATMA-METNI-2026-05-13.md
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ADDRESS = "[HASAN: gerçek atölye adresi — örn. \"Bahçelievler Mah. ... Sok. No:X Yenişehir/Mersin 33060\"]";
-const TAX_OFFICE = "[HASAN: bağlı vergi dairesi adı — örn. \"Yenişehir Vergi Dairesi\"]";
-const TAX_NUMBER = "[HASAN: 10 haneli vergi numarası]";
-const MERSIS = "[HASAN: 16 haneli MERSIS kayıt numarası]";
-const KEP = "[HASAN: PTT'den KEP adresi al — örn. \"324ajans@hs01.kep.tr\"]";
-const VERBIS_NO = "[HASAN: VERBİS başvurusu sonrası eklenecek kayıt numarası]";
-const ETBIS_NO = "[HASAN: ETBİS başvurusu sonrası eklenecek kayıt numarası]";
+const ADDRESS = "Çiftlikköy Mah. 32182 Sk. Astoria One No: 13 İç Kapı No: 61, Yenişehir / Mersin";
+const TAX_OFFICE = "İstiklal Vergi Dairesi";
+const TAX_NUMBER = "0012655788";
+const MERSIS = "0001265578800001";
+const TRADE_REGISTRY = "Mersin Ticaret Sicil 66377";
+// 324 Ajans için resmi KEP henüz alınmadı — alındığında doldur (PTT'den)
+const KEP = "[BAŞVURU BEKLEMEDE — PTT'den 324ajans@hs01.kep.tr formatında al]";
+const VERBIS_NO = "[BAŞVURU BEKLEMEDE — VERBİS kaydı sonrası eklenecek]";
+const ETBIS_NO = "[BAŞVURU BEKLEMEDE — ETBİS kaydı sonrası eklenecek]";
 
 const EMAIL = "merhaba@markala.com.tr";
 const PHONE = "0324 433 33 51";
