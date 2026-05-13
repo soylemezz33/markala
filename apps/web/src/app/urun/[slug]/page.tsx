@@ -24,7 +24,7 @@ import {
   TrackRecentlyViewed,
   RecentlyViewedRail,
 } from "@/components/product/recently-viewed";
-import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { ProductJsonLd, BreadcrumbJsonLd, HowToProductJsonLd } from "@/components/seo/json-ld";
 import type { Metadata } from "next";
 
 interface Props {
@@ -95,6 +95,7 @@ export default function ProductPage({ params }: Props) {
     <>
       <ProductJsonLd product={product} category={category} />
       <BreadcrumbJsonLd items={breadcrumbs} />
+      <HowToProductJsonLd product={product} slug={product.slug} />
 
       {/* Breadcrumb header */}
       <div className="bg-paper-100 border-b border-paper-200">

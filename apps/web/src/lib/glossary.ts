@@ -67,7 +67,7 @@ export const glossary: GlossaryTerm[] = [
       "Bristol karton, çok katmanlı yapısıyla yüksek dayanıklılığa sahip bir karton türüdür. 250-400 gr aralığında üretilir. Mat veya hafif dokulu yüzeyi vardır; lüks his verir. Premium kartvizit, davetiye, sertifika ve ürün etiketlerinde kullanılır. Kuşeden farklı olarak yüzey doku kabarık değildir, bu da yazı yazılabilirliğini artırır.",
     category: "kagit",
     examples: ["350 gr Bristol kartvizit", "300 gr Bristol davetiye"],
-    relatedTerms: ["kuse", "gramaj", "lüks-karton"],
+    relatedTerms: ["kuse", "gramaj"],
   },
   {
     slug: "amerikan-kagit",

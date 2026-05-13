@@ -168,6 +168,7 @@ export default async function HelpArticlePage({ params }: Props) {
         description={article.description}
         url={`/yardim/${article.slug}`}
         datePublished="2026-01-01T00:00:00Z"
+        image={`/api/mockup?theme=brand&w=1200&h=630&slug=help-${article.slug}`}
       />
       <BreadcrumbJsonLd
         items={[
