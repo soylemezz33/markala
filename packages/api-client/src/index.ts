@@ -134,6 +134,89 @@ export class MarkalaApiClient {
     deleteAddress: (id: string) =>
       this.request<void>("DELETE", `/users/me/addresses/${id}`, undefined, { auth: true }),
   };
+
+  // === Hero slides ===
+  heroSlides = {
+    list: (includeInactive = false) =>
+      this.request<HeroSlideDto[]>("GET", "/hero-slides", undefined, { query: { includeInactive } }),
+    create: (data: Partial<HeroSlideDto>) =>
+      this.request<HeroSlideDto>("POST", "/hero-slides", data, { auth: true }),
+    update: (id: string, data: Partial<HeroSlideDto>) =>
+      this.request<HeroSlideDto>("PATCH", `/hero-slides/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/hero-slides/${id}`, undefined, { auth: true }),
+  };
+
+  // === Settings ===
+  settings = {
+    get: (group?: string) =>
+      this.request<Record<string, unknown>>("GET", "/settings", undefined, { auth: true, query: { group } }),
+    upsert: (group: string, values: Record<string, unknown>) =>
+      this.request<Record<string, unknown>>("PATCH", "/settings", { group, values }, { auth: true }),
+  };
+
+  // === Corporate applications ===
+  corporateApplications = {
+    list: (status?: string) =>
+      this.request<CorporateApplicationDto[]>("GET", "/corporate-applications", undefined, { auth: true, query: { status } }),
+    setStatus: (id: string, body: { status: "approved" | "rejected" | "pending"; reviewNote?: string }) =>
+      this.request<CorporateApplicationDto>("PATCH", `/corporate-applications/${id}`, body, { auth: true }),
+  };
+
+  // === Admin: users + stats ===
+  adminUsers = {
+    list: (opts: { take?: number; skip?: number; q?: string } = {}) =>
+      this.request<AdminUserDto[]>("GET", "/admin/users", undefined, { auth: true, query: opts }),
+    detail: (id: string) =>
+      this.request<AdminUserDto>("GET", `/admin/users/${id}`, undefined, { auth: true }),
+  };
+
+  adminStats = () =>
+    this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+}
+
+export interface HeroSlideDto {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl: string;
+  mobileImageUrl?: string | null;
+  ctaLabel?: string | null;
+  ctaHref?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface CorporateApplicationDto {
+  id: string;
+  companyName: string;
+  taxOffice: string;
+  taxNumber: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  status: "none" | "pending" | "approved" | "rejected";
+  createdAt: string;
+}
+
+export interface AdminUserDto {
+  id: string;
+  email: string;
+  fullName: string;
+  phone?: string | null;
+  accountType: "individual" | "corporate";
+  companyName?: string | null;
+  role: "customer" | "admin" | "super_admin";
+  orderCount?: number;
+  createdAt: string;
+}
+
+export interface AdminStatsDto {
+  orderCount: number;
+  revenue: number;
+  customerCount: number;
+  pendingCorporate: number;
+  ordersByStatus: Array<{ status: string; count: number }>;
 }
 
 /** Convenience: env'den otomatik kurulan client */
