@@ -1,57 +1,13 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
 import { json } from "express";
-import type { Request, Response, NextFunction } from "express";
 import { AppModule } from "./app.module";
-
-/**
- * Minimal in-memory fixed-window rate limiter (auth endpoint'leri için).
- * Production'da çok-instans senaryoda Redis-backed limiter'a yükseltilmeli;
- * tek-instans VPS için yeterli ve ek dependency gerektirmez.
- */
-type Bucket = { count: number; resetAt: number };
-function makeRateLimiter(opts: { windowMs: number; max: number; path: string; method?: string }) {
-  const store = new Map<string, Bucket>();
-  // Stale bucket temizliği — windowMs başına bir kez.
-  setInterval(() => {
-    const now = Date.now();
-    for (const [k, b] of store) if (b.resetAt <= now) store.delete(k);
-  }, opts.windowMs).unref?.();
-
-  return (req: Request, res: Response, next: NextFunction) => {
-    if (opts.method && req.method !== opts.method) return next();
-    if (!req.path.endsWith(opts.path)) return next();
-
-    const fwd = req.headers["x-forwarded-for"];
-    const ip =
-      (typeof fwd === "string" ? fwd.split(",")[0]?.trim() : Array.isArray(fwd) ? fwd[0] : undefined) ||
-      req.ip ||
-      req.socket.remoteAddress ||
-      "unknown";
-    const key = `${opts.path}:${ip}`;
-    const now = Date.now();
-    let bucket = store.get(key);
-    if (!bucket || bucket.resetAt <= now) {
-      bucket = { count: 0, resetAt: now + opts.windowMs };
-      store.set(key, bucket);
-    }
-    bucket.count += 1;
-    if (bucket.count > opts.max) {
-      const retryAfterSec = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000));
-      res.setHeader("Retry-After", String(retryAfterSec));
-      res.status(429).json({
-        statusCode: 429,
-        message: "Çok fazla deneme. Lütfen bir süre sonra tekrar deneyin.",
-      });
-      return;
-    }
-    next();
-  };
-}
+import { rateLimit } from "./security/rate-limit";
 
 async function bootstrap() {
   // SECURITY: JWT_SECRET fail-fast — production'da zayıf/eksik secret tokenları taklit edilebilir kılar.
@@ -59,8 +15,11 @@ async function bootstrap() {
     throw new Error("JWT_SECRET env var must be at least 32 characters");
   }
 
-  const app = await NestFactory.create(AppModule, { cors: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { cors: false });
   const config = app.get(ConfigService);
+
+  // Trust proxy — Nginx/Cloudflare arkasında gerçek client IP'si req.ip'te görünür.
+  app.set("trust proxy", 1);
 
   // Helmet — güvenlik başlıkları (CSP default ile gönderilir; web origin'i ayrı tutuyoruz).
   app.use(helmet());
@@ -68,10 +27,12 @@ async function bootstrap() {
   // Body size limit — 100kb. Konfigüratör payload'ları küçük JSON, dosyalar R2'ye direkt yükleniyor.
   app.use(json({ limit: "100kb" }));
 
-  // Auth endpoint'leri için ayrı rate limit — global throttler 60/dk dışında.
-  // login: 5/dk · register: 3/saat (brute-force koruması).
-  app.use(makeRateLimiter({ windowMs: 60_000, max: 5, path: "/auth/login", method: "POST" }));
-  app.use(makeRateLimiter({ windowMs: 60 * 60_000, max: 3, path: "/auth/register", method: "POST" }));
+  // Auth endpoint'leri için per-IP fixed-window rate limit — standart 429 + Retry-After.
+  app.use(rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/register", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 5, path: "/auth/login", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/resend-verification", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/verify-email", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/auth/refresh", method: "POST" }));
 
   app.setGlobalPrefix("api");
   app.useGlobalPipes(
