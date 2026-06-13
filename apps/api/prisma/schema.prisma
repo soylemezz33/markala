@@ -41,18 +41,18 @@ model User {
   role         UserRole    @default(customer)
 
   // Kurumsal alanlar (B2B)
-  companyName       String?         @map("company_name")
-  taxOffice         String?         @map("tax_office")
-  taxNumber         String?         @map("tax_number")
-  corporateStatus   CorporateStatus @default(none) @map("corporate_status")
-  corporateApprovedAt DateTime?     @map("corporate_approved_at")
-  corporateDiscount Decimal?        @map("corporate_discount") @db.Decimal(5, 2)
-  corporateCreditLimit Decimal?     @map("corporate_credit_limit") @db.Decimal(12, 2)
+  companyName          String?         @map("company_name")
+  taxOffice            String?         @map("tax_office")
+  taxNumber            String?         @map("tax_number")
+  corporateStatus      CorporateStatus @default(none) @map("corporate_status")
+  corporateApprovedAt  DateTime?       @map("corporate_approved_at")
+  corporateDiscount    Decimal?        @map("corporate_discount") @db.Decimal(5, 2)
+  corporateCreditLimit Decimal?        @map("corporate_credit_limit") @db.Decimal(12, 2)
 
   // 2FA — secret artık AES-256-GCM ile şifreli saklanır (EncryptionService).
   // DB kolonu mevcut secret'a göre yeniden adlandırıldı: two_factor_secret_encrypted.
-  twoFactorEnabled Boolean  @default(false) @map("two_factor_enabled")
-  twoFactorSecret  String?  @map("two_factor_secret_encrypted")
+  twoFactorEnabled           Boolean  @default(false) @map("two_factor_enabled")
+  twoFactorSecret            String?  @map("two_factor_secret_encrypted")
   // Backup kodları artık bcrypt ile hash'lenmiş tutulur (string array yerine kodun kendisi DB'de aranabilir değildir).
   twoFactorBackupCodesHashed String[] @default([]) @map("two_factor_backup_codes_hashed")
 
@@ -82,14 +82,14 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique @map("token_hash")
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
+  id        String    @id @default(cuid())
+  tokenHash String    @unique @map("token_hash")
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
   revokedAt DateTime? @map("revoked_at")
-  userAgent String?  @map("user_agent")
-  ipAddress String?  @map("ip_address")
-  createdAt DateTime @default(now()) @map("created_at")
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -99,29 +99,29 @@ model RefreshToken {
 }
 
 model CorporateApplication {
-  id            String          @id @default(cuid())
-  userId        String?         @map("user_id")
+  id     String  @id @default(cuid())
+  userId String? @map("user_id")
 
-  companyName   String          @map("company_name")
-  taxOffice     String          @map("tax_office")
-  taxNumber     String          @map("tax_number")
-  sector        String?
-  annualVolume  String?         @map("annual_volume")
+  companyName  String  @map("company_name")
+  taxOffice    String  @map("tax_office")
+  taxNumber    String  @map("tax_number")
+  sector       String?
+  annualVolume String? @map("annual_volume")
 
-  contactName   String          @map("contact_name")
-  contactRole   String?         @map("contact_role")
-  email         String
-  phone         String
-  address       String          @db.Text
-  notes         String?         @db.Text
+  contactName String  @map("contact_name")
+  contactRole String? @map("contact_role")
+  email       String
+  phone       String
+  address     String  @db.Text
+  notes       String? @db.Text
 
-  taxCertificateUrl   String? @map("tax_certificate_url")
+  taxCertificateUrl    String? @map("tax_certificate_url")
   signatureCircularUrl String? @map("signature_circular_url")
 
-  status        CorporateStatus @default(pending)
-  reviewedById  String?         @map("reviewed_by_id")
-  reviewedAt    DateTime?       @map("reviewed_at")
-  reviewNote    String?         @map("review_note") @db.Text
+  status       CorporateStatus @default(pending)
+  reviewedById String?         @map("reviewed_by_id")
+  reviewedAt   DateTime?       @map("reviewed_at")
+  reviewNote   String?         @map("review_note") @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -149,9 +149,9 @@ model Address {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shippingOrders   Order[] @relation("ShippingAddress")
-  billingOrders    Order[] @relation("BillingAddress")
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shippingOrders Order[] @relation("ShippingAddress")
+  billingOrders  Order[] @relation("BillingAddress")
 
   @@index([userId])
   @@map("addresses")
@@ -160,17 +160,17 @@ model Address {
 // === Katalog ===
 
 model Category {
-  id               String   @id @default(cuid())
-  slug             String   @unique
+  id               String  @id @default(cuid())
+  slug             String  @unique
   name             String
-  shortDescription String   @map("short_description")
-  longDescription  String   @map("long_description")
-  imageUrl         String   @map("image_url")
-  accentColor      String?  @map("accent_color")
-  startingPrice    Decimal  @map("starting_price") @db.Decimal(10, 2)
-  productionTime   String   @map("production_time")
-  sortOrder        Int      @default(0) @map("sort_order")
-  isActive         Boolean  @default(true) @map("is_active")
+  shortDescription String  @map("short_description")
+  longDescription  String  @map("long_description")
+  imageUrl         String  @map("image_url")
+  accentColor      String? @map("accent_color")
+  startingPrice    Decimal @map("starting_price") @db.Decimal(10, 2)
+  productionTime   String  @map("production_time")
+  sortOrder        Int     @default(0) @map("sort_order")
+  isActive         Boolean @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -204,7 +204,7 @@ model Product {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  category Category   @relation(fields: [categoryId], references: [id])
+  category   Category    @relation(fields: [categoryId], references: [id])
   orderItems OrderItem[]
   reviews    Review[]
 
@@ -216,13 +216,13 @@ model Product {
 // === Sipariş ===
 
 enum OrderStatus {
-  siparis_alindi      @map("siparis-alindi")
-  tasarim_bekleniyor  @map("tasarim-bekleniyor")
-  tasarim_onayindi    @map("tasarim-onayindi")
+  siparis_alindi     @map("siparis-alindi")
+  tasarim_bekleniyor @map("tasarim-bekleniyor")
+  tasarim_onayindi   @map("tasarim-onayindi")
   uretimde
-  kargoya_verildi     @map("kargoya-verildi")
-  teslim_edildi       @map("teslim-edildi")
-  iptal_edildi        @map("iptal-edildi")
+  kargoya_verildi    @map("kargoya-verildi")
+  teslim_edildi      @map("teslim-edildi")
+  iptal_edildi       @map("iptal-edildi")
 }
 
 enum PaymentStatus {
@@ -233,9 +233,9 @@ enum PaymentStatus {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  orderNumber String      @unique @map("order_number")
-  userId      String?     @map("user_id")
+  id          String  @id @default(cuid())
+  orderNumber String  @unique @map("order_number")
+  userId      String? @map("user_id")
   email       String
   phone       String
 
@@ -249,16 +249,16 @@ model Order {
   vat         Decimal @db.Decimal(12, 4)
   total       Decimal @db.Decimal(12, 4)
 
-  shippingAddressId String  @map("shipping_address_id")
-  billingAddressId  String  @map("billing_address_id")
+  shippingAddressId String @map("shipping_address_id")
+  billingAddressId  String @map("billing_address_id")
 
   // iyzico referansları
-  iyzicoPaymentId       String? @map("iyzico_payment_id")
-  iyzicoConversationId  String? @map("iyzico_conversation_id")
+  iyzicoPaymentId      String? @map("iyzico_payment_id")
+  iyzicoConversationId String? @map("iyzico_conversation_id")
 
   // Kargo takibi
-  trackingNumber  String? @map("tracking_number")
-  trackingCarrier String? @map("tracking_carrier")
+  trackingNumber  String?   @map("tracking_number")
+  trackingCarrier String?   @map("tracking_carrier")
   shippedAt       DateTime? @map("shipped_at")
   deliveredAt     DateTime? @map("delivered_at")
 
@@ -267,14 +267,14 @@ model Order {
 
   notes String? @db.Text
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
   // KVKK & Türk Ticaret Kanunu — mali kayıt 10 yıl saklanır; soft delete.
   deletedAt DateTime? @map("deleted_at")
 
-  user            User?       @relation(fields: [userId], references: [id])
-  shippingAddress Address     @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddress  Address     @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  user            User?          @relation(fields: [userId], references: [id])
+  shippingAddress Address        @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress  Address        @relation("BillingAddress", fields: [billingAddressId], references: [id])
   items           OrderItem[]
   designUploads   DesignUpload[]
 
@@ -287,9 +287,9 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String  @map("order_id")
-  productId String  @map("product_id")
+  id        String @id @default(cuid())
+  orderId   String @map("order_id")
+  productId String @map("product_id")
 
   productSlug          String  @map("product_slug")
   productName          String  @map("product_name")
@@ -337,21 +337,21 @@ model DesignUpload {
 
 enum CouponType {
   percentage
-  fixed_amount @map("fixed-amount")
+  fixed_amount  @map("fixed-amount")
   free_shipping @map("free-shipping")
 }
 
 model Coupon {
-  id              String     @id @default(cuid())
-  code            String     @unique
-  type            CouponType
-  value           Decimal    @db.Decimal(10, 2)
-  minOrderAmount  Decimal?   @map("min_order_amount") @db.Decimal(10, 2)
-  maxUses         Int?       @map("max_uses")
-  usedCount       Int        @default(0) @map("used_count")
-  validFrom       DateTime?  @map("valid_from")
-  validUntil      DateTime?  @map("valid_until")
-  isActive        Boolean    @default(true) @map("is_active")
+  id             String     @id @default(cuid())
+  code           String     @unique
+  type           CouponType
+  value          Decimal    @db.Decimal(10, 2)
+  minOrderAmount Decimal?   @map("min_order_amount") @db.Decimal(10, 2)
+  maxUses        Int?       @map("max_uses")
+  usedCount      Int        @default(0) @map("used_count")
+  validFrom      DateTime?  @map("valid_from")
+  validUntil     DateTime?  @map("valid_until")
+  isActive       Boolean    @default(true) @map("is_active")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -401,29 +401,29 @@ model BlogCategory {
 }
 
 model BlogPost {
-  id          String     @id @default(cuid())
-  slug        String     @unique
-  title       String
-  excerpt     String     @db.Text
-  content     String     @db.Text
-  coverImage  String?    @map("cover_image")
-  authorName  String     @map("author_name")
-  authorRole  String?    @map("author_role")
-  categoryId  String?    @map("category_id")
-  tags        String[]   @default([])
-  status      BlogStatus @default(draft)
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  title      String
+  excerpt    String     @db.Text
+  content    String     @db.Text
+  coverImage String?    @map("cover_image")
+  authorName String     @map("author_name")
+  authorRole String?    @map("author_role")
+  categoryId String?    @map("category_id")
+  tags       String[]   @default([])
+  status     BlogStatus @default(draft)
 
   // SEO
-  seoTitle       String?  @map("seo_title")
-  seoDescription String?  @map("seo_description")
-  ogImage        String?  @map("og_image")
+  seoTitle       String? @map("seo_title")
+  seoDescription String? @map("seo_description")
+  ogImage        String? @map("og_image")
 
-  readingTime  Int?     @map("reading_time")
-  viewCount    Int      @default(0) @map("view_count")
+  readingTime Int? @map("reading_time")
+  viewCount   Int  @default(0) @map("view_count")
 
-  publishedAt  DateTime? @map("published_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   category BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
@@ -435,13 +435,13 @@ model BlogPost {
 // === A/B Testing ===
 
 model AbTest {
-  id          String   @id @default(cuid())
-  testKey     String   @unique @map("test_key")
+  id          String    @id @default(cuid())
+  testKey     String    @unique @map("test_key")
   name        String
-  description String?  @db.Text
-  variants    Json     // [{ id: "A", weight: 50 }, { id: "B", weight: 50 }]
-  isActive    Boolean  @default(true) @map("is_active")
-  startedAt   DateTime @default(now()) @map("started_at")
+  description String?   @db.Text
+  variants    Json // [{ id: "A", weight: 50 }, { id: "B", weight: 50 }]
+  isActive    Boolean   @default(true) @map("is_active")
+  startedAt   DateTime  @default(now()) @map("started_at")
   endedAt     DateTime? @map("ended_at")
 
   events AbTestEvent[]
@@ -450,13 +450,13 @@ model AbTest {
 }
 
 model AbTestEvent {
-  id        String   @id @default(cuid())
-  testId    String   @map("test_id")
+  id        String  @id @default(cuid())
+  testId    String  @map("test_id")
   variant   String
-  eventType String   @map("event_type") // exposure | conversion
-  eventName String?  @map("event_name")
-  userId    String?  @map("user_id")
-  uid       String   // anonymous cookie ID
+  eventType String  @map("event_type") // exposure | conversion
+  eventName String? @map("event_name")
+  userId    String? @map("user_id")
+  uid       String // anonymous cookie ID
   metadata  Json?
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -480,11 +480,11 @@ model NotificationLog {
   id        String              @id @default(cuid())
   userId    String?             @map("user_id")
   channel   NotificationChannel
-  template  String              // Örn: "order-shipped", "corporate-approved"
-  recipient String              // email veya telefon
+  template  String // Örn: "order-shipped", "corporate-approved"
+  recipient String // email veya telefon
   subject   String?
   body      String              @db.Text
-  status    String              // sent | failed | bounced
+  status    String // sent | failed | bounced
   metadata  Json?
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -508,7 +508,7 @@ model ConsentLog {
   granted     Boolean
   ipAddress   String?  @map("ip_address")
   userAgent   String?  @map("user_agent")
-  version     String?  // policy version
+  version     String? // policy version
   createdAt   DateTime @default(now()) @map("created_at")
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -527,8 +527,8 @@ model AuditLog {
   actorId    String?  @map("actor_id") // admin yapıyorsa
   entityType String   @map("entity_type") // 'User', 'Order', 'Product'
   entityId   String   @map("entity_id")
-  action     String   // 'create', 'update', 'delete', 'status_change'
-  diff       Json?    // before/after
+  action     String // 'create', 'update', 'delete', 'status_change'
+  diff       Json? // before/after
   ipAddress  String?  @map("ip_address")
   createdAt  DateTime @default(now()) @map("created_at")
 
@@ -536,4 +536,33 @@ model AuditLog {
   @@index([actorId, createdAt])
   @@index([userId])
   @@map("audit_logs")
+}
+
+// === Anasayfa slider ===
+model HeroSlide {
+  id             String   @id @default(cuid())
+  title          String
+  subtitle       String?
+  imageUrl       String   @map("image_url")
+  mobileImageUrl String?  @map("mobile_image_url")
+  ctaLabel       String?  @map("cta_label")
+  ctaHref        String?  @map("cta_href")
+  sortOrder      Int      @default(0) @map("sort_order")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@map("hero_slides")
+}
+
+// === Site ayarları (key-value) ===
+model SiteSetting {
+  key       String   @id
+  value     Json
+  group     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([group])
+  @@map("site_settings")
 }
