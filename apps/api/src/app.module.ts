@@ -8,6 +8,7 @@ import { CategoriesModule } from "./categories/categories.module";
 import { ProductsModule } from "./products/products.module";
 import { OrdersModule } from "./orders/orders.module";
 import { HeroSlidesModule } from "./hero-slides/hero-slides.module";
+import { SettingsModule } from "./settings/settings.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { HealthController } from "./health/health.controller";
@@ -25,6 +26,7 @@ import { HealthController } from "./health/health.controller";
     ProductsModule,
     OrdersModule,
     HeroSlidesModule,
+    SettingsModule,
   ],
   controllers: [HealthController],
 })
