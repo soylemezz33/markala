@@ -24,6 +24,12 @@ docker compose -f docker-compose.production.yml run --rm api \
 echo "→ Service'ler restart ediliyor..."
 docker compose -f docker-compose.production.yml up -d --no-build --remove-orphans
 
+# 3b. nginx'i restart et — web/api/admin yeniden oluşturulduysa IP'leri değişir;
+#     nginx upstream hostname'lerini bir kez resolve ettiği için stale IP'ye
+#     takılıp 502 verir. Restart güncel IP'leri yeniden çözer.
+echo "→ nginx yeniden başlatılıyor (upstream IP yenileme)..."
+docker compose -f docker-compose.production.yml restart nginx
+
 # 4. Health check
 echo "→ Health check (10 sn bekleme)..."
 sleep 10

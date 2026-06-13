@@ -143,7 +143,7 @@ export default function ProductPage({ params }: Props) {
                   <h2 className="text-xl font-semibold text-ink-900">Öne Çıkan Özellikler</h2>
                 </header>
                 <ul className="grid sm:grid-cols-2 gap-2.5">
-                  {product.features.map((f, i) => (
+                  {product.features.map((f: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-ink-700 leading-relaxed">
                       <CheckCircle size={16} weight="fill" className="text-brand-500 mt-0.5 flex-none" />
                       <span>{f}</span>
