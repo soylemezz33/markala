@@ -1,6 +1,5 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { ThrottlerModule } from "@nestjs/throttler";
 import { EncryptionModule } from "./encryption/encryption.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { IntegrationsModule } from "./integrations/integrations.module";
@@ -14,7 +13,6 @@ import { HealthController } from "./health/health.controller";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
     EncryptionModule,
     PrismaModule,
     IntegrationsModule,
