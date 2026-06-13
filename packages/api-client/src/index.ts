@@ -5,6 +5,9 @@
 
 import type { Category, Product, Order, User, Address } from "@markala/types";
 
+// Node/Next ortamında env okumak için minimal ambient bildirim (@types/node bağımlılığı eklemeden).
+declare const process: { env: Record<string, string | undefined> };
+
 export interface ApiClientConfig {
   baseUrl: string;
   /** JWT access token — auth gerektiren endpointler için */
