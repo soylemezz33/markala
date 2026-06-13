@@ -14,9 +14,14 @@ export class CorporateApplicationsService {
   }
 
   setStatus(id: string, status: "approved" | "rejected" | "pending", reviewNote?: string) {
+    // Admin'in review notu kendi kolonuna yazılır (başvuranın `notes` alanını EZMEZ).
     return this.prisma.corporateApplication.update({
       where: { id },
-      data: { status: status as CorporateStatus, ...(reviewNote !== undefined && { notes: reviewNote }) },
+      data: {
+        status: status as CorporateStatus,
+        reviewedAt: new Date(),
+        ...(reviewNote !== undefined && { reviewNote }),
+      },
     });
   }
 }

@@ -7,7 +7,9 @@ import { ShieldCheck, Eye, EyeSlash, Spinner } from "@phosphor-icons/react";
 export default function AdminLoginPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const redirect = params.get("redirect") ?? "/";
+  const rawRedirect = params.get("redirect") ?? "/";
+  // Open-redirect koruması: yalnız uygulama içi (tek eğik çizgiyle başlayan) yollara izin ver.
+  const redirect = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

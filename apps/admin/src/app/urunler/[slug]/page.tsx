@@ -13,8 +13,10 @@ export default async function ProductEditPage({ params }: Props) {
   let product;
   try {
     product = await api.products.detail(slug);
-  } catch {
-    notFound();
+  } catch (e) {
+    // Yalnız gerçek 404 → bulunamadı; auth/sunucu hataları (401/500) yutulmasın.
+    if ((e as { status?: number })?.status === 404) notFound();
+    throw e;
   }
 
   if (!product) notFound();

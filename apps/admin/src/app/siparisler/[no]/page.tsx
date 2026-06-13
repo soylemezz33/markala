@@ -12,8 +12,10 @@ export default async function OrderDetailPage({ params }: Props) {
   let order;
   try {
     order = await api.orders.detail(id);
-  } catch {
-    notFound();
+  } catch (e) {
+    // Yalnız gerçek 404 → bulunamadı; auth/sunucu hataları (401/500) yutulmasın.
+    if ((e as { status?: number })?.status === 404) notFound();
+    throw e;
   }
   return <OrderDetailClient order={order as never} />;
 }
