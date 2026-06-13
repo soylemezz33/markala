@@ -7,7 +7,9 @@ const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http:
 
 /** Geçerli admin oturumunu cookie'den çöz (RSC/route handler). */
 export async function getAdminSession(): Promise<AdminSession | null> {
-  const secret = process.env.ADMIN_SESSION_SECRET ?? "";
+  // Fail-closed: imza anahtarı yoksa/kısaysa oturumu geçersiz say.
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret || secret.length < 32) return null;
   const token = cookies().get(SESSION_COOKIE)?.value;
   return verifySession(token, secret);
 }

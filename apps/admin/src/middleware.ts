@@ -25,7 +25,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const secret = process.env.ADMIN_SESSION_SECRET ?? "";
+  // Fail-closed: imza anahtarı yapılandırılmamışsa kimseyi doğrulama (zayıf/boş anahtarla oturum kabul etme).
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    const url = new URL("/giris", req.url);
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
+  }
+
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   const session = await verifySession(token, secret);
 
