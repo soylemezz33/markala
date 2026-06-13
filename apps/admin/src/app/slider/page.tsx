@@ -9,47 +9,12 @@ import {
   Eye,
   EyeSlash,
 } from "@phosphor-icons/react/dist/ssr";
+import { getAdminApi } from "@/lib/api";
 
-const mockSlides = [
-  {
-    id: "kartvizit",
-    title: "Markanız her elden geçsin",
-    eyebrow: "Çok satan",
-    theme: "Sarı",
-    image: "/images/hero/kartvizit.jpg",
-    isActive: true,
-    sortOrder: 1,
-  },
-  {
-    id: "branda",
-    title: "Açılışınızı sokağa duyurun",
-    eyebrow: "Açılışlar için",
-    theme: "Lacivert",
-    image: "/images/hero/branda.jpg",
-    isActive: true,
-    sortOrder: 2,
-  },
-  {
-    id: "kupa",
-    title: "Kalıcı kurumsal hediye",
-    eyebrow: "Promosyon",
-    theme: "Krem",
-    image: "/images/hero/kupa.jpg",
-    isActive: true,
-    sortOrder: 3,
-  },
-  {
-    id: "tasarim",
-    title: "Tasarımınız yoksa biz hallederiz",
-    eyebrow: "Ücretsiz dahil",
-    theme: "Cyan",
-    image: "/images/hero/tasarim.jpg",
-    isActive: true,
-    sortOrder: 4,
-  },
-];
+export default async function SliderAdminPage() {
+  const api = await getAdminApi();
+  const slides = await api.heroSlides.list(true);
 
-export default function SliderAdminPage() {
   return (
     <AdminShell>
       <header className="mb-6 flex items-start justify-between gap-4">
@@ -106,11 +71,11 @@ export default function SliderAdminPage() {
       {/* Slide tablosu */}
       <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
         <div className="px-5 py-3 border-b border-paper-200 flex items-center justify-between text-xs text-ink-500">
-          <span>{mockSlides.length} slide · sıralama drag-drop ile değişir</span>
+          <span>{slides.length} slide · sıralama drag-drop ile değişir</span>
           <span>Otomatik geçiş süresi: 6 sn</span>
         </div>
         <ul className="divide-y divide-paper-200">
-          {mockSlides.map((s) => (
+          {slides.map((s) => (
             <li key={s.id} className="p-4 flex items-center gap-4 hover:bg-paper-100">
               <button
                 aria-label="Sırala"
@@ -121,20 +86,36 @@ export default function SliderAdminPage() {
 
               {/* Görsel önizleme */}
               <div className="flex-none w-20 h-20 rounded-md bg-paper-200 grid place-items-center text-ink-500 overflow-hidden">
-                <ImageIcon size={24} />
+                {s.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={s.imageUrl}
+                    alt={s.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon size={24} />
+                )}
               </div>
 
               {/* Bilgi */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-2 py-0.5 rounded bg-paper-100 text-ink-700 font-medium">
-                    {s.eyebrow}
-                  </span>
-                  <span className="text-xs text-ink-500">Tema: {s.theme}</span>
-                  <span className="text-xs text-ink-500">·</span>
-                  <span className="text-xs text-ink-500 font-mono">{s.image}</span>
+                  {s.ctaLabel && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-paper-100 text-ink-700 font-medium">
+                      {s.ctaLabel}
+                    </span>
+                  )}
+                  {s.ctaHref && (
+                    <span className="text-xs text-ink-500 font-mono truncate max-w-[200px]">
+                      {s.ctaHref}
+                    </span>
+                  )}
                 </div>
                 <h3 className="mt-1 font-medium text-ink-900">{s.title}</h3>
+                {s.subtitle && (
+                  <p className="text-xs text-ink-500 mt-0.5 truncate">{s.subtitle}</p>
+                )}
                 <p className="text-xs text-ink-500 mt-0.5">Sıra: {s.sortOrder}</p>
               </div>
 
@@ -168,13 +149,6 @@ export default function SliderAdminPage() {
           ))}
         </ul>
       </div>
-
-      {/* Footer note */}
-      <p className="mt-4 text-xs text-ink-500">
-        ⚠ Şu an mock UI. Backend bağlanınca slide'lar PostgreSQL'den okunacak ve görseller Cloudflare R2'ye yüklenecek.
-        API endpoint: <code className="font-mono">PATCH /api/slides/:id</code> ·{" "}
-        <code className="font-mono">POST /api/slides</code>
-      </p>
     </AdminShell>
   );
 }
