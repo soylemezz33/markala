@@ -1,39 +1,35 @@
-# Kayıt Güvenliği — Mail Doğrulama + Cloudflare Turnstile + Gerçek Auth
+# Kayıt Güvenliği — Mail Doğrulama + Cloudflare Turnstile + Gerçek Auth (v2)
 
 > Tasarım dokümanı · 2026-06-13 · Markala (markala.com.tr)
-> Durum: onay bekliyor → onaylanınca implementasyon planı (writing-plans)
+> v2: 6-mercekli adversarial inceleme (51 ham → 28 bulgu) sonrası sertleştirildi.
+> Durum: onaylı → implementasyon planı (writing-plans) çıkarılacak.
 
 ## 1. Problem & Kapsam
 
-### Mevcut durum (denetim bulgusu)
+### Mevcut durum (denetim bulgusu — kodla doğrulandı)
 | Katman | Durum |
 |---|---|
-| Backend `/api/auth/register` | ✅ Sağlam: argon2, rate limit (3/saat), user-enumeration koruması, şifre complexity |
 | Web frontend kayıt/giriş | ❌ **Tamamen mock** — `apps/web/src/lib/auth-store.ts` backend'e hiç gitmez, `setTimeout` ile sahte user üretir |
-| Mail doğrulama | ❌ Yok — `User.emailVerifiedAt` kolonu var ama hiç set/kontrol edilmez |
-| Mail gönderimi | ❌ Stub — `apps/api/src/integrations/sendgrid/sendgrid.service.ts` sadece log atar |
+| Mail doğrulama | ❌ Yok — `User.emailVerifiedAt` kolonu var ama hiç set/kontrol edilmez (→ DB'deki TÜM mevcut kullanıcılarda null) |
+| Mail gönderimi | ❌ Stub — `sendgrid.service.ts` sadece log atar |
 | Captcha | ❌ Hiçbir yerde yok |
+| **Rate limit** | ⚠️ **`@Throttle` dekoratörleri + `ThrottlerModule.forRoot` var AMA `ThrottlerGuard`/`APP_GUARD` register edilmemiş → ÖLÜ KOD.** Tek gerçekten aktif limit: `main.ts:73-74` in-memory limiter (login 5/dk + register 3/saat). |
 | Şifre kuralı | ⚠️ Çelişki — frontend `minLength=6`, backend 8 + complexity |
 
 ### Hedef
-Kullanıcı **üye olurken** gerçek bir güvenli akıştan geçsin:
-1. Cloudflare Turnstile captcha (kayıt **ve** giriş).
-2. Mail doğrulaması — kayıt sonrası doğrulama maili; hesap doğrulanmadan **giriş yapılamaz**.
-3. Frontend mock auth'u kaldırılıp gerçek NestJS backend'e bağlanır (aksi halde yukarıdakiler gerçek kullanıcı için çalışmaz).
-4. KVKK rıza kayıtları (`ConsentLog`) ve şifre kuralı tutarlılığı.
+Kullanıcı **üye olurken** gerçek, çalışan bir güvenli akıştan geçsin: Turnstile captcha (kayıt+giriş), mail doğrulaması (doğrulanmadan giriş yok), frontend mock→backend bağlama, gerçek çalışan rate-limit, KVKK uyumu.
 
-### Alınan kararlar
-- **Captcha sağlayıcı:** Cloudflare Turnstile (site zaten Cloudflare'de; ücretsiz, KVKK dostu).
-- **Doğrulama gücü:** Kayıtta mail doğrulama → doğrulanmadan giriş engellenir (`403 EMAIL_NOT_VERIFIED`).
-- **Captcha kapsamı:** Kayıt + Giriş.
-- **Doğrulama sonrası:** Giriş sayfasına yönlendir ("Hesabınız aktif, giriş yapın"). Verify endpoint token vermez; oturumu login açar.
-- **SMTP:** `mail.324ajans.com:465 SSL`, gönderen `markala@324ajans.com`.
-- **Kapsam:** Tam gerçek auth (frontend mock → backend).
+### Alınan kararlar (kesin)
+1. **Captcha:** Cloudflare Turnstile, kayıt **ve** giriş. Fail-**closed**. action+hostname doğrulanır.
+2. **Doğrulama gücü:** Kayıtta mail doğrulama → doğrulanmadan giriş engellenir.
+3. **Doğrulama sonrası:** verify endpoint oturum açmaz; `/giris`'e "Hesabınız aktif, giriş yapın" mesajıyla yönlendirir.
+4. **SMTP:** `mail.324ajans.com:465 SSL`, gönderen `markala@324ajans.com` (prod). Dev: MailHog `localhost:1025`.
+5. **Rate limit mekanizması:** **ThrottlerModule tamamen kaldırılır.** TÜM auth limitleri tek mekanizmaya — `main.ts` in-memory limiter'a — toplanır; e-posta-bazlı boyut + kenar katmanı (Nginx auth-zone + Cloudflare Rate Limiting) eklenir. (Bkz. §5.)
+6. **Kapsam:** Tam gerçek auth (frontend mock → backend). `apps/admin` ayrı env-tabanlı auth kullanır, **bu işten etkilenmez**.
 
-## 2. Veri Modeli (Prisma)
+## 2. Veri Modeli (Prisma) + Migration
 
 Yeni tablo — raw token DB'de **tutulmaz**, yalnızca SHA-256 hash:
-
 ```prisma
 model EmailVerificationToken {
   id         String    @id @default(cuid())
@@ -42,115 +38,173 @@ model EmailVerificationToken {
   expiresAt  DateTime  @map("expires_at")          // createdAt + 24s
   consumedAt DateTime? @map("consumed_at")
   createdAt  DateTime  @default(now()) @map("created_at")
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId])
   @@map("email_verification_tokens")
 }
 ```
+`User`'a `emailVerificationTokens EmailVerificationToken[]` ilişkisi eklenir.
 
-`User` modeline ilişki eklenir: `emailVerificationTokens EmailVerificationToken[]`.
-`User.emailVerifiedAt` zaten mevcut — artık gerçekten kullanılır.
-
-Migration adı: `email_verification_tokens`.
+**Migration `email_verification_tokens` İÇİNDE backfill (KRİTİK):**
+```sql
+UPDATE users SET email_verified_at = created_at WHERE email_verified_at IS NULL;
+```
+Mock auth döneminde kaydolanlar zaten doğrulama yapmamıştı; mevcut güven havuzu kabul edilir. Aksi halde deploy anında her eski hesap `403 EMAIL_NOT_VERIFIED` ile kilitlenir.
 
 ## 3. Backend (NestJS)
 
 ### 3.1 MailService — yeni `apps/api/src/mail/` modülü
-- `nodemailer` ile gerçek SMTP gönderimi (yeni bağımlılık: `nodemailer` + `@types/nodemailer`).
-- Konfig env'den: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`.
-- Metot: `sendVerificationEmail(to, verifyUrl)` — sade HTML + plain-text şablon (TR).
-- Konfig eksikse: dev'de uyarı + log'a düşer (mevcut stub davranışına benzer fail-soft); prod'da `MAIL_*` zorunlu.
-- Mevcut `SendgridService` stub'ı bozulmaz; yeni akış MailService kullanır.
+- `nodemailer` (yeni bağımlılık: `nodemailer` + `@types/nodemailer`).
+- Env: `SMTP_HOST/SMTP_PORT/SMTP_SECURE/SMTP_USER/SMTP_PASS/MAIL_FROM`.
+- `connectionTimeout / greetingTimeout / socketTimeout = 10sn` (zorunlu — register'ı bloke etmemek için).
+- `sendVerificationEmail(to, verifyUrl): Promise<boolean>` — **hata FIRLATMAZ**; başarısızlıkta log + `false` döner.
+- Her denemede **NotificationLog** yazar: `channel=email, template=email-verification, recipient, status=sent|failed, metadata={messageId|error}` (deliverability teşhisi + resend kötüye-kullanım görünürlüğü).
+- `SMTP_SECURE=false` (dev/MailHog) iken auth gönderilmez. Yalnızca **işlemsel** mail; pazarlama maili göndermez.
+- HTML + plain-text TR şablon; footer: "Markala — 324 Ajans BT tarafından gönderilmiştir" + işlemsel ileti ibaresi.
 
 ### 3.2 TurnstileService — yeni `apps/api/src/captcha/` modülü
-- `verify(token: string, ip?: string): Promise<boolean>` — `https://challenges.cloudflare.com/turnstile/v0/siteverify`'a POST (`secret`, `response`, `remoteip`).
-- `TURNSTILE_SECRET_KEY` env'den. Dev'de Cloudflare "her zaman geç" test secret'ı (`1x0000000000000000000000000000000AA`).
-- Modül `exports: [TurnstileService]` → AuthModule import eder.
+- `verify(token: string, expectedAction: 'register'|'login', ip?: string): Promise<boolean>`.
+- `fetch` 5sn **AbortController** timeout.
+- **FAIL-CLOSED:** ağ hatası/timeout/non-200/parse hatası → `false`. Hata yutulmaz, loglanır.
+- `true` koşulu: HTTP 200 **ve** `success===true` **ve** yanıt `action===expectedAction` **ve** `hostname` whitelist'te (`markala.com.tr`, dev'de `localhost`).
+- **Dev fail-open:** `NODE_ENV!=production` ve `TURNSTILE_SECRET_KEY` yok → `true` (yalnız dev). Prod'da secret yoksa boot uyarısı.
+- Modül `exports: [TurnstileService]`; AuthModule import eder.
 
 ### 3.3 DTO değişiklikleri
-**RegisterDto** (`apps/api/src/auth/dtos/register.dto.ts`):
+**RegisterDto** (`register.dto.ts`):
 - `+ captchaToken: string` (`@IsString @IsNotEmpty`)
-- `+ kvkkAccepted: boolean` (`@IsBoolean` + `@Equals(true)` — onaysız kayıt reddedilir)
-- `+ marketingConsent?: boolean` (`@IsOptional @IsBoolean`)
+- `+ kvkkAccepted: boolean` — `@IsBoolean` + `@Equals(true)`. **NOT: "Aydınlatma metnini okudum" teyidi, açık rıza DEĞİL** (sözleşmesel işleme KVKK m.5/2-c'ye dayanır; zorunlu hizmeti rızaya bağlamak rızayı geçersiz kılar).
+- `+ marketingConsent?: boolean` (`@IsOptional @IsBoolean`) — **tek açık rıza alanı budur.**
+- `+ consentVersion: string` — yasal metin sürümü (kaynak: §8'de tanımlanacak tek sabit).
 
-**LoginDto**: `+ captchaToken: string` (zorunlu).
+**LoginDto:** `+ captchaToken: string` (zorunlu).
 
-### 3.4 AuthService akış değişiklikleri
-| Metot | Yeni davranış |
+### 3.4 AuthService akışı
+
+**Zorunlu istek sırası (her auth endpoint):**
+`(1) IP rate-limit → (2) DTO validation → (3) captcha verify (geçersiz → 400, hiçbir DB/argon2 işlemi YOK) → (4) iş mantığı (findUnique/argon2)`.
+Captcha, `findUnique`+`argon2` çağrılarından **kesin önce** (argon2 DoS koruması).
+
+| Metot | Davranış |
 |---|---|
-| `register` | (1) captcha doğrula, geçersizse `BadRequestException`. (2) Mevcut kullanıcı → generic fail (enumeration korunur). (3) user oluştur `emailVerifiedAt=null`. (4) **ConsentLog yaz**: `kvkk granted=true` + `marketing granted=marketingConsent`, IP/UA/version ile; `user.marketingConsent*` alanlarını set et. (5) verification token üret + maille. (6) **token VERMEZ** → `{ status: "verification_sent", email }`. |
-| `login` | Şifre doğrulandıktan sonra `emailVerifiedAt == null` ise `ForbiddenException` (`code: "EMAIL_NOT_VERIFIED"`) — token verilmez. Captcha controller'da doğrulanır. |
-| `verifyEmail(rawToken)` | Hash'le → token bul → consumed/expired kontrol → `emailVerifiedAt=now`, token'ı tüket. **Oturum açmaz**, `{ ok: true }` döner. |
-| `resendVerification(email)` | Her zaman generic `{ ok: true }`. Kullanıcı varsa & doğrulanmamışsa: eski tokenları consume et, yeni üret + maille. |
+| `register` | (1) captcha verify, geçersiz→400. (2) `existing && emailVerifiedAt!=null` → generic fail (enumeration). (3) **`existing && emailVerifiedAt==null` → yeni user OLUŞTURMA; sessizce resend mantığı (eski token consume + yeni token + mail) + aynı `{status:verification_sent, email}` dön** (kullanıcı kilitlenmez). (4) yeni → user oluştur (`emailVerifiedAt=null`). (5) **ConsentLog**: `kvkk` = okudum teyidi (granted=true), `marketing` = açık rıza (granted=marketingConsent); IP/UA/`version=consentVersion`. (6) token üret + maille. (7) **token VERMEZ** → `{status:"verification_sent", email}`. |
+| `login` | captcha→password. Şifre doğru ve `emailVerifiedAt==null` → `403 EMAIL_NOT_VERIFIED`. **Otomatik resend YOK** (kullanıcı UI'dan manuel basar). Bkz. §11 kabul edilen risk. |
+| `verifyEmail(rawToken)` | Üç çıktı: **(a)** token yok/hash eşleşmedi → `400 INVALID_TOKEN` (generic). **(b)** `consumedAt!=null` VEYA kullanıcı `emailVerifiedAt!=null` → `200 ALREADY_VERIFIED` (başarı; yeni mail YOK). **(c)** token var + expired + doğrulanmamış → `410 TOKEN_EXPIRED`. Başarıda `emailVerifiedAt=now` + token consume. **Oturum açmaz.** `deletedAt!=null` kullanıcı için geçersiz. |
+| `resendVerification(email)` | Her zaman generic `{ok:true}`. Kullanıcı var & doğrulanmamış & `deletedAt==null` ise: **per-email cooldown** (son token `createdAt`'ten <60-120sn → sessizce çık) + günlük tavan (5 mail/gün/e-posta) kontrolü; geçerse eski tokenları consume + yeni + maille. |
 
-### 3.5 Controller (`apps/api/src/auth/auth.controller.ts`)
-- `POST /auth/register` — `@Throttle 3/saat`, captcha service ile doğrulanır (IP geçilir).
-- `POST /auth/login` — `@Throttle 5/dk`, captcha doğrulanır.
-- `POST /auth/verify-email` `{ token }` — `@Throttle` (örn. 10/dk).
-- `POST /auth/resend-verification` `{ email, captchaToken }` — `@Throttle 3/saat`.
-- `refresh` / `logout` / `me` değişmez.
-- `main.ts` in-memory rate limiter'a `/auth/resend-verification` eklenir.
+**Mail best-effort:** user create + token commit **işlemden çıkarılır/önce commit edilir**; `sendVerificationEmail` await edilse de hatası yutulur (try/catch + NotificationLog). Mail hatası register'ı düşürmez; kullanıcı yine `verification_sent` alır. Telafi = resend.
+
+**user payload tutarlılığı:** `issueTokenPair` minimal `{id,email,role}` döndürmeye devam eder. **Frontend login başarısından sonra daima `auth.me()` çağırıp tam profili çeker** (tek doğruluk kaynağı = `me`). register zaten user göstermez.
+
+### 3.5 Controller + rate limiter
+- Endpoint'ler: mevcut `register/login/refresh/logout/me` + yeni `POST /auth/verify-email {token}`, `POST /auth/resend-verification {email, captchaToken}`.
+- **`@Throttle` dekoratörleri ve `ThrottlerModule` import'u SİLİNİR** (app.module.ts'ten de). Tek mekanizma = `main.ts` in-memory limiter (§5).
+- **IP kaynağı:** `app.set('trust proxy', 1)` + `req.ip` kullan (Nginx `CF-Connecting-IP`'yi real_ip yapıyor). **Ham `X-Forwarded-For[0]` elle parse EDİLMEZ** — client sahte XFF enjekte edip IP-limit spoof'layabilir. `main.ts` limiter ve `clientIp` bu kaynağa taşınır.
+- **429 tek format:** `{statusCode:429, code:"RATE_LIMITED", message, retryAfter}` + `Retry-After` header.
 
 ## 4. Frontend (Next.js — apps/web)
 
 ### 4.1 api-client (`packages/api-client/src/index.ts`)
-- `auth.register` artık `{ status, email }` döner (token yok).
-- `+ auth.verifyEmail(token)`, `+ auth.resendVerification(email, captchaToken)`.
-- `login`/`register` body'sine `captchaToken` eklenir.
+- `auth.register` dönüşü `{status, email}` (token yok). `+ verifyEmail(token)`, `+ resendVerification(email, captchaToken)`. `login`/`register` body'sine `captchaToken`.
+- Tek tüketici = auth-store (doğrulandı; admin ayrı route kullanır → kırıcı değil). `getToken = () => state.accessToken`. `429/RATE_LIMITED` ve `EMAIL_NOT_VERIFIED` kodları yüzeye çıkar.
 
-### 4.2 auth-store (`apps/web/src/lib/auth-store.ts`) — mock kaldırılır
-- Gerçek api-client çağrıları.
-- Access token **bellekte** (zustand state, localStorage'a yazılmaz — XSS yüzeyini düşürür); yalnızca `user` persist edilir.
-- Açılışta `/auth/refresh` (httpOnly cookie) ile oturum geri yükleme.
-- `register` → `{ ok, status }` (auto-login yok). `login` → `EMAIL_NOT_VERIFIED` kodunu yüzeye çıkarır. `verifyEmail`, `resendVerification` eklenir. `logout` → `/auth/logout` çağırır.
+### 4.2 auth-store (`auth-store.ts`) — mock kaldırılır + oturum bootstrap
+- Gerçek api-client. **Access token bellekte** (state, localStorage'a yazılmaz). Yalnız `user` persist.
+- **`status: idle|bootstrapping|authenticated|anonymous`** alanı eklenir.
+- **AuthBootstrap** client component (root layout): açılışta **tek kez** `/auth/refresh` çağırır; bitene kadar `status=bootstrapping`.
+- **zustand persist version bump + migrate:** eski mock `markala-auth` ve `markala-marketing-consent` localStorage anahtarları temizlenir (hayalet oturum/eski `u_<base36>` id önlenir). `user` yalnız refresh başarılıysa korunur.
+- Korumalı sayfa guard'ları `user` yerine `status`'e bakar (`bootstrapping`→iskelet, `anonymous`→`/giris`).
+- `register`→`{ok,status}` (auto-login yok). `login`→`EMAIL_NOT_VERIFIED` yüzeye çıkar; başarıda `me()` ile profil çeker. `logout` async: `api.auth.logout()` (hata olsa da devam) → `{user:null, accessToken:null, status:anonymous}`. `verifyEmail`, `resendVerification` eklenir.
 
-### 4.3 Sayfalar
+### 4.3 Sayfalar & bileşenler
 | Dosya | Değişiklik |
 |---|---|
-| `apps/web/src/app/kayit/page.tsx` | Turnstile widget; şifre `minLength 6→8` + complexity ipucu; başarıda "Mailini kontrol et" ekranı + "tekrar gönder" butonu; `captchaToken`+`kvkkAccepted`+`marketingConsent` gönderir. |
-| `apps/web/src/app/giris/page.tsx` | Gerçek login; Turnstile widget; `EMAIL_NOT_VERIFIED` → uyarı + tekrar gönder. |
-| **Yeni** `apps/web/src/app/eposta-dogrula/page.tsx` | `?token=` okur → `verifyEmail` → başarıda `/giris`'e "Hesabınız aktif, giriş yapın" mesajıyla yönlendirir; hata durumunda tekrar gönder seçeneği. |
-| **Yeni** `apps/web/src/components/turnstile.tsx` | Turnstile script yükleyici + render wrapper; `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. |
+| `kayit/page.tsx` | Turnstile widget (`action=register`); şifre `minLength 6→8` + complexity ipucu; başarıda "Mailini kontrol et" + tekrar gönder; `captchaToken`+`kvkkAccepted`+`marketingConsent`+`consentVersion` gönderir. KVKK checkbox metni rıza ifadesinden arındırılır ("KVKK Aydınlatma Metni'ni okudum"). |
+| `giris/page.tsx` | Gerçek login; Turnstile (`action=login`); `EMAIL_NOT_VERIFIED`→uyarı + manuel tekrar gönder. |
+| **Yeni** `eposta-dogrula/page.tsx` | `'use client'` + **Suspense** (`useSearchParams`); **ref guard** (Strict-Mode çift-çağrı); token okunur okunmaz `router.replace` ile URL'den temizle; `<meta name=referrer content=no-referrer>`. `ALREADY_VERIFIED`→`/giris` (mail YOK); `TOKEN_EXPIRED`→resend göster; `INVALID`→generic hata. |
+| **Yeni** `components/turnstile.tsx` | Script yükleyici + render; `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. **Token tek-kullanımlık + ~300sn ömürlü:** `expired/error-callback`→token null; submit token yokken disabled; her başarısız API yanıtından sonra `turnstile.reset(widgetId)`. Site key yoksa dev'de sabit bypass token. |
 
-## 5. Sırlar & Env (gitignore'da — koda yazılmaz)
+## 5. Rate Limiting (kullanıcı talebi — sertleştirildi)
 
-`apps/api/.env.local`:
+**Mekanizma kararı:** Throttler kaldırılır; `main.ts` in-memory limiter **genişletilir** (per-email key + cooldown + günlük tavan desteği). Tek-instans VPS için yeterli; çok-instansa geçilirse `redis` zaten ayakta → `@nestjs/throttler` + `ThrottlerStorageRedis`'e yükseltilir (kabul edilen risk: restart'ta in-memory sıfırlanır, kenar katmanı telafi eder).
+
+**İki katman:** (A) Uygulama (in-memory) · (B) Kenar (Nginx auth-zone + Cloudflare Rate Limiting).
+
+| Endpoint | Uygulama limiti | Anahtar | Kenar (Nginx + Cloudflare) |
+|---|---|---|---|
+| `POST /auth/register` | IP 3/saat + e-posta günlük mail tavanı 5 | IP + e-posta | Nginx `limit_req zone=auth burst=5` (hem `markala.com.tr` hem `api.markala.com.tr`); CF 3/saat/IP → managed challenge |
+| `POST /auth/login` | IP 5/dk + e-posta 10 başarısız/15dk (captcha+argon2'den ÖNCE) | IP + e-posta kombine | Nginx `auth burst=5` (user host'larına da — şu an yalnız admin'de); CF 5/dk/IP |
+| `POST /auth/resend-verification` | IP 3/saat + e-posta 60-120sn cooldown + 5 mail/gün | IP + e-posta | Nginx `auth burst=3`; CF 3/saat/IP |
+| `POST /auth/verify-email` | IP 10/dk (in-memory'e EKLENİR) | IP | Nginx `auth burst=10` |
+| `POST /auth/refresh` | IP 30/dk (in-memory'e TAŞINIR — şu an ölü `@Throttle`) | IP | Nginx `zone=api` yeterli |
+| `POST /orders/guest` | IP 10/saat + Turnstile (şu an HİÇ limit/captcha yok) | IP + e-posta | Nginx `auth burst=5`; CF 10/saat/IP → challenge |
+
+## 6. Kenar katmanı (Nginx / Cloudflare)
+- `nginx.conf` `zone=auth rate=5r/s` mevcut ama yalnız admin host'unda uygulanıyor. **`markala.conf`'ta hem `markala.com.tr` hem `api.markala.com.tr` server bloklarına `/api/auth/(login|register|resend-verification|verify-email)` location'ları eklenir** (yukarıdaki burst değerleriyle). real_ip (`CF-Connecting-IP`) zaten doğru kurulu.
+- **Cloudflare Rate Limiting Rules** + Bot Fight Mode: tablo edgeNote'larındaki eşikler.
+
+## 7. KVKK & Hukuk
+- `kvkkAccepted` = okudum teyidi (rıza değil); yalnız `marketingConsent` açık rıza. ConsentLog ikisini ayrı `consentType` ile yazar, `version=consentVersion`.
+- **Aydınlatma metni güncellenir** (`packages/mock-data/src/legal.ts`): yurtdışı/üçüncü-taraf aktarıma **Cloudflare Turnstile** (IP+tarayıcı sinyali) + **yeni SMTP** (mail.324ajans.com) eklenir; SendGrid ibaresi gerçek duruma göre düzeltilir; `lastUpdated`/`version` güncellenir.
+- İYS/ETK: pazarlama maili + İYS ticari-ileti kaydı **kapsam dışı** (§12). `marketingConsent` toplanır ama bu işte pazarlama maili gönderilmez.
+- Saklama: `ConsentLog` hesap silinse de saklanır (ETK/zamanaşımı); silinen hesapta `email` anonimleştirme kuralı belirtilir. `EmailVerificationToken` soft-delete'te `onDelete:Cascade` TETİKLENMEZ → verify/resend `deletedAt!=null` reddeder + expired token cleanup (yeni token üretiminde eski expired'leri sil).
+
+## 8. Mail teslimat & gönderen kimliği
+- **Gönderen kararı:** `markala@324ajans.com` (Hasan verdi). `.env.production.example`'daki `merhaba@markala.com.tr` ile çelişki **buna hizalanır**.
+- From-domain (324ajans.com) ile içerik domain'i (markala.com.tr) uyuşmazlığı spam riski → **SPF (mail.324ajans.com IP) + DKIM imza + DMARC (p=none, rua) + PTR** DNS kayıtları (prod checklist). Shared hosting IP reputation (94.199.201.79) izlenir.
+- `consentVersion` ve yasal metin sürümü için `legal.ts`'e makine-okur `LEGAL_VERSION` sabiti; frontend + backend tek kaynaktan okur.
+
+## 9. Sırlar & Env (gitignore'da)
+**Dev** `apps/api/.env.local` → MailHog:
+```
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM=Markala <markala@324ajans.com>
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA   # Cloudflare resmi test (her zaman geç)
+```
+**Prod** `.env.production` → gerçek SMTP:
 ```
 SMTP_HOST=mail.324ajans.com
 SMTP_PORT=465
 SMTP_SECURE=true
 SMTP_USER=markala@324ajans.com
-SMTP_PASS=********              # Hasan'ın verdiği şifre — yalnızca burada
-MAIL_FROM=Markala <markala@324ajans.com>
-TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA   # dev test; prod'da gerçek
+SMTP_PASS=********          # Hasan'ın verdiği şifre — yalnız .env.production'da
+TURNSTILE_SECRET_KEY=********  # Cloudflare gerçek secret
 ```
-`apps/web/.env.local`:
-```
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA      # dev test; prod'da gerçek
-NEXT_PUBLIC_API_URL=http://localhost:4000                     # zaten var
-```
-`apps/api/.env.example` ve `apps/web/.env.example` placeholder (sırsız) ile güncellenir.
+`apps/web/.env.local`: `NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA` (dev test; prod gerçek).
+- **`docker-compose.production.yml` güncellenir:** api environment'a `SMTP_HOST/PORT/SECURE/USER/PASS`, `MAIL_FROM`, `TURNSTILE_SECRET_KEY` (`${...}`); web environment'a `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+- `.env.example` + `.env.production.example` bu 8 anahtarla güncellenir (Cloudflare resmi test key'leri yorumla).
 
-## 6. Güvenlik notları
-- Verification token: `crypto.randomBytes(32).base64url`, DB'de yalnızca SHA-256 hash; süre 24 saat; tek kullanımlık (`consumedAt`).
-- `resendVerification` ve `register` user-enumeration sızdırmaz (generic cevap).
-- Captcha hem register hem login'de zorunlu; başarısız doğrulama 400.
-- Login: doğrulanmamış hesaba token verilmez.
-- KVKK: rıza `ConsentLog`'a IP/UA/zaman damgası ile yazılır (ispat yükümlülüğü).
-- Mail gönderen domain (324ajans.com) ile SMTP auth eşleşir; teslimat için SPF/DKIM önerisi (prod notu).
+## 10. Test
+- **Unit:** `TurnstileService.verify` (fetch mock — fail-closed, action/hostname, dev fail-open), `MailService` (transporter mock — hata yutma + NotificationLog), `AuthService.register` (yeni/var-doğrulanmamış/var-doğrulanmış; token dönmemesi; mail hatası register'ı düşürmez), `verifyEmail` (invalid/expired/already-verified/deleted), `login` doğrulanmamışta 403, request order (captcha argon2'den önce).
+- **Manuel e2e:** kayıt → MailHog (:8025) → link → `/giris` → giriş → `me()` profil → `/hesabim`; bozuk/expired captcha + reset; doğrulanmamış giriş + manuel resend; var-doğrulanmamış re-register; backfill sonrası eski kullanıcı giriş yapabilir.
 
-## 7. Test
-- **Unit:** `TurnstileService.verify` (fetch mock — geç/kal), `MailService` (transporter mock), `AuthService.register` (unverified + token üretimi + token dönmemesi), `verifyEmail` (geçerli/expired/consumed), `login` doğrulanmamışta 403.
-- **Manuel e2e checklist:** kayıt → MailHog/gerçek inbox → link → `/giris` → giriş → `/hesabim`; bozuk captcha → 400; doğrulanmamış giriş → uyarı + resend.
+## 11. Güvenlik kararları & kabul edilen riskler
+- **Captcha fail-closed**, action+hostname doğrulanır, argon2'den önce. Token tek-kullanımlık → frontend reset.
+- **Verify auto-login yapmaz** (session-fixation yüzeyini kapatır); token URL'den temizlenir + no-referrer.
+- **Login 403 EMAIL_NOT_VERIFIED = kabul edilen risk:** yalnız şifre doğruyken döner → doğrulanmamış hesaplar için şifre-doğruluğu sızdırır. Gerekçe: doğrulanmamış pencere kısa; captcha + rate-limit credential-stuffing'i sınırlar; otomatik resend YOK.
+- **IP spoofing kapatılır:** `trust proxy=1` + `req.ip`; ham XFF parse edilmez.
+- Verification token: `randomBytes(32).base64url`, DB'de SHA-256 hash, 24s, tek-kullanım.
+- In-memory limiter restart'ta sıfırlanır = kabul edilen risk (kenar telafi eder).
 
-## 8. Hasan'ın sağlaması gerekenler (prod)
-- **Cloudflare Turnstile** site + secret key (dash.cloudflare.com → Turnstile → widget). Dev'de test anahtarları kullanılır.
-- SMTP şifresi güncel (verildi → `.env.local`).
-- Postgres ayakta + migrate edilmiş (bkz. pending setup).
+## 12. Kapsam dışı (YAGNI / sonraki iş)
+- Şifre sıfırlama akışı (token modeli ileride genişletilebilir).
+- 2FA (kolonlar mevcut, ele alınmaz).
+- **E-posta değiştirme:** ayrı iş. Mevcut `UpdateProfileDto` email içermez (`whitelist:true` korur) — **eklenmemeli**; eklenirse `emailVerifiedAt=null` + yeniden doğrulama tetiklenmeli.
+- **Guest checkout Turnstile widget'ı** UI tarafında bu iterasyonda eklenmez; app+kenar **rate-limit** eklenir, politika §5/§13'te kayıt altına alınır (bilinçli kısmi kapsam).
+- İYS ticari-ileti kaydı + pazarlama maili gönderimi.
+- Newsletter/iletişim formu captcha'sı.
+- `apps/admin` auth (ayrı, env-tabanlı — değişmez).
 
-## 9. Kapsam dışı (YAGNI)
-- Şifre sıfırlama akışı (ayrı iş; token modeli ileride genişletilebilir).
-- 2FA (kolonlar mevcut, bu işte ele alınmaz).
-- Newsletter/iletişim formlarına captcha (gerekirse ayrı).
+## 13. Hasan'ın sağlaması gerekenler (prod checklist)
+- [ ] **Cloudflare Turnstile** site + secret key (dash.cloudflare.com → Turnstile). Dev'de resmi test key'leri kullanılır.
+- [ ] SMTP şifresi güncel → `.env.production` (verildi).
+- [ ] **Deploy sırasında backfill `UPDATE`** çalıştı mı (yoksa eski hesaplar kilitli).
+- [ ] **`docker-compose.production.yml`'a 8 env eklendi** + `.env.production` dolduruldu.
+- [ ] **SPF + DKIM + DMARC + PTR** DNS kayıtları (324ajans.com mail).
+- [ ] Cloudflare Rate Limiting kuralları + Bot Fight Mode.
+- [ ] `legal.ts` KVKK metni (Turnstile + SMTP aktarımı) güncellendi.
+- [ ] Postgres ayakta + migrate edilmiş.
