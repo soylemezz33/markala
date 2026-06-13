@@ -5,25 +5,37 @@ import { categories as mockCategories, products as mockProducts, heroSlides } fr
 const prisma = new PrismaClient();
 
 async function main() {
-  // === Adminler ===
+  // GÜVENLİK: Bu seed yalnızca geliştirme/test içindir. Prod'a karşı yanlışlıkla
+  // çalıştırılmasını engelle — gerçek kullanıcı/şifre basmaz, rol zorlamaz.
+  if (process.env.NODE_ENV === "production" && !process.env.ALLOW_PRODUCTION_SEED) {
+    throw new Error(
+      "Bu seed production'da çalıştırılamaz. Gerekiyorsa ALLOW_PRODUCTION_SEED=1 ile bilinçli çalıştır.",
+    );
+  }
+
+  // === Super admin (env'den okunur; dev varsayılanı GERÇEK kimlik değildir) ===
+  const superAdminEmail = process.env.SEED_SUPERADMIN_EMAIL ?? "superadmin@markala.local";
+  const superAdminPassword = process.env.SEED_SUPERADMIN_PASSWORD ?? "DevAdmin!2026";
   await prisma.user.upsert({
-    where: { email: "admin@markala.com.tr" },
-    update: {},
+    where: { email: superAdminEmail },
+    update: {}, // mevcut hesabın rolünü ZORLAMA (privilege escalation önlemi)
     create: {
-      email: "admin@markala.com.tr",
-      passwordHash: await argon2.hash("ChangeMe123!"),
-      fullName: "Markala Admin",
-      role: "admin",
+      email: superAdminEmail,
+      passwordHash: await argon2.hash(superAdminPassword),
+      fullName: "Markala Super Admin",
+      role: "super_admin",
     },
   });
+
+  // === Demo admin (placeholder — yalnızca dev) ===
   await prisma.user.upsert({
-    where: { email: "hasansylemezz@gmail.com" },
-    update: { role: "super_admin" },
+    where: { email: "admin@markala.local" },
+    update: {},
     create: {
-      email: "hasansylemezz@gmail.com",
-      passwordHash: await argon2.hash("Markala2026!"),
-      fullName: "Hasan Söylemez",
-      role: "super_admin",
+      email: "admin@markala.local",
+      passwordHash: await argon2.hash(process.env.SEED_ADMIN_PASSWORD ?? "DevAdmin!2026"),
+      fullName: "Markala Admin",
+      role: "admin",
     },
   });
 
