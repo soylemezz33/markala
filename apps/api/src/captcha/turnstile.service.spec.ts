@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { TurnstileService } from "./turnstile.service";
 
 function cfg(values: Record<string, string | undefined>) {
@@ -35,5 +35,11 @@ describe("TurnstileService", () => {
   it("dev'de secret yok → true (dev fail-open)", async () => {
     const svc = new TurnstileService(cfg({ NODE_ENV: "development", TURNSTILE_SECRET_KEY: undefined }));
     expect(await svc.verify("anything", "login")).toBe(true);
+  });
+
+  it("non-200 yanıt → false (FAIL-CLOSED)", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }));
+    const svc = new TurnstileService(cfg({ NODE_ENV: "production", TURNSTILE_SECRET_KEY: "s" }));
+    expect(await svc.verify("tok", "register")).toBe(false);
   });
 });
