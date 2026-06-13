@@ -118,9 +118,9 @@ export default function AdminLoginPage() {
           </button>
 
           <div className="pt-3 border-t border-paper-200 text-[11px] text-ink-500 leading-relaxed">
-            <strong className="text-ink-700">İlk kurulum:</strong> .env.local oluştur
-            ve <code className="px-1 py-0.5 rounded bg-paper-100">/api/auth/setup-hash?password=ŞİFREN</code>{" "}
-            ile ADMIN_PASSWORD_HASH üret. Detay için terminal çıktısına bak.
+            <strong className="text-ink-700">Giriş:</strong> Yönetim hesabınızın e-posta ve şifresiyle giriş yapın.
+            Hesap, API kullanıcı veritabanında <code className="px-1 py-0.5 rounded bg-paper-100">admin</code> veya{" "}
+            <code className="px-1 py-0.5 rounded bg-paper-100">super_admin</code> rolünde olmalıdır.
           </div>
         </form>
 
