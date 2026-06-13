@@ -13,6 +13,7 @@ import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { HealthController } from "./health/health.controller";
 import { CorporateApplicationsModule } from "./corporate-applications/corporate-applications.module";
+import { StatsModule } from "./stats/stats.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CorporateApplicationsModule } from "./corporate-applications/corporate-
     HeroSlidesModule,
     SettingsModule,
     CorporateApplicationsModule,
+    StatsModule,
   ],
   controllers: [HealthController],
 })
