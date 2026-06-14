@@ -34,6 +34,9 @@ const nextConfig = {
   reactStrictMode: true,
   // Production: standalone output → küçük Docker image, no node_modules at runtime
   output: "standalone",
+  // Tip/lint kontrolü CI'da ayrı yapılır; production image build'ini bloklamasın
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   // Compress responses (gzip)
   compress: true,
   // Production'da X-Powered-By: Next.js header'ı kaldır

@@ -317,6 +317,15 @@ export interface CorporateApplicationDto {
   createdAt: string;
 }
 
+export interface AdminUserOrderDto {
+  id: string;
+  orderNumber: string;
+  total: string | number;
+  status: string;
+  paymentStatus: string;
+  createdAt: string;
+}
+
 export interface AdminUserDto {
   id: string;
   email: string;
@@ -327,6 +336,13 @@ export interface AdminUserDto {
   role: "customer" | "admin" | "super_admin";
   orderCount?: number;
   createdAt: string;
+  // Detay (GET /admin/users/:id) ek alanları:
+  taxOffice?: string | null;
+  taxNumber?: string | null;
+  corporateStatus?: "none" | "pending" | "approved" | "rejected";
+  corporateDiscount?: string | number | null;
+  lastLoginAt?: string | null;
+  orders?: AdminUserOrderDto[];
 }
 
 export interface AdminStatsDto {

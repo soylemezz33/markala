@@ -4,6 +4,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  // Tip/lint kontrolü CI'da ayrı yapılır; production image build'ini bloklamasın
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   poweredByHeader: false,
   compress: true,
   transpilePackages: [

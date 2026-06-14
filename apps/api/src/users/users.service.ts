@@ -85,7 +85,16 @@ export class UsersService {
       select: {
         id: true, email: true, fullName: true, phone: true, accountType: true,
         companyName: true, taxOffice: true, taxNumber: true, role: true,
-        corporateStatus: true, createdAt: true, lastLoginAt: true,
+        corporateStatus: true, corporateDiscount: true, createdAt: true, lastLoginAt: true,
+        orders: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          select: {
+            id: true, orderNumber: true, total: true, status: true,
+            paymentStatus: true, createdAt: true,
+          },
+        },
       },
     });
   }
