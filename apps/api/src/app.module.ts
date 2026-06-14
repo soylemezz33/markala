@@ -15,6 +15,7 @@ import { HealthController } from "./health/health.controller";
 import { CorporateApplicationsModule } from "./corporate-applications/corporate-applications.module";
 import { StatsModule } from "./stats/stats.module";
 import { CouponsModule } from "./coupons/coupons.module";
+import { ReviewsModule } from "./reviews/reviews.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { CouponsModule } from "./coupons/coupons.module";
     CorporateApplicationsModule,
     StatsModule,
     CouponsModule,
+    ReviewsModule,
   ],
   controllers: [HealthController],
 })
