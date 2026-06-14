@@ -150,6 +150,14 @@ export class MarkalaApiClient {
       this.request<void>("DELETE", `/hero-slides/${id}`, undefined, { auth: true }),
   };
 
+  // === Coupons ===
+  coupons = {
+    list: () => this.request<CouponDto[]>("GET", "/coupons", undefined, { auth: true }),
+    create: (data: Partial<CouponDto>) => this.request<CouponDto>("POST", "/coupons", data, { auth: true }),
+    update: (id: string, data: Partial<CouponDto>) => this.request<CouponDto>("PATCH", `/coupons/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/coupons/${id}`, undefined, { auth: true }),
+  };
+
   // === Settings ===
   settings = {
     get: (group?: string) =>
@@ -176,6 +184,20 @@ export class MarkalaApiClient {
 
   adminStats = () =>
     this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+}
+
+export interface CouponDto {
+  id: string;
+  code: string;
+  type: "percentage" | "fixed_amount" | "free_shipping";
+  value: string;
+  minOrderAmount?: string | null;
+  maxUses?: number | null;
+  usedCount: number;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface HeroSlideDto {
