@@ -150,6 +150,14 @@ export class MarkalaApiClient {
       this.request<void>("DELETE", `/hero-slides/${id}`, undefined, { auth: true }),
   };
 
+  // === Banners ===
+  banners = {
+    list: () => this.request<BannerDto[]>("GET", "/banners", undefined, { auth: true }),
+    create: (data: Partial<BannerDto>) => this.request<BannerDto>("POST", "/banners", data, { auth: true }),
+    update: (id: string, data: Partial<BannerDto>) => this.request<BannerDto>("PATCH", `/banners/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/banners/${id}`, undefined, { auth: true }),
+  };
+
   // === Coupons ===
   coupons = {
     list: () => this.request<CouponDto[]>("GET", "/coupons", undefined, { auth: true }),
@@ -202,6 +210,21 @@ export class MarkalaApiClient {
 
   adminStats = () =>
     this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+}
+
+export interface BannerDto {
+  id: string;
+  title: string;
+  location: "hero" | "category" | "cart" | "footer";
+  imageUrl: string;
+  mobileImageUrl?: string | null;
+  ctaLabel?: string | null;
+  ctaHref?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  clickCount: number;
 }
 
 export interface ReviewDto {
