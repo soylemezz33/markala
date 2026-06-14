@@ -158,6 +158,13 @@ export class MarkalaApiClient {
     remove: (id: string) => this.request<void>("DELETE", `/coupons/${id}`, undefined, { auth: true }),
   };
 
+  // === Reviews ===
+  reviews = {
+    list: (status?: "pending" | "approved") => this.request<ReviewDto[]>("GET", "/reviews", undefined, { auth: true, query: { status } }),
+    setApproval: (id: string, isApproved: boolean) => this.request<ReviewDto>("PATCH", `/reviews/${id}/approval`, { isApproved }, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/reviews/${id}`, undefined, { auth: true }),
+  };
+
   // === Settings ===
   settings = {
     get: (group?: string) =>
@@ -184,6 +191,18 @@ export class MarkalaApiClient {
 
   adminStats = () =>
     this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+}
+
+export interface ReviewDto {
+  id: string;
+  productId: string;
+  userName: string;
+  userCompany?: string | null;
+  rating: number;
+  comment: string;
+  isApproved: boolean;
+  createdAt: string;
+  product?: { slug: string; name: string } | null;
 }
 
 export interface CouponDto {
