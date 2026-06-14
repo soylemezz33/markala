@@ -26,10 +26,19 @@ function makeRateLimiter(opts: { windowMs: number; max: number; path: string; me
     if (opts.method && req.method !== opts.method) return next();
     if (!req.path.endsWith(opts.path)) return next();
 
+    // GÜVENLİK: client-spoofable XFF[0] yerine CF-Connecting-IP (Cloudflare set eder + üzerine
+    // yazar → spoof edilemez). CF yoksa en SAĞDAKİ XFF (güvenilir proxy ekler; soldakiler sahte).
+    const cf = req.headers["cf-connecting-ip"];
     const fwd = req.headers["x-forwarded-for"];
+    const fwdRightmost =
+      typeof fwd === "string"
+        ? fwd.split(",").map((s) => s.trim()).filter(Boolean).pop()
+        : Array.isArray(fwd)
+          ? fwd[fwd.length - 1]
+          : undefined;
     const ip =
-      (typeof fwd === "string" ? fwd.split(",")[0]?.trim() : Array.isArray(fwd) ? fwd[0] : undefined) ||
-      req.ip ||
+      (typeof cf === "string" ? cf.trim() : Array.isArray(cf) ? cf[0] : undefined) ||
+      fwdRightmost ||
       req.socket.remoteAddress ||
       "unknown";
     const key = `${opts.path}:${ip}`;

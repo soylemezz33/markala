@@ -27,19 +27,8 @@ async function main() {
     },
   });
 
-  // === Demo admin (placeholder — yalnızca dev) ===
-  await prisma.user.upsert({
-    where: { email: "admin@markala.local" },
-    update: {},
-    create: {
-      email: "admin@markala.local",
-      passwordHash: await argon2.hash(process.env.SEED_ADMIN_PASSWORD ?? "DevAdmin!2026"),
-      fullName: "Markala Admin",
-      role: "admin",
-    },
-  });
-
-  // === Örnek müşteriler (liste/dashboard boş görünmesin) ===
+  // === Demo admin + örnek müşteriler — YALNIZCA SEED_DEMO=1 ile (prod'da ASLA) ===
+  // Bilinen şifreli (DevAdmin!2026 / Customer123!) hesaplar GÜVENLİK AÇIĞI; prod'da oluşturulmaz.
   const sampleCustomers = [
     { email: "ali@firma.com", fullName: "Ali Yıldız", phone: "+905330000000" },
     {
@@ -51,12 +40,25 @@ async function main() {
     },
     { email: "zeynep@gmail.com", fullName: "Zeynep Aksoy", phone: "+905350000000" },
   ];
-  for (const c of sampleCustomers) {
+  const seedDemo = process.env.SEED_DEMO === "1";
+  if (seedDemo) {
     await prisma.user.upsert({
-      where: { email: c.email },
+      where: { email: "admin@markala.local" },
       update: {},
-      create: { ...c, passwordHash: await argon2.hash("Customer123!"), role: "customer" },
+      create: {
+        email: "admin@markala.local",
+        passwordHash: await argon2.hash(process.env.SEED_ADMIN_PASSWORD ?? "DevAdmin!2026"),
+        fullName: "Markala Admin",
+        role: "admin",
+      },
     });
+    for (const c of sampleCustomers) {
+      await prisma.user.upsert({
+        where: { email: c.email },
+        update: {},
+        create: { ...c, passwordHash: await argon2.hash("Customer123!"), role: "customer" },
+      });
+    }
   }
 
   // === Test kupon ===
@@ -214,8 +216,8 @@ async function main() {
   }
 
   console.log("✅ Seed tamamlandı:", {
-    admins: 2,
-    customers: sampleCustomers.length,
+    admins: seedDemo ? 2 : 1,
+    customers: seedDemo ? sampleCustomers.length : 0,
     categories: mockCategories.length,
     products: productCount,
     heroSlides: heroSlides.length,
