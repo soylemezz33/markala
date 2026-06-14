@@ -16,7 +16,14 @@ import type { User } from "@markala/types";
  * - 401 → tek seferlik otomatik refresh + retry (withRefresh).
  */
 
+// baseUrl'i BURADA (apps/web app kodu) okuyoruz — Next.js process.env.NEXT_PUBLIC_API_URL'i
+// burada kesin inline eder (api-client paketi içindeki erişim her zaman inline olmuyor).
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (typeof window !== "undefined" ? `${window.location.protocol}//api.${window.location.host.replace(/^www\./, "")}` : "http://localhost:4000");
+
 const client = createMarkalaClient({
+  baseUrl: API_BASE_URL,
   getToken: () => useAuthStore.getState().accessToken,
 });
 
