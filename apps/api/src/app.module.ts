@@ -14,6 +14,7 @@ import { UsersModule } from "./users/users.module";
 import { HealthController } from "./health/health.controller";
 import { CorporateApplicationsModule } from "./corporate-applications/corporate-applications.module";
 import { StatsModule } from "./stats/stats.module";
+import { CouponsModule } from "./coupons/coupons.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { StatsModule } from "./stats/stats.module";
     SettingsModule,
     CorporateApplicationsModule,
     StatsModule,
+    CouponsModule,
   ],
   controllers: [HealthController],
 })
