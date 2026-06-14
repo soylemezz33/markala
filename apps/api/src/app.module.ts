@@ -19,6 +19,7 @@ import { ReviewsModule } from "./reviews/reviews.module";
 import { BlogModule } from "./blog/blog.module";
 import { BannersModule } from "./banners/banners.module";
 import { FaqsModule } from "./faqs/faqs.module";
+import { LegalModule } from "./legal/legal.module";
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { FaqsModule } from "./faqs/faqs.module";
     BlogModule,
     BannersModule,
     FaqsModule,
+    LegalModule,
   ],
   controllers: [HealthController],
 })
