@@ -158,6 +158,17 @@ export class MarkalaApiClient {
     remove: (id: string) => this.request<void>("DELETE", `/coupons/${id}`, undefined, { auth: true }),
   };
 
+  // === Blog ===
+  blog = {
+    listPosts: () => this.request<BlogPostDto[]>("GET", "/blog/posts", undefined, { auth: true }),
+    createPost: (data: Partial<BlogPostDto>) => this.request<BlogPostDto>("POST", "/blog/posts", data, { auth: true }),
+    updatePost: (id: string, data: Partial<BlogPostDto>) => this.request<BlogPostDto>("PATCH", `/blog/posts/${id}`, data, { auth: true }),
+    removePost: (id: string) => this.request<void>("DELETE", `/blog/posts/${id}`, undefined, { auth: true }),
+    publishPost: (id: string) => this.request<BlogPostDto>("POST", `/blog/posts/${id}/publish`, undefined, { auth: true }),
+    listCategories: () => this.request<BlogCategoryDto[]>("GET", "/blog/categories", undefined, { auth: true }),
+    createCategory: (data: Partial<BlogCategoryDto>) => this.request<BlogCategoryDto>("POST", "/blog/categories", data, { auth: true }),
+  };
+
   // === Reviews ===
   reviews = {
     list: (status?: "pending" | "approved") => this.request<ReviewDto[]>("GET", "/reviews", undefined, { auth: true, query: { status } }),
@@ -261,6 +272,35 @@ export interface AdminStatsDto {
   customerCount: number;
   pendingCorporate: number;
   ordersByStatus: Array<{ status: string; count: number }>;
+}
+
+export interface BlogPostDto {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage?: string | null;
+  authorName: string;
+  authorRole?: string | null;
+  categoryId?: string | null;
+  tags: string[];
+  status: "draft" | "published" | "archived";
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  ogImage?: string | null;
+  viewCount: number;
+  publishedAt?: string | null;
+  createdAt: string;
+  category?: { slug: string; name: string } | null;
+}
+
+export interface BlogCategoryDto {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  sortOrder: number;
 }
 
 /** Convenience: env'den otomatik kurulan client */
