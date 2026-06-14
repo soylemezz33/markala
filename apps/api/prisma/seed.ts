@@ -175,6 +175,44 @@ async function main() {
     },
   });
 
+  // === Faz 2: Banner örnekleri ===
+  const banners = [
+    { id: "ban_hero_welcome", title: "İlk Sipariş %10", location: "hero", imageUrl: "/api/mockup?slug=hero-welcome&w=1600&h=600", ctaLabel: "ALIŞVERİŞE BAŞLA", ctaHref: "/kampanyalar", sortOrder: 1 },
+    { id: "ban_cart_ramazan", title: "Ramazan Kampanya", location: "cart", imageUrl: "/api/mockup?slug=ramazan&w=1200&h=300", ctaLabel: "KAMPANYAYI GÖR", ctaHref: "/kampanyalar", sortOrder: 2, isActive: false },
+  ];
+  for (const b of banners) {
+    await prisma.banner.upsert({ where: { id: b.id }, update: {}, create: b });
+  }
+
+  // === Faz 2: SSS örnekleri ===
+  const faqs = [
+    { id: "faq_dosya", question: "Tasarım dosyamı hangi formatta göndermeliyim?", answer: "PDF (baskıya hazır, CMYK, 3mm taşma payı) tercih edilir. AI, PSD ve yüksek çözünürlüklü JPG de kabul edilir.", category: "tasarim", sortOrder: 1 },
+    { id: "faq_selefon", question: "Selefon ile UV lak farkı nedir?", answer: "Selefon tüm yüzeyi kaplar; UV lak ise seçili bölgelere parlaklık verir.", category: "urun", productSlug: "klasik-kartvizit", sortOrder: 2 },
+    { id: "faq_kargo", question: "Kaç günde elime ulaşır?", answer: "Üretim süresi + 1-3 iş günü kargo. Ürün sayfasında belirtilen üretim süresine kargo eklenir.", category: "kargo", sortOrder: 3 },
+  ];
+  for (const f of faqs) {
+    await prisma.faq.upsert({ where: { id: f.id }, update: {}, create: f });
+  }
+
+  // === Faz 2: Yasal sayfalar ===
+  const legals = [
+    { slug: "kvkk", title: "KVKK Aydınlatma Metni", content: "<p>6698 sayılı KVKK kapsamında kişisel verileriniz...</p>", version: "v3.1" },
+    { slug: "mesafeli-satis", title: "Mesafeli Satış Sözleşmesi", content: "<p>İşbu sözleşme mesafeli satışlara ilişkin...</p>", version: "v2.4" },
+    { slug: "gizlilik", title: "Gizlilik İlkesi", content: "<p>Gizliliğiniz bizim için önemlidir...</p>", version: "v2.0" },
+  ];
+  for (const l of legals) {
+    await prisma.legalPage.upsert({ where: { slug: l.slug }, update: {}, create: l });
+  }
+
+  // === Faz 2: Kampanya paketleri ===
+  const packages = [
+    { slug: "esnaf-baslangic", name: "Esnaf Başlangıç", category: "esnaf", contents: "1.000 kartvizit + 1 kaşe + 250 broşür", listPrice: new Prisma.Decimal(950), packagePrice: new Prisma.Decimal(749), sortOrder: 1 },
+    { slug: "restoran-acilis", name: "Restoran Açılış", category: "acilis", contents: "Vinil branda + 2.000 menü + amerikan servis", listPrice: new Prisma.Decimal(6500), packagePrice: new Prisma.Decimal(4999), designSupport: true, sortOrder: 2 },
+  ];
+  for (const p of packages) {
+    await prisma.campaignPackage.upsert({ where: { slug: p.slug }, update: {}, create: p });
+  }
+
   console.log("✅ Seed tamamlandı:", {
     admins: 2,
     customers: sampleCustomers.length,
@@ -184,6 +222,10 @@ async function main() {
     settings: settings.length,
     blogCategories: blogCats.length,
     blogPosts: 1,
+    banners: banners.length,
+    faqs: faqs.length,
+    legalPages: legals.length,
+    campaignPackages: packages.length,
   });
 }
 

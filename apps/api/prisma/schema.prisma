@@ -566,3 +566,75 @@ model SiteSetting {
   @@index([group])
   @@map("site_settings")
 }
+
+// === Faz 2: Banner yönetimi ===
+model Banner {
+  id             String    @id @default(cuid())
+  title          String
+  location       String // hero | category | cart | footer
+  imageUrl       String    @map("image_url")
+  mobileImageUrl String?   @map("mobile_image_url")
+  ctaLabel       String?   @map("cta_label")
+  ctaHref        String?   @map("cta_href")
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  sortOrder      Int       @default(0) @map("sort_order")
+  isActive       Boolean   @default(true) @map("is_active")
+  clickCount     Int       @default(0) @map("click_count")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@index([location, isActive])
+  @@map("banners")
+}
+
+// === Faz 2: SSS (FAQ) ===
+model Faq {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String   @db.Text
+  category    String // tasarim | urun | kargo | odeme | iade | genel
+  productSlug String?  @map("product_slug")
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([category, isActive, sortOrder])
+  @@map("faqs")
+}
+
+// === Faz 2: Yasal sayfalar ===
+model LegalPage {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   @db.Text
+  version   String   @default("v1.0")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("legal_pages")
+}
+
+// === Faz 2: Kampanya paketleri (bundle) ===
+model CampaignPackage {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+  category      String // esnaf | kurumsal | etkinlik | acilis | promosyon
+  contents      String    @db.Text
+  listPrice     Decimal   @map("list_price") @db.Decimal(10, 2)
+  packagePrice  Decimal   @map("package_price") @db.Decimal(10, 2)
+  stockLimit    Int?      @map("stock_limit")
+  endDate       DateTime? @map("end_date")
+  designSupport Boolean   @default(false) @map("design_support")
+  sortOrder     Int       @default(0) @map("sort_order")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([category, isActive])
+  @@map("campaign_packages")
+}
