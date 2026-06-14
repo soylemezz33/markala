@@ -180,6 +180,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@markala/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
       '@markala/mock-data':
         specifier: workspace:*
         version: link:../../packages/mock-data

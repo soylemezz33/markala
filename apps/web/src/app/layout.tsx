@@ -10,6 +10,7 @@ import { Analytics } from "@/components/analytics";
 import { CookieConsent } from "@/components/cookie-consent";
 import { FloatingActions } from "@/components/floating-actions";
 import { WebVitals } from "@/components/web-vitals";
+import { AuthBootstrap } from "@/components/auth-bootstrap";
 import "./globals.css";
 
 const fontSans = DM_Sans({
@@ -125,6 +126,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
 
         <ThemeBody />
+        <AuthBootstrap />
 
         {/* Site wrapper — sabit max genişlik (1440), kenarlarda görsel ayrım YOK */}
         <div

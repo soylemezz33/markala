@@ -78,10 +78,20 @@ export class MarkalaApiClient {
 
   // === Auth ===
   auth = {
-    register: (data: { email: string; password: string; fullName: string; phone?: string }) =>
+    register: (data: {
+      email: string;
+      password: string;
+      fullName: string;
+      phone?: string;
+      marketingConsent?: boolean;
+    }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/register", data),
     login: (data: { email: string; password: string }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/login", data),
+    /** Refresh cookie (mk_refresh, httpOnly) ile yeni access token + user. */
+    refresh: () =>
+      this.request<{ accessToken: string; user: User }>("POST", "/auth/refresh"),
+    logout: () => this.request<{ ok: boolean }>("POST", "/auth/logout"),
     me: () => this.request<User>("GET", "/auth/me", undefined, { auth: true }),
   };
 

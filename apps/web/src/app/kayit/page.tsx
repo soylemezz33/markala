@@ -10,6 +10,16 @@ import { useAuthStore } from "@/lib/auth-store";
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
+/** TR telefon girişini (0532…, 532…, +90532…) API'nin beklediği E.164'e (+90XXXXXXXXXX) çevirir. Geçersizse undefined. */
+function toE164TR(raw: string): string | undefined {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return undefined;
+  let national = digits;
+  if (national.startsWith("90")) national = national.slice(2);
+  else if (national.startsWith("0")) national = national.slice(1);
+  return national.length === 10 && national.startsWith("5") ? `+90${national}` : undefined;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const register = useAuthStore((s) => s.register);
@@ -35,7 +45,16 @@ export default function RegisterPage() {
       setError("KVKK aydınlatma metnini onaylamanız gerekiyor.");
       return;
     }
-    const res = await register({ email, password, fullName, phone, marketingConsent: marketingOptIn });
+    // Telefon opsiyonel; girilmişse E.164'e normalize et (API +90… bekler).
+    let normalizedPhone: string | undefined;
+    if (phone.trim()) {
+      normalizedPhone = toE164TR(phone);
+      if (!normalizedPhone) {
+        setError("Telefon numarası geçersiz. Örn: 0532 123 45 67");
+        return;
+      }
+    }
+    const res = await register({ email, password, fullName, phone: normalizedPhone, marketingConsent: marketingOptIn });
     if (res.ok) router.replace("/hesabim");
     else setError(res.error ?? "Kayıt başarısız.");
   }
@@ -62,7 +81,7 @@ export default function RegisterPage() {
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="0532 123 45 67" />
             </Field>
             <Field label="Şifre">
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} minLength={6} placeholder="En az 6 karakter" />
+              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} minLength={8} autoComplete="new-password" placeholder="En az 8 karakter — büyük, küçük harf ve rakam" />
             </Field>
 
             <label className="flex items-start gap-2 text-sm text-ink-700 mt-3">

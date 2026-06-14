@@ -13,6 +13,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@markala/api-client": "workspace:*",
     "@markala/mock-data": "workspace:*",
     "@markala/types": "workspace:*",
     "@markala/ui": "workspace:*",
