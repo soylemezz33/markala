@@ -198,6 +198,14 @@ export class MarkalaApiClient {
     remove: (id: string) => this.request<void>("DELETE", `/legal/${id}`, undefined, { auth: true }),
   };
 
+  // === Campaign packages ===
+  campaignPackages = {
+    list: () => this.request<CampaignPackageDto[]>("GET", "/campaign-packages", undefined, { auth: true }),
+    create: (data: Partial<CampaignPackageDto>) => this.request<CampaignPackageDto>("POST", "/campaign-packages", data, { auth: true }),
+    update: (id: string, data: Partial<CampaignPackageDto>) => this.request<CampaignPackageDto>("PATCH", `/campaign-packages/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/campaign-packages/${id}`, undefined, { auth: true }),
+  };
+
   // === Reviews ===
   reviews = {
     list: (status?: "pending" | "approved") => this.request<ReviewDto[]>("GET", "/reviews", undefined, { auth: true, query: { status } }),
@@ -356,6 +364,22 @@ export interface BlogCategoryDto {
   name: string;
   description?: string | null;
   sortOrder: number;
+}
+
+export interface CampaignPackageDto {
+  id: string;
+  slug: string;
+  name: string;
+  category: "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon";
+  contents: string;
+  listPrice: string;
+  packagePrice: string;
+  stockLimit?: number | null;
+  endDate?: string | null;
+  designSupport: boolean;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface LegalPageDto {
