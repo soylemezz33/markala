@@ -1,4 +1,5 @@
 "use server";
+
 import { getAdminApi } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 
@@ -14,7 +15,7 @@ export async function updateSlide(id: string, data: Record<string, unknown>) {
   revalidatePath("/slider");
 }
 
-export async function deleteSlide(id: string) {
+export async function removeSlide(id: string) {
   const api = await getAdminApi();
   await api.heroSlides.remove(id);
   revalidatePath("/slider");
