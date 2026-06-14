@@ -17,6 +17,7 @@ import { StatsModule } from "./stats/stats.module";
 import { CouponsModule } from "./coupons/coupons.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { BlogModule } from "./blog/blog.module";
+import { BannersModule } from "./banners/banners.module";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { BlogModule } from "./blog/blog.module";
     CouponsModule,
     ReviewsModule,
     BlogModule,
+    BannersModule,
   ],
   controllers: [HealthController],
 })
