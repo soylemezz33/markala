@@ -95,9 +95,27 @@ async function main() {
       console.warn(`⚠ Ürün ${p.slug} için kategori bulunamadı: ${p.categorySlug} — atlanıyor`);
       continue;
     }
+    const pa = p as unknown as Record<string, unknown>;
+    // SEO/zengin içerik — storefront ürün sayfası bunları gösterir (mock-data'dan API'ye taşınıyor).
+    const content = {
+      features: pa.features ?? null,
+      useCases: pa.useCases ?? null,
+      specifications: pa.specifications ?? null,
+      faqs: pa.faqs ?? null,
+      relatedSlugs: pa.relatedSlugs ?? null,
+      seo: pa.seo ?? null,
+      brand: pa.brand ?? null,
+      sku: pa.sku ?? null,
+      rating: pa.rating ?? null,
+    } as unknown as Prisma.InputJsonValue;
     await prisma.product.upsert({
       where: { slug: p.slug },
-      update: {},
+      // Mevcut ürünlere content + güncel fiyatı ekle (admin elle düzenlemediyse güvenli).
+      update: {
+        content,
+        basePrice: new Prisma.Decimal(p.basePrice),
+        startingPrice: p.startingPrice !== undefined ? new Prisma.Decimal(p.startingPrice) : null,
+      },
       create: {
         slug: p.slug,
         name: p.name,
@@ -112,6 +130,7 @@ async function main() {
         badges: (p as { badges?: string[] }).badges ?? [],
         bestseller: (p as { bestseller?: boolean }).bestseller ?? false,
         parameters: ((p as { parameters?: unknown }).parameters ?? []) as Prisma.InputJsonValue,
+        content,
       },
     });
     productCount++;

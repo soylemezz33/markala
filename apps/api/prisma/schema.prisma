@@ -200,6 +200,9 @@ model Product {
   isActive         Boolean  @default(true) @map("is_active")
   /// Konfigüratör parametreleri JSON: { id, label, kind, options, ... }
   parameters       Json     @default("[]")
+  /// SEO/içerik JSON: { features, useCases, specifications, faqs, relatedSlugs, seo, brand, sku, rating }
+  /// Storefront ürün sayfası bu zengin içeriği gösterir — API canonical kaynak olsun, SEO regresyonu olmasın.
+  content          Json?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
