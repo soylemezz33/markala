@@ -11,6 +11,7 @@ export class CategoriesService {
     return this.prisma.category.findMany({
       where: includeInactive ? {} : { isActive: true },
       orderBy: { sortOrder: "asc" },
+      include: { _count: { select: { products: true } } },
     });
   }
 

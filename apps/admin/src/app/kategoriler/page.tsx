@@ -46,7 +46,7 @@ export default async function CategoriesAdminPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-ink-500 hidden md:table-cell">{c.slug}</td>
-                  <td className="px-4 py-3 text-center text-ink-700 tabular-nums">{c.productCount ?? 0}</td>
+                  <td className="px-4 py-3 text-center text-ink-700 tabular-nums">{(c as { _count?: { products: number } })._count?.products ?? 0}</td>
                   <td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(c.startingPrice).toLocaleString("tr-TR")} ₺</td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex gap-1">
