@@ -150,6 +150,31 @@ async function main() {
     });
   }
 
+  // === Blog kategorileri + örnek yazı ===
+  const blogCats = [
+    { slug: "rehber", name: "Rehber", sortOrder: 1 },
+    { slug: "karsilastirma", name: "Karşılaştırma", sortOrder: 2 },
+    { slug: "sektor", name: "Sektör", sortOrder: 3 },
+  ];
+  for (const bc of blogCats) {
+    await prisma.blogCategory.upsert({ where: { slug: bc.slug }, update: {}, create: bc });
+  }
+  const rehber = await prisma.blogCategory.findUnique({ where: { slug: "rehber" } });
+  await prisma.blogPost.upsert({
+    where: { slug: "kartvizit-tasariminda-10-kritik-detay" },
+    update: {},
+    create: {
+      slug: "kartvizit-tasariminda-10-kritik-detay",
+      title: "Kartvizit Tasarımında 10 Kritik Detay",
+      excerpt: "Profesyonel bir kartvizit için dikkat edilmesi gereken tasarım ve baskı detayları.",
+      content: "Kartvizit, markanızın elden ele dolaşan en küçük ama en etkili tanıtım aracıdır...",
+      authorName: "Hasan Söylemez",
+      categoryId: rehber?.id ?? null,
+      tags: ["kartvizit", "tasarım"],
+      status: "draft",
+    },
+  });
+
   console.log("✅ Seed tamamlandı:", {
     admins: 2,
     customers: sampleCustomers.length,
@@ -157,6 +182,8 @@ async function main() {
     products: productCount,
     heroSlides: heroSlides.length,
     settings: settings.length,
+    blogCategories: blogCats.length,
+    blogPosts: 1,
   });
 }
 
