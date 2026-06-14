@@ -18,6 +18,7 @@ import { CouponsModule } from "./coupons/coupons.module";
 import { ReviewsModule } from "./reviews/reviews.module";
 import { BlogModule } from "./blog/blog.module";
 import { BannersModule } from "./banners/banners.module";
+import { FaqsModule } from "./faqs/faqs.module";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { BannersModule } from "./banners/banners.module";
     ReviewsModule,
     BlogModule,
     BannersModule,
+    FaqsModule,
   ],
   controllers: [HealthController],
 })
