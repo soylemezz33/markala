@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { ArrowLeft, FloppyDisk, Eye, Trash, Plus, ArrowsClockwise } from "@phosphor-icons/react";
+import { ImageGallery } from "@/components/image-uploader";
 import { updateProduct } from "./actions";
 
 export interface CategoryRow {
@@ -61,6 +62,7 @@ export function ProductDetailClient({ product, categories }: Props) {
   const [keywords, setKeywords] = useState(
     (product.seo?.keywords ?? []).join(", "),
   );
+  const [images, setImages] = useState<string[]>(product.images ?? []);
   const [saving, setSaving] = useState(false);
 
   const matrixParam = product.parameters.find((p) => p.kind === "matrix");
@@ -76,6 +78,7 @@ export function ProductDetailClient({ product, categories }: Props) {
         productionTime,
         startingPrice,
         bestseller,
+        images,
         seo: {
           title: seoTitle,
           description: seoDesc,
@@ -328,24 +331,7 @@ export function ProductDetailClient({ product, categories }: Props) {
           </Card>
 
           <Card title="Görseller">
-            <div className="grid grid-cols-3 gap-2">
-              {product.images.slice(0, 6).map((img, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={i}
-                  src={
-                    img.startsWith("http") || img.startsWith("/api")
-                      ? img
-                      : `https://markala.com.tr${img}`
-                  }
-                  alt={`${product.name} ${i + 1}`}
-                  className="aspect-square object-cover rounded border border-paper-200"
-                />
-              ))}
-            </div>
-            <button className="mt-3 w-full py-2 rounded border-2 border-dashed border-paper-200 text-xs text-ink-500 hover:border-ink-300 hover:bg-paper-100">
-              + Yeni görsel yükle (R2)
-            </button>
+            <ImageGallery value={images} onChange={setImages} />
           </Card>
 
           <Card title="Tehlikeli Bölge">

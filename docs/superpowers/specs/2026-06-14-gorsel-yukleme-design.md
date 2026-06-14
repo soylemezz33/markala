@@ -103,6 +103,8 @@ Tarayıcı (ImageUploader, File)
 
 ## Prod'a geçiş
 
-R2 bucket + credential'lar hazır olunca env'e eklenir:
-`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`, `R2_BUCKET`, `R2_PUBLIC_BASE`.
-Tanımlanınca sürücü otomatik `r2`'ye geçer; kod değişmez.
+R2 bucket + credential'lar hazır olunca env'e eklenir (mevcut `CLOUDFLARE_R2_*` konvansiyonu):
+`CLOUDFLARE_R2_ACCOUNT_ID` (endpoint bundan türetilir), `CLOUDFLARE_R2_ACCESS_KEY`,
+`CLOUDFLARE_R2_SECRET`, `CLOUDFLARE_R2_BUCKET`, `CLOUDFLARE_R2_PUBLIC_BASE`.
+`CLOUDFLARE_R2_ACCESS_KEY` tanımlanınca sürücü otomatik `r2`'ye geçer; kod değişmez.
+Dev'de local sürücü mutlak URL'i `API_PUBLIC_URL` ?? `http://localhost:<PORT>`'tan üretir.

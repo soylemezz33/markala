@@ -21,6 +21,7 @@ import { BannersModule } from "./banners/banners.module";
 import { FaqsModule } from "./faqs/faqs.module";
 import { LegalModule } from "./legal/legal.module";
 import { CampaignPackagesModule } from "./campaign-packages/campaign-packages.module";
+import { StorageModule } from "./storage/storage.module";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { CampaignPackagesModule } from "./campaign-packages/campaign-packages.mo
     FaqsModule,
     LegalModule,
     CampaignPackagesModule,
+    StorageModule,
   ],
   controllers: [HealthController],
 })

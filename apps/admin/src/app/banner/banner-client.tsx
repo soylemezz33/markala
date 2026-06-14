@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
+import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
 import type { BannerDto } from "@markala/api-client";
 import { createBanner, updateBanner, removeBanner } from "./actions";
@@ -134,6 +135,10 @@ export function BannerClient({ banners }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.imageUrl.trim()) {
+      toast.error("Lütfen bir görsel yükleyin.");
+      return;
+    }
     const payload = buildPayload(form);
 
     startTransition(async () => {
@@ -315,30 +320,23 @@ export function BannerClient({ banners }: Props) {
               {/* Image URL */}
               <div>
                 <label className="block text-xs font-semibold text-ink-700 mb-1">
-                  Görsel URL <span className="text-error">*</span>
+                  Görsel <span className="text-error">*</span>
                 </label>
-                <input
-                  type="text"
-                  required
+                <ImageUploader
                   value={form.imageUrl}
-                  onChange={(e) => setField("imageUrl", e.target.value)}
-                  placeholder="https://cdn.markala.com/banner.jpg"
-                  className="w-full px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm text-ink-900 outline-none focus:border-brand-500"
+                  onChange={(url) => setField("imageUrl", url)}
                 />
               </div>
 
               {/* Mobile Image URL */}
               <div>
                 <label className="block text-xs font-semibold text-ink-700 mb-1">
-                  Mobil Görsel URL{" "}
+                  Mobil Görsel{" "}
                   <span className="font-normal text-ink-500">(boş = masaüstü ile aynı)</span>
                 </label>
-                <input
-                  type="text"
+                <ImageUploader
                   value={form.mobileImageUrl}
-                  onChange={(e) => setField("mobileImageUrl", e.target.value)}
-                  placeholder="https://cdn.markala.com/banner-mobile.jpg"
-                  className="w-full px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm text-ink-900 outline-none focus:border-brand-500"
+                  onChange={(url) => setField("mobileImageUrl", url)}
                 />
               </div>
 

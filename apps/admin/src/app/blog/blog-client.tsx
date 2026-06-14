@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
+import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Trash, CheckCircle, X } from "@phosphor-icons/react";
 import type { BlogPostDto, BlogCategoryDto } from "@markala/api-client";
 import { createPost, updatePost, removePost, publishPost } from "./actions";
@@ -448,15 +449,12 @@ export function BlogClient({ posts, categories }: Props) {
               {/* Cover image */}
               <div>
                 <label className="block text-xs font-semibold text-ink-700 mb-1">
-                  Kapak Görseli URL{" "}
+                  Kapak Görseli{" "}
                   <span className="font-normal text-ink-500">(isteğe bağlı)</span>
                 </label>
-                <input
-                  type="url"
+                <ImageUploader
                   value={form.coverImage}
-                  onChange={(e) => setField("coverImage", e.target.value)}
-                  placeholder="https://cdn.markala.com.tr/blog/kapak.jpg"
-                  className="w-full px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm text-ink-900 outline-none focus:border-brand-500"
+                  onChange={(url) => setField("coverImage", url)}
                 />
               </div>
 
