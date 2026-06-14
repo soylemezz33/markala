@@ -20,6 +20,7 @@ import { BlogModule } from "./blog/blog.module";
 import { BannersModule } from "./banners/banners.module";
 import { FaqsModule } from "./faqs/faqs.module";
 import { LegalModule } from "./legal/legal.module";
+import { CampaignPackagesModule } from "./campaign-packages/campaign-packages.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { LegalModule } from "./legal/legal.module";
     BannersModule,
     FaqsModule,
     LegalModule,
+    CampaignPackagesModule,
   ],
   controllers: [HealthController],
 })
