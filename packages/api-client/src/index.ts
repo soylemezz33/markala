@@ -158,6 +158,18 @@ export class MarkalaApiClient {
     remove: (id: string) => this.request<void>("DELETE", `/banners/${id}`, undefined, { auth: true }),
   };
 
+  // === FAQs ===
+  faqs = {
+    list: (category?: string) =>
+      this.request<FaqDto[]>("GET", "/faqs", undefined, { auth: true, query: { category } }),
+    create: (data: Partial<FaqDto>) =>
+      this.request<FaqDto>("POST", "/faqs", data, { auth: true }),
+    update: (id: string, data: Partial<FaqDto>) =>
+      this.request<FaqDto>("PATCH", `/faqs/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/faqs/${id}`, undefined, { auth: true }),
+  };
+
   // === Coupons ===
   coupons = {
     list: () => this.request<CouponDto[]>("GET", "/coupons", undefined, { auth: true }),
@@ -225,6 +237,17 @@ export interface BannerDto {
   sortOrder: number;
   isActive: boolean;
   clickCount: number;
+}
+
+export interface FaqDto {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  productSlug?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface ReviewDto {
