@@ -189,6 +189,15 @@ export class MarkalaApiClient {
     createCategory: (data: Partial<BlogCategoryDto>) => this.request<BlogCategoryDto>("POST", "/blog/categories", data, { auth: true }),
   };
 
+  // === Legal pages ===
+  legal = {
+    list: () => this.request<LegalPageDto[]>("GET", "/legal", undefined, { auth: true }),
+    detail: (slug: string) => this.request<LegalPageDto>("GET", `/legal/${slug}`, undefined, { auth: true }),
+    create: (data: Partial<LegalPageDto>) => this.request<LegalPageDto>("POST", "/legal", data, { auth: true }),
+    update: (id: string, data: Partial<LegalPageDto>) => this.request<LegalPageDto>("PATCH", `/legal/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/legal/${id}`, undefined, { auth: true }),
+  };
+
   // === Reviews ===
   reviews = {
     list: (status?: "pending" | "approved") => this.request<ReviewDto[]>("GET", "/reviews", undefined, { auth: true, query: { status } }),
@@ -347,6 +356,17 @@ export interface BlogCategoryDto {
   name: string;
   description?: string | null;
   sortOrder: number;
+}
+
+export interface LegalPageDto {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  version: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** Convenience: env'den otomatik kurulan client */
