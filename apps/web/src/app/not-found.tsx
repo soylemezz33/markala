@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  House, MagnifyingGlass, ArrowRight, Package,
+  House, ArrowRight, Package,
   Question, ChatCircle,
 } from "@phosphor-icons/react/dist/ssr";
 

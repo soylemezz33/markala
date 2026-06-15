@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
-import { BookOpen, MagnifyingGlass, ArrowRight, CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { BookOpen, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { glossary, glossaryCategories, type GlossaryCategory } from "@/lib/glossary";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 

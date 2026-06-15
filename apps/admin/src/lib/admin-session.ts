@@ -13,8 +13,7 @@ export interface AdminSession {
   iat: number; // saniye
 }
 
-const enc = new TextEncoder();
-const dec = new TextDecoder();
+const enc = new TextEncoder();
 
 function b64urlEncode(bytes: ArrayBuffer | Uint8Array): string {
   const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);

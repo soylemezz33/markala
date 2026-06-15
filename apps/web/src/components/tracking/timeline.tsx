@@ -1,10 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle, Circle, Truck, Package, Path, MapPin } from "@phosphor-icons/react";
+import { CheckCircle, Circle, Truck, MapPin } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import type { TrackingEvent } from "@markala/types";
-import { formatDate } from "@/lib/format";
 
 interface Props {
   events: TrackingEvent[];

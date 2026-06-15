@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@markala/ui";
-import { Trash, Warning, ShieldCheck, FileText, Download } from "@phosphor-icons/react";
+import { Trash, Warning, ShieldCheck, Download } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 
 export default function DeleteAccountPage() {

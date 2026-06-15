@@ -6,8 +6,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { services } from "@/lib/services";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
-
-const SITE = "https://markala.com.tr";
+
 
 export const metadata: Metadata = {
   title: "Matbaa Hizmetleri — Tasarım Desteği, Toplu Baskı, Acil Üretim",

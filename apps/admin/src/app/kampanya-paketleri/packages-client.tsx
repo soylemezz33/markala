@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
 import type { CampaignPackageDto } from "@markala/api-client";
-import { createPackage, updatePackage, removePackage } from "./actions";
+import { createPackage, updatePackage } from "./actions";
 
 interface Props {
   packages: CampaignPackageDto[];

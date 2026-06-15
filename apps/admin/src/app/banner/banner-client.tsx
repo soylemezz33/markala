@@ -6,7 +6,7 @@ import { toast } from "@/components/toast";
 import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
 import type { BannerDto } from "@markala/api-client";
-import { createBanner, updateBanner, removeBanner } from "./actions";
+import { createBanner, updateBanner } from "./actions";
 
 interface Props {
   banners: BannerDto[];
