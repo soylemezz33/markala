@@ -13,6 +13,9 @@
 | `POST /ai/search` | `semantic-search.service.ts` | PoC stub (keyword overlap) |
 | `POST /ai/design-check` | `design-quality.service.ts` | PoC stub (sabit değer döner) |
 | `POST /ai/chat` | `chatbot.service.ts` | PoC stub (kural tabanlı) |
+| `POST /ai/generate-description` | `description-generator.service.ts` | **Şablon taslak üretici + Claude-hazır seam** — deterministik Türkçe açıklama/SSS taslağı; dış AI/maliyet yok, `ANTHROPIC_API_KEY` ile Claude'a düşüş hazır |
+
+> **Açıklama üretici tasarımı (KVKK + maliyet):** Sağlayıcıya yalnızca ürün metadata'sı (ad/kategori/anahtar kelime) gider — müşteri PII'si asla. Çıktı taslaktır, admin onayı olmadan yayına çıkmaz (insan-in-the-loop, EU AI Act m.50 uyumlu). Prod'da taslak `Product.content`'te cache'lenip tekrar token maliyeti önlenir. Sağlayıcı yokken deterministik şablona güvenli düşüş → CI'da dış bağımlılıksız test edilir.
 
 ### Stub → Prod Yükseltme Öncelikleri
 

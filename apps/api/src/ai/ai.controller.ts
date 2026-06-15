@@ -3,7 +3,13 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { SemanticSearchService } from "./semantic-search.service";
 import { DesignQualityService } from "./design-quality.service";
 import { ChatbotService } from "./chatbot.service";
-import { SemanticSearchDto, DesignQualityCheckDto, ChatbotMessageDto } from "./ai.dto";
+import { DescriptionGeneratorService } from "./description-generator.service";
+import {
+  SemanticSearchDto,
+  DesignQualityCheckDto,
+  ChatbotMessageDto,
+  GenerateDescriptionDto,
+} from "./ai.dto";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 
 @ApiTags("ai")
@@ -13,6 +19,7 @@ export class AiController {
     private readonly searchService: SemanticSearchService,
     private readonly designService: DesignQualityService,
     private readonly chatbotService: ChatbotService,
+    private readonly descriptionService: DescriptionGeneratorService,
   ) {}
 
   @Post("search")
@@ -35,5 +42,16 @@ export class AiController {
   @ApiOperation({ summary: "Chatbot (PoC)", description: "Ürün öneri ve sipariş yönlendirme chatbotu. Auth opsiyonel." })
   chat(@Body() dto: ChatbotMessageDto) {
     return this.chatbotService.chat(dto);
+  }
+
+  @Post("generate-description")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Ürün açıklaması taslağı üret (PoC)",
+    description: "Ürün adı + kategoriden Türkçe açıklama/SSS taslağı üretir (admin içi, insan onaylı).",
+  })
+  generateDescription(@Body() dto: GenerateDescriptionDto) {
+    return this.descriptionService.generate(dto);
   }
 }
