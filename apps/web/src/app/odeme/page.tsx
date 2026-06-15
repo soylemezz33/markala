@@ -325,6 +325,20 @@ export default function CheckoutPage() {
             disabled={step !== "onay"}
           >
             <div className="space-y-4">
+              {/* TKHK 6502 m.55/1-c — cayma hakkı istisnası, sipariş öncesi yazılı bildirim zorunluluğu */}
+              <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
+                <p className="font-semibold mb-1">⚠️ Cayma Hakkı Hakkında Önemli Bilgi</p>
+                <p>
+                  Sipariş verdiğiniz ürünler <strong>kişiye özel üretim matbaa ürünüdür</strong> (kartvizit,
+                  branda, kaşe, plaket vb.). 6502 Sayılı TKHK m.55/1-c gereğince tüketicinin istekleri
+                  doğrultusunda hazırlanan ürünlerde <strong>cayma hakkı kullanılamaz</strong>.
+                  Üretim hatası veya teslimat hasarı halinde ücretsiz değişim hakkı saklıdır.{" "}
+                  <a href="/yasal/iade" className="underline font-medium hover:text-amber-700">
+                    Detaylı bilgi →
+                  </a>
+                </p>
+              </div>
+
               <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-sm text-ink-700">
                 Siparişini <strong>WhatsApp</strong> veya <strong>telefon</strong> üzerinden tamamlıyoruz. Butona
                 bastığında sipariş özetin WhatsApp'a aktarılır; ekibimiz ödeme (havale/EFT veya kapıda) ve üretim

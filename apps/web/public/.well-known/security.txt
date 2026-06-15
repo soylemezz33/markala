@@ -1,0 +1,12 @@
+# Markala.com.tr — Güvenlik Açığı Bildirimi (RFC 9116)
+# KVKK m.12 teknik gereksinim kapsamında sorumlu ifşa kanalı
+
+Contact: mailto:guvenlik@markala.com.tr
+Contact: https://markala.com.tr/iletisim
+Preferred-Languages: tr, en
+Policy: https://markala.com.tr/yasal/gizlilik
+Expires: 2027-01-01T00:00:00.000Z
+
+# Lütfen tespit ettiğiniz güvenlik açıklarını kamuoyuyla paylaşmadan önce
+# yukarıdaki iletişim kanalları üzerinden bildirin. 72 saat içinde yanıt verilir.
+# Kötü niyetli kullanım amaçlı olmayan raporlar için teşekkür ederiz.
