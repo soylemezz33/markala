@@ -77,16 +77,8 @@ export async function POST(req: NextRequest) {
     .toISOString()
     .slice(0, 10);
 
-  console.log("[kvkk-basvuru] new application:", {
-    ticketId,
-    fullName,
-    email,
-    requestType,
-    hasTc: Boolean(tcKimlik),
-    hasIdDoc: Boolean(body.hasIdDocument),
-    detailsPreview: details.slice(0, 80),
-    dueDate,
-  });
+  // PII loglanmaz — sadece ticketId + talep tipi + vade
+  console.log(`[kvkk-basvuru] new application: ${ticketId} type=${requestType} dueDate=${dueDate}`);
 
   // TODO: prod'da
   //   await prisma.kvkkRequest.create({ ... })

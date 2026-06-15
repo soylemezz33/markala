@@ -63,12 +63,7 @@ export async function POST(req: NextRequest) {
   const refId = `KB-${Date.now().toString(36).toUpperCase()}`;
 
   if (!isMailConfigured()) {
-    console.log("[kurumsal-basvuru] yeni başvuru (SMTP devre dışı, mock):", {
-      companyName,
-      taxNumber,
-      contactName,
-      email,
-    });
+    console.log(`[kurumsal-basvuru] yeni başvuru (SMTP devre dışı, mock): refId=${refId}`);
     return NextResponse.json({
       ok: true,
       refId,

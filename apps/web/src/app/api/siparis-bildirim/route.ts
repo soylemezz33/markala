@@ -59,12 +59,7 @@ export async function POST(req: NextRequest) {
   const { orderNumber, channel, customerName, email, phone, accountType, taxOffice, taxNumber, address, items = [], subtotal, shipping, total } = body;
 
   if (!isMailConfigured()) {
-    console.log("[siparis-bildirim] yeni sipariş (SMTP devre dışı, mock):", {
-      orderNumber,
-      customerName,
-      total,
-      items: items.length,
-    });
+    console.log(`[siparis-bildirim] yeni sipariş (SMTP devre dışı, mock): no=${orderNumber} itemCount=${items.length} total=${total}`);
     return NextResponse.json({ ok: true });
   }
 
