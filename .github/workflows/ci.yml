@@ -1,4 +1,4 @@
-name: CI — Type Check & Build
+name: CI — Type Check, Lint & Build
 
 on:
   pull_request:
@@ -34,6 +34,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm --filter @markala/api prisma:generate
+
       - name: Type-check (web)
         run: pnpm --filter @markala/web type-check
 
@@ -42,7 +45,12 @@ jobs:
 
       - name: Type-check (api)
         run: pnpm --filter @markala/api type-check
-        continue-on-error: true # API henüz tam strict değil
+
+      - name: Lint (web)
+        run: pnpm --filter @markala/web lint
+
+      - name: Lint (admin)
+        run: pnpm --filter @markala/admin lint
 
       - name: Build (web)
         run: pnpm --filter @markala/web build
@@ -56,7 +64,7 @@ jobs:
           ADMIN_SESSION_SECRET: "ci-build-only-not-for-production-use-min-32-char"
 
   test-unit:
-    name: Unit Tests (web)
+    name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -73,5 +81,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm --filter @markala/api prisma:generate
+
       - name: Run Vitest unit tests (@markala/web)
         run: pnpm --filter @markala/web test
+
+      - name: Run Vitest unit tests (@markala/api)
+        run: pnpm --filter @markala/api test

@@ -523,7 +523,7 @@ export async function fetchSiteRating(): Promise<{ average: number; count: numbe
  * AggregateRating bloğunu hiç render etmesin.
  */
 export async function fetchProductRating(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line no-unused-vars
   slug: string,
 ): Promise<{ average: number; count: number } | null> {
   return null;
