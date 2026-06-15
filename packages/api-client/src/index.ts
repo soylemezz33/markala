@@ -92,7 +92,8 @@ export class MarkalaApiClient {
     });
 
     if (!res.ok) {
-      let errBody: any = {};
+      // Hata gövdesi her zaman bu iki alanı taşımayabilir; any yerine dar tip kullan.
+      let errBody: { message?: string; code?: string } = {};
       try {
         errBody = await res.json();
       } catch {}
@@ -161,8 +162,8 @@ export class MarkalaApiClient {
 
   // === Orders ===
   orders = {
-    create: (data: any) => this.request<Order>("POST", "/orders", data, { auth: true }),
-    createGuest: (data: any) => this.request<Order>("POST", "/orders/guest", data),
+    create: (data: Record<string, unknown>) => this.request<Order>("POST", "/orders", data, { auth: true }),
+    createGuest: (data: Record<string, unknown>) => this.request<Order>("POST", "/orders/guest", data),
     listMine: () => this.request<Order[]>("GET", "/orders/mine", undefined, { auth: true }),
     listAll: (opts: { status?: string; take?: number; skip?: number } = {}) =>
       this.request<Order[]>("GET", "/orders", undefined, { auth: true, query: opts }),
