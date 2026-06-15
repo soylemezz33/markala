@@ -50,6 +50,7 @@ export function SiteFooter() {
           <FooterLink href="/kargo-takip">Kargo Takip</FooterLink>
           <FooterLink href="/kampanyalar">Kampanyalar</FooterLink>
           <FooterLink href="/kurumsal">Kurumsal Hesap (B2B)</FooterLink>
+          <FooterLink href="/kurumsal/basvuru">Kurumsal Başvuru</FooterLink>
           <FooterLink href="/yasal/kullanim-kosullari">Kullanım Şartları</FooterLink>
           <FooterLink href="/yasal/gizlilik">Gizlilik İlkesi ve KVKK</FooterLink>
         </FooterColumn>
@@ -139,17 +140,14 @@ export function SiteFooter() {
       <div className="border-t border-paper-200 bg-paper-50">
         <Container className="py-4 flex flex-wrap items-center justify-center md:justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3 text-xs text-ink-500">
-            <TrustBadge>3D Secure</TrustBadge>
-            <TrustBadge>iyzico</TrustBadge>
             <TrustBadge>SSL Sertifikalı</TrustBadge>
-            <TrustBadge>ETBİS Kayıtlı</TrustBadge>
+            <TrustBadge>KVKK Uyumlu</TrustBadge>
+            <TrustBadge>1-2 İş Günü Üretim</TrustBadge>
+            <TrustBadge>81 İl Kargo</TrustBadge>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
             <span>Ödeme:</span>
-            <PaymentBrand label="VISA" />
-            <PaymentBrand label="Mastercard" />
-            <PaymentBrand label="Troy" />
-            <PaymentBrand label="AMEX" />
+            <PaymentBrand label="Havale / EFT" />
           </div>
         </Container>
       </div>

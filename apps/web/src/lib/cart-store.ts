@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem } from "@markala/types";
+import { track } from "./analytics";
 
 interface CartState {
   items: CartItem[];
@@ -30,10 +31,19 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item) => {
         const id = `${item.productSlug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
+        const qty = item.quantity ?? 1;
         set((state) => ({
-          items: [...state.items, { ...item, id, quantity: item.quantity ?? 1 }],
+          items: [...state.items, { ...item, id, quantity: qty }],
           isOpen: true,
         }));
+        // GA4 dönüşüm — merkezi nokta: her sepete ekleme buradan geçer
+        track("add_to_cart", {
+          currency: "TRY",
+          value: item.configuration.totalPrice * qty,
+          item_id: item.productSlug,
+          item_name: item.productName,
+          quantity: qty,
+        });
       },
 
       removeItem: (id) => {

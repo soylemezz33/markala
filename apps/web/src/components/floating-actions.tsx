@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { WhatsappLogo, Phone, X, ChatCircleText } from "@phosphor-icons/react";
+import { track } from "@/lib/analytics";
 
 const WHATSAPP_NUMBER = "903244333351";
 const PHONE_NUMBER = "+903244333351";
@@ -82,6 +83,7 @@ export function FloatingActions() {
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(QUICK_MESSAGE)}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => track("contact", { method: "whatsapp", location: "floating" })}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors"
               >
                 <span className="w-9 h-9 rounded-full bg-[#25D366] text-white grid place-items-center shrink-0">
@@ -94,6 +96,7 @@ export function FloatingActions() {
               </a>
               <a
                 href={`tel:${PHONE_NUMBER}`}
+                onClick={() => track("contact", { method: "phone", location: "floating" })}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors"
               >
                 <span className="w-9 h-9 rounded-full bg-brand-500 text-ink-900 grid place-items-center shrink-0">

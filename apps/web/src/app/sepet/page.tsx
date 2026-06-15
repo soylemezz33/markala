@@ -6,9 +6,10 @@ import { useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
 import {
   Trash, Plus, Minus, ArrowRight, ShoppingBagOpen, ShieldCheck,
-  CreditCard, Lock, Tag, Truck, Storefront,
+  Clock, Tag, Truck, Storefront,
 } from "@phosphor-icons/react";
 import { useCartStore } from "@/lib/cart-store";
+import { track } from "@/lib/analytics";
 import { categories } from "@markala/mock-data";
 
 const SHIPPING_FEE = 79;
@@ -104,8 +105,12 @@ export default function CartPage() {
                     <span><Price amount={1500 - sub} size="sm" /> daha ekleyin → kargo ücretsiz</span>
                   </div>
                 )}
-                <Link href="/odeme" className="block mt-5">
-                  <Button size="lg" fullWidth>Ödemeye Geç <ArrowRight size={18} weight="bold" /></Button>
+                <Link
+                  href="/odeme"
+                  className="block mt-5"
+                  onClick={() => track("begin_checkout", { currency: "TRY", value: total, items: items.length })}
+                >
+                  <Button size="lg" fullWidth>Siparişe Devam Et <ArrowRight size={18} weight="bold" /></Button>
                 </Link>
               </div>
 
@@ -124,9 +129,9 @@ export default function CartPage() {
               </div>
 
               <ul className="grid grid-cols-3 gap-2">
-                <Trust icon={<ShieldCheck size={18} />} label="3D Secure" />
-                <Trust icon={<CreditCard size={18} />} label="iyzico" />
-                <Trust icon={<Lock size={18} />} label="SSL" />
+                <Trust icon={<Clock size={18} />} label="1-2 iş günü üretim" />
+                <Trust icon={<Truck size={18} />} label="81 il kargo" />
+                <Trust icon={<ShieldCheck size={18} />} label="KVKK uyumlu" />
               </ul>
             </div>
           </aside>
@@ -168,7 +173,7 @@ function Row({ label, value, muted }: { label: React.ReactNode; value: React.Rea
 }
 
 function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return <li className="flex flex-col items-center gap-1 p-3 bg-paper-50 border border-paper-200 rounded text-xs text-ink-500"><span className="text-ink-700">{icon}</span><span>{label}</span></li>;
+  return <li className="flex flex-col items-center gap-1 p-3 bg-paper-50 border border-paper-200 rounded text-xs text-ink-500"><span className="text-ink-700">{icon}</span><span className="text-center leading-tight">{label}</span></li>;
 }
 
 function QtyControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {

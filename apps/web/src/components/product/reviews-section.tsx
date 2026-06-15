@@ -30,7 +30,7 @@ export function ProductReviewsSection({ productSlug }: Props) {
 
   return (
     <section className="mt-10 py-10 border-t border-paper-200">
-      <div className="grid lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Özet sol */}
         <div className="lg:col-span-4">
           <h2 className="text-2xl font-semibold text-ink-900">Müşteri Yorumları</h2>

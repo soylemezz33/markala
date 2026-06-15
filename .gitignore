@@ -79,3 +79,11 @@ backup_*.sql
 *-service-account*.json
 *-credentials*.json
 markala-mcp*.json
+docker-compose.override.yml
+
+# Yerel artefaktlar / yedekler / agent çalışma dizinleri — commit etme
+.claude/worktrees/
+.playwright-mcp/
+_server_backup_*/
+.claire/
+.clone/
