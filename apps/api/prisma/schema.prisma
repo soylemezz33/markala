@@ -69,6 +69,7 @@ model User {
 
   addresses             Address[]
   orders                Order[]
+  carts                 Cart[]
   designUploads         DesignUpload[]
   corporateApplications CorporateApplication[]
   refreshTokens              RefreshToken[]
@@ -224,6 +225,7 @@ model Product {
 
   category   Category    @relation(fields: [categoryId], references: [id])
   orderItems OrderItem[]
+  cartItems  CartItem[]
   reviews    Review[]
 
   @@index([categoryId, isActive])
@@ -448,6 +450,78 @@ model BlogPost {
   @@index([status, publishedAt])
   @@index([categoryId, status])
   @@map("blog_posts")
+}
+
+// === Alışveriş Sepeti ===
+
+enum CartStatus {
+  active
+  converted
+  abandoned
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?    @map("user_id")
+  sessionId String?    @map("session_id")
+  status    CartStatus @default(active)
+  expiresAt DateTime?  @map("expires_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  user  User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items CartItem[]
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([status, updatedAt])
+  @@map("carts")
+}
+
+model CartItem {
+  id            String  @id @default(cuid())
+  cartId        String  @map("cart_id")
+  productId     String  @map("product_id")
+  productSlug   String  @map("product_slug")
+  productName   String  @map("product_name")
+  productImage  String  @map("product_image")
+  configuration Json
+  unitPrice     Decimal @map("unit_price") @db.Decimal(10, 2)
+  quantity      Int
+  lineTotal     Decimal @map("line_total") @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
+}
+
+// === Analytics Events ===
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  eventName String   @map("event_name")
+  userId    String?  @map("user_id")
+  sessionId String   @map("session_id")
+  orderId   String?  @map("order_id")
+  productId String?  @map("product_id")
+  properties Json    @default("{}")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  referrer  String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventName, createdAt])
+  @@index([userId, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([orderId])
+  @@index([productId, eventName])
+  @@map("analytics_events")
 }
 
 // === A/B Testing ===
