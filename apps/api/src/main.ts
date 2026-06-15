@@ -10,6 +10,7 @@ import type { Request, Response, NextFunction } from "express";
 import { join } from "node:path";
 import { AppModule } from "./app.module";
 import { rateLimit } from "./security/rate-limit";
+import { PrismaExceptionFilter } from "./common/prisma-exception.filter";
 
 async function bootstrap() {
   // SECURITY: JWT_SECRET fail-fast — production'da zayıf/eksik secret tokenları taklit edilebilir kılar.
@@ -58,6 +59,11 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
     }),
   );
+
+  // Yakalanmamış Prisma hatalarını (P2025 → 404, P2002 → 409, ...) tutarlı HTTP
+  // yanıtlarına çevirir; aksi halde Nest varsayılanı 500 döner. HttpException'lar
+  // etkilenmez (bkz. PrismaExceptionFilter).
+  app.useGlobalFilters(new PrismaExceptionFilter());
 
   app.enableCors({
     origin: (config.get<string>("WEB_ORIGIN") ?? "http://localhost:3000").split(","),
