@@ -55,8 +55,8 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
           ADMIN_SESSION_SECRET: "ci-build-only-not-for-production-use-min-32-char"
 
-  test-unit:
-    name: Unit Tests (web)
+  test-unit-web:
+    name: Unit Tests (web) + Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -74,4 +74,38 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Run Vitest unit tests (@markala/web)
-        run: pnpm --filter @markala/web test
+        run: pnpm --filter @markala/web test -- --coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web-${{ github.run_number }}
+          path: apps/web/coverage/
+          retention-days: 7
+
+  test-unit-api:
+    name: Unit Tests (api)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Prisma generate: @prisma/client tiplerini üretir, DB bağlantısı gerektirmez.
+      - name: Generate Prisma client
+        run: pnpm --filter @markala/api prisma:generate
+        env:
+          DATABASE_URL: "postgresql://placeholder:placeholder@localhost:5432/placeholder"
+
+      - name: Run Vitest unit tests (@markala/api)
+        run: pnpm --filter @markala/api test
