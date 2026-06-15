@@ -105,18 +105,26 @@ Free tier: 10K active metrics, 50 GB log, 14 gün retention.
    - **12708** — Nginx exporter
    - **9628** — PostgreSQL (Phase 2)
 
-## 5. Alert Thresholds
+## 5. Alert Thresholds (SLO Alarm Matrisi)
 
-| Metrik | Warning | Critical | PromQL örnek |
-|--------|---------|----------|--------------|
-| CPU usage | >70% (5 dk) | >85% (5 dk) | `100 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100` |
-| Memory | >80% | >90% | `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100` |
-| Disk | >75% | >85% | `100 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes * 100` |
-| Disk I/O wait | >20% | >40% | `rate(node_cpu_seconds_total{mode="iowait"}[5m])` |
-| 5xx rate | >0.5% | >1% (5 dk) | `sum(rate(nginx_http_requests_total{status=~"5.."}[5m])) / sum(rate(nginx_http_requests_total[5m]))` |
-| TLS expiry | <14 gün | <7 gün | UptimeRobot SSL monitor |
-| Postgres conn | >70% pool | >85% pool | `pg_stat_activity_count / pg_settings_max_connections` |
-| Site down | – | 2 consec fail | UptimeRobot |
+| Metrik | Warning eşiği | Critical eşiği | Süre | PromQL / Kaynak |
+|--------|---------------|----------------|------|-----------------|
+| CPU kullanımı | >70% | >85% | 10 dk / 5 dk | `(1 - rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100` |
+| Memory kullanımı | >80% | >90% | 10 dk / 5 dk | `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100` |
+| Disk doluluk | >85% | >95% | 10 dk / 5 dk | `(1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100` |
+| Disk I/O wait | >20% | >40% | 5 dk | `rate(node_cpu_seconds_total{mode="iowait"}[5m]) * 100` |
+| HTTP 5xx rate | >0.5% | >5% | 5 dk | `rate(nginx_http_requests_total{status=~"5.."}[5m])` |
+| API latency (p99) | >500ms | – | 5 dk | `probe_duration_seconds{job="markala-api-health-probe"}` |
+| TLS expiry | <14 gün | <7 gün | 1 sa | UptimeRobot SSL / `probe_ssl_earliest_cert_expiry` |
+| Postgres bağlantı | >80% pool | >95% pool | 5 dk / 2 dk | `pg_stat_database_numbackends / pg_settings_max_connections` |
+| Site erişilirlik | – | 2 ardışık fail | – | UptimeRobot HTTPS monitor |
+| API health/deep | – | fail (2 dk) | 2 dk | UptimeRobot keyword + Blackbox probe |
+| Backup tazeliği | – | >25 sa | 1 dk | `time() - markala_backup_last_success_timestamp_seconds` |
+
+Tüm kurallar: `monitoring/alerts/rules.yml`. Promtool ile doğrula:
+```sh
+promtool check rules monitoring/alerts/rules.yml
+```
 
 ## 6. Slack alert formatı
 
@@ -132,19 +140,44 @@ Slack'te kanal: `#markala-alerts`. Mute kuralı: gece 02:00-07:00 arası critica
 
 ## 7. Health endpoint sözleşmesi
 
-`/api/health` JSON cevap:
+İki endpoint mevcut; kullanım amacına göre seç:
+
+### `/api/health` — Shallow (her zaman 200)
+Bağımlılık testi yok. Load-balancer, Kubernetes liveness probe için:
 ```json
 {
   "status": "ok",
-  "version": "v1.2.3",
+  "service": "markala-api",
+  "version": "0.1.0",
   "uptime_seconds": 84231,
-  "db": "ok",
+  "timestamp": "2026-05-13T06:42:11Z"
+}
+```
+
+### `/api/health/deep` — Deep (DB + Redis ping)
+UptimeRobot ve Prometheus blackbox probe için. DB veya Redis erişilemezse **HTTP 503**:
+```json
+{
+  "status": "degraded",
+  "service": "markala-api",
+  "version": "0.1.0",
+  "uptime_seconds": 84231,
+  "db": "error",
   "redis": "ok",
   "timestamp": "2026-05-13T06:42:11Z"
 }
 ```
-- `status != "ok"` → UptimeRobot alarm verir (keyword check).
-- API tarafında implementasyon: `apps/api/src/health/health.controller.ts` (varsa).
+
+| Alan | Değerler |
+|------|---------|
+| `status` | `"ok"` / `"degraded"` |
+| `db` | `"ok"` / `"error"` |
+| `redis` | `"ok"` / `"error"` / `"not_configured"` |
+
+`redis: "not_configured"` — `REDIS_URL` env yok, sağlıklı sayılır.
+UptimeRobot keyword check: `"status":"ok"` (deep için string olmadan yok — HTTP 503 tetikler).
+
+Implementasyon: `apps/api/src/health/health.controller.ts`.
 
 ## 8. Sorun giderme
 
