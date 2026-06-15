@@ -59,6 +59,15 @@ export default function CheckoutPage() {
     }
   }, [cartItems.length, processing, router]);
 
+  // begin_checkout: checkout sayfasına ilk girildiğinde ateşlenir (GA4 spec gereği)
+  // Not: subtotal() hesaplar, effect mount'ta bir kez çalışır
+  useEffect(() => {
+    const sub = subtotal();
+    const shipping = sub >= 1500 ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+    trackBeginCheckout(sub + shipping, cartItems.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // sadece mount'ta — dependency array boş bırakılması kasıtlı
+
   function canProceed(): boolean {
     if (step === "iletisim") return email.includes("@") && phone.length >= 10;
     if (step === "fatura") {
@@ -74,11 +83,7 @@ export default function CheckoutPage() {
     const order: Step[] = ["iletisim", "fatura", "teslimat", "onay"];
     const idx = order.indexOf(step);
     if (idx < order.length - 1) {
-      const nextStep = order[idx + 1] ?? step;
-      if (nextStep === "onay") {
-        trackBeginCheckout(total, cartItems.length);
-      }
-      setStep(nextStep);
+      setStep(order[idx + 1] ?? step);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
