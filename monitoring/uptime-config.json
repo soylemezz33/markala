@@ -26,7 +26,7 @@
       }
     },
     {
-      "name": "Markala — API Health",
+      "name": "Markala — API Health (shallow)",
       "type": "HTTPS",
       "url": "https://markala.com.tr/api/health",
       "interval_seconds": 300,
@@ -36,6 +36,19 @@
         "type": "exists",
         "value": "\"status\":\"ok\""
       }
+    },
+    {
+      "name": "Markala — API Health Deep (DB+Redis)",
+      "type": "HTTPS",
+      "url": "https://markala.com.tr/api/health/deep",
+      "interval_seconds": 300,
+      "timeout_seconds": 20,
+      "alert_contacts": ["email-primary", "slack-webhook"],
+      "keyword_check": {
+        "type": "exists",
+        "value": "\"status\":\"ok\""
+      },
+      "_note": "DB veya Redis down ise HTTP 503 döner → UptimeRobot Down alarmı tetiklenir."
     },
     {
       "name": "Markala — Admin Login",
