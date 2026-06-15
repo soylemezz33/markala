@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -39,6 +39,21 @@ export const validStatusTransitions: Record<string, string[]> = {
   "teslim-edildi": [],
   "iptal-edildi": [],
 };
+
+/**
+ * URL slug (hyphen: "kargoya-verildi") → Prisma OrderStatus enum üyesi (underscore: "kargoya_verildi").
+ *
+ * Şema'da enum değerleri @map ile hyphen'li DB değerine maplenmiş; ANCAK Prisma Client API'si
+ * DAİMA underscore üye adını bekler (Object.values(OrderStatus) hepsi underscore). Hyphenli slug'ı
+ * doğrudan `status: ... as any` ile geçmek Prisma'da "Expected OrderStatus" validation hatası → 500
+ * üretiyordu (admin sipariş durumu güncellemesi ve status filtreli liste tamamen kırıktı).
+ * Bilinmeyen/eksik slug → null.
+ */
+export function slugToOrderStatus(slug: string | undefined | null): OrderStatus | null {
+  if (!slug) return null;
+  const member = slug.replace(/-/g, "_");
+  return (Object.values(OrderStatus) as string[]).includes(member) ? (member as OrderStatus) : null;
+}
 
 /**
  * Konfigürasyon JSON'undan opsiyonel adet/quantity bilgisini güvenli şekilde okur.
@@ -317,8 +332,10 @@ export class OrdersService {
   }
 
   listAll(opts: { status?: string; take?: number; skip?: number } = {}) {
+    // Geçersiz/bilinmeyen status filtresi → filtre uygulanmaz (eskiden Prisma'da 500'e yol açıyordu).
+    const status = slugToOrderStatus(opts.status);
     return this.prisma.order.findMany({
-      where: opts.status ? { status: opts.status as any } : {},
+      where: status ? { status } : {},
       include: { items: true, user: { select: { email: true, fullName: true } } },
       orderBy: { createdAt: "desc" },
       take: opts.take ?? 50,
@@ -356,10 +373,15 @@ export class OrdersService {
       }
     }
 
+    // Hyphen slug → Prisma enum üyesi (underscore). DTO @IsIn ile doğrulandığı için normalde
+    // null gelmez; yine de defansif kontrol (doğrudan slug yazmak Prisma'da 500 üretiyordu).
+    const enumStatus = slugToOrderStatus(status);
+    if (!enumStatus) throw new BadRequestException(`Geçersiz sipariş durumu: ${status}`);
+
     return this.prisma.order.update({
       where: { id },
       data: {
-        status: status as any,
+        status: enumStatus,
         ...extras,
         ...(status === "kargoya-verildi" && { shippedAt: new Date() }),
         ...(status === "teslim-edildi" && { deliveredAt: new Date() }),
