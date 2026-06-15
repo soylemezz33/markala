@@ -54,4 +54,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD node -e "fetch('http://localhost:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Migrate before start (idempotent)
-CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && node dist/src/main"]
+# NOT: nest build çıktısı dist/main.js (dist/src/main DEĞİL) — yanlış yol container'ı
+# MODULE_NOT_FOUND ile crash-loop'a sokar.
+CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && node dist/main"]
