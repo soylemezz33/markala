@@ -35,9 +35,9 @@ export class StorageService {
   private readonly logger = new Logger(StorageService.name);
   constructor(private config: ConfigService) {}
 
-  /** R2 credential tanımlıysa prod (r2), değilse dev (local). */
+  /** R2 credential tanımlıysa prod (r2), değilse dev (local). Prod env adları: R2_*. */
   get driver(): "local" | "r2" {
-    return this.config.get<string>("CLOUDFLARE_R2_ACCESS_KEY") ? "r2" : "local";
+    return this.config.get<string>("R2_ACCESS_KEY_ID") ? "r2" : "local";
   }
 
   async put(file: UploadInput): Promise<UploadResult> {
@@ -77,27 +77,28 @@ export class StorageService {
   private async putR2(key: string, file: UploadInput): Promise<UploadResult> {
     // Lazy import: SDK yalnızca r2 sürücüsünde yüklenir (dev başlangıcını yavaşlatmaz).
     const { S3Client, PutObjectCommand } = await import("@aws-sdk/client-s3");
-    const accountId = this.config.get<string>("CLOUDFLARE_R2_ACCOUNT_ID");
+    const accountId = this.config.get<string>("R2_ACCOUNT_ID");
     const client = new S3Client({
       region: "auto",
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: {
-        accessKeyId: this.config.get<string>("CLOUDFLARE_R2_ACCESS_KEY")!,
-        secretAccessKey: this.config.get<string>("CLOUDFLARE_R2_SECRET")!,
+        accessKeyId: this.config.get<string>("R2_ACCESS_KEY_ID")!,
+        secretAccessKey: this.config.get<string>("R2_SECRET_ACCESS_KEY")!,
       },
     });
     await client.send(
       new PutObjectCommand({
-        Bucket: this.config.get<string>("CLOUDFLARE_R2_BUCKET"),
+        Bucket: this.config.get<string>("R2_BUCKET"),
         Key: key,
         Body: file.buffer,
         ContentType: file.mimetype,
       }),
     );
-    // Public okuma URL'i: custom domain (files.markala.com.tr) veya <bucket>.r2.dev.
-    const base = (
-      this.config.get<string>("CLOUDFLARE_R2_PUBLIC_BASE") ?? ""
-    ).replace(/\/$/, "");
+    // Public okuma URL tabanı (prod env: R2_PUBLIC_URL, örn. https://uploads.markala.com.tr).
+    const base = (this.config.get<string>("R2_PUBLIC_URL") ?? "").replace(
+      /\/$/,
+      "",
+    );
     this.logger.log(`R2 upload: ${key}`);
     return { url: `${base}/${key}`, key };
   }

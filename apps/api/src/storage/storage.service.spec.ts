@@ -24,9 +24,9 @@ describe("StorageService", () => {
     expect(svc.driver).toBe("local");
   });
 
-  it("CLOUDFLARE_R2_ACCESS_KEY tanımlıysa r2 sürücü seçilir", () => {
+  it("R2_ACCESS_KEY_ID tanımlıysa r2 sürücü seçilir", () => {
     const svc = new StorageService(
-      makeConfig({ CLOUDFLARE_R2_ACCESS_KEY: "key", UPLOAD_DIR: dir }),
+      makeConfig({ R2_ACCESS_KEY_ID: "key", UPLOAD_DIR: dir }),
     );
     expect(svc.driver).toBe("r2");
   });
