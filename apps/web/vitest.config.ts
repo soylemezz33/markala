@@ -7,7 +7,8 @@ import path from "path";
  *
  * - jsdom ortamı: React komponentleri ve DOM bağımlı util'ler için
  * - alias "@" → ./src (tsconfig paths ile aynı)
- * - coverage hedefi: %60 line — başlangıç eşiği, MVP sonrası %80'e çıkarılacak
+ * - thresholds: başlangıç eşiği lines/functions %60, branches %50
+ * - lcov reporter: CI artifact upload için (actions/upload-artifact)
  */
 export default defineConfig({
   plugins: [react()],
@@ -22,8 +23,14 @@ export default defineConfig({
     include: ["tests/unit/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
-      lines: 60,
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "./coverage",
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 50,
+        statements: 60,
+      },
     },
   },
 });
