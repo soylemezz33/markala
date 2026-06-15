@@ -58,7 +58,15 @@ check_domain() {
 
   # "notAfter" tarihini Unix timestamp'e çevir
   local expiry_ts now_ts days_left
-  expiry_ts=$(date -d "$expiry_raw" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$expiry_raw" +%s 2>/dev/null)
+  expiry_ts=$(date -d "$expiry_raw" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$expiry_raw" +%s 2>/dev/null || true)
+
+  # Her iki date komutu da başarısız olursa expiry_ts boş kalır;
+  # set -euo pipefail altında boş aritmetik değişken script'i crash'ler.
+  if [[ -z "$expiry_ts" ]]; then
+    echo -e "${RED}[HATA]${RESET} ${domain}: geçerlilik tarihi ayrıştırılamadı: '${expiry_raw}'"
+    return 2
+  fi
+
   now_ts=$(date +%s)
   days_left=$(( (expiry_ts - now_ts) / 86400 ))
 
