@@ -92,14 +92,20 @@ jobs:
           script: |
             set -e
             cd /opt/markala
-            echo "→ Pulling latest images..."
-            docker compose -f docker-compose.production.yml pull
-            echo "→ Restarting services..."
-            docker compose -f docker-compose.production.yml up -d --no-build --remove-orphans
-            echo "→ Waiting for health check..."
+            # AKTİF DB incident'ı (2026-06-15) band-aid'i KIRILGAN: tam 'docker compose up'
+            # + --remove-orphans postgres volume/network'ünü tekrar bozabilir. Bu yüzden deploy
+            # postgres'e DOKUNMAZ — yalnız app servislerini (web/admin/api) günceller.
+            echo "→ Pre-deploy DB yedeği (best-effort)..."
+            mkdir -p backups
+            docker exec markala-postgres pg_dump -U "${POSTGRES_USER:-markala}" "${POSTGRES_DB:-markala}" > "backups/db-predeploy-$(date +%Y%m%d-%H%M%S).sql" 2>/dev/null || echo "  (yedek atlandı — manuel yedek al)"
+            echo "→ App imajlarını çek (web/admin/api)..."
+            docker compose -f docker-compose.production.yml --env-file .env.production pull web admin api
+            echo "→ Sadece app servislerini güncelle (postgres/nginx KORUNUR)..."
+            docker compose -f docker-compose.production.yml --env-file .env.production up -d --no-build --no-deps web admin api
+            echo "→ Sağlık kontrolü..."
             sleep 10
             curl -fsS http://localhost:3000/api/health || (echo "❌ Health check failed!" && exit 1)
-            echo "→ Cleaning old images..."
+            echo "→ Eski imajları temizle..."
             docker image prune -f
             echo "✅ Deploy complete: ${{ github.sha }}"
 
