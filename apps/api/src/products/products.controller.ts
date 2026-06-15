@@ -4,6 +4,7 @@ import { ProductsService } from "./products.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
 import { CreateProductDto, UpdateProductDto } from "./products.dto";
+import { parsePagination } from "../common/pagination";
 
 @ApiTags("products")
 @Controller("products")
@@ -23,8 +24,7 @@ export class ProductsController {
     return this.service.findAll({
       categorySlug: category,
       bestseller: bestseller === "true" ? true : bestseller === "false" ? false : undefined,
-      take: take ? parseInt(take) : undefined,
-      skip: skip ? parseInt(skip) : undefined,
+      ...parsePagination(take, skip),
     });
   }
 

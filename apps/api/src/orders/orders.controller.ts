@@ -4,6 +4,7 @@ import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
 import { CreateOrderDto, UpdateOrderStatusDto } from "./orders.dto";
+import { parsePagination } from "../common/pagination";
 import type { Request } from "express";
 
 @ApiTags("orders")
@@ -43,11 +44,7 @@ export class OrdersController {
     @Query("take") take?: string,
     @Query("skip") skip?: string,
   ) {
-    return this.service.listAll({
-      status,
-      take: take ? parseInt(take) : undefined,
-      skip: skip ? parseInt(skip) : undefined,
-    });
+    return this.service.listAll({ status, ...parsePagination(take, skip) });
   }
 
   @Get(":id")

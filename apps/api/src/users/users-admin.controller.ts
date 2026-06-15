@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { parsePagination } from "../common/pagination";
 
 @ApiTags("admin-users")
 @Controller("admin/users")
@@ -14,11 +15,7 @@ export class UsersAdminController {
 
   @Get()
   list(@Query("take") take?: string, @Query("skip") skip?: string, @Query("q") q?: string) {
-    return this.service.listForAdmin({
-      take: take ? parseInt(take) : undefined,
-      skip: skip ? parseInt(skip) : undefined,
-      q,
-    });
+    return this.service.listForAdmin({ ...parsePagination(take, skip), q });
   }
 
   @Get(":id")
