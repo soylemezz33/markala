@@ -28,7 +28,9 @@ const BASE_PRODUCT = {
 function makeTx() {
   return {
     coupon: {
-      findUnique: vi.fn().mockResolvedValue(null),
+      // Transaction içinde kupon varlığı/aktifliği yeniden doğrulanır (optimistic locking).
+      // null dönseydi ConflictException fırlatırdı ve kupon testleri yanlış sebepten fail olurdu.
+      findUnique: vi.fn().mockResolvedValue({ id: "cp1", isActive: true, maxUses: null, usedCount: 0 }),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
     order: {
