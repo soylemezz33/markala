@@ -1,0 +1,58 @@
+name: E2E — Playwright
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Playwright E2E (@markala/web)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers (chromium only)
+        run: pnpm --filter @markala/web exec playwright install --with-deps chromium
+
+      - name: Build web app
+        run: pnpm --filter @markala/web build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Run Playwright E2E tests
+        run: pnpm --filter @markala/web test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: ""
+          CI: "true"
+
+      - name: Upload test results (screenshots + traces)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ github.run_id }}
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore

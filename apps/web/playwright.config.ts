@@ -14,9 +14,12 @@ export default defineConfig({
   fullyParallel: true,
   retries: 2,
   workers: 4,
+  reporter: process.env.CI ? [["github"], ["html", { outputFolder: "playwright-report", open: "never" }]] : "list",
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
   /**
    * Yerel geliştirmede `playwright test` çalıştırıldığında Next dev server'ı
@@ -26,7 +29,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: "pnpm dev",
+        command: process.env.CI ? "pnpm start" : "pnpm dev",
         url: "http://localhost:3000",
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
