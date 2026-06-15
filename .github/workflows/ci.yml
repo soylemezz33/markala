@@ -10,6 +10,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege GITHUB_TOKEN: CI yalnız checkout + install + build yapar.
+# Üst seviye read-only token, ele geçen bir action/bağımlılığın kod push'lamasını
+# veya paket yayınlamasını engeller (GitHub hardening önerisi).
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Type-check & Lint
@@ -75,3 +81,28 @@ jobs:
 
       - name: Run Vitest unit tests (@markala/web)
         run: pnpm --filter @markala/web test
+
+  security-audit:
+    name: Dependency Audit (pnpm)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Versiyon package.json "packageManager"dan; `version:` verme → "Multiple versions" hatası.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Bilgilendirme amaçlı — high/critical zafiyetleri raporlar ama build'i bloklamaz.
+      # (Dependabot otomatik bump PR'ları açar; bu adım o anki lockfile'ın anlık denetimi.)
+      # Bloklayıcı yapmadan önce mevcut advisory'ler temizlenmeli → ayrı bir takip işi.
+      - name: pnpm audit (high+ — non-blocking)
+        run: pnpm audit --audit-level=high --prod
+        continue-on-error: true
