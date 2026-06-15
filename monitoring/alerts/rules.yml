@@ -37,6 +37,15 @@ groups:
           summary: "Disk >85% full"
           description: "{{ $labels.instance }} {{ $labels.mountpoint }} disk kullanımı %85 üzerinde."
 
+      - alert: DiskCritical
+        expr: (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes) > 0.95
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk >95% full — acil temizlik"
+          description: "{{ $labels.instance }} {{ $labels.mountpoint }} disk kullanımı %95 üzerinde. Deployment başarısız olabilir."
+
       - alert: NginxDown
         expr: up{job="nginx"} == 0
         for: 1m
@@ -64,6 +73,15 @@ groups:
           summary: "Postgres connections >80%"
           description: "Postgres aktif bağlantı sayısı max_connections değerinin %80 üzerinde."
 
+      - alert: PostgresConnectionsCritical
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Postgres connections >95% — bağlantı havuzu doydu"
+          description: "Postgres bağlantı sayısı max_connections değerinin %95 üzerinde. Yeni bağlantı kabul edilmeyebilir."
+
       - alert: BackupStaleness
         expr: time() - markala_backup_last_success_timestamp_seconds > 25 * 3600
         for: 1m
@@ -81,3 +99,88 @@ groups:
         annotations:
           summary: "5xx rate >5%"
           description: "Nginx 5xx oranı 5 dakikadır 0.05 req/s üzerinde."
+
+  # ---------------------------------------------------------------------------
+  # Warning-tier: erken uyarı sinyalleri
+  # ---------------------------------------------------------------------------
+  - name: markala-warning
+    interval: 60s
+    rules:
+      - alert: HighCPUWarning
+        expr: (1 - rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.70
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU >70% for 10m"
+          description: "{{ $labels.instance }} CPU kullanımı 10 dakikadır %70 üzerinde. Trend takip et."
+
+      - alert: HighMemoryWarning
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory >80% for 10m"
+          description: "{{ $labels.instance }} bellek kullanımı 10 dakikadır %80 üzerinde."
+
+      - alert: DiskIOWaitHigh
+        expr: rate(node_cpu_seconds_total{mode="iowait"}[5m]) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk I/O wait >20%"
+          description: "{{ $labels.instance }} disk I/O wait oranı %20 üzerinde. Yavaş disk veya yoğun yazma var."
+
+      - alert: Http5xxWarning
+        expr: rate(nginx_http_requests_total{status=~"5.."}[5m]) > 0.005
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "5xx rate >0.5%"
+          description: "Nginx 5xx oranı artıyor. API loglarını kontrol et."
+
+      - alert: SslCertExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 14 * 24 * 3600
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL sertifikası <14 gün"
+          description: "{{ $labels.instance }} SSL sertifikasının süresi 14 günden az kaldı. certbot renew çalıştır."
+
+      - alert: SslCertExpiringCritical
+        expr: probe_ssl_earliest_cert_expiry - time() < 7 * 24 * 3600
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "SSL sertifikası <7 gün — ACİL"
+          description: "{{ $labels.instance }} SSL sertifikasının süresi 7 günden az kaldı. Sitenin güvensiz görünmesi riski var."
+
+  # ---------------------------------------------------------------------------
+  # API health monitoring (Prometheus blackbox exporter gerektirir)
+  # Kurulum: docker-compose.production.yml'a blackbox-exporter servisi ekle
+  # ---------------------------------------------------------------------------
+  - name: markala-api-health
+    interval: 60s
+    rules:
+      - alert: ApiHealthEndpointDown
+        expr: probe_success{job="markala-api-health-probe"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API /health/deep yanıt vermiyor"
+          description: "markala-api /api/health/deep endpoint 2 dakikadır başarısız yanıt döndürüyor."
+
+      - alert: ApiHighLatency
+        expr: probe_duration_seconds{job="markala-api-health-probe"} > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API health endpoint p99 >500ms SLA"
+          description: "/api/health/deep yanıt süresi 5 dakikadır 500ms SLA'yı aşıyor."
