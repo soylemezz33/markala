@@ -1,4 +1,16 @@
-import { IsString, IsNotEmpty, IsUrl, IsOptional, IsNumber, Min, Max } from "class-validator";
+import {
+  IsString,
+  IsNotEmpty,
+  IsUrl,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  MaxLength,
+  IsArray,
+  ArrayMaxSize,
+  IsIn,
+} from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class SemanticSearchDto {
@@ -66,4 +78,45 @@ export class ChatbotResponseDto {
   sessionId: string;
   reply: string;
   suggestedProductSlugs: string[];
+}
+
+export class GenerateDescriptionDto {
+  @ApiProperty({ description: "Ürün adı", example: "Kartvizit (350gr Kuşe)" })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(160)
+  name: string;
+
+  @ApiPropertyOptional({ description: "Kategori adı (bağlam için)", example: "Kartvizit" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  categoryName?: string;
+
+  @ApiPropertyOptional({ description: "Öne çıkarılacak anahtar kelimeler", type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(10)
+  keywords?: string[];
+
+  @ApiPropertyOptional({ description: "Anlatım tonu", enum: ["kurumsal", "samimi"], default: "kurumsal" })
+  @IsOptional()
+  @IsIn(["kurumsal", "samimi"])
+  tone?: "kurumsal" | "samimi";
+}
+
+export class GeneratedFaqDto {
+  q: string;
+  a: string;
+}
+
+export class GenerateDescriptionResultDto {
+  // shortDescription, Product.shortDescription kısıtıyla uyumlu (≤280).
+  shortDescription: string;
+  description: string;
+  faqs: GeneratedFaqDto[];
+  // Çıktıyı üreten kaynak: "template" (deterministik, maliyetsiz) | "anthropic" (prod).
+  provider: "template" | "anthropic";
+  model: string | null;
 }
