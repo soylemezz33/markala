@@ -5,6 +5,9 @@
 
 import type { Category, Product, Order, User, Address } from "@markala/types";
 
+// Node/Next ortamında env okumak için minimal ambient bildirim (@types/node bağımlılığı eklemeden).
+declare const process: { env: Record<string, string | undefined> };
+
 export interface ApiClientConfig {
   baseUrl: string;
   /** JWT access token — auth gerektiren endpointler için */
@@ -18,6 +21,43 @@ export interface ApiError {
   message: string;
   code?: string;
   details?: unknown;
+}
+
+export interface AdminStats {
+  revenue: { total: number; today: number };
+  orders: { total: number; today: number; inProduction: number; byStatus: Record<string, number> };
+  customers: { total: number };
+  pending: { corporateApplications: number; reviews: number };
+  recentOrders: Array<{
+    orderNumber: string;
+    customer: string;
+    isCorporate: boolean;
+    total: number;
+    status: string;
+    paymentStatus: string;
+    createdAt: string;
+  }>;
+}
+
+export interface CorporateApplication {
+  id: string;
+  userId: string | null;
+  companyName: string;
+  taxOffice: string;
+  taxNumber: string;
+  sector: string | null;
+  annualVolume: string | null;
+  contactName: string;
+  contactRole: string | null;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string | null;
+  status: "none" | "pending" | "approved" | "rejected";
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export class MarkalaApiClient {
@@ -75,10 +115,20 @@ export class MarkalaApiClient {
 
   // === Auth ===
   auth = {
-    register: (data: { email: string; password: string; fullName: string; phone?: string }) =>
+    register: (data: {
+      email: string;
+      password: string;
+      fullName: string;
+      phone?: string;
+      marketingConsent?: boolean;
+    }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/register", data),
     login: (data: { email: string; password: string }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/login", data),
+    /** Refresh cookie (mk_refresh, httpOnly) ile yeni access token + user. Body yok; credentials:include. */
+    refresh: () =>
+      this.request<{ accessToken: string; user: User }>("POST", "/auth/refresh"),
+    logout: () => this.request<{ ok: boolean }>("POST", "/auth/logout"),
     me: () => this.request<User>("GET", "/auth/me", undefined, { auth: true }),
   };
 
@@ -122,6 +172,11 @@ export class MarkalaApiClient {
       this.request<Order>("PATCH", `/orders/${id}/status`, body, { auth: true }),
   };
 
+  // === Admin (dashboard stats) ===
+  admin = {
+    stats: () => this.request<AdminStats>("GET", "/admin/stats", undefined, { auth: true }),
+  };
+
   // === Users (kendim) ===
   users = {
     updateProfile: (data: Partial<User>) =>
@@ -134,12 +189,284 @@ export class MarkalaApiClient {
     deleteAddress: (id: string) =>
       this.request<void>("DELETE", `/users/me/addresses/${id}`, undefined, { auth: true }),
   };
+
+  // === Hero slides ===
+  heroSlides = {
+    list: (includeInactive = false) =>
+      this.request<HeroSlideDto[]>("GET", "/hero-slides", undefined, { query: { includeInactive } }),
+    create: (data: Partial<HeroSlideDto>) =>
+      this.request<HeroSlideDto>("POST", "/hero-slides", data, { auth: true }),
+    update: (id: string, data: Partial<HeroSlideDto>) =>
+      this.request<HeroSlideDto>("PATCH", `/hero-slides/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/hero-slides/${id}`, undefined, { auth: true }),
+  };
+
+  // === Banners ===
+  banners = {
+    list: () => this.request<BannerDto[]>("GET", "/banners", undefined, { auth: true }),
+    create: (data: Partial<BannerDto>) => this.request<BannerDto>("POST", "/banners", data, { auth: true }),
+    update: (id: string, data: Partial<BannerDto>) => this.request<BannerDto>("PATCH", `/banners/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/banners/${id}`, undefined, { auth: true }),
+  };
+
+  // === FAQs ===
+  faqs = {
+    list: (category?: string) =>
+      this.request<FaqDto[]>("GET", "/faqs", undefined, { auth: true, query: { category } }),
+    create: (data: Partial<FaqDto>) =>
+      this.request<FaqDto>("POST", "/faqs", data, { auth: true }),
+    update: (id: string, data: Partial<FaqDto>) =>
+      this.request<FaqDto>("PATCH", `/faqs/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/faqs/${id}`, undefined, { auth: true }),
+  };
+
+  // === Coupons ===
+  coupons = {
+    list: () => this.request<CouponDto[]>("GET", "/coupons", undefined, { auth: true }),
+    create: (data: Partial<CouponDto>) => this.request<CouponDto>("POST", "/coupons", data, { auth: true }),
+    update: (id: string, data: Partial<CouponDto>) => this.request<CouponDto>("PATCH", `/coupons/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/coupons/${id}`, undefined, { auth: true }),
+  };
+
+  // === Blog ===
+  blog = {
+    listPosts: () => this.request<BlogPostDto[]>("GET", "/blog/posts", undefined, { auth: true }),
+    createPost: (data: Partial<BlogPostDto>) => this.request<BlogPostDto>("POST", "/blog/posts", data, { auth: true }),
+    updatePost: (id: string, data: Partial<BlogPostDto>) => this.request<BlogPostDto>("PATCH", `/blog/posts/${id}`, data, { auth: true }),
+    removePost: (id: string) => this.request<void>("DELETE", `/blog/posts/${id}`, undefined, { auth: true }),
+    publishPost: (id: string) => this.request<BlogPostDto>("POST", `/blog/posts/${id}/publish`, undefined, { auth: true }),
+    listCategories: () => this.request<BlogCategoryDto[]>("GET", "/blog/categories", undefined, { auth: true }),
+    createCategory: (data: Partial<BlogCategoryDto>) => this.request<BlogCategoryDto>("POST", "/blog/categories", data, { auth: true }),
+  };
+
+  // === Legal pages ===
+  legal = {
+    list: () => this.request<LegalPageDto[]>("GET", "/legal", undefined, { auth: true }),
+    detail: (slug: string) => this.request<LegalPageDto>("GET", `/legal/${slug}`, undefined, { auth: true }),
+    create: (data: Partial<LegalPageDto>) => this.request<LegalPageDto>("POST", "/legal", data, { auth: true }),
+    update: (id: string, data: Partial<LegalPageDto>) => this.request<LegalPageDto>("PATCH", `/legal/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/legal/${id}`, undefined, { auth: true }),
+  };
+
+  // === Campaign packages ===
+  campaignPackages = {
+    list: () => this.request<CampaignPackageDto[]>("GET", "/campaign-packages", undefined, { auth: true }),
+    create: (data: Partial<CampaignPackageDto>) => this.request<CampaignPackageDto>("POST", "/campaign-packages", data, { auth: true }),
+    update: (id: string, data: Partial<CampaignPackageDto>) => this.request<CampaignPackageDto>("PATCH", `/campaign-packages/${id}`, data, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/campaign-packages/${id}`, undefined, { auth: true }),
+  };
+
+  // === Reviews ===
+  reviews = {
+    list: (status?: "pending" | "approved") => this.request<ReviewDto[]>("GET", "/reviews", undefined, { auth: true, query: { status } }),
+    setApproval: (id: string, isApproved: boolean) => this.request<ReviewDto>("PATCH", `/reviews/${id}/approval`, { isApproved }, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/reviews/${id}`, undefined, { auth: true }),
+  };
+
+  // === Settings ===
+  settings = {
+    get: (group?: string) =>
+      this.request<Record<string, unknown>>("GET", "/settings", undefined, { auth: true, query: { group } }),
+    upsert: (group: string, values: Record<string, unknown>) =>
+      this.request<Record<string, unknown>>("PATCH", "/settings", { group, values }, { auth: true }),
+  };
+
+  // === Corporate applications ===
+  corporateApplications = {
+    list: (status?: string) =>
+      this.request<CorporateApplicationDto[]>("GET", "/corporate-applications", undefined, { auth: true, query: { status } }),
+    setStatus: (id: string, body: { status: "approved" | "rejected" | "pending"; reviewNote?: string }) =>
+      this.request<CorporateApplicationDto>("PATCH", `/corporate-applications/${id}`, body, { auth: true }),
+  };
+
+  // === Admin: users + stats ===
+  adminUsers = {
+    list: (opts: { take?: number; skip?: number; q?: string } = {}) =>
+      this.request<AdminUserDto[]>("GET", "/admin/users", undefined, { auth: true, query: opts }),
+    detail: (id: string) =>
+      this.request<AdminUserDto>("GET", `/admin/users/${id}`, undefined, { auth: true }),
+  };
+
+  adminStats = () =>
+    this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+}
+
+export interface BannerDto {
+  id: string;
+  title: string;
+  location: "hero" | "category" | "cart" | "footer";
+  imageUrl: string;
+  mobileImageUrl?: string | null;
+  ctaLabel?: string | null;
+  ctaHref?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  clickCount: number;
+}
+
+export interface FaqDto {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  productSlug?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ReviewDto {
+  id: string;
+  productId: string;
+  userName: string;
+  userCompany?: string | null;
+  rating: number;
+  comment: string;
+  isApproved: boolean;
+  createdAt: string;
+  product?: { slug: string; name: string } | null;
+}
+
+export interface CouponDto {
+  id: string;
+  code: string;
+  type: "percentage" | "fixed_amount" | "free_shipping";
+  value: string;
+  minOrderAmount?: string | null;
+  maxUses?: number | null;
+  usedCount: number;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface HeroSlideDto {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl: string;
+  mobileImageUrl?: string | null;
+  ctaLabel?: string | null;
+  ctaHref?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface CorporateApplicationDto {
+  id: string;
+  companyName: string;
+  taxOffice: string;
+  taxNumber: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  status: "none" | "pending" | "approved" | "rejected";
+  createdAt: string;
+}
+
+export interface AdminUserOrderDto {
+  id: string;
+  orderNumber: string;
+  total: string | number;
+  status: string;
+  paymentStatus: string;
+  createdAt: string;
+}
+
+export interface AdminUserDto {
+  id: string;
+  email: string;
+  fullName: string;
+  phone?: string | null;
+  accountType: "individual" | "corporate";
+  companyName?: string | null;
+  role: "customer" | "admin" | "super_admin";
+  orderCount?: number;
+  createdAt: string;
+  // Detay (GET /admin/users/:id) ek alanları:
+  taxOffice?: string | null;
+  taxNumber?: string | null;
+  corporateStatus?: "none" | "pending" | "approved" | "rejected";
+  corporateDiscount?: string | number | null;
+  lastLoginAt?: string | null;
+  orders?: AdminUserOrderDto[];
+}
+
+export interface AdminStatsDto {
+  orderCount: number;
+  revenue: number;
+  customerCount: number;
+  pendingCorporate: number;
+  ordersByStatus: Array<{ status: string; count: number }>;
+}
+
+export interface BlogPostDto {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage?: string | null;
+  authorName: string;
+  authorRole?: string | null;
+  categoryId?: string | null;
+  tags: string[];
+  status: "draft" | "published" | "archived";
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  ogImage?: string | null;
+  viewCount: number;
+  publishedAt?: string | null;
+  createdAt: string;
+  category?: { slug: string; name: string } | null;
+}
+
+export interface BlogCategoryDto {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  sortOrder: number;
+}
+
+export interface CampaignPackageDto {
+  id: string;
+  slug: string;
+  name: string;
+  category: "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon";
+  contents: string;
+  listPrice: string;
+  packagePrice: string;
+  stockLimit?: number | null;
+  endDate?: string | null;
+  designSupport: boolean;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface LegalPageDto {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  version: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** Convenience: env'den otomatik kurulan client */
 export function createMarkalaClient(opts?: Partial<ApiClientConfig>): MarkalaApiClient {
   return new MarkalaApiClient({
-    baseUrl: opts?.baseUrl ?? (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000" : "http://localhost:4000"),
+    // `||` kullan (`??` değil): NEXT_PUBLIC_API_URL boş string ise de fallback'e düşsün,
+    // aksi halde new URL("") → "Failed to construct 'URL': Invalid URL" ile login/kayıt kırılır.
+    baseUrl: opts?.baseUrl || (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000" : "http://localhost:4000"),
     getToken: opts?.getToken,
     onError: opts?.onError,
   });

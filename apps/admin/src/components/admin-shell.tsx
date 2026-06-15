@@ -63,8 +63,7 @@ const navGroups: Array<{
   },
 ];
 
-// Mock — gerçek backend gelince /api/admin/notifications üzerinden dynamic gelecek
-const MOCK_NOTIFICATION_COUNT = 3;
+// Bildirimler artık /api/notifications (admin BFF → stats) üzerinden dinamik gelir.
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -73,6 +72,12 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement | null>(null);
+  const [notifs, setNotifs] = useState<{ count: number; items: Array<{ label: string; href: string }> }>({
+    count: 0,
+    items: [],
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -86,6 +91,32 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // Bildirimler — bekleyen işler (stats'tan türetilir)
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/notifications")
+      .then((r) => (r.ok ? r.json() : { count: 0, items: [] }))
+      .then((d) => {
+        if (!cancelled) setNotifs({ count: d.count ?? 0, items: d.items ?? [] });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Bildirim dropdown dışına tıklayınca kapan
+  useEffect(() => {
+    if (!notifOpen) return;
+    function handler(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [notifOpen]);
 
   // Dropdown dışına tıklayınca kapan
   useEffect(() => {
@@ -164,17 +195,49 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <ArrowSquareOut size={12} /> Siteyi Aç
           </a>
 
-          <button
-            className="relative p-2 rounded-md text-ink-700 hover:bg-paper-100"
-            aria-label={`Bildirimler${MOCK_NOTIFICATION_COUNT > 0 ? ` (${MOCK_NOTIFICATION_COUNT} yeni)` : ""}`}
-          >
-            <Bell size={18} />
-            {MOCK_NOTIFICATION_COUNT > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-paper-50 text-[10px] font-bold grid place-items-center leading-none">
-                {MOCK_NOTIFICATION_COUNT > 9 ? "9+" : MOCK_NOTIFICATION_COUNT}
-              </span>
+          <div ref={notifRef} className="relative">
+            <button
+              onClick={() => setNotifOpen((v) => !v)}
+              className="relative p-2 rounded-md text-ink-700 hover:bg-paper-100"
+              aria-label={`Bildirimler${notifs.count > 0 ? ` (${notifs.count} yeni)` : ""}`}
+              aria-haspopup="menu"
+              aria-expanded={notifOpen}
+            >
+              <Bell size={18} />
+              {notifs.count > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-paper-50 text-[10px] font-bold grid place-items-center leading-none">
+                  {notifs.count > 9 ? "9+" : notifs.count}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1 w-72 bg-paper-50 border border-paper-200 rounded-lg shadow-lg overflow-hidden z-30"
+              >
+                <div className="px-4 py-3 border-b border-paper-200 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-ink-900">Bildirimler</span>
+                  <span className="text-[11px] text-ink-500">{notifs.count} bekleyen</span>
+                </div>
+                {notifs.items.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-ink-500">Bekleyen iş yok 🎉</div>
+                ) : (
+                  notifs.items.map((n, i) => (
+                    <Link
+                      key={i}
+                      href={n.href}
+                      onClick={() => setNotifOpen(false)}
+                      role="menuitem"
+                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-ink-700 hover:bg-paper-100 border-b border-paper-200 last:border-0"
+                    >
+                      <Bell size={14} className="text-brand-700 flex-none" /> {n.label}
+                    </Link>
+                  ))
+                )}
+              </div>
             )}
-          </button>
+          </div>
 
           {/* User dropdown */}
           <div ref={userMenuRef} className="relative">

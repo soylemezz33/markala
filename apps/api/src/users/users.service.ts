@@ -61,4 +61,41 @@ export class UsersService {
   deleteAddress(userId: string, id: string) {
     return this.prisma.address.deleteMany({ where: { id, userId } });
   }
+
+  async listForAdmin(opts: { take?: number; skip?: number; q?: string } = {}) {
+    const rows = await this.prisma.user.findMany({
+      where: opts.q
+        ? { OR: [{ email: { contains: opts.q, mode: "insensitive" } }, { fullName: { contains: opts.q, mode: "insensitive" } }] }
+        : {},
+      select: {
+        id: true, email: true, fullName: true, phone: true, accountType: true,
+        companyName: true, role: true, createdAt: true,
+        _count: { select: { orders: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: opts.take ?? 50,
+      skip: opts.skip ?? 0,
+    });
+    return rows.map(({ _count, ...u }) => ({ ...u, orderCount: _count.orders }));
+  }
+
+  getForAdmin(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true, email: true, fullName: true, phone: true, accountType: true,
+        companyName: true, taxOffice: true, taxNumber: true, role: true,
+        corporateStatus: true, corporateDiscount: true, createdAt: true, lastLoginAt: true,
+        orders: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          select: {
+            id: true, orderNumber: true, total: true, status: true,
+            paymentStatus: true, createdAt: true,
+          },
+        },
+      },
+    });
+  }
 }

@@ -1,11 +1,12 @@
-"use client";
-
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { Plus, PencilSimple, Eye, Storefront } from "@phosphor-icons/react";
-import { categories } from "@markala/mock-data";
+import { Plus, PencilSimple, Eye, Storefront } from "@phosphor-icons/react/dist/ssr";
+import { getAdminApi } from "@/lib/api";
 
-export default function CategoriesAdminPage() {
+export default async function CategoriesAdminPage() {
+  const api = await getAdminApi();
+  const categories = await api.categories.list(true);
+
   return (
     <AdminShell>
       <header className="mb-6 flex items-center justify-between flex-wrap gap-3">
@@ -45,8 +46,8 @@ export default function CategoriesAdminPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-ink-500 hidden md:table-cell">{c.slug}</td>
-                  <td className="px-4 py-3 text-center text-ink-700 tabular-nums">{c.productCount}</td>
-                  <td className="px-4 py-3 text-right font-semibold tabular-nums">{c.startingPrice.toLocaleString("tr-TR")} ₺</td>
+                  <td className="px-4 py-3 text-center text-ink-700 tabular-nums">{(c as { _count?: { products: number } })._count?.products ?? 0}</td>
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums">{Number(c.startingPrice).toLocaleString("tr-TR")} ₺</td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex gap-1">
                       <Link href={`https://markala.com.tr/kategori/${c.slug}`} target="_blank" className="p-1.5 rounded text-ink-500 hover:bg-paper-100"><Eye size={14} /></Link>

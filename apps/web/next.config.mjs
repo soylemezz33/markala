@@ -34,11 +34,14 @@ const nextConfig = {
   reactStrictMode: true,
   // Production: standalone output → küçük Docker image, no node_modules at runtime
   output: "standalone",
+  // Tip/lint kontrolü CI'da ayrı yapılır; production image build'ini bloklamasın
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   // Compress responses (gzip)
   compress: true,
   // Production'da X-Powered-By: Next.js header'ı kaldır
   poweredByHeader: false,
-  transpilePackages: ["@markala/ui", "@markala/types", "@markala/mock-data"],
+  transpilePackages: ["@markala/ui", "@markala/types", "@markala/mock-data", "@markala/api-client"],
   images: {
     formats: ["image/avif", "image/webp"],
     // Mockup endpoint SVG döndürdüğü için aktif — kendi origin'imiz olduğu için güvenli

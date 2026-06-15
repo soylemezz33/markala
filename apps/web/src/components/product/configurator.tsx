@@ -15,6 +15,7 @@ import {
   PriceCard,
   MobileCta,
 } from "./configurator-fields";
+import { EstimatedDelivery } from "./estimated-delivery";
 
 export function Configurator({ product }: { product: Product }) {
   const addItem = useCartStore((s) => s.addItem);
@@ -59,6 +60,8 @@ export function Configurator({ product }: { product: Product }) {
         </div>
 
         <p className="text-ink-700 leading-relaxed">{product.shortDescription}</p>
+
+        <EstimatedDelivery productionTime={product.productionTime} />
 
         <div className="space-y-6 pt-2">
           {product.parameters.map((param) => (

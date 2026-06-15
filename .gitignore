@@ -11,6 +11,9 @@ out
 .turbo
 .vercel
 
+# Local upload storage (dev — StorageService local sürücü)
+apps/api/uploads/
+
 # Logs
 *.log
 npm-debug.log*
@@ -79,3 +82,11 @@ backup_*.sql
 *-service-account*.json
 *-credentials*.json
 markala-mcp*.json
+docker-compose.override.yml
+
+# Yerel artefaktlar / yedekler / agent çalışma dizinleri — commit etme
+.claude/worktrees/
+.playwright-mcp/
+_server_backup_*/
+.claire/
+.clone/

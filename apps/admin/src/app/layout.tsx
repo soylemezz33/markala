@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   description: "Markala yönetim paneli",
 };
 
+// Admin paneli tamamen dinamik — sayfalar request-time'da API'den veri çeker.
+// Build sırasında prerender DENENMEZ (aksi halde API'ye ECONNREFUSED ile build patlar).
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr" className={fontSans.variable}>

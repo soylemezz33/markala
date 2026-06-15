@@ -1,4 +1,4 @@
-import { products } from "@markala/mock-data";
+import { getProducts } from "@/lib/catalog";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { ProductRail } from "@/components/home/product-rail";
@@ -8,7 +8,8 @@ import { CustomerReviews } from "@/components/home/customer-reviews";
 import { ProcessTimeline } from "@/components/home/process-timeline";
 import { HowToProductionJsonLd } from "@/components/seo/json-ld";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const products = await getProducts();
   // Çok satılanlar (bestseller flag)
   const bestsellers = products.filter((p) => p.bestseller).slice(0, 12);
 

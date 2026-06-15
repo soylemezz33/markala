@@ -43,12 +43,20 @@ export default function KurumsalBasvuruPage() {
     setError(null);
     setSubmitting(true);
 
-    // Mock: gerçek backend bağlandığında apps/api/auth/corporate-application'a POST
     try {
-      await new Promise((r) => setTimeout(r, 800));
+      const res = await fetch("/api/kurumsal-basvuru", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? "Başvuru gönderilemedi, daha sonra tekrar deneyin.");
+        return;
+      }
       setSubmitted(true);
     } catch {
-      setError("Başvuru gönderilemedi, daha sonra tekrar deneyin.");
+      setError("Sunucuya ulaşılamadı, daha sonra tekrar deneyin.");
     } finally {
       setSubmitting(false);
     }

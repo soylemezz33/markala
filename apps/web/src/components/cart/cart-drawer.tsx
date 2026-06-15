@@ -6,6 +6,7 @@ import Link from "next/link";
 import { X, Trash, ShoppingBagOpen, ArrowRight, Plus, Minus } from "@phosphor-icons/react";
 import { Button, Price } from "@markala/ui";
 import { useCartStore } from "@/lib/cart-store";
+import { track } from "@/lib/analytics";
 import { useEffect } from "react";
 
 export function CartDrawer() {
@@ -126,12 +127,18 @@ export function CartDrawer() {
                     <Price amount={subtotal()} size="lg" className="text-ink-900" />
                   </div>
                   <p className="text-xs text-ink-500">
-                    Kargo ve KDV ödeme adımında hesaplanır.
+                    Kargo ve KDV sipariş adımında hesaplanır.
                   </p>
                   <div className="flex flex-col gap-2">
-                    <Link href="/odeme" onClick={close}>
+                    <Link
+                      href="/odeme"
+                      onClick={() => {
+                        track("begin_checkout", { currency: "TRY", value: subtotal(), items: itemCount() });
+                        close();
+                      }}
+                    >
                       <Button size="lg" fullWidth>
-                        Ödemeye Geç <ArrowRight size={18} weight="bold" />
+                        Siparişe Devam Et <ArrowRight size={18} weight="bold" />
                       </Button>
                     </Link>
                     <Link href="/sepet" onClick={close}>

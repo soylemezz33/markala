@@ -5,17 +5,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
-import { ShieldCheck, CreditCard, Lock, Check, ArrowRight, User as UserIcon, House, Truck } from "@phosphor-icons/react";
+import { CreditCard, Check, ArrowRight, User as UserIcon, House, Truck, WhatsappLogo, Phone, Clock, ShieldCheck } from "@phosphor-icons/react";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { generateOrderNumber } from "@/lib/format";
+import { whatsappUrl, phoneUrl, MARKALA_PHONE_DISPLAY } from "@/lib/whatsapp";
+import { track } from "@/lib/analytics";
 import type { Address, Order } from "@markala/types";
 
 const SHIPPING_FEE = 79;
 const VAT_RATE = 0.20;
 
-type Step = "iletisim" | "fatura" | "teslimat" | "odeme";
+type Step = "iletisim" | "fatura" | "teslimat" | "onay";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -41,11 +43,6 @@ export default function CheckoutPage() {
   const [fullAddress, setFullAddress] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
-  const [installments, setInstallments] = useState(1);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedTolerance, setAcceptedTolerance] = useState(false);
   const [acceptedKvkk, setAcceptedKvkk] = useState(false);
@@ -74,7 +71,7 @@ export default function CheckoutPage() {
 
   function handleNext() {
     if (!canProceed()) return;
-    const order: Step[] = ["iletisim", "fatura", "teslimat", "odeme"];
+    const order: Step[] = ["iletisim", "fatura", "teslimat", "onay"];
     const idx = order.indexOf(step);
     if (idx < order.length - 1) {
       setStep(order[idx + 1] ?? step);
@@ -82,78 +79,152 @@ export default function CheckoutPage() {
     }
   }
 
-  function handlePay() {
+  /** Sipariş özetini WhatsApp mesajına çevirir. */
+  function buildWhatsappMessage(orderNumber: string): string {
+    const lines: string[] = [];
+    lines.push("*Markala — Sipariş Talebi*");
+    lines.push(`Sipariş No: ${orderNumber}`);
+    lines.push("");
+    cartItems.forEach((i) => {
+      const lineTotal = i.configuration.totalPrice * i.quantity;
+      lines.push(`• ${i.productName} — ${i.configuration.summary} ×${i.quantity} = ${lineTotal.toLocaleString("tr-TR")} ₺`);
+      if (i.configuration.needsDesign) lines.push("   (tasarım desteği isteniyor)");
+      if (i.configuration.uploadedFileName) lines.push(`   (dosya: ${i.configuration.uploadedFileName})`);
+    });
+    lines.push("");
+    lines.push(`Ara toplam: ${sub.toLocaleString("tr-TR")} ₺`);
+    lines.push(`Kargo: ${shipping === 0 ? "Ücretsiz" : shipping.toLocaleString("tr-TR") + " ₺"}`);
+    lines.push(`*Toplam: ${total.toLocaleString("tr-TR")} ₺* (KDV dahil)`);
+    lines.push("");
+    lines.push(`Ad/Firma: ${accountType === "individual" ? fullName : companyName}`);
+    lines.push(`Telefon: ${phone}`);
+    lines.push(`E-posta: ${email}`);
+    if (accountType === "corporate") {
+      lines.push(`Vergi: ${taxOffice} / ${taxNumber}`);
+    }
+    lines.push(`Teslimat: ${fullAddress}, ${district}/${city}${zipCode ? " " + zipCode : ""}`);
+    return lines.join("\n");
+  }
+
+  function buildOrder(orderNumber: string): Order {
+    const address: Address = {
+      id: "addr_1",
+      label: "Teslimat",
+      fullName: accountType === "individual" ? fullName : companyName,
+      phone,
+      city,
+      district,
+      fullAddress,
+      zipCode,
+      isDefault: true,
+    };
+    return {
+      id: `ord_${Date.now().toString(36)}`,
+      orderNumber,
+      createdAt: new Date().toISOString(),
+      status: "siparis-alindi",
+      email,
+      items: cartItems.map((i) => ({
+        productSlug: i.productSlug,
+        productName: i.productName,
+        productImage: i.productImage,
+        configurationSummary: i.configuration.summary,
+        unitPrice: i.configuration.totalPrice,
+        quantity: i.quantity,
+        lineTotal: i.configuration.totalPrice * i.quantity,
+      })),
+      subtotal: sub,
+      shippingFee: shipping,
+      discount: 0,
+      vat,
+      total,
+      shippingAddress: address,
+      billingAddress: address,
+    };
+  }
+
+  function handleSubmit(channel: "whatsapp" | "phone") {
     if (!acceptedTerms || !acceptedTolerance || !acceptedKvkk) return;
-    if (cardNumber.length < 16 || cardCvv.length < 3) return;
     setProcessing(true);
 
-    // Mock 3D secure latency
-    setTimeout(() => {
-      const address: Address = {
-        id: "addr_1",
-        label: "Teslimat",
-        fullName: accountType === "individual" ? fullName : companyName,
-        phone,
-        city,
-        district,
-        fullAddress,
-        zipCode,
-        isDefault: true,
-      };
+    const orderNumber = generateOrderNumber();
+    const order = buildOrder(orderNumber);
 
-      const order: Order = {
-        id: `ord_${Date.now().toString(36)}`,
-        orderNumber: generateOrderNumber(),
-        createdAt: new Date().toISOString(),
-        status: "siparis-alindi",
+    // GA4 dönüşümü — kullanıcı etkileşim anında (popup engellenmesin)
+    track("generate_lead", {
+      method: channel === "whatsapp" ? "whatsapp_order" : "phone_order",
+      currency: "TRY",
+      value: total,
+      items: cartItems.length,
+    });
+
+    // Ekibe sipariş bildirimi (WhatsApp'a EK kayıt kanalı). Best-effort + keepalive:
+    // sayfa yönlenirken bile tamamlanır, başarısız olsa da akışı bloke etmez.
+    fetch("/api/siparis-bildirim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        orderNumber,
+        channel,
+        customerName: accountType === "individual" ? fullName : companyName,
         email,
+        phone,
+        accountType,
+        taxOffice,
+        taxNumber,
+        address: `${fullAddress}, ${district}/${city}${zipCode ? " " + zipCode : ""}`,
         items: cartItems.map((i) => ({
-          productSlug: i.productSlug,
-          productName: i.productName,
-          productImage: i.productImage,
-          configurationSummary: i.configuration.summary,
-          unitPrice: i.configuration.totalPrice,
+          name: i.productName,
+          summary: i.configuration.summary,
           quantity: i.quantity,
           lineTotal: i.configuration.totalPrice * i.quantity,
+          needsDesign: i.configuration.needsDesign,
+          uploadedFileName: i.configuration.uploadedFileName,
         })),
         subtotal: sub,
-        shippingFee: shipping,
-        discount: 0,
-        vat,
+        shipping,
         total,
-        shippingAddress: address,
-        billingAddress: address,
-      };
+      }),
+    }).catch(() => {});
 
-      addOrder(order);
-      clearCart();
-      router.replace(`/odeme/basarili/${order.id}`);
-    }, 1800);
+    if (channel === "whatsapp") {
+      // Senkron aç — popup engelini önler
+      window.open(whatsappUrl(buildWhatsappMessage(orderNumber)), "_blank", "noopener,noreferrer");
+    } else {
+      window.location.href = phoneUrl();
+    }
+
+    addOrder(order);
+    clearCart();
+    router.replace(`/odeme/basarili/${order.id}`);
   }
 
   if (cartItems.length === 0 && !processing) return null;
+
+  const consentOk = acceptedTerms && acceptedTolerance && acceptedKvkk;
 
   return (
     <>
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-8 md:py-10">
-          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Çıkış</p>
-          <h1 className="mt-1 text-3xl md:text-4xl font-semibold text-ink-900">Siparişi tamamla</h1>
-          <p className="mt-2 text-ink-500 text-sm">3D Secure güvenli ödeme · KDV dahil fiyatlar</p>
+          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Sipariş Talebi</p>
+          <h1 className="mt-1 text-3xl md:text-4xl font-semibold text-ink-900">Siparişini tamamla</h1>
+          <p className="mt-2 text-ink-500 text-sm">WhatsApp veya telefonla hızlı sipariş · KDV dahil fiyatlar</p>
         </Container>
       </div>
 
       <Container className="py-10 md:py-14">
         <Stepper step={step} />
 
-      <div className="mt-8 grid lg:grid-cols-12 gap-8">
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-4">
           <Section
           id="iletisim"
             title="İletişim Bilgileri"
             icon={<UserIcon size={18} />}
             isActive={step === "iletisim"}
-            isComplete={["fatura", "teslimat", "odeme"].includes(step)}
+            isComplete={["fatura", "teslimat", "onay"].includes(step)}
             onEdit={() => setStep("iletisim")}
           >
             <div className="grid sm:grid-cols-2 gap-3">
@@ -173,7 +244,7 @@ export default function CheckoutPage() {
             title="Fatura Bilgileri"
             icon={<CreditCard size={18} />}
             isActive={step === "fatura"}
-            isComplete={["teslimat", "odeme"].includes(step)}
+            isComplete={["teslimat", "onay"].includes(step)}
             onEdit={() => setStep("fatura")}
             disabled={step === "iletisim"}
           >
@@ -216,7 +287,7 @@ export default function CheckoutPage() {
             title="Teslimat Adresi"
             icon={<House size={18} />}
             isActive={step === "teslimat"}
-            isComplete={step === "odeme"}
+            isComplete={step === "onay"}
             onEdit={() => setStep("teslimat")}
             disabled={step === "iletisim" || step === "fatura"}
           >
@@ -245,43 +316,22 @@ export default function CheckoutPage() {
           </Section>
 
           <Section
-          id="odeme"
-            title="Ödeme"
-            icon={<Lock size={18} />}
-            isActive={step === "odeme"}
+          id="onay"
+            title="Onay & Sipariş"
+            icon={<WhatsappLogo size={18} />}
+            isActive={step === "onay"}
             isComplete={false}
-            onEdit={() => setStep("odeme")}
-            disabled={step !== "odeme"}
+            onEdit={() => setStep("onay")}
+            disabled={step !== "onay"}
           >
-            <div className="space-y-3">
-              <Input
-          label="Kart Numarası"
-                value={cardNumber}
-                onChange={(v) => setCardNumber(v.replace(/\D/g, "").slice(0, 16))}
-                placeholder="•••• •••• •••• ••••"
-                maxLength={16}
-              />
-              <Input label="Kart Üzerindeki İsim" value={cardName} onChange={setCardName} />
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="Son Kullanım" value={cardExpiry} onChange={setCardExpiry} placeholder="AA/YY" maxLength={5} />
-                <Input label="CVV" value={cardCvv} onChange={(v) => setCardCvv(v.replace(/\D/g, "").slice(0, 4))} maxLength={4} type="password" />
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-sm text-ink-700">
+                Siparişini <strong>WhatsApp</strong> veya <strong>telefon</strong> üzerinden tamamlıyoruz. Butona
+                bastığında sipariş özetin WhatsApp'a aktarılır; ekibimiz ödeme (havale/EFT veya kapıda) ve üretim
+                detaylarını seninle netleştirir. Kart bilgisi istemiyoruz.
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-ink-900">Taksit</label>
-                <select
-          value={installments}
-                  onChange={(e) => setInstallments(parseInt(e.target.value))}
-                  className="mt-1.5 w-full px-3 py-2.5 rounded border border-paper-200 text-sm bg-paper-50 focus:border-ink-900 focus:outline-none"
-                >
-                  <option value={1}>Tek Çekim — <Pricing amount={total} /></option>
-                  <option value={3}>3 Taksit — <Pricing amount={total / 3} />/ay</option>
-                  <option value={6}>6 Taksit — <Pricing amount={total / 6} />/ay</option>
-                  <option value={9}>9 Taksit — <Pricing amount={total / 9} />/ay</option>
-                </select>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-paper-200 space-y-3">
+              <div className="space-y-3 pt-1">
                 <label className="flex items-start gap-2 text-sm text-ink-700">
                   <input
                     type="checkbox"
@@ -325,24 +375,40 @@ export default function CheckoutPage() {
                   </span>
                 </label>
               </div>
+
+              <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                <Button
+                  size="lg"
+                  fullWidth
+                  onClick={() => handleSubmit("whatsapp")}
+                  disabled={!consentOk || processing}
+                  className="bg-[#25D366] hover:bg-[#1FB358] text-white"
+                >
+                  <WhatsappLogo size={20} weight="fill" /> WhatsApp ile Siparişi Tamamla
+                </Button>
+                <Button
+                  size="lg"
+                  fullWidth
+                  variant="outline"
+                  onClick={() => handleSubmit("phone")}
+                  disabled={!consentOk || processing}
+                >
+                  <Phone size={18} weight="fill" /> Telefonla Sipariş — {MARKALA_PHONE_DISPLAY}
+                </Button>
+              </div>
+              {!consentOk && (
+                <p className="text-xs text-ink-500">Devam etmek için sözleşmeleri onaylayın.</p>
+              )}
             </div>
           </Section>
 
-          <div className="flex justify-end pt-4">
-            {step !== "odeme" ? (
+          {step !== "onay" && (
+            <div className="flex justify-end pt-4">
               <Button size="lg" onClick={handleNext} disabled={!canProceed()}>
                 Devam Et <ArrowRight size={18} weight="bold" />
               </Button>
-            ) : (
-              <Button size="lg" onClick={handlePay} disabled={!acceptedTerms || !acceptedTolerance || !acceptedKvkk || cardNumber.length < 16 || processing}>
-                {processing ? "İşleniyor..." : (
-                  <>
-                    <Lock size={18} weight="bold" /> {`${total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ₺ Öde`}
-                  </>
-                )}
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         <aside className="lg:col-span-4">
@@ -379,9 +445,9 @@ export default function CheckoutPage() {
             </div>
 
             <ul className="grid grid-cols-3 gap-2 text-xs text-ink-500">
-              <Trust icon={<ShieldCheck size={18} />} label="3D Secure" />
-              <Trust icon={<CreditCard size={18} />} label="iyzico" />
-              <Trust icon={<Lock size={18} />} label="SSL" />
+              <Trust icon={<Clock size={18} />} label="1-2 iş günü üretim" />
+              <Trust icon={<Truck size={18} />} label="81 il kargo" />
+              <Trust icon={<ShieldCheck size={18} />} label="KVKK uyumlu" />
             </ul>
           </div>
         </aside>
@@ -396,12 +462,12 @@ function Stepper({ step }: { step: Step }) {
     { id: "iletisim", label: "İletişim" },
     { id: "fatura", label: "Fatura" },
     { id: "teslimat", label: "Teslimat" },
-    { id: "odeme", label: "Ödeme" },
+    { id: "onay", label: "Onay" },
   ];
   const current = steps.findIndex((s) => s.id === step);
 
   return (
-    <nav aria-label="Ödeme adımları" className="flex items-center justify-center gap-2 md:gap-4 text-xs md:text-sm">
+    <nav aria-label="Sipariş adımları" className="flex items-center justify-center gap-2 md:gap-4 text-xs md:text-sm">
       {steps.map((s, i) => {
         const isDone = i < current;
         const isActive = i === current;
@@ -528,13 +594,9 @@ function Row({ label, value, muted }: { label: React.ReactNode; value: React.Rea
 
 function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <li className="flex flex-col items-center gap-1 p-3 bg-paper-50 border border-paper-200 rounded">
+    <li className="flex flex-col items-center gap-1 p-3 bg-paper-50 border border-paper-200 rounded text-center">
       <span className="text-ink-700">{icon}</span>
       <span>{label}</span>
     </li>
   );
-}
-
-function Pricing({ amount }: { amount: number }) {
-  return <>{amount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} ₺</>;
 }

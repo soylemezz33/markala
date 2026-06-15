@@ -17,7 +17,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.json ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 
@@ -51,7 +51,9 @@ EXPOSE 4000
 ENTRYPOINT ["/sbin/tini", "--"]
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD node -e "fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+    CMD node -e "fetch('http://localhost:4000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Migrate before start (idempotent)
+# NOT: nest build çıktısı dist/main.js (dist/src/main DEĞİL) — yanlış yol container'ı
+# MODULE_NOT_FOUND ile crash-loop'a sokar.
 CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && node dist/main"]

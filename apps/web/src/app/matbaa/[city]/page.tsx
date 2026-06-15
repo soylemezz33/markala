@@ -8,7 +8,8 @@ import {
   Buildings, Receipt, Storefront, Question, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
-import { products, categories } from "@markala/mock-data";
+import { categories } from "@markala/mock-data";
+import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
@@ -66,11 +67,12 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
-export default function CityLandingPage({ params }: Props) {
+export default async function CityLandingPage({ params }: Props) {
   const city = getCityBySlug(params.city);
   if (!city) notFound();
 
   const nearbyCities = getNearbyCities(city.slug, 3);
+  const products = await getProducts();
   const featuredProducts = products
     .filter((p) => p.bestseller)
     .slice(0, 4);
