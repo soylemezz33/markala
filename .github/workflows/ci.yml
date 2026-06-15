@@ -40,9 +40,13 @@ jobs:
       - name: Type-check (admin)
         run: pnpm --filter @markala/admin type-check
 
+      # API tsc'si üretilmiş Prisma Client tiplerine ihtiyaç duyar; pnpm postinstall
+      # script'lerini atladığı için generate'i açıkça çalıştırıyoruz.
+      - name: Generate Prisma Client (api)
+        run: pnpm --filter @markala/api prisma:generate
+
       - name: Type-check (api)
         run: pnpm --filter @markala/api type-check
-        continue-on-error: true # API henüz tam strict değil
 
       - name: Build (web)
         run: pnpm --filter @markala/web build
@@ -75,3 +79,29 @@ jobs:
 
       - name: Run Vitest unit tests (@markala/web)
         run: pnpm --filter @markala/web test
+
+  test-api:
+    name: Unit Tests (api)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Versiyon package.json "packageManager"dan; `version:` verme → "Multiple versions" hatası.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Vitest spec'leri @prisma/client'tan tip/sınıf import ediyor (mock'lu, DB yok);
+      # generate olmadan import "did you forget prisma generate" ile patlar.
+      - name: Generate Prisma Client (api)
+        run: pnpm --filter @markala/api prisma:generate
+
+      - name: Run Vitest unit tests (@markala/api)
+        run: pnpm --filter @markala/api test
