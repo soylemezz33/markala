@@ -1,0 +1,83 @@
+# Dependabot — otomatik bağımlılık güncellemeleri
+# Üç yüzey izlenir: pnpm workspace (npm), GitHub Actions, Docker imajları.
+# Gürültüyü azaltmak için minor+patch güncellemeler tek PR'da gruplanır;
+# major güncellemeler ayrı PR olarak gelir (kırıcı değişiklik incelemesi için).
+# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+version: 2
+
+updates:
+  # ── 1. pnpm workspace (apps/* + packages/*) ──────────────────────────────
+  # npm ekosistemi pnpm-lock.yaml'ı okur ve tüm workspace package.json'larını kapsar.
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/apps/*"
+      - "/packages/*"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 8
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+    groups:
+      # Üretim bağımlılıkları — minor + patch tek PR
+      production-minor-patch:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      # Geliştirme bağımlılıkları — minor + patch tek PR
+      development-minor-patch:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ── 2. GitHub Actions (.github/workflows/*) ──────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # ── 3. Docker base imajları (apps/{web,admin,api}/Dockerfile) ────────────
+  - package-ecosystem: "docker"
+    directories:
+      - "/apps/web"
+      - "/apps/admin"
+      - "/apps/api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+    groups:
+      docker-base-images:
+        patterns:
+          - "*"
