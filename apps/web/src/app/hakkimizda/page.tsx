@@ -16,6 +16,13 @@ export const metadata: Metadata = {
       "324 Ajans çatısı altında matbaa ve reklam ürünleri e-ticareti. 10+ yıl tecrübe, ücretsiz tasarım, Türkiye geneli kargo.",
     url: "/hakkimizda",
     type: "website",
+    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Hakkımızda" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markala Hakkında — 324 Ajans Çatısı",
+    description: "324 Ajans çatısı altında matbaa ve reklam ürünleri e-ticareti. 10+ yıl tecrübe.",
+    images: ["/api/mockup?theme=brand&w=1200&h=630"],
   },
 };
 
