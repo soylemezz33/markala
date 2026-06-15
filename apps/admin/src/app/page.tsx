@@ -51,9 +51,11 @@ export default async function DashboardPage() {
     api.orders.listAll({ take: 5 }),
   ]);
 
+  // Defansif: API şekli sürüm uyumsuzluğunda kayarsa tüm panel çökmesin (boş → sıfır göster).
+  const ordersByStatus = stats.ordersByStatus ?? [];
   // Üretimde sayısı — API enum değeri Prisma'dan direkt geliyor (underscore)
   const uretimdeCount =
-    stats.ordersByStatus.find((s) => s.status === "uretimde")?.count ?? 0;
+    ordersByStatus.find((s) => s.status === "uretimde")?.count ?? 0;
 
   const kpis = [
     {
@@ -129,11 +131,11 @@ export default async function DashboardPage() {
             <ChartLine size={18} weight="bold" className="text-brand-700" />
             <h2 className="font-semibold text-ink-900">Sipariş Durumları</h2>
           </header>
-          {stats.ordersByStatus.length === 0 ? (
+          {ordersByStatus.length === 0 ? (
             <p className="text-sm text-ink-400">Henüz sipariş yok.</p>
           ) : (
             <div className="space-y-2">
-              {stats.ordersByStatus.map((s) => {
+              {ordersByStatus.map((s) => {
                 const badge = statusBadge(s.status);
                 return (
                   <div
