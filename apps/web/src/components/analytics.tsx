@@ -1,8 +1,16 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Script from "next/script";
+import { hasConsent } from "./cookie-consent";
+
+const CONSENT_EVENT = "markala:open-cookie-settings";
 
 /**
- * Tüm analytics script'leri — sadece env'de tanımlıysa render edilir.
- * Client tarafa Script bileşeniyle yüklenir, performansa minimal etki.
+ * KVKK m.5 uyumlu analytics loader.
+ * Analitik ve pazarlama script'leri yalnızca kullanıcı açık rıza verdikten
+ * sonra yüklenir. Consent değişikliklerinde (banner kapatıldığında) sayfa
+ * yenilenmesi gerekmez — event listener ile güncellenir.
  *
  * Env değişkenleri:
  *   NEXT_PUBLIC_GA4_ID         — örn: G-XXXXXXXXXX
@@ -11,6 +19,19 @@ import Script from "next/script";
  *   NEXT_PUBLIC_GTM_ID         — (opsiyonel) Google Tag Manager
  */
 export function Analytics() {
+  const [analyticsAllowed, setAnalyticsAllowed] = useState(false);
+  const [marketingAllowed, setMarketingAllowed] = useState(false);
+
+  useEffect(() => {
+    function checkConsent() {
+      setAnalyticsAllowed(hasConsent("analytics"));
+      setMarketingAllowed(hasConsent("marketing"));
+    }
+    checkConsent();
+    window.addEventListener(CONSENT_EVENT, checkConsent);
+    return () => window.removeEventListener(CONSENT_EVENT, checkConsent);
+  }, []);
+
   const ga4 = process.env.NEXT_PUBLIC_GA4_ID;
   const clarity = process.env.NEXT_PUBLIC_CLARITY_ID;
   const hotjar = process.env.NEXT_PUBLIC_HOTJAR_ID;
@@ -18,7 +39,7 @@ export function Analytics() {
 
   return (
     <>
-      {ga4 && (
+      {analyticsAllowed && ga4 && (
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${ga4}`}
@@ -35,7 +56,7 @@ export function Analytics() {
         </>
       )}
 
-      {gtm && (
+      {analyticsAllowed && gtm && (
         <Script id="gtm-init" strategy="afterInteractive">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -47,7 +68,7 @@ export function Analytics() {
         </Script>
       )}
 
-      {clarity && (
+      {analyticsAllowed && clarity && (
         <Script id="clarity-init" strategy="afterInteractive">
           {`
             (function(c,l,a,r,i,t,y){
@@ -59,7 +80,7 @@ export function Analytics() {
         </Script>
       )}
 
-      {hotjar && (
+      {marketingAllowed && hotjar && (
         <Script id="hotjar-init" strategy="afterInteractive">
           {`
             (function(h,o,t,j,a,r){

@@ -37,7 +37,8 @@ function readConsent(): ConsentState | null {
 }
 
 function writeConsent(state: ConsentState): void {
-  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+  const secure = location.protocol === "https:" ? "; secure" : "";
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax${secure}`;
 }
 
 /**
