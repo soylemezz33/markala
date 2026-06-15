@@ -44,6 +44,17 @@ jobs:
         run: pnpm --filter @markala/api type-check
         continue-on-error: true # API henüz tam strict değil
 
+      # Lint adımı — job adı "Type-check & Lint" diyordu ama lint hiç koşmuyordu.
+      # Kademeli sıkılaştırma: şimdilik raporlar, bloklamaz (api type-check ile aynı
+      # desen). Kod tabanı lint-temiz olunca continue-on-error kaldırılıp gate yapılır.
+      - name: Lint (web)
+        run: pnpm --filter @markala/web lint
+        continue-on-error: true
+
+      - name: Lint (admin)
+        run: pnpm --filter @markala/admin lint
+        continue-on-error: true
+
       - name: Build (web)
         run: pnpm --filter @markala/web build
         env:

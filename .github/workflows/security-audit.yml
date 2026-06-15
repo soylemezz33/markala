@@ -1,0 +1,60 @@
+name: Security Audit — pnpm
+
+# Bağımlılık güvenlik denetimi. pnpm-lock.yaml üzerinden çalışır (install gerekmez).
+# Şimdilik RAPOR amaçlı — merge'i bloklamaz. Sonuç GitHub job summary'ye yazılır.
+# Üretim-high sayısı düşürülünce "Production audit" adımı blocking yapılabilir.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "**/package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/security-audit.yml"
+  schedule:
+    # Her Pazartesi 06:00 UTC (≈09:00 Europe/Istanbul) — mevcut lockfile'a karşı
+    # yeni açıklanan CVE'leri yakalar.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: security-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: pnpm audit (rapor — bloklamaz)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Versiyon package.json "packageManager"dan okunur (pnpm@10.33.3).
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      # Tüm bağımlılıklar (dev dahil) — genel görünüm. Bilgilendirme; merge'i bloklamaz.
+      - name: Full audit (tüm bağımlılıklar)
+        run: |
+          echo "### pnpm audit — tüm bağımlılıklar" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          pnpm audit 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # Üretim bağımlılıkları, high+ — öncelikli risk. Şimdilik yine bloklamaz.
+      - name: Production audit (high+)
+        run: |
+          echo "### pnpm audit --prod --audit-level high (öncelikli)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          pnpm audit --prod --audit-level high 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
