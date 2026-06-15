@@ -6,7 +6,7 @@ import {
   ArrowRight, CheckCircle, Phone, WhatsappLogo, Question, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { services, getServiceBySlug } from "@/lib/services";
-import { products } from "@markala/mock-data";
+import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
@@ -38,10 +38,11 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
-export default function ServicePage({ params }: Props) {
+export default async function ServicePage({ params }: Props) {
   const service = getServiceBySlug(params.slug);
   if (!service) notFound();
 
+  const products = await getProducts();
   const relatedProducts = products.filter((p) =>
     service.relatedProductSlugs?.includes(p.slug),
   );

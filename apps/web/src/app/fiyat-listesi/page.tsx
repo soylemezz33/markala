@@ -5,7 +5,8 @@ import {
   CurrencyCircleDollar, ArrowRight, Phone, WhatsappLogo, Info, CheckCircle,
   Truck, Tag, Lightning,
 } from "@phosphor-icons/react/dist/ssr";
-import { products, categories } from "@markala/mock-data";
+import { categories } from "@markala/mock-data";
+import { getProducts } from "@/lib/catalog";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const SITE = "https://markala.com.tr";
@@ -38,7 +39,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PriceListPage() {
+export default async function PriceListPage() {
+  const products = await getProducts();
+
   // Kategoriye göre grupla
   const byCategory = categories
     .map((cat) => ({

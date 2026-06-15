@@ -1,52 +1,27 @@
+import "server-only";
 import { cookies } from "next/headers";
-import { verifySession, SESSION_COOKIE } from "./admin-auth";
+import { MarkalaApiClient } from "@markala/api-client";
+import { verifySession, SESSION_COOKIE, type AdminSession } from "./admin-session";
 
-/**
- * Server-side API erişimi (RSC / route handler / server action).
- * markala_admin_session cookie'sinden accessToken'ı okur, NestJS API'yi Bearer ile çağırır.
- *
- * NOT: RSC render'ında cookie YAZILAMAZ — access token refresh'i middleware'de proaktif yapılır.
- * Burada sadece OKURUZ. Mutasyon route handler/server action'dan geçerse 401'de reaktif
- * refresh eklenebilir (şimdilik middleware proaktif yenilemesi yeterli).
- */
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-export class ApiFetchError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-    this.name = "ApiFetchError";
-  }
+/** Geçerli admin oturumunu cookie'den çöz (RSC/route handler). */
+export async function getAdminSession(): Promise<AdminSession | null> {
+  // Fail-closed: imza anahtarı yoksa/kısaysa oturumu geçersiz say.
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret || secret.length < 32) return null;
+  const token = cookies().get(SESSION_COOKIE)?.value;
+  return verifySession(token, secret);
 }
 
-async function accessToken(): Promise<string | null> {
-  const raw = cookies().get(SESSION_COOKIE)?.value;
-  const session = await verifySession(raw);
-  return session?.accessToken ?? null;
-}
-
-export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const token = await accessToken();
-  const res = await fetch(`${API_URL}/api${path}`, {
-    ...opts,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(opts.headers ?? {}),
-    },
-    cache: "no-store",
+/**
+ * Per-request typed API client. accessToken cookie'den okunur.
+ * Token tazeliği middleware tarafından garanti edilir (proaktif refresh).
+ */
+export async function getAdminApi(): Promise<MarkalaApiClient> {
+  const session = await getAdminSession();
+  return new MarkalaApiClient({
+    baseUrl: API_URL,
+    getToken: () => session?.accessToken,
   });
-
-  if (!res.ok) {
-    let msg = res.statusText;
-    try {
-      const body = (await res.json()) as { message?: string };
-      if (body?.message) msg = Array.isArray(body.message) ? body.message.join(", ") : body.message;
-    } catch {
-      /* metin değil */
-    }
-    throw new ApiFetchError(res.status, `API ${res.status} ${path}: ${msg}`);
-  }
-
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
 }

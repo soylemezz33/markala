@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { signSession, SESSION_COOKIE, SESSION_MAX_AGE, type AdminSession } from "@/lib/admin-auth";
+import { signSession, SESSION_COOKIE, SESSION_MAX_AGE, type AdminSession } from "@/lib/admin-session";
 
-// nodejs runtime: API'nin Set-Cookie (mk_refresh) başlığını getSetCookie() ile güvenle okumak için.
-export const runtime = "nodejs";
+export const runtime = "nodejs"; // getSetCookie + fetch; nodejs en güvenli
 
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
-function extractRefresh(setCookies: string[]): string | null {
+function parseRefreshFromSetCookie(setCookies: string[]): string | null {
   for (const c of setCookies) {
     const m = c.match(/(?:^|;\s*)mk_refresh=([^;]+)/);
-    if (m?.[1]) return decodeURIComponent(m[1]);
+    if (m) return decodeURIComponent(m[1]!);
   }
   return null;
 }
@@ -21,7 +20,6 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
-
   const { email, password } = body;
   if (!email || !password) {
     return NextResponse.json({ error: "E-posta ve şifre zorunlu." }, { status: 400 });
@@ -35,53 +33,41 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({ email, password }),
     });
   } catch {
-    return NextResponse.json({ error: "Sunucuya ulaşılamadı." }, { status: 502 });
+    return NextResponse.json({ error: "API'ye ulaşılamadı." }, { status: 502 });
   }
 
-  if (!apiRes.ok) {
-    // 401 (hatalı kimlik) dahil tüm hatalar generic.
-    return NextResponse.json({ error: "E-posta veya şifre hatalı." }, { status: 401 });
-  }
-
-  const data = (await apiRes.json()) as {
-    accessToken: string;
-    user: { id: string; email: string; fullName?: string; role: string };
+  const data = (await apiRes.json().catch(() => ({}))) as {
+    accessToken?: string;
+    user?: { email: string; role: string };
+    message?: string;
   };
 
-  const role = data.user?.role;
-  if (role !== "admin" && role !== "super_admin") {
-    return NextResponse.json(
-      { error: "Bu hesabın yönetim paneline erişim yetkisi yok." },
-      { status: 403 },
-    );
+  if (!apiRes.ok || !data.accessToken || !data.user) {
+    return NextResponse.json({ error: data.message ?? "Giriş başarısız." }, { status: apiRes.status || 401 });
   }
 
-  const setCookies = apiRes.headers.getSetCookie?.() ?? [];
-  const refreshToken = extractRefresh(setCookies);
-  if (!refreshToken) {
-    return NextResponse.json(
-      { error: "Oturum başlatılamadı (refresh token alınamadı)." },
-      { status: 502 },
-    );
+  if (data.user.role !== "admin" && data.user.role !== "super_admin") {
+    return NextResponse.json({ error: "Bu hesabın yönetim paneline erişim yetkisi yok." }, { status: 403 });
+  }
+
+  const refreshToken = parseRefreshFromSetCookie(apiRes.headers.getSetCookie?.() ?? []) ?? "";
+
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    return NextResponse.json({ error: "ADMIN_SESSION_SECRET eksik/kısa." }, { status: 500 });
   }
 
   const session: AdminSession = {
     accessToken: data.accessToken,
     refreshToken,
-    user: {
-      id: data.user.id,
-      email: data.user.email,
-      fullName: data.user.fullName ?? data.user.email,
-      role,
-    },
+    email: data.user.email,
+    name: data.user.email,
+    role: data.user.role as "admin" | "super_admin",
     iat: Math.floor(Date.now() / 1000),
   };
+  const token = await signSession(session, secret);
 
-  const token = await signSession(session);
-  const res = NextResponse.json({
-    ok: true,
-    user: { email: session.user.email, name: session.user.fullName, role },
-  });
+  const res = NextResponse.json({ ok: true, user: { email: session.email, role: session.role } });
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

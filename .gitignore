@@ -11,6 +11,9 @@ out
 .turbo
 .vercel
 
+# Local upload storage (dev — StorageService local sürücü)
+apps/api/uploads/
+
 # Logs
 *.log
 npm-debug.log*

@@ -5,7 +5,9 @@ import { ValidationPipe, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
-import { json } from "express";
+import { json, static as serveStatic } from "express";
+import type { Request, Response, NextFunction } from "express";
+import { join } from "node:path";
 import { AppModule } from "./app.module";
 import { rateLimit } from "./security/rate-limit";
 
@@ -24,8 +26,22 @@ async function bootstrap() {
   // Helmet — güvenlik başlıkları (CSP default ile gönderilir; web origin'i ayrı tutuyoruz).
   app.use(helmet());
 
-  // Body size limit — 100kb. Konfigüratör payload'ları küçük JSON, dosyalar R2'ye direkt yükleniyor.
+  // Body size limit — 100kb. Konfigüratör payload'ları küçük JSON.
+  // NOT: multipart upload (/api/uploads) multer ile ayrı parse edilir, bu limit etkilemez.
   app.use(json({ limit: "100kb" }));
+
+  // Local depolama sürücüsü görselleri buradan sunar (R2 yokken / dev).
+  // CORP cross-origin: helmet varsayılanı same-origin'dir, aksi halde web/admin
+  // farklı origin'den <img> yükleyemez. Bunlar public görseller.
+  const uploadDir = process.env.UPLOAD_DIR ?? join(process.cwd(), "uploads");
+  app.use(
+    "/uploads",
+    (_req: Request, res: Response, next: NextFunction) => {
+      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      next();
+    },
+    serveStatic(uploadDir),
+  );
 
   // Auth endpoint'leri için per-IP fixed-window rate limit — standart 429 + Retry-After.
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/register", method: "POST" }));
