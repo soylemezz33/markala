@@ -1,4 +1,13 @@
 import { IsBoolean, IsOptional, IsString, Length, MaxLength, MinLength } from "class-validator";
+import { PaginationQueryDto } from "../common/pagination.dto";
+
+/** Yönetici kullanıcı listesi sorgu parametreleri — doğrulanmış sayfalama + opsiyonel arama. */
+export class ListUsersQueryDto extends PaginationQueryDto {
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  q?: string;
+}
 
 /**
  * SECURITY (mass assignment koruması):
