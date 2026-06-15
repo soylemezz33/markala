@@ -10,15 +10,17 @@
 
 | Endpoint | Dosya | Durum |
 |---|---|---|
-| `POST /ai/search` | `semantic-search.service.ts` | PoC stub (keyword overlap) |
+| `POST /ai/search` | `semantic-search.service.ts` | **Canlı katalog (lexical baseline)** — Prisma'dan aktif ürünler, Türkçe-duyarlı alan-ağırlıklı skor; dış AI/maliyet yok |
 | `POST /ai/design-check` | `design-quality.service.ts` | PoC stub (sabit değer döner) |
 | `POST /ai/chat` | `chatbot.service.ts` | PoC stub (kural tabanlı) |
 
 ### Stub → Prod Yükseltme Öncelikleri
 
 1. **Chatbot** — en hızlı değer. Claude Haiku 4.5 + system prompt ile 1 sprint.
-2. **Semantic Search** — pgvector kurulumu gerektirir; 2 sprint.
+2. **Semantic Search** — ✅ lexical baseline canlı kataloğa bağlandı (sabit değer kaldırıldı). Sonraki adım: pgvector cosine similarity; lexical baseline embedding kalitesini A/B karşılaştırmak için ücretsiz referans olarak kalır.
 3. **Design Quality** — Sharp/PDF parse bağımlılığı; 3 sprint.
+
+> **Lexical baseline neden önce?** pgvector + embedding pipeline (AI.md §5) kurulana kadar `/ai/search` artık gerçek sonuç döndürür: hiçbir veri yurt dışına çıkmaz (KVKK m.9 riski 0), API maliyeti 0, deterministik (testlenebilir). Embedding'e geçildiğinde bu baseline kaldırılmaz — kalite kıyas referansı olur.
 
 ---
 
