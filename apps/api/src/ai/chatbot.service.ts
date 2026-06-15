@@ -36,7 +36,9 @@ export class ChatbotService {
     const sessionId = dto.sessionId ?? randomUUID();
     this.logger.log(`[PoC] Chatbot session=${sessionId} message="${dto.message}"`);
 
-    const lower = dto.message.toLowerCase();
+    // Türkçe locale şart: düz `toLowerCase()` "İ" harfini "i̇" (i + U+0307 combining dot)
+    // üretir, "KARTVİZİT" gibi büyük harfli girişler kuralları kaçırır. `tr` locale İ→i doğru çevirir.
+    const lower = dto.message.toLocaleLowerCase("tr");
     const matched = this.KEYWORD_RULES.find((r) => r.keywords.some((kw) => lower.includes(kw)));
 
     const reply = matched
