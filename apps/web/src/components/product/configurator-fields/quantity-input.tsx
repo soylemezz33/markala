@@ -17,6 +17,7 @@ export function QuantityInput({ value, presets, unitPrice, onChange }: Props) {
           <button
             key={preset}
             type="button"
+            aria-pressed={value === preset}
             onClick={() => onChange(preset)}
             className={cn(
               "px-4 h-10 rounded-md border text-sm font-medium tabular-nums transition-all",
@@ -32,8 +33,9 @@ export function QuantityInput({ value, presets, unitPrice, onChange }: Props) {
           type="number"
           min={1}
           value={value}
+          aria-label="Özel adet"
           onChange={(e) => onChange(parseInt(e.target.value, 10) || 1)}
-          className="w-24 h-10 px-3 rounded-md border border-paper-200 bg-paper-50 text-ink-900 text-sm tabular-nums focus:border-ink-900 focus:outline-none"
+          className="w-24 h-10 px-3 rounded-md border border-paper-200 bg-paper-50 text-ink-900 text-sm tabular-nums focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
         />
       </div>
       {unitPrice > 0 && (
