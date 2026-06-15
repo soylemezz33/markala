@@ -45,7 +45,7 @@ export const legalPages: Record<string, LegalPage> = {
   kvkk: {
     slug: "kvkk",
     title: "KVKK Aydınlatma Metni",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <h2>1. Veri Sorumlusunun Kimliği</h2>
       <p>
@@ -99,20 +99,22 @@ export const legalPages: Record<string, LegalPage> = {
         <li><strong>Yetkili kamu kurum ve kuruluşları:</strong> Yasal talep halinde.</li>
       </ul>
 
-      <h2>4.A. Yurt Dışına Aktarım</h2>
+      <h2>4.A. Yurt Dışına Aktarım ve Alt İşleyici Durumu</h2>
       <p>
-        Aşağıdaki hizmet sağlayıcılar veri işleme sürecinde yurt dışı sunucular kullanır:
+        Aşağıdaki hizmet sağlayıcılar veri işleme sürecinde yurt dışı sunucular kullanır.
+        Her biri ile Veri İşleyen Sözleşmesi (DPA) / Standart Sözleşme Maddeleri (SCC) kapsamında çalışılmaktadır:
       </p>
       <ul>
-        <li><strong>Cloudflare R2</strong> (ABD/AB) — dosya depolama</li>
-        <li><strong>Google Analytics 4</strong> (ABD) — anonimleştirilmiş trafik analizi</li>
-        <li><strong>Microsoft Clarity</strong> (ABD/AB) — kullanıcı deneyimi analizi</li>
-        <li><strong>Meta Pixel</strong> (ABD) — pazarlama (sadece açık rıza varsa)</li>
-        <li><strong>SendGrid</strong> (ABD) — transactional e-posta</li>
+        <li><strong>Cloudflare R2</strong> (ABD/AB) — dosya depolama; Cloudflare DPA ve SCC imzalı</li>
+        <li><strong>Google Analytics 4</strong> (ABD) — anonimleştirilmiş trafik analizi; Google Consent Mode v2 ile IP kısaltması zorunlu</li>
+        <li><strong>Microsoft Clarity</strong> (ABD/AB) — oturum kaydı ve ısı haritası; yalnızca kullanıcı "kişiselleştirme" çerezi onayını verirse yüklenir</li>
+        <li><strong>Meta Pixel</strong> (ABD) — pazarlama; yalnızca kullanıcı "pazarlama" çerezi onayını verirse aktif</li>
+        <li><strong>SendGrid (Twilio Inc.)</strong> (ABD) — transactional e-posta; Twilio DPA ve SCC imzalı</li>
       </ul>
       <p>
         Tüm aktarımlar <strong>standart sözleşme şartları (SCC)</strong> veya
         <strong>yeterli koruma kararı</strong> çerçevesinde, KVKK m.9 hükümleri uyarınca yapılır.
+        Aktarım güvenceleri hakkında bilgi talep edebilirsiniz (bkz. Bölüm 8 — Başvuru Yöntemi).
       </p>
 
       <h2>5. Kişisel Verilerin Toplanma Yöntemi ve Hukuki Sebebi</h2>
@@ -155,6 +157,7 @@ export const legalPages: Record<string, LegalPage> = {
       <h2>8. Başvuru Yöntemi</h2>
       <p>KVKK kapsamındaki haklarınızı kullanmak için aşağıdaki yollarla başvurabilirsiniz:</p>
       <ul>
+        <li><strong>Online Form (Önerilen):</strong> <a href="${BRAND}/kvkk-basvuru">markala.com.tr/kvkk-basvuru</a> — Kimlik doğrulamalı dijital başvuru kanalı</li>
         <li><strong>E-posta:</strong> <a href="mailto:${EMAIL}">${EMAIL}</a> (Konu: KVKK Başvuru)</li>
         <li><strong>Yazılı başvuru:</strong> ${COMPANY}, ${ADDRESS}</li>
         <li><strong>KEP:</strong> ${KEP}</li>
@@ -163,6 +166,10 @@ export const legalPages: Record<string, LegalPage> = {
         Başvurularınız KVKK'nın 13. maddesi gereğince en geç <strong>30 gün</strong>
         içinde sonuçlandırılır. İşlem ücretsizdir; ancak işlem ek bir maliyet gerektiriyorsa
         Kişisel Verileri Koruma Kurulu tarafından belirlenen tarifedeki ücret talep edilebilir.
+      </p>
+      <p>
+        <em>Online formu kullanmanız önerilir: başvurunuza otomatik takip numarası atanır
+        ve süreç 30 gün içinde e-posta ile sonuçlandırılır.</em>
       </p>
 
       <h2>9. Değişiklikler</h2>
@@ -179,7 +186,7 @@ export const legalPages: Record<string, LegalPage> = {
   "mesafeli-satis": {
     slug: "mesafeli-satis",
     title: "Mesafeli Satış Sözleşmesi",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <h2>MADDE 1 – TARAFLAR</h2>
       <p><strong>SATICI:</strong></p>
@@ -331,7 +338,7 @@ export const legalPages: Record<string, LegalPage> = {
   cerez: {
     slug: "cerez",
     title: "Çerez Politikası",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <p>
         ${BRAND} ("Site"), ${COMPANY} tarafından yönetilmektedir. İşbu Çerez Politikası,
@@ -360,13 +367,18 @@ export const legalPages: Record<string, LegalPage> = {
       </ul>
 
       <h3>2.2. Performans ve Analitik Çerezler</h3>
-      <p>Ziyaretçi davranışlarını analiz ederek Site'yi iyileştirmek için kullanılır:</p>
+      <p>Anonimleştirilmiş trafik verisiyle Site'yi iyileştirmek için kullanılır:</p>
       <ul>
-        <li><strong>Google Analytics 4 (GA4):</strong> Ziyaretçi sayısı, sayfa görüntüleme, dönüşüm oranları</li>
-        <li><strong>Microsoft Clarity:</strong> Isı haritası, kullanıcı oturumu kayıtları (anonim)</li>
+        <li><strong>Google Analytics 4 (GA4):</strong> Ziyaretçi sayısı, sayfa görüntüleme, dönüşüm oranları. IP adresi kısaltılır; kişisel kimlik toplanmaz. Google Consent Mode v2 ile yönetilir.</li>
       </ul>
 
-      <h3>2.3. Pazarlama Çerezleri</h3>
+      <h3>2.3. Kişiselleştirme Çerezleri</h3>
+      <p>Kullanıcı deneyimini geliştirmeye yönelik davranışsal analiz çerezleridir:</p>
+      <ul>
+        <li><strong>Microsoft Clarity:</strong> Isı haritası ve oturum kaydı. Gezinme davranışı anonimleştirilmiş olarak işlenir. KVKK m.4/2-ç kapsamında ayrı rıza gerektirir.</li>
+      </ul>
+
+      <h3>2.4. Pazarlama Çerezleri</h3>
       <p>İlgi alanlarınıza yönelik reklam göstermek için kullanılır:</p>
       <ul>
         <li><strong>Meta (Facebook) Pixel:</strong> Yeniden hedefleme reklamları</li>
@@ -409,7 +421,7 @@ export const legalPages: Record<string, LegalPage> = {
   gizlilik: {
     slug: "gizlilik",
     title: "Gizlilik Politikası",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <p>
         ${COMPANY} ("Şirket"), ${BRAND} alt markası altında işlettiği e-ticaret
@@ -497,7 +509,7 @@ export const legalPages: Record<string, LegalPage> = {
   "kullanim-kosullari": {
     slug: "kullanim-kosullari",
     title: "Kullanım Koşulları",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <p>
         ${BRAND} alan adı ${COMPANY} ("Şirket") tarafından yönetilmektedir. Site'yi
@@ -601,7 +613,7 @@ export const legalPages: Record<string, LegalPage> = {
   "on-bilgilendirme": {
     slug: "on-bilgilendirme",
     title: "Ön Bilgilendirme Formu",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <p>
         Mesafeli Sözleşmeler Yönetmeliği'nin 5. maddesi gereğince, sipariş onayından
@@ -674,7 +686,7 @@ export const legalPages: Record<string, LegalPage> = {
   iade: {
     slug: "iade",
     title: "İade ve Değişim Politikası",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <p>
         ${BRAND} ${COMPANY} bünyesinde yönetilmekte olup tüm iade ve değişim süreçleri
@@ -806,7 +818,7 @@ export const legalPages: Record<string, LegalPage> = {
   kargo: {
     slug: "kargo",
     title: "Kargo ve Teslimat Politikası",
-    lastUpdated: "2026-05-05",
+    lastUpdated: "2026-06-16",
     body: `
       <h2>1. Kargo Firması</h2>
       <p>
