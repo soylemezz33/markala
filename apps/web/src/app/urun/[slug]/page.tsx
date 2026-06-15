@@ -13,7 +13,8 @@ import {
   ListChecks,
   Question,
 } from "@phosphor-icons/react/dist/ssr";
-import { products, getProductBySlug, getCategoryBySlug, getProductsByCategory, PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
+import { getCategoryBySlug, PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
+import { getProductBySlug, getProductsByCategory, getProducts } from "@/lib/catalog";
 import { Configurator } from "@/components/product/configurator";
 import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product-card";
@@ -31,12 +32,13 @@ interface Props {
   params: { slug: string };
 }
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getProducts();
   return products.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const product = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const product = await getProductBySlug(params.slug);
   if (!product) return {};
   const category = getCategoryBySlug(product.categorySlug);
   const seoTitle = product.seo?.title ?? `${product.name} — ${category?.name ?? ""} Baskı`;
@@ -75,12 +77,12 @@ const trustBadges = [
   { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
 ];
 
-export default function ProductPage({ params }: Props) {
-  const product = getProductBySlug(params.slug);
+export default async function ProductPage({ params }: Props) {
+  const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
   const category = getCategoryBySlug(product.categorySlug);
-  const related = getProductsByCategory(product.categorySlug)
+  const related = (await getProductsByCategory(product.categorySlug))
     .filter((p) => p.slug !== product.slug)
     .slice(0, 4);
 

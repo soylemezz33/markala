@@ -3,7 +3,8 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
-import { categories, products } from "@markala/mock-data";
+import { categories } from "@markala/mock-data";
+import { getProducts } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Tüm Kategoriler — Matbaa & Reklam Ürünleri",
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/kategoriler" },
 };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const products = await getProducts();
+
   // Kategoriyi popülerliğe göre sırala (ürün sayısı)
   const sorted = [...categories].sort((a, b) => {
     const aCount = products.filter((p) => p.categorySlug === a.slug).length;
