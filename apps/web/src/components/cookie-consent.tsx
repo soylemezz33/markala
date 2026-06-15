@@ -13,11 +13,14 @@ const REOPEN_EVENT = "markala:open-cookie-settings";
  * Consent şemasının sürümü. KVKK/GDPR gereği üçüncü taraf çerez setine veya
  * aktarım kapsamına dokunan her değişiklikte artırın — eski sürüme sahip
  * kullanıcıların banner'ı yeniden onaylaması gerekir.
+ *
+ * v1.1: preferences kategorisi eklendi (dil, tema, favoriler).
  */
-const CONSENT_VERSION = "1.0";
+const CONSENT_VERSION = "1.1";
 
 interface ConsentState {
   necessary: true; // her zaman aktif
+  preferences: boolean;
   analytics: boolean;
   marketing: boolean;
   timestamp: number;
@@ -37,7 +40,8 @@ function readConsent(): ConsentState | null {
 }
 
 function writeConsent(state: ConsentState): void {
-  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax${secure}`;
   // Google Consent Mode v2 — analytics.tsx'deki `denied` default'u güncelle
   if (typeof window !== "undefined" && typeof (window as Window & { gtag?: (...args: unknown[]) => void }).gtag === "function") {
     const g = (window as Window & { gtag: (...args: unknown[]) => void }).gtag;
@@ -61,6 +65,7 @@ function writeConsent(state: ConsentState): void {
 export function CookieConsent() {
   const [show, setShow] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [preferences, setPreferences] = useState(true);
   const [analytics, setAnalytics] = useState(true);
   const [marketing, setMarketing] = useState(true);
 
@@ -72,12 +77,14 @@ export function CookieConsent() {
       const t = setTimeout(() => setShow(true), 800);
       // Eski tercihleri pre-fill yap ki kullanıcı tekrar onay verirken zorlanmasın
       if (existing) {
+        setPreferences(existing.preferences ?? true);
         setAnalytics(existing.analytics);
         setMarketing(existing.marketing);
       }
       return () => clearTimeout(t);
     } else {
       // Mevcut tercihleri form state'e yükle (re-open için)
+      setPreferences(existing.preferences ?? true);
       setAnalytics(existing.analytics);
       setMarketing(existing.marketing);
     }
@@ -86,6 +93,7 @@ export function CookieConsent() {
     function reopen() {
       const c = readConsent();
       if (c) {
+        setPreferences(c.preferences ?? true);
         setAnalytics(c.analytics);
         setMarketing(c.marketing);
       }
@@ -97,17 +105,17 @@ export function CookieConsent() {
   }, []);
 
   function acceptAll() {
-    writeConsent({ necessary: true, analytics: true, marketing: true, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({ necessary: true, preferences: true, analytics: true, marketing: true, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
   function rejectOptional() {
-    writeConsent({ necessary: true, analytics: false, marketing: false, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({ necessary: true, preferences: false, analytics: false, marketing: false, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
   function saveCustom() {
-    writeConsent({ necessary: true, analytics, marketing, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({ necessary: true, preferences, analytics, marketing, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
@@ -157,6 +165,12 @@ export function CookieConsent() {
                     desc="Sepet, oturum, CSRF ve güvenlik amaçlı çerezler. Site çalışması için zorunludur, devre dışı bırakılamaz."
                     checked
                     disabled
+                  />
+                  <ConsentToggle
+                    label="Tercih çerezleri"
+                    desc="Dil seçimi, tema ve favoriler gibi kullanıcı tercihlerini hatırlar. Devre dışı bırakırsanız her ziyarette tekrar seçim yapmanız gerekir."
+                    checked={preferences}
+                    onChange={setPreferences}
                   />
                   <ConsentToggle
                     label="Analitik çerezler"
@@ -250,7 +264,7 @@ function ConsentToggle({
 }
 
 /** Helper: bir consent kategorisi onaylı mı kontrol et — Analytics component'i bunu kullanabilir */
-export function hasConsent(category: "analytics" | "marketing"): boolean {
+export function hasConsent(category: "preferences" | "analytics" | "marketing"): boolean {
   const c = readConsent();
   if (!c) return false;
   return c[category];
