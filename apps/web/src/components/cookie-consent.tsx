@@ -42,7 +42,8 @@ function readConsent(): ConsentState | null {
 }
 
 function writeConsent(state: ConsentState): void {
-  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax${secure}`;
   // Google Consent Mode v2 — analytics.tsx'deki `denied` default'u güncelle
   if (typeof window !== "undefined" && typeof (window as Window & { gtag?: (...args: unknown[]) => void }).gtag === "function") {
     const g = (window as Window & { gtag: (...args: unknown[]) => void }).gtag;
