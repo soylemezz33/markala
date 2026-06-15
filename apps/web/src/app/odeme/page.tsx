@@ -158,6 +158,36 @@ export default function CheckoutPage() {
       items: cartItems.length,
     });
 
+    // Ekibe sipariş bildirimi (WhatsApp'a EK kayıt kanalı). Best-effort + keepalive:
+    // sayfa yönlenirken bile tamamlanır, başarısız olsa da akışı bloke etmez.
+    fetch("/api/siparis-bildirim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        orderNumber,
+        channel,
+        customerName: accountType === "individual" ? fullName : companyName,
+        email,
+        phone,
+        accountType,
+        taxOffice,
+        taxNumber,
+        address: `${fullAddress}, ${district}/${city}${zipCode ? " " + zipCode : ""}`,
+        items: cartItems.map((i) => ({
+          name: i.productName,
+          summary: i.configuration.summary,
+          quantity: i.quantity,
+          lineTotal: i.configuration.totalPrice * i.quantity,
+          needsDesign: i.configuration.needsDesign,
+          uploadedFileName: i.configuration.uploadedFileName,
+        })),
+        subtotal: sub,
+        shipping,
+        total,
+      }),
+    }).catch(() => {});
+
     if (channel === "whatsapp") {
       // Senkron aç — popup engelini önler
       window.open(whatsappUrl(buildWhatsappMessage(orderNumber)), "_blank", "noopener,noreferrer");
