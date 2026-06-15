@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { products, categories, getAllLegalSlugs } from "@markala/mock-data";
+import { categories, getAllLegalSlugs } from "@markala/mock-data";
+import { getProducts } from "@/lib/catalog";
 import { blogPosts, blogCategories } from "@/lib/blog";
 import { cities, getAllDistrictParams } from "@/lib/cities";
 import { services } from "@/lib/services";
@@ -27,8 +28,9 @@ const STATIC_ROUTES = [
   { path: "/kayit", priority: 0.3, freq: "yearly" as const },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const products = await getProducts();
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE}${r.path}`,

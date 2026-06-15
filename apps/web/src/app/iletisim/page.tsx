@@ -7,6 +7,7 @@ import {
   Phone, EnvelopeSimple, MapPin, WhatsappLogo, Clock, ArrowRight,
   Buildings, Users, ChatCircle, CheckCircle,
 } from "@phosphor-icons/react";
+import { track } from "@/lib/analytics";
 
 const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
@@ -86,6 +87,7 @@ export default function ContactPage() {
       }
       setTicketId(data.ticketId ?? null);
       setSent(true);
+      track("generate_lead", { method: "contact_form", subject: form.subject });
     } catch {
       setError("Sunucuya ulaşılamadı.");
     } finally {

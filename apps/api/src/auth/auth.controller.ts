@@ -8,7 +8,6 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import { ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
@@ -18,8 +17,7 @@ import { LoginDto, RegisterDto } from "./dtos";
 /**
  * SECURITY HARDENING (auth.controller):
  *
- * - @Throttle: register 3/saat, login 5/dk. Brute force azaltma.
- *   (Global Throttler 60/dk; route-level override sıkıldı.)
+ * - Rate limit: register 3/saat, login 5/dk, refresh 30/dk — main.ts'teki rateLimit() middleware'inde per-IP uygulanır.
  * - Refresh token httpOnly + Secure + SameSite=Lax cookie.
  *   `Strict` değil çünkü OAuth/3rd-party redirect senaryolarında session koparıyor; Lax CSRF için yeterli.
  * - Cookie parse: cookie-parser middleware yok — header'dan manuel parse ediyoruz.
@@ -33,7 +31,7 @@ export class AuthController {
   constructor(private auth: AuthService, private config: ConfigService) {}
 
   // Brute force: register 3 deneme / saat / IP — bot kayıt seliyle DB'yi şişirmeyi engeller.
-  @Throttle({ short: { limit: 3, ttl: 3_600_000 } })
+  // Rate limit main.ts'teki rateLimit() middleware'inde uygulanır.
   @Post("register")
   async register(
     @Body() dto: RegisterDto,
@@ -52,7 +50,7 @@ export class AuthController {
   }
 
   // Brute force: login 5/dk/IP. Hatalı parola enumeration limitlenir.
-  @Throttle({ short: { limit: 5, ttl: 60_000 } })
+  // Rate limit main.ts'teki rateLimit() middleware'inde uygulanır.
   @Post("login")
   async login(
     @Body() dto: LoginDto,
@@ -71,7 +69,7 @@ export class AuthController {
   }
 
   // Refresh token akışı — 30/dk/IP yeterli (cookie kaybı olursa kullanıcı yeniden login olur).
-  @Throttle({ short: { limit: 30, ttl: 60_000 } })
+  // Rate limit main.ts'teki rateLimit() middleware'inde uygulanır.
   @Post("refresh")
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const raw = this.readRefreshCookie(req);

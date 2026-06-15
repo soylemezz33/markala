@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container, Price } from "@markala/ui";
 import { CaretRight, Truck, ShieldCheck, Sparkle } from "@phosphor-icons/react/dist/ssr";
-import { categories, getCategoryBySlug, getProductsByCategory } from "@markala/mock-data";
+import { categories, getCategoryBySlug } from "@markala/mock-data";
+import { getProductsByCategory } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -48,10 +49,10 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
-export default function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params }: Props) {
   const cat = getCategoryBySlug(params.slug);
   if (!cat) notFound();
-  const products = getProductsByCategory(cat.slug);
+  const products = await getProductsByCategory(cat.slug);
 
   const breadcrumbs = [
     { name: "Anasayfa", href: "/" },

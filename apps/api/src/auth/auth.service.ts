@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -16,7 +17,10 @@ import { PrismaService } from "../prisma/prisma.service";
  * 1. Access token: 15dk (önceden 7gün — XSS sonrası bekleme penceresi çok genişti).
  * 2. Refresh token: 30 gün, httpOnly cookie + DB hash (sha256). Token kendisi DB'de saklanmaz.
  * 3. Token rotation: her refresh kullanımında eski revoke + yeni issue (replay tespiti).
- * 4. Register: ConflictException yerine tüm hatalar için generic dönüş — user enumeration kapatıldı.
+ * 4. Register: mevcut e-posta → 409 ConflictException + net mesaj.
+ *    (Eski tasarım enumeration için 500 dönüyordu; ama bilinmeyen e-posta zaten 200+token
+ *    döndüğünden 200/500 farkı enumeration'ı engellemiyordu — sadece gerçek kullanıcıyı
+ *    "sunucu hatası" ile korkutuyordu. UX > işlevsiz gizleme.)
  * 5. argon2 + complexity regex (DTO katmanında) brute force + DoS koruması.
  * 6. console.warn audit log; ileride Sentry/Loki entegrasyonu.
  */
@@ -35,8 +39,9 @@ export class AuthService {
     input: { email: string; password: string; fullName: string; phone?: string },
     context: { userAgent?: string; ipAddress?: string },
   ) {
-    // Generic failure — duplicate, DB error, vs. hepsi aynı mesajı döner.
-    // Account enumeration: saldırgan duplicate email vs. unknown email arasında ayırt edemez.
+    // Mevcut e-posta → 409 (beklenen client durumu); gerçek beklenmeyen hata → 500.
+    const duplicateMsg =
+      "Bu e-posta adresi zaten kayıtlı. Giriş yapabilir veya şifrenizi sıfırlayabilirsiniz.";
     try {
       const existing = await this.prisma.user.findUnique({
         where: { email: input.email },
@@ -45,7 +50,7 @@ export class AuthService {
         this.logger.warn(
           `register.duplicate_attempt email=${input.email} ip=${context.ipAddress ?? "?"}`,
         );
-        throw new InternalServerErrorException("Kayıt başarısız. Lütfen tekrar deneyin.");
+        throw new ConflictException(duplicateMsg);
       }
 
       const passwordHash = await argon2.hash(input.password);
@@ -60,7 +65,17 @@ export class AuthService {
 
       return this.issueTokenPair(user, context);
     } catch (err) {
-      if (err instanceof InternalServerErrorException) throw err;
+      // Beklenen durum: olduğu gibi yukarı fırlat (controller doğru HTTP status'u döner).
+      if (err instanceof ConflictException) throw err;
+      // Yarış durumu: findUnique ile create arası aynı e-posta oluşturulduysa Prisma
+      // unique-constraint (P2002) atar — bunu da 409'a maple, 500 değil.
+      if ((err as { code?: string })?.code === "P2002") {
+        this.logger.warn(
+          `register.duplicate_race email=${input.email} ip=${context.ipAddress ?? "?"}`,
+        );
+        throw new ConflictException(duplicateMsg);
+      }
+      // Yalnızca gerçek beklenmeyen hatalar 500 olur (izleme/alarm anlamlı kalsın).
       this.logger.error(`register.failed email=${input.email}`, err as Error);
       throw new InternalServerErrorException("Kayıt başarısız. Lütfen tekrar deneyin.");
     }

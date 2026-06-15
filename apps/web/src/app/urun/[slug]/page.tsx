@@ -13,7 +13,8 @@ import {
   ListChecks,
   Question,
 } from "@phosphor-icons/react/dist/ssr";
-import { products, getProductBySlug, getCategoryBySlug, getProductsByCategory, PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
+import { getCategoryBySlug, PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
+import { getProductBySlug, getProductsByCategory, getProducts } from "@/lib/catalog";
 import { Configurator } from "@/components/product/configurator";
 import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product-card";
@@ -31,12 +32,13 @@ interface Props {
   params: { slug: string };
 }
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const products = await getProducts();
   return products.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const product = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const product = await getProductBySlug(params.slug);
   if (!product) return {};
   const category = getCategoryBySlug(product.categorySlug);
   const seoTitle = product.seo?.title ?? `${product.name} — ${category?.name ?? ""} Baskı`;
@@ -75,12 +77,12 @@ const trustBadges = [
   { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
 ];
 
-export default function ProductPage({ params }: Props) {
-  const product = getProductBySlug(params.slug);
+export default async function ProductPage({ params }: Props) {
+  const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
   const category = getCategoryBySlug(product.categorySlug);
-  const related = getProductsByCategory(product.categorySlug)
+  const related = (await getProductsByCategory(product.categorySlug))
     .filter((p) => p.slug !== product.slug)
     .slice(0, 4);
 
@@ -119,7 +121,7 @@ export default function ProductPage({ params }: Props) {
       </div>
 
       <Container className="py-8 md:py-12">
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           {/* Sol: Galeri + Tabs */}
           <div className="lg:col-span-7 space-y-10">
             <Gallery images={product.images} alt={product.name} />
@@ -143,7 +145,7 @@ export default function ProductPage({ params }: Props) {
                   <h2 className="text-xl font-semibold text-ink-900">Öne Çıkan Özellikler</h2>
                 </header>
                 <ul className="grid sm:grid-cols-2 gap-2.5">
-                  {product.features.map((f, i) => (
+                  {product.features.map((f: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-ink-700 leading-relaxed">
                       <CheckCircle size={16} weight="fill" className="text-brand-500 mt-0.5 flex-none" />
                       <span>{f}</span>

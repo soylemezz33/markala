@@ -23,11 +23,31 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json tsconfig.json ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web
+# NEXT_PUBLIC_* değişkenleri BUILD-TIME'da bundle'a gömülür — runtime env çok geç.
+# Bunlar build-arg olarak gelmezse: storefront API'ye ulaşamaz (login/kayıt kırılır),
+# GA4/analytics yüklenmez. API_URL'e güvenli default verildi; diğerleri CI/compose'tan gelir.
+ARG NEXT_PUBLIC_API_URL=https://api.markala.com.tr
+ARG NEXT_PUBLIC_GA4_ID=
+ARG NEXT_PUBLIC_CLARITY_ID=
+ARG NEXT_PUBLIC_GTM_ID=
+ARG NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=
+ARG NEXT_PUBLIC_BING_VERIFICATION=
+ARG NEXT_PUBLIC_YANDEX_VERIFICATION=
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_GA4_ID=$NEXT_PUBLIC_GA4_ID \
+    NEXT_PUBLIC_CLARITY_ID=$NEXT_PUBLIC_CLARITY_ID \
+    NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID \
+    NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=$NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION \
+    NEXT_PUBLIC_BING_VERIFICATION=$NEXT_PUBLIC_BING_VERIFICATION \
+    NEXT_PUBLIC_YANDEX_VERIFICATION=$NEXT_PUBLIC_YANDEX_VERIFICATION
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# NEXT_PUBLIC_API_URL build-time'da inline edilmeli (client bundle storefront auth için API'yi çağırır)
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN pnpm --filter @markala/web build
 
 # ── 4. Runtime — minimal image (Next.js standalone)

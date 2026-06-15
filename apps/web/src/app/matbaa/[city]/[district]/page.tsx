@@ -9,7 +9,7 @@ import {
 import {
   getCityBySlug, getDistrictBySlug, getAllDistrictParams,
 } from "@/lib/cities";
-import { products } from "@markala/mock-data";
+import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
@@ -55,12 +55,13 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
-export default function DistrictLandingPage({ params }: Props) {
+export default async function DistrictLandingPage({ params }: Props) {
   const city = getCityBySlug(params.city);
   const district = getDistrictBySlug(params.city, params.district);
   if (!city || !district) notFound();
 
   const otherDistricts = city.districts?.filter((d) => d.slug !== district.slug) ?? [];
+  const products = await getProducts();
   const featuredProducts = products.filter((p) => p.bestseller).slice(0, 4);
 
   return (
