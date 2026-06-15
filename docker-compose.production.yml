@@ -154,6 +154,10 @@ services:
       R2_SECRET_ACCESS_KEY: ${R2_BACKUP_SECRET_ACCESS_KEY:-${R2_SECRET_ACCESS_KEY}}
       R2_BUCKET: ${R2_BACKUP_BUCKET:-markala-backups}
       R2_PREFIX: postgres-backups
+      # GPG at-rest şifreleme (KVKK m.12). RECIPIENT tanımlıysa backup .sql.gz.gpg
+      # olarak şifrelenir; tanımlı değilse şifresiz .sql.gz (uyarı ile) üretilir.
+      BACKUP_GPG_RECIPIENT: ${BACKUP_GPG_RECIPIENT:-}
+      BACKUP_GPG_PUBLIC_KEY_FILE: ${BACKUP_GPG_PUBLIC_KEY_FILE:-/backups/keys/backup-pub.asc}
     volumes:
       - ./backups:/backups
       - ./scripts/backup-postgres.sh:/usr/local/bin/backup.sh:ro
@@ -162,10 +166,11 @@ services:
     networks:
       - markala
     entrypoint: ["sh", "-c"]
-    # aws-cli kurulumu (idempotent — apk cache'lenir), sonra sonsuz backup loop
+    # aws-cli + gnupg kurulumu (idempotent — apk cache'lenir), sonra sonsuz backup loop.
+    # gnupg, BACKUP_GPG_RECIPIENT ile şifreli backup üretmek için gerekli.
     command:
       - |
-        apk add --no-cache aws-cli >/dev/null 2>&1 || true
+        apk add --no-cache aws-cli gnupg >/dev/null 2>&1 || true
         while true; do
           sh /usr/local/bin/backup.sh || echo "[$(date)] Backup hata aldı, döngü devam ediyor"
           sleep 86400

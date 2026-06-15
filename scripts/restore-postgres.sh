@@ -36,7 +36,14 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-BACKUP_FILE="${BACKUP_FILE:-markala-latest.sql.gz}"
+# Default backup dosyası — şifreli (.sql.gz.gpg) varsa onu tercih et, yoksa düz .sql.gz
+if [ -z "$BACKUP_FILE" ]; then
+    if [ -e "${BACKUP_DIR}/markala-latest.sql.gz.gpg" ]; then
+        BACKUP_FILE="markala-latest.sql.gz.gpg"
+    else
+        BACKUP_FILE="markala-latest.sql.gz"
+    fi
+fi
 BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILE}"
 
 echo "[$(date)] Restore başlıyor"
@@ -89,8 +96,23 @@ echo "[$(date)] psql restore başlıyor..."
 SIZE=$(du -h "$BACKUP_PATH" | cut -f1)
 echo "[$(date)] Dosya boyutu: $SIZE"
 
-# Restore — gunzip stream → psql
-gunzip -c "$BACKUP_PATH" | psql -v ON_ERROR_STOP=1 -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE"
+# Restore — şifreli (.gpg) ise önce GPG decrypt, sonra gunzip → psql
+# GPG decrypt için PRIVATE key restore makinesinin keyring'inde (GNUPGHOME) olmalı.
+case "$BACKUP_FILE" in
+    *.gpg)
+        if ! command -v gpg >/dev/null 2>&1; then
+            echo "❌ Şifreli backup (.gpg) ama gpg kurulu değil. Kur: apk add gnupg / apt install gnupg" >&2
+            exit 1
+        fi
+        echo "[$(date)] 🔓 GPG decrypt → gunzip → psql"
+        gpg --batch --quiet --decrypt "$BACKUP_PATH" \
+            | gunzip -c \
+            | psql -v ON_ERROR_STOP=1 -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE"
+        ;;
+    *)
+        gunzip -c "$BACKUP_PATH" | psql -v ON_ERROR_STOP=1 -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE"
+        ;;
+esac
 
 echo "[$(date)] ✅ Restore başarılı: $BACKUP_FILE"
 echo ""

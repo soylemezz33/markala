@@ -57,6 +57,7 @@ case "${1:-}" in
             --endpoint-url="$R2_ENDPOINT" \
             --exclude "*" \
             --include "markala-*.sql.gz" \
+            --include "markala-*.sql.gz.gpg" \
             --no-progress
         echo "[$(date)] ✅ Sync tamamlandı"
         ;;
@@ -70,10 +71,14 @@ case "${1:-}" in
         sed -n '2,18p' "$0"
         ;;
     "")
-        # Default: latest
-        TARGET="${BACKUP_DIR}/markala-latest.sql.gz"
+        # Default: latest — şifreli (.sql.gz.gpg) varsa onu tercih et
+        if [ -e "${BACKUP_DIR}/markala-latest.sql.gz.gpg" ]; then
+            TARGET="${BACKUP_DIR}/markala-latest.sql.gz.gpg"
+        else
+            TARGET="${BACKUP_DIR}/markala-latest.sql.gz"
+        fi
         if [ ! -e "$TARGET" ]; then
-            echo "❌ markala-latest.sql.gz bulunamadı. Önce backup oluştur."
+            echo "❌ markala-latest.sql.gz[.gpg] bulunamadı. Önce backup oluştur."
             exit 1
         fi
         # Symlink'i resolve et

@@ -17,12 +17,22 @@
 
 | Katman | Konum | Frekans | Retention |
 |--------|-------|---------|-----------|
-| Local DB dump | Hetzner VPS `./backups/markala-*.sql.gz` | Günlük 03:00 | 30 gün |
+| Local DB dump | Hetzner VPS `./backups/markala-*.sql.gz[.gpg]` | Günlük 03:00 | 30 gün |
 | Remote DB dump | Cloudflare R2 `s3://markala-backups/postgres-backups/` | Günlük (backup script sonu) | 90 gün (R2 lifecycle rule) |
 | Uploads / medya | Cloudflare R2 `s3://markala-uploads/` | Anlık (yazma sırasında) | ∞ (versioned) |
 | Compose / nginx / scripts | GitHub repo `soylemezz33/markala` | Her commit | ∞ |
 | Secrets (.env) | 1Password vault "Markala-Prod" | Manuel (rotation 90 gün) | – |
 | Iyzico, Paraşüt, NetGSM credentials | 1Password | – | – |
+| **GPG backup private key** | **1Password / offline (ASLA sunucuda değil)** | – | ∞ (kaybı = restore imkânsız) |
+
+### 2.1. At-rest şifreleme (GPG — KVKK m.12)
+
+`BACKUP_GPG_RECIPIENT` tanımlıysa backup dosyaları **`.sql.gz.gpg`** olarak GPG ile şifrelenir; R2'ye şifreli yüklenir. Müşteri PII'si üçüncü taraf depoda (R2) **şifresiz durmaz**.
+
+- **Şifreleme (sunucu):** yalnızca **public key** gerekir (`backups/keys/backup-pub.asc`). Private key sunucuda **bulunmaz**.
+- **Restore/decrypt:** **private key** gerekir → restore makinesinin GPG keyring'ine import edilmeli (`gpg --import backup-private.asc`). Private key 1Password/offline'da saklanır.
+- `restore-postgres.sh` `.gpg` uzantısını otomatik algılar (`gpg --decrypt | gunzip | psql`).
+- ⚠️ **Private key kaybı = tüm şifreli backup'lar kalıcı okunamaz.** Paper backup + 1Password zorunlu.
 
 ## 3. Aylık Restore Drill Prosedürü
 
@@ -54,7 +64,13 @@ docker run --rm \
 ### 3.2. Restore (15 dk)
 
 ```sh
+# Şifresiz backup (.sql.gz):
 gunzip -c ./backups/drill.sql.gz | \
+  docker exec -i pg-drill psql -U markala -d markala_drill
+
+# Şifreli backup (.sql.gz.gpg) — private key keyring'de olmalı:
+#   gpg --import backup-private.asc   # (bir kez, restore makinesinde)
+gpg --batch --quiet --decrypt ./backups/drill.sql.gz.gpg | gunzip -c | \
   docker exec -i pg-drill psql -U markala -d markala_drill
 ```
 
