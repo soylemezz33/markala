@@ -12,7 +12,6 @@ import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { AdminModule } from "./admin/admin.module";
 import { CorporateApplicationsModule } from "./corporate-applications/corporate-applications.module";
-import { HealthController } from "./health/health.controller";
 import { StatsModule } from "./stats/stats.module";
 import { CouponsModule } from "./coupons/coupons.module";
 import { ReviewsModule } from "./reviews/reviews.module";
@@ -22,6 +21,7 @@ import { FaqsModule } from "./faqs/faqs.module";
 import { LegalModule } from "./legal/legal.module";
 import { CampaignPackagesModule } from "./campaign-packages/campaign-packages.module";
 import { StorageModule } from "./storage/storage.module";
+import { HealthModule } from "./health/health.module";
 
 @Module({
   imports: [
@@ -47,7 +47,7 @@ import { StorageModule } from "./storage/storage.module";
     LegalModule,
     CampaignPackagesModule,
     StorageModule,
+    HealthModule,
   ],
-  controllers: [HealthController],
 })
 export class AppModule {}
