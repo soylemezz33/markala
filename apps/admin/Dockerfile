@@ -22,6 +22,9 @@ COPY --from=deps /app/apps/admin/node_modules ./apps/admin/node_modules
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY packages ./packages
 COPY apps/admin ./apps/admin
+# NEXT_PUBLIC_* build-time gömülür — admin de API'ye bu adresle ulaşır.
+ARG NEXT_PUBLIC_API_URL=https://api.markala.com.tr
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN pnpm --filter @markala/admin build

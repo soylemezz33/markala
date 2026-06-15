@@ -8,6 +8,8 @@ import { ProductsModule } from "./products/products.module";
 import { OrdersModule } from "./orders/orders.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
+import { AdminModule } from "./admin/admin.module";
+import { CorporateApplicationsModule } from "./corporate-applications/corporate-applications.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -21,6 +23,8 @@ import { HealthController } from "./health/health.controller";
     CategoriesModule,
     ProductsModule,
     OrdersModule,
+    AdminModule,
+    CorporateApplicationsModule,
   ],
   controllers: [HealthController],
 })

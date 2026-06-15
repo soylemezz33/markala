@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@markala/config": "workspace:*",
+    "@markala/mock-data": "workspace:*",
     "@nestjs/cli": "^10.4.8",
     "@nestjs/schematics": "^10.2.3",
     "@types/express": "^5.0.0",

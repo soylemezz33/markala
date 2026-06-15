@@ -10,6 +10,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ user: null }, { status: 401 });
   }
   return NextResponse.json({
-    user: { email: session.email, name: session.name, role: session.role },
+    user: {
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.fullName,
+      role: session.user.role,
+    },
   });
 }

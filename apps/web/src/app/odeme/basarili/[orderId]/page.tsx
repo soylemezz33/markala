@@ -37,9 +37,10 @@ export default function OrderSuccessPage({ params }: { params: { orderId: string
         <div className="w-16 h-16 mx-auto rounded-full bg-success/10 grid place-items-center text-success">
           <CheckCircle size={36} weight="fill" />
         </div>
-        <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">Siparişiniz alındı! 🎉</h1>
+        <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">Sipariş talebin alındı! 🎉</h1>
         <p className="mt-3 text-lg text-ink-700">
-          Tasarımınız hazırlanır hazırlanmaz size haber vereceğiz. Mail adresinize sipariş özeti gönderildi.
+          Ekibimiz en kısa sürede WhatsApp veya telefonla iletişime geçip ödeme (havale/EFT) ve üretim
+          detaylarını netleştirecek. Bu aşamada herhangi bir tahsilat yapılmadı.
         </p>
         <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-paper-100 rounded-full text-sm">
           <Receipt size={16} className="text-ink-700" />
@@ -48,7 +49,7 @@ export default function OrderSuccessPage({ params }: { params: { orderId: string
       </div>
 
       <div className="mt-10 grid md:grid-cols-3 gap-3">
-        <InfoTile icon={<EnvelopeSimple size={20} />} title="Onay maili" desc="Sipariş onayı mailinize gönderildi" />
+        <InfoTile icon={<EnvelopeSimple size={20} />} title="WhatsApp onayı" desc="Ekibimiz WhatsApp/telefonla onaylayacak" />
         <InfoTile icon={<Truck size={20} />} title="Kargo bilgisi" desc="Hazırlanınca takip kodu gönderilecek" />
         <InfoTile icon={<House size={20} />} title="Hesabım" desc={<Link href="/hesabim/siparislerim" className="text-brand-700 hover:underline">Siparişlerimi gör</Link>} />
       </div>

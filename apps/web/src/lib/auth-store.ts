@@ -2,94 +2,135 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createMarkalaClient, type ApiError } from "@markala/api-client";
 import type { User } from "@markala/types";
 
 /**
- * MOCK auth store — FAZ 1-2 için. Gerçek auth FAZ 3'te NextAuth + NestJS ile.
- * Şu an credentials sadece "varsa giriş yap" mantığı; şifre kontrolü yok.
+ * GERÇEK auth store — NestJS API'ye bağlı (argon2 + JWT + refresh rotation).
+ *
+ * Güvenlik tasarımı:
+ * - accessToken (15dk) yalnız BELLEKTE tutulur — localStorage'a YAZILMAZ (XSS sızıntısı yüzeyi).
+ * - refresh token httpOnly cookie (mk_refresh) — JS göremez; tarayıcı credentials:include ile taşır.
+ * - Sayfa yenilemede: persist'ten `user` anında geri gelir (UX flicker yok) + bootstrap()
+ *   refresh cookie ile yeni access token alır; cookie geçersizse oturum kapatılır.
+ * - 401 → tek seferlik otomatik refresh + retry (withRefresh).
  */
+
+const client = createMarkalaClient({
+  getToken: () => useAuthStore.getState().accessToken,
+});
+
+/** Authlı bir çağrı 401 dönerse bir kez refresh dene, token'ı güncelle, çağrıyı tekrarla. */
+async function withRefresh<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if ((e as ApiError)?.status === 401) {
+      const refreshed = await client.auth.refresh().catch(() => null);
+      if (refreshed) {
+        useAuthStore.setState({ accessToken: refreshed.accessToken });
+        return await fn();
+      }
+    }
+    throw e;
+  }
+}
 
 interface AuthState {
   user: User | null;
+  /** Yalnız bellekte — persist edilmez. */
+  accessToken: string | null;
   isLoading: boolean;
+  /** İlk açılışta bootstrap (refresh) tamamlanana kadar true. */
+  isBootstrapping: boolean;
 
-  login: (email: string, _password: string) => Promise<{ ok: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   register: (input: {
     email: string;
     password: string;
     fullName: string;
     phone?: string;
-    /** KVKK: pazarlama amaçlı veri işleme açık rızası (opt-in). false ise sadece zorunlu işlemler. */
+    /** KVKK pazarlama açık rızası (opt-in). */
     marketingConsent?: boolean;
   }) => Promise<{ ok: boolean; error?: string }>;
-  logout: () => void;
-  updateProfile: (patch: Partial<User>) => void;
+  logout: () => Promise<void>;
+  updateProfile: (patch: Partial<User>) => Promise<void>;
+  /** App açılışında bir kez çağrılır (AuthBootstrap). */
+  bootstrap: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
+      accessToken: null,
       isLoading: false,
+      isBootstrapping: true,
 
-      login: async (email) => {
+      login: async (email, password) => {
         set({ isLoading: true });
-        await new Promise((r) => setTimeout(r, 600)); // mock latency
-        if (!email.includes("@")) {
-          set({ isLoading: false });
-          return { ok: false, error: "Lütfen geçerli bir e-posta adresi girin." };
+        try {
+          const { accessToken } = await client.auth.login({ email, password });
+          set({ accessToken });
+          const user = await client.auth.me();
+          set({ user, isLoading: false });
+          return { ok: true };
+        } catch (e) {
+          set({ isLoading: false, accessToken: null });
+          return { ok: false, error: (e as ApiError)?.message ?? "Giriş başarısız. Lütfen tekrar deneyin." };
         }
-        const user: User = {
-          id: `u_${Date.now().toString(36)}`,
-          email,
-          fullName: email.split("@")[0]?.replace(/[._]/g, " ") ?? "Misafir",
-          accountType: "individual",
-        };
-        set({ user, isLoading: false });
-        return { ok: true };
       },
 
-      register: async ({ email, fullName, phone, marketingConsent }) => {
+      register: async ({ email, password, fullName, phone, marketingConsent }) => {
         set({ isLoading: true });
-        await new Promise((r) => setTimeout(r, 800));
-        if (!email.includes("@") || fullName.length < 2) {
-          set({ isLoading: false });
-          return { ok: false, error: "Lütfen tüm alanları doğru doldurun." };
+        try {
+          const { accessToken } = await client.auth.register({ email, password, fullName, phone, marketingConsent });
+          set({ accessToken });
+          const user = await client.auth.me();
+          set({ user, isLoading: false });
+          return { ok: true };
+        } catch (e) {
+          set({ isLoading: false, accessToken: null });
+          return { ok: false, error: (e as ApiError)?.message ?? "Kayıt başarısız. Lütfen tekrar deneyin." };
         }
-        const user: User = {
-          id: `u_${Date.now().toString(36)}`,
-          email,
-          fullName,
-          phone,
-          accountType: "individual",
-        };
-        // KVKK: pazarlama açık rızası ayrı bir kayıt (mock — FAZ 3'te backend'e taşınacak)
-        if (typeof window !== "undefined") {
-          try {
-            window.localStorage.setItem(
-              "markala-marketing-consent",
-              JSON.stringify({
-                email,
-                granted: Boolean(marketingConsent),
-                timestamp: Date.now(),
-              }),
-            );
-          } catch {
-            // localStorage erişimi reddedilirse sessizce devam et
-          }
-        }
-        set({ user, isLoading: false });
-        return { ok: true };
       },
 
-      logout: () => set({ user: null }),
+      logout: async () => {
+        try {
+          await client.auth.logout();
+        } catch {
+          // refresh cookie zaten geçersizse sorun değil — yerel state'i temizle
+        }
+        set({ user: null, accessToken: null });
+      },
 
-      updateProfile: (patch) => {
+      updateProfile: async (patch) => {
         const { user } = get();
         if (!user) return;
-        set({ user: { ...user, ...patch } });
+        set({ user: { ...user, ...patch } }); // optimistic
+        try {
+          const updated = await withRefresh(() => client.users.updateProfile(patch));
+          set({ user: updated });
+        } catch {
+          // optimistic değer kalır; kalıcı hata UI tarafında ele alınır
+        }
+      },
+
+      bootstrap: async () => {
+        try {
+          const { accessToken } = await client.auth.refresh();
+          set({ accessToken });
+          const user = await client.auth.me();
+          set({ user, isBootstrapping: false });
+        } catch {
+          set({ user: null, accessToken: null, isBootstrapping: false });
+        }
       },
     }),
-    { name: "markala-auth", partialize: (s) => ({ user: s.user }) },
+    {
+      name: "markala-auth",
+      // accessToken ASLA persist edilmez — yalnız user (UX için).
+      partialize: (s) => ({ user: s.user }),
+    },
   ),
 );

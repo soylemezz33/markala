@@ -20,6 +20,43 @@ export interface ApiError {
   details?: unknown;
 }
 
+export interface AdminStats {
+  revenue: { total: number; today: number };
+  orders: { total: number; today: number; inProduction: number; byStatus: Record<string, number> };
+  customers: { total: number };
+  pending: { corporateApplications: number; reviews: number };
+  recentOrders: Array<{
+    orderNumber: string;
+    customer: string;
+    isCorporate: boolean;
+    total: number;
+    status: string;
+    paymentStatus: string;
+    createdAt: string;
+  }>;
+}
+
+export interface CorporateApplication {
+  id: string;
+  userId: string | null;
+  companyName: string;
+  taxOffice: string;
+  taxNumber: string;
+  sector: string | null;
+  annualVolume: string | null;
+  contactName: string;
+  contactRole: string | null;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string | null;
+  status: "none" | "pending" | "approved" | "rejected";
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export class MarkalaApiClient {
   constructor(private config: ApiClientConfig) {}
 
@@ -75,10 +112,20 @@ export class MarkalaApiClient {
 
   // === Auth ===
   auth = {
-    register: (data: { email: string; password: string; fullName: string; phone?: string }) =>
+    register: (data: {
+      email: string;
+      password: string;
+      fullName: string;
+      phone?: string;
+      marketingConsent?: boolean;
+    }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/register", data),
     login: (data: { email: string; password: string }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/login", data),
+    /** Refresh cookie (mk_refresh, httpOnly) ile yeni access token + user. Body yok; credentials:include. */
+    refresh: () =>
+      this.request<{ accessToken: string; user: User }>("POST", "/auth/refresh"),
+    logout: () => this.request<{ ok: boolean }>("POST", "/auth/logout"),
     me: () => this.request<User>("GET", "/auth/me", undefined, { auth: true }),
   };
 
@@ -122,6 +169,24 @@ export class MarkalaApiClient {
       this.request<Order>("PATCH", `/orders/${id}/status`, body, { auth: true }),
   };
 
+  // === Admin (dashboard stats) ===
+  admin = {
+    stats: () => this.request<AdminStats>("GET", "/admin/stats", undefined, { auth: true }),
+  };
+
+  // === Kurumsal başvurular (admin) ===
+  corporateApplications = {
+    list: (status?: string) =>
+      this.request<CorporateApplication[]>("GET", "/corporate-applications", undefined, {
+        auth: true,
+        query: { status },
+      }),
+    detail: (id: string) =>
+      this.request<CorporateApplication>("GET", `/corporate-applications/${id}`, undefined, { auth: true }),
+    review: (id: string, data: { status: "approved" | "rejected"; reviewNote?: string }) =>
+      this.request<CorporateApplication>("PATCH", `/corporate-applications/${id}`, data, { auth: true }),
+  };
+
   // === Users (kendim) ===
   users = {
     updateProfile: (data: Partial<User>) =>
@@ -139,7 +204,9 @@ export class MarkalaApiClient {
 /** Convenience: env'den otomatik kurulan client */
 export function createMarkalaClient(opts?: Partial<ApiClientConfig>): MarkalaApiClient {
   return new MarkalaApiClient({
-    baseUrl: opts?.baseUrl ?? (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000" : "http://localhost:4000"),
+    // `||` kullan (`??` değil): NEXT_PUBLIC_API_URL boş string ise de fallback'e düşsün,
+    // aksi halde new URL("") → "Failed to construct 'URL': Invalid URL" ile login/kayıt kırılır.
+    baseUrl: opts?.baseUrl || (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000" : "http://localhost:4000"),
     getToken: opts?.getToken,
     onError: opts?.onError,
   });

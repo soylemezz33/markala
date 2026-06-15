@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
 
-export const runtime = "edge";
+// nodemailer Node.js API'lerine ihtiyaç duyar — edge runtime'da çalışmaz.
+export const runtime = "nodejs";
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 /**
  * Newsletter signup endpoint.
- * Şu an mock — geçerli e-posta kabul eder, prod'da SendGrid/Mailchimp'e POST eder.
- *
- * Backend bağlandığında burası:
- *   prisma.newsletterSubscriber.create({ data: { email, source } })
- *   sendgrid.client.contactdb.add({ email })
+ * Geçerli e-posta gelince CONTACT_TO adresine bildirim maili gönderir.
+ * Hem JSON hem form-urlencoded kabul eder; form ise /blog?subscribed=1'e redirect eder.
+ * Mail gönderimi BÜLTENİ BLOKE ETMEZ — hata olsa bile kullanıcıya başarı gösterilir.
  */
 export async function POST(req: NextRequest) {
   let body: { email?: string; source?: string };
@@ -37,10 +46,34 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // TODO: prod'da SendGrid/Mailchimp/Brevo'ya gönder
-  console.log(`[newsletter] subscribe: ${email} (source: ${source ?? "unknown"})`);
+  const sourceLabel = source && source.length > 0 ? source : "unknown";
 
-  // Form submission ise basarı sayfasına redirect
+  if (!isMailConfigured()) {
+    // SMTP yapılandırılmamışsa (dev): mock davranışı koru
+    console.log(`[newsletter] subscribe (SMTP devre dışı, mock): ${email} (source: ${sourceLabel})`);
+  } else {
+    // Bildirim maili — başarısız olsa bile aboneliği bloke etme
+    try {
+      await sendMail({
+        to: getContactTo(),
+        subject: `Yeni bülten aboneliği: ${email} (kaynak: ${sourceLabel})`,
+        text: `Yeni bülten aboneliği.\n\nE-posta: ${email}\nKaynak: ${sourceLabel}`,
+        html: `<div style="font-family:system-ui,sans-serif;color:#1a1a1a">
+          <h2 style="margin:0 0 12px">Yeni bülten aboneliği</h2>
+          <p style="margin:0 0 4px"><strong>E-posta:</strong> ${escapeHtml(email)}</p>
+          <p style="margin:0"><strong>Kaynak:</strong> ${escapeHtml(sourceLabel)}</p>
+        </div>`,
+      });
+    } catch (err) {
+      console.error(
+        `[newsletter] bildirim maili gönderilemedi (${email}):`,
+        (err as Error).message,
+      );
+      // Bilerek yutuyoruz — bülten aboneliği kritik değil, kullanıcıya başarı gösterilir.
+    }
+  }
+
+  // Form submission ise başarı sayfasına redirect
   if (!contentType.includes("application/json")) {
     return NextResponse.redirect(new URL("/blog?subscribed=1", req.url), 303);
   }
