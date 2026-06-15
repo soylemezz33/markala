@@ -7,11 +7,27 @@
     "dev": "pnpm --filter @markala/web dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
-    "type-check": "pnpm -r type-check"
+    "type-check": "pnpm -r type-check",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@10.33.3"
+  "packageManager": "pnpm@10.33.3",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0"
+  },
+  "lint-staged": {
+    "apps/api/src/**/*.ts": [
+      "pnpm --filter @markala/api exec tsc --noEmit --pretty false"
+    ],
+    "apps/web/src/**/*.{ts,tsx}": [
+      "pnpm --filter @markala/web exec next lint --fix --file"
+    ],
+    "apps/admin/src/**/*.{ts,tsx}": [
+      "pnpm --filter @markala/admin exec next lint --fix --file"
+    ]
+  }
 }
