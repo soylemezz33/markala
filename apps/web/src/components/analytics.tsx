@@ -6,12 +6,18 @@ import Script from "next/script";
  *
  * Env değişkenleri:
  *   NEXT_PUBLIC_GA4_ID         — örn: G-XXXXXXXXXX
+ *   NEXT_PUBLIC_META_PIXEL_ID  — Meta (Facebook) Pixel ID
  *   NEXT_PUBLIC_CLARITY_ID     — Microsoft Clarity proje ID
  *   NEXT_PUBLIC_HOTJAR_ID      — (opsiyonel) Hotjar site ID
  *   NEXT_PUBLIC_GTM_ID         — (opsiyonel) Google Tag Manager
+ *
+ * NOT: Script'ler consent-aware değil — fbq/gtag objeleri her zaman yüklenir.
+ * Consent kontrolü lib/analytics.ts'deki track()/fbtrack() wrapper'larındadır.
+ * Bu sayede kullanıcı sonradan onay verirse script tekrar yüklenmez.
  */
 export function Analytics() {
   const ga4 = process.env.NEXT_PUBLIC_GA4_ID;
+  const metaPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID;
   const clarity = process.env.NEXT_PUBLIC_CLARITY_ID;
   const hotjar = process.env.NEXT_PUBLIC_HOTJAR_ID;
   const gtm = process.env.NEXT_PUBLIC_GTM_ID;
@@ -70,6 +76,23 @@ export function Analytics() {
               r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
               a.appendChild(r);
             })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+          `}
+        </Script>
+      )}
+
+      {metaPixel && (
+        <Script id="meta-pixel-init" strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '${metaPixel}');
+            fbq('track', 'PageView');
           `}
         </Script>
       )}
