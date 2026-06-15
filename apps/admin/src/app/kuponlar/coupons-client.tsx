@@ -5,7 +5,7 @@ import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
 import type { CouponDto } from "@markala/api-client";
-import { createCoupon, updateCoupon, removeCoupon } from "./actions";
+import { createCoupon, updateCoupon } from "./actions";
 
 interface Props {
   coupons: CouponDto[];
