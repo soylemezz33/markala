@@ -29,7 +29,6 @@ const ADDRESS = "Çiftlikköy Mah. 32182 Sk. Astoria One No: 13 İç Kapı No: 6
 const TAX_OFFICE = "İstiklal Vergi Dairesi";
 const TAX_NUMBER = "0012655788";
 const MERSIS = "0001265578800001";
-const TRADE_REGISTRY = "Mersin Ticaret Sicil 66377";
 // 324 Ajans için resmi KEP henüz alınmadı — alındığında doldur (PTT'den)
 const KEP = "[BAŞVURU BEKLEMEDE — PTT'den 324ajans@hs01.kep.tr formatında al]";
 const VERBIS_NO = "[BAŞVURU BEKLEMEDE — VERBİS kaydı sonrası eklenecek]";

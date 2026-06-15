@@ -3,12 +3,11 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  ArrowLeft, ArrowRight, MapPin, Truck, Lightning, ShieldCheck,
-  Phone, WhatsappLogo, EnvelopeSimple, CheckCircle, Star,
+  ArrowRight, MapPin, Truck, Lightning, ShieldCheck,
+  Phone, WhatsappLogo, CheckCircle, Star,
   Buildings, Receipt, Storefront, Question, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
-import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
-import { categories } from "@markala/mock-data";
+import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
 import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";

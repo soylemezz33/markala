@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
-import { ArrowLeft, Clock, ArrowRight, ShareNetwork } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, Clock, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import {
   blogPosts,
   blogCategories,

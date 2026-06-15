@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Container } from "@markala/ui";
 import {
   Question, FileText, Truck, CreditCard, Package, ArrowsClockwise, ArrowRight,
-  PaintBrush, Receipt, Question as QMark, ShieldCheck, ChatCircle,
+  PaintBrush, Question as QMark, ShieldCheck, ChatCircle,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Button, Price, cn } from "@markala/ui";
+import { Button, Price } from "@markala/ui";
 import { ArrowLeft, Truck, Receipt, MapPin } from "@phosphor-icons/react";
 import { useOrdersStore } from "@/lib/orders-store";
 import { formatDate, orderStatusLabel } from "@/lib/format";

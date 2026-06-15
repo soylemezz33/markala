@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  MapPin, Truck, ArrowRight, Lightning, ShieldCheck, Phone,
+  Truck, ArrowRight, Lightning, ShieldCheck, Phone,
   Buildings, Storefront,
 } from "@phosphor-icons/react/dist/ssr";
 import { cities } from "@/lib/cities";

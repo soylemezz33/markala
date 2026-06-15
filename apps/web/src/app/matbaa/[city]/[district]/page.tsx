@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  ArrowLeft, ArrowRight, MapPin, Truck, Lightning, ShieldCheck,
+  ArrowRight, MapPin, Truck, Lightning, ShieldCheck,
   Phone, WhatsappLogo, CheckCircle, Buildings, Storefront, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
 import {
