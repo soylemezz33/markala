@@ -12,6 +12,19 @@ export const metadata: Metadata = {
   description:
     "Markala yardım merkezi: dosya hazırlama rehberi, sipariş süreci, kargo ve teslimat, iade-değişim, ödeme ve fatura, tasarım desteği, kurumsal hesap.",
   alternates: { canonical: "/yardim" },
+  openGraph: {
+    type: "website",
+    title: "Markala Yardım Merkezi",
+    description: "Dosya hazırlama, kargo, iade ve daha fazlası — tüm sorularınızın cevabı.",
+    url: "/yardim",
+    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Yardım Merkezi" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markala Yardım Merkezi",
+    description: "Dosya hazırlama, kargo, iade ve daha fazlası — tüm sorularınızın cevabı.",
+    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+  },
 };
 
 const topics = [

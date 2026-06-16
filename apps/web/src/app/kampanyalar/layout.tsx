@@ -10,6 +10,13 @@ export const metadata: Metadata = {
     title: "Markala Kampanya Paketleri",
     description: "Tek tek almak yerine hazır paketler — %20'ye kadar avantaj.",
     url: "/kampanyalar",
+    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Kampanyalar" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markala Kampanya Paketleri",
+    description: "Tek tek almak yerine hazır paketler — %20'ye kadar avantaj.",
+    images: ["/api/mockup?theme=brand&w=1200&h=630"],
   },
 };
 

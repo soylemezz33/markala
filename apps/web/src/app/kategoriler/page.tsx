@@ -11,6 +11,19 @@ export const metadata: Metadata = {
   description:
     "Markala kataloğundaki 20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket, antetli kağıt, zarf, magnet, çanta. Her kategoride detaylı ürün seçenekleri.",
   alternates: { canonical: "/kategoriler" },
+  openGraph: {
+    type: "website",
+    title: "Tüm Matbaa & Reklam Ürün Kategorileri — Markala",
+    description: "20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket ve daha fazlası.",
+    url: "/kategoriler",
+    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Kategoriler" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tüm Matbaa & Reklam Ürün Kategorileri — Markala",
+    description: "20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket ve daha fazlası.",
+    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+  },
 };
 
 export default async function CategoriesPage() {
