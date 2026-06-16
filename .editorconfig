@@ -1,0 +1,15 @@
+# EditorConfig — Markala monorepo kod stil tabanı
+# https://editorconfig.org · Prettier (.prettierrc.json) ile uyumlu tutulur.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown'da satır sonu iki boşlukla hard-break taşıyabilir → trim kapalı.
+[*.md]
+trim_trailing_whitespace = false

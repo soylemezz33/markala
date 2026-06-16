@@ -25,6 +25,12 @@ services:
       - "6379:6379"
     volumes:
       - markala_redis:/data
+    healthcheck:
+      # redis-cli redis:7-alpine imajında gömülü; PONG dönerse exit 0 (healthy).
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mailhog:
     image: mailhog/mailhog

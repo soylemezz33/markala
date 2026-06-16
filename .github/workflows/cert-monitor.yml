@@ -1,0 +1,123 @@
+name: SSL Sertifika & DNS İzleyici
+
+on:
+  schedule:
+    # Her gün 07:00 UTC (10:00 Türkiye)
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: "Verbose çıktı"
+        required: false
+        default: "false"
+        type: boolean
+
+concurrency:
+  group: cert-monitor
+  cancel-in-progress: false
+
+# Least-privilege: bu workflow yalnız checkout + script çalıştırır, yazma yetkisi gerekmez.
+permissions:
+  contents: read
+
+jobs:
+  ssl-check:
+    name: SSL Expiry Kontrolü
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: SSL expiry denetle
+        id: ssl
+        run: |
+          chmod +x scripts/check-ssl-expiry.sh
+          bash scripts/check-ssl-expiry.sh
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CERT_ALERT_CHAT_ID }}
+        continue-on-error: true
+
+      - name: Sonuç özeti
+        if: always()
+        run: |
+          if [[ "${{ steps.ssl.outcome }}" == "failure" ]]; then
+            echo "::warning::SSL denetimi uyarı/hata üretti. Log'ları incele."
+          else
+            echo "SSL denetimi başarılı."
+          fi
+
+  dns-health:
+    name: DNS Sağlık Kontrolü
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Temel DNS kayıtları kontrol
+        run: |
+          set -euo pipefail
+
+          DOMAIN="markala.com.tr"
+          ISSUES=0
+
+          echo "=== DNS Sağlık Raporu — $DOMAIN ==="
+          echo ""
+
+          # A kaydı
+          echo -n "A kaydı: "
+          A_RECORD=$(dig +short A "$DOMAIN" @1.1.1.1 2>/dev/null || true)
+          if [[ -n "$A_RECORD" ]]; then
+            echo "✅  $A_RECORD"
+          else
+            echo "❌  Bulunamadı"
+            ISSUES=$((ISSUES + 1))
+          fi
+
+          # MX kaydı
+          echo -n "MX kaydı: "
+          MX_RECORD=$(dig +short MX "$DOMAIN" @1.1.1.1 2>/dev/null || true)
+          if [[ -n "$MX_RECORD" ]]; then
+            echo "✅  $MX_RECORD"
+          else
+            echo "⚠️   Bulunamadı (e-posta yok mu?)"
+          fi
+
+          # SPF kaydı (TXT içinde v=spf1)
+          echo -n "SPF kaydı: "
+          SPF_RECORD=$(dig +short TXT "$DOMAIN" @1.1.1.1 2>/dev/null | grep "v=spf1" || true)
+          if [[ -n "$SPF_RECORD" ]]; then
+            echo "✅  $SPF_RECORD"
+          else
+            echo "⚠️   v=spf1 TXT kaydı bulunamadı"
+          fi
+
+          # DMARC kaydı
+          echo -n "DMARC kaydı: "
+          DMARC_RECORD=$(dig +short TXT "_dmarc.$DOMAIN" @1.1.1.1 2>/dev/null || true)
+          if [[ -n "$DMARC_RECORD" ]]; then
+            echo "✅  $DMARC_RECORD"
+          else
+            echo "⚠️   _dmarc TXT kaydı bulunamadı"
+          fi
+
+          # CAA kaydı
+          echo -n "CAA kaydı: "
+          CAA_RECORD=$(dig +short CAA "$DOMAIN" @1.1.1.1 2>/dev/null || true)
+          if [[ -n "$CAA_RECORD" ]]; then
+            echo "✅  $CAA_RECORD"
+          else
+            echo "⚠️   CAA kaydı yok (tüm CA'lara açık)"
+          fi
+
+          echo ""
+          if (( ISSUES > 0 )); then
+            echo "::warning::${ISSUES} kritik DNS sorunu bulundu."
+            exit 1
+          else
+            echo "Kritik DNS sorunu yok."
+          fi
