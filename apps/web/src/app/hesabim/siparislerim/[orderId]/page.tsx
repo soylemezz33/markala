@@ -3,25 +3,36 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Button, Price, cn } from "@markala/ui";
-import { ArrowLeft, Truck, Receipt, MapPin } from "@phosphor-icons/react";
-import { useOrdersStore } from "@/lib/orders-store";
+import { Button, Price } from "@markala/ui";
+import { ArrowLeft, Truck, Receipt, MapPin, Buildings } from "@phosphor-icons/react";
+import { useAuthStore } from "@/lib/auth-store";
+import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { generateMockTrackingEvents } from "@/lib/tracking-mock";
 import { TrackingTimeline } from "@/components/tracking/timeline";
-import type { Order } from "@markala/types";
+import type { Address, Order, OrderStatus } from "@markala/types";
+
+const normStatus = (s: string): OrderStatus => s.replace(/_/g, "-") as OrderStatus;
 
 export default function OrderDetailPage({ params }: { params: { orderId: string } }) {
-  const getById = useOrdersStore((s) => s.getById);
+  const user = useAuthStore((s) => s.user);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setOrder(getById(params.orderId) ?? null);
-    setLoading(false);
-  }, [getById, params.orderId]);
+    if (isBootstrapping || !user) return;
+    let cancelled = false;
+    setLoading(true);
+    withRefresh(() => apiClient.orders.detail(params.orderId))
+      .then((o) => { if (!cancelled) { setOrder(o ?? null); setLoading(false); } })
+      .catch(() => { if (!cancelled) { setOrder(null); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [user, isBootstrapping, params.orderId]);
 
-  if (loading) return null;
+  if (loading) {
+    return <div className="space-y-4">{[0, 1].map((i) => <div key={i} className="h-40 bg-paper-100 border border-paper-200 rounded-xl animate-pulse" />)}</div>;
+  }
 
   if (!order) {
     return (
@@ -46,7 +57,7 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           <p className="mt-1 text-sm text-ink-500">{formatDate(order.createdAt)}</p>
         </div>
         <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-brand-100 text-brand-900">
-          {orderStatusLabel(order.status)}
+          {orderStatusLabel(normStatus(order.status as unknown as string))}
         </span>
       </header>
 
@@ -78,6 +89,9 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
         <div className="mt-5 pt-5 border-t border-paper-200 space-y-1.5 text-sm">
           <Row label="Ara toplam" value={<Price amount={order.subtotal} />} />
           <Row label="Kargo" value={order.shippingFee === 0 ? <span className="text-success">Ücretsiz</span> : <Price amount={order.shippingFee} />} />
+          {order.discount > 0 && (
+            <Row label="İndirim" value={<span className="inline-flex items-center text-success">-&nbsp;<Price amount={order.discount} /></span>} />
+          )}
           <Row label="KDV" value={<Price amount={order.vat} className="text-ink-500" />} />
           <div className="pt-3 border-t border-paper-200 flex items-baseline justify-between">
             <span className="font-medium text-ink-900">Toplam</span>
@@ -97,17 +111,34 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
         />
       </section>
 
-      <section className="p-6 bg-paper-50 border border-paper-200 rounded-lg">
-        <h3 className="font-medium text-ink-900 mb-3 flex items-center gap-2">
-          <MapPin size={18} /> Teslimat Adresi
-        </h3>
-        <p className="text-sm text-ink-700 leading-relaxed">
-          {order.shippingAddress.fullName}<br />
-          {order.shippingAddress.fullAddress}<br />
-          {order.shippingAddress.district} / {order.shippingAddress.city}<br />
-          📞 {order.shippingAddress.phone}
-        </p>
-      </section>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <section className="p-6 bg-paper-50 border border-paper-200 rounded-lg">
+          <h3 className="font-medium text-ink-900 mb-3 flex items-center gap-2">
+            <MapPin size={18} /> Teslimat Adresi
+          </h3>
+          <AddressBlock a={order.shippingAddress} />
+        </section>
+        <section className="p-6 bg-paper-50 border border-paper-200 rounded-lg">
+          <h3 className="font-medium text-ink-900 mb-3 flex items-center gap-2">
+            {order.billingAddress?.type === "corporate" ? <Buildings size={18} /> : <Receipt size={18} />} Fatura Adresi
+          </h3>
+          <AddressBlock a={order.billingAddress ?? order.shippingAddress} billing />
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function AddressBlock({ a, billing }: { a: Address; billing?: boolean }) {
+  return (
+    <div className="text-sm text-ink-700 leading-relaxed space-y-0.5">
+      <p className="font-medium text-ink-900">{a.fullName}</p>
+      {billing && a.type === "corporate" && a.companyName && (
+        <p className="text-xs text-ink-500">{a.companyName}{a.taxNumber ? ` · VKN: ${a.taxNumber}` : ""}{a.taxOffice ? ` · ${a.taxOffice}` : ""}</p>
+      )}
+      <p className="text-ink-600">{a.fullAddress}</p>
+      <p className="text-ink-500">{a.district} / {a.city}{a.zipCode ? ` · ${a.zipCode}` : ""}</p>
+      <p className="text-ink-500">{a.phone}</p>
     </div>
   );
 }
