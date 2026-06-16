@@ -70,7 +70,9 @@ describe("estimateDelivery — cutoff ve iş günü mantığı", () => {
   it("label Türkçe gün + ay formatında döner", () => {
     const result = estimateDelivery("3 iş günü", monAm);
     // "D Ay Gün" formatı bekleniyor (örn. "18 Haziran Perşembe")
-    expect(result.label).toMatch(/^\d+ \w+ \w+$/);
+    // Unicode (u) bayrağı + \p{L} şart: ASCII \w, Türkçe harfleri (ş, ç, ğ...)
+    // eşleştirmez ve "Perşembe" gibi gün adlarında testi kırar.
+    expect(result.label).toMatch(/^\d+ \p{L}+ \p{L}+$/u);
     expect(result.label).toContain("Haziran");
   });
 
