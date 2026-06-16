@@ -151,6 +151,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${article.title} — Yardım Merkezi`,
     description: article.description,
     alternates: { canonical: `/yardim/${article.slug}` },
+    openGraph: {
+      type: "article",
+      title: `${article.title} — Markala Yardım`,
+      description: article.description,
+      url: `/yardim/${article.slug}`,
+      images: [{ url: `/api/mockup?theme=brand&w=1200&h=630&slug=help-${article.slug}`, width: 1200, height: 630, alt: article.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${article.title} — Markala Yardım`,
+      description: article.description,
+      images: [`/api/mockup?theme=brand&w=1200&h=630&slug=help-${article.slug}`],
+    },
   };
 }
 
