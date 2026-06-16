@@ -1,0 +1,13 @@
+# Bağımlılıklar ve üretilen çıktılar — Prettier biçimlendirmemeli.
+node_modules/
+**/node_modules/
+**/.next/
+**/dist/
+**/out/
+**/build/
+**/coverage/
+**/.turbo/
+
+# Kilit dosyası (üretilen) ve üretilen Prisma migration SQL'leri.
+pnpm-lock.yaml
+apps/api/prisma/migrations/
