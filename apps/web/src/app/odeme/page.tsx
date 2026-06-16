@@ -158,6 +158,33 @@ export default function CheckoutPage() {
       items: cartItems.length,
     });
 
+    // Siparişi KALICI olarak backend DB'ye yaz (admin panelde görünmesi için). Sepet yalnız
+    // productSlug taşır; fiyatı backend Product.basePrice'tan yeniden hesaplar. keepalive: sayfa
+    // yönlenirken bile tamamlanır. Hata olsa da (502) WhatsApp akışı bloke olmaz — yutulur.
+    fetch("/api/siparis-kaydet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        email,
+        phone,
+        customerName: accountType === "individual" ? fullName : companyName,
+        city,
+        district,
+        fullAddress,
+        zipCode,
+        channel,
+        accountType,
+        taxOffice,
+        taxNumber,
+        items: cartItems.map((i) => ({
+          productSlug: i.productSlug,
+          configuration: i.configuration,
+          quantity: i.quantity,
+        })),
+      }),
+    }).catch(() => {});
+
     // Ekibe sipariş bildirimi (WhatsApp'a EK kayıt kanalı). Best-effort + keepalive:
     // sayfa yönlenirken bile tamamlanır, başarısız olsa da akışı bloke etmez.
     fetch("/api/siparis-bildirim", {
