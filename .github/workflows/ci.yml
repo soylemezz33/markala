@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Type-check & Lint
+    name: Type-check, Build & Format
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -33,6 +33,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Format check (Prettier)
+        run: pnpm format:check
+        # Mevcut biçim sapması build'i bloklamaz; her PR'da annotation olarak
+        # görünür kalır (kademeli kapı). Tam sweep sonrası bloklayıcıya çekilecek.
+        continue-on-error: true
 
       - name: Type-check (web)
         run: pnpm --filter @markala/web type-check
