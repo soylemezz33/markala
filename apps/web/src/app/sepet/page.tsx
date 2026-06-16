@@ -120,7 +120,7 @@ export default function CartPage() {
                     <Tag size={16} /> Kupon kodun var mı?
                   </summary>
                   <div className="mt-3 flex gap-2">
-                    <input type="text" value={coupon} onChange={(e) => setCoupon(e.target.value)} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none" />
+                    <input type="text" value={coupon} onChange={(e) => setCoupon(e.target.value)} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
                     <Button variant="outline" size="md" onClick={handleApplyCoupon}>Uygula</Button>
                   </div>
                   {couponApplied && <p className="mt-2 text-xs text-success">✓ {couponApplied.code} kuponu uygulandı</p>}
