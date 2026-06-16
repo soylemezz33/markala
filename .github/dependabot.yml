@@ -1,0 +1,65 @@
+# Dependabot — otomatik bağımlılık güncellemeleri (supply-chain güvenliği)
+# Şema: https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+version: 2
+updates:
+  # ── npm/pnpm — monorepo kökü (pnpm workspace; pnpm-lock.yaml) ──
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # Minor + patch'leri tek haftalık PR'da topla — gürültüyü azalt.
+      # Major bump'lar gruba girmez → tek tek PR (kırıcı değişiklik riski izole).
+      npm-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ── GitHub Actions — workflow action sürümleri ──
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 5
+    labels:
+      - "ci"
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # ── Docker base image'leri (web/admin/api Dockerfile FROM satırları) ──
+  - package-ecosystem: "docker"
+    directories:
+      - "/apps/web"
+      - "/apps/admin"
+      - "/apps/api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Istanbul"
+    open-pull-requests-limit: 5
+    labels:
+      - "docker"
+    commit-message:
+      prefix: "chore(docker)"
