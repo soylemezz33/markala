@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, Length, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsIn, IsOptional, IsString, Length, MaxLength, MinLength } from "class-validator";
 import { PaginationQueryDto } from "../common/pagination.dto";
 
 /** Yönetici kullanıcı listesi sorgu parametreleri — doğrulanmış sayfalama + opsiyonel arama. */
@@ -84,6 +84,27 @@ export class CreateAddressDto {
   @IsBoolean()
   @IsOptional()
   isDefault?: boolean;
+
+  /** Fatura tipi: "individual" (bireysel) | "corporate" (kurumsal). Varsayilan bireysel. */
+  @IsString()
+  @IsOptional()
+  @IsIn(["individual", "corporate"])
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(160)
+  companyName?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(120)
+  taxOffice?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(40)
+  taxNumber?: string;
 }
 
 export class UpdateAddressDto {
@@ -131,4 +152,24 @@ export class UpdateAddressDto {
   @IsBoolean()
   @IsOptional()
   isDefault?: boolean;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(["individual", "corporate"])
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(160)
+  companyName?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(120)
+  taxOffice?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(40)
+  taxNumber?: string;
 }

@@ -161,6 +161,13 @@ model Address {
   zipCode     String? @map("zip_code")
   isDefault   Boolean @default(false) @map("is_default")
 
+  // Fatura için adres tipi: "individual" (bireysel) | "corporate" (kurumsal).
+  // Kurumsal adreslerde companyName + taxNumber zorunlu (DTO katmanında).
+  type        String  @default("individual")
+  companyName String? @map("company_name")
+  taxOffice   String? @map("tax_office")
+  taxNumber   String? @map("tax_number")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

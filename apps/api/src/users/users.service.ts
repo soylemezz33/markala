@@ -40,6 +40,10 @@ export class UsersService {
       fullAddress: data.fullAddress,
       zipCode: data.zipCode,
       isDefault: data.isDefault ?? false,
+      type: data.type === "corporate" ? "corporate" : "individual",
+      companyName: data.type === "corporate" ? data.companyName ?? null : null,
+      taxOffice: data.type === "corporate" ? data.taxOffice ?? null : null,
+      taxNumber: data.type === "corporate" ? data.taxNumber ?? null : null,
     };
     return this.prisma.address.create({ data: { ...safe, userId } });
   }
@@ -55,6 +59,13 @@ export class UsersService {
     if (data.fullAddress !== undefined) safe.fullAddress = data.fullAddress;
     if (data.zipCode !== undefined) safe.zipCode = data.zipCode;
     if (data.isDefault !== undefined) safe.isDefault = data.isDefault;
+    if (data.type !== undefined) {
+      safe.type = data.type === "corporate" ? "corporate" : "individual";
+      // Bireysele dönerse kurumsal alanları temizle; kurumsalsa gelen değerleri yaz.
+      safe.companyName = data.type === "corporate" ? data.companyName ?? null : null;
+      safe.taxOffice = data.type === "corporate" ? data.taxOffice ?? null : null;
+      safe.taxNumber = data.type === "corporate" ? data.taxNumber ?? null : null;
+    }
     return this.prisma.address.updateMany({ where: { id, userId }, data: safe });
   }
 

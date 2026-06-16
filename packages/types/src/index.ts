@@ -296,6 +296,11 @@ export interface Address {
   fullAddress: string;
   zipCode?: string;
   isDefault: boolean;
+  /** Fatura tipi: "individual" (bireysel) | "corporate" (kurumsal). */
+  type?: "individual" | "corporate";
+  companyName?: string | null;
+  taxOffice?: string | null;
+  taxNumber?: string | null;
 }
 
 // === Order ===
