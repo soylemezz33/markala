@@ -25,6 +25,7 @@ import {
   TrackRecentlyViewed,
   RecentlyViewedRail,
 } from "@/components/product/recently-viewed";
+import { TrackViewItem } from "@/components/product/track-view-item";
 import { ProductJsonLd, BreadcrumbJsonLd, HowToProductJsonLd } from "@/components/seo/json-ld";
 import type { Metadata } from "next";
 
@@ -98,6 +99,12 @@ export default async function ProductPage({ params }: Props) {
       <ProductJsonLd product={product} category={category} />
       <BreadcrumbJsonLd items={breadcrumbs} />
       <HowToProductJsonLd product={product} slug={product.slug} />
+      <TrackViewItem
+        slug={product.slug}
+        name={product.name}
+        categorySlug={product.categorySlug}
+        price={product.startingPrice}
+      />
 
       {/* Breadcrumb header */}
       <div className="bg-paper-100 border-b border-paper-200">

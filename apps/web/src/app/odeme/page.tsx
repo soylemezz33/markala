@@ -11,7 +11,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { generateOrderNumber } from "@/lib/format";
 import { whatsappUrl, phoneUrl, MARKALA_PHONE_DISPLAY } from "@/lib/whatsapp";
-import { track } from "@/lib/analytics";
+import { track, trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 import type { Address, Order } from "@markala/types";
 
 const SHIPPING_FEE = 79;
@@ -74,7 +74,11 @@ export default function CheckoutPage() {
     const order: Step[] = ["iletisim", "fatura", "teslimat", "onay"];
     const idx = order.indexOf(step);
     if (idx < order.length - 1) {
-      setStep(order[idx + 1] ?? step);
+      const nextStep = order[idx + 1] ?? step;
+      if (nextStep === "onay") {
+        trackBeginCheckout(total, cartItems.length);
+      }
+      setStep(nextStep);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
@@ -150,7 +154,8 @@ export default function CheckoutPage() {
     const orderNumber = generateOrderNumber();
     const order = buildOrder(orderNumber);
 
-    // GA4 dönüşümü — kullanıcı etkileşim anında (popup engellenmesin)
+    // GA4 + Meta — kullanıcı etkileşim anında (popup engellenmesin)
+    trackPurchase(orderNumber, total, cartItems.length);
     track("generate_lead", {
       method: channel === "whatsapp" ? "whatsapp_order" : "phone_order",
       currency: "TRY",
