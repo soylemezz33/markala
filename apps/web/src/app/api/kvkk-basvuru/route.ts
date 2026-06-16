@@ -10,6 +10,25 @@ interface KvkkPayload {
   requestType?: string;
   details?: string;
   hasIdDocument?: boolean;
+  _hp?: string; // honeypot — dolu gelirse bot
+}
+
+/**
+ * TC Kimlik No checksum doğrulaması.
+ * Tek pozisyonlar × 7 - çift pozisyonlar = 10. hane (mod 10)
+ * İlk 10 hane toplamı = 11. hane (mod 10)
+ */
+function isValidTcKimlik(tc: string): boolean {
+  if (!/^\d{11}$/.test(tc)) return false;
+  if (tc[0] === "0") return false;
+  const d = tc.split("").map(Number);
+  // noUncheckedIndexedAccess aktif: regex 11 haneyi garantiler, ?? 0 yalnız tip güvenliği
+  const at = (i: number): number => d[i] ?? 0;
+  const odd = at(0) + at(2) + at(4) + at(6) + at(8);
+  const even = at(1) + at(3) + at(5) + at(7);
+  const d10 = ((odd * 7) - even + 100) % 10;
+  const d11 = (at(0) + at(1) + at(2) + at(3) + at(4) + at(5) + at(6) + at(7) + at(8) + at(9)) % 10;
+  return at(9) === d10 && at(10) === d11;
 }
 
 const VALID_TYPES = [
@@ -40,6 +59,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
 
+  // Honeypot kontrolü — dolu gelirse sessiz red (bota hata mesajı verme)
+  if (body._hp) {
+    return NextResponse.json({ ok: true, ticketId: "KVKK-BOT", dueDate: "", message: "" });
+  }
+
   const { fullName, tcKimlik, email, requestType, details } = body;
 
   // Validation
@@ -52,9 +76,9 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     );
   }
-  if (tcKimlik && !/^\d{11}$/.test(tcKimlik)) {
+  if (tcKimlik && !isValidTcKimlik(tcKimlik)) {
     return NextResponse.json(
-      { error: "TC Kimlik No 11 haneli rakam olmalı." },
+      { error: "TC Kimlik No geçersiz. Lütfen kontrol edin." },
       { status: 400 },
     );
   }

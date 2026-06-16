@@ -1,5 +1,7 @@
 # SABAH RAPORU — Markala Profesyonel Yapı Tamamlandı
 
+> ⚠️ **TARİHSEL SNAPSHOT — 2026-05-06 sabah oturumu.** Proje o tarihten bu yana gelişti; güncel durum için `RAKIP-ANALIZI-2026-06.md` ve `docs/DEPLOY.md`'ye bakın. Bu doküman referans amaçlı arşivde tutulmaktadır.
+>
 > Hasan, sen uyurken sitenin tamamını üst düzey full-stack developer ve SEO uzmanı kimliğiyle inceledim,
 > profesyonel bir e-ticaret + admin paneli + müşteri panel yapısına dönüştürdüm.
 >
@@ -15,7 +17,7 @@
 
 | Bölüm | Durum | Not |
 |---|---|---|
-| **Marketing site** (`apps/web` :3003) | ✅ Profesyonel | 30+ kategori, matrix fiyat UI, ürün görselleri, SEO derin, mobile-first |
+| **Marketing site** (`apps/web` :3000) | ✅ Profesyonel | 30+ kategori, matrix fiyat UI, ürün görselleri, SEO derin, mobile-first |
 | **Admin paneli** (`apps/admin` :3001) | ✅ Profesyonel iskelet | 14 sayfa, fiyat yönetimi, API entegrasyon ayarları (mock data ile çalışır) |
 | **Müşteri paneli** (`/hesabim/*`) | ✅ KVKK uyumlu | Faturalar, hesap silme, bildirim tercihleri, şifre değiştirme |
 | **Yardım merkezi** (`/yardim/*`) | ✅ 9 sayfa | Ana + 8 rehber konu (SSS, dosya hazırlama, kargo, iade, ödeme, tasarım, kurumsal) |
@@ -25,7 +27,7 @@
 
 **Çalıştırma:**
 ```bash
-cd c:/Users/Hasan/Projects/baskisitesi
+cd c:/Users/Hasan/Projects/markala
 pnpm dev   # web (3003) + admin (3001) + api (3000) eş zamanlı
 ```
 
@@ -267,7 +269,7 @@ Hasan'ın itirazı genel "24 saatte teslim" sloganlarına idi — bu fiili veril
 ## 7) Dosya Haritası — Önemli Konum Listesi
 
 ```
-c:\Users\Hasan\Projects\baskisitesi\
+c:\Users\Hasan\Projects\markala\
 │
 ├── apps/
 │   ├── web/                              # Marketing site (port 3003)
@@ -343,15 +345,15 @@ c:\Users\Hasan\Projects\baskisitesi\
 Tarayıcıda bu URL'leri sırayla aç:
 
 ### Marketing site (port 3003)
-1. **http://localhost:3003/** — Anasayfa: hero carousel, kategori grid, kampanya marquee
-2. **http://localhost:3003/urun/klasik-kartvizit** — ⭐ Matrix wizard 3-adım: EKO/LAK/VIP → Paket → Adet
-3. **http://localhost:3003/kategori/kartvizit** — Kategori sayfası, ürün listesi
-4. **http://localhost:3003/urunler** — Tüm ürünler + filtre
-5. **http://localhost:3003/yardim** — Yardım merkezi
-6. **http://localhost:3003/yardim/dosya-hazirlama** — Tek konu sayfası
-7. **http://localhost:3003/api/mockup?slug=klasik-kartvizit** — ⭐ SVG mockup direkt
-8. **http://localhost:3003/sitemap.xml** — Otomatik sitemap
-9. **http://localhost:3003/robots.txt** — Robots dosyası
+1. **http://localhost:3000/** — Anasayfa: hero carousel, kategori grid, kampanya marquee
+2. **http://localhost:3000/urun/klasik-kartvizit** — ⭐ Matrix wizard 3-adım: EKO/LAK/VIP → Paket → Adet
+3. **http://localhost:3000/kategori/kartvizit** — Kategori sayfası, ürün listesi
+4. **http://localhost:3000/urunler** — Tüm ürünler + filtre
+5. **http://localhost:3000/yardim** — Yardım merkezi
+6. **http://localhost:3000/yardim/dosya-hazirlama** — Tek konu sayfası
+7. **http://localhost:3000/api/mockup?slug=klasik-kartvizit** — ⭐ SVG mockup direkt
+8. **http://localhost:3000/sitemap.xml** — Otomatik sitemap
+9. **http://localhost:3000/robots.txt** — Robots dosyası
 
 ### Mobil test (Chrome DevTools → Phone)
 - Header hamburger → drawer açılıyor mu, mega menu accordion çalışıyor mu
@@ -369,13 +371,13 @@ Tarayıcıda bu URL'leri sırayla aç:
 8. **http://localhost:3001/ayarlar/seo** — SEO ayarları + OG önizleme
 
 ### Müşteri paneli (port 3003 — giriş gerektirir)
-1. **http://localhost:3003/giris** — mock auth ile gir
-2. **http://localhost:3003/hesabim** — Dashboard
-3. **http://localhost:3003/hesabim/tekrar-siparis** — Hızlı tekrar sipariş
-4. **http://localhost:3003/hesabim/faturalarim** — Faturalar
-5. **http://localhost:3003/hesabim/sifre** — Şifre değiştir + güç metresi
-6. **http://localhost:3003/hesabim/bildirim** — Bildirim tercihleri
-7. **http://localhost:3003/hesabim/hesap-sil** — KVKK hesap silme
+1. **http://localhost:3000/giris** — mock auth ile gir
+2. **http://localhost:3000/hesabim** — Dashboard
+3. **http://localhost:3000/hesabim/tekrar-siparis** — Hızlı tekrar sipariş
+4. **http://localhost:3000/hesabim/faturalarim** — Faturalar
+5. **http://localhost:3000/hesabim/sifre** — Şifre değiştir + güç metresi
+6. **http://localhost:3000/hesabim/bildirim** — Bildirim tercihleri
+7. **http://localhost:3000/hesabim/hesap-sil** — KVKK hesap silme
 
 ---
 
