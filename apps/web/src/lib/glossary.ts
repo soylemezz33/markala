@@ -77,7 +77,7 @@ export const glossary: GlossaryTerm[] = [
       "Amerikan kâğıt veya NCR (No Carbon Required), iki veya daha fazla katlı, üst kâğıdın yazıyı alttaki kâğıda otomatik basınçla aktardığı özel bir kâğıt türüdür. Karbon kullanmaz; yüzeyleri kimyasal kaplı olduğu için yazı doğrudan iletilir. Makbuz, fatura, sevk irsaliyesi, sipariş formu, garanti belgesi gibi işlerde kullanılır. 2-3 nüshalı (beyaz/sarı/pembe) standart formatlarda gelir.",
     category: "kagit",
     examples: ["3 nüshalı NCR makbuz", "2 nüshalı sevk irsaliyesi"],
-    relatedTerms: ["makbuz", "fatura"],
+    relatedTerms: ["perforaj", "gramaj"],
   },
   {
     slug: "kraft",
@@ -87,7 +87,7 @@ export const glossary: GlossaryTerm[] = [
       "Kraft kâğıt, ağartılmamış selüloz lifinden üretilen, doğal kahverengi tonu olan dayanıklı bir kâğıttır. Sürdürülebilirlik vurgulayan markalar tarafından tercih edilir. Organik gıda, el yapımı sabun, butik mağaza ürün ambalajı, butik kartvizit ve etiketlerde kullanılır. Yüzey kabasaba olduğu için CMYK baskı renkleri daha mat çıkar.",
     category: "kagit",
     examples: ["Kraft kartvizit", "Kraft kese kâğıt", "Kraft etiket"],
-    relatedTerms: ["geri-donusum", "ambalaj"],
+    relatedTerms: ["kuse", "gramaj"],
   },
 
   // === RENK ===
@@ -119,7 +119,7 @@ export const glossary: GlossaryTerm[] = [
       "Pantone Matching System (PMS), her rengin numerik bir kodu olan dünya çapında standart renk paletidir. CMYK'nın yetersiz kaldığı kurumsal renklerde (örneğin Coca-Cola kırmızısı) Pantone özel mürekkep olarak kullanılır. \"5+1 renk\" baskı CMYK + 1 Pantone, \"6 renk\" ise CMYK + 2 Pantone demektir. Lüks marka kartviziti, ambalaj ve özel projelerde tercih edilir. CMYK'ya dönüşüm %15-20 sapma yaratabilir.",
     category: "renk",
     examples: ["Pantone 185 C (kırmızı)", "Pantone 286 C (mavi)", "Pantone Cool Gray 9"],
-    relatedTerms: ["cmyk", "spot-renk"],
+    relatedTerms: ["cmyk", "icc-profil"],
     synonyms: ["spot renk", "PMS"],
   },
   {
@@ -129,7 +129,7 @@ export const glossary: GlossaryTerm[] = [
     longDef:
       "Zengin siyah, sadece K:100 kullanmak yerine CMYK karışımıyla daha derin ve yoğun bir siyah elde etmek için kullanılır. Standart formül: C:60 M:40 Y:40 K:100. Ofset baskıda büyük siyah alanlarda K:100 donuk gri görünür; zengin siyah ise mat ve dolgun bir görünüm verir. Küçük metinler için kullanılmaz (üst üste binme problemi olur), sadece büyük blok alanlar için.",
     category: "renk",
-    relatedTerms: ["cmyk", "trapping"],
+    relatedTerms: ["cmyk", "ofset-baski"],
   },
   {
     slug: "icc-profil",
@@ -151,7 +151,7 @@ export const glossary: GlossaryTerm[] = [
       "Ofset baskı, mürekkebin metal plakadan kauçuk silindire, oradan kâğıda transfer edildiği endüstriyel baskı türüdür. 1.000+ adet baskıda birim maliyeti çok düşüktür. Renk kalitesi yüksek, detay üretimi mükemmeldir. Kartvizit (5.000+ adet), broşür, katalog, kitap ve gazete gibi yüksek tirajlı işlerde tercih edilir. Forma kâğıt ile çalışır, kesim sonrası ürün elde edilir.",
     category: "baski",
     examples: ["10.000 adet broşür ofset", "50.000 adet kartvizit ofset"],
-    relatedTerms: ["dijital-baski", "forma", "plakaba"],
+    relatedTerms: ["dijital-baski", "ayar-baski"],
   },
   {
     slug: "dijital-baski",
@@ -161,7 +161,7 @@ export const glossary: GlossaryTerm[] = [
       "Dijital baskı, dosyanın doğrudan baskı makinesine gönderildiği plaka gerektirmeyen baskı türüdür. Düşük adetli (1-1.000) işlerde birim maliyeti makul, ön hazırlık süresi çok kısadır. Acil işler, kişiselleştirilmiş baskı (her sayfa farklı), kısa tirajlı kartvizit ve broşürlerde tercih edilir. Renk kalitesi son yıllarda ofset düzeyine yaklaşmıştır.",
     category: "baski",
     examples: ["100 adet acil kartvizit", "250 adet broşür"],
-    relatedTerms: ["ofset-baski", "lazer-baski", "ink-jet"],
+    relatedTerms: ["ofset-baski", "serigrafi"],
   },
   {
     slug: "serigrafi",
@@ -171,7 +171,7 @@ export const glossary: GlossaryTerm[] = [
       "Serigrafi (silk-screen), boya geçirmeyen şablon ile boya geçiren elek arasındaki farktan yararlanılan, mürekkebin yüzeye sürüldüğü tekniktir. T-shirt, kupa, kalem, çanta, plastik ve metal yüzeylerde kullanılır. Kâğıt dışı yüzeylerde tek alternatiftir. UV mürekkep ile yıkamaya dayanıklı baskı sağlar.",
     category: "baski",
     examples: ["Kupa baskı", "T-shirt baskı", "Çanta baskı"],
-    relatedTerms: ["sublime-baski", "dijital-tekstil"],
+    relatedTerms: ["sublime-baski", "ofset-baski"],
   },
   {
     slug: "sublime-baski",
@@ -265,7 +265,7 @@ export const glossary: GlossaryTerm[] = [
       "Kırım (creasing/bigleme), katlanacak çizgi boyunca kâğıdın özel bir bıçakla ezilmesidir. Kalın kâğıtlarda (200 gr+) düz katlamak liflerin kırılmasına ve çatlamaya neden olur; kırım bunu önler. Davetiye, broşür, klasör kapakları, kitapçık kapakları için zorunlu işlemdir.",
     category: "kesim",
     examples: ["3 katlı broşür kırımı", "Davetiye kırımı"],
-    relatedTerms: ["perforaj", "katlama"],
+    relatedTerms: ["perforaj"],
   },
 
   // === FORMAT ===
@@ -277,7 +277,7 @@ export const glossary: GlossaryTerm[] = [
       "PDF/X, matbaa endüstrisinin standart belge formatıdır. PDF/X-1a en yaygın olanıdır; CMYK renk profili gömülü, font'lar embed edilmiş, transparan efektler düzleştirilmiş halidir. Matbaaya gönderirken bu format tercih edilmelidir. Adobe ürünlerinde \"Save As → PDF → PDF/X-1a:2001\" şeklinde export edilir. JPG ve normal PDF gibi formatlardan daha güvenlidir.",
     category: "format",
     examples: ["PDF/X-1a:2001", "PDF/X-4:2010"],
-    relatedTerms: ["dpi", "icc-profil", "embed-font"],
+    relatedTerms: ["dpi", "icc-profil", "outline"],
   },
   {
     slug: "dpi",
@@ -305,7 +305,7 @@ export const glossary: GlossaryTerm[] = [
     longDef:
       "Raster (bitmap), küçük renk noktaları (piksel) ile oluşturulan görsel formatıdır. JPG, PNG, TIFF, BMP gibi formatları vardır. Belirli bir çözünürlükte üretilir; büyütüldüğünde piksel görünür ve kalite düşer. Fotoğraflar her zaman raster'dır; baskı için 300 dpi'da olmalıdır. Photoshop ana raster düzenleme programıdır.",
     category: "format",
-    relatedTerms: ["vektorel", "dpi", "jpg-png"],
+    relatedTerms: ["vektorel", "dpi"],
   },
 
   // === ÜRETİM ===
@@ -317,7 +317,7 @@ export const glossary: GlossaryTerm[] = [
       "Fire (yield loss), matbaa sektörünün TSE/ISO standartlarına göre %1-5 aralığında kabul edilen üretim toleransıdır. Kesim sapması, ayar baskıları, KKK'da elenen defolu ürünler bu kapsamda değerlendirilir. 1.000 sipariş için 980-1.020 arası teslim normaldir. %5'i geçen eksiklerde matbaa ek ücretsiz baskı veya bedel iadesi yapar. Sözleşmeye dahildir.",
     category: "uretim",
     examples: ["1.000 adet sipariş → 980 adet teslim (%2 fire)"],
-    relatedTerms: ["kalite-kontrol", "ayar-baski"],
+    relatedTerms: ["ayar-baski", "hard-proof"],
   },
   {
     slug: "ayar-baski",
@@ -356,7 +356,30 @@ export const glossary: GlossaryTerm[] = [
     longDef:
       "Outline (Convert to Outlines), yazı karakterlerinin vektörel yollara (path) çevrilmesidir. Adobe Illustrator'da \"Type → Create Outlines\" ile yapılır. Matbaaya gönderirken yazıların outline yapılması gerekir; aksi halde matbaada o font yoksa yazı bozulur veya farklı bir fontla yazılır. Outline sonrası yazıyı düzenleyemezsiniz; bu yüzden orijinal dosyayı saklayın.",
     category: "format",
-    relatedTerms: ["vektorel", "embed-font"],
+    relatedTerms: ["vektorel", "pdf-x"],
+  },
+
+  // === TASARIM ===
+  {
+    slug: "tipografi",
+    term: "Tipografi",
+    shortDef: "Yazı karakterlerinin seçimi ve düzenlenmesi sanatı — okunabilirlik ve marka tonu.",
+    longDef:
+      "Tipografi, yazının okunabilir, etkili ve estetik biçimde düzenlenmesidir. Font seçimi, punto, satır aralığı (leading), harf aralığı (kerning/tracking) ve hizalama kararlarını kapsar. Kurumsal kimlikte tutarlı bir font ailesi marka tonunu belirler; kartvizit, broşür ve afişte hiyerarşiyi tipografi taşır. Baskıda serif fontlar uzun metinde, sans-serif fontlar başlık ve etikette tercih edilir. Çok fazla font karışımı (ikiden fazla) tasarımı dağıtır.",
+    category: "tasarim",
+    examples: ["Başlık + gövde için 2 font ailesi", "Kartvizitte 8-10 punto iletişim bilgisi"],
+    relatedTerms: ["outline", "gorsel-hiyerarsi"],
+    synonyms: ["yazı düzeni", "font düzeni"],
+  },
+  {
+    slug: "gorsel-hiyerarsi",
+    term: "Görsel Hiyerarşi",
+    shortDef: "Tasarımda öğeleri önem sırasına göre düzenleyip okuyucunun dikkatini yönlendirme.",
+    longDef:
+      "Görsel hiyerarşi, boyut, renk, kontrast, boşluk ve konumlandırma kullanarak hangi öğenin önce okunacağını belirleyen tasarım ilkesidir. Bir broşürde başlık en büyük, alt başlık orta, gövde metni en küçük olur; göz doğal olarak büyükten küçüğe akar. İyi hiyerarşi mesajı saniyeler içinde iletir; zayıf hiyerarşi okuyucuyu yorar ve dönüşümü düşürür. Beyaz alan (boşluk) da bir hiyerarşi aracıdır — kalabalık tasarım önemi belirsizleştirir.",
+    category: "tasarim",
+    examples: ["Afişte 3 kademeli başlık düzeni", "CTA butonunu kontrast renkle öne çıkarma"],
+    relatedTerms: ["tipografi"],
   },
 ];
 
