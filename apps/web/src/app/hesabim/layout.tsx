@@ -24,13 +24,20 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const logout = useAuthStore((s) => s.logout);
 
   useEffect(() => {
-    if (!user) router.replace("/giris");
-  }, [user, router]);
+    // Oturum durumu netleşmeden (bootstrap/refresh sürerken) redirect ETME —
+    // sayfa yenilemede hydration penceresinde user=null görünüp /giris'e atmasın.
+    if (!isBootstrapping && !user) router.replace("/giris");
+  }, [isBootstrapping, user, router]);
 
-  if (!user) return null;
+  if (!user) {
+    return isBootstrapping ? (
+      <div className="grid place-items-center py-32 text-ink-400 text-sm">Hesabınız yükleniyor…</div>
+    ) : null;
+  }
 
   return (
     <>
