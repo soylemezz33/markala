@@ -1,6 +1,6 @@
 # Markala — Yasal Başlatma Checklist
 
-> Son güncelleme: 2026-06-15
+> Son güncelleme: 2026-06-16
 > Sorumlu: Hasan Söylemez (324 Ajans Bilgi Teknolojileri Ltd. Şti.)
 > Kapsam: `markala.com.tr` yayına almadan önce tamamlanması gereken yasal başvurular ve placeholder doldurma görevleri.
 
@@ -86,8 +86,13 @@ Aşağıdaki dosyada `[HASAN: ...]` ile işaretli tüm sabitleri gerçek bilgile
 | İade ve İptal Politikası | 🟡 Taslak var, hukuk onayı yok | Orta | P1 |
 | Sub-processor DPA | ❌ OpenAI/Cloudflare/SendGrid DPA belgesi yok | Yüksek | P1 |
 | Hukuk Danışmanı Review | ❌ Randevu alınmadı | Kritik | P0 |
-| Footer ETBİS Rozeti | ❌ Eklenmedi | Orta | P1 |
+| Footer ETBİS Rozeti | 🟡 Kod hazır (yorum satırı), ETBİS onayı bekleniyor | Orta | P1 |
 | KVKK Başvuru Formu | ✅ `/kvkk-basvuru` sayfası aktif | Düşük | Tamamlandı |
+| Cayma Hakkı İstisnası Bildirimi | ✅ Checkout "onay" adımında amber uyarı kutusu eklendi (AJA-165) | Düşük | Tamamlandı |
+| security.txt | ✅ `/.well-known/security.txt` oluşturuldu | Düşük | Tamamlandı |
+| İYS SMS Kanalı Sorgulama | ❌ NetGSM için ayrı İYS sorgusu tasarlanmadı | Yüksek | P0 (Faz 4) |
+| Pazarlama İzni Geri Çekme Akışı | ❌ DB güncelleme + İYS senkron + SendGrid unsubscribe zinciri yok | Yüksek | P1 (Faz 4) |
+| e-Fatura/e-Arşiv Zorunluluğu | ❌ GİB eşiği değerlendirmesi yapılmadı (2025: 3M TL ciro) | Orta | P1 (Faz 3) |
 
 ---
 
@@ -153,6 +158,28 @@ Aşağıdaki işlemciler için yazılı DPA veya uyum belgesi gerekmektedir:
 - PTT şubesinden kurumsal KEP: `324ajans@hs01.kep.tr`
 - Yıllık ~500 TL
 - KVKK başvuruları için yasal tebligat kanalı
+
+#### 9. İYS SMS Kanalı (P0 — Faz 4 Öncesi)
+- NetGSM entegrasyonu kurulmadan önce İYS SMS kanalı için ayrı sorgulama zorunlu
+- `POST /api/iys/check?channel=SMS&recipient=<msisdn>` çağrısı yapılmalı
+- Telefon bazlı opt-in yoksa **hiç SMS gönderilmemeli** (TEİK Yönetmeliği m.7)
+- İYS mail + SMS kanalı ayrı ayrı kontrol ediliyor — tek onay her ikisini kapsamıyor
+- Sorumlu: Faz 4 backend geliştirici + DPO review
+
+#### 10. Pazarlama İzni Geri Çekme Akışı (P1 — Faz 4)
+- Kullanıcı hesabından marketing iznini kaldırdığında 3 adımlı zincir çalışmalı:
+  1. DB: `users.marketing_consent = false` + timestamp
+  2. İYS API: `DELETE /brands/{brandCode}/merchants/default/receivers/INDIVIDUAL`
+  3. SendGrid: List Unsubscribe header + suppression list güncellemesi
+- Bu zincir tasarlanmadan Faz 4 SMS/mail pazarlama başlatılmamalı
+- Sorumlu: Faz 4 backend + frontend geliştirici, DPO onay
+
+#### 11. e-Fatura/e-Arşiv Zorunluluğu Değerlendirmesi (P1 — Faz 3 Öncesi)
+- GİB 509 Sıra No'lu Tebliğ: 2025 yılı ciro eşiği ≥ 3M TL ise e-fatura zorunlu
+- Paraşüt entegrasyonu kurulmadan önce 324 Ajans'ın tahmini yıllık cirosunu hesapla
+- Eşik aşılıyorsa: GİB portalına başvuru + Paraşüt e-fatura paketi aktivasyonu
+- Eşik altında: e-Arşiv fatura yeterlı (Paraşüt zaten destekliyor)
+- Sorumlu: Hasan (mali veri) + Muhasebe müşavir
 
 ---
 
