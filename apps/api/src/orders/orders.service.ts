@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -41,19 +41,40 @@ export const validStatusTransitions: Record<string, string[]> = {
 };
 
 /**
+ * URL slug (hyphen: "kargoya-verildi") → Prisma OrderStatus enum üyesi (underscore: "kargoya_verildi").
+ *
+ * Şema'da enum değerleri @map ile hyphen'li DB değerine maplenmiş; ANCAK Prisma Client API'si
+ * DAİMA underscore üye adını bekler (Object.values(OrderStatus) hepsi underscore). Hyphenli slug'ı
+ * doğrudan `status: ... as any` ile geçmek Prisma'da "Expected OrderStatus" validation hatası → 500
+ * üretiyordu (admin sipariş durumu güncellemesi ve status filtreli liste tamamen kırıktı).
+ * Bilinmeyen/eksik slug → null.
+ */
+export function slugToOrderStatus(slug: string | undefined | null): OrderStatus | null {
+  if (!slug) return null;
+  const member = slug.replace(/-/g, "_");
+  return (Object.values(OrderStatus) as string[]).includes(member) ? (member as OrderStatus) : null;
+}
+
+/**
  * Konfigürasyon JSON'undan opsiyonel adet/quantity bilgisini güvenli şekilde okur.
  * Sunucu fiyatlandırması bu değeri kullanabilir (örn. "kartvizit adedi"); ancak
  * client'tan gelen unitPrice/lineTotal asla okunmaz.
+ *
+ * DAİMA pozitif TAM SAYI döner (ondalık değer aşağı yuvarlanır), geçerli adet yoksa null.
+ * Regresyon: `configuration` doğrulanmamış `unknown` olduğundan `{ quantity: 2.5 }` gibi
+ * ondalık bir değer effectiveQty olarak doğrudan OrderItem.quantity (Int) sütununa gidiyor
+ * ve Prisma create'i "invalid value 2.5" ile patlatıyordu (kullanıcıya 500). Floor + pozitiflik
+ * kontrolü bunu önler; ondalık 0..1 (örn. 0.4) → null → DTO'daki baseQty'ye düşülür.
  */
-function extractConfigQuantity(config: ConfigurationInput): number | null {
+export function extractConfigQuantity(config: ConfigurationInput): number | null {
   if (!config || typeof config !== "object") return null;
   const c = config as Record<string, unknown>;
   const candidates = [c.quantity, c.adet, c.count];
   for (const v of candidates) {
-    if (typeof v === "number" && Number.isFinite(v) && v > 0) return v;
-    if (typeof v === "string") {
-      const n = Number(v);
-      if (Number.isFinite(n) && n > 0) return n;
+    const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+    if (Number.isFinite(n)) {
+      const q = Math.floor(n);
+      if (q > 0) return q;
     }
   }
   return null;
@@ -165,7 +186,8 @@ export class OrdersService {
       // aksi halde DTO'daki baseQty kullanılır.
       const effectiveQty = configQty ?? baseQty;
 
-      if (!Number.isFinite(effectiveQty) || effectiveQty <= 0 || effectiveQty > MAX_QUANTITY_PER_ITEM) {
+      // quantity bir Int sütunu — tam sayı zorunlu (ondalık → Prisma create 500).
+      if (!Number.isInteger(effectiveQty) || effectiveQty <= 0 || effectiveQty > MAX_QUANTITY_PER_ITEM) {
         throw new BadRequestException(`Geçersiz adet (${i.productId}).`);
       }
 
@@ -310,8 +332,10 @@ export class OrdersService {
   }
 
   listAll(opts: { status?: string; take?: number; skip?: number } = {}) {
+    // Geçersiz/bilinmeyen status filtresi → filtre uygulanmaz (eskiden Prisma'da 500'e yol açıyordu).
+    const status = slugToOrderStatus(opts.status);
     return this.prisma.order.findMany({
-      where: opts.status ? { status: opts.status as any } : {},
+      where: status ? { status } : {},
       include: { items: true, user: { select: { email: true, fullName: true } } },
       orderBy: { createdAt: "desc" },
       take: opts.take ?? 50,
@@ -349,10 +373,15 @@ export class OrdersService {
       }
     }
 
+    // Hyphen slug → Prisma enum üyesi (underscore). DTO @IsIn ile doğrulandığı için normalde
+    // null gelmez; yine de defansif kontrol (doğrudan slug yazmak Prisma'da 500 üretiyordu).
+    const enumStatus = slugToOrderStatus(status);
+    if (!enumStatus) throw new BadRequestException(`Geçersiz sipariş durumu: ${status}`);
+
     return this.prisma.order.update({
       where: { id },
       data: {
-        status: status as any,
+        status: enumStatus,
         ...extras,
         ...(status === "kargoya-verildi" && { shippedAt: new Date() }),
         ...(status === "teslim-edildi" && { deliveredAt: new Date() }),
