@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   if (!isMailConfigured()) {
     // SMTP yapılandırılmamışsa (dev): mock davranışı koru
-    console.log(`[newsletter] subscribe (SMTP devre dışı, mock): ${email} (source: ${sourceLabel})`);
+    console.log(`[newsletter] subscribe (SMTP devre dışı, mock): source=${sourceLabel}`);
   } else {
     // Bildirim maili — başarısız olsa bile aboneliği bloke etme
     try {

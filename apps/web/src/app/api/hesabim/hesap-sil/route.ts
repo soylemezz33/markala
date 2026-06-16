@@ -71,7 +71,8 @@ export async function POST(req: NextRequest) {
     //   const decoded = jwt.verify(confirmToken, process.env.JWT_SECRET);
     //   if (decoded.email !== email) return 403
     //   if (decoded.purpose !== "account_deletion") return 403
-    console.log("[hesap-sil] confirm token present (mock pass):", confirmToken.slice(0, 12));
+    // Token içeriği loglanmaz
+    console.log("[hesap-sil] confirm token present (mock pass)");
   }
 
   // Mock soft-delete
@@ -80,12 +81,8 @@ export async function POST(req: NextRequest) {
     .toISOString()
     .slice(0, 10);
 
-  console.log("[hesap-sil] soft delete:", {
-    email,
-    deletedAt,
-    purgeScheduledAt,
-    legalBasis: "KVKK 11/e + GDPR Art. 17",
-  });
+  // E-posta loglanmaz; audit log prod'da DB'ye yazılmalı
+  console.log(`[hesap-sil] soft delete: deletedAt=${deletedAt} purgeScheduledAt=${purgeScheduledAt}`);
 
   // TODO: prod'da
   //   await prisma.user.update({
