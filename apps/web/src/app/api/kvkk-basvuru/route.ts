@@ -22,11 +22,13 @@ function isValidTcKimlik(tc: string): boolean {
   if (!/^\d{11}$/.test(tc)) return false;
   if (tc[0] === "0") return false;
   const d = tc.split("").map(Number);
-  const odd = d[0] + d[2] + d[4] + d[6] + d[8];
-  const even = d[1] + d[3] + d[5] + d[7];
+  // noUncheckedIndexedAccess aktif: regex 11 haneyi garantiler, ?? 0 yalnız tip güvenliği
+  const at = (i: number): number => d[i] ?? 0;
+  const odd = at(0) + at(2) + at(4) + at(6) + at(8);
+  const even = at(1) + at(3) + at(5) + at(7);
   const d10 = ((odd * 7) - even + 100) % 10;
-  const d11 = (d[0]+d[1]+d[2]+d[3]+d[4]+d[5]+d[6]+d[7]+d[8]+d[9]) % 10;
-  return d[9] === d10 && d[10] === d11;
+  const d11 = (at(0) + at(1) + at(2) + at(3) + at(4) + at(5) + at(6) + at(7) + at(8) + at(9)) % 10;
+  return at(9) === d10 && at(10) === d11;
 }
 
 const VALID_TYPES = [
