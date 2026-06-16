@@ -23,9 +23,7 @@ const STATIC_ROUTES = [
   { path: "/hakkimizda", priority: 0.7, freq: "monthly" as const },
   { path: "/iletisim", priority: 0.7, freq: "monthly" as const },
   { path: "/kargo-takip", priority: 0.5, freq: "monthly" as const },
-  { path: "/favorilerim", priority: 0.4, freq: "yearly" as const },
-  { path: "/giris", priority: 0.3, freq: "yearly" as const },
-  { path: "/kayit", priority: 0.3, freq: "yearly" as const },
+  // /favorilerim, /giris, /kayit robots.txt'de disallow — sitemap'e girmiyor
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

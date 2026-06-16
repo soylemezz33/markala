@@ -3,7 +3,7 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { CreateOrderDto, UpdateOrderStatusDto } from "./orders.dto";
+import { CreateOrderDto, ListOrdersQueryDto, UpdateOrderStatusDto } from "./orders.dto";
 import type { Request } from "express";
 
 @ApiTags("orders")
@@ -38,15 +38,11 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
   @ApiBearerAuth()
-  listAll(
-    @Query("status") status?: string,
-    @Query("take") take?: string,
-    @Query("skip") skip?: string,
-  ) {
+  listAll(@Query() query: ListOrdersQueryDto) {
     return this.service.listAll({
-      status,
-      take: take ? parseInt(take) : undefined,
-      skip: skip ? parseInt(skip) : undefined,
+      status: query.status,
+      take: query.take,
+      skip: query.skip,
     });
   }
 

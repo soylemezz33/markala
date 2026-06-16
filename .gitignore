@@ -25,6 +25,10 @@ lerna-debug.log*
 # Env files — kesinlikle commit etme (sırlar)
 .env
 .env.local
+.env.development
+.env.test
+.env.staging
+.env.production
 .env.development.local
 .env.test.local
 .env.production.local
