@@ -80,7 +80,7 @@ Marketing surface'lar (anasayfa, kategoriler, tasarım desteği, hakkımızda) *
 
 ## Hosting Kararı
 
-Bekleniyor — bkz. `~/.claude/projects/c--Users-Hasan-Projects-baskisitesi/memory/hosting.md`. Önerilen: **Hetzner CX22 (~4€/ay) + Cloudflare** (DNS + R2). Alternatif: 324 Ajans ESXi sunucusunda yeni VM.
+Önerilen: **Hetzner CX22 (~€5/ay) + Cloudflare** (DNS + R2). Alternatif: 324 Ajans ESXi sunucusunda yeni VM. Deploy adımları için bkz. [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Deploy
 
@@ -119,6 +119,8 @@ cd /opt/markala
 
 ## Geliştirici Notları
 
+- **Yeni başlıyorsanız:** [`docs/ONBOARDING.md`](docs/ONBOARDING.md) — kurulum adımları, proje yapısı, sık kullanılan komutlar.
+- **Mimari:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — sistem mimarisi, monorepo bağımlılık grafiği, sipariş/auth akışı (Mermaid diyagramlı).
 - **Görsel mockup'lar:** `apps/web/src/lib/mockup-svg.ts` — her kategori için SVG generator. Gerçek fotoğraflar geldikçe `mock-data` URL'leri yerel path'lere değiştirilebilir.
 - **Konfigüratör fiyat motoru:** `apps/web/src/lib/configurator.ts` — radio modifier + checkbox modifier + quantity × unit price. Branda gibi m² ürünleri için `basePrice: 0` + `unitPrice` kombinasyonu çalışır.
 - **API client:** `packages/api-client` — apps/web ve apps/admin arasında type-safe REST wrapper. Kullanım: `createMarkalaClient({ baseUrl, getToken })`.
