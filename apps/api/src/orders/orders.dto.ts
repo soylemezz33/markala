@@ -1,5 +1,6 @@
 import { Type } from "class-transformer";
 import {
+  Allow,
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
@@ -26,11 +27,27 @@ import { PaginationQueryDto } from "../common/pagination.dto";
  * Defense in depth: client unitPrice/total gönderse bile whitelist:true ile düşürülür.
  */
 export class CreateOrderItemDto {
+  /**
+   * Ürün kimliği. Kayıtlı katalog akışında doğrudan id gelir; storefront sepeti yalnızca
+   * `productSlug` taşıdığından id opsiyoneldir — ikisinden EN AZ BİRİ zorunludur (servis doğrular).
+   */
   @IsString()
+  @IsOptional()
   @IsNotEmpty()
-  productId!: string;
+  productId?: string;
 
-  /** Konfigüratör seçimleri snapshot'ı — esnek JSON, sunucu fiyatlandırırken kullanır. */
+  /** Storefront sepetinin taşıdığı ürün slug'ı (id yoksa sunucu bununla ürünü bulur). */
+  @IsString()
+  @IsOptional()
+  @IsNotEmpty()
+  productSlug?: string;
+
+  /**
+   * Konfigüratör seçimleri snapshot'ı — esnek JSON, sunucu fiyatlandırırken kullanır.
+   * @Allow(): tipsiz/dekoratörsüz alan ValidationPipe whitelist:true tarafından silinmesin
+   * (aksi halde storefront'un summary/selections snapshot'ı kaybolur, admin özet boş kalırdı).
+   */
+  @Allow()
   configuration: unknown;
 
   @IsInt()
@@ -52,6 +69,47 @@ export class CreateOrderItemDto {
   uploadedFileUrl?: string;
 }
 
+/**
+ * Satır-içi (misafir/storefront) adres. Kayıtlı Address yoksa sipariş bununla oluşturulur;
+ * snapshot olarak Order'a yazılır. Kayıtlı müşteri akışında bunun yerine `shippingAddressId` gelir.
+ */
+export class InlineAddressDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(120)
+  fullName!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(32)
+  phone!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  city!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  district!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  fullAddress!: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(16)
+  zipCode?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(40)
+  label?: string;
+}
+
 export class CreateOrderDto {
   @IsEmail()
   email!: string;
@@ -68,13 +126,31 @@ export class CreateOrderDto {
   @Type(() => CreateOrderItemDto)
   items!: CreateOrderItemDto[];
 
+  /**
+   * Kayıtlı adres FK'leri. Storefront/misafir akışında gelmez — bunun yerine satır-içi
+   * `shippingAddress` / `billingAddress` gelir. Servis: her adres için id VEYA inline, en az biri zorunlu.
+   */
   @IsString()
+  @IsOptional()
   @IsNotEmpty()
-  shippingAddressId!: string;
+  shippingAddressId?: string;
 
   @IsString()
+  @IsOptional()
   @IsNotEmpty()
-  billingAddressId!: string;
+  billingAddressId?: string;
+
+  /** Satır-içi teslimat adresi (misafir/storefront) — FK yoksa kullanılır. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => InlineAddressDto)
+  shippingAddress?: InlineAddressDto;
+
+  /** Satır-içi fatura adresi — verilmezse teslimat adresi kullanılır. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => InlineAddressDto)
+  billingAddress?: InlineAddressDto;
 
   @IsString()
   @IsOptional()

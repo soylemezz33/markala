@@ -214,7 +214,111 @@ describe("OrdersService.create — kupon", () => {
   });
 });
 
+describe("OrdersService.create — misafir / storefront (inline adres + slug)", () => {
+  const GUEST_ADDRESS = {
+    fullName: "Ali Veli",
+    phone: "05001112233",
+    city: "Mersin",
+    district: "Yenişehir",
+    fullAddress: "Atatürk Cad. No:1 Daire:2",
+    zipCode: "33100",
+  };
+
+  it("inline adres + productSlug → FK null, snapshot dolu, ürün slug'tan çözülür", async () => {
+    const prisma = makePrisma();
+    const svc = new OrdersService(prisma as never);
+
+    await svc.create({
+      email: "guest@markala.test",
+      phone: "05001112233",
+      items: [{ productSlug: "kartvizit", configuration: {}, quantity: 2 }],
+      shippingAddress: GUEST_ADDRESS,
+    });
+
+    const data = (prisma as any)._tx.order.create.mock.calls[0][0].data;
+    // Kayıtlı adres yok → FK null
+    expect(data.shippingAddressId).toBeNull();
+    expect(data.billingAddressId).toBeNull();
+    // Adres snapshot olarak yazıldı (yalnız izinli alanlar)
+    expect(data.shippingAddressSnapshot).toMatchObject({
+      fullName: "Ali Veli",
+      city: "Mersin",
+      district: "Yenişehir",
+      fullAddress: "Atatürk Cad. No:1 Daire:2",
+      zipCode: "33100",
+    });
+    // Fatura adresi verilmedi → teslimat snapshot'ına düşer
+    expect(data.billingAddressSnapshot).toMatchObject({ fullName: "Ali Veli" });
+    // Ürün slug'tan çözüldü
+    expect(data.items.create[0].productSlug).toBe("kartvizit");
+    expect(data.items.create[0].quantity).toBe(2);
+    // Fiyat sunucuda hesaplandı: 290 × 2 = 580
+    expect(Number(data.subtotal)).toBe(580);
+    // Adres FK doğrulaması (IDOR) misafirde çağrılmaz
+    expect(prisma.address.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("kalemde ne productId ne productSlug yoksa → BadRequestException", async () => {
+    const prisma = makePrisma();
+    const svc = new OrdersService(prisma as never);
+    await expect(
+      svc.create({
+        email: "guest@markala.test",
+        phone: "05001112233",
+        items: [{ configuration: {}, quantity: 1 } as never],
+        shippingAddress: GUEST_ADDRESS,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("adres hiç verilmezse (ne id ne inline) → BadRequestException", async () => {
+    const prisma = makePrisma();
+    const svc = new OrdersService(prisma as never);
+    await expect(
+      svc.create({
+        email: "guest@markala.test",
+        phone: "05001112233",
+        items: [{ productId: "p1", configuration: {}, quantity: 1 }],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("ayrı fatura adresi verilince snapshot olarak kendi alanına yazılır", async () => {
+    const prisma = makePrisma();
+    const svc = new OrdersService(prisma as never);
+    await svc.create({
+      email: "guest@markala.test",
+      phone: "05001112233",
+      items: [{ productSlug: "kartvizit", configuration: {}, quantity: 1 }],
+      shippingAddress: GUEST_ADDRESS,
+      billingAddress: { ...GUEST_ADDRESS, fullName: "Veli Şirketi", label: "Fatura" },
+    });
+    const data = (prisma as any)._tx.order.create.mock.calls[0][0].data;
+    expect(data.shippingAddressSnapshot).toMatchObject({ fullName: "Ali Veli" });
+    expect(data.billingAddressSnapshot).toMatchObject({ fullName: "Veli Şirketi" });
+  });
+});
+
 describe("OrdersService.findById", () => {
+  it("misafir siparişinde snapshot shippingAddress olarak yüzeye çıkar", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({
+      id: "ordg",
+      userId: null,
+      items: [],
+      shippingAddress: null,
+      billingAddress: null,
+      shippingAddressSnapshot: { fullName: "Ali Veli", fullAddress: "Atatürk Cad.", city: "Mersin" },
+      billingAddressSnapshot: { fullName: "Ali Veli" },
+    });
+    const svc = new OrdersService(prisma as never);
+
+    const res = (await svc.findById("ordg")) as never as {
+      shippingAddress: { fullName: string; city: string };
+    };
+    expect(res.shippingAddress).toMatchObject({ fullName: "Ali Veli", city: "Mersin" });
+  });
+
   it("bulunamayan sipariş → NotFoundException", async () => {
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue(null);

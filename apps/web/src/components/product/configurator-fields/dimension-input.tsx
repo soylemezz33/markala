@@ -161,7 +161,7 @@ function DimInput({
         max={max}
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value, 10))}
-        className="mt-1 w-full px-3 py-2.5 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm tabular-nums focus:border-ink-900 focus:outline-none"
+        className="mt-1 w-full px-3 py-2.5 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm tabular-nums focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
       />
     </label>
   );

@@ -119,7 +119,7 @@ export default function DeleteAccountPage() {
           <input
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
-            className="w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 font-mono text-sm focus:border-error focus:outline-none"
+            className="w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 font-mono text-sm focus:border-error focus:outline-none focus-visible:ring-2 focus-visible:ring-error/30"
           />
         </label>
 

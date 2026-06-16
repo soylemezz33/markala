@@ -173,7 +173,7 @@ export function AllProductsClient({ products }: { products: Product[] }) {
                   setPage(1);
                 }}
                 placeholder="Ürün ara..."
-                className="pl-9 pr-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none w-44 md:w-56"
+                className="pl-9 pr-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 w-44 md:w-56"
               />
             </div>
 

@@ -53,6 +53,7 @@ export function SiteFooter() {
           <FooterLink href="/kurumsal/basvuru">Kurumsal Başvuru</FooterLink>
           <FooterLink href="/yasal/kullanim-kosullari">Kullanım Şartları</FooterLink>
           <FooterLink href="/yasal/gizlilik">Gizlilik İlkesi ve KVKK</FooterLink>
+          <FooterLink href="/kvkk-basvuru">KVKK Başvuru Formu</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Araçlar & Rehberler">
@@ -71,6 +72,9 @@ export function SiteFooter() {
           <FooterLink href="https://wa.me/903244333351" external>WhatsApp Destek</FooterLink>
           <FooterLink href="mailto:merhaba@markala.com.tr" external>merhaba@markala.com.tr</FooterLink>
           <FooterLink href="tel:+903244333351" external>0324 433 33 51</FooterLink>
+          {/* KEP tebligat adresi — PTT KEP başvurusu tamamlandığında aktif edilecek */}
+          {/* <FooterLink href="mailto:324ajans@hs01.kep.tr" external>KEP: 324ajans@hs01.kep.tr</FooterLink> */}
+          <FooterLink href="/kvkk-basvuru">KVKK Başvuru Formu</FooterLink>
         </FooterColumn>
       </Container>
 
@@ -96,6 +100,7 @@ export function SiteFooter() {
             </button>
             <Link href="/yasal/iade" className="hover:text-ink-900">İade & İptal</Link>
             <Link href="/yasal/kargo" className="hover:text-ink-900">Kargolama</Link>
+            <Link href="/kvkk-basvuru" className="hover:text-ink-900">KVKK Başvuru</Link>
           </div>
         </Container>
       </div>
@@ -141,9 +146,13 @@ export function SiteFooter() {
         <Container className="py-4 flex flex-wrap items-center justify-center md:justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3 text-xs text-ink-500">
             <TrustBadge>SSL Sertifikalı</TrustBadge>
-            <TrustBadge>KVKK Uyumlu</TrustBadge>
+            <Link href="/kvkk-basvuru" className="px-2.5 py-1 rounded border border-paper-200 bg-paper-50 text-ink-700 font-medium hover:border-brand-300 hover:text-brand-700 transition-colors">
+              KVKK Uyumlu
+            </Link>
             <TrustBadge>1-2 İş Günü Üretim</TrustBadge>
             <TrustBadge>81 İl Kargo</TrustBadge>
+            {/* ETBİS rozeti — ETBİS kaydı tamamlandığında etbis.gtb.gov.tr'den resmi rozet kodu alınacak */}
+            {/* <a href="https://etbis.gtb.gov.tr" target="_blank" rel="noopener noreferrer"><TrustBadge>ETBİS Kayıtlı</TrustBadge></a> */}
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
             <span>Ödeme:</span>

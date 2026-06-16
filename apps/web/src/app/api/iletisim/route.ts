@@ -57,12 +57,7 @@ export async function POST(req: NextRequest) {
 
   // SMTP yapılandırılmamışsa (dev): mock davranışı koru
   if (!isMailConfigured()) {
-    console.log("[iletisim] new submission (SMTP devre dışı, mock):", {
-      name,
-      email,
-      subject,
-      messagePreview: message.slice(0, 80),
-    });
+    console.log(`[iletisim] new submission (SMTP devre dışı, mock): ticketId=${ticketId} subject="${subject}"`);
     return NextResponse.json({
       ok: true,
       ticketId,

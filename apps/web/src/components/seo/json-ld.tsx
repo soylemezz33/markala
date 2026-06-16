@@ -588,6 +588,35 @@ export function HowToProductJsonLd({
   );
 }
 
+/**
+ * FAQPage schema — yardım merkezi veya ürün dışı SSS sayfaları için.
+ * Ürün sayfasındaki SSS'ler için ProductJsonLd içindeki FAQPage bloğunu kullan.
+ */
+export function FAQPageJsonLd({
+  questions,
+  url,
+}: {
+  questions: Array<{ q: string; a: string }>;
+  url: string;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${SITE}${url}#faq`,
+    mainEntity: questions.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: { "@type": "Answer", text: item.a },
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 /** Kategori sayfası için CollectionPage. */
 export function CategoryJsonLd({ category, products }: { category: Category; products: Product[] }) {
   const url = `${SITE}/kategori/${category.slug}`;

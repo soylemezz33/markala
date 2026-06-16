@@ -11,7 +11,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { generateOrderNumber } from "@/lib/format";
 import { whatsappUrl, phoneUrl, MARKALA_PHONE_DISPLAY } from "@/lib/whatsapp";
-import { track } from "@/lib/analytics";
+import { track, trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 import type { Address, Order } from "@markala/types";
 
 const SHIPPING_FEE = 79;
@@ -58,6 +58,13 @@ export default function CheckoutPage() {
       router.replace("/sepet");
     }
   }, [cartItems.length, processing, router]);
+
+  // begin_checkout: checkout sayfasına ilk girildiğinde ateşlenir (GA4 spec gereği),
+  // son adımda değil. Effect mount'ta bir kez çalışır.
+  useEffect(() => {
+    trackBeginCheckout(total, cartItems.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // sadece mount'ta — dependency array boş bırakılması kasıtlı
 
   function canProceed(): boolean {
     if (step === "iletisim") return email.includes("@") && phone.length >= 10;
@@ -150,13 +157,41 @@ export default function CheckoutPage() {
     const orderNumber = generateOrderNumber();
     const order = buildOrder(orderNumber);
 
-    // GA4 dönüşümü — kullanıcı etkileşim anında (popup engellenmesin)
+    // GA4 + Meta — kullanıcı etkileşim anında (popup engellenmesin)
+    trackPurchase(orderNumber, total, cartItems.length);
     track("generate_lead", {
       method: channel === "whatsapp" ? "whatsapp_order" : "phone_order",
       currency: "TRY",
       value: total,
       items: cartItems.length,
     });
+
+    // Siparişi KALICI olarak backend DB'ye yaz (admin panelde görünmesi için). Sepet yalnız
+    // productSlug taşır; fiyatı backend Product.basePrice'tan yeniden hesaplar. keepalive: sayfa
+    // yönlenirken bile tamamlanır. Hata olsa da (502) WhatsApp akışı bloke olmaz — yutulur.
+    fetch("/api/siparis-kaydet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        email,
+        phone,
+        customerName: accountType === "individual" ? fullName : companyName,
+        city,
+        district,
+        fullAddress,
+        zipCode,
+        channel,
+        accountType,
+        taxOffice,
+        taxNumber,
+        items: cartItems.map((i) => ({
+          productSlug: i.productSlug,
+          configuration: i.configuration,
+          quantity: i.quantity,
+        })),
+      }),
+    }).catch(() => {});
 
     // Ekibe sipariş bildirimi (WhatsApp'a EK kayıt kanalı). Best-effort + keepalive:
     // sayfa yönlenirken bile tamamlanır, başarısız olsa da akışı bloke etmez.
@@ -325,6 +360,20 @@ export default function CheckoutPage() {
             disabled={step !== "onay"}
           >
             <div className="space-y-4">
+              {/* TKHK 6502 m.55/1-c — cayma hakkı istisnası, sipariş öncesi yazılı bildirim zorunluluğu */}
+              <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
+                <p className="font-semibold mb-1">⚠️ Cayma Hakkı Hakkında Önemli Bilgi</p>
+                <p>
+                  Sipariş verdiğiniz ürünler <strong>kişiye özel üretim matbaa ürünüdür</strong> (kartvizit,
+                  branda, kaşe, plaket vb.). 6502 Sayılı TKHK m.55/1-c gereğince tüketicinin istekleri
+                  doğrultusunda hazırlanan ürünlerde <strong>cayma hakkı kullanılamaz</strong>.
+                  Üretim hatası veya teslimat hasarı halinde ücretsiz değişim hakkı saklıdır.{" "}
+                  <a href="/yasal/iade" className="underline font-medium hover:text-amber-700">
+                    Detaylı bilgi →
+                  </a>
+                </p>
+              </div>
+
               <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-sm text-ink-700">
                 Siparişini <strong>WhatsApp</strong> veya <strong>telefon</strong> üzerinden tamamlıyoruz. Butona
                 bastığında sipariş özetin WhatsApp'a aktarılır; ekibimiz ödeme (havale/EFT veya kapıda) ve üretim
@@ -567,7 +616,7 @@ function Input({
           placeholder={placeholder}
           maxLength={maxLength}
           rows={3}
-          className="mt-1.5 w-full px-3 py-2 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none resize-none"
+          className="mt-1.5 w-full px-3 py-2 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 resize-none"
         />
       ) : (
         <input
@@ -576,7 +625,7 @@ function Input({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           maxLength={maxLength}
-          className="mt-1.5 w-full px-3 py-2.5 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none"
+          className="mt-1.5 w-full px-3 py-2.5 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
         />
       )}
     </label>

@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup pnpm
         # Versiyon package.json "packageManager" alanından okunur (pnpm@10.33.3).
@@ -67,13 +67,23 @@ jobs:
           NEXT_TELEMETRY_DISABLED: "1"
           ADMIN_SESSION_SECRET: "ci-build-only-not-for-production-use-min-32-char"
 
+      - name: KVKK legal placeholder kontrolü
+        # Yasal metinlerde doldurulmamış placeholder varsa uyarır.
+        # Yayın öncesi ETBİS/VERBİS/KEP kayıtları tamamlanana kadar continue-on-error aktif.
+        run: |
+          if grep -r "BAŞVURU BEKLEMEDE" packages/mock-data/src/legal.ts; then
+            echo "::warning file=packages/mock-data/src/legal.ts::KVKK yasal metinlerde doldurulmamış placeholder bulundu. ETBİS/VERBİS/KEP kayıtları tamamlanınca ilgili sabitleri güncelleyin."
+            exit 1
+          fi
+        continue-on-error: true
+
   test-unit:
     name: Unit Tests (web)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Versiyon package.json "packageManager"dan; `version:` verme → "Multiple versions" hatası.
       - uses: pnpm/action-setup@v4
@@ -94,7 +104,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Versiyon package.json "packageManager"dan; `version:` verme → "Multiple versions" hatası.
       - uses: pnpm/action-setup@v4

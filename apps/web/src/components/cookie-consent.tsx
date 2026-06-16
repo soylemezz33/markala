@@ -13,13 +13,18 @@ const REOPEN_EVENT = "markala:open-cookie-settings";
  * Consent şemasının sürümü. KVKK/GDPR gereği üçüncü taraf çerez setine veya
  * aktarım kapsamına dokunan her değişiklikte artırın — eski sürüme sahip
  * kullanıcıların banner'ı yeniden onaylaması gerekir.
+ *
+ * v1.1 → Microsoft Clarity için ayrı "preferences" kategorisi eklendi.
+ * Clarity oturum kayıtları anonim GA4 istatistiklerinden farklı bir
+ * işleme amacına sahiptir (KVKK m.4/2-ç: amaçla bağlantılılık).
  */
-const CONSENT_VERSION = "1.0";
+const CONSENT_VERSION = "1.1";
 
 interface ConsentState {
   necessary: true; // her zaman aktif
-  analytics: boolean;
-  marketing: boolean;
+  analytics: boolean;    // GA4 — anonim trafik istatistikleri
+  preferences: boolean;  // Microsoft Clarity — oturum kayıtları, ısı haritası
+  marketing: boolean;    // Meta Pixel, Google Ads
   timestamp: number;
   /** v1.0'dan itibaren zorunlu — eski kayıtlarda undefined olabilir. */
   version?: string;
@@ -37,12 +42,15 @@ function readConsent(): ConsentState | null {
 }
 
 function writeConsent(state: ConsentState): void {
-  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax${secure}`;
   // Google Consent Mode v2 — analytics.tsx'deki `denied` default'u güncelle
   if (typeof window !== "undefined" && typeof (window as Window & { gtag?: (...args: unknown[]) => void }).gtag === "function") {
     const g = (window as Window & { gtag: (...args: unknown[]) => void }).gtag;
     g("consent", "update", {
       analytics_storage: state.analytics ? "granted" : "denied",
+      // preferences (Clarity) uses functionality_storage signal
+      functionality_storage: state.preferences ? "granted" : "denied",
       ad_storage: state.marketing ? "granted" : "denied",
       ad_user_data: state.marketing ? "granted" : "denied",
       ad_personalization: state.marketing ? "granted" : "denied",
@@ -62,6 +70,7 @@ export function CookieConsent() {
   const [show, setShow] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [analytics, setAnalytics] = useState(true);
+  const [preferences, setPreferences] = useState(true);
   const [marketing, setMarketing] = useState(true);
 
   useEffect(() => {
@@ -73,12 +82,14 @@ export function CookieConsent() {
       // Eski tercihleri pre-fill yap ki kullanıcı tekrar onay verirken zorlanmasın
       if (existing) {
         setAnalytics(existing.analytics);
+        setPreferences(existing.preferences ?? true);
         setMarketing(existing.marketing);
       }
       return () => clearTimeout(t);
     } else {
       // Mevcut tercihleri form state'e yükle (re-open için)
       setAnalytics(existing.analytics);
+      setPreferences(existing.preferences ?? true);
       setMarketing(existing.marketing);
     }
 
@@ -87,6 +98,7 @@ export function CookieConsent() {
       const c = readConsent();
       if (c) {
         setAnalytics(c.analytics);
+        setPreferences(c.preferences ?? true);
         setMarketing(c.marketing);
       }
       setShowDetails(true);
@@ -97,17 +109,17 @@ export function CookieConsent() {
   }, []);
 
   function acceptAll() {
-    writeConsent({ necessary: true, analytics: true, marketing: true, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({ necessary: true, analytics: true, preferences: true, marketing: true, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
   function rejectOptional() {
-    writeConsent({ necessary: true, analytics: false, marketing: false, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({ necessary: true, analytics: false, preferences: false, marketing: false, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
   function saveCustom() {
-    writeConsent({ necessary: true, analytics, marketing, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({ necessary: true, analytics, preferences, marketing, timestamp: Date.now(), version: CONSENT_VERSION });
     setShow(false);
   }
 
@@ -160,9 +172,15 @@ export function CookieConsent() {
                   />
                   <ConsentToggle
                     label="Analitik çerezler"
-                    desc="Google Analytics (GA4) ve Microsoft Clarity ile anonimleştirilmiş trafik, sayfa görüntüleme ve oturum kayıtları. Kişisel kimlik bilgisi toplanmaz."
+                    desc="Google Analytics (GA4) ile anonimleştirilmiş trafik istatistikleri ve sayfa görüntüleme. IP adresi kısaltılır, kişisel kimlik toplanmaz."
                     checked={analytics}
                     onChange={setAnalytics}
+                  />
+                  <ConsentToggle
+                    label="Kişiselleştirme çerezleri"
+                    desc="Microsoft Clarity ile ısı haritası ve oturum kaydı. Gezinme davranışınız anonimleştirilmiş olarak kaydedilir (KVKK m.4/2-ç)."
+                    checked={preferences}
+                    onChange={setPreferences}
                   />
                   <ConsentToggle
                     label="Pazarlama çerezleri"
@@ -250,9 +268,10 @@ function ConsentToggle({
 }
 
 /** Helper: bir consent kategorisi onaylı mı kontrol et — Analytics component'i bunu kullanabilir */
-export function hasConsent(category: "analytics" | "marketing"): boolean {
+export function hasConsent(category: "analytics" | "preferences" | "marketing"): boolean {
   const c = readConsent();
   if (!c) return false;
+  if (category === "preferences") return c.preferences ?? false;
   return c[category];
 }
 
