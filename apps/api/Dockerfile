@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Markala API — NestJS production multi-stage (pnpm + Prisma)
 
-FROM node:26-alpine AS base
+FROM node:20-alpine AS base
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 RUN apk add --no-cache openssl
 WORKDIR /app
@@ -26,7 +26,7 @@ RUN pnpm --filter @markala/api prisma:generate
 # NestJS build
 RUN pnpm --filter @markala/api build
 
-FROM node:26-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000

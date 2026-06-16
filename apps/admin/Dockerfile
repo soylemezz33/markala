@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 # Markala Admin — Next.js 14 production multi-stage (pnpm monorepo)
 
-FROM node:26-alpine AS base
+FROM node:20-alpine AS base
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 WORKDIR /app
 
@@ -29,7 +29,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 RUN pnpm --filter @markala/admin build
 
-FROM node:26-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
