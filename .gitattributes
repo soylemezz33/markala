@@ -1,0 +1,14 @@
+# Tüm metin dosyaları depoda LF olarak normalize edilir (platformlar arası tutarlılık).
+# Prettier endOfLine:"lf" ve .editorconfig end_of_line=lf ile uyumludur.
+* text=auto eol=lf
+
+# İkili dosyalar dokunulmaz.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary

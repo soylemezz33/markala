@@ -15,8 +15,8 @@
 **Çalışma:** her `<slug>.jpg` → R2'ye `products/<slug>.jpg` anahtarıyla yüklenir → `products.images = [<R2_PUBLIC_URL>/products/<slug>.jpg]` (kapak). Prod'da R2 zaten kurulu (`R2_*` env).
 
 ```bash
-scp -P 23422 _upload-ready/*.jpg root@178.157.14.10:/opt/markala/_img/
-ssh -p 23422 root@178.157.14.10 'cd /opt/markala && ./scripts/assign-product-images.sh _img'
+scp -P <SSH_PORT> _upload-ready/*.jpg markala@<VPS_IP>:/opt/markala/_img/
+ssh -p <SSH_PORT> markala@<VPS_IP> 'cd /opt/markala && ./scripts/assign-product-images.sh _img'
 ```
 
 > Not: Script `images`'ı **değiştirir** (tek kapak görsel atar). Deploy adımıyla birlikte, R2/SSH erişimi açıkken çalıştırılacak.

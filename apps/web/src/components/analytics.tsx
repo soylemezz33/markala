@@ -4,6 +4,9 @@ import Script from "next/script";
  * Tüm analytics script'leri — sadece env'de tanımlıysa render edilir.
  * Client tarafa Script bileşeniyle yüklenir, performansa minimal etki.
  *
+ * Google Consent Mode v2 ile uyumlu: gtag varsayılan olarak `denied`
+ * başlar, CookieConsent component'i onay sonrası `update` ile aktifleştirir.
+ *
  * Env değişkenleri:
  *   NEXT_PUBLIC_GA4_ID         — örn: G-XXXXXXXXXX
  *   NEXT_PUBLIC_META_PIXEL_ID  — Meta (Facebook) Pixel ID
@@ -26,6 +29,25 @@ export function Analytics() {
     <>
       {ga4 && (
         <>
+          {/* Consent Mode v2 — KVKK/GDPR: tüm sinyaller varsayılan denied */}
+          <Script id="gtag-consent-default" strategy="beforeInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('consent', 'default', {
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                analytics_storage: 'denied',
+                functionality_storage: 'denied',
+                personalization_storage: 'denied',
+                security_storage: 'granted',
+                wait_for_update: 500,
+              });
+              gtag('set', 'ads_data_redaction', true);
+              gtag('set', 'url_passthrough', true);
+            `}
+          </Script>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${ga4}`}
             strategy="afterInteractive"

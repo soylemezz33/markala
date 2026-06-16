@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@markala/ui";
-import { CaretRight, FileText, Notebook, Cookie, Shield, ListBullets } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, FileText, Notebook, Cookie, Shield, ListBullets, ArrowUUpLeft, Package } from "@phosphor-icons/react/dist/ssr";
 import { getAllLegalSlugs, getLegalPage, legalPages } from "@markala/mock-data";
 import { formatDate } from "@/lib/format";
 import type { Metadata } from "next";
@@ -39,6 +39,8 @@ const slugIcons: Record<string, typeof FileText> = {
   cerez: Cookie,
   gizlilik: Shield,
   "kullanim-kosullari": Notebook,
+  iade: ArrowUUpLeft,
+  kargo: Package,
 };
 
 export default function LegalPage({ params }: Props) {

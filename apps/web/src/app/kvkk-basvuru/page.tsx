@@ -19,6 +19,25 @@ import {
   Paperclip,
 } from "@phosphor-icons/react";
 
+/**
+ * TC Kimlik No doğrulama — Türkiye Cumhuriyeti algoritması:
+ * - 11 hane, ilk hane 0 olamaz
+ * - 10. hane: (tek_pozisyonlar × 7 - çift_pozisyonlar) mod 10
+ * - 11. hane: (ilk 10 hanenin toplamı) mod 10
+ */
+function validateTcKimlik(tc: string): boolean {
+  if (!/^\d{11}$/.test(tc)) return false;
+  if (tc[0] === "0") return false;
+  const d = tc.split("").map(Number);
+  // noUncheckedIndexedAccess aktif: regex 11 haneyi garantiler, ?? 0 yalnız tip güvenliği
+  const at = (i: number): number => d[i] ?? 0;
+  const odd = at(0) + at(2) + at(4) + at(6) + at(8);
+  const even = at(1) + at(3) + at(5) + at(7);
+  const d10 = ((odd * 7) - even + 100) % 10;
+  const d11 = (at(0) + at(1) + at(2) + at(3) + at(4) + at(5) + at(6) + at(7) + at(8) + at(9)) % 10;
+  return at(9) === d10 && at(10) === d11;
+}
+
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
@@ -71,6 +90,8 @@ export default function KvkkBasvuruPage() {
     details: "",
   });
   const [consent, setConsent] = useState(false);
+  // Honeypot: insanlar tarafından görünmez, botlar doldurur → spam tespiti
+  const [honeypot, setHoneypot] = useState("");
 
   function update<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -88,8 +109,9 @@ export default function KvkkBasvuruPage() {
       setError("Geçerli bir e-posta adresi girin.");
       return;
     }
-    if (form.tcKimlik && !/^\d{11}$/.test(form.tcKimlik)) {
-      setError("TC Kimlik No 11 haneli rakam olmalı.");
+    if (honeypot) return; // sessiz bot reddi
+    if (form.tcKimlik && !validateTcKimlik(form.tcKimlik)) {
+      setError("TC Kimlik No geçersiz. Lütfen kontrol edin.");
       return;
     }
     if (!form.requestType) {
@@ -110,7 +132,7 @@ export default function KvkkBasvuruPage() {
       const res = await fetch("/api/kvkk-basvuru", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, hasIdDocument: Boolean(fileName) }),
+        body: JSON.stringify({ ...form, hasIdDocument: Boolean(fileName), _hp: honeypot }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -256,6 +278,7 @@ export default function KvkkBasvuruPage() {
                       });
                       setConsent(false);
                       setFileName(null);
+                      setHoneypot("");
                     }}
                   >
                     Yeni Başvuru
@@ -268,6 +291,20 @@ export default function KvkkBasvuruPage() {
                 className="p-6 md:p-8 bg-paper-50 border border-paper-200 rounded-xl space-y-5"
                 noValidate
               >
+                {/* Honeypot — botlar bu alanı görür ve doldurur, insanlar görmez */}
+                <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }}>
+                  <label htmlFor="kvkk-confirm-email">E-posta tekrar (boş bırakın)</label>
+                  <input
+                    id="kvkk-confirm-email"
+                    name="confirm_email"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </div>
+
                 <header className="pb-4 border-b border-paper-200">
                   <h2 className="text-xl md:text-2xl font-semibold text-ink-900">
                     Başvuru Bilgileri
