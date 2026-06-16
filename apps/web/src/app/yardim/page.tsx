@@ -4,6 +4,7 @@ import {
   Question, FileText, Truck, CreditCard, Package, ArrowsClockwise, ArrowRight,
   PaintBrush, Receipt, Question as QMark, ShieldCheck, ChatCircle,
 } from "@phosphor-icons/react/dist/ssr";
+import { FAQPageJsonLd } from "@/components/seo/json-ld";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -33,9 +34,37 @@ const popularFaqs = [
   { q: "Siparişimi nasıl iptal ederim?", href: "/yardim/iade" },
 ];
 
+const faqSchemaItems = [
+  {
+    q: "Tasarım dosyamı hangi formatta göndermeliyim?",
+    a: "CMYK renk profilinde, 300 dpi çözünürlükte PDF/X-1a formatı tercih edilir. Her kenardan 2-3 mm taşma payı bırakmanız baskı kalitesi için önemlidir. Detaylar için Dosya Hazırlama Rehberi sayfamıza bakabilirsiniz.",
+  },
+  {
+    q: "Kaç günde elime ulaşır?",
+    a: "Çoğu üründe üretim süresi 1-2 iş günüdür. Buna DHL kargo süresi olan 1-3 iş günü eklenir. Toplam 2-5 iş günü içinde teslim edilir.",
+  },
+  {
+    q: "Selefon ile UV lak farkı nedir?",
+    a: "Selefon, baskı yüzeyine yapıştırılan mat veya parlak bir film kaplamasıdır; baskıyı nemden ve çizilmeden korur. UV lak ise sıvı hâlde sürülüp ultraviyole ışınla anında kuruyan bir vernik çeşididir; selefona göre daha ince ve daha az koruma sağlar ancak baskıya farklı bir doku katar.",
+  },
+  {
+    q: "Üretim toleransı nedir? %1-5 fire ne demek?",
+    a: "Matbaa üretiminde makineden kaynaklanan adet farkına 'tolerans' veya 'fire' denir. Sipariş ettiğiniz adetten %1-5 daha az veya daha fazla ürün teslim edilmesi sektör standardıdır. Bu durum sipariş onayında otomatik kabul edilmiş sayılır.",
+  },
+  {
+    q: "Kurumsal cari hesap nasıl açılır?",
+    a: "Kurumsal satış ekibimize kurumsal@markala.com.tr üzerinden veya WhatsApp hattımızdan ulaşabilirsiniz. Aylık fatura, açık hesap ve özel taksit imkânları hakkında bilgi verilir.",
+  },
+  {
+    q: "Siparişimi nasıl iptal ederim?",
+    a: "Siparişiniz üretime alınmadan önce iptal edilebilir. Üretim başladıktan sonra iptal mümkün değildir. İptal talebi için WhatsApp veya e-posta ile sipariş numaranızı bildirmeniz yeterlidir.",
+  },
+];
+
 export default function YardimPage() {
   return (
     <>
+      <FAQPageJsonLd questions={faqSchemaItems} url="/yardim" />
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-12 md:py-16 max-w-3xl text-center">
           <div className="w-16 h-16 mx-auto rounded-full bg-brand-100 grid place-items-center text-brand-700 mb-4">
