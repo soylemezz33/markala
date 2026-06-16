@@ -5,8 +5,8 @@ import type { Category } from "@markala/types";
  * Path: /images/categories/[slug].jpg (Hasan tarafından yüklenecek).
  * Görsel yoksa Next/Image fallback gösterir — kart bg-paper-100 ile boş kalmaz.
  */
-/** Kategori görseli — mockup endpoint kategoriye özel illustrasyon üretir */
-const catImg = (slug: string) => `/api/mockup?category=${slug}&w=1200&h=900`;
+/** Kategori görseli — gerçek mockup görselleri /public/images/categories/[slug].jpg (2026-06 yüklendi) */
+const catImg = (slug: string) => `/images/categories/${slug}.jpg`;
 
 export const categories: Category[] = [
   {
