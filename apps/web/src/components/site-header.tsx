@@ -25,7 +25,7 @@ import {
   Heart,
 } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
-import { categories } from "@markala/mock-data";
+import { categories, products } from "@markala/mock-data";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -912,6 +912,10 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   if (!open) return null;
 
   const popularCategories = categories.slice(0, 6);
+  const q = query.trim().toLowerCase();
+  const results = q
+    ? products.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q)).slice(0, 8)
+    : [];
 
   return (
     <AnimatePresence>
@@ -1039,10 +1043,29 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           )}
 
           {query && (
-            <div className="p-5 text-center text-sm text-ink-500">
-              "<span className="text-ink-900 font-medium">{query}</span>" için arama sonuçları yakında.
-              <br />
-              <span className="text-xs">Şimdilik kategorilerden manuel arama yapabilirsiniz.</span>
+            <div className="p-3 max-h-[55vh] overflow-y-auto">
+              {results.length === 0 ? (
+                <div className="p-5 text-center text-sm text-ink-500">
+                  "<span className="text-ink-900 font-medium">{query}</span>" için sonuç bulunamadı.
+                  <br />
+                  <span className="text-xs">Farklı bir kelime deneyin veya kategorilere göz atın.</span>
+                </div>
+              ) : (
+                <ul className="divide-y divide-paper-200">
+                  {results.map((p) => (
+                    <li key={p.slug}>
+                      <Link
+                        href={`/urun/${p.slug}`}
+                        onClick={() => { saveSearch(query); onClose(); }}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors"
+                      >
+                        <MagnifyingGlass size={15} className="text-ink-400 flex-none" />
+                        <span className="text-sm font-medium text-ink-900 truncate">{p.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </motion.div>
