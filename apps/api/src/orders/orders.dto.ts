@@ -14,6 +14,7 @@ import {
   Min,
   ValidateNested,
 } from "class-validator";
+import { PaginationQueryDto } from "../common/pagination.dto";
 
 /**
  * SECURITY NOTE
@@ -112,4 +113,11 @@ export class UpdateOrderStatusDto {
   @IsOptional()
   @MaxLength(128)
   trackingCarrier?: string;
+}
+
+/** Yönetici sipariş listesi sorgu parametreleri — doğrulanmış sayfalama + opsiyonel durum filtresi. */
+export class ListOrdersQueryDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsIn(ORDER_STATUS_VALUES as unknown as string[])
+  status?: OrderStatusInput;
 }

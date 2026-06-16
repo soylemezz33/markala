@@ -24,16 +24,39 @@ import { PrismaService } from "../prisma/prisma.service";
  * 5. argon2 + complexity regex (DTO katmanında) brute force + DoS koruması.
  * 6. console.warn audit log; ileride Sentry/Loki entegrasyonu.
  */
+/**
+ * Geçerli (decode edilebilir) bir argon2 dummy hash üretir.
+ *
+ * argon2.verify(), hash'i memory-hard KDF'yi çalıştırmadan ÖNCE decode eder ve
+ * geçersiz/çok kısa bir encoded hash'te anında reddeder ("Output is too short").
+ * Bu yüzden timing koruması için elle yazılmış bir sabit DEĞİL, gerçek argon2.hash()
+ * çıktısı kullanılmalı — aksi halde verify ~0.2ms'de patlar, gerçek login ~40ms sürer
+ * ve "kullanıcı var/yok" farkı timing'den okunabilir (user enumeration).
+ */
+export function createDummyHash(): Promise<string> {
+  return argon2.hash(crypto.randomBytes(32).toString("hex"));
+}
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly refreshTtlMs = 30 * 24 * 60 * 60 * 1000; // 30 gün
+  /** Bilinmeyen e-postada verify edilecek geçerli dummy hash — lazy, tek sefer üretilir. */
+  private dummyHashPromise?: Promise<string>;
 
   constructor(
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
   ) {}
+
+  /** Bilinmeyen e-postada verify edilecek geçerli dummy hash — ilk çağrıda üretip cache'ler. Bkz. createDummyHash(). */
+  private getDummyHash(): Promise<string> {
+    if (!this.dummyHashPromise) {
+      this.dummyHashPromise = createDummyHash();
+    }
+    return this.dummyHashPromise;
+  }
 
   async register(
     input: { email: string; password: string; fullName: string; phone?: string },
@@ -88,14 +111,10 @@ export class AuthService {
   ) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      // Timing attack azaltma: kullanıcı yoksa da bir argon2 verify maliyeti üret.
-      // Dummy hash sabit; başarısız olur ama eşit gecikme sağlar.
-      await argon2
-        .verify(
-          "$argon2id$v=19$m=65536,t=3,p=4$ZmFrZS1zYWx0LWZvci10aW1pbmc$XXX",
-          password,
-        )
-        .catch(() => false);
+      // Timing attack azaltma: kullanıcı yoksa da GERÇEK bir argon2 verify maliyeti üret.
+      // Geçerli dummy hash → KDF çalışır → "kullanıcı var" path'iyle eşit gecikme. Bkz. getDummyHash().
+      const dummyHash = await this.getDummyHash();
+      await argon2.verify(dummyHash, password).catch(() => false);
       this.logger.warn(
         `login.unknown_email email=${email} ip=${context.ipAddress ?? "?"}`,
       );

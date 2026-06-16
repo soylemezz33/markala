@@ -23,7 +23,7 @@ interface Props {
 export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   "siparis-alindi":      { label: "Sipariş Alındı",     color: "bg-[#1565C0]/10 text-[#1565C0]" },
   "tasarim-bekleniyor":  { label: "Tasarım Bekleniyor", color: "bg-warning/10 text-warning" },
-  "tasarim-onayindi":    { label: "Tasarım Onaylandı",  color: "bg-[#6A1B9A]/10 text-[#6A1B9A]" },
+  "tasarim-onayindi":    { label: "Tasarım Onayında",   color: "bg-[#6A1B9A]/10 text-[#6A1B9A]" },
   "uretimde":            { label: "Üretimde",            color: "bg-warning/10 text-warning" },
   "kargoya-verildi":     { label: "Kargoda",             color: "bg-success/10 text-success" },
   "teslim-edildi":       { label: "Teslim Edildi",       color: "bg-paper-200 text-ink-700" },
