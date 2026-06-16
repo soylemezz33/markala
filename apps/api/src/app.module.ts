@@ -10,7 +10,6 @@ import { HeroSlidesModule } from "./hero-slides/hero-slides.module";
 import { SettingsModule } from "./settings/settings.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
-import { AdminModule } from "./admin/admin.module";
 import { CorporateApplicationsModule } from "./corporate-applications/corporate-applications.module";
 import { StatsModule } from "./stats/stats.module";
 import { CouponsModule } from "./coupons/coupons.module";
@@ -34,7 +33,6 @@ import { HealthModule } from "./health/health.module";
     CategoriesModule,
     ProductsModule,
     OrdersModule,
-    AdminModule,
     CorporateApplicationsModule,
     HeroSlidesModule,
     SettingsModule,
