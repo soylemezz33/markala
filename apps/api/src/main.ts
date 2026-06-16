@@ -10,6 +10,7 @@ import type { Request, Response, NextFunction } from "express";
 import { join } from "node:path";
 import { AppModule } from "./app.module";
 import { rateLimit } from "./security/rate-limit";
+import { AllExceptionsFilter } from "./common/http-exception.filter";
 
 async function bootstrap() {
   // SECURITY: JWT_SECRET fail-fast — production'da zayıf/eksik secret tokenları taklit edilebilir kılar.
@@ -58,6 +59,10 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
     }),
   );
+
+  // Global hata zarfı — tüm yanıtları { statusCode, code, message, path, timestamp }
+  // şekline normalize eder; yakalanmamış Prisma hatalarını doğru HTTP status'a mapler.
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   app.enableCors({
     origin: (config.get<string>("WEB_ORIGIN") ?? "http://localhost:3000").split(","),
