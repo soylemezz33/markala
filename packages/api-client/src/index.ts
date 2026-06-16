@@ -130,6 +130,9 @@ export class MarkalaApiClient {
       this.request<{ accessToken: string; user: User }>("POST", "/auth/refresh"),
     logout: () => this.request<{ ok: boolean }>("POST", "/auth/logout"),
     me: () => this.request<User>("GET", "/auth/me", undefined, { auth: true }),
+    /** Şifre değiştir — currentPassword backend'de argon2.verify ile doğrulanır; hatalıysa 401. */
+    changePassword: (data: { currentPassword: string; newPassword: string }) =>
+      this.request<{ ok: boolean }>("PATCH", "/auth/password", data, { auth: true }),
   };
 
   // === Categories ===

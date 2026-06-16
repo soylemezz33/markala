@@ -1,29 +1,48 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@markala/ui";
 import { Lock, Eye, EyeSlash, CheckCircle, ShieldCheck } from "@phosphor-icons/react";
+import { useAuthStore } from "@/lib/auth-store";
+import { apiClient, withRefresh } from "@/lib/api";
 
 export default function PasswordChangePage() {
+  const router = useRouter();
+  const logout = useAuthStore((s) => s.logout);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isStrong = next.length >= 8 && /[A-Z]/.test(next) && /[0-9]/.test(next);
+  // Backend complexity ile aynı: büyük + küçük + rakam, min 8.
+  const isStrong = next.length >= 8 && /[a-z]/.test(next) && /[A-Z]/.test(next) && /[0-9]/.test(next);
   const matches = next === confirm && next.length > 0;
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!current) return setError("Mevcut şifrenizi girin");
-    if (!isStrong) return setError("Yeni şifre en az 8 karakter, 1 büyük harf ve 1 rakam içermeli");
+    if (!isStrong) return setError("Yeni şifre en az 8 karakter; büyük, küçük harf ve rakam içermeli");
     if (!matches) return setError("Yeni şifre eşleşmiyor");
-    setSaved(true);
-    setCurrent(""); setNext(""); setConfirm("");
-    setTimeout(() => setSaved(false), 3000);
+    setLoading(true);
+    try {
+      await withRefresh(() => apiClient.auth.changePassword({ currentPassword: current, newPassword: next }));
+      setSaved(true);
+      setCurrent(""); setNext(""); setConfirm("");
+      // Backend güvenlik için TÜM oturumları (refresh token) iptal etti → yeni şifreyle tekrar giriş.
+      setTimeout(async () => {
+        await logout();
+        router.replace("/giris?sifre-degisti=1");
+      }, 1600);
+    } catch (err) {
+      setError((err as { message?: string })?.message ?? "Şifre değiştirilemedi. Lütfen tekrar deneyin.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -59,12 +78,12 @@ export default function PasswordChangePage() {
         {error && <div className="p-3 bg-error/10 border border-error/20 rounded-md text-sm text-error">{error}</div>}
 
         <div className="flex items-center gap-3 pt-2">
-          <Button type="submit" disabled={!matches || !isStrong}>
-            <Lock size={14} weight="bold" /> Şifreyi Güncelle
+          <Button type="submit" disabled={loading || !matches || !isStrong}>
+            <Lock size={14} weight="bold" /> {loading ? "Güncelleniyor..." : "Şifreyi Güncelle"}
           </Button>
           {saved && (
             <span className="inline-flex items-center gap-1.5 text-sm text-success font-medium">
-              <CheckCircle size={16} weight="fill" /> Şifreniz güncellendi
+              <CheckCircle size={16} weight="fill" /> Şifreniz güncellendi — yeni şifreyle giriş yapın
             </span>
           )}
         </div>

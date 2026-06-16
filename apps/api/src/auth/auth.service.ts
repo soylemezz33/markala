@@ -184,6 +184,33 @@ export class AuthService {
     return { ok: true };
   }
 
+  /**
+   * Şifre değiştirme — mevcut şifreyi argon2.verify ile DOĞRULAR, sonra yeni hash yazar.
+   * Mevcut şifre hatalıysa 401. Güvenlik için kullanıcının TÜM aktif refresh token'larını
+   * revoke eder (tüm cihazlar düşer; kullanıcı yeni şifreyle yeniden giriş yapar).
+   * NOT: Önceki sürümde /hesabim/sifre formu mock'tu — backend endpoint yoktu, mevcut şifre
+   * hiç doğrulanmıyordu ve değişiklik DB'ye yazılmıyordu.
+   */
+  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException("Kullanıcı bulunamadı.");
+
+    const ok = await argon2.verify(user.passwordHash, currentPassword).catch(() => false);
+    if (!ok) {
+      this.logger.warn(`password.change.bad_current userId=${userId}`);
+      throw new UnauthorizedException("Mevcut şifreniz hatalı.");
+    }
+
+    const passwordHash = await argon2.hash(newPassword);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    this.logger.log(`password.change.ok userId=${userId}`);
+    return { ok: true };
+  }
+
   async me(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Patch,
   Post,
   Req,
   Res,
@@ -12,7 +13,7 @@ import type { Request, Response } from "express";
 import { ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt.guard";
-import { LoginDto, RegisterDto } from "./dtos";
+import { ChangePasswordDto, LoginDto, RegisterDto } from "./dtos";
 
 /**
  * SECURITY HARDENING (auth.controller):
@@ -97,6 +98,17 @@ export class AuthController {
   @ApiBearerAuth()
   me(@Req() req: Request & { user: { sub: string } }) {
     return this.auth.me(req.user.sub);
+  }
+
+  // Şifre değiştirme — mevcut şifre argon2.verify ile doğrulanır; hatalıysa 401.
+  @Patch("password")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async changePassword(
+    @Req() req: Request & { user: { sub: string } },
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.auth.changePassword(req.user.sub, dto.currentPassword, dto.newPassword);
   }
 
   // === Helpers ===
