@@ -49,6 +49,11 @@ const nextConfig = {
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
+      // Canlı ürün/kategori görselleri (admin yükler). Bu origin remotePatterns'te
+      // olmadığı için <Image> bileşenleri `unoptimized` ile raw 1080² JPG servis
+      // ediyordu. CWV denetimi 2026-06-17: ana sayfa ürün görsellerinde ~849 KiB
+      // israf. Origin eklenince Next resize + AVIF/WebP optimizasyonu devreye girer.
+      { protocol: "https", hostname: "api.markala.com.tr" },
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },
       { protocol: "https", hostname: "images.unsplash.com" },

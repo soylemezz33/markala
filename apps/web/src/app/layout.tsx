@@ -107,6 +107,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr" className={fontSans.variable}>
       <head>
+        {/* Ürün/kategori görselleri bu origin'den gelir. Preconnect, slow-4G'de
+            DNS+TLS+TCP el sıkışmasını (~3 RTT) ilk görselden önce tamamlar →
+            Speed Index ve görsel-LCP (ürün/kategori sayfaları) iyileşir.
+            CWV denetimi 2026-06-17. */}
+        <link rel="preconnect" href="https://api.markala.com.tr" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://api.markala.com.tr" />
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
       </head>
