@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useCartStore } from "@/lib/cart-store";
 
 // GA4 track() çağrısını izole et — analytics network bağımlılığı test dışı
-vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/analytics", () => ({ track: vi.fn(), trackAddToCart: vi.fn() }));
 
 function makeItem(totalPrice = 290) {
   return {
