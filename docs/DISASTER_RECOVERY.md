@@ -131,7 +131,7 @@ docker compose exec -T postgres sh -c "gunzip -c /backups/markala-latest.sql.gz 
 
 **Hedef RTO: 2 saat**.
 
-1. **Yeni Hetzner VPS sipariş et** (CX31, Falkenstein) — ~10 dk.
+1. **Yeni Hetzner VPS sipariş et** (CX22+, Nuremberg veya Helsinki) — ~10 dk.
 2. **DNS'i Cloudflare'de yeni IP'ye çevir** — TTL 60 sn ayarlıysa anında — ~2 dk.
 3. **Sunucuyu hazırla:**
    ```sh
@@ -157,10 +157,17 @@ docker compose exec -T postgres sh -c "gunzip -c /backups/markala-latest.sql.gz 
    ```sh
    docker compose -f docker-compose.production.yml up -d
    ```
-8. **SSL — Let's Encrypt yeniden alma:**
+8. **SSL — Cloudflare Origin Certificate geri yükle (Let's Encrypt DEĞİL):**
    ```sh
-   docker compose exec nginx certbot --nginx -d markala.com.tr -d www.markala.com.tr -d admin.markala.com.tr -d api.markala.com.tr
+   # 1Password vault "Markala-Prod"'dan markala.com.tr.pem ve markala.com.tr.key'i al
+   mkdir -p /opt/markala/nginx/ssl
+   # scp ile lokal makinenden VPS'e kopyala:
+   # scp markala.com.tr.pem markala@<VPS_IP>:/opt/markala/nginx/ssl/
+   # scp markala.com.tr.key markala@<VPS_IP>:/opt/markala/nginx/ssl/
+   chmod 600 /opt/markala/nginx/ssl/*
+   docker compose -f docker-compose.production.yml restart nginx
    ```
+   > ⚠️ DEPLOY.md §3'te tarif edilen Cloudflare Origin Certificate kullanılıyor (15 yıl, Cloudflare dashboard'dan üretildi). certbot/Let's Encrypt ile KARIŞTIRILMAZ — Cloudflare proxy modunda çalıştığından certbot doğrulama yapamaz.
 9. **Smoke + status page güncelle:**
    ```sh
    curl -fsS https://markala.com.tr/api/health

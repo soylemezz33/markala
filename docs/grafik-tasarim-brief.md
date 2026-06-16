@@ -10,7 +10,7 @@
 
 | Kullanım | Teslim ölçüsü | Oran | Not |
 |---|---|---|---|
-| **Ana ürün görseli** | **1500 × 1500 px** | 1:1 (kare) | Hem ürün kartı hem detay sayfası bunu kullanır |
+| **Ana ürün görseli** | **1500 × 1500 px** | 1:1 (kare) | Hem ürün kartı hem detay sayfası bunu kullanır. Mevcut mockup seti 1080×1080 JPG ise de yeni çekimler/tasarımlar için 1500×1500 WebP standart hedef. |
 | Detay küçük resimler | Ayrı export GEREKMEZ | 1:1 | Site aynı dosyayı küçülterek kullanır |
 | Sosyal paylaşım (OG / WhatsApp önizleme) | **1200 × 630 px** | 1.91:1 | Ürün başına 1 adet, opsiyonel |
 | Kategori / hero banner (istenirse) | **1920 × 800 px** | ~2.4:1 | Sadece talep edilen kategoriler için |

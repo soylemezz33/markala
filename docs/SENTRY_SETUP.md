@@ -56,7 +56,7 @@ Token'ı bir kerede kopyala — bir daha gösterilmez.
 
 ## 4. Environment Değişkenleri
 
-### `.env.production` (web + admin) — VPS'te `/var/www/markala/.env`
+### `.env.production` (web + admin) — VPS'te `/opt/markala/.env.production`
 
 ```bash
 # Sentry — error tracking
@@ -100,7 +100,7 @@ Repo → **Settings** → **Secrets and variables** → **Actions** → **New re
 Sentry SDK package.json'a eklendi ama henüz kurulmadı:
 
 ```bash
-cd c:\Users\Hasan\Projects\baskisitesi
+# Repo kökünde (pnpm workspace)
 pnpm install
 ```
 
