@@ -108,6 +108,50 @@ function buildNotesWithIdem(notes: string | undefined, idemHash: string | undefi
   return notes ? `${tag}\n${notes}` : tag;
 }
 
+/** Satır-içi (misafir/storefront) adres — kayıtlı Address yoksa Order'a snapshot olarak yazılır. */
+export interface InlineAddress {
+  fullName: string;
+  phone: string;
+  city: string;
+  district: string;
+  fullAddress: string;
+  zipCode?: string;
+  label?: string;
+}
+
+/** Sadece izinli alanları al — client'tan gelebilecek fazlalık alanları snapshot'a sızdırma. */
+function normalizeAddressSnapshot(a: InlineAddress): InlineAddress {
+  return {
+    fullName: a.fullName,
+    phone: a.phone,
+    city: a.city,
+    district: a.district,
+    fullAddress: a.fullAddress,
+    ...(a.zipCode ? { zipCode: a.zipCode } : {}),
+    label: a.label ?? "Teslimat",
+  };
+}
+
+/**
+ * Yanıtta adresi tek bir şekle indir: kayıtlı sipariş FK relation'ını,
+ * misafir siparişi ise snapshot JSON'unu `shippingAddress`/`billingAddress` olarak yüzeye çıkarır.
+ * Böylece admin panel (order.shippingAddress.fullAddress ...) FK olsun snapshot olsun aynı şekilde render eder.
+ */
+function withAddressView<
+  T extends {
+    shippingAddress?: unknown;
+    billingAddress?: unknown;
+    shippingAddressSnapshot?: unknown;
+    billingAddressSnapshot?: unknown;
+  },
+>(order: T): T {
+  return {
+    ...order,
+    shippingAddress: order.shippingAddress ?? order.shippingAddressSnapshot ?? null,
+    billingAddress: order.billingAddress ?? order.billingAddressSnapshot ?? null,
+  };
+}
+
 @Injectable()
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
@@ -123,15 +167,20 @@ export class OrdersService {
     email: string;
     phone: string;
     items: Array<{
-      productId: string;
+      // productId VEYA productSlug'tan en az biri gelir (storefront sepeti yalnızca slug taşır).
+      productId?: string;
+      productSlug?: string;
       configuration: ConfigurationInput;
       quantity: number;
       needsDesignSupport?: boolean;
       uploadedFileName?: string;
       uploadedFileUrl?: string;
     }>;
-    shippingAddressId: string;
-    billingAddressId: string;
+    // Adres: kayıtlı FK id VEYA satır-içi inline adres (misafir/storefront). En az biri zorunlu.
+    shippingAddressId?: string;
+    billingAddressId?: string;
+    shippingAddress?: InlineAddress;
+    billingAddress?: InlineAddress;
     couponCode?: string;
     notes?: string;
     idempotencyKey?: string;
@@ -154,30 +203,40 @@ export class OrdersService {
       if (existing) return existing;
     }
 
-    // Adresler kullanıcıya ait mi? (auth'lu siparişlerde IDOR koruması)
-    if (input.userId) {
-      const [shipping, billing] = await Promise.all([
-        this.prisma.address.findFirst({ where: { id: input.shippingAddressId, userId: input.userId } }),
-        this.prisma.address.findFirst({ where: { id: input.billingAddressId, userId: input.userId } }),
-      ]);
-      if (!shipping || !billing) {
-        throw new ForbiddenException("Belirtilen adrese erişim izniniz yok.");
-      }
-    }
+    // Adres çözümü: her adres için kayıtlı FK id VEYA satır-içi snapshot. En az biri zorunlu.
+    const resolvedAddresses = await this.resolveAddresses(input);
 
-    // Ürünleri tek seferde çek (active + price snapshot).
-    const productIds = Array.from(new Set(input.items.map((i) => i.productId)));
+    // Ürünleri tek seferde çek (active + price snapshot). Storefront sepeti slug taşıdığından
+    // hem id hem slug ile çözeriz; item başına önce id, yoksa slug ile eşleştirilir.
+    const productIds = Array.from(
+      new Set(input.items.map((i) => i.productId).filter((v): v is string => !!v)),
+    );
+    const productSlugs = Array.from(
+      new Set(input.items.map((i) => i.productSlug).filter((v): v is string => !!v)),
+    );
     const products = await this.prisma.product.findMany({
-      where: { id: { in: productIds }, isActive: true },
+      where: {
+        isActive: true,
+        OR: [
+          ...(productIds.length ? [{ id: { in: productIds } }] : []),
+          ...(productSlugs.length ? [{ slug: { in: productSlugs } }] : []),
+        ],
+      },
     });
-    const productMap = new Map(products.map((p) => [p.id, p]));
+    const productById = new Map(products.map((p) => [p.id, p]));
+    const productBySlug = new Map(products.map((p) => [p.slug, p]));
 
     // SECURITY: kalem fiyatlarını her zaman sunucuda Product.basePrice'tan hesapla.
     // Client'tan gelen herhangi bir fiyat alanı tamamen yok sayılır.
     const recalculatedItems = input.items.map((i) => {
-      const product = productMap.get(i.productId);
+      if (!i.productId && !i.productSlug) {
+        throw new BadRequestException("Sipariş kalemi productId veya productSlug içermelidir.");
+      }
+      const product =
+        (i.productId ? productById.get(i.productId) : undefined) ??
+        (i.productSlug ? productBySlug.get(i.productSlug) : undefined);
       if (!product) {
-        throw new BadRequestException(`Ürün bulunamadı veya pasif: ${i.productId}`);
+        throw new BadRequestException(`Ürün bulunamadı veya pasif: ${i.productId ?? i.productSlug}`);
       }
 
       const baseQty = Number.isInteger(i.quantity) && i.quantity > 0 ? i.quantity : 1;
@@ -287,7 +346,7 @@ export class OrdersService {
         }
       }
 
-      return tx.order.create({
+      const created = await tx.order.create({
         data: {
           orderNumber: generateOrderNumber(),
           userId: input.userId,
@@ -298,8 +357,14 @@ export class OrdersService {
           discount: new Prisma.Decimal(discount),
           vat: new Prisma.Decimal(vat),
           total: new Prisma.Decimal(total),
-          shippingAddressId: input.shippingAddressId,
-          billingAddressId: input.billingAddressId,
+          shippingAddressId: resolvedAddresses.shippingAddressId,
+          billingAddressId: resolvedAddresses.billingAddressId,
+          shippingAddressSnapshot: resolvedAddresses.shippingAddressSnapshot
+            ? (resolvedAddresses.shippingAddressSnapshot as unknown as Prisma.InputJsonValue)
+            : Prisma.DbNull,
+          billingAddressSnapshot: resolvedAddresses.billingAddressSnapshot
+            ? (resolvedAddresses.billingAddressSnapshot as unknown as Prisma.InputJsonValue)
+            : Prisma.DbNull,
           notes: finalNotes,
           items: {
             create: recalculatedItems.map((i) => ({
@@ -320,7 +385,66 @@ export class OrdersService {
         },
         include: { items: true, shippingAddress: true, billingAddress: true },
       });
+
+      // Misafir siparişinde FK relation null gelir; snapshot'ı adres olarak yüzeye çıkar.
+      return withAddressView(created);
     });
+  }
+
+  /**
+   * Sipariş adreslerini çözer: her biri için kayıtlı FK id VEYA satır-içi inline adres.
+   * Kurallar:
+   *  - shippingAddressId verildiyse: auth kullanıcıda IDOR kontrolü, misafirde id'ye güvenilir (geri uyum).
+   *  - shippingAddress (inline) verildiyse: snapshot olarak saklanır (FK yok).
+   *  - billing yoksa shipping'e düşer (kayıtlı id veya snapshot).
+   *  - Hiçbiri yoksa BadRequest.
+   */
+  private async resolveAddresses(input: {
+    userId?: string;
+    shippingAddressId?: string;
+    billingAddressId?: string;
+    shippingAddress?: InlineAddress;
+    billingAddress?: InlineAddress;
+  }): Promise<{
+    shippingAddressId: string | null;
+    billingAddressId: string | null;
+    shippingAddressSnapshot: InlineAddress | null;
+    billingAddressSnapshot: InlineAddress | null;
+  }> {
+    // Auth kullanıcıda kayıtlı adres id'sinin kullanıcıya ait olduğunu doğrula (IDOR).
+    const assertOwned = async (id: string) => {
+      if (!input.userId) return; // misafir: id'ye dokunma (mevcut /orders/guest davranışı)
+      const found = await this.prisma.address.findFirst({ where: { id, userId: input.userId } });
+      if (!found) throw new ForbiddenException("Belirtilen adrese erişim izniniz yok.");
+    };
+
+    // Teslimat adresi — zorunlu.
+    let shippingAddressId: string | null = null;
+    let shippingAddressSnapshot: InlineAddress | null = null;
+    if (input.shippingAddressId) {
+      await assertOwned(input.shippingAddressId);
+      shippingAddressId = input.shippingAddressId;
+    } else if (input.shippingAddress) {
+      shippingAddressSnapshot = normalizeAddressSnapshot(input.shippingAddress);
+    } else {
+      throw new BadRequestException("Teslimat adresi gerekli (shippingAddressId veya shippingAddress).");
+    }
+
+    // Fatura adresi — verilmezse teslimat adresine düşer.
+    let billingAddressId: string | null = null;
+    let billingAddressSnapshot: InlineAddress | null = null;
+    if (input.billingAddressId) {
+      await assertOwned(input.billingAddressId);
+      billingAddressId = input.billingAddressId;
+    } else if (input.billingAddress) {
+      billingAddressSnapshot = normalizeAddressSnapshot(input.billingAddress);
+    } else {
+      // Fatura = teslimat
+      billingAddressId = shippingAddressId;
+      billingAddressSnapshot = shippingAddressSnapshot;
+    }
+
+    return { shippingAddressId, billingAddressId, shippingAddressSnapshot, billingAddressSnapshot };
   }
 
   listMine(userId: string) {
@@ -350,7 +474,8 @@ export class OrdersService {
     });
     if (!order) throw new NotFoundException("Sipariş bulunamadı.");
     if (userId && order.userId !== userId) throw new ForbiddenException("Bu siparişe erişim izniniz yok.");
-    return order;
+    // Misafir siparişinde FK relation null; snapshot'ı adres olarak yüzeye çıkar (admin detay render).
+    return withAddressView(order);
   }
 
   async updateStatus(

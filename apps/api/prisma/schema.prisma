@@ -267,8 +267,16 @@ model Order {
   vat         Decimal @db.Decimal(12, 4)
   total       Decimal @db.Decimal(12, 4)
 
-  shippingAddressId String @map("shipping_address_id")
-  billingAddressId  String @map("billing_address_id")
+  // Kayıtlı müşteri (hesabım > adreslerim) siparişlerinde FK doldurulur.
+  // Storefront/misafir siparişlerinde adres kaydı yoktur (kullanıcı checkout'ta
+  // satır-içi girer) — bu yüzden FK opsiyoneldir; adres aşağıdaki snapshot'ta tutulur.
+  shippingAddressId String? @map("shipping_address_id")
+  billingAddressId  String? @map("billing_address_id")
+
+  // Satır-içi (misafir/storefront) adres snapshot'ı — FK yoksa kullanılır.
+  // { fullName, phone, city, district, fullAddress, zipCode?, label? }
+  shippingAddressSnapshot Json? @map("shipping_address_snapshot")
+  billingAddressSnapshot  Json? @map("billing_address_snapshot")
 
   // iyzico referansları
   iyzicoPaymentId      String? @map("iyzico_payment_id")
@@ -291,8 +299,8 @@ model Order {
   deletedAt DateTime? @map("deleted_at")
 
   user            User?          @relation(fields: [userId], references: [id])
-  shippingAddress Address        @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddress  Address        @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  shippingAddress Address?       @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddress  Address?       @relation("BillingAddress", fields: [billingAddressId], references: [id])
   items           OrderItem[]
   designUploads   DesignUpload[]
 
