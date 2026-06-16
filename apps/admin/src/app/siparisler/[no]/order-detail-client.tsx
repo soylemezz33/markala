@@ -22,7 +22,7 @@ import { STATUS_LABELS } from "../orders-client";
 const STATUSES = [
   { id: "siparis-alindi",     label: "Sipariş Alındı" },
   { id: "tasarim-bekleniyor", label: "Tasarım Bekleniyor" },
-  { id: "tasarim-onayindi",   label: "Tasarım Onaylandı" },
+  { id: "tasarim-onayindi",   label: "Tasarım Onayında" },
   { id: "uretimde",           label: "Üretimde" },
   { id: "kargoya-verildi",    label: "Kargoda" },
   { id: "teslim-edildi",      label: "Teslim Edildi" },
