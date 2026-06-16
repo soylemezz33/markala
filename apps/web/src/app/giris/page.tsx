@@ -80,6 +80,14 @@ export default function LoginPage() {
                 Hemen kayıt olun
               </Link>
             </p>
+
+            <Link
+              href="/kurumsal/basvuru"
+              className="mt-4 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-paper-200 bg-paper-50 px-4 py-3 hover:border-brand-300 hover:bg-brand-50 transition-colors"
+            >
+              <span className="text-sm font-semibold text-ink-900">Kurumsal Başvuru</span>
+              <span className="text-xs text-ink-500">Cari hesap &amp; kurumsal fiyatlandırma için başvurun</span>
+            </Link>
           </div>
         </Container>
       </div>

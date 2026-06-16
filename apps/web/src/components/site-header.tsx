@@ -57,7 +57,7 @@ const MAIN_NAV: Array<{
 }> = [
   {
     label: "Kartvizit & Kırtasiye",
-    href: "/kategori/kartvizit",
+    href: "/urunler",
     groups: [
       {
         title: "Kartvizit",
@@ -80,7 +80,7 @@ const MAIN_NAV: Array<{
   },
   {
     label: "Broşür & El İlanı",
-    href: "/kategori/brosur",
+    href: "/urunler",
     groups: [
       {
         title: "Broşür",
@@ -103,7 +103,7 @@ const MAIN_NAV: Array<{
   },
   {
     label: "Bayrak & Branda",
-    href: "/kategori/yelken-bayrak",
+    href: "/urunler",
     groups: [
       {
         title: "Bayrak",
@@ -126,7 +126,7 @@ const MAIN_NAV: Array<{
   },
   {
     label: "Promosyon & Hediye",
-    href: "/kategori/kupa",
+    href: "/urunler",
     groups: [
       {
         title: "Promosyon",
@@ -150,7 +150,7 @@ const MAIN_NAV: Array<{
   },
   {
     label: "Reklam Tabela",
-    href: "/kategori/dekota-baski",
+    href: "/urunler",
     groups: [
       {
         title: "Tabela & Levha",
@@ -291,7 +291,7 @@ export function SiteHeader() {
                     <Phone size={12} weight="fill" /> 0324 433 33 51
                   </a>
                   <a
-                    href="https://wa.me/903244333351"
+                    href="https://wa.me/905319004102"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hidden sm:flex items-center gap-1.5 hover:text-brand-400 transition-colors"

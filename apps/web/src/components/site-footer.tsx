@@ -27,11 +27,11 @@ export function SiteFooter() {
             markala.com.tr'yi sosyal medyada takip edin.
           </p>
           <div className="mt-5 flex items-center gap-2">
-            <SocialLink href="https://facebook.com/markala" label="Facebook"><FacebookLogo size={18} /></SocialLink>
-            <SocialLink href="https://twitter.com/markala" label="Twitter"><TwitterLogo size={18} /></SocialLink>
-            <SocialLink href="https://instagram.com/markala" label="Instagram"><InstagramLogo size={18} /></SocialLink>
-            <SocialLink href="https://linkedin.com/company/markala" label="LinkedIn"><LinkedinLogo size={18} /></SocialLink>
-            <SocialLink href="https://wa.me/903244333351" label="WhatsApp"><WhatsappLogo size={18} /></SocialLink>
+            <SocialLink href="https://facebook.com" label="Facebook"><FacebookLogo size={18} /></SocialLink>
+            <SocialLink href="https://x.com" label="Twitter"><TwitterLogo size={18} /></SocialLink>
+            <SocialLink href="https://instagram.com" label="Instagram"><InstagramLogo size={18} /></SocialLink>
+            <SocialLink href="https://linkedin.com" label="LinkedIn"><LinkedinLogo size={18} /></SocialLink>
+            <SocialLink href="https://wa.me/905319004102" label="WhatsApp"><WhatsappLogo size={18} /></SocialLink>
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export function SiteFooter() {
 
         <FooterColumn title="Destek">
           <FooterLink href="/yardim">Yardım Merkezi</FooterLink>
-          <FooterLink href="https://wa.me/903244333351" external>WhatsApp Destek</FooterLink>
+          <FooterLink href="https://wa.me/905319004102" external>WhatsApp Destek</FooterLink>
           <FooterLink href="mailto:merhaba@markala.com.tr" external>merhaba@markala.com.tr</FooterLink>
           <FooterLink href="tel:+903244333351" external>0324 433 33 51</FooterLink>
           {/* KEP tebligat adresi — PTT KEP başvurusu tamamlandığında aktif edilecek */}

@@ -315,7 +315,7 @@ export default async function PriceListPage() {
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <a
-              href="https://wa.me/903244333351?text=Merhaba,+matbaa+fiyat+listesinden+toplu+sipariş+için+özel+teklif+almak+istiyorum."
+              href="https://wa.me/905319004102?text=Merhaba,+matbaa+fiyat+listesinden+toplu+sipariş+için+özel+teklif+almak+istiyorum."
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 bg-[#25D366] hover:bg-[#1FB358] text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2"

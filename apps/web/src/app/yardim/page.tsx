@@ -147,7 +147,7 @@ export default function YardimPage() {
             <Link href="/iletisim" className="px-5 py-2.5 bg-brand-500 text-ink-900 rounded-lg text-sm font-semibold">
               İletişim Formu
             </Link>
-            <a href="https://wa.me/903244333351" className="px-5 py-2.5 border border-paper-100/30 text-paper-50 rounded-lg text-sm font-semibold hover:bg-white/5">
+            <a href="https://wa.me/905319004102" className="px-5 py-2.5 border border-paper-100/30 text-paper-50 rounded-lg text-sm font-semibold hover:bg-white/5">
               WhatsApp
             </a>
           </div>

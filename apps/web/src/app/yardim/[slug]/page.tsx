@@ -287,7 +287,7 @@ export default async function HelpArticlePage({ params }: Props) {
             <div className="font-semibold text-ink-900 text-sm">Cevabınızı bulamadınız mı?</div>
             <p className="text-xs text-ink-500 mt-1">
               <Link href="/iletisim" className="text-brand-700 hover:underline font-medium">İletişim formundan</Link> ulaşın
-              ya da <a href="https://wa.me/903244333351" className="text-brand-700 hover:underline font-medium">WhatsApp</a> ile yazın.
+              ya da <a href="https://wa.me/905319004102" className="text-brand-700 hover:underline font-medium">WhatsApp</a> ile yazın.
             </p>
           </div>
         </div>

@@ -173,7 +173,7 @@ export default async function DistrictLandingPage({ params }: Props) {
               <ArrowRight size={14} weight="bold" />
             </Link>
             <a
-              href={`https://wa.me/903244333351?text=${encodeURIComponent(`Merhaba, ${district.name} ${city.name} için matbaa fiyat almak istiyorum.`)}`}
+              href={`https://wa.me/905319004102?text=${encodeURIComponent(`Merhaba, ${district.name} ${city.name} için matbaa fiyat almak istiyorum.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 bg-[#25D366] hover:bg-[#1FB358] text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2"

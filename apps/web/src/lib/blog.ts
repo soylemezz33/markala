@@ -143,7 +143,7 @@ JPEG göndermeyin — sıkıştırma kayıpları metni bulanıklaştırır.
 3. Tasarım dosyanı yükle ya da ücretsiz tasarım talep et
 4. Onay sonrası 1-2 iş günü içinde üretim, DHL ile kapına teslim
 
-Sorularınız için [WhatsApp](https://wa.me/903244333351) ya da [yardım merkezi](/yardim).
+Sorularınız için [WhatsApp](https://wa.me/905319004102) ya da [yardım merkezi](/yardim).
     `.trim(),
   },
 
