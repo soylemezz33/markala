@@ -16,6 +16,10 @@ concurrency:
   group: cert-monitor
   cancel-in-progress: false
 
+# Least-privilege: bu workflow yalnız checkout + script çalıştırır, yazma yetkisi gerekmez.
+permissions:
+  contents: read
+
 jobs:
   ssl-check:
     name: SSL Expiry Kontrolü
