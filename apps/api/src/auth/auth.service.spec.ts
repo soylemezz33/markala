@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { ConflictException, InternalServerErrorException } from "@nestjs/common";
-import { AuthService } from "./auth.service";
+import { ConflictException, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import * as argon2 from "argon2";
+import { AuthService, createDummyHash } from "./auth.service";
 
 /**
  * Regresyon: mevcut e-posta ile kayıt ESKİDEN 500 dönüyordu (auth.service.ts:44-49) —
@@ -62,5 +63,35 @@ describe("AuthService.register", () => {
     expect(res.accessToken).toBe("signed.jwt.token");
     expect(res.refreshToken).toBeTruthy();
     expect(prisma.refreshToken.create).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * Regresyon: bilinmeyen e-postada timing-attack koruması ESKİDEN elle yazılmış
+ * geçersiz bir argon2 sabitine (`$argon2id$...$XXX`) karşı verify çalıştırıyordu.
+ * argon2.verify bu hash'i decode edemeyip KDF'yi çalıştırmadan anında reddediyor
+ * (~0.2ms) — gerçek verify ~40ms sürdüğü için "kullanıcı var/yok" timing'den okunabiliyordu.
+ * Artık geçerli bir hash üretilmeli ve verify, throw etmeden false dönmeli (KDF çalışır).
+ */
+describe("AuthService.login — timing koruması", () => {
+  beforeEach(() => vi.restoreAllMocks());
+
+  it("dummy hash geçerli ve decode edilebilir argon2id çıktısıdır", async () => {
+    const h = await createDummyHash();
+    expect(h).toMatch(/^\$argon2id\$/);
+    // Geçerli hash → verify KDF'yi çalıştırıp false döner. Eski sabit (`$...$XXX`)
+    // decode edilemediği için throw ediyordu → timing koruması işlevsizdi.
+    await expect(argon2.verify(h, "yanlis")).resolves.toBe(false);
+  });
+
+  it("bilinmeyen e-posta → UnauthorizedException (dummy verify path çökmeden çalışır)", async () => {
+    const prisma = makePrisma();
+    prisma.user.findUnique.mockResolvedValue(null);
+    const svc = new AuthService(prisma, jwt, cfg);
+
+    await expect(svc.login("yok@markala.test", "Sifre123", ctx)).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });
