@@ -25,7 +25,7 @@ function isValidIp(ip: string | undefined): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  let body: { orderId?: string; paymentNonce?: string };
+  let body: { orderId?: string; paymentNonce?: string; identityNumber?: string };
   try {
     body = await req.json();
   } catch {
@@ -45,7 +45,12 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${API_BASE}/api/payments/iyzico/init`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: body.orderId, paymentNonce: body.paymentNonce, clientIp }),
+      body: JSON.stringify({
+        orderId: body.orderId,
+        paymentNonce: body.paymentNonce,
+        clientIp,
+        identityNumber: body.identityNumber,
+      }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {

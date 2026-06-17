@@ -193,7 +193,11 @@ export default function CheckoutPage() {
       const payRes = await fetch("/api/odeme-baslat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: saveRes.orderId, paymentNonce: saveRes.paymentNonce }),
+        body: JSON.stringify({
+          orderId: saveRes.orderId,
+          paymentNonce: saveRes.paymentNonce,
+          identityNumber: accountType === "individual" ? tcNo : undefined,
+        }),
       })
         .then((r) => r.json())
         .catch(() => null);

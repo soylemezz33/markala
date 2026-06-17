@@ -16,6 +16,11 @@ class InitPaymentDto {
   @IsOptional()
   @IsIP()
   clientIp?: string;
+
+  /** Bireysel müşteri TC Kimlik No (iyzico buyer.identityNumber). Yoksa geçerli yer tutucu kullanılır. */
+  @IsOptional()
+  @IsString()
+  identityNumber?: string;
 }
 
 @ApiTags("payments")
@@ -26,7 +31,7 @@ export class PaymentsController {
   /** Storefront (misafir dahil) ödeme başlatır → iyzico hosted ödeme sayfası URL'i döner. */
   @Post("iyzico/init")
   async init(@Body() dto: InitPaymentDto, @Req() req: Request) {
-    return this.payments.initCheckout(dto.orderId, dto.paymentNonce, dto.clientIp || req.ip);
+    return this.payments.initCheckout(dto.orderId, dto.paymentNonce, dto.clientIp || req.ip, dto.identityNumber);
   }
 
   /**

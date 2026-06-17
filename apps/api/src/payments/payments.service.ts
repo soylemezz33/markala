@@ -104,10 +104,17 @@ export class PaymentsService {
   }
 
   /** Sipariş için iyzico Checkout Form başlatır; hosted ödeme sayfası URL'ini döndürür. */
+  /** iyzico identityNumber 11 haneli olmalı; geçersizse checksum-geçerli yer tutucu kullan
+   *  ("11111111111" checksum GEÇERSİZ → iyzico prod reddedebilir). */
+  private safeIdentity(tc?: string): string {
+    return tc && /^\d{11}$/.test(tc) ? tc : "11111111110";
+  }
+
   async initCheckout(
     orderId: string,
     nonce: string,
     clientIp?: string,
+    identityNumber?: string,
   ): Promise<{ paymentPageUrl?: string; checkoutFormContent?: string; token?: string }> {
     if (!this.iyzico.isConfigured()) {
       throw new ServiceUnavailableException("Ödeme sistemi şu an kullanılamıyor.");
@@ -151,7 +158,7 @@ export class PaymentsService {
         surname,
         gsmNumber: this.gsm(ship.phone ?? order.phone),
         email: order.email,
-        identityNumber: "11111111111", // iyzico zorunlu KYC alanı; gerçek TC saklanmıyor → placeholder
+        identityNumber: this.safeIdentity(identityNumber), // checkout'taki TC; yoksa checksum-geçerli yer tutucu
         registrationAddress: buyerAddress,
         ip: clientIp || "0.0.0.0",
         city: ship.city || "Bilinmiyor",
@@ -236,7 +243,9 @@ export class PaymentsService {
     if (order.paymentStatus === "beklemede" && basketOk) {
       await this.prisma.order.update({ where: { id: orderId }, data: { paymentStatus: "basarisiz" } });
     }
-    this.logger.warn(`iyzico ödeme BAŞARISIZ order=${orderId}: ${result.paymentStatus} ${result.errorMessage}`);
+    this.logger.warn(
+      `iyzico ödeme BAŞARISIZ order=${orderId}: status=${result.paymentStatus} kod=${result.errorCode ?? "-"} mesaj=${result.errorMessage ?? "-"}`,
+    );
     return { redirectUrl: `${webOrigin}/odeme/hata?siparis=${orderId}` };
   }
 }

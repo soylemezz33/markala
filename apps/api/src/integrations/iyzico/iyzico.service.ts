@@ -31,6 +31,7 @@ export interface IyzicoRetrieveResult {
   conversationId?: string;
   basketId?: string;
   paidPrice?: string;
+  errorCode?: string;
   errorMessage?: string;
 }
 
@@ -107,6 +108,7 @@ export class IyzicoService {
             conversationId: result?.conversationId,
             basketId: result?.basketId,
             paidPrice: result?.paidPrice,
+            errorCode: result?.errorCode,
             errorMessage: result?.errorMessage,
           });
         },
