@@ -80,6 +80,11 @@ export function HeroCarousel() {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
+  // İlk boyamada (SSR + ilk client render) giriş animasyonunu ATLA: aksi halde
+  // hero metni `opacity:0` ile SSR'lanıp hidrasyon + framer-motion animasyonu
+  // bitene kadar görünmez kalıyor ve LCP'yi ~2.4s render-delay ile geciktiriyor.
+  // İlk mount sonrası true olur; slide geçişlerinde giriş animasyonu yine oynar.
+  const [entered, setEntered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const goTo = useCallback((next: number, dir = 1) => {
@@ -89,6 +94,11 @@ export function HeroCarousel() {
 
   const next = useCallback(() => goTo(index + 1, 1), [index, goTo]);
   const prev = useCallback(() => goTo(index - 1, -1), [index, goTo]);
+
+  // İlk boyamadan sonra giriş animasyonlarını etkinleştir (LCP koruması).
+  useEffect(() => {
+    setEntered(true);
+  }, []);
 
   useEffect(() => {
     if (paused) return;
@@ -151,7 +161,7 @@ export function HeroCarousel() {
               {/* Content */}
               <div className="relative lg:col-span-6 px-8 md:px-14 lg:px-16 py-12 md:py-16 z-10">
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={entered ? { opacity: 0, y: 16 } : false}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.15 }}
                   className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium tracking-wide", theme.badge)}
@@ -161,7 +171,7 @@ export function HeroCarousel() {
                 </motion.div>
 
                 <motion.h1
-          initial={{ opacity: 0, y: 16 }}
+          initial={entered ? { opacity: 0, y: 16 } : false}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
                   className={cn("mt-5 text-display-xl font-serif leading-[1.02] max-w-xl", theme.text)}
@@ -174,7 +184,7 @@ export function HeroCarousel() {
                 </motion.h1>
 
                 <motion.p
-          initial={{ opacity: 0, y: 16 }}
+          initial={entered ? { opacity: 0, y: 16 } : false}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                   className={cn("mt-6 text-lg md:text-xl leading-relaxed max-w-lg", theme.textMuted)}
@@ -183,7 +193,7 @@ export function HeroCarousel() {
                 </motion.p>
 
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={entered ? { opacity: 0, y: 16 } : false}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.55 }}
                   className="mt-8 flex flex-wrap items-center gap-3"
@@ -203,7 +213,7 @@ export function HeroCarousel() {
 
                 {(slide.size || slide.badge) && (
                   <motion.div
-          initial={{ opacity: 0 }}
+          initial={entered ? { opacity: 0 } : false}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.7 }}
                     className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
@@ -236,7 +246,7 @@ export function HeroCarousel() {
                   <BannerDisplayVisual />
                 ) : (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    initial={entered ? { opacity: 0, scale: 0.9, y: 20 } : false}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     className="relative w-full max-w-[520px] aspect-square"
