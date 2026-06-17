@@ -16,7 +16,9 @@ const VAT_RATE = 0.2;
 /** KDV dahil fiyatları ondalık çarpana çevirmek için (1.20). */
 const VAT_DIVISOR = 1 + VAT_RATE;
 /** Şu an sabit kargo. Gelecekte adres bölgesine göre dinamikleştirilebilir. */
-const DEFAULT_SHIPPING_FEE = 49.9;
+const DEFAULT_SHIPPING_FEE = 79;
+/** Ara toplam (KDV dahil) bu tutarın üstündeyse kargo ücretsiz — web ekranıyla aynı politika. */
+const FREE_SHIPPING_THRESHOLD = 750;
 /** Konfigürasyonda gelen serbest "miktar" alanları kötüye kullanılmasın diye üst sınır. */
 const MAX_QUANTITY_PER_ITEM = 100_000;
 
@@ -314,7 +316,8 @@ export class OrdersService {
       appliedCoupon = { id: coupon.id, code: coupon.code, type: coupon.type };
     }
 
-    const freeShipping = appliedCoupon?.type === "free_shipping";
+    // Kargo: free_shipping kuponu VEYA ara toplam eşiği (750₺) → ücretsiz; aksi halde sabit 79₺.
+    const freeShipping = appliedCoupon?.type === "free_shipping" || subtotal >= FREE_SHIPPING_THRESHOLD;
     const shippingFee = freeShipping ? 0 : DEFAULT_SHIPPING_FEE;
 
     // basePrice KDV dahil — vat reverse calculation

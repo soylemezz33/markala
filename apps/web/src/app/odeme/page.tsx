@@ -15,6 +15,8 @@ import { track, trackBeginCheckout } from "@/lib/analytics";
 import type { Address, Order } from "@markala/types";
 
 const SHIPPING_FEE = 79;
+/** Ara toplam bu tutarın üstündeyse kargo ücretsiz (backend ile aynı). */
+const FREE_SHIPPING_THRESHOLD = 750;
 const VAT_RATE = 0.20;
 
 type Step = "iletisim" | "fatura" | "teslimat" | "onay";
@@ -50,7 +52,7 @@ export default function CheckoutPage() {
   const [payError, setPayError] = useState<string | null>(null);
 
   const sub = subtotal();
-  const shipping = sub >= 1500 ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+  const shipping = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
   const vat = sub * VAT_RATE;
   const total = sub + shipping;
 

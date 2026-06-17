@@ -13,6 +13,8 @@ import { track } from "@/lib/analytics";
 import { categories } from "@markala/mock-data";
 
 const SHIPPING_FEE = 79;
+/** Ara toplam bu tutarın üstündeyse kargo ücretsiz (backend ile aynı). */
+const FREE_SHIPPING_THRESHOLD = 750;
 const VAT_RATE = 0.20;
 
 export default function CartPage() {
@@ -22,7 +24,7 @@ export default function CartPage() {
 
   const sub = subtotal();
   const discount = couponApplied?.discount ?? 0;
-  const shippingFee = sub >= 1500 ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+  const shippingFee = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
   const subAfterDiscount = Math.max(0, sub - discount);
   const vat = subAfterDiscount * VAT_RATE;
   const total = subAfterDiscount + shippingFee;
@@ -99,10 +101,10 @@ export default function CartPage() {
                     <Row label={<span className="text-base font-semibold text-ink-900">Toplam</span>} value={<Price amount={total} size="lg" className="text-ink-900" />} />
                   </div>
                 </dl>
-                {sub < 1500 && (
+                {sub > 0 && sub < FREE_SHIPPING_THRESHOLD && (
                   <div className="mt-4 p-3 bg-brand-50 border border-brand-200 rounded-md flex items-center gap-2 text-xs text-ink-700">
                     <Truck size={14} className="text-brand-700 flex-none" />
-                    <span><Price amount={1500 - sub} size="sm" /> daha ekleyin → kargo ücretsiz</span>
+                    <span><Price amount={FREE_SHIPPING_THRESHOLD - sub} size="sm" /> daha ekleyin → kargo ücretsiz</span>
                   </div>
                 )}
                 <Link

@@ -136,10 +136,10 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
     expect(Number(createCall.subtotal)).toBe(290);
     // discount = 0 (kupon yok)
     expect(Number(createCall.discount)).toBe(0);
-    // shippingFee = 49.9 sabit
-    expect(Number(createCall.shippingFee)).toBe(49.9);
-    // total = 290 + 49.9 = 339.9
-    expect(Number(createCall.total)).toBeCloseTo(339.9, 2);
+    // shippingFee = 79 (ara toplam 750 altı → ücretli)
+    expect(Number(createCall.shippingFee)).toBe(79);
+    // total = 290 + 79 = 369
+    expect(Number(createCall.total)).toBeCloseTo(369, 2);
   });
 
   it("konfigüratör fiyatı SUNUCUDA parameters + selections'tan hesaplanır (base_price=0)", async () => {
@@ -228,8 +228,8 @@ describe("OrdersService.create — kupon", () => {
     const txMock = (prisma as any)._tx;
     const createCall = txMock.order.create.mock.calls[0][0].data;
     expect(Number(createCall.discount)).toBeCloseTo(29, 2);
-    // total = (290 - 29) + 49.9 = 310.9
-    expect(Number(createCall.total)).toBeCloseTo(310.9, 2);
+    // total = (290 - 29) + 79 = 340
+    expect(Number(createCall.total)).toBeCloseTo(340, 2);
   });
 
   it("free_shipping kupon kargo ücretini sıfırlar", async () => {
@@ -243,6 +243,19 @@ describe("OrdersService.create — kupon", () => {
     const createCall = txMock.order.create.mock.calls[0][0].data;
     expect(Number(createCall.shippingFee)).toBe(0);
     expect(Number(createCall.total)).toBeCloseTo(290, 2);
+  });
+
+  it("ara toplam 750₺ üstünde kargo ücretsiz (kupon olmadan)", async () => {
+    const prisma = makePrisma();
+    const svc = new OrdersService(prisma as never, makeParasut() as never);
+
+    // 290 × 3 = 870 ≥ 750 → kargo 0
+    await svc.create({ ...BASE_INPUT, items: [{ productId: "p1", configuration: {}, quantity: 3 }] });
+
+    const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
+    expect(Number(createCall.subtotal)).toBe(870);
+    expect(Number(createCall.shippingFee)).toBe(0);
+    expect(Number(createCall.total)).toBeCloseTo(870, 2);
   });
 
   it("süresi dolmuş kupon → BadRequestException", async () => {
