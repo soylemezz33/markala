@@ -116,6 +116,13 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
   const savings = bundle.originalPrice - bundle.bundlePrice;
   const savingsPercent = Math.round((savings / bundle.originalPrice) * 100);
 
+  // Mock paketlerin statik /images/bundles/*.jpg dosyaları yok (404). Hem mock hem DB paketleri için
+  // kategori bazlı branded mockup'a düş (DB paketleri zaten /api/mockup imageUrl'ü taşıyor).
+  const imgSrc =
+    bundle.imageUrl && !bundle.imageUrl.startsWith("/images/bundles/")
+      ? bundle.imageUrl
+      : `/api/mockup?category=${bundle.category}&w=800&h=600&theme=brand`;
+
   function handleAdd() {
     const summary = bundle.contents
       .map((c) => `${c.quantity} × ${c.productName}`)
@@ -123,7 +130,7 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
     addItem({
       productSlug: bundle.slug,
       productName: bundle.name,
-      productImage: bundle.imageUrl,
+      productImage: imgSrc,
       configuration: {
         selections: { __bundle: bundle.slug },
         summary: `Hazır paket · ${summary}${bundle.designSupport ? " · Tasarım dahil" : ""}`,
@@ -143,7 +150,7 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
       {/* Görsel + badge */}
       <div className="relative aspect-[4/3] bg-paper-100 overflow-hidden">
         <Image
-          src={bundle.imageUrl}
+          src={imgSrc}
           alt={bundle.name}
           fill unoptimized
               sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw"
