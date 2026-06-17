@@ -3,6 +3,7 @@ import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
+import { calculateConfiguredPrice, extractSelections, pickConfigurationSummary } from "./pricing";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -242,30 +243,30 @@ export class OrdersService {
         throw new BadRequestException(`Ürün bulunamadı veya pasif: ${i.productId ?? i.productSlug}`);
       }
 
-      const baseQty = Number.isInteger(i.quantity) && i.quantity > 0 ? i.quantity : 1;
-      const configQty = extractConfigQuantity(i.configuration);
-      // Konfigürasyonda quantity verilmişse (örn. kartvizit "1000 adet" preset'i) o üstün,
-      // aksi halde DTO'daki baseQty kullanılır.
-      const effectiveQty = configQty ?? baseQty;
-
-      // quantity bir Int sütunu — tam sayı zorunlu (ondalık → Prisma create 500).
-      if (!Number.isInteger(effectiveQty) || effectiveQty <= 0 || effectiveQty > MAX_QUANTITY_PER_ITEM) {
-        throw new BadRequestException(`Geçersiz adet (${i.productId}).`);
+      // Sepet adedi = kaç adet KONFİGÜRE kalem (örn. 1 set "1000 kartvizit"). Konfigüratör
+      // içindeki adet (1000) fiyatın İÇİNE girer (matrix/quantity parametresi), satır adedi değildir.
+      const quantity = Number.isInteger(i.quantity) && i.quantity > 0 ? i.quantity : 1;
+      if (quantity > MAX_QUANTITY_PER_ITEM) {
+        throw new BadRequestException(`Geçersiz adet (${i.productId ?? i.productSlug}).`);
       }
 
-      // basePrice Prisma Decimal -> number; kuruş hassasiyeti için 2 ondalık yuvarlama.
-      const unitPriceNum = Number(product.basePrice);
-      if (!Number.isFinite(unitPriceNum) || unitPriceNum < 0) {
+      // SECURITY + DOĞRU FİYAT: birim fiyatı, ürünün KENDİ parameters şemasından + kullanıcının
+      // selections'ından SUNUCUDA hesapla. Çoğu üründe base_price=0; gerçek fiyat konfigüratörden
+      // gelir (client'ın totalPrice'ı yok sayılır). Eskiden yalnız base_price kullanılıyordu →
+      // base_price=0 ürünlerde (kartvizit vb.) sipariş/ödeme tutarı 0'a düşüyordu.
+      const selections = extractSelections(i.configuration);
+      const configuredUnit = calculateConfiguredPrice(Number(product.basePrice), product.parameters, selections);
+      if (!Number.isFinite(configuredUnit) || configuredUnit < 0) {
         throw new BadRequestException(`Ürün fiyatı geçersiz: ${product.slug}`);
       }
-      const unitPrice = round2(unitPriceNum);
-      const lineTotal = round2(unitPrice * effectiveQty);
+      const unitPrice = round2(configuredUnit);
+      const lineTotal = round2(unitPrice * quantity);
 
       return {
         product,
         configuration: i.configuration ?? {},
-        configurationSummary: summarizeConfiguration(i.configuration),
-        quantity: effectiveQty,
+        configurationSummary: pickConfigurationSummary(i.configuration, summarizeConfiguration(i.configuration)),
+        quantity,
         unitPrice,
         lineTotal,
         needsDesignSupport: i.needsDesignSupport ?? false,

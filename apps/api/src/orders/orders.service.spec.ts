@@ -142,21 +142,67 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
     expect(Number(createCall.total)).toBeCloseTo(339.9, 2);
   });
 
-  it("konfigürasyondaki 'adet' alanı quantity olarak kullanılır", async () => {
+  it("konfigüratör fiyatı SUNUCUDA parameters + selections'tan hesaplanır (base_price=0)", async () => {
     const prisma = makePrisma();
+    // Gerçek senaryo: kartvizit base_price=0, matrix parametresi; 1000 adet CYP hücresi = 290.
+    const CONFIG_PRODUCT = {
+      id: "pcfg",
+      slug: "klasik-kartvizit",
+      name: "Klasik Kartvizit",
+      basePrice: 0,
+      images: ["k.jpg"],
+      isActive: true,
+      parameters: [
+        { id: "varyant", kind: "matrix", cells: [{ id: "cyp-1000", price: 290 }] },
+      ],
+    };
+    prisma.product.findMany.mockResolvedValue([CONFIG_PRODUCT]);
     const svc = new OrdersService(prisma as never, makeParasut() as never);
 
     await svc.create({
       ...BASE_INPUT,
-      items: [{ productId: "p1", configuration: { adet: 500 }, quantity: 1 }],
+      items: [
+        {
+          productId: "pcfg",
+          configuration: { selections: { varyant: "cyp-1000" }, summary: "CYP · 1.000 Adet" },
+          quantity: 1,
+        },
+      ],
     });
 
-    const txMock = (prisma as any)._tx;
-    const createCall = txMock.order.create.mock.calls[0][0].data;
-    // configQty = 500 → lineTotal = round2(290 × 500) = 145000
+    const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
     const item = createCall.items.create[0];
-    expect(item.quantity).toBe(500);
-    expect(Number(item.lineTotal)).toBe(145000);
+    // base_price=0 OLMASINA RAĞMEN konfigüratör fiyatı 290 hesaplanır (eski bug: 0 düşerdi)
+    expect(Number(item.unitPrice)).toBeCloseTo(290, 2);
+    expect(item.quantity).toBe(1);
+    expect(Number(item.lineTotal)).toBeCloseTo(290, 2);
+    expect(item.configurationSummary).toBe("CYP · 1.000 Adet");
+    expect(Number(createCall.subtotal)).toBeCloseTo(290, 2);
+  });
+
+  it("sepet adedi (cart quantity) konfigüre kalem sayısıdır → fiyatla çarpılır", async () => {
+    const prisma = makePrisma();
+    const CONFIG_PRODUCT = {
+      id: "pcfg2",
+      slug: "klasik-kartvizit",
+      name: "Klasik Kartvizit",
+      basePrice: 0,
+      images: ["k.jpg"],
+      isActive: true,
+      parameters: [{ id: "varyant", kind: "matrix", cells: [{ id: "cyp-1000", price: 290 }] }],
+    };
+    prisma.product.findMany.mockResolvedValue([CONFIG_PRODUCT]);
+    const svc = new OrdersService(prisma as never, makeParasut() as never);
+
+    await svc.create({
+      ...BASE_INPUT,
+      items: [{ productId: "pcfg2", configuration: { selections: { varyant: "cyp-1000" } }, quantity: 3 }],
+    });
+
+    const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
+    const item = createCall.items.create[0];
+    expect(item.quantity).toBe(3);
+    expect(Number(item.lineTotal)).toBeCloseTo(870, 2); // 290 × 3
   });
 });
 

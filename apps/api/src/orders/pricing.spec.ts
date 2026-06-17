@@ -1,0 +1,57 @@
+import { describe, it, expect } from "vitest";
+import { calculateConfiguredPrice, extractSelections, pickConfigurationSummary } from "./pricing";
+
+describe("calculateConfiguredPrice", () => {
+  it("parametresiz ürün → base_price", () => {
+    expect(calculateConfiguredPrice(290, [], {})).toBe(290);
+    expect(calculateConfiguredPrice(0, undefined, {})).toBe(0);
+  });
+
+  it("matrix: seçili hücre fiyatı base'e eklenir (kartvizit senaryosu, base=0)", () => {
+    const params = [{ id: "varyant", kind: "matrix", cells: [{ id: "cyp-1000", price: 290 }, { id: "cyp-2000", price: 480 }] }];
+    expect(calculateConfiguredPrice(0, params, { varyant: "cyp-1000" })).toBe(290);
+    expect(calculateConfiguredPrice(0, params, { varyant: "cyp-2000" })).toBe(480);
+  });
+
+  it("quantity: adet × unitPrice", () => {
+    const params = [{ id: "adet", kind: "quantity", unitPrice: 0.29 }];
+    expect(calculateConfiguredPrice(0, params, { adet: 1000 })).toBeCloseTo(290, 2);
+  });
+
+  it("radio/select priceModifier + checkbox-group toplamı", () => {
+    const params = [
+      { id: "kagit", kind: "radio", options: [{ id: "mat", priceModifier: 50 }, { id: "parlak", priceModifier: 0 }] },
+      { id: "ekstra", kind: "checkbox-group", options: [{ id: "lak", priceModifier: 30 }, { id: "kabartma", priceModifier: 20 }] },
+    ];
+    expect(calculateConfiguredPrice(100, params, { kagit: "mat", ekstra: ["lak", "kabartma"] })).toBe(200);
+  });
+
+  it("dimension: alan(m²) × pricePerSqm + 1m² altı oto ek", () => {
+    const params = [
+      { id: "olcu", kind: "dimension", pricePerSqm: 100, extras: [{ id: "min", autoBelow1Sqm: true, flatFee: 25 }] },
+    ];
+    // 50×50cm = 0.25 m² → 25 + oto ek 25 = 50
+    expect(calculateConfiguredPrice(0, params, { olcu: { width: 50, height: 50, extras: [] } })).toBeCloseTo(50, 2);
+    // 100×100cm = 1 m² → 100, oto ek yok (alan<1 değil)
+    expect(calculateConfiguredPrice(0, params, { olcu: { width: 100, height: 100, extras: [] } })).toBeCloseTo(100, 2);
+  });
+
+  it("negatif sonuç 0'a sabitlenir; geçersiz selection güvenle yok sayılır", () => {
+    expect(calculateConfiguredPrice(0, [{ id: "x", kind: "matrix", cells: [] }], { x: "yok" })).toBe(0);
+    expect(calculateConfiguredPrice(0, "bozuk" as unknown, {})).toBe(0);
+  });
+});
+
+describe("extractSelections / pickConfigurationSummary", () => {
+  it("configuration.selections çıkarılır, yoksa boş", () => {
+    expect(extractSelections({ selections: { a: "b" } })).toEqual({ a: "b" });
+    expect(extractSelections({ adet: 5 })).toEqual({});
+    expect(extractSelections(null)).toEqual({});
+  });
+
+  it("client summary varsa kullanılır, yoksa fallback", () => {
+    expect(pickConfigurationSummary({ summary: "CYP · 1000 Adet" }, "fb")).toBe("CYP · 1000 Adet");
+    expect(pickConfigurationSummary({ summary: "  " }, "fb")).toBe("fb");
+    expect(pickConfigurationSummary({}, "fb")).toBe("fb");
+  });
+});

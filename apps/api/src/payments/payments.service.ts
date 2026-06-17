@@ -70,12 +70,12 @@ export class PaymentsService {
     const shippingKurus = Math.round(Number(order.shippingFee) * 100);
     const itemsNetKurus = Math.max(0, subtotalKurus - discountKurus);
 
-    const raw: Array<{ id: string; name: string; kurus: number; shipping?: boolean }> = [];
+    const productItems: Array<{ id: string; name: string; kurus: number; shipping?: boolean }> = [];
     let allocated = 0;
     order.items.forEach((it, idx) => {
       const lineKurus = Math.round(Number(it.lineTotal) * 100);
       const share = subtotalKurus > 0 ? Math.round((lineKurus * itemsNetKurus) / subtotalKurus) : lineKurus;
-      raw.push({
+      productItems.push({
         id: String(it.productSlug ?? it.id ?? `item-${idx}`).slice(0, 60),
         name: String(it.productName ?? "Ürün").slice(0, 100),
         kurus: share,
@@ -83,7 +83,10 @@ export class PaymentsService {
       allocated += share;
     });
     // Ürün kalemleri toplamını tam itemsNetKurus'a sabitle (oransal yuvarlama farkını son kaleme yedir).
-    if (raw.length) raw[raw.length - 1].kurus += itemsNetKurus - allocated;
+    if (productItems.length) productItems[productItems.length - 1].kurus += itemsNetKurus - allocated;
+
+    // iyzico 0/negatif fiyatlı kalemi reddeder (hata 5050). 0'lık kalemleri at — toplamı etkilemez.
+    const raw = productItems.filter((r) => r.kurus > 0);
     if (shippingKurus > 0) raw.push({ id: "kargo", name: "Kargo", kurus: shippingKurus, shipping: true });
 
     // Güvenlik kemeri: tüm sepet toplamı tam order.total olsun.
