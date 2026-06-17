@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from "@nestjs/common";
 import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { ParasutService } from "../integrations/parasut/parasut.service";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -154,7 +155,9 @@ function withAddressView<
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(OrdersService.name);
+
+  constructor(private prisma: PrismaService, private parasut: ParasutService) {}
 
   /**
    * SECURITY: never trust client-side pricing.
@@ -503,7 +506,7 @@ export class OrdersService {
     const enumStatus = slugToOrderStatus(status);
     if (!enumStatus) throw new BadRequestException(`Geçersiz sipariş durumu: ${status}`);
 
-    return this.prisma.order.update({
+    const updated = await this.prisma.order.update({
       where: { id },
       data: {
         status: enumStatus,
@@ -512,5 +515,43 @@ export class OrdersService {
         ...(status === "teslim-edildi" && { deliveredAt: new Date() }),
       },
     });
+
+    // Mal sevk edildiğinde (kargoya-verildi) Paraşüt e-fatura/e-arşiv kes.
+    // Idempotent (parasutInvoiceId varsa atlar) ve hata-izole: fatura başarısız
+    // olsa bile sipariş durumu güncellemesi başarılı döner.
+    if (status === "kargoya-verildi") {
+      await this.issueInvoiceIfNeeded(id);
+    }
+
+    return updated;
+  }
+
+  /**
+   * Sipariş için Paraşüt faturası kes (henüz kesilmemişse). Tüm hataları yutar —
+   * çağıran akışı (sipariş durumu güncelleme) ASLA bozulmaz. Paraşüt yapılandırılmamışsa
+   * servis no-op döner. Başarılı faturada Order.parasutInvoiceId güncellenir.
+   */
+  private async issueInvoiceIfNeeded(orderId: string): Promise<void> {
+    try {
+      const o = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        select: { parasutInvoiceId: true },
+      });
+      if (!o || o.parasutInvoiceId) return; // zaten fatura var → çift kesme
+
+      const res = await this.parasut.createInvoiceFromOrder(orderId);
+      if (res.status === "issued" && res.invoiceId) {
+        await this.prisma.order.update({
+          where: { id: orderId },
+          data: { parasutInvoiceId: res.invoiceId },
+        });
+        this.logger.log(`Paraşüt faturası bağlandı: order=${orderId} invoice=${res.invoiceId}`);
+      } else if (res.status === "failed") {
+        this.logger.warn(`Paraşüt faturası kesilemedi (akış bozulmadı): order=${orderId}`);
+      }
+    } catch (e) {
+      // createInvoiceFromOrder kendi içinde yakalıyor; bu defansif son kalkan.
+      this.logger.error(`issueInvoiceIfNeeded beklenmedik hata order=${orderId}: ${(e as Error).message}`);
+    }
   }
 }

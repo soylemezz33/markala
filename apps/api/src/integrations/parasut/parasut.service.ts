@@ -23,6 +23,8 @@ export class ParasutService {
   private readonly oauthUrl = "https://api.parasut.com/oauth/token";
   private readonly redirectUri = "urn:ietf:wg:oauth:2.0:oob";
   private token: { access: string; refresh: string; expiresAt: number } | null = null;
+  /** Ürün adı → Paraşüt product id (instance içi cache, tekrar aramayı önler). */
+  private productCache = new Map<string, string>();
 
   constructor(private config: ConfigService, private prisma: PrismaService) {}
 
@@ -136,6 +138,33 @@ export class ParasutService {
     return { contactId: created.data.id };
   }
 
+  // === Ürün (product) upsert — fatura kalemi zorunlu product ilişkisi için ===
+  /** Ürün adına göre Paraşüt product'ı bulur, yoksa oluşturur. ID döner. */
+  private async upsertProduct(name: string, listPrice: number, vatRate: number): Promise<string> {
+    const key = name.slice(0, 250);
+    const cached = this.productCache.get(key);
+    if (cached) return cached;
+
+    const found = await this.api<{ data: Array<{ id: string; attributes: { name: string } }> }>(
+      "GET",
+      `/products?filter[name]=${encodeURIComponent(key)}&page[size]=5`,
+    );
+    const exact = found.data?.find((p) => p.attributes?.name === key);
+    if (exact?.id) {
+      this.productCache.set(key, exact.id);
+      return exact.id;
+    }
+
+    const created = await this.api<{ data: { id: string } }>("POST", "/products", {
+      data: {
+        type: "products",
+        attributes: { name: key, vat_rate: vatRate, list_price: listPrice, currency: "TRL" },
+      },
+    });
+    this.productCache.set(key, created.data.id);
+    return created.data.id;
+  }
+
   // === Sipariş → sales_invoice ===
   async createInvoiceFromOrder(orderId: string): Promise<{ invoiceId: string; status: "issued" | "queued" | "failed" | "skipped" }> {
     if (!this.isConfigured()) {
@@ -165,17 +194,58 @@ export class ParasutService {
       });
       if (!contactId) return { invoiceId: "", status: "failed" };
 
-      // KDV: Türkiye matbaa tipik %20. (unit_price KDV hariç kabul edilir.)
+      // KDV %20. Sistem fiyatları KDV DAHİL saklandığından Paraşüt'e NET (KDV hariç) gönderilir;
+      // aksi halde Paraşüt net'in üstüne %20 ekleyip faturayı %20 fazla keserdi.
       const vatRate = 20;
-      const details = order.items.map((it) => ({
-        type: "sales_invoice_details",
-        attributes: {
-          quantity: it.quantity,
-          unit_price: Number(it.unitPrice),
-          vat_rate: vatRate,
-          description: `${it.productName} — ${it.configurationSummary}`.slice(0, 250),
-        },
-      }));
+      const grossToNet = (gross: number) => Math.round((gross / (1 + vatRate / 100)) * 100) / 100;
+
+      // Kupon indirimi (order.discount, KDV dahil TL) ürün satırlarına oransal YÜZDE olarak dağıtılır
+      // → Paraşüt'ün hesapladığı toplam, müşterinin ödediği order.total ile eşleşir. (Kargoya uygulanmaz.)
+      const subtotalGross = order.items.reduce((s, it) => s + Number(it.unitPrice) * it.quantity, 0);
+      const discountGross = Number(order.discount ?? 0);
+      const discountPct =
+        subtotalGross > 0 && discountGross > 0
+          ? Math.round((discountGross / subtotalGross) * 10000) / 100 // iki ondalık yüzde
+          : 0;
+
+      // Her kalem bir Paraşüt product'ına bağlı olmalı → ürün adına göre upsert.
+      const details: Array<Record<string, unknown>> = [];
+      for (const it of order.items) {
+        const netUnit = grossToNet(Number(it.unitPrice));
+        const productId = await this.upsertProduct(it.productName, netUnit, vatRate);
+        details.push({
+          type: "sales_invoice_details",
+          attributes: {
+            quantity: it.quantity,
+            unit_price: netUnit,
+            vat_rate: vatRate,
+            description: `${it.productName} — ${it.configurationSummary}`.slice(0, 250),
+            ...(discountPct > 0 ? { discount_type: "percentage", discount_value: discountPct } : {}),
+          },
+          relationships: {
+            product: { data: { type: "products", id: productId } },
+          },
+        });
+      }
+
+      // Kargo bedeli ayrı kalem. Ücretsiz kargo/kupon ile 0 ise atlanır.
+      const shippingGross = Number(order.shippingFee ?? 0);
+      if (shippingGross > 0) {
+        const netShip = grossToNet(shippingGross);
+        const shipProductId = await this.upsertProduct("Kargo", netShip, vatRate);
+        details.push({
+          type: "sales_invoice_details",
+          attributes: {
+            quantity: 1,
+            unit_price: netShip,
+            vat_rate: vatRate,
+            description: "Kargo bedeli",
+          },
+          relationships: {
+            product: { data: { type: "products", id: shipProductId } },
+          },
+        });
+      }
 
       const today = new Date().toISOString().slice(0, 10);
       const created = await this.api<{ data: { id: string } }>("POST", "/sales_invoices", {
