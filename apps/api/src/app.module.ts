@@ -21,6 +21,7 @@ import { LegalModule } from "./legal/legal.module";
 import { CampaignPackagesModule } from "./campaign-packages/campaign-packages.module";
 import { StorageModule } from "./storage/storage.module";
 import { HealthModule } from "./health/health.module";
+import { PaymentsModule } from "./payments/payments.module";
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { HealthModule } from "./health/health.module";
     CampaignPackagesModule,
     StorageModule,
     HealthModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

@@ -5,13 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
-import { CreditCard, Check, ArrowRight, User as UserIcon, House, Truck, WhatsappLogo, Phone, Clock, ShieldCheck } from "@phosphor-icons/react";
+import { CreditCard, Check, ArrowRight, User as UserIcon, House, Truck, WhatsappLogo, Lock, Clock, ShieldCheck } from "@phosphor-icons/react";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { generateOrderNumber } from "@/lib/format";
-import { whatsappUrl, phoneUrl, MARKALA_PHONE_DISPLAY } from "@/lib/whatsapp";
-import { track, trackBeginCheckout, trackPurchase } from "@/lib/analytics";
+import { whatsappUrl } from "@/lib/whatsapp";
+import { track, trackBeginCheckout } from "@/lib/analytics";
 import type { Address, Order } from "@markala/types";
 
 const SHIPPING_FEE = 79;
@@ -47,6 +47,7 @@ export default function CheckoutPage() {
   const [acceptedTolerance, setAcceptedTolerance] = useState(false);
   const [acceptedKvkk, setAcceptedKvkk] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   const sub = subtotal();
   const shipping = sub >= 1500 ? 0 : sub > 0 ? SHIPPING_FEE : 0;
@@ -86,33 +87,6 @@ export default function CheckoutPage() {
     }
   }
 
-  /** Sipariş özetini WhatsApp mesajına çevirir. */
-  function buildWhatsappMessage(orderNumber: string): string {
-    const lines: string[] = [];
-    lines.push("*Markala — Sipariş Talebi*");
-    lines.push(`Sipariş No: ${orderNumber}`);
-    lines.push("");
-    cartItems.forEach((i) => {
-      const lineTotal = i.configuration.totalPrice * i.quantity;
-      lines.push(`• ${i.productName} — ${i.configuration.summary} ×${i.quantity} = ${lineTotal.toLocaleString("tr-TR")} ₺`);
-      if (i.configuration.needsDesign) lines.push("   (tasarım desteği isteniyor)");
-      if (i.configuration.uploadedFileName) lines.push(`   (dosya: ${i.configuration.uploadedFileName})`);
-    });
-    lines.push("");
-    lines.push(`Ara toplam: ${sub.toLocaleString("tr-TR")} ₺`);
-    lines.push(`Kargo: ${shipping === 0 ? "Ücretsiz" : shipping.toLocaleString("tr-TR") + " ₺"}`);
-    lines.push(`*Toplam: ${total.toLocaleString("tr-TR")} ₺* (KDV dahil)`);
-    lines.push("");
-    lines.push(`Ad/Firma: ${accountType === "individual" ? fullName : companyName}`);
-    lines.push(`Telefon: ${phone}`);
-    lines.push(`E-posta: ${email}`);
-    if (accountType === "corporate") {
-      lines.push(`Vergi: ${taxOffice} / ${taxNumber}`);
-    }
-    lines.push(`Teslimat: ${fullAddress}, ${district}/${city}${zipCode ? " " + zipCode : ""}`);
-    return lines.join("\n");
-  }
-
   function buildOrder(orderNumber: string): Order {
     const address: Address = {
       id: "addr_1",
@@ -150,89 +124,79 @@ export default function CheckoutPage() {
     };
   }
 
-  function handleSubmit(channel: "whatsapp" | "phone") {
-    if (!acceptedTerms || !acceptedTolerance || !acceptedKvkk) return;
+  /**
+   * Kredi/banka kartı ile öde: (1) siparişi backend'e kalıcı yaz (sunucu fiyatı yeniden
+   * hesaplar), (2) iyzico Checkout Form başlat, (3) iyzico hosted ödeme sayfasına yönlen.
+   * Kart bilgisi iyzico'da girilir — bizim sitemize girilmez (PCI kapsamı dışı, 3D Secure).
+   * Ödeme sonucu iyzico → backend callback → /odeme/basarili veya /odeme/hata.
+   */
+  async function handlePayWithCard() {
+    if (!consentOk || processing) return;
+    setPayError(null);
     setProcessing(true);
 
-    const orderNumber = generateOrderNumber();
-    const order = buildOrder(orderNumber);
+    // GA4 — kullanıcı ödeme adımına geçti (purchase başarı sayfasında ateşlenir)
+    track("add_payment_info", { currency: "TRY", value: total, items: cartItems.length, payment_type: "credit_card" });
 
-    // GA4 + Meta — kullanıcı etkileşim anında (popup engellenmesin)
-    trackPurchase(orderNumber, total, cartItems.length);
-    track("generate_lead", {
-      method: channel === "whatsapp" ? "whatsapp_order" : "phone_order",
-      currency: "TRY",
-      value: total,
-      items: cartItems.length,
-    });
+    try {
+      // 1) Siparişi KALICI olarak backend DB'ye yaz → orderId al (fiyat sunucuda yeniden hesaplanır)
+      const saveRes = await fetch("/api/siparis-kaydet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          phone,
+          customerName: accountType === "individual" ? fullName : companyName,
+          city,
+          district,
+          fullAddress,
+          zipCode,
+          channel: "kart",
+          accountType,
+          taxOffice,
+          taxNumber,
+          items: cartItems.map((i) => ({
+            productSlug: i.productSlug,
+            configuration: i.configuration,
+            quantity: i.quantity,
+          })),
+        }),
+      })
+        .then((r) => r.json())
+        .catch(() => null);
 
-    // Siparişi KALICI olarak backend DB'ye yaz (admin panelde görünmesi için). Sepet yalnız
-    // productSlug taşır; fiyatı backend Product.basePrice'tan yeniden hesaplar. keepalive: sayfa
-    // yönlenirken bile tamamlanır. Hata olsa da (502) WhatsApp akışı bloke olmaz — yutulur.
-    fetch("/api/siparis-kaydet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      keepalive: true,
-      body: JSON.stringify({
-        email,
-        phone,
-        customerName: accountType === "individual" ? fullName : companyName,
-        city,
-        district,
-        fullAddress,
-        zipCode,
-        channel,
-        accountType,
-        taxOffice,
-        taxNumber,
-        items: cartItems.map((i) => ({
-          productSlug: i.productSlug,
-          configuration: i.configuration,
-          quantity: i.quantity,
-        })),
-      }),
-    }).catch(() => {});
+      if (!saveRes?.ok || !saveRes.orderId) {
+        setProcessing(false);
+        setPayError("Sipariş oluşturulamadı. Lütfen bilgileri kontrol edip tekrar deneyin.");
+        return;
+      }
 
-    // Ekibe sipariş bildirimi (WhatsApp'a EK kayıt kanalı). Best-effort + keepalive:
-    // sayfa yönlenirken bile tamamlanır, başarısız olsa da akışı bloke etmez.
-    fetch("/api/siparis-bildirim", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      keepalive: true,
-      body: JSON.stringify({
-        orderNumber,
-        channel,
-        customerName: accountType === "individual" ? fullName : companyName,
-        email,
-        phone,
-        accountType,
-        taxOffice,
-        taxNumber,
-        address: `${fullAddress}, ${district}/${city}${zipCode ? " " + zipCode : ""}`,
-        items: cartItems.map((i) => ({
-          name: i.productName,
-          summary: i.configuration.summary,
-          quantity: i.quantity,
-          lineTotal: i.configuration.totalPrice * i.quantity,
-          needsDesign: i.configuration.needsDesign,
-          uploadedFileName: i.configuration.uploadedFileName,
-        })),
-        subtotal: sub,
-        shipping,
-        total,
-      }),
-    }).catch(() => {});
+      // Başarı sayfası store'dan okusun diye siparişi backend id'siyle ekle. Sepet ödeme
+      // BAŞARILI olunca (başarı sayfasında) temizlenir — başarısızlıkta sepet korunur.
+      const order = buildOrder(saveRes.orderNumber ?? generateOrderNumber());
+      order.id = saveRes.orderId;
+      addOrder(order);
 
-    if (channel === "whatsapp") {
-      // Senkron aç — popup engelini önler
-      window.open(whatsappUrl(buildWhatsappMessage(orderNumber)), "_blank", "noopener,noreferrer");
-    } else {
-      window.location.href = phoneUrl();
+      // 2) iyzico ödemesini başlat → hosted ödeme sayfasına yönlen
+      const payRes = await fetch("/api/odeme-baslat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: saveRes.orderId }),
+      })
+        .then((r) => r.json())
+        .catch(() => null);
+
+      if (payRes?.ok && payRes.paymentPageUrl) {
+        window.location.href = payRes.paymentPageUrl; // iyzico'ya yönlendiriliyor
+        return;
+      }
+
+      setProcessing(false);
+      setPayError("Ödeme başlatılamadı. Lütfen birkaç dakika sonra tekrar deneyin.");
+    } catch {
+      setProcessing(false);
+      setPayError("Bir hata oluştu. Lütfen tekrar deneyin.");
     }
-
-    addOrder(order);
-    clearCart();
-    router.replace(`/odeme/basarili/${order.id}`);
   }
 
   if (cartItems.length === 0 && !processing) return null;
@@ -245,7 +209,7 @@ export default function CheckoutPage() {
         <Container className="py-8 md:py-10">
           <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Sipariş Talebi</p>
           <h1 className="mt-1 text-3xl md:text-4xl font-semibold text-ink-900">Siparişini tamamla</h1>
-          <p className="mt-2 text-ink-500 text-sm">WhatsApp veya telefonla hızlı sipariş · KDV dahil fiyatlar</p>
+          <p className="mt-2 text-ink-500 text-sm">Güvenli kredi/banka kartı ile ödeme (3D Secure) · KDV dahil fiyatlar</p>
         </Container>
       </div>
 
@@ -352,8 +316,8 @@ export default function CheckoutPage() {
 
           <Section
           id="onay"
-            title="Onay & Sipariş"
-            icon={<WhatsappLogo size={18} />}
+            title="Onay & Ödeme"
+            icon={<CreditCard size={18} />}
             isActive={step === "onay"}
             isComplete={false}
             onEdit={() => setStep("onay")}
@@ -375,9 +339,10 @@ export default function CheckoutPage() {
               </div>
 
               <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-sm text-ink-700">
-                Siparişini <strong>WhatsApp</strong> veya <strong>telefon</strong> üzerinden tamamlıyoruz. Butona
-                bastığında sipariş özetin WhatsApp'a aktarılır; ekibimiz ödeme (havale/EFT veya kapıda) ve üretim
-                detaylarını seninle netleştirir. Kart bilgisi istemiyoruz.
+                Ödemeni <strong>kredi/banka kartı</strong> ile güvenle yapıyorsun. "Kartla Güvenli Öde"
+                butonuna bastığında iyzico'nun güvenli ödeme sayfasına yönlendirilirsin; kart bilgilerin{" "}
+                <strong>iyzico tarafında</strong> girilir, sitemizde saklanmaz. Tüm kartlarda{" "}
+                <strong>3D Secure</strong> ve taksit seçenekleri mevcuttur.
               </div>
 
               <div className="space-y-3 pt-1">
@@ -425,29 +390,35 @@ export default function CheckoutPage() {
                 </label>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-3 pt-2">
+              <div className="pt-2 space-y-3">
                 <Button
                   size="lg"
                   fullWidth
-                  onClick={() => handleSubmit("whatsapp")}
-                  disabled={!consentOk || processing}
-                  className="bg-[#25D366] hover:bg-[#1FB358] text-white"
-                >
-                  <WhatsappLogo size={20} weight="fill" /> WhatsApp ile Siparişi Tamamla
-                </Button>
-                <Button
-                  size="lg"
-                  fullWidth
-                  variant="outline"
-                  onClick={() => handleSubmit("phone")}
+                  onClick={handlePayWithCard}
                   disabled={!consentOk || processing}
                 >
-                  <Phone size={18} weight="fill" /> Telefonla Sipariş — {MARKALA_PHONE_DISPLAY}
+                  <Lock size={18} weight="fill" />{" "}
+                  {processing ? "Yönlendiriliyor…" : `Kartla Güvenli Öde — ${total.toLocaleString("tr-TR")} ₺`}
                 </Button>
+                <div className="flex items-center justify-center gap-1.5 text-xs text-ink-500">
+                  <ShieldCheck size={14} /> 256-bit SSL · iyzico 3D Secure · Kart bilgisi sitemizde saklanmaz
+                </div>
+                {payError && <p className="text-sm text-red-600 text-center">{payError}</p>}
+                {!consentOk && (
+                  <p className="text-xs text-ink-500 text-center">Ödemeye geçmek için sözleşmeleri onaylayın.</p>
+                )}
+                <p className="text-center text-xs text-ink-400 pt-1">
+                  Sorun mu yaşıyorsun?{" "}
+                  <a
+                    href={whatsappUrl("Merhaba, sipariş/ödeme konusunda yardım almak istiyorum.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#1FB358] hover:underline font-medium inline-flex items-center gap-1"
+                  >
+                    <WhatsappLogo size={13} weight="fill" /> WhatsApp'tan iletişime geç
+                  </a>
+                </p>
               </div>
-              {!consentOk && (
-                <p className="text-xs text-ink-500">Devam etmek için sözleşmeleri onaylayın.</p>
-              )}
             </div>
           </Section>
 

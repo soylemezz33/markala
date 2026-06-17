@@ -6,18 +6,27 @@ import { useEffect, useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
 import { CheckCircle, Truck, EnvelopeSimple, House, Receipt } from "@phosphor-icons/react";
 import { useOrdersStore } from "@/lib/orders-store";
+import { useCartStore } from "@/lib/cart-store";
 import { formatDate, orderStatusLabel } from "@/lib/format";
+import { trackPurchase } from "@/lib/analytics";
 import type { Order } from "@markala/types";
 
 export default function OrderSuccessPage({ params }: { params: { orderId: string } }) {
   const getById = useOrdersStore((s) => s.getById);
+  const clearCart = useCartStore((s) => s.clear);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setOrder(getById(params.orderId) ?? null);
+    const o = getById(params.orderId) ?? null;
+    setOrder(o);
     setLoading(false);
-  }, [getById, params.orderId]);
+    // Ödeme başarılı → sepeti temizle (başarısızlıkta /odeme/hata'ya gidilir, sepet korunur).
+    clearCart();
+    // GA4/Meta purchase — gerçek tahsilat onayı bu sayfada (sadece mount'ta bir kez).
+    if (o) trackPurchase(o.orderNumber, o.total, o.items.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.orderId]);
 
   if (loading) return null;
 
@@ -37,10 +46,10 @@ export default function OrderSuccessPage({ params }: { params: { orderId: string
         <div className="w-16 h-16 mx-auto rounded-full bg-success/10 grid place-items-center text-success">
           <CheckCircle size={36} weight="fill" />
         </div>
-        <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">Sipariş talebin alındı! 🎉</h1>
+        <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">Ödemen alındı, teşekkürler! 🎉</h1>
         <p className="mt-3 text-lg text-ink-700">
-          Ekibimiz en kısa sürede WhatsApp veya telefonla iletişime geçip ödeme (havale/EFT) ve üretim
-          detaylarını netleştirecek. Bu aşamada herhangi bir tahsilat yapılmadı.
+          Siparişin ve ödemen başarıyla alındı. Faturan e-posta adresine iletilecek; ekibimiz üretim
+          ve kargo sürecini başlatıyor.
         </p>
         <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-paper-100 rounded-full text-sm">
           <Receipt size={16} className="text-ink-700" />
@@ -49,7 +58,7 @@ export default function OrderSuccessPage({ params }: { params: { orderId: string
       </div>
 
       <div className="mt-10 grid md:grid-cols-3 gap-3">
-        <InfoTile icon={<EnvelopeSimple size={20} />} title="WhatsApp onayı" desc="Ekibimiz WhatsApp/telefonla onaylayacak" />
+        <InfoTile icon={<EnvelopeSimple size={20} />} title="Ödeme onaylandı" desc="Faturan e-posta ile gönderilecek" />
         <InfoTile icon={<Truck size={20} />} title="Kargo bilgisi" desc="Hazırlanınca takip kodu gönderilecek" />
         <InfoTile icon={<House size={20} />} title="Hesabım" desc={<Link href="/hesabim/siparislerim" className="text-brand-700 hover:underline">Siparişlerimi gör</Link>} />
       </div>

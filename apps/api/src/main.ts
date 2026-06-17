@@ -5,7 +5,7 @@ import { ValidationPipe, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
-import { json, static as serveStatic } from "express";
+import { json, urlencoded, static as serveStatic } from "express";
 import type { Request, Response, NextFunction } from "express";
 import { join } from "node:path";
 import { AppModule } from "./app.module";
@@ -30,6 +30,8 @@ async function bootstrap() {
   // Body size limit — 100kb. Konfigüratör payload'ları küçük JSON.
   // NOT: multipart upload (/api/uploads) multer ile ayrı parse edilir, bu limit etkilemez.
   app.use(json({ limit: "100kb" }));
+  // iyzico Checkout Form callback'i x-www-form-urlencoded gönderir (token alanı) → ayrı parser.
+  app.use(urlencoded({ extended: true, limit: "100kb" }));
 
   // Local depolama sürücüsü görselleri buradan sunar (R2 yokken / dev).
   // CORP cross-origin: helmet varsayılanı same-origin'dir, aksi halde web/admin

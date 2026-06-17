@@ -1,51 +1,116 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import Iyzipay from "iyzipay";
 
 /**
- * iyzico ödeme entegrasyonu — STUB.
+ * iyzico ödeme entegrasyonu — GERÇEK (Checkout Form / hosted).
  *
- * FAZ 4'te bu modül gerçek iyzipay-node SDK'sı ile değiştirilecek:
- * https://github.com/iyzico/iyzipay-node
+ * Akış: kart bilgisi MARKALA sitesine GİRİLMEZ — müşteri iyzico'nun barındırdığı
+ * ödeme sayfasında (paymentPageUrl) kartını girer, 3D Secure iyzico tarafında yapılır.
+ * Böylece PCI kapsamı minimumda kalır. iyzico ödeme sonucunu callbackUrl'e POST eder;
+ * sonucu token ile `retrieve` ederek doğrularız.
  *
- * Şu an her zaman başarılı ödeme döner — checkout flow'u test edebilmek için.
+ * Config eksikse servis no-op (isConfigured=false) — ödeme akışı 503 döner, başka yer bozulmaz.
+ * ENV: IYZICO_API_KEY, IYZICO_SECRET, IYZICO_BASE_URL (varsayılan sandbox). Docs: docs.iyzico.com
  */
+
+export interface IyzicoInitResult {
+  status: "success" | "failure";
+  token?: string;
+  checkoutFormContent?: string;
+  paymentPageUrl?: string;
+  errorMessage?: string;
+}
+
+export interface IyzicoRetrieveResult {
+  /** iyzico ham durumu: SUCCESS | FAILURE | INIT_THREEDS | CALLBACK_THREEDS ... */
+  paymentStatus: string;
+  /** Bizim sadeleştirilmiş kararımız. */
+  status: "success" | "failure";
+  paymentId?: string;
+  conversationId?: string;
+  basketId?: string;
+  paidPrice?: string;
+  errorMessage?: string;
+}
+
 @Injectable()
 export class IyzicoService {
   private readonly logger = new Logger(IyzicoService.name);
+  private client: Iyzipay | null = null;
 
   constructor(private config: ConfigService) {}
 
-  async initiate3DSecure(input: {
-    orderId: string;
-    amount: number;
-    cardHolderName: string;
-    cardNumber: string;
-    expiryMonth: string;
-    expiryYear: string;
-    cvc: string;
-    installments?: number;
-  }): Promise<{ paymentId: string; htmlContent: string; status: "success" | "failure" }> {
-    this.logger.warn(`[STUB] iyzico 3D Secure: order=${input.orderId} amount=${input.amount}`);
-    return {
-      paymentId: `mock_${Date.now()}`,
-      htmlContent: `<p>Mock 3D Secure iframe — gerçek implementasyon FAZ 4'te.</p>`,
-      status: "success",
-    };
+  /** Tüm zorunlu env var mı? Yoksa ödeme servisi no-op. */
+  isConfigured(): boolean {
+    return Boolean(this.config.get<string>("IYZICO_API_KEY") && this.config.get<string>("IYZICO_SECRET"));
   }
 
-  async getInstallments(binNumber: string, amount: number): Promise<Array<{ count: number; total: number }>> {
-    this.logger.warn(`[STUB] iyzico installments lookup: bin=${binNumber}`);
-    // BIN bilgisine göre dinamik taksit listesi — burada statik 1/3/6/9
-    return [
-      { count: 1, total: amount },
-      { count: 3, total: amount * 1.02 },
-      { count: 6, total: amount * 1.05 },
-      { count: 9, total: amount * 1.09 },
-    ];
+  private get baseUrl(): string {
+    // Güvenli varsayılan: sandbox. Prod'da IYZICO_BASE_URL=https://api.iyzipay.com verilmeli.
+    return this.config.get<string>("IYZICO_BASE_URL") ?? "https://sandbox-api.iyzipay.com";
   }
 
-  async refund(paymentId: string, amount?: number): Promise<{ refundId: string; status: "success" | "failure" }> {
-    this.logger.warn(`[STUB] iyzico refund: payment=${paymentId} amount=${amount ?? "full"}`);
-    return { refundId: `refund_${Date.now()}`, status: "success" };
+  private getClient(): Iyzipay {
+    if (this.client) return this.client;
+    this.client = new Iyzipay({
+      apiKey: this.config.get<string>("IYZICO_API_KEY") ?? "",
+      secretKey: this.config.get<string>("IYZICO_SECRET") ?? "",
+      uri: this.baseUrl,
+    });
+    return this.client;
+  }
+
+  /** Checkout Form başlat — paymentPageUrl (yönlendirme) + checkoutFormContent (popup) döner. */
+  async initializeCheckoutForm(request: Record<string, unknown>): Promise<IyzicoInitResult> {
+    const client = this.getClient();
+    return new Promise<IyzicoInitResult>((resolve) => {
+      client.checkoutFormInitialize.create(request, (err, result) => {
+        if (err) {
+          this.logger.error(`iyzico init hata: ${(err as Error)?.message ?? String(err)}`);
+          resolve({ status: "failure", errorMessage: "init_error" });
+          return;
+        }
+        if (result?.status !== "success") {
+          // errorMessage müşteriye gösterilebilir genel bir mesaj; kart/PII içermez.
+          this.logger.warn(`iyzico init başarısız: ${result?.errorCode} ${result?.errorMessage}`);
+          resolve({ status: "failure", errorMessage: result?.errorMessage });
+          return;
+        }
+        resolve({
+          status: "success",
+          token: result.token,
+          checkoutFormContent: result.checkoutFormContent,
+          paymentPageUrl: result.paymentPageUrl,
+        });
+      });
+    });
+  }
+
+  /** Ödeme sonucunu token ile doğrula (callback'te çağrılır). */
+  async retrieveCheckoutForm(token: string, conversationId?: string): Promise<IyzicoRetrieveResult> {
+    const client = this.getClient();
+    return new Promise<IyzicoRetrieveResult>((resolve) => {
+      client.checkoutForm.retrieve(
+        { locale: Iyzipay.LOCALE.TR, conversationId: conversationId ?? "", token },
+        (err, result) => {
+          if (err) {
+            this.logger.error(`iyzico retrieve hata: ${(err as Error)?.message ?? String(err)}`);
+            resolve({ paymentStatus: "ERROR", status: "failure", errorMessage: "retrieve_error" });
+            return;
+          }
+          const ok = result?.status === "success" && result?.paymentStatus === "SUCCESS";
+          resolve({
+            paymentStatus: result?.paymentStatus ?? "FAILURE",
+            status: ok ? "success" : "failure",
+            paymentId: result?.paymentId,
+            conversationId: result?.conversationId,
+            basketId: result?.basketId,
+            paidPrice: result?.paidPrice,
+            errorMessage: result?.errorMessage,
+          });
+        },
+      );
+    });
   }
 }
