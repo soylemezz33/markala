@@ -9,6 +9,7 @@ import { ConfigService } from "@nestjs/config";
 import Iyzipay from "iyzipay";
 import { PrismaService } from "../prisma/prisma.service";
 import { IyzicoService } from "../integrations/iyzico/iyzico.service";
+import { verifyPaymentNonce } from "./payment-nonce";
 
 interface AddressView {
   fullName?: string;
@@ -102,10 +103,17 @@ export class PaymentsService {
   /** Sipariş için iyzico Checkout Form başlatır; hosted ödeme sayfası URL'ini döndürür. */
   async initCheckout(
     orderId: string,
+    nonce: string,
     clientIp?: string,
   ): Promise<{ paymentPageUrl?: string; checkoutFormContent?: string; token?: string }> {
     if (!this.iyzico.isConfigured()) {
       throw new ServiceUnavailableException("Ödeme sistemi şu an kullanılamıyor.");
+    }
+    // IDOR koruması: nonce sipariş oluşturma yanıtında verilir; gizli anahtar olmadan üretilemez.
+    // Geçersizse "bulunamadı" (varlık sızdırmamak için, DB'ye bile gitmeden).
+    const secret = this.config.get<string>("JWT_SECRET") ?? "";
+    if (!verifyPaymentNonce(secret, orderId, nonce)) {
+      throw new NotFoundException("Sipariş bulunamadı.");
     }
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -187,11 +195,26 @@ export class PaymentsService {
 
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, paymentStatus: true },
+      select: { id: true, paymentStatus: true, orderNumber: true, total: true },
     });
     if (!order) return { redirectUrl: `${webOrigin}/odeme/hata` };
 
+    // Callback özgünlüğü: iyzico'dan dönen kayıt bu siparişe ait ve tutar BEKLENEN ile aynı mı?
+    // (token sahte olsa retrieve başarısız olur; ayrıca basketId/paidPrice çapraz-sipariş/tutar
+    //  oynamasını yakalar.) Uyuşmazlıkta hiçbir statü değiştirmeyiz — manuel inceleme.
+    const basketOk = result.basketId === order.orderNumber;
+    const paidKurus = Math.round(Number(result.paidPrice) * 100);
+    const expectedKurus = Math.round(Number(order.total) * 100);
+    const amountOk = Number.isFinite(paidKurus) && paidKurus === expectedKurus;
+
     if (result.status === "success") {
+      if (!basketOk || !amountOk) {
+        this.logger.error(
+          `iyzico DOĞRULAMA UYUŞMAZLIĞI order=${orderId} basketId=${result.basketId} beklenen=${order.orderNumber} ` +
+            `paidPrice=${result.paidPrice} beklenenTutar=${order.total} → ödeme işaretlenmedi, MANUEL İNCELEME`,
+        );
+        return { redirectUrl: `${webOrigin}/odeme/hata?siparis=${orderId}` };
+      }
       if (order.paymentStatus !== "basarili") {
         await this.prisma.order.update({
           where: { id: orderId },
@@ -206,7 +229,8 @@ export class PaymentsService {
       return { redirectUrl: `${webOrigin}/odeme/basarili/${orderId}` };
     }
 
-    if (order.paymentStatus !== "basarili") {
+    // Başarısız: yalnız hâlâ beklemede VE bu siparişe ait callback ise işaretle (griefing/çapraz koruması).
+    if (order.paymentStatus === "beklemede" && basketOk) {
       await this.prisma.order.update({ where: { id: orderId }, data: { paymentStatus: "basarisiz" } });
     }
     this.logger.warn(`iyzico ödeme BAŞARISIZ order=${orderId}: ${result.paymentStatus} ${result.errorMessage}`);

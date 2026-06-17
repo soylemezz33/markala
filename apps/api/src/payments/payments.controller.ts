@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Req, Res } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
+import { IsIP, IsOptional, IsString } from "class-validator";
 import type { Request, Response } from "express";
 import { PaymentsService } from "./payments.service";
 
@@ -8,9 +8,13 @@ class InitPaymentDto {
   @IsString()
   orderId!: string;
 
-  /** Gerçek müşteri IP'si — storefront sunucu-içinden çağırdığında iletilir (fraud skoru için). */
-  @IsOptional()
+  /** Sipariş oluşturma yanıtında verilen HMAC nonce — IDOR koruması, zorunlu. */
   @IsString()
+  paymentNonce!: string;
+
+  /** Gerçek müşteri IP'si (fraud skoru). Geçerli IP değilse reddedilir; yoksa req.ip kullanılır. */
+  @IsOptional()
+  @IsIP()
   clientIp?: string;
 }
 
@@ -22,7 +26,7 @@ export class PaymentsController {
   /** Storefront (misafir dahil) ödeme başlatır → iyzico hosted ödeme sayfası URL'i döner. */
   @Post("iyzico/init")
   async init(@Body() dto: InitPaymentDto, @Req() req: Request) {
-    return this.payments.initCheckout(dto.orderId, dto.clientIp || req.ip);
+    return this.payments.initCheckout(dto.orderId, dto.paymentNonce, dto.clientIp || req.ip);
   }
 
   /**

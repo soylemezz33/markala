@@ -107,8 +107,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, status: res.status }, { status: 502 });
     }
 
-    const order = (await res.json()) as { id?: string; orderNumber?: string };
-    return NextResponse.json({ ok: true, orderId: order.id, orderNumber: order.orderNumber });
+    const order = (await res.json()) as { id?: string; orderNumber?: string; paymentNonce?: string };
+    // paymentNonce: ödeme başlatmada (IDOR koruması) zorunlu — backend'den geçir.
+    return NextResponse.json({
+      ok: true,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      paymentNonce: order.paymentNonce,
+    });
   } catch (err) {
     // Backend erişilemez — checkout (WhatsApp) yine de devam etsin; admin kaydı sonra eklenir.
     console.error("[siparis-kaydet] backend erişilemedi:", (err as Error).message);

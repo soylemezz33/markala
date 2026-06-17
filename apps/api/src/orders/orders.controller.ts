@@ -1,30 +1,43 @@
 import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Query, Headers } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
+import { ConfigService } from "@nestjs/config";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
 import { CreateOrderDto, ListOrdersQueryDto, UpdateOrderStatusDto } from "./orders.dto";
+import { paymentNonce } from "../payments/payment-nonce";
 import type { Request } from "express";
 
 @ApiTags("orders")
 @Controller("orders")
 export class OrdersController {
-  constructor(private service: OrdersService) {}
+  constructor(private service: OrdersService, private config: ConfigService) {}
+
+  /**
+   * Sipariş yanıtına ödeme nonce'u ekler — /payments/iyzico/init bunu zorunlu kılar.
+   * Böylece sipariş id'sini ele geçiren biri (cuid bilse bile) ödeme başlatamaz/statü bozamaz.
+   */
+  private withNonce<T extends { id: string }>(order: T): T & { paymentNonce: string } {
+    const secret = this.config.get<string>("JWT_SECRET") ?? "";
+    return { ...order, paymentNonce: paymentNonce(secret, order.id) };
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  create(
+  async create(
     @Req() req: Request & { user: { sub: string } },
     @Body() dto: CreateOrderDto,
     @Headers("idempotency-key") idempotencyKey?: string,
   ) {
-    return this.service.create({ ...dto, userId: req.user.sub, idempotencyKey });
+    const order = await this.service.create({ ...dto, userId: req.user.sub, idempotencyKey });
+    return this.withNonce(order as { id: string });
   }
 
   @Post("guest")
-  createGuest(@Body() dto: CreateOrderDto, @Headers("idempotency-key") idempotencyKey?: string) {
-    return this.service.create({ ...dto, idempotencyKey });
+  async createGuest(@Body() dto: CreateOrderDto, @Headers("idempotency-key") idempotencyKey?: string) {
+    const order = await this.service.create({ ...dto, idempotencyKey });
+    return this.withNonce(order as { id: string });
   }
 
   @Get("mine")

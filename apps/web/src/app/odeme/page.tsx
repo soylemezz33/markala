@@ -178,10 +178,11 @@ export default function CheckoutPage() {
       addOrder(order);
 
       // 2) iyzico ödemesini başlat → hosted ödeme sayfasına yönlen
+      // paymentNonce: sipariş yanıtında gelir, ödeme başlatma IDOR korumasında zorunlu.
       const payRes = await fetch("/api/odeme-baslat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: saveRes.orderId }),
+        body: JSON.stringify({ orderId: saveRes.orderId, paymentNonce: saveRes.paymentNonce }),
       })
         .then((r) => r.json())
         .catch(() => null);

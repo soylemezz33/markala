@@ -16,27 +16,36 @@ const API_BASE =
  * Gerçek müşteri IP'sini backend'e iletiriz (fraud skoru) — aksi halde backend yalnız
  * sunucu-içi (Next container) IP'sini görürdü.
  */
+/** Kabaca IPv4/IPv6 doğrulaması — backend @IsIP'in geçersiz XFF'te 400 vermesini önler. */
+function isValidIp(ip: string | undefined): boolean {
+  if (!ip) return false;
+  const v4 = /^(\d{1,3}\.){3}\d{1,3}$/;
+  const v6 = /^[0-9a-fA-F:]+$/;
+  return v4.test(ip) || (ip.includes(":") && v6.test(ip));
+}
+
 export async function POST(req: NextRequest) {
-  let body: { orderId?: string };
+  let body: { orderId?: string; paymentNonce?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ ok: false, error: "invalid_json" }, { status: 400 });
   }
-  if (!body.orderId) {
-    return NextResponse.json({ ok: false, error: "missing_orderId" }, { status: 400 });
+  if (!body.orderId || !body.paymentNonce) {
+    return NextResponse.json({ ok: false, error: "missing_params" }, { status: 400 });
   }
 
-  const clientIp =
+  const rawIp =
     (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() ||
     req.headers.get("x-real-ip") ||
     undefined;
+  const clientIp = isValidIp(rawIp) ? rawIp : undefined; // geçersizse gönderme → backend req.ip kullanır
 
   try {
     const res = await fetch(`${API_BASE}/api/payments/iyzico/init`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: body.orderId, clientIp }),
+      body: JSON.stringify({ orderId: body.orderId, paymentNonce: body.paymentNonce, clientIp }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
