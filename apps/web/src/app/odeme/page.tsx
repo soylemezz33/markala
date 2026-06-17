@@ -53,7 +53,7 @@ export default function CheckoutPage() {
 
   const sub = subtotal();
   const shipping = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
-  const vat = sub * VAT_RATE;
+  const vat = sub - sub / (1 + VAT_RATE); // KDV DAHİL fiyat → içindeki KDV payı (üstüne eklenmez)
   const total = sub + shipping;
 
   useEffect(() => {
@@ -472,7 +472,7 @@ export default function CheckoutPage() {
               <div className="mt-4 pt-4 border-t border-paper-200 space-y-2 text-sm">
                 <Row label="Ara toplam" value={<Price amount={sub} className="text-ink-900" />} />
                 <Row label="Kargo" value={shipping === 0 ? <span className="text-success font-medium">Ücretsiz</span> : <Price amount={shipping} />} />
-                <Row label="KDV (%20)" value={<Price amount={vat} className="text-ink-500" />} muted />
+                <Row label="KDV (%20 dahil)" value={<Price amount={vat} className="text-ink-500" />} muted />
                 <div className="pt-3 border-t border-paper-200 flex items-baseline justify-between">
                   <span className="font-medium text-ink-900">Toplam</span>
                   <Price amount={total} size="lg" className="text-ink-900" />

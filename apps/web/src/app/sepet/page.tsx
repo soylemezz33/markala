@@ -26,7 +26,8 @@ export default function CartPage() {
   const discount = couponApplied?.discount ?? 0;
   const shippingFee = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
   const subAfterDiscount = Math.max(0, sub - discount);
-  const vat = subAfterDiscount * VAT_RATE;
+  // Fiyatlar KDV DAHİL → gösterilen KDV, tutarın İÇİNDEKİ paydır (gross − gross/1.2), üstüne EKLENMEZ.
+  const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE);
   const total = subAfterDiscount + shippingFee;
 
   function handleApplyCoupon() {
@@ -96,7 +97,7 @@ export default function CartPage() {
                     <Row label={`Kupon (${couponApplied?.code})`} value={<Price amount={-discount} className="text-success" />} />
                   )}
                   <Row label="Kargo" value={shippingFee === 0 ? <span className="text-success font-medium">Ücretsiz</span> : <Price amount={shippingFee} className="text-ink-900" />} />
-                  <Row label={`KDV (%${VAT_RATE * 100})`} value={<Price amount={vat} className="text-ink-500" />} muted />
+                  <Row label={`KDV (%${VAT_RATE * 100} dahil)`} value={<Price amount={vat} className="text-ink-500" />} muted />
                   <div className="border-t border-paper-200 pt-3 mt-3">
                     <Row label={<span className="text-base font-semibold text-ink-900">Toplam</span>} value={<Price amount={total} size="lg" className="text-ink-900" />} />
                   </div>
