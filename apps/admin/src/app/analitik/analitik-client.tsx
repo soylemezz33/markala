@@ -645,8 +645,13 @@ function WinBackPanel({
       c.lastActivityAt ?? "",
       c.daysSinceLastActivity != null ? String(c.daysSinceLastActivity) : "",
     ]);
-    // CSV kaçışlama: çift tırnak ikile, alanı tırnağa al.
-    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    // CSV kaçışlama: formül-injection nötrle (=,+,-,@,tab,CR ile başlayanlar Excel'de formül
+    // olur; müşteri adı/e-postası kullanıcı girdisi → kötü niyetli kayıt CSV açılınca tetiklenmesin),
+    // sonra çift tırnak ikile + alanı tırnağa al.
+    const esc = (v: string) => {
+      const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+      return `"${safe.replace(/"/g, '""')}"`;
+    };
     const csv = [header, ...rows].map((r) => r.map(esc).join(",")).join("\r\n");
     // Excel'de Türkçe karakter için BOM ekle.
     const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
