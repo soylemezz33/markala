@@ -197,31 +197,46 @@ export class PaymentsService {
    */
   async handleCallback(token: string): Promise<{ redirectUrl: string }> {
     const webOrigin = (this.config.get<string>("WEB_ORIGIN") ?? "http://localhost:3000").split(",")[0];
-    if (!token) return { redirectUrl: `${webOrigin}/odeme/hata` };
+    this.logger.log(`iyzico callback geldi: token=${token ? "var" : "YOK"}`);
+    if (!token) {
+      this.logger.warn("iyzico callback: token YOK (body parse?) → /odeme/hata");
+      return { redirectUrl: `${webOrigin}/odeme/hata` };
+    }
 
     const result = await this.iyzico.retrieveCheckoutForm(token);
+    this.logger.log(
+      `iyzico retrieve: status=${result.status} paymentStatus=${result.paymentStatus} conv=${result.conversationId} ` +
+        `price=${result.price} paid=${result.paidPrice} basket=${result.basketId} kod=${result.errorCode ?? "-"} mesaj=${result.errorMessage ?? "-"}`,
+    );
     const orderId = result.conversationId;
-    if (!orderId) return { redirectUrl: `${webOrigin}/odeme/hata` };
+    if (!orderId) {
+      this.logger.warn("iyzico callback: conversationId YOK → /odeme/hata");
+      return { redirectUrl: `${webOrigin}/odeme/hata` };
+    }
 
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       select: { id: true, paymentStatus: true, orderNumber: true, total: true },
     });
-    if (!order) return { redirectUrl: `${webOrigin}/odeme/hata` };
+    if (!order) {
+      this.logger.warn(`iyzico callback: sipariş bulunamadı order=${orderId} → /odeme/hata`);
+      return { redirectUrl: `${webOrigin}/odeme/hata` };
+    }
 
-    // Callback özgünlüğü: iyzico'dan dönen kayıt bu siparişe ait ve tutar BEKLENEN ile aynı mı?
-    // (token sahte olsa retrieve başarısız olur; ayrıca basketId/paidPrice çapraz-sipariş/tutar
-    //  oynamasını yakalar.) Uyuşmazlıkta hiçbir statü değiştirmeyiz — manuel inceleme.
+    // Callback özgünlüğü: kayıt bu siparişe ait (basketId=orderNumber) ve tutar BEKLENEN ile aynı mı?
+    // ÖNEMLİ: iyzico `price` = sepet toplamı (bizim gönderdiğimiz). `paidPrice` TAKSİT komisyonuyla
+    // price'tan YÜKSEK olabilir → bütünlük kontrolü `price` ile yapılır (yoksa taksitli ödeme reddedilip
+    // para çekilmiş ama sipariş işaretlenmemiş kalırdı).
     const basketOk = result.basketId === order.orderNumber;
-    const paidKurus = Math.round(Number(result.paidPrice) * 100);
+    const priceKurus = Math.round(Number(result.price) * 100);
     const expectedKurus = Math.round(Number(order.total) * 100);
-    const amountOk = Number.isFinite(paidKurus) && paidKurus === expectedKurus;
+    const amountOk = Number.isFinite(priceKurus) && priceKurus === expectedKurus;
 
     if (result.status === "success") {
       if (!basketOk || !amountOk) {
         this.logger.error(
           `iyzico DOĞRULAMA UYUŞMAZLIĞI order=${orderId} basketId=${result.basketId} beklenen=${order.orderNumber} ` +
-            `paidPrice=${result.paidPrice} beklenenTutar=${order.total} → ödeme işaretlenmedi, MANUEL İNCELEME`,
+            `price=${result.price} beklenenTutar=${order.total} → ödeme işaretlenmedi, MANUEL İNCELEME`,
         );
         return { redirectUrl: `${webOrigin}/odeme/hata?siparis=${orderId}` };
       }
@@ -235,7 +250,9 @@ export class PaymentsService {
           },
         });
       }
-      this.logger.log(`iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} tutar=${result.paidPrice}`);
+      this.logger.log(
+        `iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} price=${result.price} paid=${result.paidPrice}`,
+      );
       return { redirectUrl: `${webOrigin}/odeme/basarili/${orderId}` };
     }
 

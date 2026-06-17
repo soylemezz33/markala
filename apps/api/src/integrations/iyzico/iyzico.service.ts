@@ -30,6 +30,9 @@ export interface IyzicoRetrieveResult {
   paymentId?: string;
   conversationId?: string;
   basketId?: string;
+  /** Sepet toplamı (taksit komisyonu HARİÇ) — bizim gönderdiğimiz tutar; doğrulama buna göre. */
+  price?: string;
+  /** Müşterinin gerçekte ödediği (taksit komisyonu DAHİL olabilir, price'tan yüksek). */
   paidPrice?: string;
   errorCode?: string;
   errorMessage?: string;
@@ -107,6 +110,7 @@ export class IyzicoService {
             paymentId: result?.paymentId,
             conversationId: result?.conversationId,
             basketId: result?.basketId,
+            price: result?.price,
             paidPrice: result?.paidPrice,
             errorCode: result?.errorCode,
             errorMessage: result?.errorMessage,
