@@ -55,13 +55,14 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: "status", label: "Duruma göre" },
 ];
 
-type DateRange = "all" | "today" | "7d" | "30d" | "month";
+type DateRange = "all" | "today" | "7d" | "30d" | "month" | "custom";
 const DATE_OPTIONS: Array<{ value: DateRange; label: string }> = [
   { value: "all", label: "Tüm zamanlar" },
   { value: "today", label: "Bugün" },
   { value: "7d", label: "Son 7 gün" },
   { value: "30d", label: "Son 30 gün" },
   { value: "month", label: "Bu ay" },
+  { value: "custom", label: "Özel aralık" },
 ];
 
 export function OrdersClient({ orders }: Props) {
@@ -69,6 +70,8 @@ export function OrdersClient({ orders }: Props) {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
   const [dateRange, setDateRange] = useState<DateRange>("all");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   const now = new Date();
   const inRange = (iso: string): boolean => {
@@ -77,6 +80,12 @@ export function OrdersClient({ orders }: Props) {
     if (Number.isNaN(d.getTime())) return true;
     if (dateRange === "today") return d.toDateString() === now.toDateString();
     if (dateRange === "month") return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    if (dateRange === "custom") {
+      const t = d.getTime();
+      if (customFrom && t < new Date(`${customFrom}T00:00:00`).getTime()) return false;
+      if (customTo && t > new Date(`${customTo}T23:59:59`).getTime()) return false;
+      return true;
+    }
     const days = dateRange === "7d" ? 7 : 30;
     const from = new Date(now);
     from.setDate(from.getDate() - days);
@@ -172,6 +181,27 @@ export function OrdersClient({ orders }: Props) {
             ))}
           </select>
         </label>
+        {dateRange === "custom" && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm">
+            <input
+              type="date"
+              value={customFrom}
+              max={customTo || undefined}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="bg-transparent outline-none text-ink-900"
+              aria-label="Başlangıç tarihi"
+            />
+            <span className="text-ink-400">→</span>
+            <input
+              type="date"
+              value={customTo}
+              min={customFrom || undefined}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="bg-transparent outline-none text-ink-900"
+              aria-label="Bitiş tarihi"
+            />
+          </div>
+        )}
         <label className="flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm">
           <span className="text-ink-500 whitespace-nowrap">Sırala:</span>
           <select
