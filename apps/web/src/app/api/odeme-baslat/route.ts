@@ -35,7 +35,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "missing_params" }, { status: 400 });
   }
 
+  // Cloudflare arkasında gerçek müşteri IP'si cf-connecting-ip'te; iyzico fraud sinyali için en doğrusu.
   const rawIp =
+    req.headers.get("cf-connecting-ip") ||
     (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() ||
     req.headers.get("x-real-ip") ||
     undefined;
