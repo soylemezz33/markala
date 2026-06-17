@@ -88,6 +88,8 @@ services:
       NEXT_PUBLIC_YANDEX_VERIFICATION: ${NEXT_PUBLIC_YANDEX_VERIFICATION}
       NEXT_PUBLIC_GTM_ID: ${NEXT_PUBLIC_GTM_ID}
       NEXT_PUBLIC_APP_VERSION: ${TAG:-latest}
+      # Admin → storefront anlık cache temizleme webhook'u (admin ile AYNI secret)
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
       TZ: Europe/Istanbul
     networks:
       - markala
@@ -111,6 +113,9 @@ services:
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET}
       NEXT_PUBLIC_API_URL: https://api.markala.com.tr
+      # Storefront cache anlık temizleme (web ile AYNI secret) + hedef webhook URL'i
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      WEB_REVALIDATE_URL: ${WEB_REVALIDATE_URL:-https://markala.com.tr/api/revalidate}
       TZ: Europe/Istanbul
     networks:
       - markala

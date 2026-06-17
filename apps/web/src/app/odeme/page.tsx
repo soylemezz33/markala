@@ -142,9 +142,14 @@ export default function CheckoutPage() {
 
     try {
       // 1) Siparişi KALICI olarak backend DB'ye yaz → orderId al (fiyat sunucuda yeniden hesaplanır)
+      // Giriş yapmışsa access token'ı ilet → sipariş kullanıcının HESABINA bağlanır (siparişlerim'de görünür).
+      const token = useAuthStore.getState().accessToken;
       const saveRes = await fetch("/api/siparis-kaydet", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           email,
           phone,

@@ -406,6 +406,15 @@ export interface AdminStatsDto {
   customerCount: number;
   pendingCorporate: number;
   ordersByStatus: Array<{ status: string; count: number }>;
+  /** Entegrasyonların gerçek yapılandırma durumu (env'den) — opsiyonel (eski API ile uyum). */
+  integrations?: {
+    iyzico: boolean;
+    parasut: boolean;
+    sendgrid: boolean;
+    netgsm: boolean;
+    dhl: boolean;
+    r2: boolean;
+  };
 }
 
 export interface BlogPostDto {

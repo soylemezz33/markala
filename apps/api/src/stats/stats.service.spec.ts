@@ -16,7 +16,7 @@ function mockPrisma() {
 describe("StatsService", () => {
   it("özet sayıları derler", async () => {
     const prisma = mockPrisma();
-    const svc = new StatsService(prisma as never);
+    const svc = new StatsService(prisma as never, { get: () => undefined } as never);
     const res = await svc.summary();
     expect(res.orderCount).toBe(5);
     expect(res.revenue).toBe(1200);
@@ -28,7 +28,7 @@ describe("StatsService", () => {
   it("ciro null ise 0 döner", async () => {
     const prisma = mockPrisma();
     prisma.order.aggregate = vi.fn().mockResolvedValue({ _sum: { total: null } });
-    const svc = new StatsService(prisma as never);
+    const svc = new StatsService(prisma as never, { get: () => undefined } as never);
     const res = await svc.summary();
     expect(res.revenue).toBe(0);
   });

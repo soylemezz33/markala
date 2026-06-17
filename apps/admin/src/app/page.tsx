@@ -7,14 +7,6 @@ import {
   Bell, ChartLine, ClockCounterClockwise, Receipt,
 } from "@phosphor-icons/react/dist/ssr";
 
-// Aksiyon bekleyenler — API'de bu detaylar henüz yok, statik sıfır gösteriliyor
-const pendingActions = [
-  { label: "Tasarım onayı bekleyen sipariş", count: 0, icon: Question, href: "/siparisler?filter=tasarim-onay" },
-  { label: "Ödeme sonrası bekleyen", count: 0, icon: CurrencyCircleDollar, href: "/siparisler?filter=odeme-bekliyor" },
-  { label: "Stok azalan ürün", count: 0, icon: Package, href: "/urunler?filter=dusuk-stok" },
-  { label: "Onay bekleyen yorum", count: 0, icon: Bell, href: "/yorumlar?filter=onay-bekliyor" },
-];
-
 /** Prisma enum değerini Türkçe etiket + Tailwind renk sınıfına dönüştürür */
 function statusBadge(status: string): { label: string; className: string } {
   switch (status) {
@@ -52,8 +44,15 @@ export default async function DashboardPage() {
   ]);
 
   // Üretimde sayısı — API enum değeri Prisma'dan direkt geliyor (underscore)
-  const uretimdeCount =
-    (stats.ordersByStatus ?? []).find((s) => s.status === "uretimde")?.count ?? 0;
+  const statusCount = (s: string) => (stats.ordersByStatus ?? []).find((x) => x.status === s)?.count ?? 0;
+  const uretimdeCount = statusCount("uretimde");
+
+  // Aksiyon bekleyenler — GERÇEK stats'tan türetilir (eskiden statik 0 idi).
+  const pendingActions = [
+    { label: "Tasarım bekleyen sipariş", count: statusCount("tasarim_bekleniyor"), icon: Question, href: "/siparisler" },
+    { label: "Üretimdeki sipariş", count: uretimdeCount, icon: Package, href: "/siparisler" },
+    { label: "Bekleyen kurumsal başvuru", count: stats.pendingCorporate ?? 0, icon: Bell, href: "/musteriler/kurumsal-basvurular" },
+  ];
 
   const kpis = [
     {

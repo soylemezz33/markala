@@ -115,13 +115,21 @@ th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #eee;font-size:12p
 
 export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const [currentStatus, setCurrentStatus] = useState(order.status);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [internalNote, setInternalNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const handleStatusChange = (statusId: string) => {
-    setCurrentStatus(statusId);
+    if (statusId === currentStatus || isPending) return;
+    const prev = currentStatus;
+    setStatusError(null);
+    setCurrentStatus(statusId); // optimistik
     startTransition(async () => {
-      await updateOrderStatus(order.id, statusId);
+      const res = await updateOrderStatus(order.id, statusId);
+      if (!res.ok) {
+        setCurrentStatus(prev); // başarısız → geri al
+        setStatusError(res.error);
+      }
     });
   };
 
@@ -272,6 +280,12 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 </button>
               ))}
             </div>
+
+            {statusError && (
+              <p className="mb-4 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2">
+                {statusError}
+              </p>
+            )}
 
             {/* Zaman çizelgesi */}
             <ol className="space-y-3">

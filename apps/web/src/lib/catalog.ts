@@ -70,7 +70,8 @@ function mapProduct(p: ApiProduct): Product {
 
 async function fetchJson(path: string): Promise<unknown> {
   const res = await fetch(`${API_BASE}/api${path}`, {
-    next: { revalidate: 60 },
+    // 30sn ISR + admin düzenlemesinde /api/revalidate ile anlık tazeleme (cross-app).
+    next: { revalidate: 30 },
   });
   if (!res.ok) throw new Error(`catalog API ${path} -> ${res.status}`);
   return res.json();

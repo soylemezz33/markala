@@ -34,12 +34,15 @@ function round2(n: number): number {
  * yalnızca aşağıdaki izinli komşu durumlara taşıyabilir.
  * Örn. teslim_edildi → siparis_alindi YASAK.
  */
+// Admin esnekliği: İLERİ yönde herhangi bir aşamaya atlama + her aktif durumdan iptal serbest.
+// GERİ dönüş ve terminal (teslim/iptal) durumlardan çıkış YASAK. Böylece admin "tasarım"ı
+// atlayıp doğrudan "üretimde"/"kargoda" işaretleyebilir; yanlışlıkla geri alma engellenir.
 export const validStatusTransitions: Record<string, string[]> = {
-  "siparis-alindi": ["tasarim-bekleniyor", "tasarim-onayindi", "uretimde", "iptal-edildi"],
-  "tasarim-bekleniyor": ["tasarim-onayindi", "iptal-edildi"],
-  "tasarim-onayindi": ["uretimde", "iptal-edildi"],
-  uretimde: ["kargoya-verildi", "iptal-edildi"],
-  "kargoya-verildi": ["teslim-edildi"],
+  "siparis-alindi": ["tasarim-bekleniyor", "tasarim-onayindi", "uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi"],
+  "tasarim-bekleniyor": ["tasarim-onayindi", "uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi"],
+  "tasarim-onayindi": ["uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi"],
+  uretimde: ["kargoya-verildi", "teslim-edildi", "iptal-edildi"],
+  "kargoya-verildi": ["teslim-edildi", "iptal-edildi"],
   "teslim-edildi": [],
   "iptal-edildi": [],
 };

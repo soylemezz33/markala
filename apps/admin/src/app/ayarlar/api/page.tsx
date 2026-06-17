@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import {
@@ -18,7 +18,7 @@ interface Integration {
   icon: typeof Plug;
   fields: Array<{ key: string; label: string; type?: "text" | "password" | "url" | "number"; placeholder?: string; required?: boolean }>;
   docsUrl: string;
-  status: "connected" | "disconnected" | "error";
+  status: "connected" | "disconnected" | "error" | "unknown";
 }
 
 const integrations: Integration[] = [
@@ -159,8 +159,27 @@ const categoryLabels: Record<Integration["category"], string> = {
 
 export default function ApiSettingsPage() {
   const [active, setActive] = useState<string>(integrations[0]!.id);
+  // GERÇEK bağlantı durumu (env'den) — backend adminStats().integrations'tan çekilir.
+  const [liveStatus, setLiveStatus] = useState<Record<string, boolean> | null>(null);
 
-  const current = integrations.find((i) => i.id === active)!;
+  useEffect(() => {
+    fetch("/api/integration-status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setLiveStatus(d?.integrations ?? null))
+      .catch(() => {});
+  }, []);
+
+  // Sabit "connected" yerine gerçek durumu uygula (veri gelene kadar "Bilinmiyor").
+  const liveIntegrations = integrations.map((it) => ({
+    ...it,
+    status: liveStatus
+      ? liveStatus[it.id]
+        ? ("connected" as const)
+        : ("disconnected" as const)
+      : ("unknown" as const),
+  }));
+
+  const current = liveIntegrations.find((i) => i.id === active)!;
 
   return (
     <AdminShell>
@@ -178,7 +197,7 @@ export default function ApiSettingsPage() {
         {/* Sol: entegrasyon listesi */}
         <aside className="lg:col-span-4">
           <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
-            {integrations.map((it) => {
+            {liveIntegrations.map((it) => {
               const isActive = active === it.id;
               return (
                 <button
@@ -249,6 +268,10 @@ function IntegrationForm({ integration }: { integration: Integration }) {
           ) : integration.status === "error" ? (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-error/10 text-error">
               <Warning size={11} weight="fill" /> Hata
+            </span>
+          ) : integration.status === "unknown" ? (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-paper-200 text-ink-400">
+              … Bilinmiyor
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-bold bg-paper-200 text-ink-500">

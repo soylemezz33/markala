@@ -26,9 +26,9 @@ const navGroups: Array<{
     title: "Genel",
     links: [
       { href: "/", label: "Dashboard", icon: ChartLineUp },
-      { href: "/siparisler", label: "Siparişler", icon: ShoppingCart, badge: "12" },
+      { href: "/siparisler", label: "Siparişler", icon: ShoppingCart },
       { href: "/musteriler", label: "Müşteriler", icon: Users },
-      { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings, badge: "2" },
+      { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings },
     ],
   },
   {

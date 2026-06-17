@@ -99,12 +99,28 @@ export async function POST(req: NextRequest) {
     notes: noteParts.length ? noteParts.join(" · ") : undefined,
   };
 
-  try {
-    const res = await fetch(`${API_BASE}/api/orders/guest`, {
+  // Giriş yapmış kullanıcı → authed /orders (sipariş userId ile HESABA bağlanır, "siparişlerim"de görünür).
+  // Token yoksa veya authed çağrı 401/403 dönerse misafir /orders/guest'e düşeriz (sipariş asla kaybolmaz).
+  const authHeader = req.headers.get("authorization") ?? undefined;
+
+  async function postOrder(authed: boolean) {
+    return fetch(`${API_BASE}/api/orders${authed ? "" : "/guest"}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(authed && authHeader ? { Authorization: authHeader } : {}),
+      },
       body: JSON.stringify(guestOrder),
     });
+  }
+
+  try {
+    let res = await postOrder(Boolean(authHeader));
+    // Token süresi geçmiş/geçersizse misafir olarak tekrar dene (sipariş oluşsun).
+    if (!res.ok && authHeader && (res.status === 401 || res.status === 403)) {
+      console.warn("[siparis-kaydet] authed sipariş 401/403 → guest fallback");
+      res = await postOrder(false);
+    }
 
     if (!res.ok) {
       let detail: unknown = undefined;
