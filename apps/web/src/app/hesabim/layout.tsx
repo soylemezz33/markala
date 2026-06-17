@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Container, cn } from "@markala/ui";
-import { House, Package, MapPin, ArrowsClockwise, User as UserIcon, SignOut, Receipt, Bell, Lock, Trash, ShieldCheck, Clock, CreditCard } from "@phosphor-icons/react";
+import { House, Package, MapPin, ArrowsClockwise, User as UserIcon, SignOut, Receipt, Bell, Lock, ShieldCheck, Clock, CreditCard } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 
 const links = [
@@ -18,8 +18,7 @@ const links = [
   { href: "/hesabim/bilgilerim", label: "Bilgilerim", icon: UserIcon },
   { href: "/hesabim/sifre", label: "Şifre Değiştir", icon: Lock },
   { href: "/hesabim/bildirim", label: "Bildirim Tercihleri", icon: Bell },
-  { href: "/hesabim/veri-yonetimi", label: "Veri Yönetimi (KVKK)", icon: ShieldCheck },
-  { href: "/hesabim/hesap-sil", label: "Hesabı Sil (KVKK)", icon: Trash, danger: true },
+  { href: "/hesabim/veri-yonetimi", label: "Veri Yönetimi (KVKK)", icon: ShieldCheck, danger: true },
 ];
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {

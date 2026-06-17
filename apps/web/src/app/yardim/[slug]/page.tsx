@@ -15,8 +15,8 @@ const articleCityLinks: Record<string, Array<{ label: string; href: string }>> =
     { label: "Adana matbaa & baskı", href: "/matbaa/adana" },
   ],
   "kargo": [
-    { label: "İstanbul'a baskı kargosu", href: "/matbaa/istanbul" },
-    { label: "Ankara'ya baskı kargosu", href: "/matbaa/ankara" },
+    { label: "Antalya'ya baskı kargosu", href: "/matbaa/antalya" },
+    { label: "Gaziantep'e baskı kargosu", href: "/matbaa/gaziantep" },
   ],
   "siparis": [
     { label: "Mersin matbaa siparişi", href: "/matbaa/mersin" },

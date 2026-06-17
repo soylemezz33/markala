@@ -15,14 +15,23 @@ export default function ProfilePage() {
   const [fullName, setFullName] = useState(user?.fullName ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!user) return null;
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    updateProfile({ fullName, phone });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2200);
+    setSaving(true);
+    setError(null);
+    const res = await updateProfile({ fullName, phone });
+    setSaving(false);
+    if (res.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2200);
+    } else {
+      setError(res.error ?? "Kaydedilemedi.");
+    }
   }
 
   return (
@@ -56,12 +65,13 @@ export default function ProfilePage() {
         </Field>
 
         <div className="flex items-center gap-3 pt-3">
-          <Button type="submit"><UserIcon size={16} weight="bold" /> Kaydet</Button>
+          <Button type="submit" disabled={saving}><UserIcon size={16} weight="bold" /> {saving ? "Kaydediliyor…" : "Kaydet"}</Button>
           {saved && (
             <span className="inline-flex items-center gap-1.5 text-sm text-success font-medium">
               <CheckCircle size={16} weight="fill" /> Kaydedildi
             </span>
           )}
+          {error && <span className="text-sm text-error font-medium">{error}</span>}
         </div>
       </form>
 

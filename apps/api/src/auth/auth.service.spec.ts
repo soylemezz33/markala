@@ -11,6 +11,7 @@ import { AuthService, createDummyHash } from "./auth.service";
 
 const cfg = { get: (_k: string) => undefined } as any;
 const jwt = { sign: () => "signed.jwt.token" } as any;
+const mail = { sendVerificationEmail: vi.fn(), sendPasswordResetEmail: vi.fn() } as any;
 
 function makePrisma(over: Partial<Record<string, any>> = {}) {
   return {
@@ -33,7 +34,7 @@ describe("AuthService.register", () => {
   it("mevcut e-posta → 409 ConflictException (500 DEĞİL)", async () => {
     const prisma = makePrisma();
     prisma.user.findUnique.mockResolvedValue({ id: "existing", email: input.email });
-    const svc = new AuthService(prisma, jwt, cfg);
+    const svc = new AuthService(prisma, jwt, cfg, mail);
 
     await expect(svc.register(input, ctx)).rejects.toBeInstanceOf(ConflictException);
     expect(prisma.user.create).not.toHaveBeenCalled();
@@ -42,7 +43,7 @@ describe("AuthService.register", () => {
   it("yarış durumu: create P2002 → 409 ConflictException", async () => {
     const prisma = makePrisma();
     prisma.user.create.mockRejectedValue(Object.assign(new Error("unique"), { code: "P2002" }));
-    const svc = new AuthService(prisma, jwt, cfg);
+    const svc = new AuthService(prisma, jwt, cfg, mail);
 
     await expect(svc.register(input, ctx)).rejects.toBeInstanceOf(ConflictException);
   });
@@ -50,14 +51,14 @@ describe("AuthService.register", () => {
   it("gerçek beklenmeyen DB hatası → 500 InternalServerError", async () => {
     const prisma = makePrisma();
     prisma.user.create.mockRejectedValue(new Error("connection lost"));
-    const svc = new AuthService(prisma, jwt, cfg);
+    const svc = new AuthService(prisma, jwt, cfg, mail);
 
     await expect(svc.register(input, ctx)).rejects.toBeInstanceOf(InternalServerErrorException);
   });
 
   it("yeni e-posta → access + refresh token üretir", async () => {
     const prisma = makePrisma();
-    const svc = new AuthService(prisma, jwt, cfg);
+    const svc = new AuthService(prisma, jwt, cfg, mail);
 
     const res = await svc.register({ ...input, email: "yeni@markala.test" }, ctx);
     expect(res.accessToken).toBe("signed.jwt.token");
@@ -87,7 +88,7 @@ describe("AuthService.login — timing koruması", () => {
   it("bilinmeyen e-posta → UnauthorizedException (dummy verify path çökmeden çalışır)", async () => {
     const prisma = makePrisma();
     prisma.user.findUnique.mockResolvedValue(null);
-    const svc = new AuthService(prisma, jwt, cfg);
+    const svc = new AuthService(prisma, jwt, cfg, mail);
 
     await expect(svc.login("yok@markala.test", "Sifre123", ctx)).rejects.toBeInstanceOf(
       UnauthorizedException,

@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
-import { ArrowLeft, FloppyDisk, Eye, Trash, Plus, ArrowsClockwise } from "@phosphor-icons/react";
+import { ArrowLeft, FloppyDisk, Eye, Trash, ArrowsClockwise } from "@phosphor-icons/react";
 import { ImageGallery } from "@/components/image-uploader";
-import { updateProduct } from "./actions";
+import { updateProduct, removeProduct } from "./actions";
 
 export interface CategoryRow {
   id: string;
@@ -46,6 +47,7 @@ interface Props {
 }
 
 export function ProductDetailClient({ product, categories }: Props) {
+  const router = useRouter();
   const [name, setName] = useState(product.name);
   const [shortDesc, setShortDesc] = useState(product.shortDescription);
   const [description, setDescription] = useState(product.description);
@@ -57,6 +59,7 @@ export function ProductDetailClient({ product, categories }: Props) {
     Number(product.startingPrice ?? product.basePrice),
   );
   const [bestseller, setBestseller] = useState(product.bestseller ?? false);
+  const [isActive, setIsActive] = useState(product.isActive ?? true);
   const [seoTitle, setSeoTitle] = useState(product.seo?.title ?? "");
   const [seoDesc, setSeoDesc] = useState(product.seo?.description ?? "");
   const [keywords, setKeywords] = useState(
@@ -64,12 +67,71 @@ export function ProductDetailClient({ product, categories }: Props) {
   );
   const [images, setImages] = useState<string[]>(product.images ?? []);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const matrixParam = product.parameters.find((p) => p.kind === "matrix");
+
+  // Matris hücre fiyatları controlled state: anahtar `${rowId}-${colId}`, değer string (boş = satışta değil).
+  const [cellPrices, setCellPrices] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const cell of matrixParam?.cells ?? []) {
+      init[`${cell.rowId}-${cell.colId}`] = cell.price != null ? String(cell.price) : "";
+    }
+    return init;
+  });
+
+  const setCell = (key: string, val: string) =>
+    setCellPrices((prev) => ({ ...prev, [key]: val }));
+
+  // "%X Toplu Artır" — mevcut (dolu) hücreleri oransal artırır. Sadece controlled state'i değiştirir,
+  // değişiklik "Kaydet"e basınca uygulanır (sahte kayıt yok).
+  function handleBulkIncrease() {
+    const raw = window.prompt("Tüm dolu hücreleri yüzde kaç artıralım? (örn. 10)");
+    if (raw == null) return;
+    const pct = Number(raw);
+    if (!Number.isFinite(pct) || pct === 0) {
+      toast.error("Geçerli bir yüzde girin.");
+      return;
+    }
+    setCellPrices((prev) => {
+      const next: Record<string, string> = {};
+      for (const [k, v] of Object.entries(prev)) {
+        if (v === "" || v == null) {
+          next[k] = v;
+          continue;
+        }
+        const base = Number(v);
+        if (!Number.isFinite(base)) {
+          next[k] = v;
+          continue;
+        }
+        next[k] = String(Math.round(base * (1 + pct / 100) * 100) / 100);
+      }
+      return next;
+    });
+    toast.info(`Dolu hücreler %${pct} güncellendi. Kaydet'e basınca uygulanır.`);
+  }
+
+  /** Controlled matris state'inden updateProduct'a gönderilecek parameters dizisini üretir. */
+  function buildParametersPayload() {
+    if (!matrixParam) return undefined;
+    const updatedMatrix = {
+      ...matrixParam,
+      cells: (matrixParam.cells ?? []).map((cell) => {
+        const key = `${cell.rowId}-${cell.colId}`;
+        const raw = cellPrices[key];
+        const price = raw === "" || raw == null ? 0 : Number(raw);
+        return { ...cell, price: Number.isFinite(price) ? price : 0 };
+      }),
+    };
+    // Diğer parametreleri korur, yalnız matris parametresini günceller.
+    return product.parameters.map((p) => (p.id === matrixParam.id ? updatedMatrix : p));
+  }
 
   async function handleSave() {
     setSaving(true);
     try {
+      const parameters = buildParametersPayload();
       await updateProduct(product.id, {
         name,
         shortDescription: shortDesc,
@@ -78,7 +140,9 @@ export function ProductDetailClient({ product, categories }: Props) {
         productionTime,
         startingPrice,
         bestseller,
+        isActive,
         images,
+        ...(parameters ? { parameters } : {}),
         seo: {
           title: seoTitle,
           description: seoDesc,
@@ -94,6 +158,21 @@ export function ProductDetailClient({ product, categories }: Props) {
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleDelete() {
+    if (!confirm(`"${product.name}" ürünü kalıcı olarak silinecek. Emin misiniz?`)) return;
+    setDeleting(true);
+    (async () => {
+      try {
+        await removeProduct(product.id);
+        toast.success(`"${product.name}" silindi.`);
+        router.push("/urunler");
+      } catch {
+        toast.error("Silme başarısız. Lütfen tekrar deneyin.");
+        setDeleting(false);
+      }
+    })();
   }
 
   return (
@@ -243,17 +322,25 @@ export function ProductDetailClient({ product, categories }: Props) {
                           </div>
                         </th>
                         {matrixParam.cols?.map((c) => {
-                          const cell = matrixParam.cells?.find(
+                          const key = `${r.id}-${c.id}`;
+                          // Sadece tanımlı hücreler (cells'te var olan kombinasyonlar) düzenlenebilir;
+                          // tanımsız kombinasyon "—" (salt-okunur) kalır.
+                          const hasCell = matrixParam.cells?.some(
                             (x) => x.rowId === r.id && x.colId === c.id,
                           );
                           return (
                             <td key={c.id} className="px-1.5 py-1 text-center">
-                              <input
-                                type="number"
-                                defaultValue={cell?.price ?? ""}
-                                placeholder="—"
-                                className="w-20 px-1.5 py-1 rounded border border-paper-200 text-xs tabular-nums text-center focus:border-ink-900 focus:outline-none"
-                              />
+                              {hasCell ? (
+                                <input
+                                  type="number"
+                                  value={cellPrices[key] ?? ""}
+                                  onChange={(e) => setCell(key, e.target.value)}
+                                  placeholder="—"
+                                  className="w-20 px-1.5 py-1 rounded border border-paper-200 text-xs tabular-nums text-center focus:border-ink-900 focus:outline-none"
+                                />
+                              ) : (
+                                <span className="text-ink-400">—</span>
+                              )}
                             </td>
                           );
                         })}
@@ -263,13 +350,13 @@ export function ProductDetailClient({ product, categories }: Props) {
                 </table>
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100">
-                  <Plus size={12} weight="bold" /> Satır Ekle
-                </button>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100">
-                  <Plus size={12} weight="bold" /> Sütun Ekle
-                </button>
-                <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100 ml-auto">
+                {/* "Satır/Sütun Ekle" şimdilik yok: yeni eksen (id/etiket) tanımlama akışı
+                    backend'de güvenli şekilde desteklenmiyor — yanlış vaat vermemek için gizli. */}
+                <button
+                  type="button"
+                  onClick={handleBulkIncrease}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100 ml-auto"
+                >
                   <ArrowsClockwise size={12} weight="bold" /> %X Toplu Artır
                 </button>
               </div>
@@ -314,7 +401,7 @@ export function ProductDetailClient({ product, categories }: Props) {
           <Card title="Yayın Durumu">
             <label className="flex items-center justify-between gap-3 cursor-pointer">
               <span className="text-sm font-medium text-ink-900">Yayında</span>
-              <Toggle checked={product.isActive ?? true} onChange={() => {}} />
+              <Toggle checked={isActive} onChange={setIsActive} />
             </label>
             <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
               <span className="text-sm font-medium text-ink-900">
@@ -322,12 +409,7 @@ export function ProductDetailClient({ product, categories }: Props) {
               </span>
               <Toggle checked={bestseller} onChange={setBestseller} />
             </label>
-            <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
-              <span className="text-sm font-medium text-ink-900">
-                Anasayfada öne çıkar
-              </span>
-              <Toggle checked={false} onChange={() => {}} />
-            </label>
+            {/* "Anasayfada öne çıkar" kaldırıldı: backend'de karşılığı yok (yanlış vaat vermemek için). */}
           </Card>
 
           <Card title="Görseller">
@@ -336,12 +418,11 @@ export function ProductDetailClient({ product, categories }: Props) {
 
           <Card title="Tehlikeli Bölge">
             <button
-              onClick={() =>
-                confirm(`"${product.name}" ürünü silinecek. Emin misiniz?`)
-              }
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium border border-error/30 text-error hover:bg-error/10"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-md text-sm font-medium border border-error/30 text-error hover:bg-error/10 disabled:opacity-60"
             >
-              <Trash size={14} /> Ürünü Sil
+              <Trash size={14} /> {deleting ? "Siliniyor…" : "Ürünü Sil"}
             </button>
           </Card>
         </div>

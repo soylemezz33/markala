@@ -131,7 +131,7 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           {/* Sol: Galeri + Tabs */}
           <div className="lg:col-span-7 space-y-10">
-            <Gallery images={product.images} alt={product.name} />
+            <Gallery images={product.images} alt={product.name} fallbackSrc={`/api/mockup?slug=${product.slug}&w=800&h=800`} />
 
             {/* Hızlı aksiyonlar — Beğen / Paylaş */}
             <div className="flex items-center gap-2">

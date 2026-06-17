@@ -4,9 +4,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@markala/ui";
 
-export function Gallery({ images, alt }: { images: string[]; alt: string }) {
+export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: string; fallbackSrc?: string }) {
   const [active, setActive] = useState(0);
-  const safeImages = images.length > 0 ? images : [""];
+  const placeholder = fallbackSrc || "/api/mockup?w=800&h=800";
+  const safeImages = images.length > 0 ? images : [placeholder];
 
   return (
     <div>

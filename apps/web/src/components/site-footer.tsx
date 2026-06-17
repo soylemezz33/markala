@@ -156,7 +156,9 @@ export function SiteFooter() {
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
             <span>Ödeme:</span>
-            <PaymentBrand label="Havale / EFT" />
+            <PaymentBrand label="Kredi / Banka Kartı" />
+            <PaymentBrand label="3D Secure" />
+            <PaymentBrand label="iyzico" />
           </div>
         </Container>
       </div>

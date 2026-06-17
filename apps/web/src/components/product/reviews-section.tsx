@@ -129,20 +129,12 @@ export function ProductReviewsSection({ productSlug }: Props) {
               <p className="mt-2 text-sm text-ink-700 leading-relaxed">{r.comment}</p>
 
               <footer className="mt-3 flex items-center gap-3 text-[11px] text-ink-500">
-                <button className="inline-flex items-center gap-1 hover:text-ink-900">
-                  <ThumbsUp size={11} /> Faydalı ({r.helpful})
-                </button>
+                <span className="inline-flex items-center gap-1">
+                  <ThumbsUp size={11} /> {r.helpful} kişi faydalı buldu
+                </span>
               </footer>
             </article>
           ))}
-
-          {stats.count > reviews.length && (
-            <div className="text-center pt-2">
-              <button className="text-sm font-medium text-brand-700 hover:text-brand-900">
-                Tüm {stats.count} yorumu göster →
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </section>

@@ -5,8 +5,8 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { WhatsappLogo, Phone, X, ChatCircleText } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
 
-const WHATSAPP_NUMBER = "903244333351";
-const PHONE_NUMBER = "+903244333351";
+const WHATSAPP_NUMBER = "905319004102"; // mobil hat — sabit hat (0324) WhatsApp'a kayıtlı değil
+const PHONE_NUMBER = "+903244333351"; // arama için sabit hat
 const QUICK_MESSAGE = "Merhaba, Markala'dan bilgi almak istiyorum.";
 
 /**

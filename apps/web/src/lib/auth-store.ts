@@ -61,7 +61,7 @@ interface AuthState {
     marketingConsent?: boolean;
   }) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
-  updateProfile: (patch: Partial<User>) => Promise<void>;
+  updateProfile: (patch: Partial<User>) => Promise<{ ok: boolean; error?: string }>;
   /** App açılışında bir kez çağrılır (AuthBootstrap). */
   bootstrap: () => Promise<void>;
 }
@@ -113,13 +113,16 @@ export const useAuthStore = create<AuthState>()(
 
       updateProfile: async (patch) => {
         const { user } = get();
-        if (!user) return;
+        if (!user) return { ok: false, error: "Oturum bulunamadı." };
+        const prev = user;
         set({ user: { ...user, ...patch } }); // optimistic
         try {
           const updated = await withRefresh(() => client.users.updateProfile(patch));
           set({ user: updated });
-        } catch {
-          // optimistic değer kalır; kalıcı hata UI tarafında ele alınır
+          return { ok: true };
+        } catch (e) {
+          set({ user: prev }); // başarısızsa optimistic değişikliği geri al — yanlış "kaydedildi" gösterme
+          return { ok: false, error: (e as ApiError)?.message ?? "Profil güncellenemedi." };
         }
       },
 

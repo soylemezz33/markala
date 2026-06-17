@@ -8,8 +8,15 @@ export function DesignUpload() {
   const { state, dispatch } = useConfigurator();
   const { needsDesign, uploadedFileName } = state;
 
+  const MAX_MB = 200;
+
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
+    if (file && file.size > MAX_MB * 1024 * 1024) {
+      alert(`Dosya çok büyük (maks. ${MAX_MB} MB). Daha küçük bir dosya seçin veya sipariş sonrası WhatsApp ile gönderin.`);
+      e.target.value = "";
+      return;
+    }
     dispatch({ type: "UPLOAD_FILE", file });
   }
 
@@ -31,6 +38,7 @@ export function DesignUpload() {
           )}
           role="switch"
           aria-checked={needsDesign}
+          aria-label="Tasarım desteği istiyorum"
         >
           <span
             className={cn(
@@ -53,7 +61,9 @@ export function DesignUpload() {
             <>
               <CheckCircle size={28} className="mx-auto text-success" />
               <p className="mt-2 text-sm font-medium text-ink-900 break-all">{uploadedFileName}</p>
-              <p className="mt-1 text-xs text-ink-500">Dosya hazır — sepete eklerken yüklenecek</p>
+              <p className="mt-1 text-xs text-ink-500">
+                Dosya adı kaydedildi. Baskı dosyanızı sipariş onayından sonra e-posta / WhatsApp ile ileteceğiz.
+              </p>
             </>
           ) : (
             <>

@@ -30,7 +30,7 @@ export function Configurator({ product }: { product: Product }) {
     addItem({
       productSlug: product.slug,
       productName: product.name,
-      productImage: product.images[0] ?? "",
+      productImage: product.images[0] || `/api/mockup?slug=${product.slug}&w=200&h=200`,
       configuration: {
         selections: state.selections,
         summary: buildSummary(product, { selections: state.selections }, state.needsDesign),

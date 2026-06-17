@@ -51,6 +51,8 @@ async function bootstrap() {
   app.use(rateLimit({ windowMs: 60_000, max: 5, path: "/auth/login", method: "POST" }));
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/resend-verification", method: "POST" }));
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/verify-email", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60 * 60_000, max: 5, path: "/auth/forgot-password", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/reset-password", method: "POST" }));
   app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/auth/refresh", method: "POST" }));
   // Ödeme başlatma — nonce zaten zorunlu; bu per-IP limit ek savunma (kötüye kullanım/spam).
   app.use(rateLimit({ windowMs: 60_000, max: 20, path: "/payments/iyzico/init", method: "POST" }));

@@ -133,6 +133,12 @@ export class MarkalaApiClient {
     /** Şifre değiştir — currentPassword backend'de argon2.verify ile doğrulanır; hatalıysa 401. */
     changePassword: (data: { currentPassword: string; newPassword: string }) =>
       this.request<{ ok: boolean }>("PATCH", "/auth/password", data, { auth: true }),
+    /** Şifre sıfırlama talebi — daima { ok:true } (enumeration koruması); kullanıcı varsa mail gider. */
+    forgotPassword: (email: string) =>
+      this.request<{ ok: boolean }>("POST", "/auth/forgot-password", { email }),
+    /** Token ile yeni şifre belirle — geçersiz/süresi dolmuş token 400 döner. */
+    resetPassword: (data: { token: string; newPassword: string }) =>
+      this.request<{ ok: boolean }>("POST", "/auth/reset-password", data),
   };
 
   // === Categories ===

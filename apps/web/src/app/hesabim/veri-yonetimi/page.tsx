@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@markala/ui";
+import { apiClient, withRefresh } from "@/lib/api";
 import {
   Download,
   Trash,
@@ -52,6 +53,29 @@ export default function VeriYonetimiPage() {
   const [pushMarketing, setPushMarketing] = useState(false);
   const [personalizedAds, setPersonalizedAds] = useState(true);
   const [prefsSaved, setPrefsSaved] = useState(false);
+  const [prefsSaving, setPrefsSaving] = useState(false);
+  const [prefsError, setPrefsError] = useState<string | null>(null);
+  // Bildirim tercihleri (sipariş/kargo vb.) ile aynı notificationPrefs JSON'ında saklanıyor;
+  // marketing'i merge ederken üzerine yazmamak için tüm prefs'i tutuyoruz.
+  const loadedPrefs = useRef<Record<string, unknown>>({});
+
+  // Kayıtlı pazarlama tercihlerini yükle.
+  useEffect(() => {
+    withRefresh(() => apiClient.users.getNotificationPrefs())
+      .then((stored) => {
+        if (stored && typeof stored === "object") {
+          loadedPrefs.current = stored as Record<string, unknown>;
+          const m = (stored as Record<string, { email?: boolean; sms?: boolean; push?: boolean; ads?: boolean }>).marketing;
+          if (m && typeof m === "object") {
+            setEmailMarketing(!!m.email);
+            setSmsMarketing(!!m.sms);
+            setPushMarketing(!!m.push);
+            setPersonalizedAds(!!m.ads);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   if (!user) return null;
 
@@ -59,7 +83,11 @@ export default function VeriYonetimiPage() {
     setExporting(true);
     setExportError(null);
     try {
-      const res = await fetch("/api/hesabim/veri-export", { method: "POST" });
+      const token = useAuthStore.getState().accessToken;
+      const res = await fetch("/api/hesabim/veri-export", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         setExportError(j.error ?? "Veri indirme başarısız oldu.");
@@ -132,10 +160,24 @@ export default function VeriYonetimiPage() {
     }
   }
 
-  function savePrefs() {
-    setPrefsSaved(true);
-    setTimeout(() => setPrefsSaved(false), 2500);
-    // TODO: prod'da /api/hesabim/pazarlama-tercihleri'ne POST
+  async function savePrefs() {
+    setPrefsSaving(true);
+    setPrefsError(null);
+    // Mevcut bildirim tercihlerini koru, yalnız marketing'i güncelle.
+    const merged = {
+      ...loadedPrefs.current,
+      marketing: { email: emailMarketing, sms: smsMarketing, push: pushMarketing, ads: personalizedAds },
+    };
+    try {
+      await withRefresh(() => apiClient.users.updateNotificationPrefs(merged));
+      loadedPrefs.current = merged;
+      setPrefsSaved(true);
+      setTimeout(() => setPrefsSaved(false), 2500);
+    } catch {
+      setPrefsError("Kaydedilemedi, lütfen tekrar deneyin.");
+    } finally {
+      setPrefsSaving(false);
+    }
   }
 
   return (
@@ -277,7 +319,8 @@ export default function VeriYonetimiPage() {
                 <CheckCircle size={16} weight="fill" /> Kaydedildi
               </span>
             )}
-            <Button onClick={savePrefs}>Kaydet</Button>
+            {prefsError && <span className="text-sm text-error font-medium">{prefsError}</span>}
+            <Button onClick={savePrefs} disabled={prefsSaving}>{prefsSaving ? "Kaydediliyor…" : "Kaydet"}</Button>
           </div>
         </div>
       </section>

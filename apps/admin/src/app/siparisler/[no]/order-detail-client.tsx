@@ -14,7 +14,7 @@ import {
   CheckCircle,
   ClockClockwise,
   Printer,
-  ChatCircle,
+  XCircle,
 } from "@phosphor-icons/react";
 import { updateOrderStatus } from "./actions";
 
@@ -157,6 +157,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
 
   const customer = order.customerName ?? order.email ?? "—";
   const currentStatusIndex = STATUSES.findIndex((s) => s.id === currentStatus);
+  const isCancelled = currentStatus === "iptal-edildi";
 
   const a = order.shippingAddress;
 
@@ -286,12 +287,17 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
           </Card>
 
           <Card title="Sipariş Durumu">
+            {isCancelled && (
+              <p className="mb-4 text-xs font-semibold text-error bg-error/10 border border-error/20 rounded-md px-3 py-2 flex items-center gap-1.5">
+                <XCircle size={14} weight="fill" /> Bu sipariş iptal edildi.
+              </p>
+            )}
             <div className="flex flex-wrap gap-2 mb-4">
               {STATUSES.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleStatusChange(s.id)}
-                  disabled={isPending}
+                  disabled={isPending || isCancelled}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all disabled:opacity-60 ${
                     currentStatus === s.id
                       ? "bg-ink-900 text-paper-50 border-ink-900"
@@ -302,6 +308,18 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 </button>
               ))}
             </div>
+
+            {!isCancelled && (
+              <div className="mb-4">
+                <button
+                  onClick={() => handleStatusChange("iptal-edildi")}
+                  disabled={isPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-error/30 text-error hover:bg-error/10 disabled:opacity-60"
+                >
+                  <XCircle size={14} /> Siparişi İptal Et
+                </button>
+              </div>
+            )}
 
             {statusError && (
               <p className="mb-4 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2">
@@ -350,11 +368,17 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
               value={internalNote}
               onChange={(e) => setInternalNote(e.target.value)}
               rows={3}
-              placeholder="Üretim ekibine not, tasarım uyarısı, müşteriye iletilmeyecek bilgi..."
-              className="w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm"
+              disabled
+              placeholder="Sipariş notu kaydetme özelliği yakında eklenecek (backend desteği bekleniyor)."
+              className="w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-100/50 text-sm text-ink-500 disabled:cursor-not-allowed"
             />
-            <button className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium bg-ink-900 text-paper-50 hover:bg-ink-700">
-              <ChatCircle size={12} /> Not Ekle
+            <button
+              type="button"
+              disabled
+              title="Sipariş notu kaydetme henüz aktif değil"
+              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium bg-paper-200 text-ink-500 cursor-not-allowed"
+            >
+              <ClockClockwise size={12} /> Not Ekle (yakında)
             </button>
           </Card>
         </div>

@@ -9,3 +9,10 @@ export async function updateProduct(id: string, data: Record<string, unknown>) {
   revalidatePath(`/urunler`);
   await revalidateStorefront(); // storefront'u ANINDA tazele (fiyat/isim değişikliği sitede görünsün)
 }
+
+export async function removeProduct(id: string) {
+  const api = await getAdminApi();
+  await api.products.remove(id);
+  revalidatePath(`/urunler`);
+  await revalidateStorefront(); // silinen ürün storefront'tan da kalksın
+}

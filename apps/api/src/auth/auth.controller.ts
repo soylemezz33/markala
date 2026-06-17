@@ -13,7 +13,7 @@ import type { Request, Response } from "express";
 import { ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt.guard";
-import { ChangePasswordDto, LoginDto, RegisterDto } from "./dtos";
+import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from "./dtos";
 
 /**
  * SECURITY HARDENING (auth.controller):
@@ -91,6 +91,19 @@ export class AuthController {
     await this.auth.logout(raw);
     res.clearCookie(this.cookieName, this.cookieOptions(0));
     return { ok: true };
+  }
+
+  // Şifre sıfırlama TALEBİ (public). Daima { ok:true } döner — kullanıcı var/yok sızdırılmaz.
+  // Rate limit: forgot-password 5/saat/IP (main.ts rateLimit middleware) — e-posta bombardımanı önlenir.
+  @Post("forgot-password")
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.auth.requestPasswordReset(dto.email);
+  }
+
+  // Token ile yeni şifre belirle (public). Geçersiz/süresi dolmuş token → 400.
+  @Post("reset-password")
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.auth.resetPassword(dto.token, dto.newPassword);
   }
 
   @Get("me")

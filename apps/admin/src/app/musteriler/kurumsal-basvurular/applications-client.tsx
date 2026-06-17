@@ -11,6 +11,7 @@ import {
   Clock,
   FileText,
   MagnifyingGlass,
+  X,
 } from "@phosphor-icons/react";
 import type { CorporateApplicationDto } from "@markala/api-client";
 import { setApplicationStatus } from "./actions";
@@ -53,6 +54,7 @@ export function ApplicationsClient({ applications }: Props) {
   const [filter, setFilter] = useState<Status | "all">("pending");
   const [search, setSearch] = useState("");
   const [pending, startTransition] = useTransition();
+  const [detail, setDetail] = useState<CorporateApplicationDto | null>(null);
 
   const filtered = applications.filter((a) => {
     if (filter !== "all" && a.status !== filter) return false;
@@ -170,6 +172,7 @@ export function ApplicationsClient({ applications }: Props) {
                   <div className="flex items-center justify-end gap-1">
                     <button
                       title="Detay"
+                      onClick={() => setDetail(a)}
                       className="p-1.5 rounded hover:bg-paper-100 text-ink-500"
                       aria-label="Detay"
                     >
@@ -237,7 +240,84 @@ export function ApplicationsClient({ applications }: Props) {
       >
         ← Tüm müşteriler
       </Link>
+
+      {detail && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/60 backdrop-blur-sm p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDetail(null);
+          }}
+        >
+          <div className="bg-paper-50 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-paper-200">
+              <div className="flex items-center gap-2">
+                <Buildings size={20} className="text-brand-700" />
+                <h2 className="text-lg font-semibold text-ink-900">{detail.companyName}</h2>
+              </div>
+              <button onClick={() => setDetail(null)} className="p-1.5 -mr-1.5 rounded hover:bg-paper-100 text-ink-500" aria-label="Kapat">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                    STATUS_CLASS[detail.status] ?? STATUS_CLASS.none
+                  }`}
+                >
+                  {STATUS_LABEL[detail.status] ?? detail.status}
+                </span>
+              </div>
+
+              <DetailRow label="Firma Adı" value={detail.companyName} />
+              <DetailRow label="Vergi Dairesi" value={detail.taxOffice} />
+              <DetailRow label="Vergi Numarası" value={detail.taxNumber} mono />
+              <DetailRow label="Yetkili Kişi" value={detail.contactName} />
+              <DetailRow label="E-posta" value={detail.email} />
+              <DetailRow label="Telefon" value={detail.phone} />
+              <DetailRow label="Başvuru Tarihi" value={formatDate(detail.createdAt)} />
+            </div>
+
+            {detail.status === "pending" && (
+              <div className="flex justify-end gap-2 px-6 py-4 border-t border-paper-200">
+                <button
+                  onClick={() => {
+                    handleSetStatus(detail.id, "rejected");
+                    setDetail(null);
+                  }}
+                  disabled={pending}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-error/15 text-error hover:bg-error/25 disabled:opacity-50"
+                >
+                  Reddet
+                </button>
+                <button
+                  onClick={() => {
+                    handleSetStatus(detail.id, "approved");
+                    setDetail(null);
+                  }}
+                  disabled={pending}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-success/15 text-success hover:bg-success/25 disabled:opacity-50"
+                >
+                  Onayla
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </AdminShell>
+  );
+}
+
+function DetailRow({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider flex-none pt-0.5">{label}</span>
+      <span className={`text-sm text-ink-900 text-right break-words ${mono ? "font-mono" : ""}`}>
+        {value || "—"}
+      </span>
+    </div>
   );
 }
 

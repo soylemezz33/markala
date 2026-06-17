@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { Plus, MagnifyingGlass, Eye, PencilSimple, Trash, Package, ArrowsDownUp } from "@phosphor-icons/react";
+import { removeProduct } from "./actions";
 
 export interface CategoryRow {
   id: string;
@@ -33,6 +34,19 @@ interface Props {
 export function ProductsClient({ products, categories }: Props) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [isPending, startTransition] = useTransition();
+
+  function handleDelete(p: ProductRow) {
+    if (!confirm(`"${p.name}" ürünü kalıcı olarak silinecek. Emin misiniz?`)) return;
+    startTransition(async () => {
+      try {
+        await removeProduct(p.id);
+        toast.success(`"${p.name}" silindi.`);
+      } catch {
+        toast.error("Silme başarısız. Lütfen tekrar deneyin.");
+      }
+    });
+  }
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -142,8 +156,14 @@ export function ProductsClient({ products, categories }: Props) {
                     </td>
                     <td className="px-4 py-3 text-center text-xs text-ink-500 hidden md:table-cell">{p.productionTime}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success/10 text-success">
-                        Aktif
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                          p.isActive === false
+                            ? "bg-paper-200 text-ink-500"
+                            : "bg-success/10 text-success"
+                        }`}
+                      >
+                        {p.isActive === false ? "Pasif" : "Aktif"}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -164,9 +184,10 @@ export function ProductsClient({ products, categories }: Props) {
                           <PencilSimple size={14} />
                         </Link>
                         <button
-                          className="p-1.5 rounded text-ink-500 hover:bg-error/10 hover:text-error"
+                          className="p-1.5 rounded text-ink-500 hover:bg-error/10 hover:text-error disabled:opacity-50"
                           title="Sil"
-                          onClick={() => toast.info(`"${p.name}" silinecek`)}
+                          disabled={isPending}
+                          onClick={() => handleDelete(p)}
                         >
                           <Trash size={14} />
                         </button>

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
@@ -10,6 +11,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
 import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
+import { MailService } from "../mail/mail.service";
 
 /**
  * SECURITY HARDENING (auth.service):
@@ -48,7 +50,77 @@ export class AuthService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
+    private mail: MailService,
   ) {}
+
+  /**
+   * Şifre sıfırlama TALEBİ — daima sessizce başarılı döner (user enumeration koruması).
+   * Kullanıcı varsa: tek-kullanımlık token üretir (1 saat), hash'ini DB'ye yazar, sıfırlama
+   * bağlantısını e-posta ile yollar. SMTP yapılandırılmamışsa mail sessizce başarısız olur
+   * ama akış bozulmaz (log'a düşer).
+   */
+  async requestPasswordReset(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    // Kullanıcı yoksa da aynı yanıt + benzer gecikme — var/yok bilgisini sızdırma.
+    if (!user || user.deletedAt) {
+      this.logger.warn(`password.reset.request_unknown email=${email}`);
+      return { ok: true };
+    }
+
+    const rawToken = crypto.randomBytes(48).toString("base64url");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 saat
+
+    // Aynı kullanıcının tüketilmemiş eski token'larını geçersiz kıl (tek aktif link).
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId: user.id, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    await this.prisma.passwordResetToken.create({
+      data: { userId: user.id, tokenHash, expiresAt },
+    });
+
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const resetUrl = `${webUrl}/sifre-sifirla?token=${rawToken}`;
+    await this.mail.sendPasswordResetEmail(user.email, resetUrl); // hata fırlatmaz
+    this.logger.log(`password.reset.request_sent userId=${user.id}`);
+    return { ok: true };
+  }
+
+  /**
+   * Token ile yeni şifre belirle. Token geçersiz/süresi dolmuş/kullanılmışsa 400.
+   * Başarıda: argon2 hash yazılır, token tüketilir, kullanıcının TÜM refresh token'ları revoke
+   * edilir (ele geçirilmiş oturumlar düşer; kullanıcı yeni şifreyle yeniden giriş yapar).
+   */
+  async resetPassword(rawToken: string, newPassword: string) {
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const stored = await this.prisma.passwordResetToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!stored || stored.consumedAt || stored.expiresAt < new Date()) {
+      this.logger.warn(`password.reset.invalid_token`);
+      throw new BadRequestException(
+        "Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş. Lütfen yeniden talep edin.",
+      );
+    }
+
+    const passwordHash = await argon2.hash(newPassword);
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: stored.userId }, data: { passwordHash } }),
+      this.prisma.passwordResetToken.update({
+        where: { id: stored.id },
+        data: { consumedAt: new Date() },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: stored.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+    this.logger.log(`password.reset.ok userId=${stored.userId}`);
+    return { ok: true };
+  }
 
   /** Bilinmeyen e-postada verify edilecek geçerli dummy hash — ilk çağrıda üretip cache'ler. Bkz. createDummyHash(). */
   private getDummyHash(): Promise<string> {

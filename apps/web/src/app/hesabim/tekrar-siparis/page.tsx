@@ -1,17 +1,34 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Button } from "@markala/ui";
 import { ArrowsClockwise, Package, ArrowRight, Star, ShoppingBag } from "@phosphor-icons/react";
-import { useOrdersStore } from "@/lib/orders-store";
+import { useAuthStore } from "@/lib/auth-store";
+import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import type { Order } from "@markala/types";
 
 export default function TekrarSiparisPage() {
-  const orders = useOrdersStore((s) => s.orders);
+  const user = useAuthStore((s) => s.user);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
+  const [orders, setOrders] = useState<Order[] | null>(null);
+
+  // Gerçek siparişler backend'den (eskiden yalnız localStorage'dan okunuyor, girişte boş kalıyordu).
+  useEffect(() => {
+    if (isBootstrapping || !user) return;
+    let cancelled = false;
+    withRefresh(() => apiClient.orders.listMine())
+      .then((d) => { if (!cancelled) setOrders(d ?? []); })
+      .catch(() => { if (!cancelled) setOrders([]); });
+    return () => { cancelled = true; };
+  }, [user, isBootstrapping]);
+
+  const loading = orders === null;
 
   // Aynı ürünün birden fazla siparişini birleştir, en güncel siparişi kullan
   const productMap = new Map<string, { name: string; image: string; lastOrder: string; orderId: string; orderNumber: string; orderCount: number }>();
-  for (const order of orders) {
+  for (const order of orders ?? []) {
     for (const item of order.items) {
       const existing = productMap.get(item.productSlug);
       if (existing) {
@@ -50,7 +67,11 @@ export default function TekrarSiparisPage() {
         </p>
       </header>
 
-      {repeatable.length === 0 ? (
+      {loading ? (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => <div key={i} className="h-24 bg-paper-100 border border-paper-200 rounded-xl animate-pulse" />)}
+        </div>
+      ) : repeatable.length === 0 ? (
         <div className="text-center py-16 bg-paper-50 border border-paper-200 rounded-xl">
           <div className="w-16 h-16 mx-auto rounded-full bg-paper-100 grid place-items-center text-ink-500">
             <Package size={28} />

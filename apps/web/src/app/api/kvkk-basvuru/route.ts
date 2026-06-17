@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
 
-export const runtime = "edge";
+// nodemailer Node.js API'leri gerektirir — edge runtime'da çalışmaz.
+export const runtime = "nodejs";
+
+const REQUEST_TYPE_LABELS: Record<string, string> = {
+  bilgi: "Bilgi talebi",
+  silme: "Verilerin silinmesi",
+  duzeltme: "Verilerin düzeltilmesi",
+  tasima: "Veri taşınabilirliği",
+  itiraz: "İşlemeye itiraz",
+  aktarim: "Aktarım bilgisi",
+  diger: "Diğer",
+};
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 interface KvkkPayload {
   fullName?: string;
@@ -95,7 +116,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Mock kayıt — prod'da DB + mail
   const ticketId = `KVKK-${Date.now().toString(36).toUpperCase()}`;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
@@ -104,10 +124,66 @@ export async function POST(req: NextRequest) {
   // PII loglanmaz — sadece ticketId + talep tipi + vade
   console.log(`[kvkk-basvuru] new application: ${ticketId} type=${requestType} dueDate=${dueDate}`);
 
-  // TODO: prod'da
-  //   await prisma.kvkkRequest.create({ ... })
-  //   await sendgrid.send({ to: "kvkk@markala.com.tr", ... })
-  //   await sendgrid.send({ to: email, subject: "Başvurunuz alındı", ... })
+  // SMTP yapılandırılmamışsa (dev/localhost) mock davranışı koru — geliştirmeyi bloke etme.
+  if (!isMailConfigured()) {
+    console.log(`[kvkk-basvuru] SMTP devre dışı (mock): ${ticketId}`);
+    return NextResponse.json({
+      ok: true,
+      ticketId,
+      dueDate,
+      message:
+        "Başvurunuz alındı. KVKK 13. madde gereği en geç 30 gün içinde e-posta ile dönüş yapılacaktır.",
+    });
+  }
+
+  const typeLabel = REQUEST_TYPE_LABELS[requestType] ?? requestType;
+  const text = [
+    `Yeni KVKK m.11 veri sahibi başvurusu (${ticketId})`,
+    `Yasal yanıt vadesi: ${dueDate} (KVKK m.13 — 30 gün)`,
+    "",
+    `Ad Soyad: ${fullName}`,
+    `E-posta: ${email}`,
+    `Telefon: ${body.phone || "-"}`,
+    `TC Kimlik: ${tcKimlik ? tcKimlik.slice(0, 3) + "****" + tcKimlik.slice(-2) : "-"}`,
+    `Kimlik belgesi ekli beyanı: ${body.hasIdDocument ? "Evet" : "Hayır"}`,
+    `Talep türü: ${typeLabel}`,
+    "",
+    "Talep detayı:",
+    details,
+  ].join("\n");
+
+  const html = `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a">
+    <h2 style="margin:0 0 4px">Yeni KVKK veri sahibi başvurusu</h2>
+    <p style="color:#999;font-size:12px;margin:0 0 4px">Başvuru No: ${escapeHtml(ticketId)}</p>
+    <p style="color:#b00;font-size:13px;margin:0 0 16px"><strong>Yasal yanıt vadesi: ${escapeHtml(dueDate)}</strong> (KVKK m.13 — 30 gün)</p>
+    <table style="border-collapse:collapse;font-size:14px;width:100%">
+      <tr><td style="padding:4px 8px;color:#666;white-space:nowrap;vertical-align:top">Ad Soyad</td><td style="padding:4px 8px;font-weight:600">${escapeHtml(fullName)}</td></tr>
+      <tr><td style="padding:4px 8px;color:#666;vertical-align:top">E-posta</td><td style="padding:4px 8px"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
+      <tr><td style="padding:4px 8px;color:#666;vertical-align:top">Telefon</td><td style="padding:4px 8px">${escapeHtml(body.phone || "-")}</td></tr>
+      <tr><td style="padding:4px 8px;color:#666;vertical-align:top">Talep türü</td><td style="padding:4px 8px;font-weight:600">${escapeHtml(typeLabel)}</td></tr>
+    </table>
+    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
+    <p style="white-space:pre-wrap;font-size:14px;line-height:1.5">${escapeHtml(details)}</p>
+  </div>`;
+
+  try {
+    await sendMail({
+      to: process.env.KVKK_TO || getContactTo(),
+      subject: `[KVKK] ${typeLabel} — ${ticketId} (vade ${dueDate})`,
+      text,
+      html,
+      replyTo: email,
+    });
+  } catch (err) {
+    console.error(`[kvkk-basvuru] mail gönderilemedi ${ticketId}:`, (err as Error).message);
+    return NextResponse.json(
+      {
+        error:
+          "Başvurunuz şu an iletilemedi. Lütfen birkaç dakika sonra tekrar deneyin veya doğrudan kvkk@markala.com.tr adresine yazın.",
+      },
+      { status: 502 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,

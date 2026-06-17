@@ -1,124 +1,75 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+// Backend'e (NestJS) Bearer token ile çağrı yapacağız — Node.js runtime.
+export const runtime = "nodejs";
+
+const API_BASE =
+  process.env.API_INTERNAL_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://api:4000";
 
 /**
  * KVKK 11/d + GDPR Madde 20 — Veri taşınabilirliği (Data Portability).
- * Kullanıcının kendi verisini JSON olarak indirmesi için endpoint.
+ * Giriş yapmış kullanıcının KENDİ gerçek verisini JSON olarak indirir.
  *
- * Session check şu an mock — gerçek auth FAZ 3'te NextAuth ile bağlanacak.
- * Prod'da:
- *   const session = await getServerSession(authOptions)
- *   if (!session?.user) return 401
- *   const data = await prisma.user.findUnique({
- *     where: { id: session.user.id },
- *     include: { orders, addresses, reviews, favorites, marketingConsents }
- *   })
+ * Auth: client Authorization: Bearer <accessToken> gönderir (veri-yonetimi sayfası).
+ * Token yoksa/geçersizse 401 — eskiden auth YOKTU ve herkese sabit "Demo Kullanıcı" mock'u dönüyordu.
  */
-
-interface ExportPayload {
-  exportedAt: string;
-  exportFormat: string;
-  legalBasis: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    phone: string | null;
-    accountType: string;
-    createdAt: string;
-  };
-  profile: {
-    preferredLanguage: string;
-    marketingConsents: {
-      email: boolean;
-      sms: boolean;
-      push: boolean;
-      personalizedAds: boolean;
-      consentDate: string;
-    };
-  };
-  addresses: Array<Record<string, string | null>>;
-  orders: Array<Record<string, unknown>>;
-  reviews: Array<Record<string, unknown>>;
-  favorites: string[];
-  notes: string;
+async function api<T>(path: string, auth: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api${path}`, {
+      headers: { Authorization: auth },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(req: NextRequest) {
-  // Mock session — prod'da gerçek auth
-  // const session = await getServerSession(authOptions);
-  // if (!session?.user) {
-  //   return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
-  // }
+  const auth = req.headers.get("authorization");
+  if (!auth) {
+    return NextResponse.json(
+      { error: "Bu işlem için giriş yapmanız gerekir." },
+      { status: 401 },
+    );
+  }
 
-  // Mock kullanıcı verisi
-  const mockUserId = "u_mock_demo";
-  const mockEmail = "demo@markala.com.tr";
+  // Kullanıcı kimliği — token geçersizse 401 (mock veri DÖNMEZ).
+  const user = await api<Record<string, unknown>>("/auth/me", auth);
+  if (!user) {
+    return NextResponse.json(
+      { error: "Oturum geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapın." },
+      { status: 401 },
+    );
+  }
 
-  const exportData: ExportPayload = {
+  // Gerçek veri — paralel çek (hata olanlar boş döner, export yine üretilir).
+  const [orders, addresses, notificationPrefs] = await Promise.all([
+    api<unknown[]>("/orders/mine", auth),
+    api<unknown[]>("/users/me/addresses", auth),
+    api<Record<string, unknown>>("/users/me/notification-prefs", auth),
+  ]);
+
+  const exportData = {
     exportedAt: new Date().toISOString(),
     exportFormat: "Markala-DataExport-v1",
     legalBasis:
       "KVKK 11/d (eksik/yanlış işlenmişse düzeltilme) + GDPR Madde 20 (veri taşınabilirliği)",
-    user: {
-      id: mockUserId,
-      email: mockEmail,
-      fullName: "Demo Kullanıcı",
-      phone: null,
-      accountType: "individual",
-      createdAt: "2025-01-01T00:00:00.000Z",
-    },
-    profile: {
-      preferredLanguage: "tr-TR",
-      marketingConsents: {
-        email: true,
-        sms: false,
-        push: false,
-        personalizedAds: true,
-        consentDate: "2025-01-01T00:00:00.000Z",
-      },
-    },
-    addresses: [
-      {
-        label: "Ev",
-        recipient: "Demo Kullanıcı",
-        phone: null,
-        addressLine: "Mock adres satırı 1, Daire 2",
-        district: "Yenişehir",
-        city: "Mersin",
-        postalCode: "33000",
-      },
-    ],
-    orders: [
-      {
-        id: "ORD-MOCK-001",
-        date: "2025-01-15",
-        status: "delivered",
-        total: 1250.5,
-        items: [
-          { product: "Kartvizit 500 ad.", qty: 1, unitPrice: 350 },
-          { product: "Broşür A5 1000 ad.", qty: 1, unitPrice: 900.5 },
-        ],
-      },
-    ],
-    reviews: [
-      {
-        productId: "kartvizit-mat",
-        rating: 5,
-        comment: "Kalite ve teslimat süresi mükemmel.",
-        date: "2025-01-20",
-      },
-    ],
-    favorites: ["kartvizit-mat", "brosur-a5", "katalog-50sf"],
+    user,
+    addresses: addresses ?? [],
+    orders: orders ?? [],
+    notificationPreferences: notificationPrefs ?? {},
     notes:
-      "Bu dosya 6698 sayılı KVKK m.11/d ve GDPR Madde 20 kapsamında oluşturulmuştur. " +
-      "Veriler dosya oluşturulduğu andaki halini yansıtır. " +
-      "Sipariş ve fatura kayıtları VUK 213 gereği anonimleştirilmiş olarak 10 yıl saklanmaya devam eder.",
+      "Bu dosya 6698 sayılı KVKK m.11/d ve GDPR Madde 20 kapsamında, talep anındaki gerçek hesap " +
+      "verinizle oluşturulmuştur. Favori listesi tarayıcınızda yerel olarak tutulduğundan bu dosyaya " +
+      "dahil değildir. Sipariş ve fatura kayıtları VUK 213 gereği anonimleştirilmiş olarak 10 yıl saklanır.",
   };
 
   const jsonString = JSON.stringify(exportData, null, 2);
-  const fileName = `markala-data-${new Date().toISOString().slice(0, 10)}.json`;
+  const fileName = `markala-verilerim-${new Date().toISOString().slice(0, 10)}.json`;
 
   return new NextResponse(jsonString, {
     status: 200,
@@ -129,9 +80,4 @@ export async function POST(req: NextRequest) {
       "X-Markala-Export": "kvkk-data-portability-v1",
     },
   });
-}
-
-// GET ile de tetiklenebilir olsun ki tarayıcıdan doğrudan link verilebilsin
-export async function GET(req: NextRequest) {
-  return POST(req);
 }

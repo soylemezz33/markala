@@ -1,8 +1,9 @@
 /**
  * Markala iletişim/sipariş kanalları (tek kaynak).
- * Numara floating-actions.tsx ile aynı; değişiklik tek yerden yapılır.
+ * WhatsApp = mobil hat (905319004102) — sabit hat (0324) WhatsApp'a kayıtlı DEĞİL.
+ * Arama (tel:) = sabit hat. İkisi ayrı kanaldır; karıştırma.
  */
-export const MARKALA_WHATSAPP_NUMBER = "903244333351";
+export const MARKALA_WHATSAPP_NUMBER = "905319004102";
 export const MARKALA_PHONE_NUMBER = "+903244333351";
 export const MARKALA_PHONE_DISPLAY = "0324 433 33 51";
 

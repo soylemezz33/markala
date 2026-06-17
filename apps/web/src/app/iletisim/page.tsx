@@ -138,7 +138,7 @@ export default function ContactPage() {
 
         <div className="grid lg:grid-cols-12 gap-10">
           {/* Sol: Form */}
-          <section className="lg:col-span-7">
+          <section id="teklif" className="lg:col-span-7 scroll-mt-24">
             <header className="mb-6">
               <h2 className="text-2xl md:text-3xl font-semibold text-ink-900">Mesaj gönderin</h2>
               <p className="mt-2 text-ink-700">Formu doldurun — sipariş veya teklif talebi için en geç 24 saatte dönüş yaparız.</p>

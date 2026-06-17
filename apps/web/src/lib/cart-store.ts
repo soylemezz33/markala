@@ -8,10 +8,12 @@ import { trackAddToCart } from "./analytics";
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  couponCode: string | null;
 
   addItem: (item: Omit<CartItem, "id" | "quantity"> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  setCoupon: (code: string | null) => void;
   clear: () => void;
 
   open: () => void;
@@ -28,6 +30,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      couponCode: null,
 
       addItem: (item) => {
         const id = `${item.productSlug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
@@ -56,7 +59,9 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
-      clear: () => set({ items: [] }),
+      setCoupon: (code) => set({ couponCode: code }),
+
+      clear: () => set({ items: [], couponCode: null }),
 
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),

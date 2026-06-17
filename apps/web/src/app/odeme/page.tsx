@@ -18,6 +18,8 @@ const SHIPPING_FEE = 79;
 /** Ara toplam bu tutarın üstündeyse kargo ücretsiz (backend ile aynı). */
 const FREE_SHIPPING_THRESHOLD = 750;
 const VAT_RATE = 0.20;
+/** Gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanıp tahsil edilir. */
+const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.10 };
 
 type Step = "iletisim" | "fatura" | "teslimat" | "onay";
 
@@ -26,6 +28,7 @@ export default function CheckoutPage() {
   const cartItems = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal);
   const clearCart = useCartStore((s) => s.clear);
+  const couponCode = useCartStore((s) => s.couponCode);
   const user = useAuthStore((s) => s.user);
   const addOrder = useOrdersStore((s) => s.add);
 
@@ -52,9 +55,12 @@ export default function CheckoutPage() {
   const [payError, setPayError] = useState<string | null>(null);
 
   const sub = subtotal();
-  const shipping = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
-  const vat = sub - sub / (1 + VAT_RATE); // KDV DAHİL fiyat → içindeki KDV payı (üstüne eklenmez)
-  const total = sub + shipping;
+  const appliedCoupon = couponCode && KNOWN_COUPONS[couponCode] ? couponCode : null;
+  const discount = appliedCoupon ? sub * (KNOWN_COUPONS[appliedCoupon] ?? 0) : 0;
+  const subAfterDiscount = Math.max(0, sub - discount);
+  const shipping = subAfterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+  const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE); // KDV DAHİL fiyat → içindeki KDV payı (üstüne eklenmez)
+  const total = subAfterDiscount + shipping;
 
   useEffect(() => {
     if (cartItems.length === 0 && !processing) {
@@ -118,7 +124,7 @@ export default function CheckoutPage() {
       })),
       subtotal: sub,
       shippingFee: shipping,
-      discount: 0,
+      discount,
       vat,
       total,
       shippingAddress: address,
@@ -162,6 +168,7 @@ export default function CheckoutPage() {
           accountType,
           taxOffice,
           taxNumber,
+          couponCode: appliedCoupon ?? undefined,
           items: cartItems.map((i) => ({
             productSlug: i.productSlug,
             configuration: i.configuration,
@@ -471,6 +478,9 @@ export default function CheckoutPage() {
               </ul>
               <div className="mt-4 pt-4 border-t border-paper-200 space-y-2 text-sm">
                 <Row label="Ara toplam" value={<Price amount={sub} className="text-ink-900" />} />
+                {discount > 0 && (
+                  <Row label={`Kupon (${appliedCoupon})`} value={<Price amount={-discount} className="text-success" />} />
+                )}
                 <Row label="Kargo" value={shipping === 0 ? <span className="text-success font-medium">Ücretsiz</span> : <Price amount={shipping} />} />
                 <Row label="KDV (%20 dahil)" value={<Price amount={vat} className="text-ink-500" />} muted />
                 <div className="pt-3 border-t border-paper-200 flex items-baseline justify-between">

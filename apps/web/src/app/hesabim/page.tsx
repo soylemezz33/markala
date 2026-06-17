@@ -1,20 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Button, Price } from "@markala/ui";
 import { Package, ArrowsClockwise, MapPin, ArrowRight, ShoppingBagOpen, TrendUp, Sparkle } from "@phosphor-icons/react";
-import { useOrdersStore } from "@/lib/orders-store";
 import { useAuthStore } from "@/lib/auth-store";
+import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
+import type { Order, OrderStatus } from "@markala/types";
+
+const normStatus = (s: string): OrderStatus => s.replace(/_/g, "-") as OrderStatus;
 
 export default function AccountOverviewPage() {
-  const orders = useOrdersStore((s) => s.orders);
   const user = useAuthStore((s) => s.user);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
+  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [addressCount, setAddressCount] = useState<number | null>(null);
+
+  // Gerçek sipariş + adres verisi backend'den (eskiden localStorage'dan okunup hep 0 gösteriyordu).
+  useEffect(() => {
+    if (isBootstrapping || !user) return;
+    let cancelled = false;
+    withRefresh(() => apiClient.orders.listMine())
+      .then((d) => { if (!cancelled) setOrders(d ?? []); })
+      .catch(() => { if (!cancelled) setOrders([]); });
+    withRefresh(() => apiClient.users.listAddresses())
+      .then((d) => { if (!cancelled) setAddressCount((d ?? []).length); })
+      .catch(() => { if (!cancelled) setAddressCount(0); });
+    return () => { cancelled = true; };
+  }, [user, isBootstrapping]);
 
   if (!user) return null;
 
-  const totalSpent = orders.reduce((acc, o) => acc + o.total, 0);
-  const recentOrders = orders.slice(0, 3);
+  const list = orders ?? [];
+  const totalSpent = list.reduce((acc, o) => acc + o.total, 0);
+  const recentOrders = list.slice(0, 3);
+  const loading = orders === null;
 
   return (
     <div className="space-y-6">
@@ -23,25 +44,25 @@ export default function AccountOverviewPage() {
         <StatCard
           icon={<Package size={20} />}
           label="Toplam Sipariş"
-          value={orders.length.toString()}
+          value={loading ? "…" : list.length.toString()}
           accent="bg-brand-100 text-brand-700"
         />
         <StatCard
           icon={<TrendUp size={20} />}
           label="Toplam Harcama"
-          value={<Price amount={totalSpent} className="text-ink-900" />}
+          value={loading ? "…" : <Price amount={totalSpent} className="text-ink-900" />}
           accent="bg-success/10 text-success"
         />
         <StatCard
           icon={<MapPin size={20} />}
           label="Aktif Adres"
-          value="0"
+          value={addressCount === null ? "…" : addressCount.toString()}
           accent="bg-[#E8F0FF] text-[#1565C0]"
         />
       </div>
 
       {/* Hoş geldin kuponu (yeni üyelere) */}
-      {orders.length === 0 && (
+      {!loading && list.length === 0 && (
         <div className="p-6 md:p-8 bg-ink-900 text-paper-50 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-400">
@@ -60,14 +81,18 @@ export default function AccountOverviewPage() {
       <section className="p-6 bg-paper-50 border border-paper-200 rounded-xl">
         <header className="flex items-center justify-between mb-5">
           <h2 className="font-semibold text-ink-900">Son Siparişler</h2>
-          {orders.length > 0 && (
+          {list.length > 0 && (
             <Link href="/hesabim/siparislerim" className="text-sm text-brand-700 hover:underline font-medium">
               Tümünü gör →
             </Link>
           )}
         </header>
 
-        {recentOrders.length === 0 ? (
+        {loading ? (
+          <div className="space-y-3">
+            {[0, 1].map((i) => <div key={i} className="h-12 bg-paper-100 rounded-lg animate-pulse" />)}
+          </div>
+        ) : recentOrders.length === 0 ? (
           <div className="py-12 text-center">
             <div className="w-14 h-14 mx-auto rounded-full bg-paper-100 grid place-items-center text-ink-500">
               <ShoppingBagOpen size={24} />
@@ -86,7 +111,7 @@ export default function AccountOverviewPage() {
                   </Link>
                   <p className="text-xs text-ink-500 mt-0.5">
                     {formatDate(o.createdAt)} · {o.items.length} ürün ·{" "}
-                    <span className="text-brand-700 font-medium">{orderStatusLabel(o.status)}</span>
+                    <span className="text-brand-700 font-medium">{orderStatusLabel(normStatus(o.status as unknown as string))}</span>
                   </p>
                 </div>
                 <div className="flex items-center gap-3 flex-none">

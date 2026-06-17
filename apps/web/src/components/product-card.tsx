@@ -34,7 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
     >
       <div className="relative aspect-square overflow-hidden bg-paper-100">
         <Image
-          src={product.images[0] ?? ""}
+          src={product.images[0] || `/api/mockup?slug=${product.slug}&w=600&h=600`}
           alt={product.name}
           fill
           unoptimized

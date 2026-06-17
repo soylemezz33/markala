@@ -40,7 +40,9 @@ export async function GET() {
         contents: contents.length ? contents : [{ quantity: 1, productName: contentsText || p.name }],
         originalPrice: original,
         bundlePrice: bundle,
-        imageUrl: `/images/bundles/${String(p.slug)}.jpg`,
+        // Bundle'lar için ayrı görsel dosyası yok → mockup endpoint kategori bazlı branded
+        // SVG üretir (her zaman 200). Statik /images/bundles/*.jpg DB slug'larında 404 veriyordu.
+        imageUrl: `/api/mockup?category=${category}&w=800&h=600&theme=brand`,
         badge: "FIRSAT",
         category,
         isActive: true,

@@ -17,13 +17,21 @@ const SHIPPING_FEE = 79;
 const FREE_SHIPPING_THRESHOLD = 750;
 const VAT_RATE = 0.20;
 
+/** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
+const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.10 };
+
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCartStore();
+  const storedCoupon = useCartStore((s) => s.couponCode);
+  const setStoreCoupon = useCartStore((s) => s.setCoupon);
   const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState<{ code: string; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   const sub = subtotal();
-  const discount = couponApplied?.discount ?? 0;
+  // Uygulanan kupon cart-store'da tutulur → /odeme'ye taşınır (eskiden yalnız bu sayfanın
+  // local state'indeydi, ödemeye geçince sessizce düşüyordu = bait-and-switch).
+  const appliedCode = storedCoupon && KNOWN_COUPONS[storedCoupon] ? storedCoupon : null;
+  const discount = appliedCode ? sub * (KNOWN_COUPONS[appliedCode] ?? 0) : 0;
   const shippingFee = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
   const subAfterDiscount = Math.max(0, sub - discount);
   // Fiyatlar KDV DAHİL → gösterilen KDV, tutarın İÇİNDEKİ paydır (gross − gross/1.2), üstüne EKLENMEZ.
@@ -31,9 +39,20 @@ export default function CartPage() {
   const total = subAfterDiscount + shippingFee;
 
   function handleApplyCoupon() {
-    if (coupon.trim().toUpperCase() === "HOSGELDIN" && sub > 0) {
-      setCouponApplied({ code: "HOSGELDIN", discount: sub * 0.10 });
+    const code = coupon.trim().toUpperCase();
+    setCouponError(null);
+    if (!code) return;
+    if (KNOWN_COUPONS[code] && sub > 0) {
+      setStoreCoupon(code);
+      setCoupon("");
+    } else {
+      setCouponError("Geçersiz veya süresi dolmuş kupon kodu.");
     }
+  }
+
+  function handleRemoveCoupon() {
+    setStoreCoupon(null);
+    setCouponError(null);
   }
 
   if (items.length === 0) return <EmptyCart />;
@@ -94,7 +113,7 @@ export default function CartPage() {
                 <dl className="space-y-2.5 text-sm">
                   <Row label="Ara toplam" value={<Price amount={sub} className="text-ink-900" />} />
                   {discount > 0 && (
-                    <Row label={`Kupon (${couponApplied?.code})`} value={<Price amount={-discount} className="text-success" />} />
+                    <Row label={`Kupon (${appliedCode})`} value={<Price amount={-discount} className="text-success" />} />
                   )}
                   <Row label="Kargo" value={shippingFee === 0 ? <span className="text-success font-medium">Ücretsiz</span> : <Price amount={shippingFee} className="text-ink-900" />} />
                   <Row label={`KDV (%${VAT_RATE * 100} dahil)`} value={<Price amount={vat} className="text-ink-500" />} muted />
@@ -123,10 +142,16 @@ export default function CartPage() {
                     <Tag size={16} /> Kupon kodun var mı?
                   </summary>
                   <div className="mt-3 flex gap-2">
-                    <input type="text" value={coupon} onChange={(e) => setCoupon(e.target.value)} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
-                    <Button variant="outline" size="md" onClick={handleApplyCoupon}>Uygula</Button>
+                    <input type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(null); }} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
+                    <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!coupon.trim()}>Uygula</Button>
                   </div>
-                  {couponApplied && <p className="mt-2 text-xs text-success">✓ {couponApplied.code} kuponu uygulandı</p>}
+                  {couponError && <p className="mt-2 text-xs text-error">{couponError}</p>}
+                  {appliedCode && (
+                    <p className="mt-2 text-xs text-success flex items-center gap-2">
+                      ✓ {appliedCode} kuponu uygulandı
+                      <button onClick={handleRemoveCoupon} className="text-ink-500 hover:text-error underline">kaldır</button>
+                    </p>
+                  )}
                   <p className="mt-2 text-xs text-ink-500">İpucu: yeni müşteriler için <code className="font-mono bg-paper-100 px-1.5 py-0.5 rounded">HOSGELDIN</code></p>
                 </details>
               </div>

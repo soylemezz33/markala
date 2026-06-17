@@ -40,6 +40,7 @@ interface IncomingPayload {
   accountType?: string; // individual | corporate
   taxOffice?: string;
   taxNumber?: string;
+  couponCode?: string;
   notes?: string;
   items?: IncomingItem[];
 }
@@ -96,6 +97,8 @@ export async function POST(req: NextRequest) {
       zipCode: clamp(body.zipCode, 16),
       label: "Teslimat",
     },
+    // Kupon kodu → backend gerçek indirimi sunucuda hesaplar/doğrular (geçersizse 400 döner).
+    couponCode: clamp(body.couponCode, 40)?.toUpperCase(),
     notes: noteParts.length ? noteParts.join(" · ") : undefined,
   };
 

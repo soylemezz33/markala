@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   ChartLineUp, Package, Storefront, ShoppingCart, Users, Tag, FileText,
-  Gear, SignOut, Sliders, ImageSquare, Bell, MagnifyingGlass, List, X,
+  Gear, SignOut, Sliders, ImageSquare, Bell, List, X,
   PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
   ChatCircle, CurrencyCircleDollar, Receipt, Buildings, CaretDown, UserCircle,
 } from "@phosphor-icons/react";
@@ -78,6 +78,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     count: 0,
     items: [],
   });
+  // Sistem sağlığı: null = bilinmiyor (ilk yükleme), true = ok, false = sorun var.
+  const [systemOk, setSystemOk] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +105,26 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       .catch(() => {});
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Sistem sağlığı — periyodik yoklama (footer rozeti). Hata → "Sorun var".
+  useEffect(() => {
+    let cancelled = false;
+    const check = () =>
+      fetch("/api/system-health")
+        .then((r) => (r.ok ? r.json() : { ok: false }))
+        .then((d) => {
+          if (!cancelled) setSystemOk(!!d.ok);
+        })
+        .catch(() => {
+          if (!cancelled) setSystemOk(false);
+        });
+    check();
+    const id = setInterval(check, 60000); // 60 sn'de bir
+    return () => {
+      cancelled = true;
+      clearInterval(id);
     };
   }, []);
 
@@ -172,19 +194,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <List size={20} />
           </button>
 
-          <div className="hidden md:flex flex-1 max-w-md items-center gap-2 px-3 py-2 bg-paper-100 border border-paper-200 rounded-lg">
-            <MagnifyingGlass size={16} className="text-ink-500" />
-            <input
-              type="search"
-              placeholder="Ürün, sipariş, müşteri ara..."
-              className="flex-1 bg-transparent outline-none text-sm text-ink-900"
-            />
-            <kbd className="hidden lg:inline-block px-1.5 py-0.5 rounded text-[10px] font-mono text-ink-500 bg-paper-50 border border-paper-200">
-              ⌘K
-            </kbd>
-          </div>
-
-          <div className="flex-1 md:hidden" />
+          {/* Global arama kaldırıldı: işlevsel bir arama route'u yok (dekoratif idi). */}
+          <div className="flex-1" />
 
           <a
             href="https://markala.com.tr"
@@ -299,7 +310,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         {/* Footer */}
         <footer className="border-t border-paper-200 bg-paper-50 px-6 py-4 text-xs text-ink-500 flex flex-wrap items-center justify-between gap-2">
           <span>Markala Admin v0.9 · 324 Ajans</span>
-          <span>Sistem durumu: <span className="text-success font-medium">● Operasyonel</span></span>
+          <span>
+            Sistem durumu:{" "}
+            {systemOk === null ? (
+              <span className="text-ink-400 font-medium">● Kontrol ediliyor…</span>
+            ) : systemOk ? (
+              <span className="text-success font-medium">● Operasyonel</span>
+            ) : (
+              <span className="text-error font-medium">● Sorun var</span>
+            )}
+          </span>
         </footer>
       </div>
 
