@@ -55,10 +55,33 @@ const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: "status", label: "Duruma göre" },
 ];
 
+type DateRange = "all" | "today" | "7d" | "30d" | "month";
+const DATE_OPTIONS: Array<{ value: DateRange; label: string }> = [
+  { value: "all", label: "Tüm zamanlar" },
+  { value: "today", label: "Bugün" },
+  { value: "7d", label: "Son 7 gün" },
+  { value: "30d", label: "Son 30 gün" },
+  { value: "month", label: "Bu ay" },
+];
+
 export function OrdersClient({ orders }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
+  const [dateRange, setDateRange] = useState<DateRange>("all");
+
+  const now = new Date();
+  const inRange = (iso: string): boolean => {
+    if (dateRange === "all") return true;
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return true;
+    if (dateRange === "today") return d.toDateString() === now.toDateString();
+    if (dateRange === "month") return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    const days = dateRange === "7d" ? 7 : 30;
+    const from = new Date(now);
+    from.setDate(from.getDate() - days);
+    return d >= from;
+  };
 
   const filtered = orders.filter((o) => {
     const customer = o.customerName ?? o.email ?? "";
@@ -68,7 +91,7 @@ export function OrdersClient({ orders }: Props) {
       customer.toLowerCase().includes(search.toLowerCase()) ||
       (o.email ?? "").toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || toSlug(o.status) === statusFilter;
-    return matchSearch && matchStatus;
+    return matchSearch && matchStatus && inRange(o.createdAt);
   });
 
   const sorted = [...filtered].sort((a, b) => {
@@ -137,6 +160,18 @@ export function OrdersClient({ orders }: Props) {
             className="flex-1 bg-transparent outline-none text-sm text-ink-900"
           />
         </div>
+        <label className="flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm">
+          <span className="text-ink-500 whitespace-nowrap">Tarih:</span>
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value as DateRange)}
+            className="bg-transparent outline-none text-ink-900 cursor-pointer pr-1"
+          >
+            {DATE_OPTIONS.map((d) => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
+        </label>
         <label className="flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm">
           <span className="text-ink-500 whitespace-nowrap">Sırala:</span>
           <select
