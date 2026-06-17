@@ -64,7 +64,9 @@ export class ParasutService {
     });
     if (!res.ok) {
       this.token = null; // refresh başarısızsa bir sonraki sefer password grant'a düş
-      throw new Error(`Paraşüt OAuth ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      // Ham gövdeyi Error'a KOYMA (token/PII sızabilir) — yalnız debug'da ayrı logla.
+      this.logger.debug(`Paraşüt OAuth hata gövdesi: ${(await res.text()).slice(0, 200)}`);
+      throw new Error(`Paraşüt OAuth ${res.status}`);
     }
     const j = (await res.json()) as { access_token: string; refresh_token: string; expires_in: number };
     this.token = { access: j.access_token, refresh: j.refresh_token, expiresAt: now + j.expires_in * 1000 };
@@ -84,7 +86,11 @@ export class ParasutService {
       body: body ? JSON.stringify(body) : undefined,
     });
     const text = await res.text();
-    if (!res.ok) throw new Error(`Paraşüt ${method} ${path} → ${res.status}: ${text.slice(0, 300)}`);
+    if (!res.ok) {
+      // Ham yanıt gövdesini Error mesajına KOYMA (logger.error'a sızmasın) — debug'da ayrı tut.
+      this.logger.debug(`Paraşüt API hata gövdesi (${method} ${path}): ${text.slice(0, 300)}`);
+      throw new Error(`Paraşüt ${method} ${path} → ${res.status}`);
+    }
     return (text ? JSON.parse(text) : {}) as T;
   }
 
