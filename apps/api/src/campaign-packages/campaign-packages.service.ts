@@ -13,6 +13,14 @@ export class CampaignPackagesService {
     });
   }
 
+  /** Storefront için aktif paketler (public). */
+  findActive() {
+    return this.prisma.campaignPackage.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+  }
+
   create(dto: CreateCampaignPackageDto) {
     const data: Prisma.CampaignPackageCreateInput = {
       slug: dto.slug,

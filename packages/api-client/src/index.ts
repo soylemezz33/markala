@@ -191,6 +191,15 @@ export class MarkalaApiClient {
       this.request<Address>("PATCH", `/users/me/addresses/${id}`, data, { auth: true }),
     deleteAddress: (id: string) =>
       this.request<void>("DELETE", `/users/me/addresses/${id}`, undefined, { auth: true }),
+    getNotificationPrefs: () =>
+      this.request<Record<string, { email?: boolean; sms?: boolean }> | null>(
+        "GET",
+        "/users/me/notification-prefs",
+        undefined,
+        { auth: true },
+      ),
+    updateNotificationPrefs: (prefs: Record<string, { email: boolean; sms: boolean }>) =>
+      this.request<{ ok: boolean }>("PATCH", "/users/me/notification-prefs", prefs, { auth: true }),
   };
 
   // === Hero slides ===

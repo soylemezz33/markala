@@ -17,6 +17,19 @@ export class UsersController {
     return this.service.updateProfile(req.user.sub, dto);
   }
 
+  @Get("notification-prefs")
+  getNotificationPrefs(@Req() req: Request & { user: { sub: string } }) {
+    return this.service.getNotificationPrefs(req.user.sub);
+  }
+
+  @Patch("notification-prefs")
+  updateNotificationPrefs(
+    @Req() req: Request & { user: { sub: string } },
+    @Body() body: Record<string, { email?: boolean; sms?: boolean }>,
+  ) {
+    return this.service.updateNotificationPrefs(req.user.sub, body);
+  }
+
   @Get("addresses")
   listAddresses(@Req() req: Request & { user: { sub: string } }) {
     return this.service.listAddresses(req.user.sub);

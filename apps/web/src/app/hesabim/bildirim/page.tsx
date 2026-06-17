@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@markala/ui";
 import { Bell, EnvelopeSimple, ChatCircle, CheckCircle, FloppyDisk } from "@phosphor-icons/react";
+import { apiClient, withRefresh } from "@/lib/api";
 
 interface Pref {
   id: string;
@@ -24,6 +25,24 @@ const initialPrefs: Pref[] = [
 export default function NotificationPreferencesPage() {
   const [prefs, setPrefs] = useState(initialPrefs);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Kayıtlı tercihleri yükle (varsa varsayılanları override eder).
+  useEffect(() => {
+    withRefresh(() => apiClient.users.getNotificationPrefs())
+      .then((stored) => {
+        if (stored && typeof stored === "object") {
+          setPrefs((p) =>
+            p.map((x) => {
+              const s = stored[x.id];
+              return s ? { ...x, email: !!s.email, sms: !!s.sms } : x;
+            }),
+          );
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   function toggle(id: string, ch: "email" | "sms") {
     setPrefs((p) => p.map((x) => (x.id === id ? { ...x, [ch]: !x[ch] } : x)));
@@ -33,9 +52,19 @@ export default function NotificationPreferencesPage() {
     setPrefs((p) => p.map((x) => ({ ...x, email: false, sms: false })));
   }
 
-  function onSave() {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  async function onSave() {
+    setSaving(true);
+    setError(null);
+    const map = Object.fromEntries(prefs.map((p) => [p.id, { email: p.email, sms: p.sms }]));
+    try {
+      await withRefresh(() => apiClient.users.updateNotificationPrefs(map));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setError("Kaydedilemedi, lütfen tekrar deneyin.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -91,8 +120,9 @@ export default function NotificationPreferencesPage() {
               <CheckCircle size={16} weight="fill" /> Tercihleriniz kaydedildi
             </span>
           )}
-          <Button onClick={onSave}>
-            <FloppyDisk size={14} weight="bold" /> Kaydet
+          {error && <span className="text-sm text-error font-medium">{error}</span>}
+          <Button onClick={onSave} disabled={saving}>
+            <FloppyDisk size={14} weight="bold" /> {saving ? "Kaydediliyor…" : "Kaydet"}
           </Button>
         </div>
       </div>

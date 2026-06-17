@@ -235,49 +235,78 @@ export class OrdersService {
     const productById = new Map(products.map((p) => [p.id, p]));
     const productBySlug = new Map(products.map((p) => [p.slug, p]));
 
-    // SECURITY: kalem fiyatlarını her zaman sunucuda Product.basePrice'tan hesapla.
-    // Client'tan gelen herhangi bir fiyat alanı tamamen yok sayılır.
+    // Kampanya paketleri (CampaignPackage — Product DEĞİL): üründe bulunmayan slug'lar için.
+    // Sepete eklenmiş bir paket de sipariş/ödeme akışına girebilsin diye (sabit packagePrice).
+    const unresolvedSlugs = productSlugs.filter((s) => !productBySlug.has(s));
+    const bundles = unresolvedSlugs.length
+      ? await this.prisma.campaignPackage.findMany({ where: { isActive: true, slug: { in: unresolvedSlugs } } })
+      : [];
+    const bundleBySlug = new Map(bundles.map((b) => [b.slug, b]));
+
+    // SECURITY: kalem fiyatlarını her zaman SUNUCUDA hesapla (Product konfigüratörü veya paket
+    // packagePrice'ı). Client'tan gelen herhangi bir fiyat alanı tamamen yok sayılır.
     const recalculatedItems = input.items.map((i) => {
       if (!i.productId && !i.productSlug) {
         throw new BadRequestException("Sipariş kalemi productId veya productSlug içermelidir.");
       }
-      const product =
-        (i.productId ? productById.get(i.productId) : undefined) ??
-        (i.productSlug ? productBySlug.get(i.productSlug) : undefined);
-      if (!product) {
-        throw new BadRequestException(`Ürün bulunamadı veya pasif: ${i.productId ?? i.productSlug}`);
-      }
-
-      // Sepet adedi = kaç adet KONFİGÜRE kalem (örn. 1 set "1000 kartvizit"). Konfigüratör
-      // içindeki adet (1000) fiyatın İÇİNE girer (matrix/quantity parametresi), satır adedi değildir.
+      // Sepet adedi = kaç adet kalem (konfigüre ürün seti veya paket).
       const quantity = Number.isInteger(i.quantity) && i.quantity > 0 ? i.quantity : 1;
       if (quantity > MAX_QUANTITY_PER_ITEM) {
         throw new BadRequestException(`Geçersiz adet (${i.productId ?? i.productSlug}).`);
       }
-
-      // SECURITY + DOĞRU FİYAT: birim fiyatı, ürünün KENDİ parameters şemasından + kullanıcının
-      // selections'ından SUNUCUDA hesapla. Çoğu üründe base_price=0; gerçek fiyat konfigüratörden
-      // gelir (client'ın totalPrice'ı yok sayılır). Eskiden yalnız base_price kullanılıyordu →
-      // base_price=0 ürünlerde (kartvizit vb.) sipariş/ödeme tutarı 0'a düşüyordu.
-      const selections = extractSelections(i.configuration);
-      const configuredUnit = calculateConfiguredPrice(Number(product.basePrice), product.parameters, selections);
-      if (!Number.isFinite(configuredUnit) || configuredUnit < 0) {
-        throw new BadRequestException(`Ürün fiyatı geçersiz: ${product.slug}`);
-      }
-      const unitPrice = round2(configuredUnit);
-      const lineTotal = round2(unitPrice * quantity);
-
-      return {
-        product,
-        configuration: i.configuration ?? {},
-        configurationSummary: pickConfigurationSummary(i.configuration, summarizeConfiguration(i.configuration)),
+      const configuration = i.configuration ?? {};
+      const configurationSummary = pickConfigurationSummary(i.configuration, summarizeConfiguration(i.configuration));
+      const common = {
+        configuration,
+        configurationSummary,
         quantity,
-        unitPrice,
-        lineTotal,
         needsDesignSupport: i.needsDesignSupport ?? false,
         uploadedFileName: i.uploadedFileName,
         uploadedFileUrl: i.uploadedFileUrl,
       };
+
+      const product =
+        (i.productId ? productById.get(i.productId) : undefined) ??
+        (i.productSlug ? productBySlug.get(i.productSlug) : undefined);
+
+      if (product) {
+        // Konfigüratör fiyatı: ürünün KENDİ parameters şeması + kullanıcı selections'ından.
+        const selections = extractSelections(i.configuration);
+        const configuredUnit = calculateConfiguredPrice(Number(product.basePrice), product.parameters, selections);
+        if (!Number.isFinite(configuredUnit) || configuredUnit < 0) {
+          throw new BadRequestException(`Ürün fiyatı geçersiz: ${product.slug}`);
+        }
+        const unitPrice = round2(configuredUnit);
+        return {
+          ...common,
+          productId: product.id as string | null,
+          productSlug: product.slug,
+          productName: product.name,
+          productImage: product.images?.[0] ?? "",
+          unitPrice,
+          lineTotal: round2(unitPrice * quantity),
+        };
+      }
+
+      // Kampanya paketi (sabit packagePrice; productId NULL).
+      const bundle = i.productSlug ? bundleBySlug.get(i.productSlug) : undefined;
+      if (bundle) {
+        const unitPrice = round2(Number(bundle.packagePrice));
+        if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+          throw new BadRequestException(`Paket fiyatı geçersiz: ${bundle.slug}`);
+        }
+        return {
+          ...common,
+          productId: null,
+          productSlug: bundle.slug,
+          productName: bundle.name,
+          productImage: "",
+          unitPrice,
+          lineTotal: round2(unitPrice * quantity),
+        };
+      }
+
+      throw new BadRequestException(`Ürün bulunamadı veya pasif: ${i.productId ?? i.productSlug}`);
     });
 
     // Sunucu tarafı toplamlar.
@@ -378,10 +407,10 @@ export class OrdersService {
           notes: finalNotes,
           items: {
             create: recalculatedItems.map((i) => ({
-              productId: i.product.id,
-              productSlug: i.product.slug,
-              productName: i.product.name,
-              productImage: i.product.images?.[0] ?? "",
+              productId: i.productId ?? undefined,
+              productSlug: i.productSlug,
+              productName: i.productName,
+              productImage: i.productImage,
               configurationSummary: i.configurationSummary,
               configuration: i.configuration as Prisma.InputJsonValue,
               unitPrice: new Prisma.Decimal(i.unitPrice),

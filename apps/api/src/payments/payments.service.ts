@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ServiceUnavailableException,
+  OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Iyzipay from "iyzipay";
@@ -21,7 +22,7 @@ interface AddressView {
 }
 
 @Injectable()
-export class PaymentsService {
+export class PaymentsService implements OnModuleInit {
   private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
@@ -29,6 +30,13 @@ export class PaymentsService {
     private iyzico: IyzicoService,
     private config: ConfigService,
   ) {}
+
+  onModuleInit() {
+    // GÜVENLİK AĞI: callback kaçan ("para çekildi ama işaretlenmedi") ödemeleri periyodik kurtar.
+    // Başlangıçtan 30sn sonra bir kez + her 10 dk. Tek api instance'ı olduğundan setInterval yeterli.
+    setTimeout(() => void this.reconcilePendingPayments().catch(() => undefined), 30_000);
+    setInterval(() => void this.reconcilePendingPayments().catch(() => undefined), 10 * 60_000).unref?.();
+  }
 
   private addrOf(fk: unknown, snap: unknown): AddressView {
     return ((fk ?? snap ?? {}) as AddressView) || {};
@@ -187,7 +195,59 @@ export class PaymentsService {
       this.logger.warn(`iyzico init başarısız order=${orderId}: ${res.errorMessage}`);
       throw new ServiceUnavailableException("Ödeme başlatılamadı, lütfen tekrar deneyin.");
     }
+    // Token'ı sakla — callback kaçarsa reconciliation bununla ödemeyi kurtarır.
+    if (res.token) {
+      await this.prisma.order
+        .update({ where: { id: orderId }, data: { iyzicoCheckoutToken: res.token } })
+        .catch(() => undefined);
+    }
     return { paymentPageUrl: res.paymentPageUrl, checkoutFormContent: res.checkoutFormContent, token: res.token };
+  }
+
+  /**
+   * GÜVENLİK AĞI — callback kaçan ödemeleri kurtarır. Son 48 saatte 'beklemede' kalan,
+   * iyzico token'ı olan siparişleri retrieve eder; iyzico'da BAŞARILI ve tutar/sepet eşleşiyorsa
+   * siparişi 'basarili' işaretler. Böylece "para çekildi ama sipariş işaretlenmedi" kalıcı olmaz.
+   */
+  async reconcilePendingPayments(): Promise<{ checked: number; recovered: number }> {
+    if (!this.iyzico.isConfigured()) return { checked: 0, recovered: 0 };
+    const since = new Date(Date.now() - 48 * 3600_000);
+    const pending = await this.prisma.order.findMany({
+      where: {
+        paymentStatus: "beklemede",
+        iyzicoCheckoutToken: { not: null },
+        createdAt: { gte: since },
+        deletedAt: null,
+      },
+      select: { id: true, orderNumber: true, total: true, iyzicoCheckoutToken: true },
+      take: 100,
+    });
+    let recovered = 0;
+    for (const o of pending) {
+      try {
+        const result = await this.iyzico.retrieveCheckoutForm(o.iyzicoCheckoutToken as string, o.id);
+        if (result.status !== "success") continue;
+        const basketOk = result.basketId === o.orderNumber;
+        const priceKurus = Math.round(Number(result.price) * 100);
+        const expectedKurus = Math.round(Number(o.total) * 100);
+        if (!basketOk || priceKurus !== expectedKurus) {
+          this.logger.error(
+            `reconcile UYUŞMAZLIK order=${o.id} basket=${result.basketId}/${o.orderNumber} price=${result.price}/${o.total} → atlandı`,
+          );
+          continue;
+        }
+        await this.prisma.order.update({
+          where: { id: o.id },
+          data: { paymentStatus: "basarili", iyzicoPaymentId: result.paymentId ?? undefined, iyzicoConversationId: o.id },
+        });
+        recovered++;
+        this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı)`);
+      } catch {
+        /* tek sipariş hatası tüm taramayı bozmasın */
+      }
+    }
+    if (recovered) this.logger.warn(`reconcile tamam: ${recovered}/${pending.length} sipariş kurtarıldı`);
+    return { checked: pending.length, recovered };
   }
 
   /**

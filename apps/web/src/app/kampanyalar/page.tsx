@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, Sparkle, Tag, ArrowRight } from "@phosphor-icons/react";
 import { campaignBundles } from "@markala/mock-data";
@@ -20,12 +20,20 @@ const filters: { id: CampaignBundleCategory | "all"; label: string }[] = [
 
 export default function KampanyalarPage() {
   const [filter, setFilter] = useState<CampaignBundleCategory | "all">("all");
+  // CANLI paketler (admin yönetir, DB'den). Hata/boş → mock fallback. Checkout'un çalışması için
+  // sepetteki paket slug'ı backend'de çözülebilen (DB'deki) paket olmalı.
+  const [bundles, setBundles] = useState<CampaignBundle[]>(campaignBundles);
+  useEffect(() => {
+    fetch("/api/kampanyalar")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.ok && Array.isArray(d.bundles) && d.bundles.length) setBundles(d.bundles as CampaignBundle[]);
+      })
+      .catch(() => {});
+  }, []);
   const items = useMemo(
-    () =>
-      filter === "all"
-        ? campaignBundles
-        : campaignBundles.filter((b) => b.category === filter),
-    [filter],
+    () => (filter === "all" ? bundles : bundles.filter((b) => b.category === filter)),
+    [filter, bundles],
   );
 
   return (

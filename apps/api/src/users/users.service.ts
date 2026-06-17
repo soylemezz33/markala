@@ -1,10 +1,36 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateAddressDto, UpdateAddressDto, UpdateProfileDto } from "./users.dto";
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
+
+  /** Müşteri duyuru tercihleri (granular e-posta/SMS). Null → client varsayılanı gösterir. */
+  async getNotificationPrefs(userId: string) {
+    const u = await this.prisma.user.findUnique({ where: { id: userId }, select: { notificationPrefs: true } });
+    return u?.notificationPrefs ?? null;
+  }
+
+  async updateNotificationPrefs(
+    userId: string,
+    prefs: Record<string, { email?: boolean; sms?: boolean }>,
+  ) {
+    // KVKK: kampanya/bülten e-postası açıksa pazarlama izni de güncellenir.
+    const marketingOn = Boolean(prefs?.campaigns?.email || prefs?.newsletter?.email);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        notificationPrefs: prefs as unknown as Prisma.InputJsonValue,
+        marketingConsent: marketingOn,
+        ...(marketingOn
+          ? { marketingConsentAt: new Date(), marketingConsentSource: "bildirim-tercihleri" }
+          : {}),
+      },
+    });
+    return { ok: true };
+  }
 
   /**
    * SECURITY (mass assignment koruması):

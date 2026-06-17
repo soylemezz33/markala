@@ -1,8 +1,10 @@
-import { Body, Controller, Post, Req, Res } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { IsIP, IsOptional, IsString } from "class-validator";
 import type { Request, Response } from "express";
 import { PaymentsService } from "./payments.service";
+import { JwtAuthGuard } from "../auth/jwt.guard";
+import { RolesGuard, Roles } from "../auth/roles.guard";
 
 class InitPaymentDto {
   @IsString()
@@ -42,5 +44,14 @@ export class PaymentsController {
   async callback(@Body("token") token: string, @Res() res: Response) {
     const { redirectUrl } = await this.payments.handleCallback(token);
     res.redirect(303, redirectUrl);
+  }
+
+  /** Admin: callback kaçan ödemeleri elle eşitle (güvenlik ağı). Otomatik de 10 dk'da bir çalışır. */
+  @Post("reconcile")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  reconcile() {
+    return this.payments.reconcilePendingPayments();
   }
 }

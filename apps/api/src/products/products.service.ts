@@ -50,7 +50,7 @@ export class ProductsService {
     return this.prisma.product.create({ data });
   }
 
-  update(id: string, dto: UpdateProductDto) {
+  async update(id: string, dto: UpdateProductDto) {
     const data: Prisma.ProductUpdateInput = {
       ...(dto.slug !== undefined && { slug: dto.slug }),
       ...(dto.name !== undefined && { name: dto.name }),
@@ -67,6 +67,20 @@ export class ProductsService {
       ...(dto.parameters !== undefined && { parameters: dto.parameters as Prisma.InputJsonValue }),
       ...(dto.categoryId !== undefined && { category: { connect: { id: dto.categoryId } } }),
     };
+
+    // FİYAT TUTARLILIĞI: startingPrice değişiyor ve basePrice elle verilmemişse, ürün
+    // KONFİGÜRATÖRSÜZ (parameters boş) ise basePrice'ı da eşitle. Böylece basit üründe
+    // "gösterilen fiyat (startingPrice)" = "siparişte tahsil edilen (basePrice)" olur.
+    // Konfigüratörlü ürünlerde basePrice'a DOKUNULMAZ (fiyat matrix/quantity'den gelir).
+    if (dto.startingPrice !== undefined && dto.basePrice === undefined) {
+      const current = await this.prisma.product.findUnique({ where: { id }, select: { parameters: true } });
+      const params = current?.parameters;
+      const hasConfigurator = Array.isArray(params) && params.length > 0;
+      if (!hasConfigurator) {
+        data.basePrice = new Prisma.Decimal(dto.startingPrice);
+      }
+    }
+
     return this.prisma.product.update({ where: { id }, data });
   }
 
