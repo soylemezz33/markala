@@ -37,24 +37,21 @@ export class EncryptionService {
     const cipher = crypto.createCipheriv("aes-256-gcm", this.key, iv);
     const encrypted = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
     const authTag = cipher.getAuthTag();
-    return [
-      iv.toString("base64"),
-      authTag.toString("base64"),
-      encrypted.toString("base64"),
-    ].join(".");
+    return [iv.toString("base64"), authTag.toString("base64"), encrypted.toString("base64")].join(
+      ".",
+    );
   }
 
   /** `iv.tag.data` formatındaki payload'u çözüp düz metne çevirir. */
   decrypt(payload: string): string {
-    const [ivB64, tagB64, dataB64] = payload.split(".");
-    if (!ivB64 || !tagB64 || !dataB64) {
+    const parts = payload.split(".");
+    // Tam 3 parça olmalı; iv ve tag her zaman dolu (12/16 byte). data parçası boş
+    // OLABİLİR (boş düz metnin şifreli hâli boş base64'tür) → yalnız varlığını arar.
+    if (parts.length !== 3 || !parts[0] || !parts[1]) {
       throw new Error("EncryptionService: geçersiz şifreli payload formatı.");
     }
-    const decipher = crypto.createDecipheriv(
-      "aes-256-gcm",
-      this.key,
-      Buffer.from(ivB64, "base64"),
-    );
+    const [ivB64, tagB64, dataB64] = parts;
+    const decipher = crypto.createDecipheriv("aes-256-gcm", this.key, Buffer.from(ivB64, "base64"));
     decipher.setAuthTag(Buffer.from(tagB64, "base64"));
     return Buffer.concat([
       decipher.update(Buffer.from(dataB64, "base64")),
