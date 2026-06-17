@@ -131,6 +131,30 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+/// Birinci-parti ziyaretçi/davranış olayları — admin ziyaretçi analizi & CRM panelini besler.
+/// userId opsiyonel plain string (FK YOK): olaylar kullanıcı silinse de korunur, cascade maliyeti yok.
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  type        String   // page_view | product_view | add_to_cart | begin_checkout | purchase | search | session_start
+  sessionId   String   @map("session_id") // anonim ziyaretçi oturumu (cookie/localStorage uuid)
+  userId      String?  @map("user_id") // giriş yapmışsa
+  path        String?
+  productSlug String?  @map("product_slug")
+  dwellMs     Int?     @map("dwell_ms") // ürün inceleme süresi (ms)
+  value       Decimal? @db.Decimal(12, 2) // sepet/sipariş tutarı (add_to_cart/purchase)
+  referrer    String?
+  device      String?  // mobile | desktop | tablet
+  utmSource   String?  @map("utm_source")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([type, createdAt])
+  @@index([productSlug, type])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
 model CorporateApplication {
   id     String  @id @default(cuid())
   userId String? @map("user_id")

@@ -8,6 +8,7 @@ import {
   Gear, SignOut, Sliders, ImageSquare, Bell, List, X,
   PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
   ChatCircle, CurrencyCircleDollar, Receipt, Buildings, CaretDown, UserCircle,
+  Pulse,
 } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
@@ -26,6 +27,7 @@ const navGroups: Array<{
     title: "Genel",
     links: [
       { href: "/", label: "Dashboard", icon: ChartLineUp },
+      { href: "/analitik", label: "Ziyaretçi Analizi", icon: Pulse },
       { href: "/siparisler", label: "Siparişler", icon: ShoppingCart },
       { href: "/musteriler", label: "Müşteriler", icon: Users },
       { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings },

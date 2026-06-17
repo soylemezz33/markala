@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem } from "@markala/types";
 import { trackAddToCart } from "./analytics";
+import { track as trackVisitor } from "./visitor-analytics";
 
 interface CartState {
   items: CartItem[];
@@ -45,6 +46,12 @@ export const useCartStore = create<CartState>()(
           qty,
           item.configuration.totalPrice * qty,
         );
+        // Birinci-parti izleme (consent yoksa no-op; SSR güvenli)
+        trackVisitor("add_to_cart", {
+          type: "add_to_cart",
+          productSlug: item.productSlug,
+          value: item.configuration.totalPrice * qty,
+        });
       },
 
       removeItem: (id) => {

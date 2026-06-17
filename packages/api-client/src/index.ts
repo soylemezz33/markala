@@ -141,6 +141,19 @@ export class MarkalaApiClient {
       this.request<{ ok: boolean }>("POST", "/auth/reset-password", data),
   };
 
+  // === Analytics / Ziyaretçi Analizi & CRM ===
+  analytics = {
+    /** Storefront birinci-parti olay gönderimi (public, batch). JWT varsa userId backend'de eklenir. */
+    collect: (events: AnalyticsCollectEvent[]) =>
+      this.request<{ ok: boolean; accepted: number }>("POST", "/analytics/collect", { events }),
+    /** Admin gösterge paneli — KPI/huni/top ürün/heatmap/CRM segment özetleri. */
+    overview: (days = 30) =>
+      this.request<AnalyticsOverviewDto>("GET", "/analytics/overview", undefined, { auth: true, query: { days } }),
+    /** Bir segmentin müşteri listesi (win-back/kampanya için iletişim bilgili). */
+    segment: (key: string) =>
+      this.request<AnalyticsSegmentResultDto>("GET", `/analytics/segments/${key}`, undefined, { auth: true }),
+  };
+
   // === Categories ===
   categories = {
     list: (includeInactive = false) =>
@@ -501,6 +514,116 @@ export interface LegalPageDto {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// ===== Analytics / Ziyaretçi Analizi & CRM tipleri =====
+
+/** Storefront'tan gönderilen birinci-parti olay. */
+export interface AnalyticsCollectEvent {
+  type: string; // page_view | product_view | add_to_cart | begin_checkout | purchase | search | session_start
+  sessionId: string;
+  path?: string;
+  productSlug?: string;
+  dwellMs?: number;
+  value?: number;
+  referrer?: string;
+  device?: string; // mobile | desktop | tablet
+  utmSource?: string;
+}
+
+export interface AnalyticsKpis {
+  sessions: number;
+  uniqueVisitors: number;
+  pageViews: number;
+  productViews: number;
+  addToCarts: number;
+  checkouts: number;
+  orders: number;
+  conversionRate: number; // sipariş/oturum (%)
+  returningRate: number; // dönen ziyaretçi oranı (%)
+  avgDwellMs: number; // ortalama ürün inceleme süresi
+}
+
+export interface AnalyticsTopProduct {
+  slug: string;
+  name: string;
+  views: number;
+  avgDwellMs: number;
+  addToCarts: number;
+  orders: number;
+  conversionRate: number; // sipariş/görüntülenme (%)
+}
+
+export interface AnalyticsFunnelStage {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface AnalyticsTimePoint {
+  date: string; // YYYY-MM-DD
+  sessions: number;
+  orders: number;
+}
+
+/** Kayıtlı kullanıcı ziyaret zamanlaması ısı haritası hücresi (dow 0=Pazar, hour 0-23). */
+export interface AnalyticsHeatCell {
+  dow: number;
+  hour: number;
+  count: number;
+}
+
+export interface AnalyticsDeviceSlice {
+  device: string;
+  count: number;
+}
+
+export interface AnalyticsSegment {
+  key: string; // new | loyal | at_risk | dormant | lost | inactive_60d ...
+  label: string;
+  description: string;
+  count: number;
+  tone?: string; // ui ipucu: success|warning|error|info
+  actionable?: boolean; // kampanya hedefi mi
+}
+
+export interface AnalyticsOverviewDto {
+  range: { days: number; from: string; to: string };
+  /** Event verisi henüz birikmediyse true (yeni etkinleştirildi) — ziyaretçi bölümleri "veri toplanıyor". */
+  collecting: boolean;
+  kpis: AnalyticsKpis;
+  topProducts: AnalyticsTopProduct[];
+  funnel: AnalyticsFunnelStage[];
+  trafficByDay: AnalyticsTimePoint[];
+  visitHeatmap: AnalyticsHeatCell[];
+  deviceBreakdown: AnalyticsDeviceSlice[];
+  customers: {
+    total: number;
+    withOrders: number;
+    conversionRate: number; // sipariş veren üye / toplam üye (%)
+    newThisPeriod: number;
+    returning: number; // 2+ siparişli
+    segments: AnalyticsSegment[];
+  };
+}
+
+export interface AnalyticsSegmentCustomer {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  orderCount: number;
+  totalSpent: number;
+  lastOrderAt: string | null;
+  lastActivityAt: string | null; // max(lastLoginAt, lastOrderAt)
+  daysSinceLastActivity: number | null;
+}
+
+export interface AnalyticsSegmentResultDto {
+  key: string;
+  label: string;
+  count: number;
+  customers: AnalyticsSegmentCustomer[];
 }
 
 /** Convenience: env'den otomatik kurulan client */

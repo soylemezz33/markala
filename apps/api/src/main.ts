@@ -56,6 +56,8 @@ async function bootstrap() {
   app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/auth/refresh", method: "POST" }));
   // Ödeme başlatma — nonce zaten zorunlu; bu per-IP limit ek savunma (kötüye kullanım/spam).
   app.use(rateLimit({ windowMs: 60_000, max: 20, path: "/payments/iyzico/init", method: "POST" }));
+  // Ziyaretçi analizi olay toplama — public + yüksek-frekanslı; per-IP spam/flood koruması.
+  app.use(rateLimit({ windowMs: 60_000, max: 120, path: "/analytics/collect", method: "POST" }));
 
   app.setGlobalPrefix("api");
   app.useGlobalPipes(

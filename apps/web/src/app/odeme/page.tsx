@@ -12,6 +12,7 @@ import { useOrdersStore } from "@/lib/orders-store";
 import { generateOrderNumber } from "@/lib/format";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { track, trackBeginCheckout } from "@/lib/analytics";
+import { track as trackVisitor } from "@/lib/visitor-analytics";
 import type { Address, Order } from "@markala/types";
 
 const SHIPPING_FEE = 79;
@@ -72,6 +73,8 @@ export default function CheckoutPage() {
   // son adımda değil. Effect mount'ta bir kez çalışır.
   useEffect(() => {
     trackBeginCheckout(total, cartItems.length);
+    // Birinci-parti izleme (consent yoksa no-op; SSR güvenli)
+    trackVisitor("begin_checkout", { type: "begin_checkout", value: total });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // sadece mount'ta — dependency array boş bırakılması kasıtlı
 

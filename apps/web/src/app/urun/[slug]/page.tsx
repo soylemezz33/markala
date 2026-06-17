@@ -26,6 +26,7 @@ import {
   RecentlyViewedRail,
 } from "@/components/product/recently-viewed";
 import { TrackViewItem } from "@/components/product/track-view-item";
+import { ProductViewTracker } from "@/components/product-view-tracker";
 import { ProductJsonLd, BreadcrumbJsonLd, HowToProductJsonLd } from "@/components/seo/json-ld";
 import type { Metadata } from "next";
 
@@ -105,6 +106,7 @@ export default async function ProductPage({ params }: Props) {
         categorySlug={product.categorySlug}
         price={product.startingPrice}
       />
+      <ProductViewTracker slug={product.slug} />
 
       {/* Breadcrumb header */}
       <div className="bg-paper-100 border-b border-paper-200">

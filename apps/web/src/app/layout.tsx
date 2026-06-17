@@ -7,6 +7,7 @@ import { ThemeBody } from "@/components/theme-body";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/seo/json-ld";
 import { Analytics } from "@/components/analytics";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { CookieConsent } from "@/components/cookie-consent";
 import { FloatingActions } from "@/components/floating-actions";
 import { WebVitals } from "@/components/web-vitals";
@@ -141,6 +142,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <FloatingActions />
         <CookieConsent />
         <Analytics />
+        <AnalyticsTracker />
         <WebVitals />
       </body>
     </html>
