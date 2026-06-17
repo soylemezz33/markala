@@ -30,6 +30,9 @@ export const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   "iptal-edildi":        { label: "İptal",               color: "bg-error/10 text-error" },
 };
 
+/** Prisma enum (underscore: kargoya_verildi) → STATUS_LABELS anahtarı (hyphen: kargoya-verildi). */
+const toSlug = (s: string) => String(s ?? "").replace(/_/g, "-");
+
 function formatDate(iso: string): string {
   try {
     return new Date(iso).toLocaleDateString("tr-TR", {
@@ -42,9 +45,20 @@ function formatDate(iso: string): string {
   }
 }
 
+type SortKey = "date-desc" | "date-asc" | "amount-desc" | "amount-asc" | "order-asc" | "status";
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: "date-desc", label: "Tarih (yeni → eski)" },
+  { value: "date-asc", label: "Tarih (eski → yeni)" },
+  { value: "amount-desc", label: "Tutar (yüksek → düşük)" },
+  { value: "amount-asc", label: "Tutar (düşük → yüksek)" },
+  { value: "order-asc", label: "Sipariş No (A → Z)" },
+  { value: "status", label: "Duruma göre" },
+];
+
 export function OrdersClient({ orders }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortKey>("date-desc");
 
   const filtered = orders.filter((o) => {
     const customer = o.customerName ?? o.email ?? "";
@@ -53,11 +67,45 @@ export function OrdersClient({ orders }: Props) {
       o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
       customer.toLowerCase().includes(search.toLowerCase()) ||
       (o.email ?? "").toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || o.status === statusFilter;
+    const matchStatus = statusFilter === "all" || toSlug(o.status) === statusFilter;
     return matchSearch && matchStatus;
   });
 
+  const sorted = [...filtered].sort((a, b) => {
+    switch (sortBy) {
+      case "date-asc": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case "date-desc": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case "amount-asc": return Number(a.total) - Number(b.total);
+      case "amount-desc": return Number(b.total) - Number(a.total);
+      case "order-asc": return a.orderNumber.localeCompare(b.orderNumber);
+      case "status": return toSlug(a.status).localeCompare(toSlug(b.status));
+      default: return 0;
+    }
+  });
+
   const totalAmount = filtered.reduce((acc, o) => acc + Number(o.total), 0);
+
+  function downloadCsv() {
+    const head = ["Sipariş No", "Müşteri", "E-posta", "Tarih", "Tutar", "Durum"];
+    const rows = sorted.map((o) => [
+      o.orderNumber,
+      o.customerName ?? "",
+      o.email ?? "",
+      formatDate(o.createdAt),
+      String(Number(o.total)),
+      STATUS_LABELS[toSlug(o.status)]?.label ?? o.status,
+    ]);
+    const csv = [head, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `siparisler-${formatDate(new Date().toISOString()).replace(/\./g, "-")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <AdminShell>
@@ -69,7 +117,11 @@ export function OrdersClient({ orders }: Props) {
             <strong className="text-ink-900">₺ {totalAmount.toLocaleString("tr-TR")}</strong>
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
+        <button
+          onClick={downloadCsv}
+          disabled={sorted.length === 0}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           <Download size={14} weight="bold" /> CSV İndir
         </button>
       </header>
@@ -85,6 +137,18 @@ export function OrdersClient({ orders }: Props) {
             className="flex-1 bg-transparent outline-none text-sm text-ink-900"
           />
         </div>
+        <label className="flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm">
+          <span className="text-ink-500 whitespace-nowrap">Sırala:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="bg-transparent outline-none text-ink-900 cursor-pointer pr-1"
+          >
+            {SORT_OPTIONS.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -92,8 +156,7 @@ export function OrdersClient({ orders }: Props) {
           Tümü ({orders.length})
         </StatusChip>
         {Object.entries(STATUS_LABELS).map(([k, v]) => {
-          const count = orders.filter((o) => o.status === k).length;
-          if (count === 0) return null;
+          const count = orders.filter((o) => toSlug(o.status) === k).length;
           return (
             <StatusChip key={k} active={statusFilter === k} onClick={() => setStatusFilter(k)}>
               {v.label} ({count})
@@ -129,8 +192,8 @@ export function OrdersClient({ orders }: Props) {
                   </td>
                 </tr>
               ) : (
-                filtered.map((o) => {
-                  const s = STATUS_LABELS[o.status] ?? { label: o.status, color: "bg-paper-200 text-ink-700" };
+                sorted.map((o) => {
+                  const s = STATUS_LABELS[toSlug(o.status)] ?? { label: o.status, color: "bg-paper-200 text-ink-700" };
                   const customer = o.customerName ?? o.email ?? "—";
                   return (
                     <tr key={o.id} className="hover:bg-paper-100/40">

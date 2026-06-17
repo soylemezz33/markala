@@ -17,7 +17,6 @@ import {
   ChatCircle,
 } from "@phosphor-icons/react";
 import { updateOrderStatus } from "./actions";
-import { STATUS_LABELS } from "../orders-client";
 
 const STATUSES = [
   { id: "siparis-alindi",     label: "Sipariş Alındı" },
@@ -28,6 +27,17 @@ const STATUSES = [
   { id: "teslim-edildi",      label: "Teslim Edildi" },
 ];
 
+/** Prisma enum (underscore) → STATUSES id (hyphen). API status'ünü tabloyla eşleştirir. */
+const toSlug = (s: string) => String(s ?? "").replace(/_/g, "-");
+
+/** Ödeme durumu etiketleri (sipariş durumundan AYRI). */
+const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
+  beklemede: { label: "Ödeme Bekliyor", color: "bg-warning/10 text-warning" },
+  basarili: { label: "Ödendi", color: "bg-success/10 text-success" },
+  basarisiz: { label: "Ödeme Başarısız", color: "bg-error/10 text-error" },
+  iade_edildi: { label: "İade Edildi", color: "bg-paper-200 text-ink-500" },
+};
+
 export interface OrderDetailProps {
   id: string;
   orderNumber: string;
@@ -35,6 +45,7 @@ export interface OrderDetailProps {
   customerName?: string | null;
   createdAt: string;
   status: string;
+  paymentStatus?: string | null;
   total: unknown;
   subtotal?: unknown;
   shippingFee?: unknown;
@@ -114,13 +125,24 @@ th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #eee;font-size:12p
 }
 
 export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
-  const [currentStatus, setCurrentStatus] = useState(order.status);
+  const [currentStatus, setCurrentStatus] = useState(toSlug(order.status));
   const [statusError, setStatusError] = useState<string | null>(null);
   const [internalNote, setInternalNote] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const handleStatusChange = (statusId: string) => {
     if (statusId === currentStatus || isPending) return;
+    // Terminal durumlar (teslim/iptal) GERİ ALINAMAZ → ekstra onay iste.
+    const TERMINAL: Record<string, string> = {
+      "teslim-edildi": "Teslim Edildi",
+      "iptal-edildi": "İptal Edildi",
+    };
+    if (TERMINAL[statusId]) {
+      const ok = window.confirm(
+        `Sipariş "${TERMINAL[statusId]}" olarak işaretlenecek.\n\nBu işlem GERİ ALINAMAZ (durum bundan sonra değiştirilemez). Devam etmek istiyor musunuz?`,
+      );
+      if (!ok) return;
+    }
     const prev = currentStatus;
     setStatusError(null);
     setCurrentStatus(statusId); // optimistik
@@ -396,13 +418,15 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
 
           <Card title="Ödeme">
             <div className="mt-1 text-xs">
-              <span
-                className={`inline-block px-2 py-0.5 rounded-full font-semibold ${
-                  STATUS_LABELS[currentStatus]?.color ?? "bg-paper-200 text-ink-700"
-                }`}
-              >
-                {STATUS_LABELS[currentStatus]?.label ?? currentStatus}
-              </span>
+              {(() => {
+                const ps = String(order.paymentStatus ?? "beklemede");
+                const p = PAYMENT_LABELS[ps] ?? { label: ps, color: "bg-paper-200 text-ink-700" };
+                return (
+                  <span className={`inline-block px-2 py-0.5 rounded-full font-semibold ${p.color}`}>
+                    {p.label}
+                  </span>
+                );
+              })()}
             </div>
             <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
               ₺ {Number(order.total).toLocaleString("tr-TR")}

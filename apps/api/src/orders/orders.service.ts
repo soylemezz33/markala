@@ -465,15 +465,35 @@ export class OrdersService {
     });
   }
 
-  listAll(opts: { status?: string; take?: number; skip?: number } = {}) {
+  async listAll(opts: { status?: string; take?: number; skip?: number } = {}) {
     // Geçersiz/bilinmeyen status filtresi → filtre uygulanmaz (eskiden Prisma'da 500'e yol açıyordu).
     const status = slugToOrderStatus(opts.status);
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: status ? { status } : {},
-      include: { items: true, user: { select: { email: true, fullName: true } } },
+      include: {
+        items: true,
+        user: { select: { email: true, fullName: true } },
+        shippingAddress: true,
+        billingAddress: true,
+      },
       orderBy: { createdAt: "desc" },
       take: opts.take ?? 50,
       skip: opts.skip ?? 0,
+    });
+    // Müşteri adı: üye → FK adres → snapshot (misafir checkout'ta girilen isim) → null.
+    // Admin sipariş tablolarında e-posta yerine isim göstermek için.
+    return orders.map((o) => {
+      const nameOf = (a: unknown) => (a as { fullName?: string } | null)?.fullName || undefined;
+      return {
+        ...o,
+        customerName:
+          o.user?.fullName ||
+          nameOf(o.shippingAddress) ||
+          nameOf(o.billingAddress) ||
+          nameOf(o.shippingAddressSnapshot) ||
+          nameOf(o.billingAddressSnapshot) ||
+          null,
+      };
     });
   }
 

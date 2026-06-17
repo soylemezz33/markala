@@ -3,8 +3,11 @@ import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { getAdminApi } from "@/lib/api";
 import {
-  ArrowLeft, EnvelopeSimple, Phone, ClockCounterClockwise,
+  ArrowLeft, EnvelopeSimple, Phone, ClockCounterClockwise, MapPin,
 } from "@phosphor-icons/react/dist/ssr";
+
+/** Prisma enum (underscore) → etiket anahtarı (hyphen). */
+const toSlug = (s: string) => String(s ?? "").replace(/_/g, "-");
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +46,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
   if (!user) notFound();
 
   const orders = user.orders ?? [];
+  const addresses = user.addresses ?? [];
   const totalSpent = orders
     .filter((o) => o.paymentStatus === "basarili")
     .reduce((sum, o) => sum + Number(o.total), 0);
@@ -112,19 +116,57 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                     {orders.map((o) => (
                       <tr key={o.id} className="hover:bg-paper-100/40">
                         <td className="px-5 py-3">
-                          <Link href={`/siparisler/${o.orderNumber}`} className="font-mono text-xs font-semibold text-brand-700 hover:underline">
+                          <Link href={`/siparisler/${o.id}`} className="font-mono text-xs font-semibold text-brand-700 hover:underline">
                             {o.orderNumber}
                           </Link>
                         </td>
                         <td className="px-5 py-3 text-ink-500 text-xs hidden md:table-cell">{fmtDate(o.createdAt)}</td>
                         <td className="px-5 py-3 text-ink-700 text-xs">
-                          {STATUS_LABEL[o.status] ?? o.status} · {PAYMENT_LABEL[o.paymentStatus] ?? o.paymentStatus}
+                          {STATUS_LABEL[toSlug(o.status)] ?? o.status} · {PAYMENT_LABEL[toSlug(o.paymentStatus)] ?? o.paymentStatus}
                         </td>
                         <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">{TRY(o.total)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </section>
+
+          {/* Adresler */}
+          <section className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden mt-5">
+            <header className="px-5 py-3 border-b border-paper-200 bg-paper-100/40 flex items-center gap-2">
+              <MapPin size={16} className="text-brand-700" />
+              <h2 className="font-semibold text-ink-900 text-sm">Adresler ({addresses.length})</h2>
+            </header>
+            {addresses.length === 0 ? (
+              <div className="p-10 text-center text-ink-500 text-sm">Kayıtlı adres yok.</div>
+            ) : (
+              <div className="p-5 grid sm:grid-cols-2 gap-3">
+                {addresses.map((a) => (
+                  <div key={a.id} className="border border-paper-200 rounded-lg p-4 text-sm">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-medium text-ink-900">{a.label || "Adres"}</span>
+                      {a.type === "corporate" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-brand-100 text-brand-900">Kurumsal</span>
+                      )}
+                      {a.isDefault && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-success/10 text-success">Varsayılan</span>
+                      )}
+                    </div>
+                    <div className="text-ink-700">{a.fullName}</div>
+                    {a.type === "corporate" && a.companyName && (
+                      <div className="text-ink-500 text-xs">
+                        {a.companyName} · VD: {a.taxOffice ?? "—"} · VN: {a.taxNumber ?? "—"}
+                      </div>
+                    )}
+                    <div className="text-ink-600 mt-1">{a.fullAddress}</div>
+                    <div className="text-ink-500 text-xs">
+                      {a.district} / {a.city} {a.zipCode}
+                    </div>
+                    {a.phone && <div className="text-ink-500 text-xs mt-1">{a.phone}</div>}
+                  </div>
+                ))}
               </div>
             )}
           </section>

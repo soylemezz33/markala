@@ -208,7 +208,7 @@ export default async function DashboardPage() {
               <tbody className="divide-y divide-paper-200">
                 {(recentOrders as any[]).map((o) => {
                   const badge = statusBadge(String(o.status ?? ""));
-                  const customerName = o.user?.fullName ?? o.email ?? "—";
+                  const customerName = o.customerName ?? o.user?.fullName ?? o.email ?? "—";
                   const totalVal = typeof o.total === "object" && o.total !== null
                     ? Number(o.total.toString())
                     : Number(o.total ?? 0);

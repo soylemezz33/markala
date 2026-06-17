@@ -398,6 +398,21 @@ export interface AdminUserDto {
   corporateDiscount?: string | number | null;
   lastLoginAt?: string | null;
   orders?: AdminUserOrderDto[];
+  addresses?: Array<{
+    id: string;
+    label?: string | null;
+    type?: string | null;
+    fullName?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    district?: string | null;
+    fullAddress?: string | null;
+    zipCode?: string | null;
+    companyName?: string | null;
+    taxOffice?: string | null;
+    taxNumber?: string | null;
+    isDefault?: boolean;
+  }>;
 }
 
 export interface AdminStatsDto {

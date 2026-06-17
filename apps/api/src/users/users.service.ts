@@ -106,6 +106,14 @@ export class UsersService {
             paymentStatus: true, createdAt: true,
           },
         },
+        addresses: {
+          orderBy: { isDefault: "desc" },
+          select: {
+            id: true, label: true, type: true, fullName: true, phone: true,
+            city: true, district: true, fullAddress: true, zipCode: true,
+            companyName: true, taxOffice: true, taxNumber: true, isDefault: true,
+          },
+        },
       },
     });
   }
