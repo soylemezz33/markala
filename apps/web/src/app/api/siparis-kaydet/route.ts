@@ -75,17 +75,25 @@ export async function POST(req: NextRequest) {
     body.notes,
   ].filter(Boolean);
 
+  // Adres alanlarını backend DTO limitlerine kırp — opsiyonel/uzun bir girdi (örn. >16 hane
+  // posta kodu) TÜM siparişi 400 ile düşürmesin. Boş/whitespace → undefined.
+  const clamp = (v: unknown, n: number): string | undefined => {
+    if (v == null) return undefined;
+    const s = String(v).trim();
+    return s ? s.slice(0, n) : undefined;
+  };
+
   const guestOrder = {
     email: body.email,
-    phone: body.phone,
+    phone: clamp(body.phone, 32),
     items,
     shippingAddress: {
-      fullName: body.customerName || body.email || "Misafir",
-      phone: body.phone,
-      city: body.city,
-      district: body.district,
-      fullAddress: body.fullAddress,
-      zipCode: body.zipCode || undefined,
+      fullName: clamp(body.customerName, 120) || clamp(body.email, 120) || "Misafir",
+      phone: clamp(body.phone, 32),
+      city: clamp(body.city, 80),
+      district: clamp(body.district, 80),
+      fullAddress: clamp(body.fullAddress, 500),
+      zipCode: clamp(body.zipCode, 16),
       label: "Teslimat",
     },
     notes: noteParts.length ? noteParts.join(" · ") : undefined,
@@ -104,7 +112,9 @@ export async function POST(req: NextRequest) {
         detail = await res.json();
       } catch {}
       console.error(`[siparis-kaydet] backend ${res.status}:`, detail);
-      return NextResponse.json({ ok: false, status: res.status }, { status: 502 });
+      const m = (detail as { message?: unknown })?.message;
+      const errMsg = Array.isArray(m) ? m.join(", ") : typeof m === "string" ? m : undefined;
+      return NextResponse.json({ ok: false, status: res.status, error: errMsg }, { status: 502 });
     }
 
     const order = (await res.json()) as { id?: string; orderNumber?: string; paymentNonce?: string };

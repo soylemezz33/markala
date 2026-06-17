@@ -167,7 +167,11 @@ export default function CheckoutPage() {
 
       if (!saveRes?.ok || !saveRes.orderId) {
         setProcessing(false);
-        setPayError("Sipariş oluşturulamadı. Lütfen bilgileri kontrol edip tekrar deneyin.");
+        setPayError(
+          saveRes?.error
+            ? `Sipariş oluşturulamadı: ${saveRes.error}`
+            : "Sipariş oluşturulamadı. Lütfen bilgileri kontrol edip tekrar deneyin.",
+        );
         return;
       }
 
@@ -302,7 +306,7 @@ export default function CheckoutPage() {
                 className="sm:col-span-2"
                 multiline
               />
-              <Input label="Posta Kodu (opsiyonel)" value={zipCode} onChange={setZipCode} />
+              <Input label="Posta Kodu (opsiyonel)" value={zipCode} onChange={setZipCode} maxLength={10} />
             </div>
             <label className="mt-3 flex items-center gap-2 text-sm text-ink-700">
               <input
