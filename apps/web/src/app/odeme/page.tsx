@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
 import { CreditCard, Check, ArrowRight, User as UserIcon, House, Truck, WhatsappLogo, Lock, Clock, ShieldCheck } from "@phosphor-icons/react";
+import { IlIlceSelect } from "@/components/forms/il-ilce-select";
+import { PhoneInput } from "@/components/forms/phone-input";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
@@ -44,7 +46,7 @@ export default function CheckoutPage() {
   const [companyName, setCompanyName] = useState("");
   const [taxOffice, setTaxOffice] = useState("");
   const [taxNumber, setTaxNumber] = useState("");
-  const [city, setCity] = useState("İstanbul");
+  const [city, setCity] = useState("");
   const [district, setDistrict] = useState("");
   const [fullAddress, setFullAddress] = useState("");
   const [zipCode, setZipCode] = useState("");
@@ -254,7 +256,7 @@ export default function CheckoutPage() {
           >
             <div className="grid sm:grid-cols-2 gap-3">
               <Input label="E-posta" value={email} onChange={setEmail} type="email" placeholder="ornek@firma.com" />
-              <Input label="Telefon" value={phone} onChange={setPhone} type="tel" placeholder="0532 ..." />
+              <PhoneInput value={phone} onChange={setPhone} label="Telefon" required />
             </div>
             {!user && (
               <p className="mt-3 text-xs text-ink-500">
@@ -317,8 +319,7 @@ export default function CheckoutPage() {
             disabled={step === "iletisim" || step === "fatura"}
           >
             <div className="grid sm:grid-cols-2 gap-3">
-              <Input label="İl" value={city} onChange={setCity} />
-              <Input label="İlçe" value={district} onChange={setDistrict} />
+              <IlIlceSelect il={city} ilce={district} onIlChange={setCity} onIlceChange={setDistrict} required className="sm:col-span-2 grid sm:grid-cols-2 gap-3" />
               <Input
           label="Adres"
                 value={fullAddress}

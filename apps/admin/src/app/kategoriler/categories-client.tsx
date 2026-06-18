@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
+import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Eye, Storefront, Trash, X } from "@phosphor-icons/react";
 import { createCategory, updateCategory, removeCategory } from "./actions";
 
@@ -147,7 +148,7 @@ export function CategoriesClient({ categories }: Props) {
     if (!form.slug.trim()) return toast.error("Geçerli bir slug girin.");
     if (form.shortDescription.trim().length < 2) return toast.error("Kısa açıklama girin.");
     if (form.longDescription.trim().length < 2) return toast.error("Uzun açıklama girin.");
-    if (!form.imageUrl.trim()) return toast.error("Görsel URL girin.");
+    if (!form.imageUrl.trim()) return toast.error("Lütfen bir görsel yükleyin.");
     if (!form.productionTime.trim()) return toast.error("Üretim süresi girin.");
 
     const payload = buildPayload();
@@ -308,13 +309,10 @@ export function CategoriesClient({ categories }: Props) {
                   className={inputCls}
                 />
               </Field>
-              <Field label="Görsel URL" required>
-                <input
-                  required
+              <Field label="Görsel" required>
+                <ImageUploader
                   value={form.imageUrl}
-                  onChange={(e) => setField("imageUrl", e.target.value)}
-                  placeholder="https://..."
-                  className={inputCls + " font-mono text-xs"}
+                  onChange={(url) => setField("imageUrl", url)}
                 />
               </Field>
               <div className="grid grid-cols-2 gap-3">

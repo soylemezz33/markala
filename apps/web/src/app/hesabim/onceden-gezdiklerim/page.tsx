@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, ArrowRight } from "@phosphor-icons/react";
 import { Button } from "@markala/ui";
-import { products } from "@markala/mock-data";
+import { products as mockProducts } from "@markala/mock-data";
+import { apiClient } from "@/lib/api";
 import { getRecentlyViewed } from "@/lib/client-storage";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@markala/types";
@@ -13,17 +14,35 @@ export default function RecentlyViewedPage() {
   const [items, setItems] = useState<Product[] | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
+    // Slug'ları CANLI API'den çöz; admin güncellemeleri (görsel/isim/fiyat) anında yansısın.
+    // Mock yalnızca API'de bulunamayan slug için fallback.
+    async function resolve(slugs: string[]): Promise<Product[]> {
+      let live: Product[] = [];
+      try {
+        live = await apiClient.products.list({ take: 500 });
+      } catch {
+        live = [];
+      }
+      const liveBySlug = new Map(live.map((p) => [p.slug, p]));
+      return slugs
+        .map((s) => liveBySlug.get(s) ?? mockProducts.find((p) => p.slug === s))
+        .filter((p): p is Product => p !== undefined);
+    }
+
     function load() {
       const slugs = getRecentlyViewed();
-      setItems(
-        slugs
-          .map((s) => products.find((p) => p.slug === s))
-          .filter((p): p is Product => p !== undefined),
-      );
+      resolve(slugs).then((resolved) => {
+        if (!cancelled) setItems(resolved);
+      });
     }
     load();
     window.addEventListener("markala:recent-changed", load);
-    return () => window.removeEventListener("markala:recent-changed", load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("markala:recent-changed", load);
+    };
   }, []);
 
   return (

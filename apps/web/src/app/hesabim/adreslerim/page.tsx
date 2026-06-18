@@ -7,6 +7,8 @@ import {
 } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
+import { IlIlceSelect } from "@/components/forms/il-ilce-select";
+import { PhoneInput } from "@/components/forms/phone-input";
 import type { Address } from "@markala/types";
 
 type AddrType = "individual" | "corporate";
@@ -217,11 +219,23 @@ export default function AddressesPage() {
               )}
 
               <Input label="Ad Soyad *" value={form.fullName} onChange={(v) => set("fullName", v)} />
-              <Input label="Telefon *" value={form.phone} onChange={(v) => set("phone", v)} placeholder="05XX XXX XX XX" />
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="İl *" value={form.city} onChange={(v) => set("city", v)} />
-                <Input label="İlçe *" value={form.district} onChange={(v) => set("district", v)} />
-              </div>
+              <PhoneInput
+                value={form.phone}
+                onChange={(v) => set("phone", v)}
+                label="Telefon *"
+                inputClassName="w-full px-3.5 py-2.5 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30"
+              />
+              <IlIlceSelect
+                il={form.city}
+                ilce={form.district}
+                onIlChange={(v) => set("city", v)}
+                onIlceChange={(v) => set("district", v)}
+                required
+                className="grid grid-cols-2 gap-3"
+                ilLabel="İl *"
+                ilceLabel="İlçe *"
+                selectClassName="mt-1.5 w-full px-3.5 py-2.5 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30"
+              />
               <Textarea label="Açık Adres *" value={form.fullAddress} onChange={(v) => set("fullAddress", v)} />
               <Input label="Posta Kodu" value={form.zipCode} onChange={(v) => set("zipCode", v)} />
 

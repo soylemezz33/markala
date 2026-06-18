@@ -18,6 +18,7 @@ import {
   IdentificationCard,
   Paperclip,
 } from "@phosphor-icons/react";
+import { PhoneInput } from "@/components/forms/phone-input";
 
 /**
  * TC Kimlik No doğrulama — Türkiye Cumhuriyeti algoritması:
@@ -369,16 +370,12 @@ export default function KvkkBasvuruPage() {
                       aria-required="true"
                     />
                   </Field>
-                  <Field id="kvkk-phone" label="Telefon">
-                    <input
-                      id="kvkk-phone"
-                      type="tel"
-                      placeholder="0532 ..."
-                      className={inputClass}
-                      value={form.phone}
-                      onChange={(e) => update("phone", e.target.value)}
-                    />
-                  </Field>
+                  <PhoneInput
+                    value={form.phone}
+                    onChange={(v) => update("phone", v)}
+                    label="Telefon"
+                    inputClassName={inputClass}
+                  />
                 </div>
 
                 <Field id="kvkk-type" label="Talep Türü" required>

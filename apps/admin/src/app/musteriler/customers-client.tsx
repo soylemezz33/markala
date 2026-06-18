@@ -1,18 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { MagnifyingGlass, EnvelopeSimple, Phone, Buildings, User as UserIcon, Eye } from "@phosphor-icons/react";
+import { Pagination, paginate } from "@/components/pagination";
 import type { AdminUserDto } from "@markala/api-client";
 
 interface Props {
   customers: AdminUserDto[];
 }
 
+const PAGE_SIZE = 20;
+
 export function CustomersClient({ customers }: Props) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
 
   const filtered = customers.filter((c) => {
     const matchSearch =
@@ -23,6 +27,13 @@ export function CustomersClient({ customers }: Props) {
     const matchType = typeFilter === "all" || c.accountType === typeFilter;
     return matchSearch && matchType;
   });
+
+  // Filtre/arama değişince ilk sayfaya dön.
+  useEffect(() => {
+    setPage(1);
+  }, [search, typeFilter]);
+
+  const { pageItems, pageCount, safePage } = paginate(filtered, page, PAGE_SIZE);
 
   return (
     <AdminShell>
@@ -66,7 +77,7 @@ export function CustomersClient({ customers }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-paper-200">
-              {filtered.map((c) => (
+              {pageItems.map((c) => (
                 <tr key={c.id} className="hover:bg-paper-100/40">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -117,6 +128,13 @@ export function CustomersClient({ customers }: Props) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={safePage}
+          pageCount={pageCount}
+          total={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
     </AdminShell>
   );

@@ -21,7 +21,13 @@ export default async function ProductEditPage({ params }: Props) {
 
   if (!product) notFound();
 
-  const categories = await api.categories.list(true);
+  // Kategoriler ikincil — geçici hatada ürün düzenleme yine açılsın (boş kategori listesiyle).
+  let categories: unknown[] = [];
+  try {
+    categories = await api.categories.list(true);
+  } catch {
+    categories = [];
+  }
 
   return (
     <ProductDetailClient

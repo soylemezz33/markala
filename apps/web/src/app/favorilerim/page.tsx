@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import { Heart, ArrowRight, ShoppingBag } from "@phosphor-icons/react";
-import { products } from "@markala/mock-data";
+import { products as mockProducts } from "@markala/mock-data";
 import type { Product } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
+import { apiClient } from "@/lib/api";
 import { getWishlist } from "@/lib/client-storage";
 
 export default function WishlistPage() {
@@ -15,17 +16,35 @@ export default function WishlistPage() {
 
   useEffect(() => {
     setMounted(true);
+    let cancelled = false;
+
+    // Favori slug'ları CANLI API'den çöz; API-only/admin ürünleri de görünsün,
+    // admin güncellemeleri anında yansısın. Mock yalnız fallback.
+    async function resolve(slugs: string[]): Promise<Product[]> {
+      let live: Product[] = [];
+      try {
+        live = await apiClient.products.list({ take: 500 });
+      } catch {
+        live = [];
+      }
+      const liveBySlug = new Map(live.map((p) => [p.slug, p]));
+      return slugs
+        .map((s) => liveBySlug.get(s) ?? mockProducts.find((p) => p.slug === s))
+        .filter((p): p is Product => p !== undefined);
+    }
+
     function load() {
       const slugs = getWishlist();
-      setItems(
-        slugs
-          .map((s) => products.find((p) => p.slug === s))
-          .filter((p): p is Product => p !== undefined),
-      );
+      resolve(slugs).then((resolved) => {
+        if (!cancelled) setItems(resolved);
+      });
     }
     load();
     window.addEventListener("markala:wishlist-changed", load);
-    return () => window.removeEventListener("markala:wishlist-changed", load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("markala:wishlist-changed", load);
+    };
   }, []);
 
   return (

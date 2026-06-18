@@ -6,6 +6,7 @@ import { Container } from "@markala/ui";
 import {
   Buildings, Upload, CheckCircle, Spinner, ArrowLeft,
 } from "@phosphor-icons/react";
+import { PhoneInput } from "@/components/forms/phone-input";
 
 export default function KurumsalBasvuruPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -227,16 +228,13 @@ export default function KurumsalBasvuruPage() {
                 className={inputCls}
               />
             </Field>
-            <Field id="kb-phone" label="Telefon" required>
-              <input
-                type="tel"
-                required
-                value={form.phone}
-                onChange={(e) => update("phone", e.target.value)}
-                placeholder="05XX XXX XX XX"
-                className={inputCls}
-              />
-            </Field>
+            <PhoneInput
+              value={form.phone}
+              onChange={(v) => update("phone", v)}
+              label="Telefon"
+              required
+              inputClassName={inputCls}
+            />
           </div>
         </fieldset>
 

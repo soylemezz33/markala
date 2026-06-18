@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { MagnifyingGlass, Eye, Download, Package } from "@phosphor-icons/react";
+import { Pagination, paginate } from "@/components/pagination";
 
 export interface OrderRow {
   id: string;
@@ -65,6 +66,8 @@ const DATE_OPTIONS: Array<{ value: DateRange; label: string }> = [
   { value: "custom", label: "Özel aralık" },
 ];
 
+const PAGE_SIZE = 20;
+
 export function OrdersClient({ orders }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -72,6 +75,7 @@ export function OrdersClient({ orders }: Props) {
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [page, setPage] = useState(1);
 
   const now = new Date();
   const inRange = (iso: string): boolean => {
@@ -116,6 +120,13 @@ export function OrdersClient({ orders }: Props) {
   });
 
   const totalAmount = filtered.reduce((acc, o) => acc + Number(o.total), 0);
+
+  // Filtre/arama/sıralama değişince ilk sayfaya dön.
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, search, sortBy, dateRange, customFrom, customTo]);
+
+  const { pageItems, pageCount, safePage } = paginate(sorted, page, PAGE_SIZE);
 
   function downloadCsv() {
     const head = ["Sipariş No", "Müşteri", "E-posta", "Tarih", "Tutar", "Durum"];
@@ -257,7 +268,7 @@ export function OrdersClient({ orders }: Props) {
                   </td>
                 </tr>
               ) : (
-                sorted.map((o) => {
+                pageItems.map((o) => {
                   const s = STATUS_LABELS[toSlug(o.status)] ?? { label: o.status, color: "bg-paper-200 text-ink-700" };
                   const customer = o.customerName ?? o.email ?? "—";
                   return (
@@ -299,6 +310,13 @@ export function OrdersClient({ orders }: Props) {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={safePage}
+          pageCount={pageCount}
+          total={filtered.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       </div>
     </AdminShell>
   );

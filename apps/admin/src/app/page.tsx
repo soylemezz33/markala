@@ -1,11 +1,21 @@
 import { AdminShell } from "@/components/admin-shell";
 import { getAdminApi } from "@/lib/api";
+import { LoadErrorBanner } from "@/components/load-error-banner";
 import Link from "next/link";
+import type { AdminStatsDto } from "@markala/api-client";
 import {
   TrendUp, ShoppingCart, Users, Package,
   CurrencyCircleDollar, Truck, Question, Plus, Sparkle, ArrowRight,
   Bell, ChartLine, ClockCounterClockwise, Receipt,
 } from "@phosphor-icons/react/dist/ssr";
+
+const EMPTY_STATS: AdminStatsDto = {
+  orderCount: 0,
+  revenue: 0,
+  customerCount: 0,
+  pendingCorporate: 0,
+  ordersByStatus: [],
+};
 
 /** Prisma enum değerini Türkçe etiket + Tailwind renk sınıfına dönüştürür */
 function statusBadge(status: string): { label: string; className: string } {
@@ -36,12 +46,19 @@ function statusBadge(status: string): { label: string; className: string } {
 }
 
 export default async function DashboardPage() {
-  const api = await getAdminApi();
-
-  const [stats, recentOrders] = await Promise.all([
-    api.adminStats(),
-    api.orders.listAll({ take: 5 }),
-  ]);
+  let stats: AdminStatsDto = EMPTY_STATS;
+  let recentOrders: unknown[] = [];
+  let loadError = false;
+  try {
+    const api = await getAdminApi();
+    [stats, recentOrders] = await Promise.all([
+      api.adminStats(),
+      api.orders.listAll({ take: 5 }),
+    ]);
+  } catch {
+    // Geçici backend hatası — sayfayı çökertme, boş/fallback verilerle + uyarıyla render et.
+    loadError = true;
+  }
 
   // Üretimde sayısı — API enum değeri Prisma'dan direkt geliyor (underscore)
   const statusCount = (s: string) => (stats.ordersByStatus ?? []).find((x) => x.status === s)?.count ?? 0;
@@ -83,6 +100,7 @@ export default async function DashboardPage() {
 
   return (
     <AdminShell>
+      {loadError && <LoadErrorBanner />}
       <header className="mb-6 flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Dashboard</h1>

@@ -10,9 +10,25 @@ import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { generateMockTrackingEvents } from "@/lib/tracking-mock";
 import { TrackingTimeline } from "@/components/tracking/timeline";
-import type { Address, Order, OrderStatus } from "@markala/types";
+import type { Address, Order, OrderStatus, TrackingEvent } from "@markala/types";
 
+// API Prisma enum'u underscore döndürebilir (teslim_edildi); UI/aşama eşlemeleri hyphen kullanıyor.
 const normStatus = (s: string): OrderStatus => s.replace(/_/g, "-") as OrderStatus;
+
+/**
+ * Sipariş status'üne göre kargo-takibi aşamalarını üretir.
+ * Status ÖNCE normalize edilir; aksi halde "teslim_edildi" aşama eşlemesine (hyphen)
+ * düşmez, ilk aşamaya (Sipariş Alındı ~%6) geriler.
+ */
+function buildTrackingEvents(order: Order): TrackingEvent[] {
+  const status = normStatus(order.status as unknown as string);
+  const events = generateMockTrackingEvents({ ...order, status });
+  // Teslim edildiyse tüm aşamalar tamamlanmış sayılır → ilerleme %100, son aşama "tamamlandı".
+  if (status === ("teslim-edildi" as OrderStatus)) {
+    return events.map((e) => ({ ...e, state: "done" as const }));
+  }
+  return events;
+}
 
 export default function OrderDetailPage({ params }: { params: { orderId: string } }) {
   const user = useAuthStore((s) => s.user);
@@ -105,7 +121,7 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           <Truck size={18} /> Kargo Takibi
         </h3>
         <TrackingTimeline
-          events={generateMockTrackingEvents(order)}
+          events={buildTrackingEvents(order)}
           trackingNumber={order.trackingNumber ?? `DHL${order.id.slice(-12).toUpperCase()}`}
           carrier={order.trackingCarrier ?? "DHL"}
         />

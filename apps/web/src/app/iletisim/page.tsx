@@ -8,6 +8,7 @@ import {
   Buildings, Users, ChatCircle, CheckCircle,
 } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
+import { PhoneInput } from "@/components/forms/phone-input";
 
 const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
@@ -196,15 +197,12 @@ export default function ContactPage() {
                     />
                   </Field>
                 </div>
-                <Field id="iletisim-phone" label="Telefon">
-                  <input
-                    type="tel"
-                    className={inputClass}
-                    placeholder="0532 ..."
-                    value={form.phone}
-                    onChange={(e) => update("phone", e.target.value)}
-                  />
-                </Field>
+                <PhoneInput
+                  value={form.phone}
+                  onChange={(v) => update("phone", v)}
+                  label="Telefon"
+                  inputClassName={inputClass}
+                />
                 <Field id="iletisim-subject" label="Konu" required>
                   <select
                     required

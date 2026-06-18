@@ -1,8 +1,20 @@
 import { getAdminApi } from "@/lib/api";
+import { LoadErrorBanner } from "@/components/load-error-banner";
 import { SliderClient } from "./slider-client";
 
 export default async function SliderAdminPage() {
-  const api = await getAdminApi();
-  const slides = await api.heroSlides.list(true);
-  return <SliderClient slides={slides as never} />;
+  let slides: unknown[] = [];
+  let loadError = false;
+  try {
+    const api = await getAdminApi();
+    slides = await api.heroSlides.list(true);
+  } catch {
+    loadError = true;
+  }
+  return (
+    <>
+      {loadError && <LoadErrorBanner />}
+      <SliderClient slides={slides as never} />
+    </>
+  );
 }

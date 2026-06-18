@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@markala/ui";
 import { CheckCircle, User as UserIcon } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
+import { PhoneInput } from "@/components/forms/phone-input";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -60,9 +61,12 @@ export default function ProfilePage() {
         <Field label="Ad Soyad">
           <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} />
         </Field>
-        <Field label="Telefon">
-          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="0532 ..." />
-        </Field>
+        <PhoneInput
+          value={phone}
+          onChange={setPhone}
+          label="Telefon"
+          inputClassName={inputClass}
+        />
 
         <div className="flex items-center gap-3 pt-3">
           <Button type="submit" disabled={saving}><UserIcon size={16} weight="bold" /> {saving ? "Kaydediliyor…" : "Kaydet"}</Button>

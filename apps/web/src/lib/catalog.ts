@@ -1,5 +1,5 @@
 import type { Product } from "@markala/types";
-import { products as mockProducts } from "@markala/mock-data";
+import { products as mockProducts, heroSlides as mockHeroSlides, type HeroSlide } from "@markala/mock-data";
 
 /**
  * Katalog veri katmanı — storefront ürünleri artık CANLI API'den (admin yönetir).
@@ -94,6 +94,45 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
     return mapProduct((await fetchJson(`/products/${encodeURIComponent(slug)}`)) as ApiProduct);
   } catch {
     return mockProducts.find((p) => p.slug === slug);
+  }
+}
+
+const HERO_THEMES: HeroSlide["theme"][] = ["yellow", "ink", "cyan", "cream"];
+
+/**
+ * Admin'in DB'deki hero slide'ı (HeroSlideDto) → storefront HeroCarousel şekli.
+ * DB minimal (title/subtitle/imageUrl/cta/sortOrder); zengin alanlar (eyebrow/theme/visual)
+ * için nötr varsayılan: sağ tarafta gerçek görsel render edilir (visualType="image").
+ */
+function mapHeroSlide(s: Record<string, unknown>, i: number): HeroSlide {
+  return {
+    id: String(s.id ?? `db-${i}`),
+    eyebrow: "Öne Çıkan",
+    title: String(s.title ?? ""),
+    description: String(s.subtitle ?? ""),
+    ctaLabel: String(s.ctaLabel || "İncele"),
+    ctaHref: String(s.ctaHref || "/urunler"),
+    productImage: String(s.imageUrl ?? ""),
+    theme: HERO_THEMES[i % HERO_THEMES.length]!,
+    visualType: "image",
+  };
+}
+
+/**
+ * Anasayfa hero slide'ları — CANLI API (admin "Anasayfa Slider"dan yönetir).
+ * Aktif slide yoksa/hata → mock slide'lara düşer (anasayfa hero ASLA boş kalmaz).
+ * Görselsiz slide atlanır (image alanı boş görünmesin).
+ */
+export async function getHeroSlides(): Promise<HeroSlide[]> {
+  try {
+    const data = await fetchJson("/hero-slides");
+    if (!Array.isArray(data)) return mockHeroSlides;
+    const mapped = (data as Record<string, unknown>[])
+      .filter((s) => s && s.imageUrl)
+      .map(mapHeroSlide);
+    return mapped.length > 0 ? mapped : mockHeroSlides;
+  } catch {
+    return mockHeroSlides;
   }
 }
 

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Container, Button } from "@markala/ui";
 import { Sparkle, Gift, Lightning, Receipt } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
+import { PhoneInput } from "@/components/forms/phone-input";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -77,9 +78,8 @@ export default function RegisterPage() {
             <Field label="E-posta">
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} autoComplete="email" placeholder="ornek@firma.com" />
             </Field>
-            <Field label="Telefon (opsiyonel)">
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="0532 123 45 67" />
-            </Field>
+            <PhoneInput value={phone} onChange={setPhone} label="Telefon (opsiyonel)" inputClassName={inputClass} placeholder="5XX XXX XX XX" />
+
             <Field label="Şifre">
               <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} minLength={8} autoComplete="new-password" placeholder="En az 8 karakter — büyük, küçük harf ve rakam" />
             </Field>

@@ -1,4 +1,4 @@
-import { getProducts } from "@/lib/catalog";
+import { getProducts, getHeroSlides } from "@/lib/catalog";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { ProductRail } from "@/components/home/product-rail";
@@ -9,7 +9,7 @@ import { ProcessTimeline } from "@/components/home/process-timeline";
 import { HowToProductionJsonLd } from "@/components/seo/json-ld";
 
 export default async function HomePage() {
-  const products = await getProducts();
+  const [products, heroSlides] = await Promise.all([getProducts(), getHeroSlides()]);
   // Çok satılanlar (bestseller flag)
   const bestsellers = products.filter((p) => p.bestseller).slice(0, 12);
 
@@ -24,7 +24,7 @@ export default async function HomePage() {
   return (
     <>
       <HowToProductionJsonLd />
-      <HeroCarousel />
+      <HeroCarousel slides={heroSlides} />
       <TrustBadges />
 
       <ProductRail

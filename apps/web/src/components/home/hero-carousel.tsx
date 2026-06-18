@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, CaretLeft, CaretRight, Sparkle } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
-import { heroSlides, type HeroSlide } from "@markala/mock-data";
+import { heroSlides as mockHeroSlides, type HeroSlide } from "@markala/mock-data";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 
 const AUTOPLAY_MS = 6000;
@@ -76,7 +76,9 @@ const themeStyles: Record<HeroSlide["theme"], {
   },
 };
 
-export function HeroCarousel() {
+export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
+  // Canlı DB slide'ları (admin) verilirse onları, yoksa mock'u kullan.
+  const heroSlides = slides && slides.length > 0 ? slides : mockHeroSlides;
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
@@ -85,7 +87,7 @@ export function HeroCarousel() {
   const goTo = useCallback((next: number, dir = 1) => {
     setDirection(dir);
     setIndex(((next % heroSlides.length) + heroSlides.length) % heroSlides.length);
-  }, []);
+  }, [heroSlides.length]);
 
   const next = useCallback(() => goTo(index + 1, 1), [index, goTo]);
   const prev = useCallback(() => goTo(index - 1, -1), [index, goTo]);
@@ -248,6 +250,7 @@ export function HeroCarousel() {
                         alt={slide.title}
                         fill
                         priority
+                        unoptimized
                         sizes="(min-width:1024px) 50vw, 100vw"
                         className="object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
                       />
