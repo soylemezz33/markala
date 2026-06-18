@@ -112,8 +112,9 @@ export default function FiyatHesaplaWidget() {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-ink-700 mb-1">Ürün</label>
+          <label htmlFor="widget-urun" className="block text-xs font-medium text-ink-700 mb-1">Ürün</label>
           <select
+            id="widget-urun"
             value={productSlug}
             onChange={(e) => {
               setProductSlug(e.target.value);
@@ -133,8 +134,9 @@ export default function FiyatHesaplaWidget() {
         {matrix && (
           <>
             <div>
-              <label className="block text-xs font-medium text-ink-700 mb-1">Paket / Tip</label>
+              <label htmlFor="widget-paket" className="block text-xs font-medium text-ink-700 mb-1">Paket / Tip</label>
               <select
+                id="widget-paket"
                 value={packageId}
                 onChange={(e) => setPackageId(e.target.value)}
                 className="w-full px-3 py-2 border border-paper-200 rounded-md text-sm text-ink-900 bg-paper-50 outline-none focus:border-brand-500"
@@ -149,8 +151,9 @@ export default function FiyatHesaplaWidget() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-ink-700 mb-1">Adet</label>
+              <label htmlFor="widget-adet" className="block text-xs font-medium text-ink-700 mb-1">Adet</label>
               <select
+                id="widget-adet"
                 value={quantityId}
                 onChange={(e) => setQuantityId(e.target.value)}
                 className="w-full px-3 py-2 border border-paper-200 rounded-md text-sm text-ink-900 bg-paper-50 outline-none focus:border-brand-500"

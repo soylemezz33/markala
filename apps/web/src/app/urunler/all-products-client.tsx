@@ -185,6 +185,7 @@ export function AllProductsClient({ products, categories }: { products: Product[
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
+                aria-label="Ürünleri sırala"
                 className="appearance-none pl-3 pr-9 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm cursor-pointer"
               >
                 {sortOptions.map((o) => (

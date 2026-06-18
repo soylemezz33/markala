@@ -104,7 +104,7 @@ export default async function CategoryPage({ params }: Props) {
       <Container className="py-12 md:py-16">
         <div className="flex items-center justify-between mb-6 text-sm">
           <span className="text-ink-500"><span className="font-semibold text-ink-900">{products.length}</span> ürün</span>
-          <select className="px-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm">
+          <select aria-label="Ürünleri sırala" className="px-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm">
             <option>En çok satan</option>
             <option>Yeniler önce</option>
             <option>Fiyat (artan)</option>

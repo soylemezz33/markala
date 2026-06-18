@@ -168,6 +168,8 @@ export default async function BlogPage() {
               type="email"
               required
               name="email"
+              autoComplete="email"
+              aria-label="E-posta adresiniz"
               placeholder="ornek@firma.com"
               className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-paper-50 placeholder:text-paper-100/40 outline-none focus:border-brand-400 text-sm"
             />
