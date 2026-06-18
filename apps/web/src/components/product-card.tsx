@@ -46,7 +46,9 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.badges && product.badges.length > 0 && (
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
             {product.badges.map((b) => {
+              // Bilinmeyen rozet (admin'in girdiği serbest metin) tüm kartı çökertmesin.
               const style = badgeStyles[b];
+              if (!style) return null;
               return (
                 <span
                   key={b}
