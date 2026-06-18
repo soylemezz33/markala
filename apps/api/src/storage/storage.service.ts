@@ -33,7 +33,7 @@ const DESIGN_ALLOWED_EXT = new Set([
   "jpg",
   "jpeg",
   "png",
-  "svg",
+  // SVG BİLEREK YOK — XML+script içerebilir; public upload + admin görüntüleme = stored XSS riski.
   "tif",
   "tiff",
   "zip",

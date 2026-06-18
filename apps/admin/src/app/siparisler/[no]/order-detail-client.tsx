@@ -266,7 +266,8 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                           <PaintBrush size={11} weight="fill" /> Tasarım desteği istendi
                         </div>
                       )}
-                      {item.uploadedFileUrl ? (
+                      {/* href guard: yalnız http(s) — javascript:/data: gibi URL'ler render edilmez (XSS). */}
+                      {/^https?:\/\//i.test(item.uploadedFileUrl ?? "") ? (
                         <div className="mt-2 flex items-center gap-2 flex-wrap">
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ink-700">
                             <FileText size={12} className="text-ink-500" /> Tasarım Dosyası:
@@ -275,7 +276,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                             {item.uploadedFileName ?? "tasarim"}
                           </span>
                           <a
-                            href={item.uploadedFileUrl}
+                            href={item.uploadedFileUrl ?? undefined}
                             target="_blank"
                             rel="noopener noreferrer"
                             download

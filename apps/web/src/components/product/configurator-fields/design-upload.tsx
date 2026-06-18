@@ -103,7 +103,7 @@ export function DesignUpload() {
           <input
             type="file"
             className="hidden"
-            accept=".ai,.eps,.pdf,.cdr,.psd,.svg,.tif,.tiff,.zip,.rar,.jpg,.jpeg,.png"
+            accept=".ai,.eps,.pdf,.cdr,.psd,.tif,.tiff,.zip,.rar,.jpg,.jpeg,.png"
             onChange={handleFileUpload}
             disabled={uploading}
           />

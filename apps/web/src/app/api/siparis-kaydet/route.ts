@@ -22,6 +22,28 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   "http://api:4000";
 
+/**
+ * Tasarım dosyası URL'i client'tan geliyor → ASLA güvenme (admin bunu href olarak render eder).
+ * Yalnız kendi storage'ımıza (https://*.markala.com.tr/... veya dev localhost) izin ver;
+ * javascript:/data:/yabancı host → stored XSS olur, reddet (undefined).
+ */
+function safeUploadUrl(v: unknown): string | undefined {
+  if (typeof v !== "string" || !v) return undefined;
+  try {
+    const u = new URL(v);
+    const httpOk = u.protocol === "https:" || u.protocol === "http:";
+    const hostOk =
+      u.hostname === "markala.com.tr" ||
+      u.hostname.endsWith(".markala.com.tr") ||
+      u.hostname === "localhost" ||
+      u.hostname === "127.0.0.1";
+    if (httpOk && hostOk) return u.href;
+  } catch {
+    // geçersiz URL (örn. "javascript:...") → reddet
+  }
+  return undefined;
+}
+
 interface IncomingItem {
   productSlug?: string;
   configuration?: {
@@ -65,7 +87,7 @@ export async function POST(req: NextRequest) {
       quantity: Math.max(1, Math.floor(Number(i.quantity) || 1)),
       needsDesignSupport: Boolean(i.configuration?.needsDesign),
       uploadedFileName: i.configuration?.uploadedFileName,
-      uploadedFileUrl: i.configuration?.uploadedFileUrl,
+      uploadedFileUrl: safeUploadUrl(i.configuration?.uploadedFileUrl),
     }));
 
   if (items.length === 0) {
