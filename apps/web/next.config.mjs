@@ -49,6 +49,11 @@ const nextConfig = {
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
+      // Üretim görsel kaynağı — ürün/kategori/slide görselleri buradan gelir.
+      // Eksik olunca next/image "hostname not configured" atıyordu; bileşenler bu
+      // yüzden `unoptimized` ile optimizasyonu baypas ediyordu (ham büyük JPEG → LCP).
+      { protocol: "https", hostname: "api.markala.com.tr" },
+      { protocol: "https", hostname: "markala.com.tr" },
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },
       { protocol: "https", hostname: "images.unsplash.com" },
