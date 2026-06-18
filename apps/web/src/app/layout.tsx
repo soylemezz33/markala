@@ -21,6 +21,19 @@ const fontSans = DM_Sans({
   axes: ["opsz"],
 });
 
+// Ürün/hero görselleri API origin'inden (ör. api.markala.com.tr) servis edilir.
+// LCP görselinin DNS+TLS bağlantı kurulumunu erken başlatmak için preconnect —
+// böylece görsel keşfedildiğinde bağlantı hazır olur (CWV: LCP "load delay" ↓).
+const imageOrigin = (() => {
+  try {
+    return new URL(
+      process.env.NEXT_PUBLIC_API_URL || "https://api.markala.com.tr",
+    ).origin;
+  } catch {
+    return "https://api.markala.com.tr";
+  }
+})();
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://markala.com.tr"),
   title: {
@@ -108,6 +121,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr" className={fontSans.variable}>
       <head>
+        <link rel="preconnect" href={imageOrigin} />
+        <link rel="dns-prefetch" href={imageOrigin} />
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
       </head>

@@ -336,8 +336,9 @@ export function AllProductsClient({ products, categories }: { products: Product[
             ) : (
               <>
                 <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
-                  {paginated.map((p) => (
-                    <ProductCard key={p.slug} product={p} />
+                  {paginated.map((p, i) => (
+                    // İlk satır (above-the-fold) → LCP görseli öncelikli yüklensin.
+                    <ProductCard key={p.slug} product={p} priority={i < 4} />
                   ))}
                 </div>
 
