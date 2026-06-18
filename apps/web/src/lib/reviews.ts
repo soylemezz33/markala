@@ -1,7 +1,19 @@
 /**
- * Mock müşteri yorumları — anasayfa ve ürün sayfalarında kullanılır.
- * Postgres bağlandığında prisma.review.findMany() ile değiştirilecek.
+ * Yorum veri katmanı.
+ *
+ * Tasarım:
+ * - Ürün yorumları (server): /reviews/public?productSlug= → yalnız ONAYLI yorumlar (canlı).
+ *   Yorum yoksa BOŞ döner — sahte yorum gösterme (mock'a DÜŞMEZ). UI "henüz yorum yok" gösterir.
+ * - rating ortalaması/sayısı/dağılımı GERÇEK onaylı yorumlardan hesaplanır.
+ * - Anasayfa öne çıkan yorumlar (getFeaturedReviews): tercihen en güncel onaylı gerçek yorumlar,
+ *   yeterli gerçek yorum yoksa mevcut testimonial MOCK ile tamamlanır (anasayfa boş kalmasın).
+ * - Server-only fonksiyonlar apiClient KULLANMAZ (catalog.ts deseni: fetch + revalidate).
  */
+
+const API_BASE =
+  process.env.API_INTERNAL_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://api:4000";
 
 export interface Review {
   id: string;
@@ -17,7 +29,18 @@ export interface Review {
   helpful: number;
 }
 
-export const reviews: Review[] = [
+export interface ProductRatingStats {
+  average: number;
+  count: number;
+  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MOCK testimonial'lar — YALNIZ anasayfa öne çıkanlar için fallback. Ürün
+// sayfasında KULLANILMAZ (orada gerçek yorum yoksa boş durum gösterilir).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MOCK_FEATURED: Review[] = [
   {
     id: "rv-001",
     authorName: "Ali Yıldız",
@@ -97,76 +120,94 @@ export const reviews: Review[] = [
     createdAt: "2026-03-22T13:00:00Z",
     helpful: 7,
   },
-  {
-    id: "rv-007",
-    authorName: "Cem Yıldız",
-    authorCompany: "Yıldız Catering",
-    productSlug: "magnet",
-    rating: 5,
-    title: "Buzdolabı magnetleri",
-    comment:
-      "Sipariş çağrı için buzdolabı magneti bastırdık. 2.000 adet, baskı sonrası kesim çok düzgün, eğri yok. Müşteriler sürekli sevdiklerine veriyor — etkili reklam materyali.",
-    verified: true,
-    createdAt: "2026-03-15T17:00:00Z",
-    helpful: 12,
-  },
-  {
-    id: "rv-008",
-    authorName: "Selin Öz",
-    authorCompany: "Öz Avukatlık",
-    productSlug: "kapakli-bloknot",
-    rating: 4,
-    title: "Müvekkil hediyeliği",
-    comment:
-      "Logolu kapaklı bloknot, 200 adet. Kapak deri görünümlü, premium bir his veriyor. Kalem hediyesi de eklemek isterdim ama Markala şu an pen sunmuyor — eklenirse mükemmel olur.",
-    verified: true,
-    createdAt: "2026-03-04T10:00:00Z",
-    helpful: 5,
-  },
-  {
-    id: "rv-009",
-    authorName: "Hakan Doğan",
-    authorCompany: "Doğan İnşaat",
-    productSlug: "branda-afis",
-    rating: 5,
-    title: "Şantiye afişi 2 yıl dayandı",
-    comment:
-      "Şantiye girişine 2x3m branda afişimiz var, 2 yıl önce Markala'dan aldık. Mersin güneşi, deniz tuzu, rüzgâr — hâlâ aynı renk. Yeni şantiyeye 4 tane daha sipariş ettim.",
-    verified: true,
-    createdAt: "2026-02-25T08:00:00Z",
-    helpful: 28,
-  },
 ];
 
-export function getProductReviews(slug: string, limit?: number): Review[] {
-  const list = reviews
-    .filter((r) => r.productSlug === slug)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  return limit ? list.slice(0, limit) : list;
+// ─────────────────────────────────────────────────────────────────────────────
+// API mapping + fetch
+// ─────────────────────────────────────────────────────────────────────────────
+
+function clampRating(v: unknown): 1 | 2 | 3 | 4 | 5 {
+  const n = Math.round(Number(v));
+  if (n <= 1) return 1;
+  if (n >= 5) return 5;
+  return n as 1 | 2 | 3 | 4 | 5;
 }
 
-export function getFeaturedReviews(limit = 6): Review[] {
-  return [...reviews]
-    .filter((r) => r.rating >= 4 && r.comment.length > 100)
-    .sort((a, b) => b.helpful - a.helpful)
-    .slice(0, limit);
+/** ReviewDto → storefront Review. userName→authorName, comment→comment; onaylı yorumlar "verified". */
+function mapReview(r: Record<string, unknown>): Review {
+  const product = (r.product ?? {}) as Record<string, unknown>;
+  return {
+    id: String(r.id),
+    authorName: String(r.userName ?? "Müşteri"),
+    authorCompany: (r.userCompany as string | null) ?? undefined,
+    productSlug: product.slug ? String(product.slug) : undefined,
+    rating: clampRating(r.rating),
+    comment: String(r.comment ?? ""),
+    // Onaylı yorum = doğrulanmış sipariş kabul edilir (admin moderasyonundan geçti).
+    verified: Boolean(r.isApproved),
+    createdAt: String(r.createdAt ?? new Date().toISOString()),
+    helpful: 0,
+  };
 }
 
-export function getProductRatingStats(slug: string): {
-  average: number;
-  count: number;
-  distribution: Record<1 | 2 | 3 | 4 | 5, number>;
-} {
-  const list = reviews.filter((r) => r.productSlug === slug);
+async function fetchJson(path: string): Promise<unknown> {
+  const res = await fetch(`${API_BASE}/api${path}`, { next: { revalidate: 60 } });
+  if (!res.ok) throw new Error(`reviews API ${path} -> ${res.status}`);
+  return res.json();
+}
+
+function computeStats(list: Review[]): ProductRatingStats {
   if (list.length === 0) {
     return { average: 0, count: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } };
   }
-  const sum = list.reduce((s, r) => s + r.rating, 0);
   const distribution: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  for (const r of list) distribution[r.rating]++;
+  let sum = 0;
+  for (const r of list) {
+    distribution[r.rating]++;
+    sum += r.rating;
+  }
   return {
     average: Math.round((sum / list.length) * 10) / 10,
     count: list.length,
     distribution,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Server erişimcileri
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Bir ürünün ONAYLI yorumları (en yeni önce). API hatası/yorum yoksa → BOŞ dizi.
+ * Mock'a DÜŞMEZ (sahte yorum gösterme); UI boş durumu kendi yönetir.
+ */
+export async function getProductReviews(productSlug: string, limit?: number): Promise<Review[]> {
+  try {
+    const data = await fetchJson(`/reviews/public?productSlug=${encodeURIComponent(productSlug)}`);
+    if (!Array.isArray(data)) return [];
+    const list = (data as Record<string, unknown>[])
+      .map(mapReview)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return limit ? list.slice(0, limit) : list;
+  } catch {
+    return [];
+  }
+}
+
+/** Ürün rating istatistikleri — GERÇEK onaylı yorumlardan. Yorum yoksa count=0. */
+export async function getProductRatingStats(productSlug: string): Promise<ProductRatingStats> {
+  const list = await getProductReviews(productSlug);
+  return computeStats(list);
+}
+
+/**
+ * Anasayfa öne çıkan yorumlar.
+ *
+ * NOT: Public API'de ürün-bağımsız "tüm onaylı yorumlar" uç noktası yok (/reviews/public
+ * productSlug zorunlu). Bu yüzden anasayfa testimonial'ları şu an MOCK üzerinden gösterilir
+ * (genel müşteri görüşleri). Backend ürün-bağımsız onaylı yorum listesi eklediğinde burada
+ * gerçek yorumlarla beslenebilir. Mock fallback anasayfanın boş kalmamasını garanti eder.
+ */
+export async function getFeaturedReviews(limit = 6): Promise<Review[]> {
+  return MOCK_FEATURED.slice(0, limit);
 }

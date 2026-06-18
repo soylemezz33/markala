@@ -12,6 +12,21 @@ export class BannersService {
     });
   }
 
+  /** Storefront — yalnız AKTİF ve tarih penceresi içindeki banner'lar (pasif/süresi geçen gösterilmez). */
+  findActivePublic() {
+    const now = new Date();
+    return this.prisma.banner.findMany({
+      where: {
+        isActive: true,
+        AND: [
+          { OR: [{ startDate: null }, { startDate: { lte: now } }] },
+          { OR: [{ endDate: null }, { endDate: { gte: now } }] },
+        ],
+      },
+      orderBy: [{ location: "asc" }, { sortOrder: "asc" }],
+    });
+  }
+
   create(dto: CreateBannerDto) {
     return this.prisma.banner.create({
       data: {

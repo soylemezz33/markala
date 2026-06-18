@@ -3,7 +3,7 @@ import { ApiTags, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import { ProductsService } from "./products.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { CreateProductDto, UpdateProductDto } from "./products.dto";
+import { BulkPriceDto, CreateProductDto, UpdateProductDto } from "./products.dto";
 
 @ApiTags("products")
 @Controller("products")
@@ -39,6 +39,14 @@ export class ProductsController {
   @ApiBearerAuth()
   create(@Body() dto: CreateProductDto) {
     return this.service.create(dto);
+  }
+
+  @Post("bulk-price")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  bulkPrice(@Body() dto: BulkPriceDto) {
+    return this.service.bulkPrice(dto);
   }
 
   @Patch(":id")

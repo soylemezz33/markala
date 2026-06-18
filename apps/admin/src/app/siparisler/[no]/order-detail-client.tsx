@@ -58,6 +58,7 @@ export interface OrderDetailProps {
   items: Array<{
     productName: string;
     productSlug?: string;
+    productImage?: string | null;
     configurationSummary?: string;
     quantity?: number;
     unitPrice?: unknown;
@@ -250,8 +251,13 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
               ) : (
                 order.items.map((item, i) => (
                   <div key={i} className="flex items-start gap-4 p-3 bg-paper-100/50 rounded-lg">
-                    <div className="flex-none w-16 h-16 rounded bg-paper-200 grid place-items-center">
-                      <Package size={20} className="text-ink-500" />
+                    <div className="flex-none w-16 h-16 rounded bg-paper-200 overflow-hidden grid place-items-center">
+                      {item.productImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.productImage} alt={item.productName} className="w-full h-full object-cover" />
+                      ) : (
+                        <Package size={20} className="text-ink-500" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-ink-900 truncate">{item.productName}</div>
@@ -266,30 +272,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                           <PaintBrush size={11} weight="fill" /> Tasarım desteği istendi
                         </div>
                       )}
-                      {/* href guard: yalnız http(s) — javascript:/data: gibi URL'ler render edilmez (XSS). */}
-                      {/^https?:\/\//i.test(item.uploadedFileUrl ?? "") ? (
-                        <div className="mt-2 flex items-center gap-2 flex-wrap">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ink-700">
-                            <FileText size={12} className="text-ink-500" /> Tasarım Dosyası:
-                          </span>
-                          <span className="text-[11px] text-ink-700 break-all">
-                            {item.uploadedFileName ?? "tasarim"}
-                          </span>
-                          <a
-                            href={item.uploadedFileUrl ?? undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border border-paper-200 text-ink-900 hover:bg-paper-100"
-                          >
-                            <DownloadSimple size={12} /> İndir
-                          </a>
-                        </div>
-                      ) : item.uploadedFileName ? (
-                        <div className="mt-2 text-[11px] text-warning">
-                          Dosya: {item.uploadedFileName} (yüklenmedi — müşteriden iste)
-                        </div>
-                      ) : null}
+                      {/* Tasarım dosyası gösterimi ayrı "Tasarım Dosyaları" bölümünde (aşağıda). */}
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-ink-900 tabular-nums">
@@ -319,6 +302,55 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
               <RowKV label="Toplam" value={`₺ ${Number(order.total).toLocaleString("tr-TR")}`} bold />
             </div>
           </Card>
+
+          {/* Tasarım Dosyaları — müşterinin yüklediği baskı dosyaları ayrı, belirgin bölümde + büyük İndir butonu */}
+          {order.items.some(
+            (it) =>
+              /^https?:\/\//i.test(it.uploadedFileUrl ?? "") || it.needsDesignSupport || it.uploadedFileName,
+          ) && (
+            <Card title="Tasarım Dosyaları">
+              <div className="space-y-2">
+                {order.items.map((item, i) => {
+                  const hasFile = /^https?:\/\//i.test(item.uploadedFileUrl ?? "");
+                  if (!hasFile && !item.needsDesignSupport && !item.uploadedFileName) return null;
+                  return (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between gap-3 p-3 rounded-lg border border-paper-200 bg-paper-100/40"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium text-ink-900 text-sm truncate">{item.productName}</div>
+                        {hasFile ? (
+                          <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-500 break-all">
+                            <FileText size={12} /> {item.uploadedFileName ?? "tasarim"}
+                          </div>
+                        ) : item.needsDesignSupport ? (
+                          <div className="mt-0.5 text-xs text-brand-700">
+                            Tasarım desteği istendi — grafik ekibi hazırlayacak
+                          </div>
+                        ) : (
+                          <div className="mt-0.5 text-xs text-warning">
+                            Dosya yüklenmedi — müşteriden iste{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
+                          </div>
+                        )}
+                      </div>
+                      {hasFile && (
+                        <a
+                          href={item.uploadedFileUrl ?? undefined}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="flex-none inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium bg-ink-900 text-paper-50 hover:bg-ink-700"
+                        >
+                          <DownloadSimple size={14} /> İndir
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
 
           <Card title="Sipariş Durumu">
             {isCancelled && (

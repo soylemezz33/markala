@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Container } from "@markala/ui";
-import { getLegalPage } from "@markala/mock-data";
+import { getLegalPage } from "@/lib/legal";
 import { FileText, ArrowRight, Info } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function MesafeliSatisPage() {
-  const page = getLegalPage("mesafeli-satis");
+export default async function MesafeliSatisPage() {
+  const page = await getLegalPage("mesafeli-satis");
 
   return (
     <Container className="py-12 md:py-16 max-w-4xl">

@@ -5,9 +5,9 @@ import {
   CurrencyCircleDollar, ArrowRight, Phone, WhatsappLogo, Info, CheckCircle,
   Truck, Tag, Lightning,
 } from "@phosphor-icons/react/dist/ssr";
-import { categories } from "@markala/mock-data";
-import { getProducts } from "@/lib/catalog";
+import { getCategories, getProducts } from "@/lib/catalog";
 import { getDisplayPrice } from "@/lib/configurator";
+import { formatPriceDisplay } from "@/lib/format";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const SITE = "https://markala.com.tr";
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PriceListPage() {
-  const products = await getProducts();
+  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
 
   // Kategoriye göre grupla
   const byCategory = categories
@@ -78,10 +78,11 @@ export default async function PriceListPage() {
     })),
   };
 
-  // Toplam ürün, fiyat aralığı
-  const allPrices = products.map((p) => getDisplayPrice(p));
-  const minPrice = Math.min(...allPrices);
-  const maxPrice = Math.max(...allPrices);
+  // Toplam ürün, fiyat aralığı — "teklif usulü" (0) ürünleri vitrin aralığına katma,
+  // yoksa "0 ₺'den başlar" gibi bozuk metin çıkar.
+  const allPrices = products.map((p) => getDisplayPrice(p)).filter((v) => v > 0);
+  const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
+  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 0;
 
   return (
     <>
@@ -224,9 +225,11 @@ export default async function PriceListPage() {
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-semibold text-ink-900 tabular-nums">
-                            {getDisplayPrice(p).toLocaleString("tr-TR")} ₺
+                            {formatPriceDisplay(getDisplayPrice(p))}
                           </span>
-                          <span className="text-xs text-ink-500 ml-1">'den</span>
+                          {getDisplayPrice(p) > 0 && (
+                            <span className="text-xs text-ink-500 ml-1">'den</span>
+                          )}
                         </td>
                         <td className="px-3 py-3 text-right">
                           <Link

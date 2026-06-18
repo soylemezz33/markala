@@ -337,6 +337,18 @@ export class OrdersService {
       if (minOrder > 0 && subtotal < minOrder) {
         throw new BadRequestException(`Bu kupon için minimum sipariş tutarı: ${minOrder} TL`);
       }
+      // İlk-sipariş kuralı (HOSGELDIN gibi): kullanıcının/e-postanın önceki siparişi varsa reddet
+      // → tekrar kullanımı engeller. (Beklemede sipariş "Ödeme Yap" ile aynı sipariş üzerinden öder,
+      //  yeni sipariş açmaz; bu yüzden önceki sipariş = ilk değil.)
+      if (coupon.firstOrderOnly) {
+        const or: Array<{ userId?: string; email?: string }> = [];
+        if (input.userId) or.push({ userId: input.userId });
+        if (input.email) or.push({ email: input.email });
+        const priorCount = or.length ? await this.prisma.order.count({ where: { OR: or } }) : 0;
+        if (priorCount > 0) {
+          throw new BadRequestException("Bu kupon yalnızca ilk siparişinizde geçerlidir.");
+        }
+      }
 
       const value = Number(coupon.value);
       if (coupon.type === "percentage") {

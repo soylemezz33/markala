@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
-import { categories, getAllLegalSlugs } from "@markala/mock-data";
+import { categories } from "@markala/mock-data";
 import { getProducts } from "@/lib/catalog";
-import { blogPosts, blogCategories } from "@/lib/blog";
+import { getBlogPosts, getBlogCategories } from "@/lib/blog";
+import { getLegalSlugs } from "@/lib/legal";
 import { cities, getAllDistrictParams } from "@/lib/cities";
 import { services } from "@/lib/services";
 
@@ -28,7 +29,12 @@ const STATIC_ROUTES = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const products = await getProducts();
+  const [products, blogPosts, blogCategories, legalSlugs] = await Promise.all([
+    getProducts(),
+    getBlogPosts(),
+    getBlogCategories(),
+    getLegalSlugs(),
+  ]);
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE}${r.path}`,
@@ -51,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const legalEntries: MetadataRoute.Sitemap = getAllLegalSlugs().map((slug) => ({
+  const legalEntries: MetadataRoute.Sitemap = legalSlugs.map((slug) => ({
     url: `${SITE}/yasal/${slug}`,
     lastModified: now,
     changeFrequency: "yearly",

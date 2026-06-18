@@ -25,7 +25,9 @@ import {
   Heart,
 } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
-import { categories, products } from "@markala/mock-data";
+import type { Category, Product } from "@markala/types";
+import { categories as mockCategories, products as mockProducts } from "@markala/mock-data";
+import { apiClient } from "@/lib/api";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 
@@ -859,10 +861,49 @@ function saveSearch(query: string) {
   }
 }
 
+/**
+ * Arama + mega-menü kataloğunu CANLI API'den lazy çeker (admin'in eklediği ürün/kategori
+ * aramada ve "Popüler Kategoriler"de çıksın). `enabled` true olunca (modal açılınca) bir kez
+ * çekilir; API hatası/boş → mock fallback korunur (arama ASLA kırılmaz).
+ */
+function useLiveCatalog(enabled: boolean): { products: Product[]; categories: Category[] } {
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (!enabled || fetchedRef.current) return;
+    fetchedRef.current = true;
+    let active = true;
+    apiClient.products
+      .list({ take: 200 })
+      .then((list) => {
+        if (active && Array.isArray(list) && list.length > 0) setProducts(list);
+      })
+      .catch(() => {
+        /* mock fallback korunur */
+      });
+    apiClient.categories
+      .list()
+      .then((list) => {
+        if (active && Array.isArray(list) && list.length > 0) setCategories(list);
+      })
+      .catch(() => {
+        /* mock fallback korunur */
+      });
+    return () => {
+      active = false;
+    };
+  }, [enabled]);
+
+  return { products, categories };
+}
+
 function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const modalRef = useRef<HTMLDivElement>(null);
+  const { products, categories } = useLiveCatalog(open);
 
   // Açılırken query reset + ilk inputa odaklan + history yükle
   useEffect(() => {

@@ -75,12 +75,18 @@ export function BulkPriceClient({ products, categories }: Props) {
 
     setApplying(true);
     try {
-      const updates = targetProducts.map((p) => ({
-        id: p.id,
-        basePrice: computeNew(Number(p.startingPrice ?? p.basePrice)),
-      }));
-      await bulkUpdatePrices(updates);
-      toast.success(`${targetProducts.length} ürün güncellendi.`);
+      const res = await bulkUpdatePrices({
+        scope,
+        categoryId:
+          scope === "category"
+            ? categories.find((c) => c.slug === categorySlug)?.id
+            : undefined,
+        op,
+        direction,
+        value,
+        round,
+      });
+      toast.success(`${res.updated} ürün güncellendi.`);
     } catch {
       toast.error("Güncelleme sırasında hata oluştu.");
     } finally {
@@ -217,8 +223,9 @@ export function BulkPriceClient({ products, categories }: Props) {
             <div className="mt-3 flex items-start gap-2 text-[11px] text-ink-500">
               <Warning size={14} className="flex-none mt-0.5 text-warning" />
               <span>
-                Bu işlem geri alınamaz. Backend bağlandığında işlem öncesi
-                yedek snapshot alınır.
+                Bu işlem geri alınamaz. Yüzde güncellemede konfigüratörlü
+                ürünlerin fiyat matrisi/birim fiyatları da orantılı ölçeklenir;
+                değişiklik siteye otomatik yansır. Önizleme yaklaşıktır.
               </span>
             </div>
           </Card>

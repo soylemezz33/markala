@@ -29,11 +29,28 @@ function escapeHtml(value: string): string {
 
 /**
  * Kurumsal (B2B) başvuru endpoint.
- * Başvuru CONTACT_TO adresine e-posta olarak iletilir. SMTP yoksa (dev) console.log + başarı.
- *
- * NOT: Admin panelindeki "kurumsal başvurular" listesine düşmesi için NestJS API'de
- * public bir create endpoint'i gerekir (şu an yok — Faz 2). Şimdilik ekibe e-posta gider.
+ * 1) Başvuru NestJS API'ye yazılır → admin "Kurumsal Başvurular" listesine "pending" düşer.
+ * 2) Ayrıca CONTACT_TO adresine e-posta bildirimi gönderilir (best-effort).
+ * DB kaydı SMTP'den bağımsızdır; e-posta gitmese bile başvuru panelde görünür.
  */
+async function persistApplication(refId: string, payload: CorporatePayload): Promise<void> {
+  const apiBase =
+    process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
+  try {
+    const res = await fetch(`${apiBase}/corporate-applications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      console.error(`[kurumsal-basvuru] DB kaydı başarısız (${refId}): HTTP ${res.status}`);
+    }
+  } catch (err) {
+    console.error(`[kurumsal-basvuru] DB kaydı hatası (${refId}):`, (err as Error).message);
+  }
+}
+
 export async function POST(req: NextRequest) {
   let body: CorporatePayload;
   try {
@@ -61,6 +78,12 @@ export async function POST(req: NextRequest) {
   }
 
   const refId = `KB-${Date.now().toString(36).toUpperCase()}`;
+
+  // DB'ye yaz (panele düşsün) — SMTP durumundan bağımsız, her zaman.
+  await persistApplication(refId, {
+    companyName, taxOffice, taxNumber, sector, annualVolume,
+    contactName, contactRole, email, phone, address, notes,
+  });
 
   if (!isMailConfigured()) {
     console.log(`[kurumsal-basvuru] yeni başvuru (SMTP devre dışı, mock): refId=${refId}`);

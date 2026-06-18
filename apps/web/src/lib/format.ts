@@ -27,6 +27,15 @@ export function formatPriceWithSymbol(amount: number): string {
   return `${tlFormatter.format(amount)} ₺`;
 }
 
+/**
+ * Müşteriye gösterilen başlık/vitrin fiyatı. Hesaplanan fiyat 0 (veya altı) ise
+ * "teklif usulü" ürün demektir → "0,00 ₺" yerine "Teklif Al" göster.
+ * Sepet/sipariş/fatura matematiğinde KULLANMA — yalnızca vitrin gösterimi.
+ */
+export function formatPriceDisplay(amount: number): string {
+  return amount > 0 ? formatPriceWithSymbol(amount) : "Teklif Al";
+}
+
 export function formatDate(iso: string | Date): string {
   return dateFormatter.format(typeof iso === "string" ? new Date(iso) : iso);
 }

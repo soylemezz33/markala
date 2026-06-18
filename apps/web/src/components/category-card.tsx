@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { Price } from "@markala/ui";
 import type { Category } from "@markala/types";
+import { formatPriceDisplay } from "@/lib/format";
 
 interface CategoryCardProps {
   category: Category;
@@ -33,8 +34,16 @@ export function CategoryCard({ category }: CategoryCardProps) {
       <div className="p-4">
         <h3 className="font-medium text-ink-900">{category.name}</h3>
         <div className="mt-1 flex items-baseline gap-1.5 text-sm text-ink-500">
-          <Price amount={category.startingPrice} size="sm" className="text-ink-900" />
-          <span>'den</span>
+          {category.startingPrice > 0 ? (
+            <>
+              <Price amount={category.startingPrice} size="sm" className="text-ink-900" />
+              <span>'den</span>
+            </>
+          ) : (
+            <span className="text-sm font-medium tabular-nums tracking-tight text-ink-900">
+              Teklif Al
+            </span>
+          )}
         </div>
       </div>
     </Link>

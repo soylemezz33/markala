@@ -49,4 +49,26 @@ export class LegalService {
       data: { isActive: false },
     });
   }
+
+  // === Public (guard'sız) — yalnız AKTİF sayfalar ===
+
+  /** Aktif yasal sayfa listesi (slug+title; sitemap için). Pasif sayfa sızdırılmaz. */
+  findActive() {
+    return this.prisma.legalPage.findMany({
+      where: { isActive: true },
+      select: { slug: true, title: true },
+      orderBy: { title: "asc" },
+    });
+  }
+
+  /** Tek aktif yasal sayfa; yoksa veya pasifse 404. */
+  async findActiveBySlug(slug: string) {
+    const page = await this.prisma.legalPage.findFirst({
+      where: { slug, isActive: true },
+    });
+    if (!page) {
+      throw new NotFoundException(`Yasal sayfa bulunamadı: ${slug}`);
+    }
+    return page;
+  }
 }

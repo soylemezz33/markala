@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { products } from "@markala/mock-data";
+import { useEffect, useMemo, useState } from "react";
+import { products as mockProducts } from "@markala/mock-data";
 import type { Product } from "@markala/types";
+import { apiClient } from "@/lib/api";
 import { ArrowSquareOut, Calculator } from "@phosphor-icons/react";
 
 const SITE = "https://markala.com.tr";
@@ -48,15 +49,42 @@ function getMatrixData(p: Product): {
   return { packages, quantities, baseCells };
 }
 
-const eligible = products.filter(
-  (p) => p.parameters?.some((par) => par.kind === "matrix"),
-);
+/** Matrix-tipi parametresi olan (fiyat tablosu çıkarılabilen) ürünler. */
+function filterEligible(list: Product[]): Product[] {
+  return list.filter((p) => p.parameters?.some((par) => par.kind === "matrix"));
+}
 
 export default function FiyatHesaplaWidget() {
-  const [productSlug, setProductSlug] = useState(eligible[0]?.slug ?? "");
+  // Ürünler CANLI API'den (admin'in eklediği ürünler de hesaplayıcıda çıksın);
+  // API hatası/boş → mock fallback ile widget boş kalmaz.
+  const [products, setProducts] = useState<Product[]>(mockProducts);
+  useEffect(() => {
+    let active = true;
+    apiClient.products
+      .list({ take: 200 })
+      .then((list) => {
+        if (active && Array.isArray(list) && list.length > 0) setProducts(list);
+      })
+      .catch(() => {
+        /* mock fallback korunur */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const eligible = useMemo(() => filterEligible(products), [products]);
+  const [productSlug, setProductSlug] = useState("");
+  // Liste hazır olunca (veya seçili slug listede yoksa) select'i ilk uygun ürüne sabitle.
+  useEffect(() => {
+    if (eligible.length === 0) return;
+    if (!eligible.some((p) => p.slug === productSlug)) {
+      setProductSlug(eligible[0]!.slug);
+    }
+  }, [eligible, productSlug]);
   const product = useMemo(
     () => products.find((p) => p.slug === productSlug) ?? eligible[0],
-    [productSlug],
+    [products, eligible, productSlug],
   );
   const matrix = useMemo(() => (product ? getMatrixData(product) : null), [product]);
 

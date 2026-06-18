@@ -2,6 +2,7 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -146,4 +147,34 @@ export class UpdateProductDto {
 
   @IsOptional()
   parameters?: unknown;
+}
+
+/**
+ * Toplu fiyat güncelleme. Operasyonu (yüzde/sabit, artır/düşür) SUNUCUYA gönderiyoruz;
+ * sunucu hedef ürünleri yükleyip basePrice + startingPrice + KONFİGÜRATÖR PARAMETRELERİNİ
+ * (matris hücre fiyatları, birim fiyat, m² fiyatı, seçenek ek ücretleri) birlikte ölçekler.
+ * Eski hata: yalnız basePrice/startingPrice yazılıyordu → matrisli üründe sitede fiyat değişmiyordu.
+ */
+export class BulkPriceDto {
+  @IsIn(["all", "category"])
+  scope!: "all" | "category";
+
+  @IsString()
+  @IsOptional()
+  categoryId?: string;
+
+  @IsIn(["percent", "fixed"])
+  op!: "percent" | "fixed";
+
+  @IsIn(["increase", "decrease"])
+  direction!: "increase" | "decrease";
+
+  @IsNumber()
+  @Min(0)
+  value!: number;
+
+  /** "none" | "5" | "10" | "50" | "100" — bütün-fiyat alanlarını en yakına yuvarlar. */
+  @IsString()
+  @IsOptional()
+  round?: string;
 }

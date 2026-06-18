@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { getProducts, getCategories } from "@/lib/catalog";
+import { formatPriceDisplay } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Tüm Kategoriler — Matbaa & Reklam Ürünleri",
@@ -90,9 +91,11 @@ export default async function CategoriesPage() {
                   <div className="mt-3 pt-3 border-t border-paper-200 flex items-baseline justify-between text-sm">
                     <span className="text-ink-700">
                       <span className="font-semibold text-ink-900 tabular-nums">
-                        {cat.startingPrice.toLocaleString("tr-TR")} ₺
+                        {formatPriceDisplay(cat.startingPrice)}
                       </span>
-                      <span className="text-xs text-ink-500 ml-1">'den</span>
+                      {cat.startingPrice > 0 && (
+                        <span className="text-xs text-ink-500 ml-1">'den</span>
+                      )}
                     </span>
                     <span className="text-xs text-brand-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1">
                       İncele <ArrowRight size={11} weight="bold" />

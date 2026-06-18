@@ -4,19 +4,22 @@ import { revalidatePath } from "next/cache";
 import { revalidateStorefront } from "@/lib/revalidate-web";
 
 /**
- * Toplu fiyat güncelleme. NOT: storefront ürün kartları/detayı `startingPrice ?? basePrice`
- * gösterdiğinden, görünen fiyatı değiştirmek için `startingPrice`'a yazıyoruz (eskiden basePrice'a
- * yazılıyordu → konfigüratör ürünlerinde değişiklik sitede HİÇ görünmüyordu).
+ * Toplu fiyat güncelleme. Operasyonu SUNUCUYA gönderiyoruz; sunucu hedef ürünlerin
+ * basePrice + startingPrice + KONFİGÜRATÖR PARAMETRELERİNİ (matris hücreleri, birim/m² fiyatı,
+ * ek ücretler) birlikte ölçekler. Böylece matrisli üründe de fiyat sitede yansır.
+ * (Eskiden client tek tek `startingPrice` yazıyordu → matrisli üründe görünen fiyat değişmiyordu.)
  */
-export async function bulkUpdatePrices(
-  updates: Array<{ id: string; basePrice: number }>,
-) {
+export async function bulkUpdatePrices(input: {
+  scope: "all" | "category";
+  categoryId?: string;
+  op: "percent" | "fixed";
+  direction: "increase" | "decrease";
+  value: number;
+  round?: string;
+}) {
   const api = await getAdminApi();
-  await Promise.all(
-    updates.map(({ id, basePrice }) =>
-      api.products.update(id, { startingPrice: basePrice } as never),
-    ),
-  );
+  const result = await api.products.bulkPrice(input);
   revalidatePath("/urunler");
   await revalidateStorefront();
+  return result;
 }

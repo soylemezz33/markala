@@ -8,7 +8,6 @@ import {
   Buildings, Receipt, Storefront, Question, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
-import { categories } from "@markala/mock-data";
 import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";

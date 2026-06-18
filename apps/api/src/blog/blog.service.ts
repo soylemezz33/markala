@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { BlogStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateBlogCategoryDto, CreateBlogPostDto, UpdateBlogPostDto } from "./blog.dto";
@@ -68,6 +68,27 @@ export class BlogService {
 
   findAllCategories() {
     return this.prisma.blogCategory.findMany({ orderBy: { sortOrder: "asc" } });
+  }
+
+  // === Public (guard'sız) — yalnız YAYINLANMIŞ içerik döner ===
+
+  /** Yayınlanmış yazılar, en yeni önce. Taslak/arşiv ASLA sızdırılmaz. */
+  findPublishedPosts() {
+    return this.prisma.blogPost.findMany({
+      where: { status: "published" as BlogStatus, publishedAt: { not: null } },
+      include: { category: { select: { slug: true, name: true } } },
+      orderBy: { publishedAt: "desc" },
+    });
+  }
+
+  /** Tek yayınlanmış yazı; yoksa veya yayınlanmamışsa 404. */
+  async findPublishedBySlug(slug: string) {
+    const post = await this.prisma.blogPost.findFirst({
+      where: { slug, status: "published" as BlogStatus, publishedAt: { not: null } },
+      include: { category: { select: { slug: true, name: true } } },
+    });
+    if (!post) throw new NotFoundException(`Blog yazısı bulunamadı: ${slug}`);
+    return post;
   }
 
   createCategory(dto: CreateBlogCategoryDto) {

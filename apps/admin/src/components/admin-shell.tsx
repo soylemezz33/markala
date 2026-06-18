@@ -8,7 +8,7 @@ import {
   Gear, SignOut, Sliders, ImageSquare, Bell, List, X,
   PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
   ChatCircle, CurrencyCircleDollar, Receipt, Buildings, CaretDown, UserCircle,
-  Pulse,
+  Pulse, Medal,
 } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
@@ -50,6 +50,7 @@ const navGroups: Array<{
       { href: "/banner", label: "Banner Yönetimi", icon: ImageSquare },
       { href: "/blog", label: "Blog Yazıları", icon: FileText },
       { href: "/yorumlar", label: "Yorumlar", icon: ChatCircle },
+      { href: "/referanslar", label: "Referanslar", icon: Medal },
       { href: "/sss", label: "SSS Yönetimi", icon: Translate },
     ],
   },

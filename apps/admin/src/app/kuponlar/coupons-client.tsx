@@ -22,6 +22,7 @@ interface FormState {
   validFrom: string;
   validUntil: string;
   isActive: boolean;
+  firstOrderOnly: boolean;
 }
 
 const EMPTY_FORM: FormState = {
@@ -33,6 +34,7 @@ const EMPTY_FORM: FormState = {
   validFrom: "",
   validUntil: "",
   isActive: true,
+  firstOrderOnly: false,
 };
 
 function typeLabel(type: CouponType): string {
@@ -57,6 +59,7 @@ function buildPayload(form: FormState): Record<string, unknown> {
     code: form.code.trim().toUpperCase(),
     type: form.type,
     isActive: form.isActive,
+    firstOrderOnly: form.firstOrderOnly,
   };
 
   if (form.type !== "free_shipping") {
@@ -107,6 +110,7 @@ export function CouponsClient({ coupons }: Props) {
       validFrom: formatDate(c.validFrom),
       validUntil: formatDate(c.validUntil),
       isActive: c.isActive,
+      firstOrderOnly: c.firstOrderOnly ?? false,
     });
     setModalOpen(true);
   }
@@ -200,7 +204,14 @@ export function CouponsClient({ coupons }: Props) {
                 {coupons.map((c) => (
                   <tr key={c.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
-                      <span className="font-mono font-semibold text-ink-900 tracking-wide">{c.code}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-semibold text-ink-900 tracking-wide">{c.code}</span>
+                        {c.firstOrderOnly && (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-500/15 text-brand-600">
+                            İlk sipariş
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-ink-700 hidden md:table-cell">{typeLabel(c.type)}</td>
                     <td className="px-4 py-3 font-medium text-ink-900">{formatDiscount(c)}</td>
@@ -393,6 +404,24 @@ export function CouponsClient({ coupons }: Props) {
                   className="w-4 h-4 rounded border-paper-200 accent-brand-500"
                 />
                 <span className="text-sm text-ink-900 font-medium">Kupon aktif</span>
+              </label>
+
+              {/* firstOrderOnly */}
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={form.firstOrderOnly}
+                  onChange={(e) => setField("firstOrderOnly", e.target.checked)}
+                  className="w-4 h-4 mt-0.5 rounded border-paper-200 accent-brand-500"
+                />
+                <span>
+                  <span className="block text-sm text-ink-900 font-medium">
+                    Sadece ilk siparişte geçerli
+                  </span>
+                  <span className="block text-[11px] text-ink-500 mt-0.5">
+                    Müşteri daha önce sipariş verdiyse kupon reddedilir (örn. HOSGELDIN).
+                  </span>
+                </span>
               </label>
 
               {/* Actions */}

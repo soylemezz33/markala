@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@markala/ui";
 import { CaretRight, FileText, Notebook, Cookie, Shield, ListBullets, ArrowUUpLeft, Package } from "@phosphor-icons/react/dist/ssr";
-import { getAllLegalSlugs, getLegalPage, legalPages } from "@markala/mock-data";
+import { getLegalSlugs, getLegalPage, getLegalPages } from "@/lib/legal";
 import { formatDate } from "@/lib/format";
 import type { Metadata } from "next";
 
@@ -10,12 +10,12 @@ interface Props {
   params: { slug: string };
 }
 
-export function generateStaticParams() {
-  return getAllLegalSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  return (await getLegalSlugs()).map((slug) => ({ slug }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const page = getLegalPage(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const page = await getLegalPage(params.slug);
   if (!page) return {};
   const url = `/yasal/${page.slug}`;
   return {
@@ -43,12 +43,11 @@ const slugIcons: Record<string, typeof FileText> = {
   kargo: Package,
 };
 
-export default function LegalPage({ params }: Props) {
-  const page = getLegalPage(params.slug);
+export default async function LegalPage({ params }: Props) {
+  const [page, allLegal] = await Promise.all([getLegalPage(params.slug), getLegalPages()]);
   if (!page) notFound();
 
   const Icon = slugIcons[params.slug] ?? FileText;
-  const allLegal = Object.values(legalPages);
 
   return (
     <>

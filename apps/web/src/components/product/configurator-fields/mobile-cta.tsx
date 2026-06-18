@@ -3,6 +3,7 @@
 import { Button } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
+import { formatPriceDisplay } from "@/lib/format";
 
 interface Props {
   total: number;
@@ -25,7 +26,7 @@ export function MobileCta({ total, onAddToCart }: Props) {
             Toplam
           </div>
           <div className="text-lg font-bold text-ink-900 tabular-nums truncate">
-            {total.toLocaleString("tr-TR")} ₺
+            {total > 0 ? formatPriceDisplay(total) : "Teklif Al"}
           </div>
         </div>
         <Button onClick={onAddToCart} disabled={justAdded} className="flex-none">

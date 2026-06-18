@@ -3,7 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import { ArrowRight, Clock, Tag as TagIcon } from "@phosphor-icons/react/dist/ssr";
-import { blogCategories, blogPosts } from "@/lib/blog";
+import { getBlogCategories, getBlogPosts, blogCoverSrc } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "Markala Blog — Matbaa, Tasarım & Marka Rehberleri",
@@ -33,7 +33,8 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const [blogPosts, blogCategories] = await Promise.all([getBlogPosts(), getBlogCategories()]);
   const featured = blogPosts[0];
   const rest = blogPosts.slice(1);
 
@@ -80,7 +81,7 @@ export default function BlogPage() {
           >
             <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-paper-100">
               <Image
-                src={`/api/mockup?theme=${featured.coverTheme}&w=1000&h=625`}
+                src={blogCoverSrc(featured.coverTheme, 1000, 625)}
                 alt={featured.title}
                 fill unoptimized
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
@@ -122,7 +123,7 @@ export default function BlogPage() {
             >
               <div className="relative aspect-[16/10] bg-paper-100 overflow-hidden">
                 <Image
-                  src={`/api/mockup?theme=${p.coverTheme}&w=600&h=375`}
+                  src={blogCoverSrc(p.coverTheme, 600, 375)}
                   alt={p.title}
                   fill unoptimized
                   sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw"

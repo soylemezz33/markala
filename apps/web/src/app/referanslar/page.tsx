@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Container, Button } from "@markala/ui";
 import { Buildings, ArrowRight } from "@phosphor-icons/react/dist/ssr";
-import { brands } from "@markala/mock-data";
+import { getBrands } from "@/lib/brands";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   description: "Markala olarak birlikte çalıştığımız kurumlar ve markalar.",
 };
 
-export default function ReferansPage() {
+export default async function ReferansPage() {
+  const brands = await getBrands();
+
   return (
     <Container className="py-16 md:py-24">
       <header className="max-w-3xl">
@@ -47,23 +49,38 @@ export default function ReferansPage() {
         </section>
       ) : (
         <section className="mt-12 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-          {brands.map((b) => (
-            <div
-          key={b.name}
-              className="aspect-[3/2] flex items-center justify-center p-6 bg-paper-50 border border-paper-200 rounded-lg grayscale hover:grayscale-0 transition-all duration-300"
-            >
-              {b.logoUrl ? (
-                <Image
-          src={b.logoUrl}
-                  alt={b.name}
-                  width={140} unoptimized
-                  height={70}                  className="object-contain max-h-12"
-                />
-              ) : (
-                <span className="font-medium text-ink-700 text-center text-sm">{b.name}</span>
-              )}
-            </div>
-          ))}
+          {brands.map((b) => {
+            const inner = b.logoUrl ? (
+              <Image
+                src={b.logoUrl}
+                alt={b.name}
+                width={140}
+                height={70}
+                unoptimized
+                className="object-contain max-h-12"
+              />
+            ) : (
+              <span className="font-medium text-ink-700 text-center text-sm">{b.name}</span>
+            );
+            const cellClass =
+              "aspect-[3/2] flex items-center justify-center p-6 bg-paper-50 border border-paper-200 rounded-lg grayscale hover:grayscale-0 transition-all duration-300";
+            return b.websiteUrl ? (
+              <a
+                key={b.name}
+                href={b.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className={cellClass}
+                title={b.name}
+              >
+                {inner}
+              </a>
+            ) : (
+              <div key={b.name} className={cellClass}>
+                {inner}
+              </div>
+            );
+          })}
         </section>
       )}
 

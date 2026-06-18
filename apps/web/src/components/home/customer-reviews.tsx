@@ -10,8 +10,8 @@ function formatDate(iso: string): string {
   });
 }
 
-export function CustomerReviews() {
-  const reviews = getFeaturedReviews(6);
+export async function CustomerReviews() {
+  const reviews = await getFeaturedReviews(6);
 
   return (
     <section className="bg-paper-50 py-16 md:py-24 border-t border-paper-200">

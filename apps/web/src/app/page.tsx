@@ -6,6 +6,7 @@ import { CategoryGrid } from "@/components/home/category-grid";
 import { TrustedBy } from "@/components/home/trusted-by";
 import { CustomerReviews } from "@/components/home/customer-reviews";
 import { ProcessTimeline } from "@/components/home/process-timeline";
+import { PromoBanner } from "@/components/promo-banner";
 import { HowToProductionJsonLd } from "@/components/seo/json-ld";
 
 export default async function HomePage() {
@@ -25,6 +26,7 @@ export default async function HomePage() {
     <>
       <HowToProductionJsonLd />
       <HeroCarousel slides={heroSlides} />
+      <PromoBanner location="hero" />
       <TrustBadges />
 
       <ProductRail

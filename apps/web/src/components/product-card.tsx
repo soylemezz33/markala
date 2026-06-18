@@ -87,10 +87,18 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="mt-3 pt-3 border-t border-paper-200 flex items-baseline justify-between gap-2">
           <div className="flex flex-col">
-            <Price amount={startingPrice} size="md" className="text-ink-900" />
-            <span className="text-[11px] mt-0.5 text-ink-500">
-              'den başlayan · KDV dahil
-            </span>
+            {startingPrice > 0 ? (
+              <>
+                <Price amount={startingPrice} size="md" className="text-ink-900" />
+                <span className="text-[11px] mt-0.5 text-ink-500">
+                  'den başlayan · KDV dahil
+                </span>
+              </>
+            ) : (
+              <span className="text-base font-medium tabular-nums tracking-tight text-ink-900">
+                Teklif Al
+              </span>
+            )}
           </div>
           <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-brand-700">
             Yapılandır →

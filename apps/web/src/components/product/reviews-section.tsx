@@ -1,5 +1,6 @@
 import { Star, ShieldCheck, ThumbsUp } from "@phosphor-icons/react/dist/ssr";
 import { getProductReviews, getProductRatingStats } from "@/lib/reviews";
+import { ReviewForm } from "./review-form";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("tr-TR", {
@@ -13,9 +14,11 @@ interface Props {
   productSlug: string;
 }
 
-export function ProductReviewsSection({ productSlug }: Props) {
-  const reviews = getProductReviews(productSlug, 6);
-  const stats = getProductRatingStats(productSlug);
+export async function ProductReviewsSection({ productSlug }: Props) {
+  const [reviews, stats] = await Promise.all([
+    getProductReviews(productSlug, 6),
+    getProductRatingStats(productSlug),
+  ]);
 
   if (stats.count === 0) {
     return (
@@ -24,6 +27,9 @@ export function ProductReviewsSection({ productSlug }: Props) {
         <p className="text-ink-500">
           Bu ürün için henüz yorum yok. Sipariş sonrası ilk yorumu sen yaz!
         </p>
+        <div className="mt-6 max-w-xl">
+          <ReviewForm productSlug={productSlug} />
+        </div>
       </section>
     );
   }
@@ -128,13 +134,20 @@ export function ProductReviewsSection({ productSlug }: Props) {
               )}
               <p className="mt-2 text-sm text-ink-700 leading-relaxed">{r.comment}</p>
 
-              <footer className="mt-3 flex items-center gap-3 text-[11px] text-ink-500">
-                <span className="inline-flex items-center gap-1">
-                  <ThumbsUp size={11} /> {r.helpful} kişi faydalı buldu
-                </span>
-              </footer>
+              {r.helpful > 0 && (
+                <footer className="mt-3 flex items-center gap-3 text-[11px] text-ink-500">
+                  <span className="inline-flex items-center gap-1">
+                    <ThumbsUp size={11} /> {r.helpful} kişi faydalı buldu
+                  </span>
+                </footer>
+              )}
             </article>
           ))}
+
+          {/* Yorum bırakma formu (client) */}
+          <div className="pt-4">
+            <ReviewForm productSlug={productSlug} />
+          </div>
         </div>
       </div>
     </section>

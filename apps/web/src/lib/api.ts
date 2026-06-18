@@ -1,7 +1,11 @@
 "use client";
 
-import { createMarkalaClient, type ApiError } from "@markala/api-client";
+import { createMarkalaClient, type ApiError, type BannerDto } from "@markala/api-client";
 import { useAuthStore } from "./auth-store";
+
+/** Banner DTO ve konum tipi — banner bileşenleri için yeniden dışa aktarılır. */
+export type Banner = BannerDto;
+export type BannerLocation = BannerDto["location"];
 
 /**
  * Storefront paylaşımlı API client — authlı çağrılar için (siparişlerim, faturalar vb.).

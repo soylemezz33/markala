@@ -9,6 +9,7 @@ import { products as mockProducts } from "@markala/mock-data";
 import type { Product } from "@markala/types";
 import { apiClient } from "@/lib/api";
 import { getDisplayPrice } from "@/lib/configurator";
+import { formatPriceDisplay } from "@/lib/format";
 import {
   addRecentlyViewed,
   getRecentlyViewed,
@@ -112,7 +113,9 @@ export function RecentlyViewedRail({
                 {p.name}
               </h3>
               <p className="text-xs text-ink-500 tabular-nums mt-0.5">
-                {getDisplayPrice(p).toLocaleString("tr-TR")} ₺'den
+                {getDisplayPrice(p) > 0
+                  ? `${formatPriceDisplay(getDisplayPrice(p))}'den`
+                  : "Teklif Al"}
               </p>
             </Link>
           ))}

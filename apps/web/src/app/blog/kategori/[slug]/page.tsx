@@ -5,9 +5,10 @@ import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import { ArrowLeft, ArrowRight, Clock } from "@phosphor-icons/react/dist/ssr";
 import {
-  blogCategories,
+  getBlogCategories,
   getBlogCategoryBySlug,
   getBlogPostsByCategory,
+  blogCoverSrc,
 } from "@/lib/blog";
 
 interface Props {
@@ -15,11 +16,12 @@ interface Props {
 }
 
 export async function generateStaticParams() {
+  const blogCategories = await getBlogCategories();
   return blogCategories.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const cat = getBlogCategoryBySlug(params.slug);
+  const cat = await getBlogCategoryBySlug(params.slug);
   if (!cat) return { title: "Kategori bulunamadı" };
   return {
     title: `${cat.name} — Markala Blog`,
@@ -49,10 +51,10 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function BlogCategoryPage({ params }: Props) {
-  const cat = getBlogCategoryBySlug(params.slug);
+export default async function BlogCategoryPage({ params }: Props) {
+  const cat = await getBlogCategoryBySlug(params.slug);
   if (!cat) notFound();
-  const posts = getBlogPostsByCategory(cat.slug);
+  const posts = await getBlogPostsByCategory(cat.slug);
 
   return (
     <>
@@ -87,7 +89,7 @@ export default function BlogCategoryPage({ params }: Props) {
               >
                 <div className="relative aspect-[16/10] bg-paper-100 overflow-hidden">
                   <Image
-                    src={`/api/mockup?theme=${p.coverTheme}&w=600&h=375`}
+                    src={blogCoverSrc(p.coverTheme, 600, 375)}
                     alt={p.title}
                     fill unoptimized
                     sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw"

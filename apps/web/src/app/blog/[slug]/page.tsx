@@ -5,10 +5,11 @@ import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import { ArrowLeft, Clock, ArrowRight, ShareNetwork } from "@phosphor-icons/react/dist/ssr";
 import {
-  blogPosts,
-  blogCategories,
+  getBlogPosts,
+  getBlogCategories,
   getBlogPostBySlug,
   getRelatedPosts,
+  blogCoverSrc,
 } from "@/lib/blog";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
@@ -19,11 +20,12 @@ interface Props {
 }
 
 export async function generateStaticParams() {
+  const blogPosts = await getBlogPosts();
   return blogPosts.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = getBlogPostBySlug(params.slug);
+  const post = await getBlogPostBySlug(params.slug);
   if (!post) return { title: "Yazı bulunamadı" };
 
   return {
@@ -38,13 +40,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       authors: [post.authorName],
       tags: post.tags,
       url: `/blog/${post.slug}`,
-      images: [{ url: `/api/mockup?theme=${post.coverTheme}&w=1200&h=630`, width: 1200, height: 630, alt: post.title }],
+      images: [{ url: blogCoverSrc(post.coverTheme, 1200, 630), width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: [`/api/mockup?theme=${post.coverTheme}&w=1200&h=630`],
+      images: [blogCoverSrc(post.coverTheme, 1200, 630)],
     },
   };
 }
@@ -136,12 +138,15 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function BlogPostPage({ params }: Props) {
-  const post = getBlogPostBySlug(params.slug);
+export default async function BlogPostPage({ params }: Props) {
+  const post = await getBlogPostBySlug(params.slug);
   if (!post) notFound();
 
+  const [blogCategories, related] = await Promise.all([
+    getBlogCategories(),
+    getRelatedPosts(post.slug, 3),
+  ]);
   const category = blogCategories.find((c) => c.slug === post.categorySlug);
-  const related = getRelatedPosts(post.slug, 3);
   const html = renderMarkdown(post.content);
 
   const articleSchema = {
@@ -165,7 +170,9 @@ export default function BlogPostPage({ params }: Props) {
         url: `${SITE}/api/mockup?theme=ink&w=512&h=512`,
       },
     },
-    image: `${SITE}/api/mockup?theme=${post.coverTheme}&w=1200&h=630`,
+    image: blogCoverSrc(post.coverTheme, 1200, 630).startsWith("http")
+      ? blogCoverSrc(post.coverTheme, 1200, 630)
+      : `${SITE}${blogCoverSrc(post.coverTheme, 1200, 630)}`,
     mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}/blog/${post.slug}` },
     keywords: post.tags.join(", "),
     articleSection: category?.name,
@@ -229,7 +236,7 @@ export default function BlogPostPage({ params }: Props) {
         <Container className="max-w-4xl pt-8 md:pt-12">
           <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-paper-100">
             <Image
-              src={`/api/mockup?theme=${post.coverTheme}&w=1200&h=675`}
+              src={blogCoverSrc(post.coverTheme, 1200, 675)}
               alt={post.title}
               fill unoptimized
               priority
@@ -290,7 +297,7 @@ export default function BlogPostPage({ params }: Props) {
                   >
                     <div className="relative aspect-[16/10] bg-paper-200 overflow-hidden">
                       <Image
-                        src={`/api/mockup?theme=${p.coverTheme}&w=500&h=312`}
+                        src={blogCoverSrc(p.coverTheme, 500, 312)}
                         alt={p.title}
                         fill unoptimized
                         sizes="(min-width:1024px) 25vw, 50vw"

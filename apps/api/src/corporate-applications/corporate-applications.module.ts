@@ -1,9 +1,11 @@
 import { Module } from "@nestjs/common";
 import { CorporateApplicationsController } from "./corporate-applications.controller";
+import { CorporateApplicationsPublicController } from "./corporate-applications-public.controller";
 import { CorporateApplicationsService } from "./corporate-applications.service";
 
 @Module({
-  controllers: [CorporateApplicationsController],
+  // Public controller önce: POST / (guard'sız) admin GET/PATCH'ten ayrı route'lar.
+  controllers: [CorporateApplicationsPublicController, CorporateApplicationsController],
   providers: [CorporateApplicationsService],
 })
 export class CorporateApplicationsModule {}

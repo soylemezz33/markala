@@ -7,6 +7,7 @@ import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/c
 import { ProductCard } from "@/components/product-card";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { formatPriceDisplay } from "@/lib/format";
 import type { Metadata } from "next";
 
 interface Props {
@@ -88,7 +89,13 @@ export default async function CategoryPage({ params }: Props) {
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-500">
               <span className="inline-flex items-center gap-1.5"><Truck size={14} className="text-brand-700" /> {cat.productionTime}</span>
               <span className="inline-flex items-center gap-1.5"><ShieldCheck size={14} className="text-brand-700" /> Kalite garantili</span>
-              <span className="inline-flex items-center gap-2">Başlangıç: <Price amount={cat.startingPrice} size="sm" className="text-ink-900 font-semibold" /></span>
+              <span className="inline-flex items-center gap-2">
+                {cat.startingPrice > 0 ? (
+                  <>Başlangıç: <Price amount={cat.startingPrice} size="sm" className="text-ink-900 font-semibold" /></>
+                ) : (
+                  <span className="text-ink-900 font-semibold">Teklif Al</span>
+                )}
+              </span>
             </div>
           </ScrollReveal>
         </Container>
@@ -157,7 +164,9 @@ export default async function CategoryPage({ params }: Props) {
                     {c.name}
                   </span>
                   <span className="mt-0.5 text-[11px] text-ink-500">
-                    {c.startingPrice} ₺'den
+                    {c.startingPrice > 0
+                      ? `${formatPriceDisplay(c.startingPrice)}'den`
+                      : "Teklif Al"}
                   </span>
                 </Link>
               ))}

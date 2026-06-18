@@ -13,8 +13,8 @@ import {
   ListChecks,
   Question,
 } from "@phosphor-icons/react/dist/ssr";
-import { getCategoryBySlug, PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
-import { getProductBySlug, getProductsByCategory, getProducts } from "@/lib/catalog";
+import { PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
+import { getCategoryBySlug, getProductBySlug, getProductsByCategory, getProducts } from "@/lib/catalog";
 import { Configurator } from "@/components/product/configurator";
 import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product-card";
@@ -42,7 +42,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
   if (!product) return {};
-  const category = getCategoryBySlug(product.categorySlug);
+  const category = await getCategoryBySlug(product.categorySlug);
   const seoTitle = product.seo?.title ?? `${product.name} — ${category?.name ?? ""} Baskı`;
   const seoDesc =
     product.seo?.description ??
@@ -83,8 +83,11 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const category = getCategoryBySlug(product.categorySlug);
-  const related = (await getProductsByCategory(product.categorySlug))
+  const [category, related] = await Promise.all([
+    getCategoryBySlug(product.categorySlug),
+    getProductsByCategory(product.categorySlug),
+  ]);
+  const relatedProducts = related
     .filter((p) => p.slug !== product.slug)
     .slice(0, 4);
 
@@ -270,7 +273,7 @@ export default async function ProductPage({ params }: Props) {
         </div>
 
         {/* Related products */}
-        {related.length > 0 && (
+        {relatedProducts.length > 0 && (
           <section className="mt-24 md:mt-32 pt-16 border-t border-paper-200">
             <header className="mb-10">
               <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Aynı kategoride</p>
@@ -279,7 +282,7 @@ export default async function ProductPage({ params }: Props) {
               </h2>
             </header>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-              {related.map((p) => (
+              {relatedProducts.map((p) => (
                 <ProductCard key={p.slug} product={p} />
               ))}
             </div>

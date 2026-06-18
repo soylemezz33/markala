@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Container } from "@markala/ui";
-import { getLegalPage } from "@markala/mock-data";
+import { getLegalPage } from "@/lib/legal";
 import { Shield, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function KvkkAydinlatmaPage() {
-  const page = getLegalPage("kvkk");
+export default async function KvkkAydinlatmaPage() {
+  const page = await getLegalPage("kvkk");
 
   return (
     <Container className="py-12 md:py-16 max-w-4xl">

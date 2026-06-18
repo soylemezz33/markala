@@ -2,15 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
 import {
   Trash, Plus, Minus, ArrowRight, ShoppingBagOpen, ShieldCheck,
   Clock, Tag, Truck, Storefront,
 } from "@phosphor-icons/react";
+import type { Category } from "@markala/types";
 import { useCartStore } from "@/lib/cart-store";
 import { track } from "@/lib/analytics";
-import { categories } from "@markala/mock-data";
+import { apiClient } from "@/lib/api";
+import { PromoBanner } from "@/components/promo-banner";
+import { categories as mockCategories } from "@markala/mock-data";
 
 const SHIPPING_FEE = 79;
 /** Ara toplam bu tutarın üstündeyse kargo ücretsiz (backend ile aynı). */
@@ -59,6 +62,7 @@ export default function CartPage() {
 
   return (
     <>
+      <PromoBanner location="cart" className="pt-4" />
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-8 md:py-10">
           <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Sepet</p>
@@ -170,6 +174,24 @@ export default function CartPage() {
 }
 
 function EmptyCart() {
+  // Popüler kategoriler CANLI API'den (admin'in eklediği kategoriler de görünsün);
+  // API hatası/boş → mock fallback ile boş kalmaz.
+  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  useEffect(() => {
+    let active = true;
+    apiClient.categories
+      .list()
+      .then((list) => {
+        if (active && Array.isArray(list) && list.length > 0) setCategories(list);
+      })
+      .catch(() => {
+        /* mock fallback korunur */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const popular = categories.slice(0, 6);
   return (
     <Container className="py-16 md:py-24">
