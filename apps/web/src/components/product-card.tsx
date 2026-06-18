@@ -19,9 +19,16 @@ interface ProductCardProps {
   product: Product;
   /** Geriye dönük uyum için kaldı; artık her iki değer de aynı görünür. */
   surface?: "light" | "dark";
+  /**
+   * İlk ekranda (above-the-fold) görünen kartlarda LCP görselini öncelikli
+   * yükle. next/image bu prop ile loading=eager + fetchpriority=high + preload
+   * ekler; varsayılan false (lazy). Sadece grid'in ilk satırına ver — fazlası
+   * gerçek LCP görselini bant genişliği için yarıştırıp geciktirir.
+   */
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   // Detayın açılıştaki fiyatıyla AYNI (tek kaynak: configurator). startingPrice'a güvenme.
   const startingPrice = getDisplayPrice(product);
 
@@ -42,6 +49,7 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             fill
             unoptimized
+            priority={priority}
             sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           />
