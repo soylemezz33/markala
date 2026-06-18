@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { EncryptionModule } from "./encryption/encryption.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { AuditModule } from "./audit/audit.module";
 import { IntegrationsModule } from "./integrations/integrations.module";
 import { CategoriesModule } from "./categories/categories.module";
 import { ProductsModule } from "./products/products.module";
@@ -30,6 +31,7 @@ import { BrandsModule } from "./brands/brands.module";
     ConfigModule.forRoot({ isGlobal: true }),
     EncryptionModule,
     PrismaModule,
+    AuditModule,
     IntegrationsModule,
     AuthModule,
     UsersModule,

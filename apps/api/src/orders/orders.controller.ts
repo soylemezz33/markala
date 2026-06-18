@@ -6,6 +6,7 @@ import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
 import { CreateOrderDto, ListOrdersQueryDto, UpdateOrderStatusDto } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
+import { clientIp } from "../common/client-ip";
 import type { Request } from "express";
 
 @ApiTags("orders")
@@ -70,10 +71,16 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
   @ApiBearerAuth()
-  updateStatus(@Param("id") id: string, @Body() dto: UpdateOrderStatusDto) {
-    return this.service.updateStatus(id, dto.status, {
-      trackingNumber: dto.trackingNumber,
-      trackingCarrier: dto.trackingCarrier,
-    });
+  updateStatus(
+    @Req() req: Request & { user: { sub: string } },
+    @Param("id") id: string,
+    @Body() dto: UpdateOrderStatusDto,
+  ) {
+    return this.service.updateStatus(
+      id,
+      dto.status,
+      { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
+      { actorId: req.user.sub, ipAddress: clientIp(req) },
+    );
   }
 }

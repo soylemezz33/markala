@@ -458,6 +458,65 @@ describe("OrdersService.updateStatus — durum makinesi", () => {
   });
 });
 
+describe("OrdersService.updateStatus — denetim kaydı (KVKK m.12 audit)", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function makeAudit(overrides: Record<string, unknown> = {}) {
+    return { record: vi.fn().mockResolvedValue(undefined), ...overrides };
+  }
+
+  it("başarılı durum değişiminde audit.record çağrılır (status_change + before/after diff + actor)", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({ status: "siparis_alindi" });
+    const audit = makeAudit();
+    const svc = new OrdersService(prisma as never, makeParasut() as never, audit as never);
+
+    await svc.updateStatus("ord1", "uretimde", undefined, { actorId: "admin1", ipAddress: "1.2.3.4" });
+
+    expect(audit.record).toHaveBeenCalledOnce();
+    const entry = audit.record.mock.calls[0][0];
+    expect(entry.entityType).toBe("Order");
+    expect(entry.entityId).toBe("ord1");
+    expect(entry.action).toBe("status_change");
+    expect(entry.actorId).toBe("admin1");
+    expect(entry.ipAddress).toBe("1.2.3.4");
+    expect(entry.diff).toEqual({ before: "siparis-alindi", after: "uretimde" });
+  });
+
+  it("aynı statüye 'değişim' (no-op) audit kaydı ÜRETMEZ", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({ status: "uretimde" });
+    const audit = makeAudit();
+    const svc = new OrdersService(prisma as never, makeParasut() as never, audit as never);
+
+    await svc.updateStatus("ord1", "uretimde", undefined, { actorId: "admin1" });
+
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
+  it("audit yazımı başarısız olsa bile durum güncellemesi başarılı döner (fail-safe son kalkan)", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({ status: "siparis_alindi" });
+    const audit = makeAudit({ record: vi.fn().mockRejectedValue(new Error("audit db down")) });
+    const svc = new OrdersService(prisma as never, makeParasut() as never, audit as never);
+
+    const res = await svc.updateStatus("ord1", "uretimde", undefined, { actorId: "admin1" });
+
+    expect(res).toBeDefined();
+    expect(prisma.order.update).toHaveBeenCalledOnce();
+  });
+
+  it("audit servisi enjekte edilmemişse (opsiyonel) durum güncellemesi yine çalışır", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({ status: "siparis_alindi" });
+    const svc = new OrdersService(prisma as never, makeParasut() as never);
+
+    await svc.updateStatus("ord1", "uretimde");
+
+    expect(prisma.order.update).toHaveBeenCalledOnce();
+  });
+});
+
 describe("validStatusTransitions export", () => {
   it("teslim-edildi ve iptal-edildi terminal state — boş dizi", () => {
     expect(validStatusTransitions["teslim-edildi"]).toHaveLength(0);

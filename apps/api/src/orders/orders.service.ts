@@ -3,6 +3,7 @@ import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
+import { AuditLogService } from "../audit/audit-log.service";
 import { calculateConfiguredPrice, extractSelections, pickConfigurationSummary } from "./pricing";
 
 function generateOrderNumber(): string {
@@ -163,7 +164,14 @@ function withAddressView<
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService, private parasut: ParasutService) {}
+  // auditLog opsiyonel: çekirdek sipariş davranışı denetim altyapısına BAĞIMLI değildir
+  // (audit yan etkidir, load-bearing değil). Üretimde @Global AuditModule ile daima enjekte
+  // edilir; birim testlerinde verilmeyebilir.
+  constructor(
+    private prisma: PrismaService,
+    private parasut: ParasutService,
+    private auditLog?: AuditLogService,
+  ) {}
 
   /**
    * SECURITY: never trust client-side pricing.
@@ -553,6 +561,7 @@ export class OrdersService {
     id: string,
     status: string,
     extras?: { trackingNumber?: string; trackingCarrier?: string },
+    actor?: { actorId?: string; ipAddress?: string },
   ) {
     // State-machine kontrolü: izinsiz geçişleri engelle.
     const current = await this.prisma.order.findUnique({ where: { id }, select: { status: true } });
@@ -589,6 +598,23 @@ export class OrdersService {
     // olsa bile sipariş durumu güncellemesi başarılı döner.
     if (status === "kargoya-verildi") {
       await this.issueInvoiceIfNeeded(id);
+    }
+
+    // KVKK m.12 denetim izi — yalnızca gerçek bir durum değişiminde (no-op'ta değil).
+    // record() kendi içinde fail-safe; buradaki try/catch defansif son kalkan (issueInvoiceIfNeeded deseni).
+    if (this.auditLog && currentSlug !== status) {
+      try {
+        await this.auditLog.record({
+          entityType: "Order",
+          entityId: id,
+          action: "status_change",
+          actorId: actor?.actorId,
+          diff: { before: currentSlug, after: status },
+          ipAddress: actor?.ipAddress,
+        });
+      } catch {
+        // record() zaten yutar; sözleşme ihlaline karşı son kalkan.
+      }
     }
 
     return updated;
