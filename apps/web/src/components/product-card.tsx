@@ -4,6 +4,7 @@ import { Star } from "@phosphor-icons/react/dist/ssr";
 import { Price, cn } from "@markala/ui";
 import type { BadgeKind, Product } from "@markala/types";
 import { WishlistButton } from "@/components/product/wishlist-button";
+import { ProductImageFallback } from "@/components/product/product-image-fallback";
 import { getDisplayPrice } from "@/lib/configurator";
 
 const badgeStyles: Record<BadgeKind, { label: string; className: string }> = {
@@ -35,14 +36,18 @@ export function ProductCard({ product }: ProductCardProps) {
       )}
     >
       <div className="relative aspect-square overflow-hidden bg-paper-100">
-        <Image
-          src={product.images[0] || `/api/mockup?slug=${product.slug}&w=600&h=600`}
-          alt={product.name}
-          fill
-          unoptimized
-          sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-        />
+        {product.images[0] ? (
+          <Image
+            src={product.images[0]}
+            alt={product.name}
+            fill
+            unoptimized
+            sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+          />
+        ) : (
+          <ProductImageFallback name={product.name} />
+        )}
         {product.badges && product.badges.length > 0 && (
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
             {product.badges.map((b) => {

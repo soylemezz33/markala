@@ -3,25 +3,30 @@
 import Image from "next/image";
 import { useState } from "react";
 import { cn } from "@markala/ui";
+import { ProductImageFallback } from "@/components/product/product-image-fallback";
 
-export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: string; fallbackSrc?: string }) {
+export function Gallery({ images, alt }: { images: string[]; alt: string; fallbackSrc?: string }) {
   const [active, setActive] = useState(0);
-  const placeholder = fallbackSrc || "/api/mockup?w=800&h=800";
-  const safeImages = images.length > 0 ? images : [placeholder];
+  const hasImages = images.length > 0;
+  const safeImages = images;
 
   return (
     <div>
       <div className="relative aspect-square bg-paper-100 rounded-lg overflow-hidden">
-        <Image
-          src={safeImages[active] ?? ""}
-          alt={alt}
-          fill unoptimized
-          priority
-          sizes="(min-width:1024px) 50vw, 100vw"
-          className="object-cover"
-        />
+        {hasImages ? (
+          <Image
+            src={safeImages[active] ?? ""}
+            alt={alt}
+            fill unoptimized
+            priority
+            sizes="(min-width:1024px) 50vw, 100vw"
+            className="object-cover"
+          />
+        ) : (
+          <ProductImageFallback name={alt} />
+        )}
       </div>
-      {safeImages.length > 1 && (
+      {hasImages && safeImages.length > 1 && (
         <div className="mt-3 grid grid-cols-5 gap-2">
           {safeImages.map((src, i) => (
             <button

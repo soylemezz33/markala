@@ -8,6 +8,7 @@ import { Clock, ArrowRight } from "@phosphor-icons/react";
 import { products as mockProducts } from "@markala/mock-data";
 import type { Product } from "@markala/types";
 import { apiClient } from "@/lib/api";
+import { ProductImageFallback } from "@/components/product/product-image-fallback";
 import { getDisplayPrice } from "@/lib/configurator";
 import { formatPriceDisplay } from "@/lib/format";
 import {
@@ -100,14 +101,18 @@ export function RecentlyViewedRail({
               className="group shrink-0 w-[160px] md:w-[180px] flex flex-col"
             >
               <div className="relative aspect-square rounded-lg overflow-hidden bg-paper-50 border border-paper-200 group-hover:border-ink-300 transition-colors">
-                <Image
-                  src={p.images[0] || `/api/mockup?slug=${p.slug}&w=400&h=400`}
-                  alt={p.name}
-                  fill
-                  unoptimized
-                  sizes="(max-width: 640px) 160px, 180px"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+                {p.images[0] ? (
+                  <Image
+                    src={p.images[0]}
+                    alt={p.name}
+                    fill
+                    unoptimized
+                    sizes="(max-width: 640px) 160px, 180px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <ProductImageFallback name={p.name} />
+                )}
               </div>
               <h3 className="mt-2 text-sm font-medium text-ink-900 line-clamp-2 group-hover:text-brand-700 transition-colors">
                 {p.name}
