@@ -32,6 +32,7 @@ export default function CheckoutPage() {
   const subtotal = useCartStore((s) => s.subtotal);
   const clearCart = useCartStore((s) => s.clear);
   const couponCode = useCartStore((s) => s.couponCode);
+  const setCoupon = useCartStore((s) => s.setCoupon);
   const user = useAuthStore((s) => s.user);
   const addOrder = useOrdersStore((s) => s.add);
 
@@ -56,6 +57,20 @@ export default function CheckoutPage() {
   const [acceptedKvkk, setAcceptedKvkk] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  function handleApplyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    setCouponError(null);
+    if (!code) return;
+    if (KNOWN_COUPONS[code] && sub > 0) {
+      setCoupon(code);
+      setCouponInput("");
+    } else {
+      setCouponError("Geçersiz veya süresi dolmuş kupon kodu.");
+    }
+  }
 
   const sub = subtotal();
   const appliedCoupon = couponCode && KNOWN_COUPONS[couponCode] ? couponCode : null;
@@ -494,6 +509,40 @@ export default function CheckoutPage() {
                   <span className="font-medium text-ink-900">Toplam</span>
                   <Price amount={total} size="lg" className="text-ink-900" />
                 </div>
+              </div>
+
+              {/* Promosyon / kupon kodu — sepette girilmemişse burada da girilebilir */}
+              <div className="mt-4 pt-4 border-t border-paper-200">
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-success font-medium">✓ {appliedCoupon} kuponu uygulandı</span>
+                    <button
+                      type="button"
+                      onClick={() => { setCoupon(null); setCouponError(null); }}
+                      className="text-xs text-ink-500 hover:text-error underline"
+                    >
+                      kaldır
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label className="block text-xs font-medium text-ink-700 mb-1.5">Promosyon kodu</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => { setCouponInput(e.target.value); setCouponError(null); }}
+                        placeholder="Kupon kodu"
+                        className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
+                      />
+                      <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!couponInput.trim()}>
+                        Uygula
+                      </Button>
+                    </div>
+                    {couponError && <p className="mt-1.5 text-xs text-error">{couponError}</p>}
+                    <p className="mt-1.5 text-[11px] text-ink-500">Yeni müşteriler: <code className="font-mono bg-paper-100 px-1 rounded">HOSGELDIN</code></p>
+                  </>
+                )}
               </div>
             </div>
 
