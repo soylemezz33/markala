@@ -1,9 +1,24 @@
-import { Controller, Get, Param, Query, UseGuards, Post, Body, Patch, Delete } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  Post,
+  Body,
+  Patch,
+  Delete,
+} from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import { ProductsService } from "./products.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { BulkPriceDto, CreateProductDto, UpdateProductDto } from "./products.dto";
+import {
+  BulkPriceDto,
+  CreateProductDto,
+  ProductListQueryDto,
+  UpdateProductDto,
+} from "./products.dto";
 
 @ApiTags("products")
 @Controller("products")
@@ -12,19 +27,15 @@ export class ProductsController {
 
   @Get()
   @ApiQuery({ name: "category", required: false })
-  @ApiQuery({ name: "bestseller", required: false })
-  @ApiQuery({ name: "take", required: false })
-  list(
-    @Query("category") category?: string,
-    @Query("bestseller") bestseller?: string,
-    @Query("take") take?: string,
-    @Query("skip") skip?: string,
-  ) {
+  @ApiQuery({ name: "bestseller", required: false, type: Boolean })
+  @ApiQuery({ name: "take", required: false, type: Number })
+  @ApiQuery({ name: "skip", required: false, type: Number })
+  list(@Query() query: ProductListQueryDto) {
     return this.service.findAll({
-      categorySlug: category,
-      bestseller: bestseller === "true" ? true : bestseller === "false" ? false : undefined,
-      take: take ? parseInt(take) : undefined,
-      skip: skip ? parseInt(skip) : undefined,
+      categorySlug: query.category,
+      bestseller: query.bestseller,
+      take: query.take,
+      skip: query.skip,
     });
   }
 
