@@ -190,6 +190,32 @@ const MAIN_NAV: Array<{
       },
     ],
   },
+  {
+    label: "İSG Uyarı Levhaları",
+    href: "/urunler",
+    groups: [
+      {
+        title: "İş Güvenliği Levhaları",
+        items: [
+          { label: "Uyarı / İkaz Levhaları", href: "/kategori/is-guvenligi-uyari-ikaz", badge: "YENİ" },
+          { label: "Yasaklayıcı Levhalar", href: "/kategori/is-guvenligi-yasaklayici" },
+          { label: "Emredici / KKD Levhaları", href: "/kategori/is-guvenligi-emredici-kkd" },
+          { label: "Acil Durum & İlk Yardım", href: "/kategori/is-guvenligi-acil-ilk-yardim" },
+          { label: "Yangınla Mücadele", href: "/kategori/is-guvenligi-yangin" },
+        ],
+      },
+      {
+        title: "Özel & Sektörel Levhalar",
+        items: [
+          { label: "Elektrik & Voltaj", href: "/kategori/is-guvenligi-elektrik-voltaj" },
+          { label: "Güneş Enerjisi (GES)", href: "/kategori/is-guvenligi-ges" },
+          { label: "Trafik, Saha & Otopark", href: "/kategori/is-guvenligi-trafik-saha" },
+          { label: "Kalite Kontrol Etiketleri", href: "/kategori/is-guvenligi-kalite-kontrol" },
+          { label: "Bilgilendirme & Talimat", href: "/kategori/is-guvenligi-bilgilendirme-talimat" },
+        ],
+      },
+    ],
+  },
 ];
 
 export function SiteHeader() {

@@ -1,20 +1,22 @@
 "use client";
 
 import { Button } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle, WhatsappLogo } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
 import { formatPriceDisplay } from "@/lib/format";
 
 interface Props {
   total: number;
   onAddToCart: () => void;
+  isQuote?: boolean;
+  quoteHref?: string;
 }
 
 /**
  * Mobil sticky bottom bar — fiyat + sepete ekle.
  * lg breakpoint altında görünür, üzerinde gizli.
  */
-export function MobileCta({ total, onAddToCart }: Props) {
+export function MobileCta({ total, onAddToCart, isQuote, quoteHref }: Props) {
   const { state } = useConfigurator();
   const { justAdded } = state;
 
@@ -29,17 +31,26 @@ export function MobileCta({ total, onAddToCart }: Props) {
             {total > 0 ? formatPriceDisplay(total) : "Teklif Al"}
           </div>
         </div>
-        <Button onClick={onAddToCart} disabled={justAdded} className="flex-none">
-          {justAdded ? (
-            <>
-              <CheckCircle size={16} weight="bold" /> Eklendi
-            </>
-          ) : (
-            <>
-              <ShoppingBagOpen size={16} weight="bold" /> Sepete Ekle
-            </>
-          )}
-        </Button>
+        {isQuote ? (
+          <Button
+            onClick={() => window.open(quoteHref, "_blank", "noopener")}
+            className="flex-none"
+          >
+            <WhatsappLogo size={16} weight="bold" /> Teklif Al
+          </Button>
+        ) : (
+          <Button onClick={onAddToCart} disabled={justAdded} className="flex-none">
+            {justAdded ? (
+              <>
+                <CheckCircle size={16} weight="bold" /> Eklendi
+              </>
+            ) : (
+              <>
+                <ShoppingBagOpen size={16} weight="bold" /> Sepete Ekle
+              </>
+            )}
+          </Button>
+        )}
       </div>
       {/* Sticky bar için alt boşluk — mobilde içerik kapanmasın */}
       <div className="lg:hidden h-20" />
