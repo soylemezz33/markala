@@ -237,10 +237,16 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 ) : slide.visualType === "banner-display" ? (
                   <BannerDisplayVisual />
                 ) : (
+                  // LCP NOTU: Bu görsel anasayfanın LCP elemanı. Eski `initial opacity:0`
+                  // fade-in, Framer Motion'ın initial stilini SSR'a `opacity:0` olarak
+                  // bastığı için görseli hidrasyona kadar görünmez tutuyordu; LCP "render
+                  // delay" fazı mobilde ~1.6s, simüle Slow-4G'de LCP ~8s'ye çıkıyordu.
+                  // Opacity baştan 1; giriş yalnızca transform (scale/y) ile yapılıyor —
+                  // element ilk boyamada görünür (LCP erken tetiklenir), premium his korunur.
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    initial={{ opacity: 1, scale: 0.94, y: 8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.9, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                     className="relative w-full max-w-[520px] aspect-square"
                   >
                     <div className="absolute inset-0 rounded-full blur-3xl opacity-40" style={{ background: "radial-gradient(circle, white 0%, transparent 70%)" }} />

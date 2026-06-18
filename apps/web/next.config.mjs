@@ -86,8 +86,16 @@ const nextConfig = {
         ],
       },
       {
-        // API endpoint'leri için no-cache
-        source: "/api/:path*",
+        // API endpoint'leri için no-cache — /api/mockup HARİÇ.
+        // Mockup, sorgu parametrelerinden deterministik SVG üretir (public, PII yok) ve
+        // kendi route handler'ı `public, s-maxage=604800` cache header'ı set ediyor.
+        // Bu blanket kural onu eziyordu: yanıt iki Cache-Control taşıyordu (no-store +
+        // public...), tarayıcı/CDN en kısıtlayıcıyı (no-store) seçiyor, cf-cache-status:
+        // DYNAMIC kalıyordu → hero SVG her istekte origin'de yeniden üretiliyordu.
+        // Negatif lookahead ile mockup'ı dışlıyoruz: hero SVG Cloudflare edge'inde
+        // cache'lenir ve LCP kritik yolundan çıkar. Güvenlik header'ları ayrı `/:path*`
+        // kuralından gelmeye devam eder (no-store kuralı yalnızca Cache-Control set eder).
+        source: "/api/:path((?!mockup).*)",
         headers: [
           {
             key: "Cache-Control",
