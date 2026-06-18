@@ -98,13 +98,23 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
 }
 
 const HERO_THEMES: HeroSlide["theme"][] = ["yellow", "ink", "cyan", "cream"];
+/** Görseli henüz yüklenmemiş slide'lar boş/kırık görünmesin diye dönüşümlü animasyonlu görsel. */
+const HERO_FALLBACK_VISUALS: NonNullable<HeroSlide["visualType"]>[] = [
+  "design-stack",
+  "card-stack",
+  "mug-3d",
+  "banner-display",
+];
 
 /**
  * Admin'in DB'deki hero slide'ı (HeroSlideDto) → storefront HeroCarousel şekli.
  * DB minimal (title/subtitle/imageUrl/cta/sortOrder); zengin alanlar (eyebrow/theme/visual)
- * için nötr varsayılan: sağ tarafta gerçek görsel render edilir (visualType="image").
+ * için nötr varsayılan. Görsel varsa sağda o render edilir (visualType="image");
+ * görsel YOKSA slide yine gösterilir ama boş alan yerine animasyonlu bespoke visual atanır
+ * (admin görsel yükleyince otomatik gerçek görsele geçer).
  */
 function mapHeroSlide(s: Record<string, unknown>, i: number): HeroSlide {
+  const imageUrl = String(s.imageUrl ?? "");
   return {
     id: String(s.id ?? `db-${i}`),
     eyebrow: "Öne Çıkan",
@@ -112,25 +122,22 @@ function mapHeroSlide(s: Record<string, unknown>, i: number): HeroSlide {
     description: String(s.subtitle ?? ""),
     ctaLabel: String(s.ctaLabel || "İncele"),
     ctaHref: String(s.ctaHref || "/urunler"),
-    productImage: String(s.imageUrl ?? ""),
+    productImage: imageUrl,
     theme: HERO_THEMES[i % HERO_THEMES.length]!,
-    visualType: "image",
+    visualType: imageUrl ? "image" : HERO_FALLBACK_VISUALS[i % HERO_FALLBACK_VISUALS.length]!,
   };
 }
 
 /**
  * Anasayfa hero slide'ları — CANLI API (admin "Anasayfa Slider"dan yönetir).
- * Aktif slide yoksa/hata → mock slide'lara düşer (anasayfa hero ASLA boş kalmaz).
- * Görselsiz slide atlanır (image alanı boş görünmesin).
+ * TÜM aktif slide'lar gösterilir (görseli olmayanlar bespoke visual ile). Aktif slide
+ * yoksa/hata → mock slide'lara düşer (anasayfa hero ASLA boş kalmaz).
  */
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   try {
     const data = await fetchJson("/hero-slides");
-    if (!Array.isArray(data)) return mockHeroSlides;
-    const mapped = (data as Record<string, unknown>[])
-      .filter((s) => s && s.imageUrl)
-      .map(mapHeroSlide);
-    return mapped.length > 0 ? mapped : mockHeroSlides;
+    if (!Array.isArray(data) || data.length === 0) return mockHeroSlides;
+    return (data as Record<string, unknown>[]).map(mapHeroSlide);
   } catch {
     return mockHeroSlides;
   }
