@@ -110,7 +110,7 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
               {payError && <p className="mt-2 text-sm text-error">{payError}</p>}
             </div>
             <Button onClick={() => handleRetryPayment(order.id)} disabled={paying}>
-              {paying ? "Yönlendiriliyor…" : `Ödeme Yap — ${order.total.toLocaleString("tr-TR")} ₺`}
+              {paying ? "Yönlendiriliyor…" : `Ödeme Yap — ${Number(order.total).toLocaleString("tr-TR")} ₺`}
             </Button>
           </div>
         </section>
@@ -153,7 +153,8 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           {order.discount > 0 && (
             <Row label="İndirim" value={<span className="inline-flex items-center text-success">-&nbsp;<Price amount={order.discount} /></span>} />
           )}
-          <Row label="KDV" value={<Price amount={order.vat} className="text-ink-500" />} />
+          {/* KDV fiyatlara DAHİL — additive değil; Toplam = Ara toplam + Kargo. Etiket bunu netleştirir. */}
+          <Row label="KDV (%20 dahil)" value={<Price amount={order.vat} className="text-ink-500" />} />
           <div className="pt-3 border-t border-paper-200 flex items-baseline justify-between">
             <span className="font-medium text-ink-900">Toplam</span>
             <Price amount={order.total} size="lg" className="text-ink-900" />

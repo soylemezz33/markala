@@ -86,7 +86,7 @@ export default function InvoicesPage() {
                     <td className="px-4 py-3 font-mono text-xs text-ink-700">{o.orderNumber}</td>
                     <td className="px-4 py-3 text-ink-700 text-xs">{formatDate(o.createdAt)}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                      ₺ {o.total.toLocaleString("tr-TR")}
+                      ₺ {Number(o.total).toLocaleString("tr-TR")}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {/* e-Arşiv PDF Paraşüt'ten kesiliyor; müşteriye otomatik e-posta ile gönderiliyor.

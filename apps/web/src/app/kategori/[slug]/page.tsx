@@ -3,8 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container, Price } from "@markala/ui";
 import { CaretRight, Truck, ShieldCheck, Sparkle } from "@phosphor-icons/react/dist/ssr";
-import { categories, getCategoryBySlug } from "@markala/mock-data";
-import { getProductsByCategory } from "@/lib/catalog";
+import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -14,12 +13,13 @@ interface Props {
   params: { slug: string };
 }
 
-export function generateStaticParams() {
-  return categories.map((c) => ({ slug: c.slug }));
+export async function generateStaticParams() {
+  const cats = await getCategories();
+  return cats.map((c) => ({ slug: c.slug }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const cat = getCategoryBySlug(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const cat = await getCategoryBySlug(params.slug);
   if (!cat) return {};
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
   const seoTitle =
@@ -50,7 +50,7 @@ export function generateMetadata({ params }: Props): Metadata {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const cat = getCategoryBySlug(params.slug);
+  const [cat, allCategories] = await Promise.all([getCategoryBySlug(params.slug), getCategories()]);
   if (!cat) notFound();
   const products = await getProductsByCategory(cat.slug);
 
@@ -134,7 +134,7 @@ export default async function CategoryPage({ params }: Props) {
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {categories
+            {allCategories
               .filter((c) => c.slug !== cat.slug)
               .slice(0, 6)
               .map((c) => (

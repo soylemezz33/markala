@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
-import { categories } from "@markala/mock-data";
+import { getCategories } from "@/lib/catalog";
 import { CategoryCard } from "@/components/category-card";
 import { ScrollReveal, StaggerReveal, StaggerItem } from "@/components/ui/scroll-reveal";
 
-export function CategoryGrid() {
+export async function CategoryGrid() {
+  // CANLI kategoriler (admin yönetir) — yeni eklenen kategori (örn. İş Güvenliği) burada görünür.
+  const categories = await getCategories();
   return (
     <section className="relative py-16 md:py-24 bg-paper-100">
       <Container className="relative">
@@ -20,7 +22,7 @@ export function CategoryGrid() {
             href="/urunler"
             className="hidden md:inline-flex items-center gap-1.5 text-sm text-ink-700 hover:text-ink-900 transition-colors"
           >
-            20 kategori <ArrowUpRight size={16} />
+            {categories.length} kategori <ArrowUpRight size={16} />
           </Link>
         </ScrollReveal>
 

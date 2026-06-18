@@ -6,8 +6,7 @@ import {
   CaretDown, FunnelSimple, X, MagnifyingGlass,
   CaretLeft, CaretRight,
 } from "@phosphor-icons/react";
-import { categories } from "@markala/mock-data";
-import type { BadgeKind, Product } from "@markala/types";
+import type { BadgeKind, Product, Category } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
 import { getDisplayPrice } from "@/lib/configurator";
 
@@ -32,7 +31,7 @@ const PAGE_SIZE = 12;
 const PRICE_MIN = 0;
 
 /** Ürünler API'den (server parent) props ile gelir; filtreleme/sıralama client-side. */
-export function AllProductsClient({ products }: { products: Product[] }) {
+export function AllProductsClient({ products, categories }: { products: Product[]; categories: Category[] }) {
   // Fiyat aralığı max — gelen ürünlerden hesaplanır
   const allPrices = products.map((p) => getDisplayPrice(p));
   const PRICE_MAX = allPrices.length > 0 ? Math.ceil(Math.max(...allPrices) / 100) * 100 : 1000;

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getProducts } from "@/lib/catalog";
+import { getProducts, getCategories } from "@/lib/catalog";
 import { ProductItemListJsonLd } from "@/components/seo/json-ld";
 import { AllProductsClient } from "./all-products-client";
 
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 /** Server: ürünleri CANLI API'den çek (admin yönetir), interaktif filtreleme client'ta. */
 export default async function AllProductsPage() {
-  const products = await getProducts();
+  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
   return (
     <>
       <ProductItemListJsonLd
@@ -27,7 +27,7 @@ export default async function AllProductsPage() {
         name="Markala — Tüm Matbaa & Reklam Ürünleri"
         url="/urunler"
       />
-      <AllProductsClient products={products} />
+      <AllProductsClient products={products} categories={categories} />
     </>
   );
 }

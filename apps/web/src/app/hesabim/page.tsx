@@ -33,7 +33,8 @@ export default function AccountOverviewPage() {
   if (!user) return null;
 
   const list = orders ?? [];
-  const totalSpent = list.reduce((acc, o) => acc + o.total, 0);
+  // o.total API'den Decimal STRING gelebilir → Number'a çevir, yoksa "169"+"519"="169519" (string concat) olur.
+  const totalSpent = list.reduce((acc, o) => acc + Number(o.total), 0);
   const recentOrders = list.slice(0, 3);
   const loading = orders === null;
 

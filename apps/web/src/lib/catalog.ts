@@ -1,5 +1,5 @@
-import type { Product } from "@markala/types";
-import { products as mockProducts, heroSlides as mockHeroSlides, type HeroSlide } from "@markala/mock-data";
+import type { Product, Category } from "@markala/types";
+import { products as mockProducts, heroSlides as mockHeroSlides, categories as mockCategories, type HeroSlide } from "@markala/mock-data";
 
 /**
  * Katalog veri katmanı — storefront ürünleri artık CANLI API'den (admin yönetir).
@@ -141,6 +141,50 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
   } catch {
     return mockHeroSlides;
   }
+}
+
+/**
+ * API kategorisini storefront Category şekline eşler. Zengin alanlar (seoIntro/features/faqs/seo/
+ * productCount) API'de yok → mock'tan (slug ile) doldurulur; görsel yoksa mockup'a düşer.
+ */
+function mapCategory(c: Record<string, unknown>): Category {
+  const slug = String(c.slug);
+  const mock = mockCategories.find((m) => m.slug === slug);
+  return {
+    slug,
+    name: String(c.name ?? mock?.name ?? slug),
+    shortDescription: String(c.shortDescription ?? mock?.shortDescription ?? ""),
+    longDescription: String(c.longDescription ?? mock?.longDescription ?? ""),
+    imageUrl: String(c.imageUrl || mock?.imageUrl || `/api/mockup?category=${slug}&w=1200&h=900`),
+    accentColor: (c.accentColor as string) ?? mock?.accentColor,
+    startingPrice: c.startingPrice != null ? num(c.startingPrice) : (mock?.startingPrice ?? 0),
+    productionTime: String(c.productionTime ?? mock?.productionTime ?? "1-3 iş günü"),
+    productCount: mock?.productCount ?? 0,
+    seoIntro: mock?.seoIntro,
+    features: mock?.features,
+    faqs: mock?.faqs,
+    seo: mock?.seo,
+  };
+}
+
+/**
+ * Tüm aktif kategoriler — CANLI API (admin "Kategoriler"den yönetir). Hata/boş → mock fallback.
+ * Böylece admin'in eklediği yeni kategori (örn. İş Güvenliği) sitede görünür.
+ */
+export async function getCategories(): Promise<Category[]> {
+  try {
+    const data = await fetchJson("/categories");
+    if (!Array.isArray(data) || data.length === 0) return mockCategories;
+    return (data as Record<string, unknown>[]).map(mapCategory);
+  } catch {
+    return mockCategories;
+  }
+}
+
+/** Tek kategori (slug). API'de yoksa/hata → mock fallback. */
+export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
+  const list = await getCategories();
+  return list.find((c) => c.slug === slug) ?? mockCategories.find((c) => c.slug === slug);
 }
 
 /** Bir kategorinin ürünleri. API hatası → mock fallback (boş sonuç gerçek kabul edilir). */
