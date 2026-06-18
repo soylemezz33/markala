@@ -257,8 +257,10 @@ export interface CartItemConfiguration {
   totalPrice: number;
   /** Tasarım desteği istendi mi */
   needsDesign: boolean;
-  /** Yüklenen tasarım dosyası adı (mock için sadece dosya adı) */
+  /** Yüklenen tasarım dosyası adı */
   uploadedFileName?: string;
+  /** Yüklenen tasarım dosyasının indirilebilir URL'i (backend storage) */
+  uploadedFileUrl?: string;
 }
 
 export interface CartItem {
@@ -322,6 +324,12 @@ export interface OrderItem {
   unitPrice: number;
   quantity: number;
   lineTotal: number;
+  /** Müşteri tasarım desteği istedi mi */
+  needsDesignSupport?: boolean;
+  /** Yüklenen tasarım dosyasının adı (sanitize) */
+  uploadedFileName?: string | null;
+  /** Yüklenen tasarım dosyasının indirilebilir URL'i (admin "İndir") */
+  uploadedFileUrl?: string | null;
 }
 
 export type TrackingEventStatus =
@@ -351,6 +359,8 @@ export interface Order {
   orderNumber: string;
   createdAt: string; // ISO
   status: OrderStatus;
+  /** Ödeme durumu: beklemede | basarili | basarisiz | iade_edildi — "Ödeme Yap" butonu / rozet için */
+  paymentStatus?: string;
   /** Misafir veya kayıtlı müşteri e-postası — kargo takip sayfasında doğrulama için */
   email?: string;
   items: OrderItem[];

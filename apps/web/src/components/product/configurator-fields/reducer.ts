@@ -15,6 +15,8 @@ export interface ConfiguratorState {
   quantity: number;
   uploadedFile: File | null;
   uploadedFileName?: string;
+  /** Backend storage'a yüklenen tasarım dosyasının URL'i (yükleme tamamlanınca set edilir) */
+  uploadedFileUrl?: string;
   needsDesign: boolean;
   justAdded: boolean;
 }
@@ -25,6 +27,8 @@ export type ConfiguratorAction =
   | { type: "SET_DIMENSION"; paramId: string; value: DimensionValue }
   | { type: "SET_QUANTITY"; paramId: string; value: number }
   | { type: "UPLOAD_FILE"; file: File | null }
+  // Backend yükleme tamamlanınca: dosya adı (sanitize) + indirilebilir URL'i state'e yazar.
+  | { type: "SET_UPLOADED_URL"; fileName: string; url: string }
   | { type: "TOGGLE_DESIGN_HELP" }
   | { type: "SET_DESIGN_HELP"; value: boolean }
   | { type: "MARK_ADDED"; value: boolean }
@@ -37,6 +41,7 @@ export function initState(product: Product): ConfiguratorState {
     quantity: 1,
     uploadedFile: null,
     uploadedFileName: undefined,
+    uploadedFileUrl: undefined,
     needsDesign: false,
     justAdded: false,
   };
@@ -77,10 +82,19 @@ export function configuratorReducer(
         quantity: Math.max(1, action.value),
       };
     case "UPLOAD_FILE":
+      // Dosya seçimi/temizlenmesi. Dosya kaldırılınca yüklenmiş URL de temizlenir.
       return {
         ...state,
         uploadedFile: action.file,
         uploadedFileName: action.file?.name,
+        uploadedFileUrl: undefined,
+      };
+    case "SET_UPLOADED_URL":
+      // Backend yükleme tamamlandı — sanitize edilmiş ad + indirilebilir URL.
+      return {
+        ...state,
+        uploadedFileName: action.fileName,
+        uploadedFileUrl: action.url,
       };
     case "TOGGLE_DESIGN_HELP":
       return { ...state, needsDesign: !state.needsDesign };

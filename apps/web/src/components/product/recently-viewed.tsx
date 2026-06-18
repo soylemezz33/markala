@@ -8,6 +8,7 @@ import { Clock, ArrowRight } from "@phosphor-icons/react";
 import { products as mockProducts } from "@markala/mock-data";
 import type { Product } from "@markala/types";
 import { apiClient } from "@/lib/api";
+import { getDisplayPrice } from "@/lib/configurator";
 import {
   addRecentlyViewed,
   getRecentlyViewed,
@@ -99,7 +100,7 @@ export function RecentlyViewedRail({
             >
               <div className="relative aspect-square rounded-lg overflow-hidden bg-paper-50 border border-paper-200 group-hover:border-ink-300 transition-colors">
                 <Image
-                  src={p.images[0] ?? ""}
+                  src={p.images[0] || `/api/mockup?slug=${p.slug}&w=400&h=400`}
                   alt={p.name}
                   fill
                   unoptimized
@@ -111,7 +112,7 @@ export function RecentlyViewedRail({
                 {p.name}
               </h3>
               <p className="text-xs text-ink-500 tabular-nums mt-0.5">
-                {(p.startingPrice ?? p.basePrice).toLocaleString("tr-TR")} ₺'den
+                {getDisplayPrice(p).toLocaleString("tr-TR")} ₺'den
               </p>
             </Link>
           ))}

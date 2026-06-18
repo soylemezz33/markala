@@ -15,6 +15,8 @@ import {
   ClockClockwise,
   Printer,
   XCircle,
+  DownloadSimple,
+  PaintBrush,
 } from "@phosphor-icons/react";
 import { updateOrderStatus } from "./actions";
 
@@ -33,7 +35,7 @@ const toSlug = (s: string) => String(s ?? "").replace(/_/g, "-");
 /** Ödeme durumu etiketleri (sipariş durumundan AYRI). */
 const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
   beklemede: { label: "Ödeme Bekliyor", color: "bg-warning/10 text-warning" },
-  basarili: { label: "Ödendi", color: "bg-success/10 text-success" },
+  basarili: { label: "Ödeme Yapıldı", color: "bg-success/10 text-success" },
   basarisiz: { label: "Ödeme Başarısız", color: "bg-error/10 text-error" },
   iade_edildi: { label: "İade Edildi", color: "bg-paper-200 text-ink-500" },
 };
@@ -60,6 +62,9 @@ export interface OrderDetailProps {
     quantity?: number;
     unitPrice?: unknown;
     lineTotal?: unknown;
+    needsDesignSupport?: boolean;
+    uploadedFileName?: string | null;
+    uploadedFileUrl?: string | null;
   }>;
   shippingAddress?: {
     fullName?: string;
@@ -256,6 +261,34 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                       {item.quantity != null && (
                         <div className="text-[11px] text-ink-500 mt-1">Adet: {item.quantity}</div>
                       )}
+                      {item.needsDesignSupport && (
+                        <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-500/15 text-brand-700">
+                          <PaintBrush size={11} weight="fill" /> Tasarım desteği istendi
+                        </div>
+                      )}
+                      {item.uploadedFileUrl ? (
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-ink-700">
+                            <FileText size={12} className="text-ink-500" /> Tasarım Dosyası:
+                          </span>
+                          <span className="text-[11px] text-ink-700 break-all">
+                            {item.uploadedFileName ?? "tasarim"}
+                          </span>
+                          <a
+                            href={item.uploadedFileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border border-paper-200 text-ink-900 hover:bg-paper-100"
+                          >
+                            <DownloadSimple size={12} /> İndir
+                          </a>
+                        </div>
+                      ) : item.uploadedFileName ? (
+                        <div className="mt-2 text-[11px] text-warning">
+                          Dosya: {item.uploadedFileName} (yüklenmedi — müşteriden iste)
+                        </div>
+                      ) : null}
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-ink-900 tabular-nums">

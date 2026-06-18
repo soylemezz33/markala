@@ -20,6 +20,27 @@ const ALLOWED_EXT: Record<string, string> = {
 };
 const MAX_BYTES = 5 * 1024 * 1024;
 
+/**
+ * Müşteri tasarım dosyası — admin görsel yüklemeden FARKLI kurallar:
+ * matbaa kaynak dosyaları (CDR/AI/PSD) MIME tipi güvenilmez → UZANTI whitelist'i ile doğrulanır.
+ */
+const DESIGN_ALLOWED_EXT = new Set([
+  "pdf",
+  "ai",
+  "eps",
+  "cdr",
+  "psd",
+  "jpg",
+  "jpeg",
+  "png",
+  "svg",
+  "tif",
+  "tiff",
+  "zip",
+  "rar",
+]);
+const DESIGN_MAX_BYTES = 50 * 1024 * 1024;
+
 export interface UploadInput {
   buffer: Buffer;
   mimetype: string;
@@ -28,6 +49,24 @@ export interface UploadInput {
 export interface UploadResult {
   url: string;
   key: string;
+}
+
+export interface DesignUploadInput {
+  buffer: Buffer;
+  mimetype: string;
+  originalName: string;
+}
+
+export interface DesignUploadResult {
+  url: string;
+  key: string;
+  fileName: string;
+  fileSize: number;
+}
+
+/** Dosya adını güvenli hale getir — sadece harf/rakam/._- bırak, son 120 karaktere kırp. */
+function sanitizeFileName(originalName: string): string {
+  return (originalName ?? "").replace(/[^\w.\-]+/g, "_").slice(-120);
 }
 
 @Injectable()
@@ -55,6 +94,34 @@ export class StorageService {
     return this.driver === "r2"
       ? this.putR2(key, file)
       : this.putLocal(key, file);
+  }
+
+  /**
+   * Müşteri tasarım dosyası yükleme. Tip doğrulaması UZANTI ile (CDR/AI/PSD mimetype güvenilmez);
+   * maks 50MB. putLocal/putR2 yazma altyapısı yeniden kullanılır.
+   */
+  async putDesign(input: DesignUploadInput): Promise<DesignUploadResult> {
+    const ext = (input.originalName.split(".").pop() ?? "").toLowerCase();
+    if (!ext || !DESIGN_ALLOWED_EXT.has(ext)) {
+      throw new BadRequestException(
+        "Yalnızca PDF, AI, EPS, CDR, PSD, JPG, PNG, SVG, TIFF, ZIP veya RAR dosyası yükleyebilirsiniz.",
+      );
+    }
+    if (input.buffer.length > DESIGN_MAX_BYTES) {
+      throw new BadRequestException("Tasarım dosyası en fazla 50MB olabilir.");
+    }
+
+    const key = `${randomUUID()}.${ext}`;
+    const file: UploadInput = { buffer: input.buffer, mimetype: input.mimetype };
+    const { url } = await (this.driver === "r2"
+      ? this.putR2(key, file)
+      : this.putLocal(key, file));
+    return {
+      url,
+      key,
+      fileName: sanitizeFileName(input.originalName),
+      fileSize: input.buffer.length,
+    };
   }
 
   private get uploadDir(): string {

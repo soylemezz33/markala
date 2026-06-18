@@ -7,6 +7,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { categories } from "@markala/mock-data";
 import { getProducts } from "@/lib/catalog";
+import { getDisplayPrice } from "@/lib/configurator";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const SITE = "https://markala.com.tr";
@@ -48,7 +49,7 @@ export default async function PriceListPage() {
       cat,
       items: products
         .filter((p) => p.categorySlug === cat.slug)
-        .sort((a, b) => (a.startingPrice ?? a.basePrice) - (b.startingPrice ?? b.basePrice)),
+        .sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b)),
     }))
     .filter((g) => g.items.length > 0);
 
@@ -69,7 +70,7 @@ export default async function PriceListPage() {
         url: `${SITE}/urun/${p.slug}`,
         offers: {
           "@type": "Offer",
-          price: p.startingPrice ?? p.basePrice,
+          price: getDisplayPrice(p),
           priceCurrency: "TRY",
           availability: "https://schema.org/InStock",
         },
@@ -78,7 +79,7 @@ export default async function PriceListPage() {
   };
 
   // Toplam ürün, fiyat aralığı
-  const allPrices = products.map((p) => p.startingPrice ?? p.basePrice);
+  const allPrices = products.map((p) => getDisplayPrice(p));
   const minPrice = Math.min(...allPrices);
   const maxPrice = Math.max(...allPrices);
 
@@ -223,7 +224,7 @@ export default async function PriceListPage() {
                         </td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-semibold text-ink-900 tabular-nums">
-                            {(p.startingPrice ?? p.basePrice).toLocaleString("tr-TR")} ₺
+                            {getDisplayPrice(p).toLocaleString("tr-TR")} ₺
                           </span>
                           <span className="text-xs text-ink-500 ml-1">'den</span>
                         </td>

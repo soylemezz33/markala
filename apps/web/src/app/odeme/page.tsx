@@ -215,6 +215,9 @@ export default function CheckoutPage() {
         .catch(() => null);
 
       if (payRes?.ok && payRes.paymentPageUrl) {
+        // Sipariş oluştu + ödeme başlatıldı → sepeti boşalt. Ödeme tamamlanmazsa müşteri
+        // "Siparişlerim → Ödeme Yap" ile devam eder (sipariş "Ödeme Bekliyor" olarak durur).
+        clearCart();
         window.location.href = payRes.paymentPageUrl; // iyzico'ya yönlendiriliyor
         return;
       }

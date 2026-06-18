@@ -14,6 +14,7 @@ export interface OrderRow {
   createdAt: string;
   total: unknown; // Decimal string from API
   status: string;
+  paymentStatus?: string | null;
   items: unknown[];
 }
 
@@ -294,6 +295,17 @@ export function OrdersClient({ orders }: Props) {
                         >
                           {s.label}
                         </span>
+                        {/* Ödeme durumu rozeti — ödenmemiş sipariş ("beklemede") net görünsün. */}
+                        {o.paymentStatus && o.paymentStatus !== "basarili" && toSlug(o.status) !== "iptal-edildi" && (
+                          <span className="mt-1 block text-[10px] font-semibold text-warning">
+                            ● Ödeme Bekliyor
+                          </span>
+                        )}
+                        {o.paymentStatus === "basarili" && (
+                          <span className="mt-1 block text-[10px] font-semibold text-success">
+                            ● Ödeme Yapıldı
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link

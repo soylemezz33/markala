@@ -25,6 +25,15 @@ class InitPaymentDto {
   identityNumber?: string;
 }
 
+class RetryPaymentDto {
+  @IsString()
+  orderId!: string;
+
+  @IsOptional()
+  @IsIP()
+  clientIp?: string;
+}
+
 @ApiTags("payments")
 @Controller("payments")
 export class PaymentsController {
@@ -44,6 +53,14 @@ export class PaymentsController {
   async callback(@Body("token") token: string, @Res() res: Response) {
     const { redirectUrl } = await this.payments.handleCallback(token);
     res.redirect(303, redirectUrl);
+  }
+
+  /** Giriş yapmış müşteri "Ödeme Yap" — KENDİ beklemede siparişi için ödemeyi yeniden başlatır. */
+  @Post("iyzico/retry")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async retry(@Body() dto: RetryPaymentDto, @Req() req: Request & { user: { sub: string } }) {
+    return this.payments.retryCheckoutForOwner(dto.orderId, req.user.sub, dto.clientIp || req.ip);
   }
 
   /** Admin: callback kaçan ödemeleri elle eşitle (güvenlik ağı). Otomatik de 10 dk'da bir çalışır. */

@@ -1,24 +1,66 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@markala/ui";
-import { UploadSimple, CheckCircle } from "@phosphor-icons/react";
+import { UploadSimple, CheckCircle, SpinnerGap, WarningCircle } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
+
+const MAX_MB = 50;
 
 export function DesignUpload() {
   const { state, dispatch } = useConfigurator();
-  const { needsDesign, uploadedFileName } = state;
+  const { needsDesign, uploadedFileName, uploadedFileUrl } = state;
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const MAX_MB = 200;
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const file = input.files?.[0] ?? null;
+    if (!file) return;
 
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    if (file && file.size > MAX_MB * 1024 * 1024) {
-      alert(`Dosya çok büyük (maks. ${MAX_MB} MB). Daha küçük bir dosya seçin veya sipariş sonrası WhatsApp ile gönderin.`);
-      e.target.value = "";
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setError(`Dosya çok büyük (maks. ${MAX_MB} MB). Lütfen sipariş sonrası WhatsApp ile gönderin.`);
+      input.value = "";
       return;
     }
+
+    setError(null);
+    setUploading(true);
+    // Seçilen dosyayı hemen state'e koy (ad görünsün); URL yükleme bitince eklenir.
     dispatch({ type: "UPLOAD_FILE", file });
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/tasarim-yukle", { method: "POST", body: form });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        url?: string;
+        fileName?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.ok || !data.url) {
+        throw new Error(data.error || "Dosya yüklenemedi.");
+      }
+      dispatch({
+        type: "SET_UPLOADED_URL",
+        fileName: data.fileName || file.name,
+        url: data.url,
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? `Yükleme başarısız: ${err.message}`
+          : "Dosya yüklenemedi. Lütfen tekrar deneyin.",
+      );
+      dispatch({ type: "UPLOAD_FILE", file: null });
+      input.value = "";
+    } finally {
+      setUploading(false);
+    }
   }
+
+  const uploaded = Boolean(uploadedFileUrl);
 
   return (
     <div className="border-t border-paper-200 pt-6">
@@ -50,31 +92,48 @@ export function DesignUpload() {
       </label>
 
       {!needsDesign && (
-        <label className="mt-4 block border-2 border-dashed border-paper-200 rounded-md p-6 text-center hover:border-ink-300 transition-colors cursor-pointer">
+        <label
+          className={cn(
+            "mt-4 block border-2 border-dashed rounded-md p-6 text-center transition-colors",
+            uploading
+              ? "border-paper-200 cursor-wait"
+              : "border-paper-200 hover:border-ink-300 cursor-pointer",
+          )}
+        >
           <input
             type="file"
             className="hidden"
-            accept=".ai,.pdf,.cdr,.psd,.jpg,.jpeg,.png"
+            accept=".ai,.eps,.pdf,.cdr,.psd,.svg,.tif,.tiff,.zip,.rar,.jpg,.jpeg,.png"
             onChange={handleFileUpload}
+            disabled={uploading}
           />
-          {uploadedFileName ? (
+          {uploading ? (
             <>
-              <CheckCircle size={28} className="mx-auto text-success" />
+              <SpinnerGap size={28} className="mx-auto text-ink-500 animate-spin" />
+              <p className="mt-2 text-sm font-medium text-ink-900">Yükleniyor…</p>
+              <p className="mt-1 text-xs text-ink-500 break-all">{uploadedFileName}</p>
+            </>
+          ) : uploaded ? (
+            <>
+              <CheckCircle size={28} className="mx-auto text-success" weight="fill" />
               <p className="mt-2 text-sm font-medium text-ink-900 break-all">{uploadedFileName}</p>
-              <p className="mt-1 text-xs text-ink-500">
-                Dosya adı kaydedildi. Baskı dosyanızı sipariş onayından sonra e-posta / WhatsApp ile ileteceğiz.
-              </p>
+              <p className="mt-1 text-xs text-success">✓ Yüklendi · değiştirmek için tıklayın</p>
             </>
           ) : (
             <>
               <UploadSimple size={28} className="mx-auto text-ink-500" />
               <p className="mt-2 text-sm font-medium text-ink-900">Tasarım dosyanızı yükleyin</p>
-              <p className="mt-1 text-xs text-ink-500">
-                AI, PDF, CDR, PSD, JPG, PNG · Maks. 200 MB
-              </p>
+              <p className="mt-1 text-xs text-ink-500">Maks. 50 MB · AI, PDF, CDR, PSD, JPG, PNG</p>
             </>
           )}
         </label>
+      )}
+
+      {error && (
+        <p className="mt-3 flex items-start gap-2 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2">
+          <WarningCircle size={14} className="flex-none mt-0.5" weight="fill" />
+          <span>{error}</span>
+        </p>
       )}
     </div>
   );

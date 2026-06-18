@@ -4,6 +4,7 @@ import { Star } from "@phosphor-icons/react/dist/ssr";
 import { Price, cn } from "@markala/ui";
 import type { BadgeKind, Product } from "@markala/types";
 import { WishlistButton } from "@/components/product/wishlist-button";
+import { getDisplayPrice } from "@/lib/configurator";
 
 const badgeStyles: Record<BadgeKind, { label: string; className: string }> = {
   yeni: { label: "Yeni", className: "bg-ink-900 text-paper-50" },
@@ -20,7 +21,8 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const startingPrice = product.startingPrice ?? product.basePrice;
+  // Detayın açılıştaki fiyatıyla AYNI (tek kaynak: configurator). startingPrice'a güvenme.
+  const startingPrice = getDisplayPrice(product);
 
   return (
     <Link

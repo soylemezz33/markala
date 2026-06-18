@@ -35,6 +35,25 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
   const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+
+  async function handleRetryPayment(orderId: string) {
+    setPaying(true);
+    setPayError(null);
+    try {
+      const res = await withRefresh(() => apiClient.payments.retry(orderId));
+      if (res?.paymentPageUrl) {
+        window.location.href = res.paymentPageUrl; // iyzico hosted ödeme sayfası
+        return;
+      }
+      setPayError("Ödeme başlatılamadı. Lütfen tekrar deneyin.");
+    } catch {
+      setPayError("Ödeme başlatılamadı. Lütfen birkaç dakika sonra tekrar deneyin.");
+    } finally {
+      setPaying(false);
+    }
+  }
 
   useEffect(() => {
     if (isBootstrapping || !user) return;
@@ -76,6 +95,32 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           {orderStatusLabel(normStatus(order.status as unknown as string))}
         </span>
       </header>
+
+      {/* Ödeme durumu — beklemede ise "Ödeme Yap" ile tekrar denenir; ödendiyse onay. */}
+      {order.paymentStatus === "beklemede" && normStatus(order.status as unknown as string) !== "iptal-edildi" ? (
+        <section className="p-5 bg-warning/10 border border-warning/30 rounded-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-ink-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-warning" /> Ödeme Bekliyor
+              </p>
+              <p className="mt-1 text-sm text-ink-700">
+                Bu siparişin ödemesi henüz tamamlanmadı. Aşağıdaki butonla güvenli ödeme sayfasından tamamlayabilirsiniz.
+              </p>
+              {payError && <p className="mt-2 text-sm text-error">{payError}</p>}
+            </div>
+            <Button onClick={() => handleRetryPayment(order.id)} disabled={paying}>
+              {paying ? "Yönlendiriliyor…" : `Ödeme Yap — ${order.total.toLocaleString("tr-TR")} ₺`}
+            </Button>
+          </div>
+        </section>
+      ) : order.paymentStatus === "basarili" ? (
+        <section className="p-4 bg-success/10 border border-success/30 rounded-xl">
+          <p className="text-sm font-medium text-success flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-success" /> Ödeme Yapıldı
+          </p>
+        </section>
+      ) : null}
 
       <section className="p-6 bg-paper-50 border border-paper-200 rounded-lg">
         <h3 className="font-medium text-ink-900 mb-4 flex items-center gap-2">

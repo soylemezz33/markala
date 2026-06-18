@@ -194,6 +194,13 @@ export class MarkalaApiClient {
       this.request<Order>("PATCH", `/orders/${id}/status`, body, { auth: true }),
   };
 
+  // === Payments ===
+  payments = {
+    /** "Ödeme Yap" tekrar — giriş yapmış müşteri kendi beklemede siparişi için ödemeyi yeniden başlatır. */
+    retry: (orderId: string) =>
+      this.request<{ paymentPageUrl?: string }>("POST", "/payments/iyzico/retry", { orderId }, { auth: true }),
+  };
+
   // === Admin (dashboard stats) ===
   admin = {
     stats: () => this.request<AdminStats>("GET", "/admin/stats", undefined, { auth: true }),

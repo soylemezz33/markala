@@ -9,6 +9,7 @@ import {
 import { categories } from "@markala/mock-data";
 import type { BadgeKind, Product } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
+import { getDisplayPrice } from "@/lib/configurator";
 
 type SortKey = "popular" | "newest" | "price-asc" | "price-desc";
 
@@ -33,7 +34,7 @@ const PRICE_MIN = 0;
 /** Ürünler API'den (server parent) props ile gelir; filtreleme/sıralama client-side. */
 export function AllProductsClient({ products }: { products: Product[] }) {
   // Fiyat aralığı max — gelen ürünlerden hesaplanır
-  const allPrices = products.map((p) => p.startingPrice ?? p.basePrice);
+  const allPrices = products.map((p) => getDisplayPrice(p));
   const PRICE_MAX = allPrices.length > 0 ? Math.ceil(Math.max(...allPrices) / 100) * 100 : 1000;
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -57,7 +58,7 @@ export function AllProductsClient({ products }: { products: Product[] }) {
       );
     }
 
-    list = list.filter((p) => (p.startingPrice ?? p.basePrice) <= priceMax);
+    list = list.filter((p) => getDisplayPrice(p) <= priceMax);
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -73,16 +74,10 @@ export function AllProductsClient({ products }: { products: Product[] }) {
         list = list.slice().reverse();
         break;
       case "price-asc":
-        list = list.sort(
-          (a, b) =>
-            (a.startingPrice ?? a.basePrice) - (b.startingPrice ?? b.basePrice),
-        );
+        list = list.sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
         break;
       case "price-desc":
-        list = list.sort(
-          (a, b) =>
-            (b.startingPrice ?? b.basePrice) - (a.startingPrice ?? a.basePrice),
-        );
+        list = list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
         break;
       default:
         list = list.sort((a, b) => (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0));

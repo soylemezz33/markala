@@ -10,7 +10,7 @@ import { ConfigService } from "@nestjs/config";
 import Iyzipay from "iyzipay";
 import { PrismaService } from "../prisma/prisma.service";
 import { IyzicoService } from "../integrations/iyzico/iyzico.service";
-import { verifyPaymentNonce } from "./payment-nonce";
+import { verifyPaymentNonce, paymentNonce } from "./payment-nonce";
 
 interface AddressView {
   fullName?: string;
@@ -202,6 +202,23 @@ export class PaymentsService implements OnModuleInit {
         .catch(() => undefined);
     }
     return { paymentPageUrl: res.paymentPageUrl, checkoutFormContent: res.checkoutFormContent, token: res.token };
+  }
+
+  /**
+   * "Ödeme Yap" tekrar denemesi — giriş yapmış kullanıcı KENDİ beklemede siparişi için ödemeyi
+   * yeniden başlatır (müşteri checkout'ta ödemeyi tamamlamadıysa siparişlerim'den tekrar dener).
+   * Sahiplik (userId) doğrulanır; nonce sunucuda üretilip initCheckout yeniden kullanılır (IDOR güvenli).
+   */
+  async retryCheckoutForOwner(orderId: string, userId: string, clientIp?: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, userId: true, paymentStatus: true },
+    });
+    // Varlık/sahiplik sızdırma: yoksa veya kullanıcının değilse aynı "bulunamadı".
+    if (!order || order.userId !== userId) throw new NotFoundException("Sipariş bulunamadı.");
+    if (order.paymentStatus === "basarili") throw new BadRequestException("Bu sipariş zaten ödenmiş.");
+    const secret = this.config.get<string>("JWT_SECRET") ?? "";
+    return this.initCheckout(orderId, paymentNonce(secret, orderId), clientIp);
   }
 
   /**

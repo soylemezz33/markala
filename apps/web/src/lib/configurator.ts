@@ -180,6 +180,16 @@ export function getInstallmentAmount(total: number, count = 3): number {
   return total / count;
 }
 
+/**
+ * Kartlarda/listelerde/favorilerde gösterilen fiyat = ürün DETAYININ AÇILIŞTAKİ fiyatı
+ * (configurator varsayılan seçimleriyle hesaplanan toplam). Tek kaynak: böylece aynı ürünün
+ * fiyatı her sayfada AYNI olur (kart 50 ↔ detay 90 gibi tutarsızlık olmaz). Parametresiz
+ * üründe basePrice döner. startingPrice (DB display alanı) artık fiyat KAYNAĞI değil.
+ */
+export function getDisplayPrice(product: Product): number {
+  return calculatePrice(product, initConfig(product)).total;
+}
+
 export function findParameter(product: Product, id: string): ProductParameter | undefined {
   return product.parameters.find((p) => p.id === id);
 }

@@ -24,7 +24,11 @@ const API_BASE =
 
 interface IncomingItem {
   productSlug?: string;
-  configuration?: { needsDesign?: boolean; uploadedFileName?: string } & Record<string, unknown>;
+  configuration?: {
+    needsDesign?: boolean;
+    uploadedFileName?: string;
+    uploadedFileUrl?: string;
+  } & Record<string, unknown>;
   quantity?: number;
 }
 
@@ -61,6 +65,7 @@ export async function POST(req: NextRequest) {
       quantity: Math.max(1, Math.floor(Number(i.quantity) || 1)),
       needsDesignSupport: Boolean(i.configuration?.needsDesign),
       uploadedFileName: i.configuration?.uploadedFileName,
+      uploadedFileUrl: i.configuration?.uploadedFileUrl,
     }));
 
   if (items.length === 0) {

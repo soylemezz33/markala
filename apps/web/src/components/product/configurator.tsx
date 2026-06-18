@@ -37,6 +37,7 @@ export function Configurator({ product }: { product: Product }) {
         totalPrice: breakdown.total,
         needsDesign: state.needsDesign,
         uploadedFileName: state.uploadedFileName,
+        uploadedFileUrl: state.uploadedFileUrl,
       },
     });
     dispatch({ type: "MARK_ADDED", value: true });
