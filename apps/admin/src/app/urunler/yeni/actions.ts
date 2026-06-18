@@ -5,11 +5,20 @@ import { revalidatePath } from "next/cache";
 import { revalidateStorefront } from "@/lib/revalidate-web";
 
 /**
+ * createProduct payload tipi. parameters opsiyoneldir; varsa fiyat matrisi (kind:"matrix")
+ * gibi konfigüratör parametre dizisidir. Backend CreateProductDto bunu `parameters?: unknown`
+ * olarak kabul eder (api-client products.create → Partial<Product>).
+ */
+export type CreateProductInput = Record<string, unknown> & {
+  parameters?: unknown[];
+};
+
+/**
  * Yeni ürün oluşturur. Başarıda oluşan ürünün slug'ını döner ki client detay sayfasına
  * yönlendirebilsin. Hata olursa sessizce yutmaz → { ok:false, error } ile client'a iletir.
  */
 export async function createProduct(
-  data: Record<string, unknown>,
+  data: CreateProductInput,
 ): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
   try {
     const api = await getAdminApi();

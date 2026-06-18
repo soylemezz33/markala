@@ -7,6 +7,12 @@ import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { ArrowLeft, FloppyDisk } from "@phosphor-icons/react";
 import { ImageGallery } from "@/components/image-uploader";
+import {
+  MatrixBuilder,
+  emptyMatrixDraft,
+  buildMatrixParameter,
+  type MatrixDraft,
+} from "@/components/matrix-builder";
 import { createProduct } from "./actions";
 
 export interface CategoryRow {
@@ -47,6 +53,7 @@ export function NewProductClient({ categories }: Props) {
   const [bestseller, setBestseller] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [images, setImages] = useState<string[]>([]);
+  const [matrix, setMatrix] = useState<MatrixDraft>(() => emptyMatrixDraft());
   const [saving, setSaving] = useState(false);
 
   function handleNameChange(val: string) {
@@ -66,6 +73,14 @@ export function NewProductClient({ categories }: Props) {
     if (description.trim().length < 2) return toast.error("Tam açıklama girin.");
     if (!productionTime.trim()) return toast.error("Üretim süresi girin.");
 
+    // Fiyat matrisi: açıksa geçerli (≥1 satır + ≥1 sütun + ≥1 dolu hücre) olmalı.
+    const matrixParam = buildMatrixParameter(matrix);
+    if (matrix.enabled && !matrixParam) {
+      return toast.error(
+        "Fiyat matrisi eksik: en az 1 satır (etiketli) + 1 sütun (adet) + 1 dolu fiyat hücresi girin (ya da matrisi kapatın).",
+      );
+    }
+
     setSaving(true);
     (async () => {
       const res = await createProduct({
@@ -74,12 +89,14 @@ export function NewProductClient({ categories }: Props) {
         categoryId,
         shortDescription: shortDesc.trim(),
         description: description.trim(),
-        basePrice: Number(basePrice) || 0,
+        // Matris varsa hücre TAM fiyat sağlar → çift sayım olmasın diye basePrice 0.
+        basePrice: matrixParam ? 0 : Number(basePrice) || 0,
         ...(Number(startingPrice) > 0 ? { startingPrice: Number(startingPrice) } : {}),
         productionTime: productionTime.trim(),
         images,
         bestseller,
         isActive,
+        ...(matrixParam ? { parameters: [matrixParam] } : {}),
       });
       if (res.ok) {
         toast.success("Ürün oluşturuldu.");
@@ -183,14 +200,15 @@ export function NewProductClient({ categories }: Props) {
                     className={inputCls}
                   />
                 </Field>
-                <Field label="Taban Fiyat (TL) *">
+                <Field label={matrix.enabled ? "Taban Fiyat (TL) — matriste kullanılmaz" : "Taban Fiyat (TL) *"}>
                   <input
                     type="number"
                     min={0}
                     step={0.01}
-                    value={basePrice}
+                    value={matrix.enabled ? 0 : basePrice}
+                    disabled={matrix.enabled}
                     onChange={(e) => setBasePrice(Number(e.target.value))}
-                    className={inputCls + " tabular-nums"}
+                    className={inputCls + " tabular-nums disabled:opacity-60 disabled:cursor-not-allowed"}
                   />
                 </Field>
                 <Field label="Başlangıç Fiyatı (TL) — opsiyonel">
@@ -204,6 +222,10 @@ export function NewProductClient({ categories }: Props) {
                   />
                 </Field>
               </div>
+            </Card>
+
+            <Card title="Fiyat Matrisi">
+              <MatrixBuilder value={matrix} onChange={setMatrix} />
             </Card>
           </div>
 
