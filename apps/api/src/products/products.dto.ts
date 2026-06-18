@@ -1,18 +1,65 @@
+import { Transform, Type } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
   Matches,
+  Max,
   MaxLength,
   Min,
   MinLength,
 } from "class-validator";
 
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * Public `GET /products` üst sınırı. Storefront kataloğu "tümünü getir"
+ * mantığıyla çalışır (web/lib/catalog.ts → `?take=5000`, kategori sayfası
+ * `?take=2000`). Admin listelerindeki 200 sınırı buraya UYGULANAMAZ: katalog
+ * 1188+ ürün ve 200'e kırpmak "kategori sayıları 0" hatasını geri getirir
+ * (bkz. web commit "ürün listesi 200 limiti → tümü"). Bu yüzden public tavan
+ * storefront'un çektiği maksimumla (5000) hizalıdır; katalog bu sınırı aşarsa
+ * storefront isteğiyle birlikte yükseltilmeli (veya cursor pagination'a geçilmeli).
+ */
+export const MAX_PUBLIC_PRODUCT_TAKE = 5000;
+
+/**
+ * Public `GET /products` query doğrulaması.
+ *
+ * NEDEN: controller `take ? parseInt(take) : undefined` kullanıyordu —
+ * `?take=abc` → `parseInt` NaN → `NaN ?? 50` NaN kalır → Prisma `take: NaN` →
+ * 500. Negatif/ondalık/aşırı büyük değerler de korunmasızdı. `@Type(() => Number)`
+ * query string'i sayıya çevirir; geçersiz girdi artık temiz 400 döner.
+ */
+export class ProductListQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  category?: string;
+
+  /** "true" | "false" → boolean | undefined (controller'ın eski lenient davranışı korunur). */
+  @IsOptional()
+  @Transform(({ value }) => (value === "true" ? true : value === "false" ? false : undefined))
+  bestseller?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: "take tam sayı olmalı" })
+  @Min(1)
+  @Max(MAX_PUBLIC_PRODUCT_TAKE)
+  take?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: "skip tam sayı olmalı" })
+  @Min(0)
+  skip?: number;
+}
 
 export class CreateProductDto {
   @IsString()
