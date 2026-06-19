@@ -48,6 +48,7 @@ model User {
   corporateApprovedAt  DateTime?       @map("corporate_approved_at")
   corporateDiscount    Decimal?        @map("corporate_discount") @db.Decimal(5, 2)
   corporateCreditLimit Decimal?        @map("corporate_credit_limit") @db.Decimal(12, 2)
+  corporatePaymentTermDays Int?        @map("corporate_payment_term_days")
 
   // 2FA — secret artık AES-256-GCM ile şifreli saklanır (EncryptionService).
   // DB kolonu mevcut secret'a göre yeniden adlandırıldı: two_factor_secret_encrypted.
@@ -74,6 +75,7 @@ model User {
   orders                Order[]
   designUploads         DesignUpload[]
   corporateApplications CorporateApplication[]
+  ledgerEntries         CorporateLedgerEntry[]
   refreshTokens              RefreshToken[]
   emailVerificationTokens    EmailVerificationToken[]
   passwordResetTokens        PasswordResetToken[]
@@ -189,6 +191,28 @@ model CorporateApplication {
   @@index([email])
   @@index([userId])
   @@map("corporate_applications")
+}
+
+// Cari hesap (açık hesap) defteri — kurumsal müşteri borç (debit) / ödeme (credit) hareketleri.
+enum LedgerEntryKind {
+  debit
+  credit
+}
+
+model CorporateLedgerEntry {
+  id          String          @id @default(cuid())
+  userId      String          @map("user_id")
+  orderId     String?         @map("order_id")
+  kind        LedgerEntryKind
+  amount      Decimal         @db.Decimal(12, 2)
+  description String
+  dueDate     DateTime?       @map("due_date")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("corporate_ledger_entries")
 }
 
 model Address {
@@ -308,6 +332,8 @@ model Order {
 
   status        OrderStatus   @default(siparis_alindi)
   paymentStatus PaymentStatus @default(beklemede) @map("payment_status")
+  // Ödeme yolu: null/"iyzico" (online), "cari" (açık hesap/B2B), "havale" vb.
+  paymentMethod String?       @map("payment_method")
 
   // Kuruş hassasiyeti için (12, 4); ara toplam/KDV/toplam yuvarlama hatasını azaltır.
   subtotal    Decimal @db.Decimal(12, 4)

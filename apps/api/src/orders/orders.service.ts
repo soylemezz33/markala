@@ -193,6 +193,7 @@ export class OrdersService {
     couponCode?: string;
     notes?: string;
     idempotencyKey?: string;
+    paymentMethod?: string;
   }) {
     if (!input.items || input.items.length === 0) {
       throw new BadRequestException("Sipariş en az bir kalem içermelidir.");
@@ -360,18 +361,24 @@ export class OrdersService {
       appliedCoupon = { id: coupon.id, code: coupon.code, type: coupon.type };
     }
 
-    // === Kurumsal (B2B) indirim — onaylı kurumsal kullanıcıya özel oran (admin müşteri başına belirler) ===
+    // === Kurumsal (B2B) — onaylı kurumsal kullanıcı: indirim + cari hesap uygunluğu ===
+    let cariEligible = false;
+    let cariCreditLimit: number | null = null;
+    let cariTermDays = 0;
     if (input.userId) {
       const u = await this.prisma.user.findUnique({
         where: { id: input.userId },
-        select: { accountType: true, corporateStatus: true, corporateDiscount: true },
+        select: {
+          accountType: true, corporateStatus: true, corporateDiscount: true,
+          corporateCreditLimit: true, corporatePaymentTermDays: true,
+        },
       });
-      const pct =
-        u?.accountType === "corporate" && u.corporateStatus === "approved" && u.corporateDiscount != null
-          ? Number(u.corporateDiscount)
-          : 0;
-      if (pct > 0) {
-        discount = round2(discount + (subtotal * pct) / 100);
+      if (u?.accountType === "corporate" && u.corporateStatus === "approved") {
+        cariEligible = true;
+        cariCreditLimit = u.corporateCreditLimit != null ? Number(u.corporateCreditLimit) : null;
+        cariTermDays = u.corporatePaymentTermDays ?? 0;
+        const pct = u.corporateDiscount != null ? Number(u.corporateDiscount) : 0;
+        if (pct > 0) discount = round2(discount + (subtotal * pct) / 100);
       }
     }
 
@@ -386,6 +393,22 @@ export class OrdersService {
     const vat = round2(taxableGross - netBeforeVat);
     // Toplam = brüt (KDV dahil) + kargo (KDV burada ayrı tutulmuyor).
     const total = round2(taxableGross + shippingFee);
+
+    // === Cari hesap (açık hesap) ödeme yolu — yalnız onaylı kurumsal müşteri, kredi limiti dahilinde ===
+    const onAccount = input.paymentMethod === "cari";
+    let cariDueDate: Date | null = null;
+    if (onAccount) {
+      if (!cariEligible) {
+        throw new BadRequestException("Açık hesap (cari) yalnızca onaylı kurumsal müşteriler içindir.");
+      }
+      const currentBalance = await this.corporateBalance(input.userId!);
+      if (cariCreditLimit != null && round2(currentBalance + total) > cariCreditLimit) {
+        throw new BadRequestException(
+          `Kredi limiti aşılıyor (limit ${cariCreditLimit} ₺, mevcut borç ${currentBalance} ₺).`,
+        );
+      }
+      cariDueDate = new Date(Date.now() + cariTermDays * 24 * 60 * 60 * 1000);
+    }
 
     const finalNotes = buildNotesWithIdem(input.notes, idemHash);
 
@@ -423,6 +446,7 @@ export class OrdersService {
           discount: new Prisma.Decimal(discount),
           vat: new Prisma.Decimal(vat),
           total: new Prisma.Decimal(total),
+          paymentMethod: onAccount ? "cari" : input.paymentMethod ?? null,
           shippingAddressId: resolvedAddresses.shippingAddressId,
           billingAddressId: resolvedAddresses.billingAddressId,
           shippingAddressSnapshot: resolvedAddresses.shippingAddressSnapshot
@@ -452,9 +476,40 @@ export class OrdersService {
         include: { items: true, shippingAddress: true, billingAddress: true },
       });
 
+      // Açık hesap (cari): siparişi cari deftere borç (debit) olarak işle — vade tarihli.
+      if (onAccount && input.userId) {
+        await tx.corporateLedgerEntry.create({
+          data: {
+            userId: input.userId,
+            orderId: created.id,
+            kind: "debit",
+            amount: new Prisma.Decimal(total),
+            description: `Sipariş ${created.orderNumber}`,
+            dueDate: cariDueDate,
+          },
+        });
+      }
+
       // Misafir siparişinde FK relation null gelir; snapshot'ı adres olarak yüzeye çıkar.
       return withAddressView(created);
     });
+  }
+
+  /** Cari hesap bakiyesi: borç(debit) − ödeme(credit). Pozitif = müşteri borçlu. */
+  private async corporateBalance(userId: string): Promise<number> {
+    const grouped = await this.prisma.corporateLedgerEntry.groupBy({
+      by: ["kind"],
+      where: { userId },
+      _sum: { amount: true },
+    });
+    let debit = 0;
+    let credit = 0;
+    for (const g of grouped) {
+      const v = Number(g._sum.amount ?? 0);
+      if (g.kind === "debit") debit = v;
+      else credit = v;
+    }
+    return round2(debit - credit);
   }
 
   /**

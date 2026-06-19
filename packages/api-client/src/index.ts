@@ -379,6 +379,15 @@ export class MarkalaApiClient {
     ) => this.request<AdminUserDto>("PATCH", `/admin/users/${id}/corporate`, data, { auth: true }),
   };
 
+  // Cari hesap (B2B açık hesap) defteri
+  corporateLedger = {
+    statement: (userId: string) =>
+      this.request<LedgerStatementDto>("GET", `/admin/corporate-ledger/${userId}`, undefined, { auth: true }),
+    recordPayment: (userId: string, data: { amount: number; description?: string }) =>
+      this.request<LedgerStatementDto>("POST", `/admin/corporate-ledger/${userId}/payment`, data, { auth: true }),
+    mine: () => this.request<LedgerStatementDto>("GET", "/users/me/ledger", undefined, { auth: true }),
+  };
+
   adminStats = () =>
     this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
 }
@@ -486,6 +495,7 @@ export interface AdminUserDto {
   corporateStatus?: "none" | "pending" | "approved" | "rejected";
   corporateDiscount?: string | number | null;
   corporateCreditLimit?: string | number | null;
+  corporatePaymentTermDays?: number | null;
   lastLoginAt?: string | null;
   orders?: AdminUserOrderDto[];
   addresses?: Array<{
@@ -503,6 +513,21 @@ export interface AdminUserDto {
     taxNumber?: string | null;
     isDefault?: boolean;
   }>;
+}
+
+export interface LedgerEntryDto {
+  id: string;
+  orderId?: string | null;
+  kind: "debit" | "credit";
+  amount: string | number;
+  description: string;
+  dueDate?: string | null;
+  createdAt: string;
+}
+
+export interface LedgerStatementDto {
+  balance: number;
+  entries: LedgerEntryDto[];
 }
 
 export interface AdminStatsDto {

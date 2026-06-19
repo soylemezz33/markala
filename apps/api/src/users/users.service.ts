@@ -122,7 +122,7 @@ export class UsersService {
       select: {
         id: true, email: true, fullName: true, phone: true, accountType: true,
         companyName: true, taxOffice: true, taxNumber: true, role: true,
-        corporateStatus: true, corporateDiscount: true, corporateCreditLimit: true, createdAt: true, lastLoginAt: true,
+        corporateStatus: true, corporateDiscount: true, corporateCreditLimit: true, corporatePaymentTermDays: true, createdAt: true, lastLoginAt: true,
         orders: {
           where: { deletedAt: null },
           orderBy: { createdAt: "desc" },
@@ -149,11 +149,11 @@ export class UsersService {
     const data: Record<string, unknown> = {};
     if (dto.corporateDiscount !== undefined) data.corporateDiscount = dto.corporateDiscount;
     if (dto.corporateCreditLimit !== undefined) data.corporateCreditLimit = dto.corporateCreditLimit;
-    // corporatePaymentTermDays: Faz 2'de şema alanı eklenince burada yazılacak.
+    if (dto.corporatePaymentTermDays !== undefined) data.corporatePaymentTermDays = dto.corporatePaymentTermDays;
     return this.prisma.user.update({
       where: { id },
       data,
-      select: { id: true, corporateDiscount: true, corporateCreditLimit: true },
+      select: { id: true, corporateDiscount: true, corporateCreditLimit: true, corporatePaymentTermDays: true },
     });
   }
 }

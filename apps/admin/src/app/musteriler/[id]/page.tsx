@@ -2,7 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { getAdminApi } from "@/lib/api";
+import type { LedgerStatementDto } from "@markala/api-client";
 import { CorporateSettingsForm } from "./corporate-settings-form";
+import { CariPaymentForm } from "./cari-payment-form";
 import {
   ArrowLeft, EnvelopeSimple, Phone, ClockCounterClockwise, MapPin,
 } from "@phosphor-icons/react/dist/ssr";
@@ -52,6 +54,16 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
     .filter((o) => o.paymentStatus === "basarili")
     .reduce((sum, o) => sum + Number(o.total), 0);
 
+  // Cari hesap (yalnız kurumsal) — bakiye + ekstre
+  let ledger: LedgerStatementDto | null = null;
+  if (user.accountType === "corporate") {
+    try {
+      ledger = await api.corporateLedger.statement(params.id);
+    } catch {
+      ledger = null;
+    }
+  }
+
   return (
     <AdminShell>
       <div className="mb-6 flex items-center gap-3">
@@ -86,7 +98,37 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                 userId={user.id}
                 initialDiscount={user.corporateDiscount != null ? Number(user.corporateDiscount) : null}
                 initialCreditLimit={user.corporateCreditLimit != null ? Number(user.corporateCreditLimit) : null}
+                initialPaymentTermDays={user.corporatePaymentTermDays != null ? Number(user.corporatePaymentTermDays) : null}
               />
+            </Card>
+          )}
+
+          {user.accountType === "corporate" && ledger && (
+            <Card title="Cari Hesap (Açık Hesap)">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-ink-500">Güncel bakiye (borç)</span>
+                <span className={`text-lg font-bold tabular-nums ${ledger.balance > 0 ? "text-error" : "text-success"}`}>
+                  {TRY(ledger.balance)}
+                </span>
+              </div>
+              <CariPaymentForm userId={user.id} />
+              {ledger.entries.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-paper-200 max-h-64 overflow-y-auto">
+                  <div className="text-xs text-ink-500 mb-2">Hareketler</div>
+                  <ul className="space-y-1.5 text-sm">
+                    {ledger.entries.map((e) => (
+                      <li key={String(e.id)} className="flex items-center justify-between gap-2">
+                        <span className="text-ink-700 truncate">
+                          {fmtDate(String(e.createdAt))} · {String(e.description)}
+                        </span>
+                        <span className={`tabular-nums font-medium ${e.kind === "debit" ? "text-error" : "text-success"}`}>
+                          {e.kind === "debit" ? "+" : "−"}{TRY(Number(e.amount))}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </Card>
           )}
 
