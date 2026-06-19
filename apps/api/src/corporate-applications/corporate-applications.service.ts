@@ -1,11 +1,19 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as argon2 from "argon2";
+import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
-import type { CorporateStatus } from "@prisma/client";
+import { MailService } from "../mail/mail.service";
+import type { CorporateApplication, CorporateStatus } from "@prisma/client";
 import type { CreateCorporateApplicationDto } from "./corporate-applications.dto";
 
 @Injectable()
 export class CorporateApplicationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+    private mail: MailService,
+  ) {}
 
   /** Public B2B başvurusu — panele "pending" olarak düşer. */
   create(dto: CreateCorporateApplicationDto, userId?: string) {
@@ -56,26 +64,76 @@ export class CorporateApplicationsService {
       data: { status, reviewNote, reviewedById: reviewerId, reviewedAt: new Date() },
     });
 
-    if (app.userId) {
-      if (status === "approved") {
-        await this.prisma.user.update({
-          where: { id: app.userId },
-          data: {
-            accountType: "corporate",
-            corporateStatus: "approved",
-            corporateApprovedAt: new Date(),
-            companyName: app.companyName,
-            taxOffice: app.taxOffice,
-            taxNumber: app.taxNumber,
-          },
-        });
-      } else {
-        await this.prisma.user
-          .update({ where: { id: app.userId }, data: { corporateStatus: "rejected" } })
-          .catch(() => undefined);
-      }
+    if (status === "approved") {
+      await this.approveAccount(app);
+    } else if (app.userId) {
+      await this.prisma.user
+        .update({ where: { id: app.userId }, data: { corporateStatus: "rejected" } })
+        .catch(() => undefined);
     }
 
     return updated;
+  }
+
+  /**
+   * Onayda kurumsal hesabı hazırla: başvuruya bağlı / aynı e-postalı kullanıcı varsa onu
+   * kurumsal yap; yoksa yeni hesap oluştur ve şifre-belirleme (davet) e-postası gönder —
+   * böylece müşteri panele giriş yapabilir. Misafir başvurularda da çalışır (userId null).
+   */
+  private async approveAccount(app: CorporateApplication): Promise<void> {
+    const corp = {
+      accountType: "corporate" as const,
+      corporateStatus: "approved" as const,
+      corporateApprovedAt: new Date(),
+      companyName: app.companyName,
+      taxOffice: app.taxOffice,
+      taxNumber: app.taxNumber,
+    };
+
+    let user =
+      (app.userId ? await this.prisma.user.findUnique({ where: { id: app.userId } }) : null) ??
+      (await this.prisma.user.findUnique({ where: { email: app.email } }));
+
+    let isNew = false;
+    if (user) {
+      await this.prisma.user.update({ where: { id: user.id }, data: corp });
+    } else {
+      // Yeni kurumsal hesap — rastgele şifre (davet linkiyle belirlenecek)
+      const placeholderHash = await argon2.hash(crypto.randomBytes(32).toString("hex"));
+      user = await this.prisma.user.create({
+        data: {
+          email: app.email,
+          passwordHash: placeholderHash,
+          fullName: app.contactName,
+          phone: app.phone,
+          role: "customer",
+          ...corp,
+        },
+      });
+      isNew = true;
+    }
+
+    if (app.userId !== user.id) {
+      await this.prisma.corporateApplication.update({ where: { id: app.id }, data: { userId: user.id } });
+    }
+
+    if (isNew) {
+      await this.sendInvite(user.id, user.email, app.companyName);
+    }
+  }
+
+  /** Davet/şifre-belirleme e-postası (şifre-sıfırlama altyapısı; 7 gün geçerli). */
+  private async sendInvite(userId: string, email: string, companyName: string): Promise<void> {
+    const rawToken = crypto.randomBytes(48).toString("base64url");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    await this.prisma.passwordResetToken.updateMany({
+      where: { userId, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    await this.prisma.passwordResetToken.create({ data: { userId, tokenHash, expiresAt } });
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const inviteUrl = `${webUrl}/sifre-sifirla?token=${rawToken}`;
+    await this.mail.sendCorporateInviteEmail(email, inviteUrl, companyName);
   }
 }

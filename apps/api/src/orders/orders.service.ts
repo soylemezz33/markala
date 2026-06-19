@@ -360,6 +360,21 @@ export class OrdersService {
       appliedCoupon = { id: coupon.id, code: coupon.code, type: coupon.type };
     }
 
+    // === Kurumsal (B2B) indirim — onaylı kurumsal kullanıcıya özel oran (admin müşteri başına belirler) ===
+    if (input.userId) {
+      const u = await this.prisma.user.findUnique({
+        where: { id: input.userId },
+        select: { accountType: true, corporateStatus: true, corporateDiscount: true },
+      });
+      const pct =
+        u?.accountType === "corporate" && u.corporateStatus === "approved" && u.corporateDiscount != null
+          ? Number(u.corporateDiscount)
+          : 0;
+      if (pct > 0) {
+        discount = round2(discount + (subtotal * pct) / 100);
+      }
+    }
+
     // Kargo: free_shipping kuponu VEYA ara toplam eşiği (750₺) → ücretsiz; aksi halde sabit 79₺.
     const freeShipping = appliedCoupon?.type === "free_shipping" || subtotal >= FREE_SHIPPING_THRESHOLD;
     const shippingFee = freeShipping ? 0 : DEFAULT_SHIPPING_FEE;

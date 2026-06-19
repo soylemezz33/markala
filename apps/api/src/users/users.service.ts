@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { CreateAddressDto, UpdateAddressDto, UpdateProfileDto } from "./users.dto";
+import { CreateAddressDto, UpdateAddressDto, UpdateProfileDto, UpdateCorporateDto } from "./users.dto";
 
 @Injectable()
 export class UsersService {
@@ -122,7 +122,7 @@ export class UsersService {
       select: {
         id: true, email: true, fullName: true, phone: true, accountType: true,
         companyName: true, taxOffice: true, taxNumber: true, role: true,
-        corporateStatus: true, corporateDiscount: true, createdAt: true, lastLoginAt: true,
+        corporateStatus: true, corporateDiscount: true, corporateCreditLimit: true, createdAt: true, lastLoginAt: true,
         orders: {
           where: { deletedAt: null },
           orderBy: { createdAt: "desc" },
@@ -141,6 +141,19 @@ export class UsersService {
           },
         },
       },
+    });
+  }
+
+  /** Admin: kurumsal müşteri ayarları (indirim oranı + kredi limiti) — müşteri başına. */
+  async updateCorporateSettings(id: string, dto: UpdateCorporateDto) {
+    const data: Record<string, unknown> = {};
+    if (dto.corporateDiscount !== undefined) data.corporateDiscount = dto.corporateDiscount;
+    if (dto.corporateCreditLimit !== undefined) data.corporateCreditLimit = dto.corporateCreditLimit;
+    // corporatePaymentTermDays: Faz 2'de şema alanı eklenince burada yazılacak.
+    return this.prisma.user.update({
+      where: { id },
+      data,
+      select: { id: true, corporateDiscount: true, corporateCreditLimit: true },
     });
   }
 }

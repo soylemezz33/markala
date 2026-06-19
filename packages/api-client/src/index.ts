@@ -373,6 +373,10 @@ export class MarkalaApiClient {
       this.request<AdminUserDto[]>("GET", "/admin/users", undefined, { auth: true, query: opts }),
     detail: (id: string) =>
       this.request<AdminUserDto>("GET", `/admin/users/${id}`, undefined, { auth: true }),
+    updateCorporate: (
+      id: string,
+      data: { corporateDiscount?: number; corporateCreditLimit?: number; corporatePaymentTermDays?: number },
+    ) => this.request<AdminUserDto>("PATCH", `/admin/users/${id}/corporate`, data, { auth: true }),
   };
 
   adminStats = () =>
@@ -481,6 +485,7 @@ export interface AdminUserDto {
   taxNumber?: string | null;
   corporateStatus?: "none" | "pending" | "approved" | "rejected";
   corporateDiscount?: string | number | null;
+  corporateCreditLimit?: string | number | null;
   lastLoginAt?: string | null;
   orders?: AdminUserOrderDto[];
   addresses?: Array<{

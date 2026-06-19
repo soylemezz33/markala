@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsOptional, IsString, Length, MaxLength, MinLength } from "class-validator";
+import { IsBoolean, IsIn, IsNumber, IsOptional, IsString, Length, Max, MaxLength, Min, MinLength } from "class-validator";
 import { PaginationQueryDto } from "../common/pagination.dto";
 
 /** Yönetici kullanıcı listesi sorgu parametreleri — doğrulanmış sayfalama + opsiyonel arama. */
@@ -7,6 +7,26 @@ export class ListUsersQueryDto extends PaginationQueryDto {
   @IsOptional()
   @MaxLength(100)
   q?: string;
+}
+
+/** Admin → kurumsal müşteri ayarları (müşteri başına indirim oranı + kredi limiti + vade). */
+export class UpdateCorporateDto {
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  corporateDiscount?: number;
+
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @IsOptional()
+  corporateCreditLimit?: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(365)
+  @IsOptional()
+  corporatePaymentTermDays?: number;
 }
 
 /**

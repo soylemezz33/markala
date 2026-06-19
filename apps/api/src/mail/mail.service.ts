@@ -75,6 +75,35 @@ export class MailService {
     }
   }
 
+  /** Kurumsal başvuru onayında: hesabı aktive et + şifre belirleme (davet) bağlantısı. */
+  async sendCorporateInviteEmail(to: string, inviteUrl: string, companyName: string): Promise<boolean> {
+    // companyName kullanıcı-kontrollü (başvuru formu) → HTML injection'a karşı escape et.
+    const safeCompany = String(companyName)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const subject = "Markala — Kurumsal hesabınız onaylandı";
+    const text = `${companyName} kurumsal hesabınız onaylandı. Panele giriş için önce şifrenizi belirleyin:\n${inviteUrl}\n\nBağlantı 7 gün geçerlidir.\n\nMarkala — 324 Ajans BT (işlemsel ileti).`;
+    const html = `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto">
+      <h2 style="color:#1a1a1a">Kurumsal hesabınız onaylandı 🎉</h2>
+      <p><strong>${safeCompany}</strong> için kurumsal hesabınız aktif edildi. Panele giriş yapmak için önce şifrenizi belirleyin:</p>
+      <p><a href="${inviteUrl}" style="display:inline-block;background:#F5B800;color:#1a1a1a;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Şifremi belirle ve giriş yap</a></p>
+      <p style="color:#666;font-size:13px">Bağlantı 7 gün geçerlidir. Buton çalışmazsa: <br><a href="${inviteUrl}">${inviteUrl}</a></p>
+      <p style="color:#666;font-size:13px">Giriş sonrası kurumsal indiriminiz, sipariş geçmişiniz ve hesabınız tek panelde.</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+      <p style="color:#999;font-size:12px">Bu işlemsel bir iletidir. Markala — 324 Ajans BT tarafından gönderilmiştir.</p>
+    </div>`;
+
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template: "corporate-invite" });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.corporateInvite failed to=${to}: ${(err as Error).message}`);
+      await this.logNotification(to, "failed", { error: (err as Error).message, template: "corporate-invite" });
+      return false;
+    }
+  }
+
   private async logNotification(recipient: string, status: "sent" | "failed", metadata: Record<string, unknown>) {
     await this.prisma.notificationLog
       .create({

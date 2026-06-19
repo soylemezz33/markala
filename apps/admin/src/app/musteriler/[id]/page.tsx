@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { getAdminApi } from "@/lib/api";
+import { CorporateSettingsForm } from "./corporate-settings-form";
 import {
   ArrowLeft, EnvelopeSimple, Phone, ClockCounterClockwise, MapPin,
 } from "@phosphor-icons/react/dist/ssr";
@@ -81,7 +82,11 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
               <KV label="Vergi Dairesi" value={user.taxOffice ?? "—"} />
               <KV label="Vergi No" value={user.taxNumber ?? "—"} />
               <KV label="Durum" value={user.corporateStatus ?? "—"} />
-              {user.corporateDiscount != null && <KV label="İndirim" value={`%${user.corporateDiscount}`} />}
+              <CorporateSettingsForm
+                userId={user.id}
+                initialDiscount={user.corporateDiscount != null ? Number(user.corporateDiscount) : null}
+                initialCreditLimit={user.corporateCreditLimit != null ? Number(user.corporateCreditLimit) : null}
+              />
             </Card>
           )}
 

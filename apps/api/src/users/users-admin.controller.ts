@@ -1,9 +1,9 @@
-import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { ListUsersQueryDto } from "./users.dto";
+import { ListUsersQueryDto, UpdateCorporateDto } from "./users.dto";
 
 @ApiTags("admin-users")
 @Controller("admin/users")
@@ -21,5 +21,11 @@ export class UsersAdminController {
   @Get(":id")
   detail(@Param("id") id: string) {
     return this.service.getForAdmin(id);
+  }
+
+  /** Kurumsal müşteri ayarları (indirim oranı + kredi limiti) — admin müşteri başına belirler. */
+  @Patch(":id/corporate")
+  updateCorporate(@Param("id") id: string, @Body() dto: UpdateCorporateDto) {
+    return this.service.updateCorporateSettings(id, dto);
   }
 }
