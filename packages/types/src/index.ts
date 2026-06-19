@@ -49,6 +49,12 @@ export interface ProductOption {
   priceModifier: number;
   /** Bu seçenek seçilince taban fiyatı çarpan oranı (örn. 1.2 = %20 zam) */
   priceMultiplier?: number;
+  /**
+   * Ebata göre değişen fiyat (TL). Anahtar = "isSizeDriver" parametresinin
+   * seçili opsiyon id'si (örn. "25x35"). Tanımlıysa priceModifier yerine bu kullanılır.
+   * İş güvenliği levhaları gibi ebat×malzeme fiyatlı ürünler için.
+   */
+  priceBySize?: Record<string, number>;
 }
 
 export type ParameterKind =
@@ -112,6 +118,16 @@ export interface ProductParameter {
   quantityPresets?: number[];
   /** "quantity" tipi için adet başına TL */
   unitPrice?: number;
+  /**
+   * Bu select/radio parametresinin seçili opsiyonu, ebat-bazlı fiyatların (priceBySize)
+   * anahtarını belirler. Üründe en fazla bir parametre isSizeDriver olmalı.
+   */
+  isSizeDriver?: boolean;
+  /**
+   * true ise bu parametrenin opsiyon katkısı adet (quantity) ile ÇARPILIR.
+   * (Varsayılan: katkı bir kez eklenir — mevcut matbaa ürünleri böyle.)
+   */
+  perUnit?: boolean;
   defaultOptionId?: string;
 
   // === "dimension" tipi için (en + boy → alan/çevre) ===

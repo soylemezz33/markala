@@ -79,14 +79,28 @@ export function calculatePrice(product: Product, state: ConfigState): PriceBreak
   let quantity = 1;
   let dimensions: PriceBreakdown["dimensions"] | undefined;
 
+  // Ebat-bazlı / per-unit fiyat ön-taraması (İSG levhaları: ebat×malzeme × adet)
+  let sizeKey = "";
+  let perUnitQty = 1;
+  for (const p of product.parameters) {
+    const s = state.selections[p.id];
+    if (p.isSizeDriver && typeof s === "string") sizeKey = s;
+    if (p.kind === "quantity" && typeof s === "number") perUnitQty = s;
+  }
+
   for (const param of product.parameters) {
     const sel = state.selections[param.id];
 
     if ((param.kind === "radio" || param.kind === "select") && typeof sel === "string") {
       const opt = param.options?.find((o) => o.id === sel);
-      if (opt && opt.priceModifier !== 0) {
-        total += opt.priceModifier;
-        modifiers.push({ label: `${param.label}: ${opt.label}`, amount: opt.priceModifier });
+      if (opt) {
+        // priceBySize varsa ebata göre fiyat; perUnit ise adetle çarp
+        const unit = opt.priceBySize?.[sizeKey] ?? opt.priceModifier;
+        const amount = param.perUnit ? unit * perUnitQty : unit;
+        if (amount !== 0) {
+          total += amount;
+          modifiers.push({ label: `${param.label}: ${opt.label}`, amount });
+        }
       }
     }
 
@@ -163,6 +177,11 @@ export function calculatePrice(product: Product, state: ConfigState): PriceBreak
         }
       }
     }
+  }
+
+  // Per-unit/ebat fiyatlı ürünlerde birim fiyat = toplam / adet (gösterim için)
+  if (unitPrice === 0 && quantity > 0 && total > 0) {
+    unitPrice = total / quantity;
   }
 
   return {
