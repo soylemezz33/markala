@@ -237,7 +237,10 @@ export function AllProductsClient({ products, categories }: { products: Product[
             <div className="lg:sticky lg:top-24 space-y-5">
               {/* Kategoriler */}
               <FilterCard title="Kategoriler">
-                <ul className="space-y-1">
+                <ul
+                  className="space-y-1 max-h-80 overflow-y-auto pr-1"
+                  style={{ scrollbarWidth: "thin" }}
+                >
                   <li>
                     <CategoryButton
                       active={!activeCategory}
