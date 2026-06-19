@@ -36,6 +36,35 @@ describe("calculateConfiguredPrice", () => {
     expect(calculateConfiguredPrice(0, params, { olcu: { width: 100, height: 100, extras: [] } })).toBeCloseTo(100, 2);
   });
 
+  it("İSG: ebat-bazlı (priceBySize) + perUnit baskı+malzeme × adet", () => {
+    const params = [
+      {
+        id: "ebat", kind: "radio", isSizeDriver: true,
+        options: [{ id: "25x35", priceModifier: 0 }, { id: "50x70", priceModifier: 0 }],
+      },
+      {
+        id: "baski", kind: "radio", perUnit: true,
+        options: [{ id: "reflektif", priceModifier: 0, priceBySize: { "25x35": 110, "50x70": 430 } }],
+      },
+      {
+        id: "malzeme", kind: "radio", perUnit: true,
+        options: [
+          { id: "yok", priceModifier: 0, priceBySize: { "25x35": 0, "50x70": 0 } },
+          { id: "dekota", priceModifier: 0, priceBySize: { "25x35": 70, "50x70": 270 } },
+        ],
+      },
+      { id: "adet", kind: "quantity", unitPrice: 0 },
+    ];
+    // 50×70 · Reflektif + Dekota · 1 adet = 430 + 270 = 700
+    expect(calculateConfiguredPrice(0, params, { ebat: "50x70", baski: "reflektif", malzeme: "dekota", adet: 1 })).toBe(700);
+    // ×2 adet = 1400
+    expect(calculateConfiguredPrice(0, params, { ebat: "50x70", baski: "reflektif", malzeme: "dekota", adet: 2 })).toBe(1400);
+    // yalnız etiket (malzeme yok): 50×70 Reflektif = 430
+    expect(calculateConfiguredPrice(0, params, { ebat: "50x70", baski: "reflektif", malzeme: "yok", adet: 1 })).toBe(430);
+    // 25×35 Reflektif + Dekota = 110 + 70 = 180
+    expect(calculateConfiguredPrice(0, params, { ebat: "25x35", baski: "reflektif", malzeme: "dekota", adet: 1 })).toBe(180);
+  });
+
   it("negatif sonuç 0'a sabitlenir; geçersiz selection güvenle yok sayılır", () => {
     expect(calculateConfiguredPrice(0, [{ id: "x", kind: "matrix", cells: [] }], { x: "yok" })).toBe(0);
     expect(calculateConfiguredPrice(0, "bozuk" as unknown, {})).toBe(0);

@@ -42,6 +42,17 @@ export function calculateConfiguredPrice(
   const params = Array.isArray(parameters) ? parameters : [];
   const sels = selections && typeof selections === "object" ? selections : {};
 
+  // Ebat-bazlı / per-unit fiyat ön-taraması (İSG levhaları: ebat×malzeme/baskı × adet)
+  let sizeKey = "";
+  let perUnitQty = 1;
+  for (const p of params) {
+    if (!p || typeof p !== "object") continue;
+    const param = p as Record<string, any>;
+    const sel = (sels as Selections)[param.id];
+    if (param.isSizeDriver && typeof sel === "string") sizeKey = sel;
+    if (param.kind === "quantity" && typeof sel === "number") perUnitQty = num(sel);
+  }
+
   for (const p of params) {
     if (!p || typeof p !== "object") continue;
     const param = p as Record<string, any>;
@@ -50,7 +61,11 @@ export function calculateConfiguredPrice(
 
     if ((kind === "radio" || kind === "select") && typeof sel === "string") {
       const opt = param.options?.find((o: any) => o?.id === sel);
-      if (opt) total += num(opt.priceModifier);
+      if (opt) {
+        // priceBySize varsa ebata göre fiyat; perUnit ise adetle çarp (configurator.ts ile aynı)
+        const unit = opt.priceBySize?.[sizeKey] ?? opt.priceModifier;
+        total += param.perUnit ? num(unit) * perUnitQty : num(unit);
+      }
     } else if (kind === "checkbox-group" && Array.isArray(sel)) {
       for (const optId of sel) {
         const opt = param.options?.find((o: any) => o?.id === optId);
