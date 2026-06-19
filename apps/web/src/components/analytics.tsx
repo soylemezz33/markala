@@ -103,6 +103,9 @@ export function Analytics() {
       )}
 
       {metaPixel && (
+        // KVKK/GDPR: fbq('init') yalnızca piksel kurulumu yapar, veri göndermez.
+        // fbq('track', 'PageView') kasıtlı olarak buradan kaldırıldı — consent
+        // kontrolü AnalyticsTracker içinde fbtrack() wrapper'ı üzerinden yapılır.
         <Script id="meta-pixel-init" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -114,7 +117,6 @@ export function Analytics() {
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
             fbq('init', '${metaPixel}');
-            fbq('track', 'PageView');
           `}
         </Script>
       )}
