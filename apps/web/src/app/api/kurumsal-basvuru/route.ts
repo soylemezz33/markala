@@ -37,7 +37,7 @@ async function persistApplication(refId: string, payload: CorporatePayload): Pro
   const apiBase =
     process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
   try {
-    const res = await fetch(`${apiBase}/corporate-applications`, {
+    const res = await fetch(`${apiBase}/api/corporate-applications`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

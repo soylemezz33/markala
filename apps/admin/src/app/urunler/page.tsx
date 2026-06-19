@@ -9,7 +9,7 @@ export default async function ProductsAdminPage() {
   try {
     const api = await getAdminApi();
     [products, categories] = await Promise.all([
-      api.products.list({ take: 200 }),
+      api.products.list({ take: 5000 }),
       api.categories.list(true),
     ]);
   } catch {
