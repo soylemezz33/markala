@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, CaretLeft, CaretRight, Sparkle } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
@@ -83,8 +83,15 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  // İlk yükleme + reduced-motion'da above-the-fold içeriği opacity:0 ile gizleme.
+  // Aksi halde LCP elementi (hero başlığı) JS hydrate olana kadar görünmez kalır.
+  const hasNavigatedRef = useRef(false);
+  const reveal = <T,>(target: T): T | false =>
+    prefersReducedMotion || !hasNavigatedRef.current ? false : target;
 
   const goTo = useCallback((next: number, dir = 1) => {
+    hasNavigatedRef.current = true;
     setDirection(dir);
     setIndex(((next % heroSlides.length) + heroSlides.length) % heroSlides.length);
   }, [heroSlides.length]);
@@ -153,7 +160,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
               {/* Content */}
               <div className="relative lg:col-span-6 px-8 md:px-14 lg:px-16 py-12 md:py-16 z-10">
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={reveal({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.15 }}
                   className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium tracking-wide", theme.badge)}
@@ -163,7 +170,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 </motion.div>
 
                 <motion.h1
-          initial={{ opacity: 0, y: 16 }}
+          initial={reveal({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
                   className={cn("mt-5 text-display-xl font-serif leading-[1.02] max-w-xl", theme.text)}
@@ -176,7 +183,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 </motion.h1>
 
                 <motion.p
-          initial={{ opacity: 0, y: 16 }}
+          initial={reveal({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                   className={cn("mt-6 text-lg md:text-xl leading-relaxed max-w-lg", theme.textMuted)}
@@ -185,7 +192,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 </motion.p>
 
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={reveal({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.55 }}
                   className="mt-8 flex flex-wrap items-center gap-3"
@@ -205,7 +212,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
 
                 {(slide.size || slide.badge) && (
                   <motion.div
-          initial={{ opacity: 0 }}
+          initial={reveal({ opacity: 0 })}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.7 }}
                     className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
@@ -238,7 +245,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                   <BannerDisplayVisual />
                 ) : (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    initial={reveal({ opacity: 0, scale: 0.9, y: 20 })}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     className="relative w-full max-w-[520px] aspect-square"
