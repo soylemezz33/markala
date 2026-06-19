@@ -2,7 +2,7 @@
 
 import { useMemo, useReducer } from "react";
 import { Button } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, WhatsappLogo } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import { buildSummary, calculatePrice } from "@/lib/configurator";
 import { useCartStore } from "@/lib/cart-store";
@@ -26,12 +26,8 @@ export function Configurator({ product }: { product: Product }) {
     [product, state.selections],
   );
 
-  // Teklif usulü (fiyatsız) ürünler: sepete ekleyip bozuk 0-tutar ödemeye sokmak yerine
-  // doğrudan WhatsApp'tan teklif al. Fiyatlı ürünler bu koşula girmez.
-  const isQuote = breakdown.total <= 0;
-  const quoteHref = `https://wa.me/905319004102?text=${encodeURIComponent(
-    `Merhaba, "${product.name}" ürünü için teklif almak istiyorum.`,
-  )}`;
+  // total>0 ise normal satın alma; 0 ise (örn. malzeme+folyo "Yok" seçilmişse) buton kapalı.
+  const canBuy = breakdown.total > 0;
 
   function handleAddToCart() {
     addItem({
@@ -80,39 +76,29 @@ export function Configurator({ product }: { product: Product }) {
 
         <PriceCard breakdown={breakdown} />
 
-        {isQuote ? (
-          <Button
-            size="lg"
-            fullWidth
-            onClick={() => window.open(quoteHref, "_blank", "noopener")}
-          >
-            <WhatsappLogo size={20} weight="bold" /> Teklif Al
-          </Button>
-        ) : (
-          <Button size="lg" fullWidth onClick={handleAddToCart} disabled={state.justAdded}>
-            {state.justAdded ? (
-              <>
-                <CheckCircle size={20} weight="bold" /> Sepete Eklendi
-              </>
-            ) : (
-              <>
-                <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
-              </>
-            )}
-          </Button>
-        )}
+        <Button
+          size="lg"
+          fullWidth
+          onClick={handleAddToCart}
+          disabled={state.justAdded || !canBuy}
+        >
+          {state.justAdded ? (
+            <>
+              <CheckCircle size={20} weight="bold" /> Sepete Eklendi
+            </>
+          ) : !canBuy ? (
+            <>Lütfen malzeme veya folyo seçin</>
+          ) : (
+            <>
+              <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
+            </>
+          )}
+        </Button>
 
-        <MobileCta
-          total={breakdown.total}
-          onAddToCart={handleAddToCart}
-          isQuote={isQuote}
-          quoteHref={quoteHref}
-        />
+        <MobileCta total={breakdown.total} onAddToCart={handleAddToCart} />
 
         <p className="text-xs text-ink-500 text-center">
-          {isQuote
-            ? "Teklif Al'a tıklayın — ebat, malzeme ve adet ihtiyacınıza göre size özel fiyatla en kısa sürede dönüş yaparız."
-            : "Sepete eklediğinizde üretim başlamaz — onay sonrası matbaa süreci başlar."}
+          Sepete eklediğinizde üretim başlamaz — onay sonrası matbaa süreci başlar.
         </p>
       </div>
     </ConfiguratorContext.Provider>

@@ -1,24 +1,23 @@
 "use client";
 
 import { Button } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, WhatsappLogo } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
 import { formatPriceDisplay } from "@/lib/format";
 
 interface Props {
   total: number;
   onAddToCart: () => void;
-  isQuote?: boolean;
-  quoteHref?: string;
 }
 
 /**
  * Mobil sticky bottom bar — fiyat + sepete ekle.
  * lg breakpoint altında görünür, üzerinde gizli.
  */
-export function MobileCta({ total, onAddToCart, isQuote, quoteHref }: Props) {
+export function MobileCta({ total, onAddToCart }: Props) {
   const { state } = useConfigurator();
   const { justAdded } = state;
+  const canBuy = total > 0;
 
   return (
     <>
@@ -28,29 +27,20 @@ export function MobileCta({ total, onAddToCart, isQuote, quoteHref }: Props) {
             Toplam
           </div>
           <div className="text-lg font-bold text-ink-900 tabular-nums truncate">
-            {total > 0 ? formatPriceDisplay(total) : "Teklif Al"}
+            {total > 0 ? formatPriceDisplay(total) : "—"}
           </div>
         </div>
-        {isQuote ? (
-          <Button
-            onClick={() => window.open(quoteHref, "_blank", "noopener")}
-            className="flex-none"
-          >
-            <WhatsappLogo size={16} weight="bold" /> Teklif Al
-          </Button>
-        ) : (
-          <Button onClick={onAddToCart} disabled={justAdded} className="flex-none">
-            {justAdded ? (
-              <>
-                <CheckCircle size={16} weight="bold" /> Eklendi
-              </>
-            ) : (
-              <>
-                <ShoppingBagOpen size={16} weight="bold" /> Sepete Ekle
-              </>
-            )}
-          </Button>
-        )}
+        <Button onClick={onAddToCart} disabled={justAdded || !canBuy} className="flex-none">
+          {justAdded ? (
+            <>
+              <CheckCircle size={16} weight="bold" /> Eklendi
+            </>
+          ) : (
+            <>
+              <ShoppingBagOpen size={16} weight="bold" /> Sepete Ekle
+            </>
+          )}
+        </Button>
       </div>
       {/* Sticky bar için alt boşluk — mobilde içerik kapanmasın */}
       <div className="lg:hidden h-20" />
