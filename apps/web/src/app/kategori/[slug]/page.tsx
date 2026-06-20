@@ -21,7 +21,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cat = await getCategoryBySlug(params.slug);
-  if (!cat) return {};
+  // Kategori yok → noindex (soft-404 zararını kes; çelişkili index,follow etiketini önle).
+  if (!cat) return { robots: { index: false, follow: false } };
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
   const seoTitle =
     cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??

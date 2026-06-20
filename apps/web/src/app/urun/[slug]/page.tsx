@@ -41,7 +41,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
-  if (!product) return {};
+  // Ürün yok/silinmiş → noindex (not-found sayfası 200 dönse de Google indekslemesin; soft-404 zararını kes).
+  if (!product) return { robots: { index: false, follow: false } };
   const category = await getCategoryBySlug(product.categorySlug);
   const seoTitle = product.seo?.title ?? `${product.name} — ${category?.name ?? ""} Baskı`;
   const seoDesc =
