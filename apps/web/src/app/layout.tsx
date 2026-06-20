@@ -58,7 +58,9 @@ export const metadata: Metadata = {
       "30+ matbaa ürünü kategorisi, ücretsiz tasarım, 1-2 iş günü üretim, Türkiye geneli DHL kargo. 324 Ajans güvencesiyle.",
     images: [
       {
-        url: "/api/mockup?theme=brand&w=1200&h=630",
+        // RASTER PNG (1200x630) — sosyal crawler'lar SVG'yi reddediyordu; statik PNG ile
+        // Facebook/X/WhatsApp/LinkedIn önizlemeleri doğru görünür. public/og-default.png.
+        url: "/og-default.png",
         width: 1200,
         height: 630,
         alt: "Markala — Matbaa ve Reklam Ürünleri",
@@ -70,7 +72,7 @@ export const metadata: Metadata = {
     title: "Markala — Matbaa ve Reklam Ürünleri",
     description:
       "30+ matbaa ürünü, ücretsiz tasarım, hızlı kargo. 324 Ajans güvencesiyle.",
-    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+    images: ["/og-default.png"],
   },
   robots: {
     index: true,
