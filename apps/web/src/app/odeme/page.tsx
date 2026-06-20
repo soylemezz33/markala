@@ -84,7 +84,9 @@ export default function CheckoutPage() {
   const appliedCoupon = couponCode && KNOWN_COUPONS[couponCode] ? couponCode : null;
   const discount = appliedCoupon ? sub * (KNOWN_COUPONS[appliedCoupon] ?? 0) : 0;
   const subAfterDiscount = Math.max(0, sub - discount);
-  const shipping = subAfterDiscount >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+  // Kargo eşiği İNDİRİM ÖNCESİ ara toplama göre — sepet ekranı VE backend ile birebir aynı
+  // (aksi halde kuponlu siparişte sepet "ücretsiz" derken ödeme 79₺ ekleyebiliyordu).
+  const shipping = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
   const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE); // KDV DAHİL fiyat → içindeki KDV payı (üstüne eklenmez)
   const total = subAfterDiscount + shipping;
 

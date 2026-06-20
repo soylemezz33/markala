@@ -80,7 +80,9 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: "markala-cart",
-      partialize: (s) => ({ items: s.items }),
+      // couponCode da saklanır — sepet↔ödeme arası yenileme/gezinmede kupon kaybolmasın
+      // (aksi halde gösterilen indirim sessizce düşerdi).
+      partialize: (s) => ({ items: s.items, couponCode: s.couponCode }),
     },
   ),
 );

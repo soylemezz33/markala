@@ -2,12 +2,16 @@
 
 import Link from "next/link";
 import { Container, Button } from "@markala/ui";
-import { XCircle, ArrowCounterClockwise, WhatsappLogo } from "@phosphor-icons/react";
+import { XCircle, ClipboardText, WhatsappLogo } from "@phosphor-icons/react";
 import { whatsappUrl } from "@/lib/whatsapp";
 
 /**
- * iyzico ödeme başarısız/iptal yönlendirmesi. Sepet KORUNUR (ödeme öncesi temizlenmiyor),
- * kullanıcı tekrar deneyebilir. Sipariş backend'de paymentStatus=basarisiz olarak kalır.
+ * iyzico ödeme başarısız/iptal yönlendirmesi.
+ *
+ * NOT: Sipariş ödeme BAŞLATILIRKEN backend'e KALICI yazılır (paymentStatus=beklemede) ve
+ * sepet o anda boşaltılır. Bu yüzden burada "tekrar dene" akışı sepetten DEĞİL, oluşmuş
+ * siparişten devam eder: müşteri "Siparişlerim → Ödeme Yap" ile aynı siparişin ödemesini
+ * tamamlar (yeni/çift sipariş oluşmaz). Kartından tahsilat yapılmamıştır.
  */
 export default function PaymentFailedPage() {
   return (
@@ -17,14 +21,15 @@ export default function PaymentFailedPage() {
       </div>
       <h1 className="mt-5 text-3xl md:text-4xl font-semibold text-ink-900">Ödeme tamamlanamadı</h1>
       <p className="mt-3 text-ink-700">
-        Ödemen alınamadı ya da işlem iptal edildi. Kartından herhangi bir tahsilat yapılmadı.
-        Sepetin korundu — dilersen tekrar deneyebilirsin.
+        Ödemen alınamadı ya da işlem iptal edildi. <strong>Kartından herhangi bir tahsilat yapılmadı.</strong>{" "}
+        Siparişin oluşturuldu ve <strong>"Ödeme Bekliyor"</strong> olarak duruyor — dilediğin zaman
+        ödemeyi tamamlayabilirsin.
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link href="/odeme">
+        <Link href="/hesabim/siparislerim">
           <Button size="lg">
-            <ArrowCounterClockwise size={18} weight="bold" /> Tekrar Dene
+            <ClipboardText size={18} weight="bold" /> Siparişlerim → Ödeme Yap
           </Button>
         </Link>
         <a
@@ -39,9 +44,16 @@ export default function PaymentFailedPage() {
       </div>
 
       <p className="mt-8 text-sm text-ink-500">
-        Sorun devam ederse{" "}
-        <Link href="/sepet" className="text-brand-700 hover:underline">sepetine</Link> dönüp tekrar deneyebilir
-        veya bizimle iletişime geçebilirsin.
+        Giriş yapmadan sipariş verdiysen ödemeni tamamlamak için{" "}
+        <a
+          href={whatsappUrl("Merhaba, misafir olarak sipariş verdim, ödememi tamamlamak istiyorum.")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand-700 hover:underline"
+        >
+          WhatsApp'tan bize ulaş
+        </a>
+        , sipariş numaranla ödeme bağlantısını ilet edelim.
       </p>
     </Container>
   );
