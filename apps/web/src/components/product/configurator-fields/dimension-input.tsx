@@ -42,9 +42,9 @@ export function DimensionInput({ param, value, onChange }: Props) {
         <DimInput label="Boy (cm)" value={h} min={min} max={max} onChange={(v) => setDim("height", v)} />
       </div>
 
-      {/* Canlı hesap tablosu */}
-      <div className="mt-3 overflow-hidden rounded-md border border-paper-200 bg-paper-100">
-        <table className="w-full text-sm">
+      {/* Canlı hesap tablosu — mobilde 5 sütun ezilmesin diye yatay kaydırılabilir (clip yerine scroll) */}
+      <div className="mt-3 overflow-x-auto rounded-md border border-paper-200 bg-paper-100">
+        <table className="w-full min-w-[420px] text-sm">
           <thead>
             <tr className="text-xs uppercase tracking-wide text-ink-500 border-b border-paper-200">
               <th className="px-3 py-2 text-left font-medium"></th>

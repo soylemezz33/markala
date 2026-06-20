@@ -211,7 +211,7 @@ export default function AddressesPage() {
               {form.type === "corporate" && (
                 <div className="space-y-4 p-3 bg-brand-50/50 border border-brand-100 rounded-lg">
                   <Input label="Firma Adı / Ünvan *" value={form.companyName} onChange={(v) => set("companyName", v)} />
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input label="Vergi No / TCKN *" value={form.taxNumber} onChange={(v) => set("taxNumber", v)} />
                     <Input label="Vergi Dairesi" value={form.taxOffice} onChange={(v) => set("taxOffice", v)} />
                   </div>
@@ -231,7 +231,7 @@ export default function AddressesPage() {
                 onIlChange={(v) => set("city", v)}
                 onIlceChange={(v) => set("district", v)}
                 required
-                className="grid grid-cols-2 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                 ilLabel="İl *"
                 ilceLabel="İlçe *"
                 selectClassName="mt-1.5 w-full px-3.5 py-2.5 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30"
