@@ -229,9 +229,9 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
 function QtyControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
     <div className="inline-flex items-center border border-paper-200 rounded">
-      <button onClick={() => onChange(value - 1)} disabled={value <= 1} className="w-9 h-9 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30" aria-label="Azalt"><Minus size={14} /></button>
+      <button onClick={() => onChange(value - 1)} disabled={value <= 1} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30" aria-label="Azalt"><Minus size={14} /></button>
       <span className="w-10 text-center text-sm tabular-nums font-medium">{value}</span>
-      <button onClick={() => onChange(value + 1)} className="w-9 h-9 grid place-items-center text-ink-700 hover:bg-paper-100" aria-label="Arttır"><Plus size={14} /></button>
+      <button onClick={() => onChange(value + 1)} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100" aria-label="Arttır"><Plus size={14} /></button>
     </div>
   );
 }

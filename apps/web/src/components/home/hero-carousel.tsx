@@ -295,7 +295,8 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 onClick={() => goTo(i, i > index ? 1 : -1)}
                 aria-label={`Slide ${i + 1}: ${s.title}`}
                 className={cn(
-                  "h-2 rounded-full transition-all duration-300",
+                  // before: ile tıklanabilir alan ~32px (görsel dot aynı kalır) — mobil dokunma hedefi
+                  "relative h-2 rounded-full transition-all duration-300 before:absolute before:-inset-3 before:content-['']",
                   i === index
                     ? "w-10 bg-paper-50/95"
                     : "w-2 bg-paper-50/50 hover:bg-paper-50/70",

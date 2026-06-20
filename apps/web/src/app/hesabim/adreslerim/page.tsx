@@ -192,7 +192,7 @@ export default function AddressesPage() {
           <div className="w-full max-w-lg bg-paper-50 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-paper-200 sticky top-0 bg-paper-50">
               <h3 className="font-semibold text-ink-900 text-lg">{form.id ? "Adresi Düzenle" : "Yeni Adres"}</h3>
-              <button onClick={() => setShowForm(false)} className="p-1 text-ink-500 hover:text-ink-900" aria-label="Kapat"><X size={20} /></button>
+              <button onClick={() => setShowForm(false)} className="w-10 h-10 grid place-items-center -mr-2 text-ink-500 hover:text-ink-900" aria-label="Kapat"><X size={20} /></button>
             </div>
             <form onSubmit={onSubmit} className="p-5 space-y-4">
               {/* Tip seçimi */}
