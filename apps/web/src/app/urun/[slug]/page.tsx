@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Container } from "@markala/ui";
 import {
   CaretRight,
-  Share,
   Truck,
   ShieldCheck,
   CreditCard,
@@ -21,6 +20,7 @@ import { ProductCard } from "@/components/product-card";
 import { ProductTabs } from "@/components/product/product-tabs";
 import { ProductReviewsSection } from "@/components/product/reviews-section";
 import { WishlistButton } from "@/components/product/wishlist-button";
+import { ShareButton } from "@/components/product/share-button";
 import {
   TrackRecentlyViewed,
   RecentlyViewedRail,
@@ -141,9 +141,7 @@ export default async function ProductPage({ params }: Props) {
             {/* Hızlı aksiyonlar — Beğen / Paylaş */}
             <div className="flex items-center gap-2">
               <WishlistButton slug={product.slug} variant="labeled" />
-              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-paper-200 text-sm text-ink-700 hover:border-ink-300 hover:bg-paper-100 transition-colors">
-                <Share size={16} /> Paylaş
-              </button>
+              <ShareButton title={product.name} />
             </div>
 
             {/* Tabs */}

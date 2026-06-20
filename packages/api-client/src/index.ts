@@ -170,7 +170,7 @@ export class MarkalaApiClient {
 
   // === Products ===
   products = {
-    list: (opts: { category?: string; bestseller?: boolean; take?: number; skip?: number } = {}) =>
+    list: (opts: { category?: string; bestseller?: boolean; take?: number; skip?: number; q?: string } = {}) =>
       this.request<Product[]>("GET", "/products", undefined, { query: opts }),
     detail: (slug: string) => this.request<Product>("GET", `/products/${slug}`),
     create: (data: Partial<Product>) =>

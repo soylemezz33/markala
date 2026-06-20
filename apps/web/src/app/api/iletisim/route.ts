@@ -99,17 +99,20 @@ export async function POST(req: NextRequest) {
       replyTo: email,
     });
   } catch (err) {
+    // SMTP geçici sorunu kullanıcıyı BLOKE ETMEMELİ (eski davranış 502 → "ulaşmıyor").
+    // Mesajın tamamı sunucu loglarına yazılır (kaybolmaz, ekip ulaşır) + kullanıcı WhatsApp'a yönlendirilir.
     console.error(
-      `[iletisim] mail gönderilemedi (${ticketId}):`,
+      `[iletisim] mail gönderilemedi (${ticketId}) — mesaj LOGLANDI:`,
       (err as Error).message,
+      JSON.stringify({ ticketId, name, email, phone, subject, message }),
     );
-    return NextResponse.json(
-      {
-        error:
-          "Şu an mesajınızı iletemedik, lütfen telefonla ulaşın veya daha sonra tekrar deneyin.",
-      },
-      { status: 502 },
-    );
+    return NextResponse.json({
+      ok: true,
+      ticketId,
+      degraded: true,
+      message:
+        "Mesajını aldık. En hızlı dönüş için WhatsApp hattımızdan da yazabilirsin: 0531 900 41 02",
+    });
   }
 
   return NextResponse.json({

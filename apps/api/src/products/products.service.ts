@@ -7,12 +7,18 @@ import { BulkPriceDto, CreateProductDto, UpdateProductDto } from "./products.dto
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number } = {}) {
+  findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string } = {}) {
+    // Arama: çok-kelimeli sorgu token'lara bölünür, HER token isimde geçmeli (AND).
+    // Böylece "kart vizit" → "Klasik Kartvizit" eşleşir (boşluklu yazımda da bulunur).
+    const tokens = (opts.q ?? "").trim().split(/\s+/).filter(Boolean);
     return this.prisma.product.findMany({
       where: {
         isActive: true,
         ...(opts.bestseller !== undefined && { bestseller: opts.bestseller }),
         ...(opts.categorySlug && { category: { slug: opts.categorySlug } }),
+        ...(tokens.length
+          ? { AND: tokens.map((t) => ({ name: { contains: t, mode: "insensitive" as const } })) }
+          : {}),
       },
       include: { category: true },
       take: opts.take ?? 50,

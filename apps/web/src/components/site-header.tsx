@@ -26,7 +26,7 @@ import {
 } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
 import type { Category, Product } from "@markala/types";
-import { categories as mockCategories, products as mockProducts } from "@markala/mock-data";
+import { categories as mockCategories } from "@markala/mock-data";
 import { apiClient } from "@/lib/api";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -892,8 +892,7 @@ function saveSearch(query: string) {
  * aramada ve "Popüler Kategoriler"de çıksın). `enabled` true olunca (modal açılınca) bir kez
  * çekilir; API hatası/boş → mock fallback korunur (arama ASLA kırılmaz).
  */
-function useLiveCatalog(enabled: boolean): { products: Product[]; categories: Category[] } {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+function useLiveCategories(enabled: boolean): Category[] {
   const [categories, setCategories] = useState<Category[]>(mockCategories);
   const fetchedRef = useRef(false);
 
@@ -901,14 +900,6 @@ function useLiveCatalog(enabled: boolean): { products: Product[]; categories: Ca
     if (!enabled || fetchedRef.current) return;
     fetchedRef.current = true;
     let active = true;
-    apiClient.products
-      .list({ take: 200 })
-      .then((list) => {
-        if (active && Array.isArray(list) && list.length > 0) setProducts(list);
-      })
-      .catch(() => {
-        /* mock fallback korunur */
-      });
     apiClient.categories
       .list()
       .then((list) => {
@@ -922,14 +913,15 @@ function useLiveCatalog(enabled: boolean): { products: Product[]; categories: Ca
     };
   }, [enabled]);
 
-  return { products, categories };
+  return categories;
 }
 
 function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
+  const [results, setResults] = useState<Product[]>([]);
   const modalRef = useRef<HTMLDivElement>(null);
-  const { products, categories } = useLiveCatalog(open);
+  const categories = useLiveCategories(open);
 
   // Açılırken query reset + ilk inputa odaklan + history yükle
   useEffect(() => {
@@ -976,13 +968,34 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
+  // Sunucu-taraflı arama (debounce) — katalog 870+ ürün; tümünü client'a indirip filtrelemek
+  // yerine backend isme göre filtreler (q, çok-kelime AND). En az 2 karakterde tetiklenir.
+  useEffect(() => {
+    const term = query.trim();
+    if (term.length < 2) {
+      setResults([]);
+      return;
+    }
+    let active = true;
+    const timer = setTimeout(() => {
+      apiClient.products
+        .list({ q: term, take: 12 })
+        .then((list) => {
+          if (active && Array.isArray(list)) setResults(list);
+        })
+        .catch(() => {
+          if (active) setResults([]);
+        });
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [query]);
+
   if (!open) return null;
 
   const popularCategories = categories.slice(0, 6);
-  const q = query.trim().toLowerCase();
-  const results = q
-    ? products.filter((p) => p.name.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q)).slice(0, 8)
-    : [];
 
   return (
     <AnimatePresence>
