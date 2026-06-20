@@ -83,8 +83,13 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  // LCP koruması: ilk slide ilk boyamada animasyonsuz (görünür) gelir; böylece
+  // başlık (H1 = LCP adayı) framer-motion hydration'ını beklemeden boyanır.
+  // İlk geçişten (autoplay/nav) sonra animasyonlar normal şekilde devreye girer.
+  const firstSlideRef = useRef(true);
 
   const goTo = useCallback((next: number, dir = 1) => {
+    firstSlideRef.current = false;
     setDirection(dir);
     setIndex(((next % heroSlides.length) + heroSlides.length) % heroSlides.length);
   }, [heroSlides.length]);
@@ -112,6 +117,11 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
 
   const slide = heroSlides[index]!;
   const theme = themeStyles[slide.theme];
+
+  // İlk boyamada (LCP) enter-animasyonunu atla → element doğrudan `animate`
+  // durumunda (opacity:1) render edilir, JS hydration'ı beklemez.
+  const isFirst = firstSlideRef.current;
+  const enter = <T,>(v: T): T | false => (isFirst ? false : v);
 
   return (
     <section className="relative bg-paper-50">
@@ -153,7 +163,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
               {/* Content */}
               <div className="relative lg:col-span-6 px-8 md:px-14 lg:px-16 py-12 md:py-16 z-10">
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={enter({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.15 }}
                   className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium tracking-wide", theme.badge)}
@@ -163,7 +173,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 </motion.div>
 
                 <motion.h1
-          initial={{ opacity: 0, y: 16 }}
+          initial={enter({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
                   className={cn("mt-5 text-display-xl font-serif leading-[1.02] max-w-xl", theme.text)}
@@ -176,7 +186,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 </motion.h1>
 
                 <motion.p
-          initial={{ opacity: 0, y: 16 }}
+          initial={enter({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                   className={cn("mt-6 text-lg md:text-xl leading-relaxed max-w-lg", theme.textMuted)}
@@ -185,7 +195,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                 </motion.p>
 
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={enter({ opacity: 0, y: 16 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.55 }}
                   className="mt-8 flex flex-wrap items-center gap-3"
@@ -238,7 +248,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                   <BannerDisplayVisual />
                 ) : (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    initial={enter({ opacity: 0, scale: 0.9, y: 20 })}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     className="relative w-full max-w-[520px] aspect-square"

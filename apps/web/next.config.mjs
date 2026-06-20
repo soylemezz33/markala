@@ -32,8 +32,16 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
-  // Production: standalone output → küçük Docker image, no node_modules at runtime
-  output: "standalone",
+  // Production: standalone output → küçük Docker image, no node_modules at runtime.
+  // NEXT_DISABLE_STANDALONE=1 ile kapatılabilir — Windows local'de trace-copy
+  // adımı symlink (EPERM) hatası verdiği için yalnızca yerel ölçüm/geliştirmede
+  // kapatılır; CI/Docker ortamında env set edilmez, standalone aktif kalır.
+  output: process.env.NEXT_DISABLE_STANDALONE === "1" ? undefined : "standalone",
+  // Barrel paketlerin (icon/animation) yalnızca kullanılan modüllerini içeri al —
+  // dev derleme hızını ve client JS yükünü düşürür (Next.js optimizePackageImports).
+  experimental: {
+    optimizePackageImports: ["@phosphor-icons/react", "framer-motion"],
+  },
   // Tip/lint kontrolü CI'da ayrı yapılır; production image build'ini bloklamasın
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
