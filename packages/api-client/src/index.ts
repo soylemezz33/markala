@@ -332,6 +332,16 @@ export class MarkalaApiClient {
       }),
   };
 
+  // === Contact (İletişim Mesajları / Gelen Kutusu) ===
+  contact = {
+    // Admin: mesaj listesi (opsiyonel durum filtresi: new | read | archived).
+    list: (status?: string) =>
+      this.request<ContactMessageDto[]>("GET", "/contact", undefined, { auth: true, query: { status } }),
+    // Admin: mesaj durumu güncelle.
+    setStatus: (id: string, status: string) =>
+      this.request<ContactMessageDto>("PATCH", `/contact/${id}`, { status }, { auth: true }),
+  };
+
   // === Brands (Referanslar) ===
   brands = {
     // --- Public (storefront): yalnız aktif markalar ---
@@ -434,6 +444,20 @@ export interface ReviewDto {
   isApproved: boolean;
   createdAt: string;
   product?: { slug: string; name: string } | null;
+}
+
+export interface ContactMessageDto {
+  id: string;
+  ticketId: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject: string;
+  message: string;
+  source: string;
+  status: string;
+  mailSent: boolean;
+  createdAt: string;
 }
 
 export interface CouponDto {
