@@ -88,12 +88,21 @@ export async function getProducts(): Promise<Product[]> {
   }
 }
 
-/** Tek ürün (slug). Bulunamazsa/hata → mock fallback. */
+/**
+ * Tek ürün (slug). KRİTİK: API 404'ü (ürün silinmiş/pasif) ağ hatasından AYIRIR.
+ * - 404 → undefined → sayfa notFound() (silinen ürün stale mock fiyatla GÖRÜNMEZ/satılmaz).
+ * - 5xx / ağ hatası → mock fallback (geçici sorunda storefront kırılmasın, dayanıklılık).
+ */
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   try {
-    return mapProduct((await fetchJson(`/products/${encodeURIComponent(slug)}`)) as ApiProduct);
+    const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(slug)}`, {
+      next: { revalidate: 30 },
+    });
+    if (res.status === 404) return undefined; // ürün yok/silinmiş → notFound (mock'a DÜŞME)
+    if (!res.ok) return mockProducts.find((p) => p.slug === slug); // geçici sunucu hatası → fallback
+    return mapProduct((await res.json()) as ApiProduct);
   } catch {
-    return mockProducts.find((p) => p.slug === slug);
+    return mockProducts.find((p) => p.slug === slug); // ağ hatası → fallback
   }
 }
 
