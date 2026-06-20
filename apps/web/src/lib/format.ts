@@ -37,11 +37,16 @@ export function formatPriceDisplay(amount: number): string {
 }
 
 export function formatDate(iso: string | Date): string {
-  return dateFormatter.format(typeof iso === "string" ? new Date(iso) : iso);
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  // Geçersiz/boş tarihte Intl.format throw eder (RangeError) — sayfa çökmesin diye guard.
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return "";
+  return dateFormatter.format(d);
 }
 
 export function formatDateShort(iso: string | Date): string {
-  return shortDateFormatter.format(typeof iso === "string" ? new Date(iso) : iso);
+  const d = typeof iso === "string" ? new Date(iso) : iso;
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return "";
+  return shortDateFormatter.format(d);
 }
 
 const orderStatusLabels: Record<string, string> = {
