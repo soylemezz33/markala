@@ -156,13 +156,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${article.title} — Markala Yardım`,
       description: article.description,
       url: `/yardim/${article.slug}`,
-      images: [{ url: `/api/mockup?theme=brand&w=1200&h=630&slug=help-${article.slug}`, width: 1200, height: 630, alt: article.title }],
+      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: article.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${article.title} — Markala Yardım`,
       description: article.description,
-      images: [`/api/mockup?theme=brand&w=1200&h=630&slug=help-${article.slug}`],
+      images: ["/og-default.png"],
     },
   };
 }
@@ -181,7 +181,7 @@ export default async function HelpArticlePage({ params }: Props) {
         description={article.description}
         url={`/yardim/${article.slug}`}
         datePublished="2026-01-01T00:00:00Z"
-        image={`/api/mockup?theme=brand&w=1200&h=630&slug=help-${article.slug}`}
+        image={"/og-default.png"}
       />
       <BreadcrumbJsonLd
         items={[

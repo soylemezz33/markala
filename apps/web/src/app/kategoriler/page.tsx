@@ -16,13 +16,13 @@ export const metadata: Metadata = {
     title: "Tüm Matbaa & Reklam Ürün Kategorileri — Markala",
     description: "20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket ve daha fazlası.",
     url: "/kategoriler",
-    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Kategoriler" }],
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Kategoriler" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Tüm Matbaa & Reklam Ürün Kategorileri — Markala",
     description: "20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket ve daha fazlası.",
-    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+    images: ["/og-default.png"],
   },
 };
 

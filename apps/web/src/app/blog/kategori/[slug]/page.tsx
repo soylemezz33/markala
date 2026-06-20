@@ -32,13 +32,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${cat.name} — Markala Blog`,
       description: cat.description,
       url: `/blog/kategori/${cat.slug}`,
-      images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: cat.name }],
+      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: cat.name }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${cat.name} — Markala Blog`,
       description: cat.description,
-      images: ["/api/mockup?theme=brand&w=1200&h=630"],
+      images: ["/og-default.png"],
     },
   };
 }

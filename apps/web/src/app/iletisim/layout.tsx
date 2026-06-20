@@ -10,13 +10,13 @@ export const metadata: Metadata = {
     title: "Markala İletişim",
     description: "WhatsApp, telefon, e-posta ve adres bilgileri.",
     url: "/iletisim",
-    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala İletişim" }],
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala İletişim" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Markala İletişim",
     description: "WhatsApp, telefon, e-posta ve adres bilgileri.",
-    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+    images: ["/og-default.png"],
   },
 };
 

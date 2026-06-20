@@ -49,9 +49,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     product.seo?.description ??
     `${product.name} baskı ${product.startingPrice ? `${product.startingPrice} TL'den` : ""}. ${product.shortDescription}`;
   const url = `/urun/${product.slug}`;
-  const ogImage = product.images[0]?.startsWith("/")
-    ? product.images[0]
-    : `/api/mockup?slug=${product.slug}&w=1200&h=630`;
+  // og:image = GERÇEK ürün görseli (raster JPEG, sosyal crawler kabul eder) varsa onu kullan;
+  // yoksa markalı PNG fallback. (Eski koşul startsWith("/") mutlak URL'lerde hep false'tu →
+  // tüm ürün og'leri SVG mockup'a düşüyordu = paylaşımda bozuk önizleme.)
+  const ogImage = product.images[0] ?? "/og-default.png";
   return {
     title: seoTitle,
     description: seoDesc.slice(0, 160),

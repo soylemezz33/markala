@@ -31,13 +31,13 @@ export const metadata: Metadata = {
     title: "Matbaa Terimleri Sözlüğü — Markala",
     description: "30+ matbaa ve baskı terimi A-Z açıklamaları.",
     url: "/sozluk",
-    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Matbaa Sözlüğü" }],
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Matbaa Sözlüğü" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Matbaa Terimleri Sözlüğü — Markala",
     description: "30+ matbaa ve baskı terimi A-Z açıklamaları.",
-    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+    images: ["/og-default.png"],
   },
 };
 

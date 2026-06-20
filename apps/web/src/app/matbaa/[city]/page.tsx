@@ -56,7 +56,7 @@ export function generateMetadata({ params }: Props): Metadata {
       url: `/matbaa/${city.slug}`,
       images: [
         {
-          url: `/api/mockup?theme=brand&w=1200&h=630`,
+          url: "/og-default.png",
           width: 1200,
           height: 630,
           alt: `${city.name} Matbaa & Baskı — Markala`,

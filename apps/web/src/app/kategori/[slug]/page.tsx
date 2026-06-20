@@ -29,7 +29,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     `${cat.name} Baskı${cat.startingPrice ? ` — ${cat.startingPrice} TL'den` : ""}`;
   const seoDesc = cat.seo?.description ?? cat.longDescription;
   const url = `/kategori/${cat.slug}`;
-  const ogImage = `/api/mockup?category=${cat.slug}&w=1200&h=630`;
+  // og:image = gerçek kategori görseli (raster) varsa; mockup-SVG fallback'i ise markalı PNG.
+  const ogImage =
+    cat.imageUrl && !cat.imageUrl.includes("/api/mockup") ? cat.imageUrl : "/og-default.png";
   return {
     title: seoTitle,
     description: seoDesc.slice(0, 160),

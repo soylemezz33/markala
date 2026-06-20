@@ -16,13 +16,13 @@ export const metadata: Metadata = {
     title: "Markala Blog — Matbaa & Tasarım Rehberleri",
     description: "Profesyonel matbaa içerikleri, tasarım ipuçları ve sektör analizleri.",
     url: "/blog",
-    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Blog" }],
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Blog" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Markala Blog — Matbaa & Tasarım Rehberleri",
     description: "Profesyonel matbaa içerikleri, tasarım ipuçları ve sektör analizleri.",
-    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+    images: ["/og-default.png"],
   },
 };
 

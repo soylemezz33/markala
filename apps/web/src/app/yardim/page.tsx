@@ -17,13 +17,13 @@ export const metadata: Metadata = {
     title: "Markala Yardım Merkezi",
     description: "Dosya hazırlama, kargo, iade ve daha fazlası — tüm sorularınızın cevabı.",
     url: "/yardim",
-    images: [{ url: "/api/mockup?theme=brand&w=1200&h=630", width: 1200, height: 630, alt: "Markala Yardım Merkezi" }],
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Yardım Merkezi" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Markala Yardım Merkezi",
     description: "Dosya hazırlama, kargo, iade ve daha fazlası — tüm sorularınızın cevabı.",
-    images: ["/api/mockup?theme=brand&w=1200&h=630"],
+    images: ["/og-default.png"],
   },
 };
 
