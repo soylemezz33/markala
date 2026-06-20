@@ -13,6 +13,10 @@ function formatDate(iso: string): string {
 export async function CustomerReviews() {
   const reviews = await getFeaturedReviews(6);
 
+  // Gerçek onaylı yorum yoksa bölümü hiç gösterme — sahte içerik/istatistik YOK.
+  // Yorumlar biriktikçe (admin onayı) bölüm otomatik görünür.
+  if (!reviews.length) return null;
+
   return (
     <section className="bg-paper-50 py-16 md:py-24 border-t border-paper-200">
       <Container>
@@ -21,11 +25,10 @@ export async function CustomerReviews() {
             Müşteri Yorumları
           </p>
           <h2 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
-            12.000+ memnun müşteri
+            Müşterilerimiz ne diyor?
           </h2>
           <p className="mt-3 text-lg text-ink-700">
-            Hepsi doğrulanmış sipariş — Trustpilot, Google Reviews ve doğrudan müşteri
-            geri bildirimleri.
+            Markala'da sipariş veren müşterilerin onaylı değerlendirmeleri.
           </p>
         </div>
 
@@ -85,27 +88,7 @@ export async function CustomerReviews() {
             </article>
           ))}
         </div>
-
-        {/* Trust summary */}
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl">
-          <Stat value="4.8" label="ortalama puan" sub="2.450 yorum" />
-          <Stat value="%97" label="memnuniyet" sub="son 12 ay" />
-          <Stat value="12.000+" label="müşteri" sub="Türkiye geneli" />
-          <Stat value="48 saat" label="ortalama teslim" sub="Mersin & çevresi" />
-        </div>
       </Container>
     </section>
-  );
-}
-
-function Stat({ value, label, sub }: { value: string; label: string; sub: string }) {
-  return (
-    <div>
-      <div className="text-2xl md:text-3xl font-semibold text-ink-900 tabular-nums">
-        {value}
-      </div>
-      <div className="text-sm text-ink-700">{label}</div>
-      <div className="text-[11px] text-ink-500 mt-0.5">{sub}</div>
-    </div>
   );
 }

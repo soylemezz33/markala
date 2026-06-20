@@ -1,25 +1,16 @@
+import Image from "next/image";
 import { Container } from "@markala/ui";
+import { getBrands } from "@/lib/brands";
 
 /**
- * Bize güvenenler — kurumsal müşteri logoları stripi.
- * Şu an SVG-text mockup (gerçek logolar geldikçe Image ile değiştirilir).
- *
- * Tasarım kararı: tüm logolar grayscale + opacity, brand-rengi
- * çatışmasını önler ve "ortak/eşit önem" hissi verir.
+ * Bize güvenenler — kurumsal referans markaları.
+ * CANLI: admin "Referanslar"dan eklenen GERÇEK markalar gösterilir (getBrands).
+ * Marka yoksa bölüm hiç render edilmez — sahte firma adı GÖSTERİLMEZ.
  */
+export async function TrustedBy() {
+  const brands = await getBrands();
+  if (!brands.length) return null;
 
-const TRUSTED_BRANDS: { name: string; sector: string }[] = [
-  { name: "Lisan Fen", sector: "Eğitim" },
-  { name: "Akdeniz Otel", sector: "Turizm" },
-  { name: "324 Ajans", sector: "Reklam" },
-  { name: "Mersin Marina", sector: "Restoran" },
-  { name: "Kara Mimarlık", sector: "Mimarlık" },
-  { name: "Şen Emlak", sector: "Gayrimenkul" },
-  { name: "Yıldız Catering", sector: "Yiyecek" },
-  { name: "Doğan İnşaat", sector: "İnşaat" },
-];
-
-export function TrustedBy() {
   return (
     <section className="bg-paper-50 py-12 md:py-16 border-y border-paper-200">
       <Container>
@@ -28,13 +19,31 @@ export function TrustedBy() {
             BİZE GÜVENENLER
           </p>
           <h2 className="mt-2 text-lg md:text-xl text-ink-700">
-            Türkiye'nin önde gelen markaları matbaa ihtiyaçlarını Markala'dan karşılıyor
+            Kurumsal müşterilerimiz matbaa ihtiyaçlarını Markala'dan karşılıyor
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-x-2 gap-y-6 items-center">
-          {TRUSTED_BRANDS.map((b) => (
-            <BrandPlaceholder key={b.name} name={b.name} sector={b.sector} />
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-6 items-center">
+          {brands.map((b) => (
+            <div
+              key={b.name}
+              className="flex items-center justify-center py-3 px-2 opacity-70 hover:opacity-100 transition-opacity"
+              title={b.name}
+            >
+              {b.logoUrl ? (
+                <Image
+                  src={b.logoUrl}
+                  alt={b.name}
+                  width={140}
+                  height={48}
+                  className="h-10 w-auto object-contain grayscale hover:grayscale-0 transition"
+                />
+              ) : (
+                <span className="font-serif text-base md:text-lg text-ink-700 text-center leading-tight">
+                  {b.name}
+                </span>
+              )}
+            </div>
           ))}
         </div>
 
@@ -46,21 +55,5 @@ export function TrustedBy() {
         </p>
       </Container>
     </section>
-  );
-}
-
-function BrandPlaceholder({ name, sector }: { name: string; sector: string }) {
-  return (
-    <div
-      className="group flex flex-col items-center justify-center py-3 px-2 rounded-lg opacity-60 hover:opacity-100 transition-opacity"
-      title={`${name} — ${sector}`}
-    >
-      <div className="font-serif text-base md:text-lg text-ink-700 group-hover:text-ink-900 transition-colors text-center leading-tight">
-        {name}
-      </div>
-      <div className="mt-1 text-[10px] uppercase tracking-wider text-ink-500">
-        {sector}
-      </div>
-    </div>
   );
 }

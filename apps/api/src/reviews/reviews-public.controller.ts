@@ -24,6 +24,13 @@ import { CreatePublicReviewDto } from "./reviews.dto";
 export class ReviewsPublicController {
   constructor(private service: ReviewsService) {}
 
+  /** Anasayfa öne çıkan onaylanmış yorumlar (ürün-bağımsız). Yoksa boş dizi döner. */
+  @Get("featured")
+  featured(@Query("limit") limit?: string) {
+    const n = Number(limit);
+    return this.service.findFeaturedApproved(Number.isFinite(n) && n > 0 ? n : 6);
+  }
+
   /** Bir ürünün onaylanmış yorumları. productSlug zorunlu; yoksa 400. */
   @Get()
   list(@Query("productSlug") productSlug?: string) {

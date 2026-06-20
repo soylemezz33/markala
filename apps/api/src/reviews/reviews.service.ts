@@ -23,6 +23,17 @@ export class ReviewsService {
 
   // === Public (storefront) ===
 
+  /** Anasayfa öne çıkanlar: ürün-bağımsız son ONAYLANMIŞ yorumlar (en yeni önce). Yoksa boş. */
+  async findFeaturedApproved(limit = 6) {
+    const take = Math.min(Math.max(Math.trunc(limit) || 6, 1), 24);
+    return this.prisma.review.findMany({
+      where: { isApproved: true },
+      orderBy: { createdAt: "desc" },
+      take,
+      include: { product: { select: { slug: true, name: true } } },
+    });
+  }
+
   /** Bir ürünün SADECE ONAYLANMIŞ yorumları, en yeni önce. Bekleyenler ASLA dönmez. */
   async findApprovedByProductSlug(productSlug: string) {
     const product = await this.prisma.product.findUnique({

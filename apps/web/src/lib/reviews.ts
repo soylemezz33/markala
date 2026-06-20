@@ -4,9 +4,9 @@
  * Tasarım:
  * - Ürün yorumları (server): /reviews/public?productSlug= → yalnız ONAYLI yorumlar (canlı).
  *   Yorum yoksa BOŞ döner — sahte yorum gösterme (mock'a DÜŞMEZ). UI "henüz yorum yok" gösterir.
+ * - Anasayfa öne çıkan yorumlar (getFeaturedReviews): /reviews/public/featured → ürün-bağımsız
+ *   GERÇEK onaylı yorumlar. Yorum yoksa BOŞ döner (anasayfa bölümü gizlenir). MOCK YOK.
  * - rating ortalaması/sayısı/dağılımı GERÇEK onaylı yorumlardan hesaplanır.
- * - Anasayfa öne çıkan yorumlar (getFeaturedReviews): tercihen en güncel onaylı gerçek yorumlar,
- *   yeterli gerçek yorum yoksa mevcut testimonial MOCK ile tamamlanır (anasayfa boş kalmasın).
  * - Server-only fonksiyonlar apiClient KULLANMAZ (catalog.ts deseni: fetch + revalidate).
  */
 
@@ -34,93 +34,6 @@ export interface ProductRatingStats {
   count: number;
   distribution: Record<1 | 2 | 3 | 4 | 5, number>;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MOCK testimonial'lar — YALNIZ anasayfa öne çıkanlar için fallback. Ürün
-// sayfasında KULLANILMAZ (orada gerçek yorum yoksa boş durum gösterilir).
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MOCK_FEATURED: Review[] = [
-  {
-    id: "rv-001",
-    authorName: "Ali Yıldız",
-    authorCompany: "Akdeniz Otel İşletmeleri",
-    authorRole: "Pazarlama Müdürü",
-    productSlug: "klasik-kartvizit",
-    rating: 5,
-    title: "Otel açılışımıza yetiştirdiler",
-    comment:
-      "Açılıştan 3 gün önce sipariş ettim, üretim ve kargo sorunsuz tamamlandı. Selefonlu kartvizitler beklediğimden daha kalın çıktı, kâğıt kalitesi iyi. Tasarım önerisi de bedava — grafik ekiplerinin gözü açık.",
-    verified: true,
-    createdAt: "2026-04-28T14:00:00Z",
-    helpful: 23,
-  },
-  {
-    id: "rv-002",
-    authorName: "Ayşe Demir",
-    authorCompany: "Mersin Marina Restoran",
-    productSlug: "broşür",
-    rating: 5,
-    title: "Menü broşürlerinde işbirliği",
-    comment:
-      "Mevsimlik menü için 2.500 adet 4 sayfalı broşür sipariş ettik. CMYK profilini kontrol ettiler, hızlı düzeltme yaptılar. Renkler yağ-kir lekesinde bile bozulmuyor. Bu sezon 3. sipariş.",
-    verified: true,
-    createdAt: "2026-04-22T10:30:00Z",
-    helpful: 18,
-  },
-  {
-    id: "rv-003",
-    authorName: "Mehmet Erdoğan",
-    authorCompany: "Lisan Fen Eğitim Kurumları",
-    authorRole: "Kurucu",
-    productSlug: "antetli-kagit",
-    rating: 5,
-    title: "Kurumsal kimlik yenileme",
-    comment:
-      "324 Ajans ile birlikte tüm kurumsal kimliği yeniledik — antetli kâğıt, zarf, klasör. Markala bütün baskıyı tek elden yönetti. Açık fatura, ay sonu kapanış. Ciddi bir iş ortağı.",
-    verified: true,
-    createdAt: "2026-04-15T16:00:00Z",
-    helpful: 31,
-  },
-  {
-    id: "rv-004",
-    authorName: "Fatma Kara",
-    authorCompany: "Kara Mimarlık",
-    productSlug: "afis",
-    rating: 4,
-    title: "Sergi afişleri",
-    comment:
-      "Sergi için A1 boyut afiş bastırdık, 50 adet. UV mürekkep güneşe dayanıklı, 2 hafta dış mekanda kaldı, renk solmadı. Kargo bir gün gecikti, yıldızı oradan kırdım.",
-    verified: true,
-    createdAt: "2026-04-08T11:20:00Z",
-    helpful: 9,
-  },
-  {
-    id: "rv-005",
-    authorName: "Burak Şen",
-    authorCompany: "Şen Emlak",
-    productSlug: "el-ilani",
-    rating: 5,
-    title: "Mahalle dağıtımı için ideal",
-    comment:
-      "10.000 adet A5 el ilanı bastırdık. Birim maliyeti rakiplerine göre %15-20 daha düşük çıktı. Kâğıt çok ince değil, uçuşmuyor. Hızlı dağıtım için işe yaradı.",
-    verified: true,
-    createdAt: "2026-03-28T09:00:00Z",
-    helpful: 14,
-  },
-  {
-    id: "rv-006",
-    authorName: "Zeynep Aydın",
-    authorRole: "Freelance Tasarımcı",
-    productSlug: "klasik-kartvizit",
-    rating: 5,
-    comment:
-      "Müşterilerim için ürettiğim tasarımları artık Markala'da bastırıyorum. Pantone uyumu sıkı, hard proof imkânı çok değerli. 3 günde teslim.",
-    verified: true,
-    createdAt: "2026-03-22T13:00:00Z",
-    helpful: 7,
-  },
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API mapping + fetch
@@ -201,13 +114,15 @@ export async function getProductRatingStats(productSlug: string): Promise<Produc
 }
 
 /**
- * Anasayfa öne çıkan yorumlar.
- *
- * NOT: Public API'de ürün-bağımsız "tüm onaylı yorumlar" uç noktası yok (/reviews/public
- * productSlug zorunlu). Bu yüzden anasayfa testimonial'ları şu an MOCK üzerinden gösterilir
- * (genel müşteri görüşleri). Backend ürün-bağımsız onaylı yorum listesi eklediğinde burada
- * gerçek yorumlarla beslenebilir. Mock fallback anasayfanın boş kalmamasını garanti eder.
+ * Anasayfa öne çıkan yorumlar — ürün-bağımsız GERÇEK onaylı yorumlar (/reviews/public/featured).
+ * Onaylı yorum yoksa BOŞ döner; anasayfa bölümü kendini gizler. Sahte testimonial KULLANILMAZ.
  */
 export async function getFeaturedReviews(limit = 6): Promise<Review[]> {
-  return MOCK_FEATURED.slice(0, limit);
+  try {
+    const data = await fetchJson(`/reviews/public/featured?limit=${limit}`);
+    if (!Array.isArray(data)) return [];
+    return (data as Record<string, unknown>[]).map(mapReview);
+  } catch {
+    return [];
+  }
 }

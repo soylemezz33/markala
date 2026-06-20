@@ -4,9 +4,7 @@ import Link from "next/link";
 import { Container } from "@markala/ui";
 import {
   InstagramLogo,
-  FacebookLogo,
   LinkedinLogo,
-  TwitterLogo,
   WhatsappLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { openCookieSettings } from "@/components/cookie-consent";
@@ -27,10 +25,8 @@ export function SiteFooter() {
             markala.com.tr'yi sosyal medyada takip edin.
           </p>
           <div className="mt-5 flex items-center gap-2">
-            <SocialLink href="https://facebook.com" label="Facebook"><FacebookLogo size={18} /></SocialLink>
-            <SocialLink href="https://x.com" label="Twitter"><TwitterLogo size={18} /></SocialLink>
-            <SocialLink href="https://instagram.com" label="Instagram"><InstagramLogo size={18} /></SocialLink>
-            <SocialLink href="https://linkedin.com" label="LinkedIn"><LinkedinLogo size={18} /></SocialLink>
+            <SocialLink href="https://instagram.com/markala.com.tr" label="Instagram"><InstagramLogo size={18} /></SocialLink>
+            <SocialLink href="https://www.linkedin.com/company/324ajans" label="LinkedIn"><LinkedinLogo size={18} /></SocialLink>
             <SocialLink href="https://wa.me/905319004102" label="WhatsApp"><WhatsappLogo size={18} /></SocialLink>
           </div>
         </div>
