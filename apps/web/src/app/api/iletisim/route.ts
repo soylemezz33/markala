@@ -22,10 +22,36 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/** Mesajı NestJS API'ye (DB) kalıcı yazar — SMTP'den BAĞIMSIZ, lead kaybolmaz (kurumsal-basvuru deseni). */
+async function persistContact(payload: {
+  ticketId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+}): Promise<void> {
+  const apiBase =
+    process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
+  try {
+    const res = await fetch(`${apiBase}/api/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, source: "iletisim" }),
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      console.error(`[iletisim] DB kaydı başarısız (${payload.ticketId}): HTTP ${res.status}`);
+    }
+  } catch (err) {
+    console.error(`[iletisim] DB kaydı hatası (${payload.ticketId}):`, (err as Error).message);
+  }
+}
+
 /**
  * İletişim formu endpoint.
- * Geçerli form, CONTACT_TO adresine (varsayılan merhaba@markala.com.tr) e-posta olarak iletilir.
- * SMTP yapılandırılmamışsa (dev/localhost) sadece console.log yapar ve başarı döner.
+ * 1) Mesaj NestJS API'ye yazılır → admin "Gelen Kutusu"na düşer (SMTP'den BAĞIMSIZ).
+ * 2) Ayrıca CONTACT_TO adresine e-posta gönderilir (best-effort). Mail gitmese bile mesaj DB'de.
  */
 export async function POST(req: NextRequest) {
   let body: ContactPayload;
@@ -54,6 +80,9 @@ export async function POST(req: NextRequest) {
   }
 
   const ticketId = `TK-${Date.now().toString(36).toUpperCase()}`;
+
+  // DB'ye kalıcı yaz (admin Gelen Kutusu'na düşsün) — SMTP durumundan BAĞIMSIZ, HER ZAMAN.
+  await persistContact({ ticketId, name, email, phone, subject, message });
 
   // SMTP yapılandırılmamışsa (dev): mock davranışı koru
   if (!isMailConfigured()) {

@@ -630,6 +630,26 @@ model NotificationLog {
   @@map("notification_logs")
 }
 
+/// İletişim formu mesajları — SMTP'den BAĞIMSIZ kalıcı kayıt (mail gitmese bile lead kaybolmaz).
+/// Admin "Gelen Kutusu"ndan görüntülenir; corporate_applications ile aynı DB-first deseni.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  ticketId  String   @unique @map("ticket_id")
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String   @db.Text
+  source    String   @default("iletisim") // iletisim | teklif | ...
+  status    String   @default("new") // new | read | archived
+  mailSent  Boolean  @default(false) @map("mail_sent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
 // === KVKK — Rıza & Audit kayıtları ===
 
 /// Açık rıza kayıtları — KVKK uyum için tüm onaylar (kayıt, pazarlama, çerez)
