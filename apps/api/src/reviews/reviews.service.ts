@@ -48,6 +48,20 @@ export class ReviewsService {
     });
   }
 
+  /** Kullanıcı bu ürüne yorum yapabilir mi? = ürünü içeren (silinmemiş) bir siparişi var mı. */
+  async canUserReview(userId: string, productSlug: string): Promise<boolean> {
+    const product = await this.prisma.product.findUnique({
+      where: { slug: productSlug },
+      select: { id: true },
+    });
+    if (!product) return false;
+    const purchased = await this.prisma.order.findFirst({
+      where: { userId, deletedAt: null, items: { some: { productId: product.id } } },
+      select: { id: true },
+    });
+    return Boolean(purchased);
+  }
+
   /**
    * Giriş yapmış müşteri yorum bırakır. Yorum PENDING (isApproved=false) doğar; admin moderasyonu şart.
    * authorName = kullanıcının fullName (DB'den, güvenilir kaynak).

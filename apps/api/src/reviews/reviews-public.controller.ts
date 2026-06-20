@@ -31,6 +31,18 @@ export class ReviewsPublicController {
     return this.service.findFeaturedApproved(Number.isFinite(n) && n > 0 ? n : 6);
   }
 
+  /** Giriş yapmış kullanıcı bu ürüne yorum yapabilir mi (ürünü satın aldı mı)? */
+  @Get("can-review")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async canReview(
+    @Req() req: Request & { user: { sub: string } },
+    @Query("productSlug") productSlug?: string,
+  ) {
+    if (!productSlug) return { canReview: false };
+    return { canReview: await this.service.canUserReview(req.user.sub, productSlug) };
+  }
+
   /** Bir ürünün onaylanmış yorumları. productSlug zorunlu; yoksa 400. */
   @Get()
   list(@Query("productSlug") productSlug?: string) {

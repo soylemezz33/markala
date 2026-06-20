@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Star } from "@phosphor-icons/react";
 import { Button } from "@markala/ui";
@@ -13,9 +13,10 @@ interface Props {
 
 /**
  * Ürün yorumu bırakma formu (client).
- * - Giriş yoksa: "yorum yapmak için giriş yapın" + /giris linki.
- * - Giriş varsa: yıldız (1-5) + başlık (ops.) + metin → apiClient.reviews.createPublic.
- * - Yorum onaysız doğar → başarıda "onay sonrası yayınlanacak" mesajı; sayfada hemen görünmez.
+ * - Giriş yoksa: "yorum yapmak için giriş yapın".
+ * - Giriş var ama ürünü SATIN ALMAMIŞSA: "satın almanız gerekiyor" (form gösterilmez).
+ * - Giriş var + satın almışsa: yıldız + başlık + metin → reviews.createPublic (onaysız doğar).
+ * Satın-alma şartı backend'de de zorunlu (createPublic 403); buradaki ön-kontrol UX içindir.
  */
 export function ReviewForm({ productSlug }: Props) {
   const user = useAuthStore((s) => s.user);
@@ -25,32 +26,28 @@ export function ReviewForm({ productSlug }: Props) {
   const [body, setBody] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
   const [error, setError] = useState<string | null>(null);
+  // null = kontrol ediliyor, true = yorum yapabilir (satın aldı), false = yapamaz
+  const [canReview, setCanReview] = useState<boolean | null>(null);
 
-  if (!user) {
-    return (
-      <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
-        <h3 className="font-semibold text-ink-900">Bu ürünü kullandınız mı?</h3>
-        <p className="mt-1.5 text-sm text-ink-700">
-          Yorum yapmak için{" "}
-          <Link href="/giris" className="text-brand-700 font-medium hover:underline">
-            giriş yapın
-          </Link>
-          . Yalnızca üyeler değerlendirme bırakabilir.
-        </p>
-      </div>
-    );
-  }
-
-  if (status === "success") {
-    return (
-      <div className="p-5 bg-success/10 border border-success/30 rounded-xl">
-        <h3 className="font-semibold text-success">Yorumunuz alındı, teşekkürler!</h3>
-        <p className="mt-1.5 text-sm text-ink-700">
-          Yorumunuz onay sonrası yayınlanacak.
-        </p>
-      </div>
-    );
-  }
+  // Giriş yapan kullanıcı bu ürünü satın almış mı? (yorum hakkı ön-kontrolü)
+  useEffect(() => {
+    if (!user) {
+      setCanReview(null);
+      return;
+    }
+    let active = true;
+    setCanReview(null);
+    withRefresh(() => apiClient.reviews.canReview(productSlug))
+      .then((res) => {
+        if (active) setCanReview(Boolean(res?.canReview));
+      })
+      .catch(() => {
+        if (active) setCanReview(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user, productSlug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -76,8 +73,56 @@ export function ReviewForm({ productSlug }: Props) {
       setStatus("success");
     } catch {
       setStatus("idle");
-      setError("Yorum gönderilemedi. Lütfen tekrar deneyin.");
+      // Büyük ihtimalle satın-alma şartı (403) — ön-kontrol kaçırdıysa net mesaj ver.
+      setError("Yorum gönderilemedi. Yalnızca satın aldığınız ürüne yorum yapabilirsiniz.");
     }
+  }
+
+  if (!user) {
+    return (
+      <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
+        <h3 className="font-semibold text-ink-900">Bu ürünü kullandınız mı?</h3>
+        <p className="mt-1.5 text-sm text-ink-700">
+          Yorum yapmak için{" "}
+          <Link href="/giris" className="text-brand-700 font-medium hover:underline">
+            giriş yapın
+          </Link>
+          . Yalnızca ürünü satın alan üyeler değerlendirme bırakabilir.
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <div className="p-5 bg-success/10 border border-success/30 rounded-xl">
+        <h3 className="font-semibold text-success">Yorumunuz alındı, teşekkürler!</h3>
+        <p className="mt-1.5 text-sm text-ink-700">Yorumunuz onay sonrası yayınlanacak.</p>
+      </div>
+    );
+  }
+
+  // Satın-alma kontrolü sürüyor
+  if (canReview === null) {
+    return (
+      <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl animate-pulse">
+        <div className="h-4 w-40 bg-paper-200 rounded" />
+        <div className="mt-2 h-3 w-64 bg-paper-100 rounded" />
+      </div>
+    );
+  }
+
+  // Giriş var ama ürünü satın almamış → form GÖSTERİLMEZ, açıklama gösterilir
+  if (canReview === false) {
+    return (
+      <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
+        <h3 className="font-semibold text-ink-900">Bu ürünü değerlendirmek ister misin?</h3>
+        <p className="mt-1.5 text-sm text-ink-700">
+          Yorum yapabilmek için önce bu ürünü <strong>satın almış olman</strong> gerekiyor.
+          Siparişin tamamlandıktan sonra buradan değerlendirme bırakabilirsin.
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -131,9 +176,7 @@ export function ReviewForm({ productSlug }: Props) {
           {status === "submitting" ? "Gönderiliyor…" : "Yorumu Gönder"}
         </Button>
       </div>
-      <p className="mt-2 text-xs text-ink-500">
-        Yorumlar moderasyon sonrası yayınlanır.
-      </p>
+      <p className="mt-2 text-xs text-ink-500">Yorumlar moderasyon sonrası yayınlanır.</p>
     </form>
   );
 }

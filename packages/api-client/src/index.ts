@@ -324,6 +324,12 @@ export class MarkalaApiClient {
     // --- Giriş yapmış müşteri yorum bırakır (onaysız doğar) ---
     createPublic: (data: { productSlug: string; rating: number; title?: string; body: string }) =>
       this.request<ReviewDto>("POST", "/reviews/public", data, { auth: true }),
+    // --- Giriş yapmış müşteri bu ürüne yorum yapabilir mi (ürünü satın aldı mı)? ---
+    canReview: (productSlug: string) =>
+      this.request<{ canReview: boolean }>("GET", "/reviews/public/can-review", undefined, {
+        auth: true,
+        query: { productSlug },
+      }),
   };
 
   // === Brands (Referanslar) ===
