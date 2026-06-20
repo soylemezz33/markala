@@ -104,6 +104,77 @@ export class MailService {
     }
   }
 
+  /**
+   * Cari hesap (B2B) AYLIK ekstre özeti maili — otomatik aylık faturalama sonrası gönderilir.
+   * HATA FIRLATMAZ — faturalama akışını bloke etmez.
+   */
+  async sendCorporateMonthlyStatementEmail(input: {
+    to: string;
+    companyName: string;
+    period: string; // "YYYY-MM"
+    orders: Array<{ orderNumber: string; date: string; amount: number }>;
+    total: number;
+    invoiceIssued: boolean;
+  }): Promise<boolean> {
+    const esc = (s: string) =>
+      String(s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const fmt = (n: number) =>
+      new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
+    const subject = `Markala — ${input.period} dönemi cari hesap ekstresi`;
+    const rowsText = input.orders
+      .map((o) => `  • ${o.orderNumber} (${o.date}) — ${fmt(o.amount)} ₺`)
+      .join("\n");
+    const invoiceNote = input.invoiceIssued
+      ? "Bu döneme ait e-faturanız Paraşüt üzerinden düzenlenmiştir."
+      : "Bu döneme ait fatura kaydı oluşturulmuştur.";
+    const text =
+      `${input.companyName} — ${input.period} dönemi açık hesap (cari) ekstresi:\n\n` +
+      `${rowsText}\n\n` +
+      `Toplam: ${fmt(input.total)} ₺ (${input.orders.length} sipariş)\n\n` +
+      `${invoiceNote}\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir.`;
+
+    const rowsHtml = input.orders
+      .map(
+        (o) =>
+          `<tr><td style="padding:6px 8px;border-bottom:1px solid #eee">${esc(o.orderNumber)}</td>` +
+          `<td style="padding:6px 8px;border-bottom:1px solid #eee">${esc(o.date)}</td>` +
+          `<td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(o.amount)} ₺</td></tr>`,
+      )
+      .join("");
+    const html = `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto">
+      <h2 style="color:#1a1a1a">${input.period} dönemi cari hesap ekstresi</h2>
+      <p><strong>${esc(input.companyName)}</strong> için açık hesap (cari) siparişlerinizin aylık özeti:</p>
+      <table style="border-collapse:collapse;width:100%;font-size:14px">
+        <thead><tr>
+          <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #ddd">Sipariş</th>
+          <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #ddd">Tarih</th>
+          <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #ddd">Tutar</th>
+        </tr></thead>
+        <tbody>${rowsHtml}</tbody>
+        <tfoot><tr>
+          <td colspan="2" style="padding:8px;text-align:right;font-weight:600">Toplam (${input.orders.length} sipariş)</td>
+          <td style="padding:8px;text-align:right;font-weight:700">${fmt(input.total)} ₺</td>
+        </tr></tfoot>
+      </table>
+      <p style="color:#666;font-size:13px;margin-top:16px">${invoiceNote}</p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+      <p style="color:#999;font-size:12px">Bu işlemsel bir iletidir. Markala — 324 Ajans BT tarafından gönderilmiştir.</p>
+    </div>`;
+
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: input.to, subject, text, html });
+      await this.logNotification(input.to, "sent", { messageId: info.messageId, template: "corporate-monthly-statement", period: input.period });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.corporateMonthlyStatement failed to=${input.to}: ${(err as Error).message}`);
+      await this.logNotification(input.to, "failed", { error: (err as Error).message, template: "corporate-monthly-statement", period: input.period });
+      return false;
+    }
+  }
+
   private async logNotification(recipient: string, status: "sent" | "failed", metadata: Record<string, unknown>) {
     await this.prisma.notificationLog
       .create({

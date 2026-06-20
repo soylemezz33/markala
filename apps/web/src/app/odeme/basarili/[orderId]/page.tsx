@@ -2,18 +2,31 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
-import { CheckCircle, Truck, EnvelopeSimple, House, Receipt } from "@phosphor-icons/react";
+import { CheckCircle, Truck, EnvelopeSimple, House, Receipt, Buildings } from "@phosphor-icons/react";
 import { useOrdersStore } from "@/lib/orders-store";
 import { useCartStore } from "@/lib/cart-store";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { trackPurchase } from "@/lib/analytics";
 import type { Order } from "@markala/types";
 
+// useSearchParams Suspense sınırı içinde okunmalı (next build prerender hatası önlenir) — repo deseni.
 export default function OrderSuccessPage({ params }: { params: { orderId: string } }) {
+  return (
+    <Suspense fallback={null}>
+      <OrderSuccessContent params={params} />
+    </Suspense>
+  );
+}
+
+function OrderSuccessContent({ params }: { params: { orderId: string } }) {
   const getById = useOrdersStore((s) => s.getById);
   const clearCart = useCartStore((s) => s.clear);
+  const searchParams = useSearchParams();
+  // Açık hesap (cari) ile verilen sipariş → "ödeme alındı" değil, "cari hesaba işlendi" mesajı göster.
+  const isCari = searchParams.get("method") === "cari";
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,10 +59,21 @@ export default function OrderSuccessPage({ params }: { params: { orderId: string
         <div className="w-16 h-16 mx-auto rounded-full bg-success/10 grid place-items-center text-success">
           <CheckCircle size={36} weight="fill" />
         </div>
-        <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">Ödemen alındı, teşekkürler! 🎉</h1>
+        <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">
+          {isCari ? "Siparişin alındı, teşekkürler! 🎉" : "Ödemen alındı, teşekkürler! 🎉"}
+        </h1>
         <p className="mt-3 text-lg text-ink-700">
-          Siparişin ve ödemen başarıyla alındı. Faturan e-posta adresine iletilecek; ekibimiz üretim
-          ve kargo sürecini başlatıyor.
+          {isCari ? (
+            <>
+              Siparişin başarıyla alındı ve tutarı <strong>açık hesabına (cari)</strong> işlendi. Faturan
+              e-posta adresine iletilecek; ekibimiz üretim ve kargo sürecini başlatıyor.
+            </>
+          ) : (
+            <>
+              Siparişin ve ödemen başarıyla alındı. Faturan e-posta adresine iletilecek; ekibimiz üretim
+              ve kargo sürecini başlatıyor.
+            </>
+          )}
         </p>
         <div className="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-paper-100 rounded-full text-sm">
           <Receipt size={16} className="text-ink-700" />
@@ -58,7 +82,15 @@ export default function OrderSuccessPage({ params }: { params: { orderId: string
       </div>
 
       <div className="mt-10 grid md:grid-cols-3 gap-3">
-        <InfoTile icon={<EnvelopeSimple size={20} />} title="Ödeme onaylandı" desc="Faturan e-posta ile gönderilecek" />
+        {isCari ? (
+          <InfoTile
+            icon={<Buildings size={20} />}
+            title="Cari hesaba işlendi"
+            desc={<Link href="/hesabim/cari-hesabim" className="text-brand-700 hover:underline">Cari hesabımı gör</Link>}
+          />
+        ) : (
+          <InfoTile icon={<EnvelopeSimple size={20} />} title="Ödeme onaylandı" desc="Faturan e-posta ile gönderilecek" />
+        )}
         <InfoTile icon={<Truck size={20} />} title="Kargo bilgisi" desc="Hazırlanınca takip kodu gönderilecek" />
         <InfoTile icon={<House size={20} />} title="Hesabım" desc={<Link href="/hesabim/siparislerim" className="text-brand-700 hover:underline">Siparişlerimi gör</Link>} />
       </div>

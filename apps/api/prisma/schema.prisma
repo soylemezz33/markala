@@ -76,6 +76,7 @@ model User {
   designUploads         DesignUpload[]
   corporateApplications CorporateApplication[]
   ledgerEntries         CorporateLedgerEntry[]
+  monthlyInvoices       CorporateMonthlyInvoice[]
   refreshTokens              RefreshToken[]
   emailVerificationTokens    EmailVerificationToken[]
   passwordResetTokens        PasswordResetToken[]
@@ -213,6 +214,30 @@ model CorporateLedgerEntry {
 
   @@index([userId, createdAt])
   @@map("corporate_ledger_entries")
+}
+
+/// Cari hesap (B2B açık hesap) AYLIK toplu faturası — Faz 3 otomatik aylık faturalama.
+/// (userId, period) benzersiz → aynı müşteri/ay ikinci kez faturalanmaz (idempotent).
+/// status: pending (kayıt açıldı) | issued (Paraşüt faturası kesildi) | failed | skipped (Paraşüt yapılandırılmamış).
+model CorporateMonthlyInvoice {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  /// Faturalanan ay "YYYY-MM" (örn. "2026-05").
+  period           String
+  /// O aydaki açık-hesap siparişlerinin KDV dahil toplamı.
+  totalAmount      Decimal   @map("total_amount") @db.Decimal(12, 2)
+  orderCount       Int       @map("order_count")
+  status           String    @default("pending")
+  parasutInvoiceId String?   @map("parasut_invoice_id")
+  issuedAt         DateTime? @map("issued_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period])
+  @@index([period])
+  @@map("corporate_monthly_invoices")
 }
 
 model Address {

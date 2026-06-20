@@ -62,14 +62,19 @@ interface IncomingPayload {
   district?: string;
   fullAddress?: string;
   zipCode?: string;
-  channel?: string; // whatsapp | phone
+  channel?: string; // whatsapp | phone | kart
   accountType?: string; // individual | corporate
   taxOffice?: string;
   taxNumber?: string;
   couponCode?: string;
+  /** Ödeme yolu — backend doğrular (cari = yalnız onaylı kurumsal). */
+  paymentMethod?: string; // iyzico | cari | havale
   notes?: string;
   items?: IncomingItem[];
 }
+
+/** Backend yalnız bu ödeme yollarını tanır; bilinmeyen değer iletme (backend null'a düşürür). */
+const ALLOWED_PAYMENT_METHODS = new Set(["iyzico", "cari", "havale"]);
 
 export async function POST(req: NextRequest) {
   let body: IncomingPayload;
@@ -95,8 +100,9 @@ export async function POST(req: NextRequest) {
   }
 
   // Kanal + kurumsal vergi bilgisini admin görsün diye nota düş (Order'da ayrı kolon yok).
+  const channelLabels: Record<string, string> = { phone: "Telefon", kart: "Web (Kart)", cari: "Web (Açık Hesap)" };
   const noteParts = [
-    body.channel ? `Kanal: ${body.channel === "phone" ? "Telefon" : "WhatsApp"}` : null,
+    body.channel ? `Kanal: ${channelLabels[body.channel] ?? "WhatsApp"}` : null,
     body.accountType === "corporate" && (body.taxOffice || body.taxNumber)
       ? `Vergi: ${body.taxOffice ?? "-"} / ${body.taxNumber ?? "-"}`
       : null,
@@ -126,6 +132,11 @@ export async function POST(req: NextRequest) {
     },
     // Kupon kodu → backend gerçek indirimi sunucuda hesaplar/doğrular (geçersizse 400 döner).
     couponCode: clamp(body.couponCode, 40)?.toUpperCase(),
+    // Ödeme yolu → backend doğrular: "cari" yalnız onaylı kurumsal müşteri + kredi limiti dahilinde.
+    // Bilinmeyen değer GÖNDERME (backend null/iyzico'ya düşürür); cari kötüye kullanımı sunucuda durur.
+    paymentMethod: body.paymentMethod && ALLOWED_PAYMENT_METHODS.has(body.paymentMethod)
+      ? body.paymentMethod
+      : undefined,
     notes: noteParts.length ? noteParts.join(" · ") : undefined,
   };
 

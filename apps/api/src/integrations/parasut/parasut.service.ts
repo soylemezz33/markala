@@ -271,4 +271,97 @@ export class ParasutService {
       return { invoiceId: "", status: "failed" };
     }
   }
+
+  // === Cari hesap (B2B açık hesap) — aylık toplu ekstre faturası ===
+  /**
+   * Bir kurumsal müşterinin bir aydaki açık-hesap (cari) siparişlerini TEK bir
+   * sales_invoice'ta toplar (her sipariş bir kalem). Sipariş bazlı
+   * `createInvoiceFromOrder` ile aynı altyapıyı (contact/product upsert, JSON:API)
+   * paylaşır; tek fark, kalemlerin tek-tek siparişler yerine aylık dökümü temsil etmesidir.
+   *
+   * Sistem tutarları KDV DAHİL saklanır → Paraşüt'e NET (KDV hariç) gönderilir.
+   * Hata fırlatmaz; { status } ile sonucu bildirir (no-op = "skipped").
+   */
+  async createMonthlyStatementInvoice(input: {
+    contact: {
+      email: string;
+      fullName: string;
+      taxNumber?: string;
+      taxOffice?: string;
+      phone?: string;
+      address?: string;
+      city?: string;
+      district?: string;
+    };
+    /** "2026-05" gibi YYYY-MM — fatura açıklamasında kullanılır. */
+    period: string;
+    /** Her açık-hesap siparişi bir kalem: KDV DAHİL brüt tutar. */
+    lines: Array<{ description: string; grossAmount: number }>;
+  }): Promise<{ invoiceId: string; status: "issued" | "failed" | "skipped" }> {
+    if (!this.isConfigured()) {
+      this.logger.warn(`[Paraşüt yapılandırılmamış] aylık ekstre faturası atlandı: ${input.contact.email} ${input.period}`);
+      return { invoiceId: "", status: "skipped" };
+    }
+    if (!input.lines.length) return { invoiceId: "", status: "skipped" };
+    try {
+      const isCorporate = Boolean(input.contact.taxNumber);
+      const { contactId } = await this.upsertContact({
+        email: input.contact.email,
+        fullName: input.contact.fullName,
+        accountType: isCorporate ? "corporate" : "individual",
+        taxNumber: input.contact.taxNumber,
+        taxOffice: input.contact.taxOffice,
+        phone: input.contact.phone,
+        address: input.contact.address,
+        city: input.contact.city,
+        district: input.contact.district,
+      });
+      if (!contactId) return { invoiceId: "", status: "failed" };
+
+      const vatRate = 20;
+      const grossToNet = (gross: number) => Math.round((gross / (1 + vatRate / 100)) * 100) / 100;
+
+      const details: Array<Record<string, unknown>> = [];
+      for (const line of input.lines) {
+        const netUnit = grossToNet(line.grossAmount);
+        // Her kalem bir Paraşüt product'ına bağlı olmalı → genel "Açık Hesap Sipariş" ürünü.
+        const productId = await this.upsertProduct("Açık Hesap Sipariş", netUnit, vatRate);
+        details.push({
+          type: "sales_invoice_details",
+          attributes: {
+            quantity: 1,
+            unit_price: netUnit,
+            vat_rate: vatRate,
+            description: line.description.slice(0, 250),
+          },
+          relationships: {
+            product: { data: { type: "products", id: productId } },
+          },
+        });
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      const created = await this.api<{ data: { id: string } }>("POST", "/sales_invoices", {
+        data: {
+          type: "sales_invoices",
+          attributes: {
+            item_type: "invoice",
+            description: `Markala cari hesap ekstresi ${input.period}`,
+            issue_date: today,
+            currency: "TRL",
+          },
+          relationships: {
+            contact: { data: { type: "contacts", id: contactId } },
+            details: { data: details },
+          },
+        },
+      });
+
+      this.logger.log(`Paraşüt aylık ekstre faturası: ${input.contact.email} ${input.period} invoice=${created.data.id}`);
+      return { invoiceId: created.data.id, status: "issued" };
+    } catch (e) {
+      this.logger.error(`Paraşüt aylık ekstre fatura hatası ${input.contact.email} ${input.period}: ${(e as Error).message}`);
+      return { invoiceId: "", status: "failed" };
+    }
+  }
 }

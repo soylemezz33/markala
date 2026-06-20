@@ -4,15 +4,18 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Container, cn } from "@markala/ui";
-import { House, Package, MapPin, ArrowsClockwise, User as UserIcon, SignOut, Receipt, Bell, Lock, ShieldCheck, Clock, CreditCard } from "@phosphor-icons/react";
+import { House, Package, MapPin, ArrowsClockwise, User as UserIcon, SignOut, Receipt, Bell, Lock, ShieldCheck, Clock, CreditCard, Buildings } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 
-const links = [
+type NavLink = { href: string; label: string; icon: typeof House; danger?: boolean };
+
+const baseLinks: NavLink[] = [
   { href: "/hesabim", label: "Hesap Özeti", icon: House },
   { href: "/hesabim/siparislerim", label: "Siparişlerim", icon: Package },
   { href: "/hesabim/tekrar-siparis", label: "Hızlı Tekrar Sipariş", icon: ArrowsClockwise },
   { href: "/hesabim/onceden-gezdiklerim", label: "Önceden Gezdiklerim", icon: Clock },
   { href: "/hesabim/faturalarim", label: "Faturalarım", icon: Receipt },
+  // Cari Hesabım — yalnız kurumsal üyeye eklenir (aşağıda accountType'a göre).
   { href: "/hesabim/adreslerim", label: "Adreslerim", icon: MapPin },
   { href: "/hesabim/kartlarim", label: "Kayıtlı Kartlarım", icon: CreditCard },
   { href: "/hesabim/bilgilerim", label: "Bilgilerim", icon: UserIcon },
@@ -20,6 +23,8 @@ const links = [
   { href: "/hesabim/bildirim", label: "Bildirim Tercihleri", icon: Bell },
   { href: "/hesabim/veri-yonetimi", label: "Veri Yönetimi (KVKK)", icon: ShieldCheck, danger: true },
 ];
+
+const corporateLink: NavLink = { href: "/hesabim/cari-hesabim", label: "Cari Hesabım", icon: Buildings };
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -39,6 +44,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <div className="grid place-items-center py-32 text-ink-400 text-sm">Hesabınız yükleniyor…</div>
     ) : null;
   }
+
+  // Cari Hesabım menüsü yalnız kurumsal üyede görünür ("Faturalarım"dan sonra).
+  const links =
+    user.accountType === "corporate"
+      ? [...baseLinks.slice(0, 5), corporateLink, ...baseLinks.slice(5)]
+      : baseLinks;
 
   return (
     <>

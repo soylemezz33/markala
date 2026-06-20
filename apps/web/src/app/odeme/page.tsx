@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
-import { CreditCard, Check, ArrowRight, User as UserIcon, House, Truck, WhatsappLogo, Lock, Clock, ShieldCheck } from "@phosphor-icons/react";
+import { CreditCard, Check, ArrowRight, User as UserIcon, House, Truck, WhatsappLogo, Lock, Clock, ShieldCheck, Buildings, Wallet } from "@phosphor-icons/react";
 import { IlIlceSelect } from "@/components/forms/il-ilce-select";
 import { PhoneInput } from "@/components/forms/phone-input";
 import { useCartStore } from "@/lib/cart-store";
@@ -59,6 +59,9 @@ export default function CheckoutPage() {
   const [payError, setPayError] = useState<string | null>(null);
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
+  // Ödeme yolu seçimi — kart (iyzico) veya cari (açık hesap). Cari yalnız kurumsal üyeye sunulur;
+  // "approved" şartını backend doğrular (uygun değilse anlaşılır hata döner, payError'da gösterilir).
+  const [paymentMethod, setPaymentMethod] = useState<"iyzico" | "cari">("iyzico");
 
   function handleApplyCoupon() {
     const code = couponInput.trim().toUpperCase();
@@ -71,6 +74,11 @@ export default function CheckoutPage() {
       setCouponError("Geçersiz veya süresi dolmuş kupon kodu.");
     }
   }
+
+  // Açık hesap (cari) ödeme seçeneği yalnız GİRİŞ YAPMIŞ KURUMSAL üyeye sunulur.
+  // /auth/me yanıtında accountType var; "approved" durumu client'a gelmediği için onay şartını
+  // backend zorlar (uygun değilse 400 + anlaşılır mesaj → payError). Misafir/bireysel görmez.
+  const canUseCari = Boolean(user && user.accountType === "corporate");
 
   const sub = subtotal();
   const appliedCoupon = couponCode && KNOWN_COUPONS[couponCode] ? couponCode : null;
@@ -85,6 +93,11 @@ export default function CheckoutPage() {
       router.replace("/sepet");
     }
   }, [cartItems.length, processing, router]);
+
+  // Kurumsal değilse cari seçeneği görünmez — yanlışlıkla seçili kalmasın (oturum kapandı vb.).
+  useEffect(() => {
+    if (!canUseCari && paymentMethod === "cari") setPaymentMethod("iyzico");
+  }, [canUseCari, paymentMethod]);
 
   // begin_checkout: checkout sayfasına ilk girildiğinde ateşlenir (GA4 spec gereği),
   // son adımda değil. Effect mount'ta bir kez çalışır.
@@ -153,6 +166,45 @@ export default function CheckoutPage() {
   }
 
   /**
+   * Siparişi KALICI olarak backend DB'ye yazar → orderId döner (fiyat sunucuda yeniden hesaplanır).
+   * Giriş yapmışsa access token iletilir → sipariş HESABA bağlanır (siparişlerim'de görünür).
+   * `paymentMethod`: "cari" gönderilirse backend onaylı kurumsal + kredi limiti şartını zorlar.
+   * Başarısızsa { ok:false, error } döner; çağıran payError gösterir.
+   */
+  async function saveOrder(opts: { channel: string; paymentMethod?: "iyzico" | "cari" }) {
+    const token = useAuthStore.getState().accessToken;
+    return fetch("/api/siparis-kaydet", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        email,
+        phone,
+        customerName: accountType === "individual" ? fullName : companyName,
+        city,
+        district,
+        fullAddress,
+        zipCode,
+        channel: opts.channel,
+        accountType,
+        taxOffice,
+        taxNumber,
+        couponCode: appliedCoupon ?? undefined,
+        paymentMethod: opts.paymentMethod,
+        items: cartItems.map((i) => ({
+          productSlug: i.productSlug,
+          configuration: i.configuration,
+          quantity: i.quantity,
+        })),
+      }),
+    })
+      .then((r) => r.json() as Promise<{ ok?: boolean; orderId?: string; orderNumber?: string; paymentNonce?: string; error?: string }>)
+      .catch(() => null);
+  }
+
+  /**
    * Kredi/banka kartı ile öde: (1) siparişi backend'e kalıcı yaz (sunucu fiyatı yeniden
    * hesaplar), (2) iyzico Checkout Form başlat, (3) iyzico hosted ödeme sayfasına yönlen.
    * Kart bilgisi iyzico'da girilir — bizim sitemize girilmez (PCI kapsamı dışı, 3D Secure).
@@ -167,37 +219,8 @@ export default function CheckoutPage() {
     track("add_payment_info", { currency: "TRY", value: total, items: cartItems.length, payment_type: "credit_card" });
 
     try {
-      // 1) Siparişi KALICI olarak backend DB'ye yaz → orderId al (fiyat sunucuda yeniden hesaplanır)
-      // Giriş yapmışsa access token'ı ilet → sipariş kullanıcının HESABINA bağlanır (siparişlerim'de görünür).
-      const token = useAuthStore.getState().accessToken;
-      const saveRes = await fetch("/api/siparis-kaydet", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          email,
-          phone,
-          customerName: accountType === "individual" ? fullName : companyName,
-          city,
-          district,
-          fullAddress,
-          zipCode,
-          channel: "kart",
-          accountType,
-          taxOffice,
-          taxNumber,
-          couponCode: appliedCoupon ?? undefined,
-          items: cartItems.map((i) => ({
-            productSlug: i.productSlug,
-            configuration: i.configuration,
-            quantity: i.quantity,
-          })),
-        }),
-      })
-        .then((r) => r.json())
-        .catch(() => null);
+      // 1) Siparişi KALICI olarak backend DB'ye yaz → orderId al
+      const saveRes = await saveOrder({ channel: "kart", paymentMethod: "iyzico" });
 
       if (!saveRes?.ok || !saveRes.orderId) {
         setProcessing(false);
@@ -239,6 +262,42 @@ export default function CheckoutPage() {
 
       setProcessing(false);
       setPayError("Ödeme başlatılamadı. Lütfen birkaç dakika sonra tekrar deneyin.");
+    } catch {
+      setProcessing(false);
+      setPayError("Bir hata oluştu. Lütfen tekrar deneyin.");
+    }
+  }
+
+  /**
+   * Açık hesaba yaz (cari): kurumsal müşteri ödemeyi anında yapmaz; tutar cari hesabına
+   * borç olarak işlenir (vade backend'deki corporatePaymentTermDays'e göre). Online ödeme yok.
+   * Backend "approved kurumsal + kredi limiti" şartını doğrular; uygun değilse 400 + mesaj döner.
+   */
+  async function handlePlaceOnAccount() {
+    if (!consentOk || processing || !canUseCari) return;
+    setPayError(null);
+    setProcessing(true);
+
+    try {
+      const saveRes = await saveOrder({ channel: "cari", paymentMethod: "cari" });
+
+      if (!saveRes?.ok || !saveRes.orderId) {
+        setProcessing(false);
+        setPayError(
+          saveRes?.error
+            ? `Sipariş oluşturulamadı: ${saveRes.error}`
+            : "Sipariş oluşturulamadı. Açık hesap yalnızca onaylı kurumsal müşteriler içindir.",
+        );
+        return;
+      }
+
+      // Sipariş başarıyla oluştu → başarı sayfası store'dan okusun. Cari'de online ödeme yok,
+      // o yüzden sepeti hemen boşaltıp başarı sayfasına yönlendiriyoruz (?method=cari → doğru mesaj).
+      const order = buildOrder(saveRes.orderNumber ?? generateOrderNumber());
+      order.id = saveRes.orderId;
+      addOrder(order);
+      clearCart();
+      router.push(`/odeme/basarili/${saveRes.orderId}?method=cari`);
     } catch {
       setProcessing(false);
       setPayError("Bir hata oluştu. Lütfen tekrar deneyin.");
@@ -383,12 +442,47 @@ export default function CheckoutPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-sm text-ink-700">
-                Ödemeni <strong>kredi/banka kartı</strong> ile güvenle yapıyorsun. "Kartla Güvenli Öde"
-                butonuna bastığında iyzico'nun güvenli ödeme sayfasına yönlendirilirsin; kart bilgilerin{" "}
-                <strong>iyzico tarafında</strong> girilir, sitemizde saklanmaz. Tüm kartlarda{" "}
-                <strong>3D Secure</strong> ve taksit seçenekleri mevcuttur.
-              </div>
+              {/* Ödeme yolu seçimi — yalnız kurumsal üyeye cari (açık hesap) seçeneği sunulur. */}
+              {canUseCari && (
+                <div>
+                  <p className="text-sm font-medium text-ink-900 mb-2">Ödeme yöntemi</p>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <PaymentOption
+                      active={paymentMethod === "iyzico"}
+                      onClick={() => { setPaymentMethod("iyzico"); setPayError(null); }}
+                      icon={<CreditCard size={20} weight="bold" />}
+                      title="Kredi / Banka Kartı"
+                      desc="Online güvenli ödeme (3D Secure)"
+                    />
+                    <PaymentOption
+                      active={paymentMethod === "cari"}
+                      onClick={() => { setPaymentMethod("cari"); setPayError(null); }}
+                      icon={<Buildings size={20} weight="bold" />}
+                      title="Açık hesaba yaz (cari)"
+                      desc="Kurumsal cari hesabınıza borç olarak işlenir"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === "cari" ? (
+                <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-sm text-ink-700">
+                  Bu sipariş <strong>açık hesabınıza (cari)</strong> borç olarak işlenecek; şimdi online
+                  ödeme yapmazsınız. Tutar, anlaşılan vade süresine göre cari hesabınıza yansır ve{" "}
+                  <Link href="/hesabim/cari-hesabim" className="underline font-medium hover:text-ink-900">
+                    Cari Hesabım
+                  </Link>{" "}
+                  sayfasından takip edilir. Açık hesap yalnızca <strong>onaylı kurumsal müşteriler</strong>{" "}
+                  içindir ve kredi limitiniz dahilinde kullanılabilir.
+                </div>
+              ) : (
+                <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-sm text-ink-700">
+                  Ödemeni <strong>kredi/banka kartı</strong> ile güvenle yapıyorsun. "Kartla Güvenli Öde"
+                  butonuna bastığında iyzico'nun güvenli ödeme sayfasına yönlendirilirsin; kart bilgilerin{" "}
+                  <strong>iyzico tarafında</strong> girilir, sitemizde saklanmaz. Tüm kartlarda{" "}
+                  <strong>3D Secure</strong> ve taksit seçenekleri mevcuttur.
+                </div>
+              )}
 
               <div className="space-y-3 pt-1">
                 <label className="flex items-start gap-2 text-sm text-ink-700">
@@ -436,18 +530,37 @@ export default function CheckoutPage() {
               </div>
 
               <div className="pt-2 space-y-3">
-                <Button
-                  size="lg"
-                  fullWidth
-                  onClick={handlePayWithCard}
-                  disabled={!consentOk || processing}
-                >
-                  <Lock size={18} weight="fill" />{" "}
-                  {processing ? "Yönlendiriliyor…" : `Kartla Güvenli Öde — ${total.toLocaleString("tr-TR")} ₺`}
-                </Button>
-                <div className="flex items-center justify-center gap-1.5 text-xs text-ink-500">
-                  <ShieldCheck size={14} /> 256-bit SSL · iyzico 3D Secure · Kart bilgisi sitemizde saklanmaz
-                </div>
+                {paymentMethod === "cari" ? (
+                  <>
+                    <Button
+                      size="lg"
+                      fullWidth
+                      onClick={handlePlaceOnAccount}
+                      disabled={!consentOk || processing}
+                    >
+                      <Wallet size={18} weight="fill" />{" "}
+                      {processing ? "Sipariş oluşturuluyor…" : `Açık Hesaba Yaz — ${total.toLocaleString("tr-TR")} ₺`}
+                    </Button>
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-ink-500">
+                      <Buildings size={14} /> Kurumsal açık hesap · Online ödeme yapılmaz · Vade dahilinde
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      fullWidth
+                      onClick={handlePayWithCard}
+                      disabled={!consentOk || processing}
+                    >
+                      <Lock size={18} weight="fill" />{" "}
+                      {processing ? "Yönlendiriliyor…" : `Kartla Güvenli Öde — ${total.toLocaleString("tr-TR")} ₺`}
+                    </Button>
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-ink-500">
+                      <ShieldCheck size={14} /> 256-bit SSL · iyzico 3D Secure · Kart bilgisi sitemizde saklanmaz
+                    </div>
+                  </>
+                )}
                 {payError && <p className="text-sm text-red-600 text-center">{payError}</p>}
                 {!consentOk && (
                   <p className="text-xs text-ink-500 text-center">Ödemeye geçmek için sözleşmeleri onaylayın.</p>
@@ -700,5 +813,45 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
       <span className="text-ink-700">{icon}</span>
       <span>{label}</span>
     </li>
+  );
+}
+
+function PaymentOption({
+  active,
+  onClick,
+  icon,
+  title,
+  desc,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "flex items-start gap-3 p-4 rounded-lg border text-left transition-all",
+        active ? "border-ink-900 bg-paper-50 shadow-sm" : "border-paper-200 bg-paper-50 hover:border-ink-300",
+      )}
+    >
+      <span className={cn("mt-0.5", active ? "text-ink-900" : "text-ink-500")}>{icon}</span>
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-ink-900">{title}</span>
+        <span className="block text-xs text-ink-500 mt-0.5">{desc}</span>
+      </span>
+      <span
+        className={cn(
+          "ml-auto mt-0.5 w-4 h-4 rounded-full border grid place-items-center flex-none",
+          active ? "border-ink-900 bg-ink-900 text-paper-50" : "border-paper-200",
+        )}
+      >
+        {active && <Check size={10} weight="bold" />}
+      </span>
+    </button>
   );
 }

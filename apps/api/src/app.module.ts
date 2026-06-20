@@ -12,6 +12,7 @@ import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { CorporateApplicationsModule } from "./corporate-applications/corporate-applications.module";
 import { CorporateLedgerModule } from "./corporate-ledger/corporate-ledger.module";
+import { CorporateInvoicingModule } from "./corporate-invoicing/corporate-invoicing.module";
 import { StatsModule } from "./stats/stats.module";
 import { CouponsModule } from "./coupons/coupons.module";
 import { ReviewsModule } from "./reviews/reviews.module";
@@ -39,6 +40,7 @@ import { BrandsModule } from "./brands/brands.module";
     OrdersModule,
     CorporateApplicationsModule,
     CorporateLedgerModule,
+    CorporateInvoicingModule,
     HeroSlidesModule,
     SettingsModule,
     StatsModule,
