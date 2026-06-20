@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import { ArrowRight, Clock, Tag as TagIcon } from "@phosphor-icons/react/dist/ssr";
 import { getBlogCategories, getBlogPosts, blogCoverSrc } from "@/lib/blog";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 export const metadata: Metadata = {
   title: "Markala Blog — Matbaa, Tasarım & Marka Rehberleri",
@@ -159,25 +160,7 @@ export default async function BlogPage() {
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
             Ayda 2 e-posta. Yeni rehberler, sektör analizleri ve aboneye özel %10 indirim.
           </p>
-          <form
-            className="mt-6 flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
-            action="/api/newsletter"
-            method="post"
-          >
-            <input
-              type="email"
-              required
-              name="email"
-              placeholder="ornek@firma.com"
-              className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-paper-50 placeholder:text-paper-100/40 outline-none focus:border-brand-400 text-sm"
-            />
-            <button
-              type="submit"
-              className="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-lg text-sm font-semibold whitespace-nowrap"
-            >
-              Abone Ol
-            </button>
-          </form>
+          <NewsletterForm source="blog-newsletter" />
         </section>
       </Container>
     </>

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -73,6 +73,22 @@ export class ReviewsService {
     });
     if (!user) {
       throw new NotFoundException("Kullanıcı bulunamadı.");
+    }
+
+    // Doğrulanmış satın alma şartı: kullanıcı YALNIZCA sipariş ettiği ürüne yorum yapabilir.
+    // (örn. kupa sipariş eden sadece kupaya yorum yazabilir, başka ürüne yazamaz.)
+    const purchased = await this.prisma.order.findFirst({
+      where: {
+        userId: args.userId,
+        deletedAt: null,
+        items: { some: { productId: product.id } },
+      },
+      select: { id: true },
+    });
+    if (!purchased) {
+      throw new ForbiddenException(
+        "Yalnızca satın aldığınız ürünlere yorum yapabilirsiniz.",
+      );
     }
 
     // Review modelinde başlık alanı yok → varsa başlığı yorumun başına ekle.

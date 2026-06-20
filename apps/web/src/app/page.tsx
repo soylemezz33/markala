@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getProducts, getHeroSlides } from "@/lib/catalog";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { TrustBadges } from "@/components/home/trust-badges";
@@ -8,6 +9,15 @@ import { CustomerReviews } from "@/components/home/customer-reviews";
 import { ProcessTimeline } from "@/components/home/process-timeline";
 import { PromoBanner } from "@/components/promo-banner";
 import { HowToProductionJsonLd } from "@/components/seo/json-ld";
+
+// Anasayfa — reklam kampanyalarının #1 iniş hedefi: kök varsayılan yerine elle ayarlı
+// başlık + açıklama + açık canonical.
+export const metadata: Metadata = {
+  title: { absolute: "Markala — Online Matbaa: Kartvizit, Broşür, Afiş & Branda Baskı" },
+  description:
+    "Kartvizit, broşür, afiş, branda ve 30+ matbaa & reklam ürünü online. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 il kargo. 324 Ajans güvencesiyle markala.com.tr.",
+  alternates: { canonical: "/" },
+};
 
 export default async function HomePage() {
   const [products, heroSlides] = await Promise.all([getProducts(), getHeroSlides()]);

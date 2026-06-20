@@ -148,6 +148,21 @@ export class AuthService {
         throw new ConflictException(duplicateMsg);
       }
 
+      // Telefon tekilliği: aynı numarayla birden çok hesap açılmasını engelle (kullanıcı isteği).
+      const phone = input.phone?.trim();
+      if (phone) {
+        const phoneTaken = await this.prisma.user.findFirst({
+          where: { phone, deletedAt: null },
+          select: { id: true },
+        });
+        if (phoneTaken) {
+          this.logger.warn(`register.duplicate_phone phone=${phone} ip=${context.ipAddress ?? "?"}`);
+          throw new ConflictException(
+            "Bu telefon numarası zaten bir hesapta kayıtlı. Giriş yapın veya farklı bir numara kullanın.",
+          );
+        }
+      }
+
       const passwordHash = await argon2.hash(input.password);
       const user = await this.prisma.user.create({
         data: {
@@ -271,6 +286,12 @@ export class AuthService {
     if (!ok) {
       this.logger.warn(`password.change.bad_current userId=${userId}`);
       throw new UnauthorizedException("Mevcut şifreniz hatalı.");
+    }
+
+    // Yeni şifre mevcut şifreyle AYNI olamaz (kullanıcı isteği) — gerçek bir değişiklik şart.
+    const sameAsCurrent = await argon2.verify(user.passwordHash, newPassword).catch(() => false);
+    if (sameAsCurrent) {
+      throw new BadRequestException("Yeni şifreniz mevcut şifrenizden farklı olmalı.");
     }
 
     const passwordHash = await argon2.hash(newPassword);

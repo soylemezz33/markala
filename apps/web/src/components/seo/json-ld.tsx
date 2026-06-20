@@ -60,16 +60,9 @@ export function OrganizationJsonLd() {
             availableLanguage: ["Turkish"],
           },
         ],
-        // Site-wide AggregateRating — tüm yorumların bütünleşik puanı
-        // TODO: Production'da prisma.review.aggregate({ _avg, _count })'tan dinamik gelmeli
-        // (bkz. fetchSiteRating() fonksiyonu — bu dosyanın alt kısmında)
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: 4.8,
-          reviewCount: 2450,
-          bestRating: 5,
-          worstRating: 1,
-        },
+        // AggregateRating KASITLI olarak yok: hardcoded/doğrulanamaz puan (eski 4.8/2450)
+        // Google yapılandırılmış-veri politikasına aykırı (manuel ceza/rich-result baskılama riski).
+        // Gerçek onaylı yorumlar birikince fetchSiteRating()'ten dinamik beslenip geri eklenecek.
         knowsAbout: [
           "Matbaa",
           "Kartvizit Baskı",
