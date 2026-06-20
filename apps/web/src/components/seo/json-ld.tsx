@@ -226,7 +226,7 @@ export function LocalBusinessJsonLd() {
     "@type": "LocalBusiness",
     "@id": `${SITE}/#localbusiness`,
     name: "Markala — Matbaa & Reklam Ürünleri",
-    image: `${SITE}/api/mockup?theme=brand&w=1200&h=800`,
+    image: `${SITE}/og-default.png`,
     url: SITE,
     telephone: "+90-324-433-3351",
     email: "info@markala.com.tr",
@@ -405,7 +405,7 @@ export function ArticleJsonLd({
     ? image.startsWith("http")
       ? image
       : `${SITE}${image}`
-    : `${SITE}/api/mockup?theme=brand&w=1200&h=630`;
+    : `${SITE}/og-default.png`;
   const data = {
     "@context": "https://schema.org",
     "@type": "Article",
