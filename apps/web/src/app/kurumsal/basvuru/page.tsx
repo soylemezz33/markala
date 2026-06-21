@@ -4,7 +4,7 @@ import { useState, FormEvent, cloneElement, isValidElement, ReactElement } from 
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import {
-  Buildings, Upload, CheckCircle, Spinner, ArrowLeft,
+  Buildings, Info, CheckCircle, Spinner, ArrowLeft,
 } from "@phosphor-icons/react";
 import { PhoneInput } from "@/components/forms/phone-input";
 
@@ -27,8 +27,6 @@ export default function KurumsalBasvuruPage() {
     notes: "",
   });
 
-  const [vergiLevha, setVergiLevha] = useState<File | null>(null);
-  const [imzaSirku, setImzaSirku] = useState<File | null>(null);
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
 
   function update<K extends keyof typeof form>(key: K, val: string) {
@@ -238,24 +236,20 @@ export default function KurumsalBasvuruPage() {
           </div>
         </fieldset>
 
-        {/* Belgeler */}
+        {/* Belgeler — vergi levhası / imza sirküleri onay sürecinde e-posta ile alınır.
+            Önceden burada "required" dosya seçtiren ama hiçbir yere göndermeyen (JSON-only
+            POST) yanıltıcı alanlar vardı: kullanıcı dosya seçip "başvuru ulaştı" görüyor
+            ama belge kayboluyordu. Gerçek upload kalıcı depolama gerektirir → net bilgi notu. */}
         <fieldset className="space-y-4">
           <legend className="text-sm font-semibold text-ink-900 mb-2">Belgeler</legend>
-          <FileField
-            id="kb-vergiLevha"
-            label="Vergi levhası (PDF veya görsel)"
-            accept="application/pdf,image/*"
-            file={vergiLevha}
-            onChange={setVergiLevha}
-            required
-          />
-          <FileField
-            id="kb-imzaSirku"
-            label="İmza sirküleri"
-            accept="application/pdf,image/*"
-            file={imzaSirku}
-            onChange={setImzaSirku}
-          />
+          <div className="rounded-lg bg-paper-100 border border-paper-200 p-4 flex items-start gap-3">
+            <Info size={20} weight="fill" className="text-brand-700 flex-none mt-0.5" aria-hidden="true" />
+            <p className="text-sm text-ink-700 leading-relaxed">
+              <strong className="text-ink-900">Belge gerekmiyor.</strong> Vergi levhası ve imza
+              sirkülerinizi, başvurunuz değerlendirilirken mali ekibimiz e-posta ile talep edecektir.
+              Şimdi yüklemenize gerek yok — başvuru formunu doldurmanız yeterli.
+            </p>
+          </div>
         </fieldset>
 
         <Field id="kb-notes" label="Notlar (opsiyonel)">
@@ -344,49 +338,3 @@ function Field({
   );
 }
 
-function FileField({
-  id,
-  label,
-  accept,
-  file,
-  onChange,
-  required,
-}: {
-  id: string;
-  label: string;
-  accept: string;
-  file: File | null;
-  onChange: (f: File | null) => void;
-  required?: boolean;
-}) {
-  return (
-    <div className="block">
-      <label htmlFor={id} className="block text-xs font-medium text-ink-700 mb-1.5 cursor-pointer">
-        {label}{" "}
-        {required && (
-          <span className="text-error" aria-hidden="true">
-            *
-          </span>
-        )}
-      </label>
-      <label
-        htmlFor={id}
-        className="flex items-center gap-3 px-4 py-3 border-2 border-dashed border-paper-200 rounded-lg hover:border-brand-500 hover:bg-paper-100 transition-colors cursor-pointer"
-      >
-        <Upload size={18} className="text-ink-500" aria-hidden="true" />
-        <span className="text-sm text-ink-700 flex-1 truncate">
-          {file ? file.name : "Dosya seç..."}
-        </span>
-        <input
-          id={id}
-          type="file"
-          accept={accept}
-          required={required}
-          aria-required={required ? "true" : undefined}
-          onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-          className="sr-only"
-        />
-      </label>
-    </div>
-  );
-}
