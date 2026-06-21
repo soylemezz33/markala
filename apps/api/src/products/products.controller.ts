@@ -15,12 +15,14 @@ export class ProductsController {
   @ApiQuery({ name: "bestseller", required: false })
   @ApiQuery({ name: "take", required: false })
   @ApiQuery({ name: "q", required: false })
+  @ApiQuery({ name: "list", required: false, description: "true → hafif liste yanıtı (content/description hariç)" })
   list(
     @Query("category") category?: string,
     @Query("bestseller") bestseller?: string,
     @Query("take") take?: string,
     @Query("skip") skip?: string,
     @Query("q") q?: string,
+    @Query("list") list?: string,
   ) {
     return this.service.findAll({
       categorySlug: category,
@@ -28,6 +30,7 @@ export class ProductsController {
       take: take ? parseInt(take) : undefined,
       skip: skip ? parseInt(skip) : undefined,
       q,
+      list: list === "true",
     });
   }
 

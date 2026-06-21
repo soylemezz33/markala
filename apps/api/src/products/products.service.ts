@@ -7,23 +7,53 @@ import { BulkPriceDto, CreateProductDto, UpdateProductDto } from "./products.dto
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string } = {}) {
+  findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string; list?: boolean } = {}) {
     // Arama: çok-kelimeli sorgu token'lara bölünür, HER token isimde geçmeli (AND).
     // Böylece "kart vizit" → "Klasik Kartvizit" eşleşir (boşluklu yazımda da bulunur).
     const tokens = (opts.q ?? "").trim().split(/\s+/).filter(Boolean);
-    return this.prisma.product.findMany({
-      where: {
-        isActive: true,
-        ...(opts.bestseller !== undefined && { bestseller: opts.bestseller }),
-        ...(opts.categorySlug && { category: { slug: opts.categorySlug } }),
-        ...(tokens.length
-          ? { AND: tokens.map((t) => ({ name: { contains: t, mode: "insensitive" as const } })) }
-          : {}),
-      },
-      include: { category: true },
+    const where = {
+      isActive: true,
+      ...(opts.bestseller !== undefined && { bestseller: opts.bestseller }),
+      ...(opts.categorySlug && { category: { slug: opts.categorySlug } }),
+      ...(tokens.length
+        ? { AND: tokens.map((t) => ({ name: { contains: t, mode: "insensitive" as const } })) }
+        : {}),
+    };
+    const common = {
+      where,
       take: opts.take ?? 50,
       skip: opts.skip ?? 0,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "desc" as const },
+    };
+    // PERF — LİSTE MODU: storefront katalog/anasayfa/kategori binlerce ürünü tek seferde
+    // çeker; ağır alanları (content JSON: features/faqs/specs/seo ~5KB + uzun description)
+    // listede HİÇ kullanılmaz → __NEXT_DATA__ payload'ını ~yarıya indirmek için HARİÇ tutulur.
+    // `parameters` KALIR: kart/filtre fiyatı (getDisplayPrice) configurator parametrelerinden
+    // hesaplanır; çıkarılırsa konfigüratörlü ürünlerde fiyat 0/"Teklif Al"a düşer (regresyon).
+    // Detay endpoint'i (/products/:slug → findBySlug) tam veriyi döndürmeye devam eder.
+    if (opts.list) {
+      return this.prisma.product.findMany({
+        ...common,
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          shortDescription: true,
+          basePrice: true,
+          startingPrice: true,
+          productionTime: true,
+          sizeLabel: true,
+          images: true,
+          badges: true,
+          bestseller: true,
+          parameters: true,
+          category: { select: { slug: true, name: true } },
+        },
+      });
+    }
+    return this.prisma.product.findMany({
+      ...common,
+      include: { category: true },
     });
   }
 

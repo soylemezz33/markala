@@ -84,7 +84,9 @@ async function fetchJson(path: string): Promise<unknown> {
 /** Tüm aktif ürünler. API hatası/boş → mock fallback. */
 export async function getProducts(): Promise<Product[]> {
   try {
-    const data = await fetchJson("/products?take=5000");
+    // list=true → hafif yanıt (content/description hariç, parameters dahil): kart/filtre/fiyat
+    // için yeterli, payload ~yarıya iner. Detay sayfası getProductBySlug ile tam veriyi alır.
+    const data = await fetchJson("/products?take=5000&list=true");
     if (!Array.isArray(data) || data.length === 0) return mockProducts;
     return data.map(mapProduct);
   } catch {
@@ -203,7 +205,7 @@ export async function getCategoryBySlug(slug: string): Promise<Category | undefi
 /** Bir kategorinin ürünleri. API hatası → mock fallback (boş sonuç gerçek kabul edilir). */
 export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
   try {
-    const data = await fetchJson(`/products?category=${encodeURIComponent(categorySlug)}&take=2000`);
+    const data = await fetchJson(`/products?category=${encodeURIComponent(categorySlug)}&take=2000&list=true`);
     if (!Array.isArray(data)) throw new Error("beklenmeyen yanıt");
     return data.map(mapProduct);
   } catch {
