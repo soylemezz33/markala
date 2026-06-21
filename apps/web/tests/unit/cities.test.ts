@@ -19,7 +19,8 @@ describe("getCityBySlug", () => {
     const c = getCityBySlug("mersin");
     expect(c).toBeDefined();
     expect(c?.name).toBe("Mersin");
-    expect(c?.sameDayCourier).toBe(true);
+    // Aynı gün kurye artık hiçbir şehirde sunulmuyor (operasyonel vaat düzeltmesi).
+    expect(c?.sameDayCourier).toBe(false);
     expect(c?.districts?.length).toBeGreaterThan(0);
   });
 
@@ -43,7 +44,8 @@ describe("getDistrictBySlug", () => {
     expect(d).toBeDefined();
     expect(d?.name).toBe("Tarsus");
     expect(d?.parentCity).toBe("mersin");
-    expect(d?.sameDayDelivery).toBe(true);
+    // Aynı gün teslim artık hiçbir ilçede sunulmuyor (operasyonel vaat düzeltmesi).
+    expect(d?.sameDayDelivery).toBe(false);
   });
 
   it("yanlış şehir/ilçe kombosu için undefined", () => {
