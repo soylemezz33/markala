@@ -342,6 +342,16 @@ export class MarkalaApiClient {
       this.request<ContactMessageDto>("PATCH", `/contact/${id}`, { status }, { auth: true }),
   };
 
+  // === Newsletter (Bülten Aboneleri) ===
+  newsletter = {
+    // Admin: abone listesi (opsiyonel durum: active | unsubscribed).
+    list: (status?: string) =>
+      this.request<NewsletterSubscriberDto[]>("GET", "/newsletter-subscribers", undefined, {
+        auth: true,
+        query: { status },
+      }),
+  };
+
   // === Brands (Referanslar) ===
   brands = {
     // --- Public (storefront): yalnız aktif markalar ---
@@ -457,6 +467,14 @@ export interface ContactMessageDto {
   source: string;
   status: string;
   mailSent: boolean;
+  createdAt: string;
+}
+
+export interface NewsletterSubscriberDto {
+  id: string;
+  email: string;
+  source: string;
+  status: string;
   createdAt: string;
 }
 
