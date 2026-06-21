@@ -200,8 +200,8 @@ export default async function CityLandingPage({ params }: Props) {
             />
             <InfoCard
               icon={Lightning}
-              title="Aynı gün üretim"
-              desc="Sabah siparişler öğleden sonra çıkar"
+              title="Hızlı üretim"
+              desc="Siparişler kısa sürede üretime alınır"
             />
             <InfoCard
               icon={ShieldCheck}
@@ -291,8 +291,8 @@ export default async function CityLandingPage({ params }: Props) {
               {city.name}'in ilçelerine teslim
             </h2>
             <p className="text-ink-700 mb-6 max-w-2xl">
-              {city.name}'in tüm ilçelerine atölyemizden direkt teslim. Merkez
-              ilçelere aynı gün motor kurye, çevre ilçelere kargo ile 1 iş günü.
+              {city.name}'in tüm ilçelerine atölyemizden direkt teslim. Mersin
+              ve ilçelerine kurye/kargo ile 1-2 iş günü.
             </p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {city.districts.map((d) => (
@@ -382,7 +382,7 @@ export default async function CityLandingPage({ params }: Props) {
               >
                 kurumsal hesap aç
               </Link>{" "}
-              — %10-15 ek indirim, açık fatura, dedicated temsilci.
+              — firmanıza özel avantajlı fiyat, açık fatura, dedicated temsilci.
             </p>
           </section>
         )}

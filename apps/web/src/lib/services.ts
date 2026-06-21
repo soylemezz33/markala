@@ -122,9 +122,9 @@ export const services: ServiceData[] = [
   {
     slug: "toplu-baski",
     title: "Toplu Baskı & Kurumsal İndirim",
-    metaTitle: "Toplu Matbaa Siparişi — %10-15 İndirim, Açık Fatura, B2B",
+    metaTitle: "Toplu Matbaa Siparişi — Avantajlı Fiyat, Açık Fatura, B2B",
     metaDescription:
-      "5.000+ adet toplu matbaa siparişlerinde %10-15 ek indirim, açık fatura, dedicated müşteri temsilcisi. Kurumsal hesap başvurusu 1-2 iş gününde onaylanır.",
+      "Toplu matbaa siparişlerinde firmanıza özel avantajlı fiyatlandırma, açık fatura, dedicated müşteri temsilcisi. Kurumsal hesap başvurusu 1-2 iş gününde onaylanır.",
     keywords: [
       "toplu matbaa siparişi",
       "toplu baskı indirim",
@@ -136,11 +136,11 @@ export const services: ServiceData[] = [
       "yıllık matbaa anlaşması",
     ],
     intro:
-      "Yıllık 50.000 ₺+ matbaa harcaması yapan firmalara özel: %10-15 ek indirim, açık fatura, ay sonu kapanış, dedicated müşteri temsilcisi ve öncelikli üretim. Kurumsal hesap 1-2 iş gününde onaylanır.",
+      "Düzenli matbaa harcaması yapan firmalara özel: firmanıza özel avantajlı fiyatlandırma, açık fatura, ay sonu kapanış, dedicated müşteri temsilcisi ve öncelikli üretim. Kurumsal hesap 1-2 iş gününde onaylanır.",
     benefits: [
       {
-        title: "%10-15 ek indirim",
-        desc: "Bireysel fiyatların üzerine yıllık ciroya göre kademeli iskonto.",
+        title: "Firmanıza özel avantajlı fiyat",
+        desc: "Bireysel fiyatların üzerine sipariş hacminize göre özel fiyatlandırma.",
       },
       {
         title: "30 gün açık fatura",
@@ -192,19 +192,19 @@ export const services: ServiceData[] = [
     faqs: [
       {
         q: "Hangi adetten itibaren toplu sayılır?",
-        a: "5.000+ kartvizit, 2.500+ broşür, 1.000+ etiket gibi ürün bazlı eşikler vardır. Genel olarak tek siparişte 50.000 ₺ ve üzeri toplu kabul edilir.",
+        a: "5.000+ kartvizit, 2.500+ broşür, 1.000+ etiket gibi ürün bazlı eşikler vardır. Yüksek adetli siparişlerde firmanıza özel fiyatlandırma sunulur.",
       },
       {
         q: "Yıllık sözleşme zorunlu mu?",
-        a: "Hayır. Tek seferlik toplu sipariş de %10 indirimden yararlanır. Yıllık sözleşme %15 indirim + sabit fiyat garantisi sağlar.",
+        a: "Hayır. Tek seferlik toplu sipariş de avantajlı fiyatlandırmadan yararlanır. Yıllık sözleşme ek avantajlar ve fiyat istikrarı sağlar.",
       },
       {
         q: "Açık fatura için kredi limiti nasıl belirlenir?",
-        a: "Mali ekibimiz vergi levhası, son 2 yıl ciro ve sektör dinamiklerine göre kredi limitini belirler. 50.000-500.000 ₺ aralığında kademeli onay.",
+        a: "Mali ekibimiz vergi levhası, ciro ve sektör dinamiklerine göre firmanıza özel kredi limitini belirler.",
       },
       {
         q: "Hangi ödeme vadeleri mevcut?",
-        a: "Standart 30 gün açık fatura. Yıllık sözleşmeli müşteriler için 45-60 gün vade mümkün. Erken ödemede %2 ek indirim.",
+        a: "Standart 30 gün açık fatura. Kurumsal müşterilerimize firmanıza özel esnek ödeme ve vade seçenekleri sunulur.",
       },
       {
         q: "Ürün stoklama yapıyor musunuz?",
@@ -213,102 +213,6 @@ export const services: ServiceData[] = [
     ],
     priceRange: { min: 5000, max: 500000 },
     relatedProductSlugs: ["klasik-kartvizit", "brosur", "antetli-kagit", "afis-105gr"],
-  },
-
-  {
-    slug: "acil-baski",
-    title: "Acil Baskı — Aynı Gün Üretim",
-    metaTitle: "Acil Matbaa — Aynı Gün Kartvizit & Broşür Baskı (Mersin)",
-    metaDescription:
-      "Acil matbaa ihtiyacınız için aynı gün üretim. Mersin merkezde 3-5 saat içinde kartvizit, broşür, sticker baskı + motor kurye teslim. Sabah 11:00 son sipariş.",
-    keywords: [
-      "acil matbaa",
-      "aynı gün kartvizit",
-      "acil kartvizit baskı",
-      "acil broşür baskı",
-      "aynı gün baskı mersin",
-      "express matbaa",
-      "hızlı baskı",
-      "5 saat kartvizit",
-    ],
-    intro:
-      "Sunum yarın mı? Müşteri toplantısı bu öğleden sonra mı? Mersin merkezde verdiğiniz acil siparişler aynı gün üretilir, motor kurye ile elinize teslim edilir. Sabah 11:00'a kadar verilen siparişler için garantili.",
-    benefits: [
-      {
-        title: "3-5 saat üretim",
-        desc: "Standart kartvizit ve broşürler 3-5 saat içinde basılır.",
-      },
-      {
-        title: "Motor kurye teslim",
-        desc: "Mersin merkez ilçelerinde aynı gün motor kurye ile elinize ulaşır.",
-      },
-      {
-        title: "Aynı kalite",
-        desc: "Acil işlerde kalite düşüşü yok — aynı 350 gr kuşe, aynı CMYK uyumu.",
-      },
-      {
-        title: "WhatsApp koordinasyon",
-        desc: "Üretim takibi WhatsApp'tan canlı — fotoğraflı kalite raporu.",
-      },
-      {
-        title: "Hard proof opsiyonu",
-        desc: "Acil iş bile olsa renk hassasiyetiniz varsa hard proof gönderebiliriz.",
-      },
-      {
-        title: "Yedek motor",
-        desc: "Mersin içinde 3 farklı motor kurye partnerimiz var — gecikme riski sıfır.",
-      },
-    ],
-    process: [
-      {
-        n: "1",
-        title: "Sabah sipariş",
-        desc: "11:00'a kadar online sipariş ver, dosyanı yükle.",
-        duration: "Saat 11:00",
-      },
-      {
-        n: "2",
-        title: "Hızlı kontrol",
-        desc: "Dosya kontrolü 15 dk içinde, varsa düzeltme önerisi.",
-        duration: "15 dk",
-      },
-      {
-        n: "3",
-        title: "Üretim",
-        desc: "Onay sonrası dijital baskıya geçer, 3-5 saat içinde tamamlanır.",
-        duration: "3-5 sa",
-      },
-      {
-        n: "4",
-        title: "Motor kurye",
-        desc: "Mesai sonuna kadar (18:00) Mersin merkez ve ilçelere teslim.",
-        duration: "1-2 sa",
-      },
-    ],
-    faqs: [
-      {
-        q: "Acil baskı ek ücret var mı?",
-        a: "Standart fiyatın %30-50 üzerinde acil zammı vardır. Kartvizit acil 200 ₺ yerine 280-300 ₺ olabilir. Net fiyat siparişte gösterilir.",
-      },
-      {
-        q: "Kaç saatte teslim alabilirim?",
-        a: "Sabah 11:00'a kadar verilen kartvizit/broşür siparişleri saat 17:00-18:00 arası elinizde olur. Mersin merkez ve Yenişehir/Tarsus için garantili.",
-      },
-      {
-        q: "Hangi ürünlerde aynı gün üretim mümkün?",
-        a: "Standart kartvizit (mat/parlak selefon), 1-2 sayfalı broşür, A4 el ilanı, sticker. Yaldız, kabartma gibi özel işlemler en az 1 iş günü gerektirir.",
-      },
-      {
-        q: "Mersin dışında acil baskı mümkün mü?",
-        a: "Adana ve Tarsus için sabah 09:00 sipariş ile aynı gün motor kurye mümkün. Antalya, Gaziantep gibi şehirler için 24 saat içinde DHL Express ile gönderim sağlanır.",
-      },
-      {
-        q: "Hafta sonu acil baskı yapıyor musunuz?",
-        a: "Cumartesi 09:00-13:00 arası kısıtlı acil hizmet. Pazar atölye kapalı — ancak önceden anlaşma ile özel servis düzenlenebilir.",
-      },
-    ],
-    priceRange: { min: 280, max: 5000 },
-    relatedProductSlugs: ["klasik-kartvizit", "el-ilani", "etiket"],
   },
 ];
 

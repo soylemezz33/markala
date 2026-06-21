@@ -85,7 +85,7 @@ export const heroSlides: HeroSlide[] = [
       { value: "0 ₺", label: "Tasarım ücreti" },
       { value: "24 sa", label: "İlk taslak" },
       { value: "∞", label: "Revize hakkı" },
-      { value: "12+", label: "Grafik tasarımcı" },
+      { value: "11+", label: "Grafik tasarımcı" },
     ],
   },
 ];

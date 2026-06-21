@@ -11,9 +11,9 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 const SITE = "https://markala.com.tr";
 
 export const metadata: Metadata = {
-  title: "Türkiye Geneli Matbaa Hizmeti — 81 İl, Aynı Gün Üretim",
+  title: "Türkiye Geneli Matbaa Hizmeti — 81 İl, Hızlı Üretim",
   description:
-    "Mersin merkezli matbaa atölyemizden Türkiye geneli kartvizit, broşür, afiş, branda, kupa baskı hizmeti. Antalya, Adana, Şanlıurfa, Hatay, Osmaniye, Gaziantep'e 1-2 iş günü kargo. Mersin içinde aynı gün motor kurye.",
+    "Mersin merkezli matbaa atölyemizden Türkiye geneli kartvizit, broşür, afiş, branda, kupa baskı hizmeti. Antalya, Adana, Şanlıurfa, Hatay, Osmaniye, Gaziantep'e 1-2 iş günü kargo. Mersin ve çevresine hızlı kargo/kurye.",
   keywords: [
     "matbaa", "online matbaa", "matbaa türkiye", "kartvizit baskı",
     "broşür baskı", "afiş baskı", "mersin matbaa", "antalya matbaa",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
     title: "Türkiye Geneli Matbaa — Markala",
     description:
-      "81 ilde matbaa hizmeti. Mersin merkezli atölye, aynı gün üretim, DHL Express ile 1-2 iş günü teslim.",
+      "81 ilde matbaa hizmeti. Mersin merkezli atölye, hızlı üretim, DHL Express ile 1-2 iş günü teslim.",
     url: "/matbaa",
   },
 };
@@ -86,13 +86,13 @@ export default function MatbaaHubPage() {
           </h1>
           <p className="mt-4 text-lg text-ink-700">
             Mersin merkezli atölyemizden 81 ilde kartvizit, broşür, afiş, branda,
-            kupa baskı. Komşu illerde 1-2 iş günü, Mersin içinde aynı gün motor
-            kurye teslim.
+            kupa baskı. Komşu illerde 1-2 iş günü, Mersin ve çevresine 1-2 iş
+            günü teslim.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-ink-500">
             <span className="inline-flex items-center gap-1.5">
               <Lightning size={14} className="text-brand-700" weight="fill" />{" "}
-              Aynı gün üretim (Mersin)
+              Hızlı üretim
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Truck size={14} className="text-brand-700" weight="fill" /> DHL

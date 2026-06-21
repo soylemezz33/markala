@@ -156,7 +156,7 @@ export default async function DistrictLandingPage({ params }: Props) {
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <Lightning size={13} weight="fill" />
-              Aynı gün üretim
+              Hızlı üretim
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-paper-100 text-ink-700 rounded-full font-medium">
               <ShieldCheck size={13} weight="fill" />
@@ -266,8 +266,8 @@ export default async function DistrictLandingPage({ params }: Props) {
             {district.name}'deki firma sahibi misin?
           </h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Kurumsal hesap aç, %10-15 ek indirim + açık fatura + dedicated
-            temsilci kazan.
+            Kurumsal hesap aç, firmana özel avantajlı fiyat + açık fatura +
+            dedicated temsilci kazan.
           </p>
           <Link
             href="/kurumsal/basvuru"

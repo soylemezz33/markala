@@ -66,7 +66,7 @@ export function FloatingActions() {
                     Markala Destek
                   </h2>
                   <div className="text-[11px] text-paper-100/70">
-                    09:00 - 18:00 · Pzt-Cum
+                    Pzt-Cum 09:00-18:00 · Cmt 09:00-17:00
                   </div>
                 </div>
                 <button

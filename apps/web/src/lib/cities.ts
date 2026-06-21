@@ -2,7 +2,7 @@
  * Şehir + ilçe verileri — local SEO landing page'leri için.
  *
  * Strateji: Mersin merkez şehri (atölyeye en yakın), Akdeniz/Doğu Akdeniz
- * bölgesi (1 günlük kargo) + Mersin ilçeleri (aynı gün motor kuryeci).
+ * bölgesi (1 günlük kargo) + Mersin ilçeleri (kargo/kurye ile 1-2 iş günü).
  *
  * Slug'lar URL'de "matbaa" kelimesini içerir (URL-keyword match).
  */
@@ -13,7 +13,7 @@ export interface CityData {
   region: "akdeniz" | "guneydogu";
   /** Kargo ulaşım süresi (iş günü) */
   deliveryDays: { min: number; max: number };
-  /** Aynı gün motor kurye var mı */
+  /** Aynı gün motor kurye var mı (artık hiçbir şehirde sunulmuyor) */
   sameDayCourier: boolean;
   /** Bölgenin yaklaşık nüfus (binin) — content için */
   population: string;
@@ -41,7 +41,7 @@ export interface District {
   parentCity: string;
   /** Mahalle/iş bölgesi/sanayi sitesi listesi */
   neighborhoods: string[];
-  /** Aynı gün teslim mi */
+  /** Aynı gün teslim mi (artık hiçbir ilçede sunulmuyor) */
   sameDayDelivery: boolean;
   intro: string;
 }
@@ -60,9 +60,9 @@ const MERSIN_DISTRICTS: District[] = [
       "Gazipaşa Mahallesi",
       "Yeşil Mahalle",
     ],
-    sameDayDelivery: true,
+    sameDayDelivery: false,
     intro:
-      "Tarsus, Mersin'in en yoğun ticaret hacmine sahip ilçelerinden. Otomotiv yan sanayi, tekstil, gıda işletmeleri için kartvizit-broşür-magnet-antetli kâğıt taleplerine motor kurye ile aynı gün teslim sağlıyoruz.",
+      "Tarsus, Mersin'in en yoğun ticaret hacmine sahip ilçelerinden. Otomotiv yan sanayi, tekstil, gıda işletmeleri için kartvizit-broşür-magnet-antetli kâğıt taleplerine kargo/kurye ile 1-2 iş günü teslim sağlıyoruz.",
   },
   {
     slug: "yenisehir",
@@ -77,9 +77,9 @@ const MERSIN_DISTRICTS: District[] = [
       "Menteş",
       "Fındıkpınarı",
     ],
-    sameDayDelivery: true,
+    sameDayDelivery: false,
     intro:
-      "Yenişehir, Mersin'in modern iş ve eğitim merkezi. Mersin Üniversitesi, hastaneler, hukuk büroları ve danışmanlık ofisleri için kurumsal kimlik, antetli kâğıt, dosya ve bloknot ihtiyaçlarına 1-2 saat içinde ulaştırma.",
+      "Yenişehir, Mersin'in modern iş ve eğitim merkezi. Mersin Üniversitesi, hastaneler, hukuk büroları ve danışmanlık ofisleri için kurumsal kimlik, antetli kâğıt, dosya ve bloknot ihtiyaçlarına kargo/kurye ile 1-2 iş günü teslim.",
   },
   {
     slug: "akdeniz",
@@ -94,7 +94,7 @@ const MERSIN_DISTRICTS: District[] = [
       "Liman Caddesi",
       "Anadolu Mahallesi",
     ],
-    sameDayDelivery: true,
+    sameDayDelivery: false,
     intro:
       "Akdeniz ilçesi Mersin Liman bölgesini ve eski şehir merkezini kapsar. Lojistik firmaları, ihracatçılar, gümrük müşavirleri için kaşe, etiket, faturalama formu ve nakliye broşürlerinde uzmanız.",
   },
@@ -110,7 +110,7 @@ const MERSIN_DISTRICTS: District[] = [
       "Toroslar Sanayi",
       "Demirhisar",
     ],
-    sameDayDelivery: true,
+    sameDayDelivery: false,
     intro:
       "Toroslar, üretim ve sanayi sitelerinin yoğun olduğu ilçe. İmalathaneler, atölyeler ve toptancılar için yapışkanlı etiket, koli yazı, magnet ve kartvizit baskısında hızlı çözüm sunuyoruz.",
   },
@@ -125,7 +125,7 @@ const MERSIN_DISTRICTS: District[] = [
       "Soğucak",
       "Kuzucubelen",
     ],
-    sameDayDelivery: true,
+    sameDayDelivery: false,
     intro:
       "Mezitli, sahil bandında turistik tesislerin yoğun olduğu ilçe. Otel, restoran, kafe ve emlak ofisleri için menü kartı, masa standı, broşür ve afiş baskısında deneyimliyiz.",
   },
@@ -180,11 +180,11 @@ export const cities: CityData[] = [
     slug: "mersin",
     name: "Mersin",
     region: "akdeniz",
-    deliveryDays: { min: 0, max: 1 },
-    sameDayCourier: true,
+    deliveryDays: { min: 1, max: 2 },
+    sameDayCourier: false,
     population: "1.916.000",
     intro:
-      "Mersin merkezli matbaa atölyemiz, şehir içi siparişlere aynı gün motor kurye, çevre ilçelere 1 iş günü teslimat sağlar. Mersin Limanı, Yenişehir ticaret bölgesi, Tarsus OSB ve Toroslar sanayi siteleri çevresinde 12.000+ aktif müşteriye matbaa hizmeti veriyoruz.",
+      "Mersin merkezli matbaa atölyemiz, Mersin ve çevresine kurye/kargo ile 1-2 iş günü teslimat sağlar. Mersin Limanı, Yenişehir ticaret bölgesi, Tarsus OSB ve Toroslar sanayi siteleri çevresinde 12.000+ aktif müşteriye matbaa hizmeti veriyoruz.",
     districts: MERSIN_DISTRICTS,
     popularProducts: [
       "Klasik kartvizit (selefonlu/UV/yaldız)",
@@ -203,7 +203,7 @@ export const cities: CityData[] = [
       "Mersin Üniversitesi yan binaları (4 fakülte)",
     ],
     commonNeeds: [
-      "Aynı gün acil kartvizit (5 saat içinde)",
+      "Hızlı kartvizit baskı",
       "Mersin Limanı evrak ve etiket baskısı",
       "Sanayi sitelerinde forma kâğıt ve makbuz",
       "Üniversite çevresinde fotokopi-baskı dışı premium iş",
@@ -211,8 +211,8 @@ export const cities: CityData[] = [
     ],
     faqs: [
       {
-        q: "Mersin'de aynı gün kartvizit baskı yapıyor musunuz?",
-        a: "Evet. Mersin merkez ilçelerinde sabah 11:00'a kadar verilen siparişler aynı gün üretilir, motor kurye ile teslim edilir. Diğer Mersin ilçelerine 1 iş günü içinde ulaşır.",
+        q: "Mersin'de kartvizit baskı yapıyor musunuz?",
+        a: "Evet. Mersin ve ilçelerine kurye/kargo ile genellikle 1-2 iş günü içinde teslim ediyoruz.",
       },
       {
         q: "Mersin'de matbaa ücreti rakiplerden farklı mı?",
@@ -220,11 +220,11 @@ export const cities: CityData[] = [
       },
       {
         q: "Tarsus, Yenişehir, Toroslar, Mezitli'ye teslim ediyor musunuz?",
-        a: "Evet, Mersin'in 13 ilçesinin tamamına kurye veya kargo ile teslim ediyoruz. Merkez ilçelere aynı gün, çevre ilçelere 1 iş günü içinde teslim sağlanır.",
+        a: "Evet, Mersin'in 13 ilçesinin tamamına kurye veya kargo ile teslim ediyoruz. Mersin'in tüm ilçelerine kurye/kargo ile 1-2 iş günü içinde teslim sağlanır.",
       },
       {
         q: "Mersin Limanı'na evrak baskısı yapar mısınız?",
-        a: "Evet. Lojistik şirketleri, gümrük müşavirleri ve ihracatçılar için CMR, sevk irsaliyesi, etiket ve konteyner numarası baskısı yapıyoruz. Acil işlerde 2-3 saat içinde teslim mümkün.",
+        a: "Evet. Lojistik şirketleri, gümrük müşavirleri ve ihracatçılar için CMR, sevk irsaliyesi, etiket ve konteyner numarası baskısı yapıyoruz.",
       },
       {
         q: "Mersin'deki ofisinizi ziyaret edebilir miyim?",
@@ -271,7 +271,7 @@ export const cities: CityData[] = [
       },
       {
         q: "Antalya bölgesinde toplu sipariş indirimi var mı?",
-        a: "Evet. 50.000 ₺ üzeri toplu otel-restoran siparişlerinde %10-15 ek indirim, açık fatura ve aylık kapanış imkânı sunuyoruz. Kurumsal hesap başvurusu yapabilirsiniz.",
+        a: "Evet. Toplu otel-restoran siparişlerinde firmanıza özel avantajlı fiyatlandırma, açık fatura ve aylık kapanış imkânı sunuyoruz. Kurumsal hesap başvurusu yapabilirsiniz.",
       },
     ],
     geo: { lat: 36.896891, lng: 30.713323 },

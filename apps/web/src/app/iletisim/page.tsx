@@ -28,7 +28,7 @@ const channels = [
     icon: Phone,
     label: "Telefon",
     value: "0324 433 33 51",
-    sub: "Hafta içi 09:00 — 18:30",
+    sub: "Hafta içi 09:00 — 18:00",
     href: "tel:+903244333351",
     accent: "bg-brand-100 text-brand-700",
     cta: "Hemen ara",
@@ -46,7 +46,7 @@ const channels = [
 
 const offices = [
   { icon: Buildings, title: "Atölye / Showroom", value: "Mersin, Türkiye", sub: "Önceden randevu ile ziyaret" },
-  { icon: Clock, title: "Çalışma Saatleri", value: "Pzt - Cmt 09:00 - 18:30", sub: "Pazar kapalı" },
+  { icon: Clock, title: "Çalışma Saatleri", value: "Pzt-Cum 09:00-18:00 · Cmt 09:00-17:00", sub: "Pazar kapalı" },
   { icon: Users, title: "Kurumsal Satış", value: "B2B özel teklif", sub: "Aylık fatura · cari hesap" },
 ];
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  PaintBrush, Stack, Lightning, ArrowRight,
+  PaintBrush, Stack, ArrowRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { services } from "@/lib/services";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -10,14 +10,14 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 const SITE = "https://markala.com.tr";
 
 export const metadata: Metadata = {
-  title: "Matbaa Hizmetleri — Tasarım Desteği, Toplu Baskı, Acil Üretim",
+  title: "Matbaa Hizmetleri — Tasarım Desteği, Toplu Baskı",
   description:
-    "Markala matbaa hizmetleri: ücretsiz tasarım desteği, toplu sipariş indirimi, aynı gün acil baskı. 3 hizmet kategorisinde detaylı bilgi.",
+    "Markala matbaa hizmetleri: ücretsiz tasarım desteği, toplu sipariş indirimi ve kurumsal çözümler. Detaylı bilgi.",
   alternates: { canonical: "/hizmetler" },
   openGraph: {
     type: "website",
     title: "Markala Matbaa Hizmetleri",
-    description: "Tasarım desteği, toplu baskı ve acil üretim hizmetleri.",
+    description: "Tasarım desteği ve toplu baskı hizmetleri.",
     url: "/hizmetler",
   },
 };
@@ -25,7 +25,6 @@ export const metadata: Metadata = {
 const icons = {
   "tasarim-destegi": PaintBrush,
   "toplu-baski": Stack,
-  "acil-baski": Lightning,
 };
 
 export default function HizmetlerHubPage() {
@@ -48,9 +47,8 @@ export default function HizmetlerHubPage() {
             Sadece baskı değil — tam matbaa çözümü
           </h1>
           <p className="mt-4 text-lg text-ink-700">
-            Ücretsiz tasarım desteğinden toplu kurumsal indirime, aynı gün acil
-            üretime kadar her ihtiyaca özel hizmet. 324 Ajans deneyimiyle 10+
-            yıldır.
+            Ücretsiz tasarım desteğinden toplu kurumsal indirime kadar her
+            ihtiyaca özel hizmet. 324 Ajans deneyimiyle 10+ yıldır.
           </p>
         </Container>
       </div>

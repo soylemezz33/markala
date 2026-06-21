@@ -145,7 +145,7 @@ export default async function PriceListPage() {
               href="/kurumsal"
               className="font-semibold underline hover:text-amber-700"
             >
-              Kurumsal hesap (B2B) %10-15 ek indirim
+              Kurumsal hesap (B2B) firmanıza özel avantajlı fiyat
             </Link>
             .
           </div>
@@ -295,8 +295,8 @@ export default async function PriceListPage() {
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
-                <strong className="text-ink-900">Kurumsal indirim:</strong> 50.000 ₺/yıl harcamalı
-                B2B müşterilere %10-15 ek indirim, açık fatura, ay sonu kapanış.
+                <strong className="text-ink-900">Kurumsal indirim:</strong> Düzenli sipariş veren
+                B2B müşterilere firmanıza özel avantajlı fiyatlandırma, açık fatura, ay sonu kapanış.
               </span>
             </li>
           </ul>

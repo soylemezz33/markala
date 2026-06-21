@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Kurumsal Hesap Başvurusu — Cari Hesap & Açık Fatura",
   description:
-    "Markala kurumsal hesap başvuru formu. Vergi levhası ve imza sirküleri ile başvurun; cari hesap, 30 gün açık fatura ve %10-15 ek indirim avantajlarından yararlanın.",
+    "Markala kurumsal hesap başvuru formu. Vergi levhası ve imza sirküleri ile başvurun; cari hesap, 30 gün açık fatura ve firmanıza özel avantajlı fiyatlandırmadan yararlanın.",
   alternates: { canonical: "/kurumsal/basvuru" },
   openGraph: {
     type: "website",

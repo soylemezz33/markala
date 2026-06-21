@@ -7,9 +7,9 @@ import {
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Kurumsal Hesap — B2B Cari, Açık Fatura, %10-15 İndirim",
+  title: "Kurumsal Hesap — B2B Cari, Açık Fatura, Avantajlı Fiyat",
   description:
-    "Markala kurumsal hesap: cari hesap, 30 gün açık fatura, ay sonu kapanış, %10-15 ek indirim, özelleştirilmiş katalog, dedicated müşteri temsilcisi.",
+    "Markala kurumsal hesap: cari hesap, 30 gün açık fatura, ay sonu kapanış, firmanıza özel avantajlı fiyatlandırma, özelleştirilmiş katalog, dedicated müşteri temsilcisi.",
   alternates: { canonical: "/kurumsal" },
 };
 
@@ -21,8 +21,8 @@ const benefits = [
   },
   {
     icon: ChartLineUp,
-    title: "%10-15 Ek İndirim",
-    desc: "Bireysel fiyatların üzerine yıllık ciroya göre kademeli iskonto.",
+    title: "Firmanıza Özel Avantajlı Fiyat",
+    desc: "Bireysel fiyatların üzerine sipariş hacminize göre özel fiyatlandırma.",
   },
   {
     icon: Package,
@@ -56,8 +56,8 @@ export default function KurumsalPage() {
             Kurumsal müşterilere özel avantajlar
           </h1>
           <p className="mt-4 text-lg text-paper-100/70 max-w-xl mx-auto">
-            Cari hesap, açık fatura, ek indirim ve dedicated temsilci.
-            Yıllık 50.000 ₺+ matbaa harcaması yapan firmalara açık.
+            Cari hesap, açık fatura, firmanıza özel avantajlı fiyatlandırma ve
+            dedicated temsilci. Düzenli matbaa ihtiyacı olan firmalara açık.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link

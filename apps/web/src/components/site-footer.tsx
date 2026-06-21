@@ -55,7 +55,6 @@ export function SiteFooter() {
         <FooterColumn title="Araçlar & Rehberler">
           <FooterLink href="/hizmetler/tasarim-destegi">Ücretsiz Tasarım Desteği</FooterLink>
           <FooterLink href="/hizmetler/toplu-baski">Toplu Baskı</FooterLink>
-          <FooterLink href="/hizmetler/acil-baski">Acil Baskı</FooterLink>
           <FooterLink href="/fiyat-listesi">Fiyat Listesi</FooterLink>
           <FooterLink href="/sozluk">Matbaa Sözlüğü</FooterLink>
           <FooterLink href="/yardim/dosya-hazirlama">Dosya Hazırlama Rehberi</FooterLink>
