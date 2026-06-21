@@ -55,7 +55,9 @@ export function TrustBadges() {
               <div className="inline-flex w-12 h-12 items-center justify-center text-brand-500 mb-3">
                 <b.icon size={32} weight="regular" />
               </div>
-              <h3 className="font-semibold text-ink-900 text-base">{b.title}</h3>
+              {/* Kart etiketi — doküman başlığı DEĞİL: <h3> kullanmak h1→h3 seviye
+                  atlaması yaratıyordu (a11y). Görünüm aynı, semantik <p>. */}
+              <p className="font-semibold text-ink-900 text-base">{b.title}</p>
               <p className="mt-2 text-sm text-ink-500 leading-relaxed">{b.desc}</p>
             </motion.li>
           ))}
