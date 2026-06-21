@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
+import { renderEmail, emailRow, emailTable } from "@/lib/email-template";
 
 // nodemailer Node.js API'lerine ihtiyaç duyar — edge runtime'da çalışmaz.
 export const runtime = "nodejs";
@@ -106,18 +107,23 @@ export async function POST(req: NextRequest) {
     message,
   ].join("\n");
 
-  const html = `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a">
-    <h2 style="margin:0 0 4px">Yeni iletişim formu mesajı</h2>
-    <p style="color:#999;font-size:12px;margin:0 0 16px">Ticket: ${escapeHtml(ticketId)}</p>
-    <table style="border-collapse:collapse;font-size:14px;width:100%">
-      <tr><td style="padding:4px 8px;color:#666;white-space:nowrap;vertical-align:top">Ad Soyad</td><td style="padding:4px 8px;font-weight:600">${escapeHtml(name)}</td></tr>
-      <tr><td style="padding:4px 8px;color:#666;vertical-align:top">E-posta</td><td style="padding:4px 8px"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
-      <tr><td style="padding:4px 8px;color:#666;vertical-align:top">Telefon</td><td style="padding:4px 8px">${escapeHtml(phone || "-")}</td></tr>
-      <tr><td style="padding:4px 8px;color:#666;vertical-align:top">Konu</td><td style="padding:4px 8px">${escapeHtml(subject)}</td></tr>
-    </table>
-    <hr style="border:none;border-top:1px solid #eee;margin:16px 0">
-    <p style="white-space:pre-wrap;font-size:14px;line-height:1.5">${escapeHtml(message)}</p>
-  </div>`;
+  const rows = emailTable(
+    emailRow("Ad Soyad", `<strong>${escapeHtml(name)}</strong>`) +
+      emailRow("E-posta", `<a href="mailto:${escapeHtml(email)}" style="color:#5C4100">${escapeHtml(email)}</a>`) +
+      emailRow("Telefon", escapeHtml(phone || "-")) +
+      emailRow("Konu", escapeHtml(subject)),
+  );
+  const html = renderEmail({
+    title: "Yeni İletişim Formu Mesajı",
+    intro: `Talep No: ${escapeHtml(ticketId)}`,
+    preheader: `${escapeHtml(name)} — ${escapeHtml(subject)}`,
+    bodyHtml: `${rows}
+      <div style="margin-top:18px;padding-top:16px;border-top:1px solid #e7e5e4">
+        <p style="margin:0 0 6px;color:#78716c;font-size:13px">Mesaj</p>
+        <p style="margin:0;white-space:pre-wrap;font-size:14px;line-height:1.6;color:#1A1410">${escapeHtml(message)}</p>
+      </div>`,
+    footnote: "Bu mesaja doğrudan yanıtlayarak müşteriye dönüş yapabilirsiniz (Yanıtla → müşteri e-postası).",
+  });
 
   try {
     await sendMail({

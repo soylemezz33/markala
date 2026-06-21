@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
+import { renderEmail, emailRow, emailTable } from "@/lib/email-template";
 
 // nodemailer Node.js API'lerine ihtiyaç duyar — edge runtime'da çalışmaz.
 export const runtime = "nodejs";
@@ -112,13 +113,15 @@ export async function POST(req: NextRequest) {
     ...rows.map(([k, v]) => `${k}: ${v}`),
   ].join("\n");
 
-  const html = `<div style="font-family:system-ui,sans-serif;max-width:580px;margin:0 auto;color:#1a1a1a">
-    <h2 style="margin:0 0 4px">Yeni kurumsal (B2B) başvuru</h2>
-    <p style="color:#999;font-size:12px;margin:0 0 16px">Ref: ${escapeHtml(refId)}</p>
-    <table style="border-collapse:collapse;font-size:14px;width:100%">
-      ${rows.map(([k, v]) => `<tr><td style="padding:4px 8px;color:#666;white-space:nowrap;vertical-align:top">${escapeHtml(k)}</td><td style="padding:4px 8px">${escapeHtml(v)}</td></tr>`).join("")}
-    </table>
-  </div>`;
+  const html = renderEmail({
+    title: "Yeni Kurumsal (B2B) Başvuru",
+    intro: `Referans: ${escapeHtml(refId)}`,
+    preheader: `${escapeHtml(companyName)} — kurumsal hesap başvurusu`,
+    bodyHtml: emailTable(
+      rows.map(([k, v]) => emailRow(escapeHtml(k), escapeHtml(v))).join(""),
+    ),
+    footnote: "Başvuruyu admin panelinden (Kurumsal Başvurular) değerlendirebilir; bu mesaja yanıtlayarak başvurana dönüş yapabilirsiniz.",
+  });
 
   try {
     await sendMail({
