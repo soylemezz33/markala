@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { cn } from "@markala/ui";
 import type { ProductParameter } from "@markala/types";
 
@@ -241,7 +242,7 @@ export function MatrixField({ param, value, onSelect }: Props) {
       )}
 
       <p className="text-[11px] text-ink-500 leading-relaxed">
-        ⓘ Tüm fiyatlar KDV dahildir. Üretim adedinde %1-5 fire payı olabilir — sözleşme şartları için <a href="/yasal/mesafeli-satis" className="underline">bakınız</a>.
+        ⓘ Tüm fiyatlar KDV dahildir. Üretim adedinde %1-5 fire payı olabilir — sözleşme şartları için <Link href="/yasal/mesafeli-satis" className="underline">bakınız</Link>.
       </p>
     </div>
   );

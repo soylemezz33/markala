@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Container } from "@markala/ui";
 import { Warning } from "@phosphor-icons/react/dist/ssr";
 
@@ -12,9 +13,9 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <span>
               <strong>TASLAK:</strong> Bu belge hukuk müşaviri incelemesinden geçmemiştir; yayına
               alınmadan önce onay zorunludur. Yayın öncesi son halini{" "}
-              <a href="/yasal/kvkk" className="underline font-medium hover:text-yellow-900">
+              <Link href="/yasal/kvkk" className="underline font-medium hover:text-yellow-900">
                 yasal sayfasında
-              </a>{" "}
+              </Link>{" "}
               bulabilirsiniz.
             </span>
           </div>

@@ -438,9 +438,9 @@ export default function CheckoutPage() {
                   branda, kaşe, plaket vb.). 6502 Sayılı TKHK m.55/1-c gereğince tüketicinin istekleri
                   doğrultusunda hazırlanan ürünlerde <strong>cayma hakkı kullanılamaz</strong>.
                   Üretim hatası veya teslimat hasarı halinde ücretsiz değişim hakkı saklıdır.{" "}
-                  <a href="/yasal/iade" className="underline font-medium hover:text-amber-700">
+                  <Link href="/yasal/iade" className="underline font-medium hover:text-amber-700">
                     Detaylı bilgi →
-                  </a>
+                  </Link>
                 </p>
               </div>
 

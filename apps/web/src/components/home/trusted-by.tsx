@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Container } from "@markala/ui";
 import { getBrands } from "@/lib/brands";
 
@@ -49,9 +50,9 @@ export async function TrustedBy() {
 
         <p className="mt-10 text-center text-xs text-ink-500">
           Logonu burada görmek ister misin?{" "}
-          <a href="/kurumsal/basvuru" className="text-brand-700 font-medium hover:underline">
+          <Link href="/kurumsal/basvuru" className="text-brand-700 font-medium hover:underline">
             Kurumsal hesap aç →
-          </a>
+          </Link>
         </p>
       </Container>
     </section>
