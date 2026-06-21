@@ -37,6 +37,18 @@ export class CreateCouponDto {
   isActive?: boolean;
 }
 
+/** Public kupon doğrulama (checkout'ta anında geçerlilik + indirim). */
+export class ValidateCouponDto {
+  @IsString() @MinLength(2) @MaxLength(40)
+  code!: string;
+
+  @IsNumber({ maxDecimalPlaces: 2 }) @Min(0)
+  subtotal!: number;
+
+  @IsString() @IsOptional()
+  email?: string;
+}
+
 export class UpdateCouponDto {
   @IsString() @IsOptional() @MinLength(2) @MaxLength(40)
   code?: string;

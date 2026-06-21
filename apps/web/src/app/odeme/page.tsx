@@ -59,19 +59,46 @@ export default function CheckoutPage() {
   const [payError, setPayError] = useState<string | null>(null);
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponChecking, setCouponChecking] = useState(false);
+  // Backend'den doğrulanmış kupon (gerçek indirim) — client tahmini (KNOWN_COUPONS) yerine.
+  const [couponInfo, setCouponInfo] = useState<{ code: string; discount: number; freeShipping: boolean } | null>(null);
   // Ödeme yolu seçimi — kart (iyzico) veya cari (açık hesap). Cari yalnız kurumsal üyeye sunulur;
   // "approved" şartını backend doğrular (uygun değilse anlaşılır hata döner, payError'da gösterilir).
   const [paymentMethod, setPaymentMethod] = useState<"iyzico" | "cari">("iyzico");
 
-  function handleApplyCoupon() {
+  // Kupon ANINDA backend'de doğrulanır → gerçek geçerlilik (tarih/min-tutar/ilk-sipariş/limit)
+  // + gerçek indirim tutarı. Tüm DB kuponları çalışır (yalnız HOSGELDIN değil); geçersizde
+  // net sebep gösterilir. Backend hata verirse KNOWN_COUPONS ile zarif fallback.
+  async function handleApplyCoupon() {
     const code = couponInput.trim().toUpperCase();
     setCouponError(null);
-    if (!code) return;
-    if (KNOWN_COUPONS[code] && sub > 0) {
-      setCoupon(code);
-      setCouponInput("");
-    } else {
-      setCouponError("Geçersiz veya süresi dolmuş kupon kodu.");
+    if (!code || sub <= 0) return;
+    setCouponChecking(true);
+    try {
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
+      const res = await fetch(`${apiBase}/api/coupons/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal: sub, email: email || undefined }),
+      });
+      const data = await res.json().catch(() => null);
+      if (data && data.valid) {
+        setCouponInfo({ code: data.code, discount: Number(data.discount) || 0, freeShipping: Boolean(data.freeShipping) });
+        setCoupon(code);
+        setCouponInput("");
+      } else if (data && data.reason) {
+        setCouponInfo(null);
+        setCouponError(data.reason);
+      } else {
+        // Backend ulaşılamadı → bilinen kupon için zarif fallback (gerçek indirim siparişte kesinleşir).
+        if (KNOWN_COUPONS[code]) { setCoupon(code); setCouponInput(""); }
+        else setCouponError("Kupon şu an kontrol edilemedi, lütfen tekrar deneyin.");
+      }
+    } catch {
+      if (KNOWN_COUPONS[code]) { setCoupon(code); setCouponInput(""); }
+      else setCouponError("Kupon şu an kontrol edilemedi, lütfen tekrar deneyin.");
+    } finally {
+      setCouponChecking(false);
     }
   }
 
@@ -81,12 +108,21 @@ export default function CheckoutPage() {
   const canUseCari = Boolean(user && user.accountType === "corporate");
 
   const sub = subtotal();
-  const appliedCoupon = couponCode && KNOWN_COUPONS[couponCode] ? couponCode : null;
-  const discount = appliedCoupon ? sub * (KNOWN_COUPONS[appliedCoupon] ?? 0) : 0;
+  // İndirim önceliği: backend-doğrulanmış couponInfo (gerçek tutar) → yoksa KNOWN_COUPONS tahmini
+  // (sayfa yenilenince couponInfo local state kaybolur ama couponCode store'da kalır; gerçek
+  // indirim her hâlükârda siparişte backend'de yeniden hesaplanıp tahsil edilir).
+  const backendCoupon = couponInfo && couponInfo.code === couponCode ? couponInfo : null;
+  const appliedCoupon = couponCode && (backendCoupon || KNOWN_COUPONS[couponCode]) ? couponCode : null;
+  const discount = backendCoupon
+    ? backendCoupon.discount
+    : appliedCoupon
+      ? sub * (KNOWN_COUPONS[appliedCoupon] ?? 0)
+      : 0;
   const subAfterDiscount = Math.max(0, sub - discount);
   // Kargo eşiği İNDİRİM ÖNCESİ ara toplama göre — sepet ekranı VE backend ile birebir aynı
   // (aksi halde kuponlu siparişte sepet "ücretsiz" derken ödeme 79₺ ekleyebiliyordu).
-  const shipping = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+  // free_shipping kuponu (backend doğruladıysa) kargoyu sıfırlar.
+  const shipping = backendCoupon?.freeShipping || sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
   const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE); // KDV DAHİL fiyat → içindeki KDV payı (üstüne eklenmez)
   const total = subAfterDiscount + shipping;
 
@@ -650,8 +686,8 @@ export default function CheckoutPage() {
                         placeholder="Kupon kodu"
                         className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
                       />
-                      <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!couponInput.trim()}>
-                        Uygula
+                      <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!couponInput.trim() || couponChecking}>
+                        {couponChecking ? "Kontrol…" : "Uygula"}
                       </Button>
                     </div>
                     {couponError && <p className="mt-1.5 text-xs text-error">{couponError}</p>}

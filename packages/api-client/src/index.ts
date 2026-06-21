@@ -273,6 +273,9 @@ export class MarkalaApiClient {
   // === Coupons ===
   coupons = {
     list: () => this.request<CouponDto[]>("GET", "/coupons", undefined, { auth: true }),
+    /** Public: checkout'ta kupon anında doğrulama → geçerlilik + gerçek indirim tutarı. */
+    validate: (data: { code: string; subtotal: number; email?: string }) =>
+      this.request<CouponValidateResult>("POST", "/coupons/validate", data),
     create: (data: Partial<CouponDto>) => this.request<CouponDto>("POST", "/coupons", data, { auth: true }),
     update: (id: string, data: Partial<CouponDto>) => this.request<CouponDto>("PATCH", `/coupons/${id}`, data, { auth: true }),
     remove: (id: string) => this.request<void>("DELETE", `/coupons/${id}`, undefined, { auth: true }),
@@ -493,6 +496,18 @@ export interface CouponDto {
   firstOrderOnly?: boolean;
   createdAt: string;
 }
+
+/** Public kupon doğrulama yanıtı — geçerliyse gerçek indirim tutarıyla. */
+export type CouponValidateResult =
+  | { valid: false; reason: string }
+  | {
+      valid: true;
+      code: string;
+      type: "percentage" | "fixed_amount" | "free_shipping";
+      value: number;
+      discount: number;
+      freeShipping: boolean;
+    };
 
 export interface HeroSlideDto {
   id: string;
