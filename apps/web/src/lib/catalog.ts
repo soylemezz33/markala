@@ -56,7 +56,11 @@ function mapProduct(p: ApiProduct): Product {
         ? (p.parameters as Product["parameters"])
         : (mock?.parameters ?? []),
     bestseller: Boolean(p.bestseller),
-    rating: (content.rating as Product["rating"]) ?? mock?.rating,
+    // SAHTE PUAN YOK: yalnız gerçek (API content) rating. mock fallback KALDIRILDI — eskiden
+    // canlı ürün mock slug'ıyla eşleşince sahte "★4.8 (64 yorum)" gösteriyordu (yorum bölümü "henüz
+    // yorum yok" derken çelişki + sahte JSON-LD aggregateRating = Google ceza riski). Gerçek yorum
+    // birikince content.rating dolar (bkz. json-ld TODO).
+    rating: (content.rating as Product["rating"]) ?? undefined,
     features: (content.features as string[]) ?? mock?.features,
     useCases: (content.useCases as string[]) ?? mock?.useCases,
     specifications: (content.specifications as Product["specifications"]) ?? mock?.specifications,

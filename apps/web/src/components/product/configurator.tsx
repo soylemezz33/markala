@@ -52,15 +52,18 @@ export function Configurator({ product }: { product: Product }) {
       <div className="space-y-6">
         <div>
           <h1 className="text-display-md font-serif text-ink-900">{product.name}</h1>
-          {product.rating && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-ink-500">
-              <span className="text-brand-500">★</span>
-              <span className="font-medium text-ink-900">{product.rating.average.toFixed(1)}</span>
-              <span>({product.rating.count} yorum)</span>
-              <span className="mx-1 text-paper-200">·</span>
-              <span>Üretim: {product.productionTime}</span>
-            </div>
-          )}
+          {/* Üretim süresi HER ZAMAN; puan yalnız GERÇEK varsa (sahte mock puan kaldırıldı). */}
+          <div className="mt-2 flex items-center gap-2 text-sm text-ink-500">
+            {product.rating && (
+              <>
+                <span className="text-brand-500">★</span>
+                <span className="font-medium text-ink-900">{product.rating.average.toFixed(1)}</span>
+                <span>({product.rating.count} yorum)</span>
+                <span className="mx-1 text-paper-200">·</span>
+              </>
+            )}
+            <span>Üretim: {product.productionTime}</span>
+          </div>
         </div>
 
         <p className="text-ink-700 leading-relaxed">{product.shortDescription}</p>
