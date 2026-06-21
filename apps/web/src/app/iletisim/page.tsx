@@ -16,7 +16,9 @@ const channels = [
   {
     icon: WhatsappLogo,
     label: "WhatsApp",
-    value: "0324 433 33 51",
+    // Görünen numara, href'teki GERÇEK WhatsApp hattıyla (wa.me/905319004102) tutarlı
+    // olmalı — önce sabit hat (0324…) yazılıydı, tık GSM'e açılıp kullanıcıyı şaşırtıyordu.
+    value: "0531 900 41 02",
     sub: "En hızlı kanal · ortalama 5 dk yanıt",
     href: "https://wa.me/905319004102",
     accent: "bg-success/10 text-success",
