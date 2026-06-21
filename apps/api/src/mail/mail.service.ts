@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
+import { renderEmail, emailButton, emailFallbackLink } from "./email-layout";
 
 @Injectable()
 export class MailService {
@@ -35,14 +36,15 @@ export class MailService {
   async sendVerificationEmail(to: string, verifyUrl: string): Promise<boolean> {
     const subject = "Markala — E-posta adresinizi doğrulayın";
     const text = `Markala hesabınızı etkinleştirmek için bağlantıya tıklayın:\n${verifyUrl}\n\nBağlantı 24 saat geçerlidir. Bu işlemi siz başlatmadıysanız e-postayı yok sayın.\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
-    const html = `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto">
-      <h2 style="color:#1a1a1a">Markala'ya hoş geldin 👋</h2>
-      <p>Hesabını etkinleştirmek için aşağıdaki butona tıkla:</p>
-      <p><a href="${verifyUrl}" style="display:inline-block;background:#F5B800;color:#1a1a1a;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">E-postamı doğrula</a></p>
-      <p style="color:#666;font-size:13px">Bağlantı 24 saat geçerlidir. Buton çalışmazsa: <br><a href="${verifyUrl}">${verifyUrl}</a></p>
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-      <p style="color:#999;font-size:12px">Bu işlemsel bir iletidir. Markala — 324 Ajans BT tarafından gönderilmiştir.</p>
-    </div>`;
+    const html = renderEmail({
+      title: "Markala'ya hoş geldiniz 👋",
+      intro: "Hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın.",
+      preheader: "E-posta adresinizi doğrulayın — bağlantı 24 saat geçerli.",
+      bodyHtml: `<p style="margin:0">Hesabınızı etkinleştirmek için aşağıdaki butona tıklayın:</p>
+        ${emailButton("E-postamı doğrula", verifyUrl)}
+        ${emailFallbackLink(verifyUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bağlantı 24 saat geçerlidir. Bu işlemi siz başlatmadıysanız e-postayı yok sayın.</p>`,
+    });
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
@@ -59,15 +61,15 @@ export class MailService {
   async sendPasswordResetEmail(to: string, resetUrl: string): Promise<boolean> {
     const subject = "Markala — Şifre sıfırlama talebi";
     const text = `Markala hesabınızın şifresini sıfırlamak için bağlantıya tıklayın:\n${resetUrl}\n\nBağlantı 1 saat geçerlidir. Bu talebi siz oluşturmadıysanız e-postayı yok sayın; şifreniz değişmez.\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
-    const html = `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto">
-      <h2 style="color:#1a1a1a">Şifre sıfırlama</h2>
-      <p>Markala hesabının şifresini sıfırlamak için aşağıdaki butona tıkla:</p>
-      <p><a href="${resetUrl}" style="display:inline-block;background:#F5B800;color:#1a1a1a;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Şifremi sıfırla</a></p>
-      <p style="color:#666;font-size:13px">Bağlantı 1 saat geçerlidir. Buton çalışmazsa: <br><a href="${resetUrl}">${resetUrl}</a></p>
-      <p style="color:#666;font-size:13px">Bu talebi sen oluşturmadıysan bu e-postayı yok say — şifren değişmez.</p>
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-      <p style="color:#999;font-size:12px">Bu işlemsel bir iletidir. Markala — 324 Ajans BT tarafından gönderilmiştir.</p>
-    </div>`;
+    const html = renderEmail({
+      title: "Şifre Sıfırlama",
+      intro: "Markala hesabınızın şifresini sıfırlama talebi aldık.",
+      preheader: "Şifre sıfırlama bağlantısı — 1 saat geçerli.",
+      bodyHtml: `<p style="margin:0">Şifrenizi sıfırlamak için aşağıdaki butona tıklayın:</p>
+        ${emailButton("Şifremi sıfırla", resetUrl)}
+        ${emailFallbackLink(resetUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bağlantı 1 saat geçerlidir. Bu talebi siz oluşturmadıysanız bu e-postayı yok sayın — şifreniz değişmez.</p>`,
+    });
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
@@ -88,15 +90,15 @@ export class MailService {
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     const subject = "Markala — Kurumsal hesabınız onaylandı";
     const text = `${companyName} kurumsal hesabınız onaylandı. Panele giriş için önce şifrenizi belirleyin:\n${inviteUrl}\n\nBağlantı 7 gün geçerlidir.\n\nMarkala — 324 Ajans BT (işlemsel ileti).`;
-    const html = `<div style="font-family:system-ui,sans-serif;max-width:520px;margin:0 auto">
-      <h2 style="color:#1a1a1a">Kurumsal hesabınız onaylandı 🎉</h2>
-      <p><strong>${safeCompany}</strong> için kurumsal hesabınız aktif edildi. Panele giriş yapmak için önce şifrenizi belirleyin:</p>
-      <p><a href="${inviteUrl}" style="display:inline-block;background:#F5B800;color:#1a1a1a;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Şifremi belirle ve giriş yap</a></p>
-      <p style="color:#666;font-size:13px">Bağlantı 7 gün geçerlidir. Buton çalışmazsa: <br><a href="${inviteUrl}">${inviteUrl}</a></p>
-      <p style="color:#666;font-size:13px">Giriş sonrası kurumsal indiriminiz, sipariş geçmişiniz ve hesabınız tek panelde.</p>
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-      <p style="color:#999;font-size:12px">Bu işlemsel bir iletidir. Markala — 324 Ajans BT tarafından gönderilmiştir.</p>
-    </div>`;
+    const html = renderEmail({
+      title: "Kurumsal Hesabınız Onaylandı 🎉",
+      intro: `${safeCompany} için kurumsal hesabınız aktif edildi.`,
+      preheader: "Kurumsal hesabınız onaylandı — şifrenizi belirleyin.",
+      bodyHtml: `<p style="margin:0">Panele giriş yapmak için önce şifrenizi belirleyin:</p>
+        ${emailButton("Şifremi belirle ve giriş yap", inviteUrl)}
+        ${emailFallbackLink(inviteUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bağlantı 7 gün geçerlidir. Giriş sonrası firmanıza özel fiyatlarınız, sipariş geçmişiniz ve hesabınız tek panelde.</p>`,
+    });
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
@@ -149,25 +151,25 @@ export class MailService {
           `<td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(o.amount)} ₺</td></tr>`,
       )
       .join("");
-    const html = `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto">
-      <h2 style="color:#1a1a1a">${input.period} dönemi cari hesap ekstresi</h2>
-      <p><strong>${esc(input.companyName)}</strong> için açık hesap (cari) siparişlerinizin aylık özeti:</p>
-      <table style="border-collapse:collapse;width:100%;font-size:14px">
-        <thead><tr>
-          <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #ddd">Sipariş</th>
-          <th style="padding:6px 8px;text-align:left;border-bottom:2px solid #ddd">Tarih</th>
-          <th style="padding:6px 8px;text-align:right;border-bottom:2px solid #ddd">Tutar</th>
-        </tr></thead>
-        <tbody>${rowsHtml}</tbody>
-        <tfoot><tr>
-          <td colspan="2" style="padding:8px;text-align:right;font-weight:600">Toplam (${input.orders.length} sipariş)</td>
-          <td style="padding:8px;text-align:right;font-weight:700">${fmt(input.total)} ₺</td>
-        </tr></tfoot>
-      </table>
-      <p style="color:#666;font-size:13px;margin-top:16px">${invoiceNote}</p>
-      <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-      <p style="color:#999;font-size:12px">Bu işlemsel bir iletidir. Markala — 324 Ajans BT tarafından gönderilmiştir.</p>
-    </div>`;
+    const html = renderEmail({
+      title: `${esc(input.period)} Dönemi Cari Hesap Ekstresi`,
+      intro: `${esc(input.companyName)} — açık hesap (cari) sipariş özeti`,
+      preheader: `${esc(input.period)} ekstresi — toplam ${fmt(input.total)} ₺`,
+      bodyHtml: `<p style="margin:0 0 12px"><strong>${esc(input.companyName)}</strong> için açık hesap (cari) siparişlerinizin ${esc(input.period)} dönemi özeti:</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
+          <thead><tr>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #1A1410;color:#1A1410">Sipariş</th>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #1A1410;color:#1A1410">Tarih</th>
+            <th style="padding:8px;text-align:right;border-bottom:2px solid #1A1410;color:#1A1410">Tutar</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot><tr>
+            <td colspan="2" style="padding:10px 8px;text-align:right;font-weight:600">Toplam (${input.orders.length} sipariş)</td>
+            <td style="padding:10px 8px;text-align:right;font-weight:700;color:#1A1410">${fmt(input.total)} ₺</td>
+          </tr></tfoot>
+        </table>
+        <p style="margin:16px 0 0;color:#78716c;font-size:13px">${invoiceNote}</p>`,
+    });
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: input.to, subject, text, html });
