@@ -23,6 +23,11 @@ export class MailService {
       connectionTimeout: 10_000,
       greetingTimeout: 10_000,
       socketTimeout: 10_000,
+      // markala maili Lisan Fen ortak mail sunucusunda barınıyor; sunucu GEÇERLİ
+      // Let's Encrypt sertifikasını "mail.lisanfen.k12.tr" adına sunuyor. Bağlantı
+      // mail.markala.com.tr'ye gider ama TLS doğrulaması gerçek sertifika adına yapılır
+      // → rejectUnauthorized AÇIK kalır (MITM koruması korunur), hostname-mismatch çözülür.
+      tls: { servername: "mail.lisanfen.k12.tr" },
     });
   }
 
