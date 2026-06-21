@@ -58,7 +58,6 @@ export function PromoBanner({ location, className }: Props) {
                   alt={b.title || b.ctaLabel || "Kampanya"}
                   width={1280}
                   height={360}
-                  unoptimized
                   className="w-full h-auto rounded-xl object-cover"
                   priority={false}
                 />

@@ -99,7 +99,7 @@ export default function OrdersPage() {
                 <li key={i} className="flex gap-3">
                   <div className="relative w-16 h-16 rounded-lg bg-paper-100 overflow-hidden flex-none">
                     {item.productImage ? (
-                      <Image src={item.productImage} alt={item.productName} fill unoptimized sizes="64px" className="object-cover" />
+                      <Image src={item.productImage} alt={item.productName} fill sizes="64px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full grid place-items-center text-ink-400"><Package size={20} /></div>
                     )}

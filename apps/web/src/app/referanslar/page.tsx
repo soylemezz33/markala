@@ -56,7 +56,6 @@ export default async function ReferansPage() {
                 alt={b.name}
                 width={140}
                 height={70}
-                unoptimized
                 className="object-contain max-h-12"
               />
             ) : (

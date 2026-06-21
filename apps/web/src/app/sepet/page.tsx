@@ -80,7 +80,7 @@ export default function CartPage() {
                 className="flex gap-4 md:gap-5 p-4 md:p-5 bg-paper-50 border border-paper-200 rounded-xl hover:border-ink-300 transition-colors"
               >
                 <Link href={`/urun/${item.productSlug}`} className="relative w-24 h-24 md:w-28 md:h-28 rounded-lg bg-paper-100 overflow-hidden flex-none">
-                  <Image src={item.productImage} alt={item.productName} fill unoptimized sizes="120px" className="object-cover" />
+                  <Image src={item.productImage} alt={item.productName} fill sizes="120px" className="object-cover" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <Link href={`/urun/${item.productSlug}`} className="font-semibold text-ink-900 hover:underline">

@@ -106,7 +106,6 @@ export function RecentlyViewedRail({
                     src={p.images[0]}
                     alt={p.name}
                     fill
-                    unoptimized
                     sizes="(max-width: 640px) 160px, 180px"
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />

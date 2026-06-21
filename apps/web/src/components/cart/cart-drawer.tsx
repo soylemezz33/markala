@@ -84,7 +84,7 @@ export function CartDrawer() {
                         onClick={close}
                         className="relative w-20 h-20 rounded-md bg-paper-100 overflow-hidden flex-none"
                       >
-                        <Image src={item.productImage} alt={item.productName} fill unoptimized
+                        <Image src={item.productImage} alt={item.productName} fill
               sizes="80px" className="object-cover"/>
                       </Link>
                       <div className="flex-1 min-w-0">

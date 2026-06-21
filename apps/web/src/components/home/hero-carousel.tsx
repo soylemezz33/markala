@@ -250,7 +250,6 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                         alt={slide.title}
                         fill
                         priority
-                        unoptimized
                         sizes="(min-width:1024px) 50vw, 100vw"
                         className="object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.25)]"
                       />

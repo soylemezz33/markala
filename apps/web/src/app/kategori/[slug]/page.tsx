@@ -71,7 +71,7 @@ export default async function CategoryPage({ params }: Props) {
 
       <section className="relative bg-paper-100 border-b border-paper-200 overflow-hidden">
         <div className="absolute inset-0 opacity-25">
-          <Image src={cat.imageUrl} alt="" fill priority unoptimized sizes="100vw" className="object-cover" />
+          <Image src={cat.imageUrl} alt="" fill priority sizes="100vw" className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-paper-100 via-paper-100/90 to-paper-100/40" />
         </div>
         <Container className="relative py-12 md:py-20">
@@ -158,7 +158,6 @@ export default async function CategoryPage({ params }: Props) {
                       src={c.imageUrl}
                       alt=""
                       fill
-                      unoptimized
                       sizes="64px"
                       className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
