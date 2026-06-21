@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Cookie } from "@phosphor-icons/react";
@@ -72,6 +72,7 @@ export function CookieConsent() {
   const [analytics, setAnalytics] = useState(true);
   const [preferences, setPreferences] = useState(true);
   const [marketing, setMarketing] = useState(true);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const existing = readConsent();
@@ -123,15 +124,30 @@ export function CookieConsent() {
     setShow(false);
   }
 
+  // a11y: dialog açılınca odağı içine al (ekran okuyucu duyurusu, preventScroll ile viewport
+  // sıçramaz) + Escape ile kapan (KVKK-güvenli: yalnız zorunlu çerezler).
+  useEffect(() => {
+    if (!show) return;
+    dialogRef.current?.focus({ preventScroll: true });
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") rejectOptional();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show]);
+
   return (
     <AnimatePresence>
       {show && (
         <motion.div
+          ref={dialogRef}
+          tabIndex={-1}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-4 inset-x-4 md:inset-x-auto md:left-6 md:right-6 lg:left-auto lg:right-6 lg:max-w-lg z-[60]"
+          className="fixed bottom-4 inset-x-4 md:inset-x-auto md:left-6 md:right-6 lg:left-auto lg:right-6 lg:max-w-lg z-[60] outline-none"
           role="dialog"
           aria-modal="true"
           aria-labelledby="cookie-consent-title"
