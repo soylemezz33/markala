@@ -34,6 +34,11 @@ const nextConfig = {
   reactStrictMode: true,
   // Production: standalone output → küçük Docker image, no node_modules at runtime
   output: "standalone",
+  experimental: {
+    // @phosphor-icons/react barrel import'u (tüm site genelinde) → yalnız kullanılan
+    // ikonlar bundle'a girsin (tree-shake). first-load JS düşer, LCP/TBT iyileşir.
+    optimizePackageImports: ["@phosphor-icons/react"],
+  },
   // Tip/lint kontrolü CI'da ayrı yapılır; production image build'ini bloklamasın
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
