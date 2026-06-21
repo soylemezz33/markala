@@ -62,6 +62,8 @@ async function bootstrap() {
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 40, path: "/uploads/design", method: "POST" }));
   // İletişim formu — public; per-IP spam koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/contact", method: "POST" }));
+  // Bülten aboneliği — public; per-IP spam koruması (15/saat).
+  app.use(rateLimit({ windowMs: 60 * 60_000, max: 15, path: "/newsletter-subscribers", method: "POST" }));
   // Müşteri ürün yorumu — giriş yapmış kullanıcı; per-IP spam/flood koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/reviews/public", method: "POST" }));
 

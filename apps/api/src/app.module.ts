@@ -27,6 +27,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { BrandsModule } from "./brands/brands.module";
 import { ContactModule } from "./contact/contact.module";
+import { NewsletterModule } from "./newsletter/newsletter.module";
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ContactModule } from "./contact/contact.module";
     AnalyticsModule,
     BrandsModule,
     ContactModule,
+    NewsletterModule,
   ],
 })
 export class AppModule {}

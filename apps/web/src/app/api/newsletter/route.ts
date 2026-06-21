@@ -13,11 +13,28 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/** Aboneyi NestJS API'ye (DB) kalıcı yazar — SMTP'den BAĞIMSIZ, abone kaybolmaz (idempotent upsert). */
+async function persistSubscriber(email: string, source: string): Promise<void> {
+  const apiBase =
+    process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
+  try {
+    const res = await fetch(`${apiBase}/api/newsletter-subscribers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, source }),
+      cache: "no-store",
+    });
+    if (!res.ok) console.error(`[newsletter] DB kaydı başarısız (${email}): HTTP ${res.status}`);
+  } catch (err) {
+    console.error(`[newsletter] DB kaydı hatası (${email}):`, (err as Error).message);
+  }
+}
+
 /**
  * Newsletter signup endpoint.
- * Geçerli e-posta gelince CONTACT_TO adresine bildirim maili gönderir.
+ * 1) Abone NestJS API'ye yazılır (DB, SMTP'den bağımsız → abone kaybolmaz).
+ * 2) Ayrıca CONTACT_TO adresine bildirim maili (best-effort).
  * Hem JSON hem form-urlencoded kabul eder; form ise /blog?subscribed=1'e redirect eder.
- * Mail gönderimi BÜLTENİ BLOKE ETMEZ — hata olsa bile kullanıcıya başarı gösterilir.
  */
 export async function POST(req: NextRequest) {
   let body: { email?: string; source?: string };
@@ -47,6 +64,9 @@ export async function POST(req: NextRequest) {
   }
 
   const sourceLabel = source && source.length > 0 ? source : "unknown";
+
+  // DB'ye kalıcı yaz (abone kaybolmasın) — SMTP durumundan BAĞIMSIZ, HER ZAMAN.
+  await persistSubscriber(email, sourceLabel);
 
   if (!isMailConfigured()) {
     // SMTP yapılandırılmamışsa (dev): mock davranışı koru

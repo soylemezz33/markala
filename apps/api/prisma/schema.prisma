@@ -650,6 +650,18 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
+/// Bülten aboneleri — SMTP'den BAĞIMSIZ kalıcı liste (signup kaybolmaz). E-posta benzersiz → idempotent.
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("web") // blog-newsletter | footer | ...
+  status    String   @default("active") // active | unsubscribed
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([status])
+  @@map("newsletter_subscribers")
+}
+
 // === KVKK — Rıza & Audit kayıtları ===
 
 /// Açık rıza kayıtları — KVKK uyum için tüm onaylar (kayıt, pazarlama, çerez)
