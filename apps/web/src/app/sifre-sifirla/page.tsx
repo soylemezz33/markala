@@ -13,7 +13,7 @@ const inputClass =
 export default function PasswordResetPage() {
   return (
     <Container className="py-16 md:py-24 max-w-md">
-      <Suspense fallback={<div className="text-center text-ink-400 text-sm">Yükleniyor…</div>}>
+      <Suspense fallback={<div className="text-center text-ink-500 text-sm">Yükleniyor…</div>}>
         <ResetFlow />
       </Suspense>
     </Container>

@@ -207,7 +207,7 @@ function CityCard({
             {city.population} nüfus · {city.region === "akdeniz" ? "Akdeniz" : "Güneydoğu"}
           </p>
         </div>
-        <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-900 text-[10px] font-bold uppercase">
+        <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-900 text-[11px] font-bold uppercase">
           {city.deliveryDays.min === 0
             ? "Aynı gün"
             : city.deliveryDays.min === city.deliveryDays.max

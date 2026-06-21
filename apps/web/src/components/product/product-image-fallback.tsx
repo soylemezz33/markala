@@ -16,7 +16,7 @@ export function ProductImageFallback({ name, className }: { name?: string; class
     >
       <ImageSquare size={32} weight="thin" className="text-ink-300" />
       {name ? (
-        <span className="text-xs font-medium text-ink-400 line-clamp-3">{name}</span>
+        <span className="text-xs font-medium text-ink-500 line-clamp-3">{name}</span>
       ) : null}
     </div>
   );

@@ -216,6 +216,6 @@ function TrustBadge({ children }: { children: React.ReactNode }) {
 
 function PaymentBrand({ label }: { label: string }) {
   return (
-    <span className="px-2 py-0.5 rounded border border-paper-200 bg-paper-50 text-ink-700 font-mono text-[10px] font-bold tracking-tight">{label}</span>
+    <span className="px-2 py-0.5 rounded border border-paper-200 bg-paper-50 text-ink-700 font-mono text-[11px] font-bold tracking-tight">{label}</span>
   );
 }

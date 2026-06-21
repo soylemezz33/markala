@@ -186,7 +186,7 @@ export default function FiyatHesaplaWidget() {
         Ürünü İncele <ArrowSquareOut size={14} />
       </a>
 
-      <p className="mt-3 text-center text-[10px] text-ink-500">
+      <p className="mt-3 text-center text-[11px] text-ink-500">
         Powered by{" "}
         <a href={SITE} target="_top" className="font-semibold text-brand-700 hover:underline">
           Markala

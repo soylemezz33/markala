@@ -108,7 +108,7 @@ export async function ProductReviewsSection({ productSlug }: Props) {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-medium text-ink-900">{r.authorName}</span>
                     {r.verified && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-success bg-success/10 px-1.5 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-success bg-success/10 px-1.5 py-0.5 rounded">
                         <ShieldCheck size={10} weight="fill" /> Doğrulanmış
                       </span>
                     )}

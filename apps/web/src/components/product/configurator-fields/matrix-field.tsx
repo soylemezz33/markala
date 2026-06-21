@@ -170,7 +170,7 @@ export function MatrixField({ param, value, onSelect }: Props) {
                     {refCell && (
                       <span className="text-xs tabular-nums text-ink-500 flex-none">
                         <span className="font-semibold text-ink-900">{refCell.price.toLocaleString("tr-TR")} ₺</span>
-                        <span className="text-[10px] ml-1">/ 1.000</span>
+                        <span className="text-[11px] ml-1">/ 1.000</span>
                       </span>
                     )}
                   </div>

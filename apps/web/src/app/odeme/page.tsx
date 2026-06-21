@@ -603,7 +603,7 @@ export default function CheckoutPage() {
                 {!consentOk && (
                   <p className="text-xs text-ink-500 text-center">Ödemeye geçmek için sözleşmeleri onaylayın.</p>
                 )}
-                <p className="text-center text-xs text-ink-400 pt-1">
+                <p className="text-center text-xs text-ink-500 pt-1">
                   Sorun mu yaşıyorsun?{" "}
                   <a
                     href={whatsappUrl("Merhaba, sipariş/ödeme konusunda yardım almak istiyorum.")}

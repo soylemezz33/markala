@@ -93,7 +93,7 @@ export default function InvoicesPage() {
                           Self-servis indirme endpoint'i hazır olunca aktifleşecek — sahte indirme yok. */}
                       <span
                         title="E-Arşiv faturanız siparişiniz kargolandığında e-posta adresinize gönderilir."
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-paper-200 text-ink-400 cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-paper-200 text-ink-500 cursor-not-allowed"
                       >
                         <Download size={12} weight="bold" /> E-posta ile gönderildi
                       </span>

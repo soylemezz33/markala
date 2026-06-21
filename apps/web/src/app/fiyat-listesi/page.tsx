@@ -212,7 +212,7 @@ export default async function PriceListPage() {
                             {p.name}
                           </Link>
                           {p.bestseller && (
-                            <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-900">
+                            <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[11px] font-bold bg-brand-100 text-brand-900">
                               POPÜLER
                             </span>
                           )}

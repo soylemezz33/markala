@@ -23,7 +23,7 @@ export function MobileCta({ total, onAddToCart }: Props) {
     <>
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-paper-50 border-t border-paper-200 shadow-2xl px-4 py-3 flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-wider text-ink-500 font-semibold">
+          <div className="text-[11px] uppercase tracking-wider text-ink-500 font-semibold">
             Toplam
           </div>
           <div className="text-lg font-bold text-ink-900 tabular-nums truncate">

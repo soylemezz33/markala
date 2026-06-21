@@ -41,7 +41,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   if (!user) {
     return isBootstrapping ? (
-      <div className="grid place-items-center py-32 text-ink-400 text-sm">Hesabınız yükleniyor…</div>
+      <div className="grid place-items-center py-32 text-ink-500 text-sm">Hesabınız yükleniyor…</div>
     ) : null;
   }
 

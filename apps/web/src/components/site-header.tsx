@@ -468,7 +468,7 @@ export function SiteHeader() {
                     </Link>
                   </div>
 
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5 mt-3">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5 mt-3">
                     Kategoriler
                   </div>
                   {MAIN_NAV.map((n) => (
@@ -483,7 +483,7 @@ export function SiteHeader() {
 
                   <div className="border-t border-paper-200 my-3" />
 
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5">
                     Yardım & İletişim
                   </div>
                   <MobileLink href="/iletisim" onClick={() => setMenuOpen(false)}>💬 Tasarım Desteği</MobileLink>
@@ -568,7 +568,7 @@ function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
             <div className="bg-paper-50 border border-paper-200 rounded-lg shadow-lg min-w-[280px] overflow-hidden">
               {nav.groups.map((g) => (
                 <div key={g.title} className="p-2">
-                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-500">
+                  <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-ink-500">
                     {g.title}
                   </div>
                   {g.items.map((item) => (
@@ -668,7 +668,7 @@ function MobileNavGroup({
             <div className="pl-4 border-l-2 border-paper-200 ml-3 my-1">
               {nav.groups.map((g) => (
                 <div key={g.title} className="py-1">
-                  <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-500">
+                  <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-ink-500">
                     {g.title}
                   </div>
                   {g.items.map((item) => (
@@ -1039,7 +1039,7 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               {history.length > 0 && (
                 <div className="mb-5 pb-5 border-b border-paper-200">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
                       Son Aramalar
                     </div>
                     <button
@@ -1077,7 +1077,7 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                 </div>
               )}
 
-              <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-3">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 mb-3">
                 Popüler Kategoriler
               </div>
               <div className="grid grid-cols-2 gap-1">
@@ -1098,7 +1098,7 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               </div>
 
               <div className="mt-5 pt-5 border-t border-paper-200">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-3">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 mb-3">
                   Hızlı Erişim
                 </div>
                 <div className="flex flex-wrap gap-2">

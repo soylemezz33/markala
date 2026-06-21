@@ -340,7 +340,7 @@ export default function VeriYonetimiPage() {
               className="font-semibold text-ink-900 text-lg flex items-center gap-2"
             >
               Hesabımı Sil
-              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-error text-paper-50">
+              <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded bg-error text-paper-50">
                 Geri alınamaz
               </span>
             </h3>

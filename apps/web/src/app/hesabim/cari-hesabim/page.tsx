@@ -125,10 +125,10 @@ export default function CorporateLedgerPage() {
                         {e.dueDate ? formatDate(e.dueDate) : "—"}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums font-medium">
-                        {isDebit ? <span className="text-error">{amount.toLocaleString("tr-TR")} ₺</span> : <span className="text-ink-400">—</span>}
+                        {isDebit ? <span className="text-error">{amount.toLocaleString("tr-TR")} ₺</span> : <span className="text-ink-500">—</span>}
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums font-medium">
-                        {!isDebit ? <span className="text-success">{amount.toLocaleString("tr-TR")} ₺</span> : <span className="text-ink-400">—</span>}
+                        {!isDebit ? <span className="text-success">{amount.toLocaleString("tr-TR")} ₺</span> : <span className="text-ink-500">—</span>}
                       </td>
                     </tr>
                   );

@@ -306,7 +306,7 @@ export default async function CityLandingPage({ params }: Props) {
                       {d.name}
                     </h3>
                     {d.sameDayDelivery && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-success/15 text-success">
+                      <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-success/15 text-success">
                         AYNI GÜN
                       </span>
                     )}

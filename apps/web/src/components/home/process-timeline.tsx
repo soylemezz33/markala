@@ -114,7 +114,7 @@ export function ProcessTimeline() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-semibold text-ink-900">{s.title}</h3>
-                  <span className="text-[10px] font-semibold text-brand-700 px-1.5 py-0.5 rounded-full bg-brand-100 tabular-nums shrink-0">
+                  <span className="text-[11px] font-semibold text-brand-700 px-1.5 py-0.5 rounded-full bg-brand-100 tabular-nums shrink-0">
                     ⏱ {s.duration}
                   </span>
                 </div>
