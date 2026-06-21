@@ -54,6 +54,8 @@ const nextConfig = {
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
+      // Kendi görsel CDN'imiz — ürün/kategori görselleri buradan (Next optimize edebilsin).
+      { protocol: "https", hostname: "api.markala.com.tr" },
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },
       { protocol: "https", hostname: "images.unsplash.com" },
