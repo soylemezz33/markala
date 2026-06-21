@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException, Logger } from "@nestjs/common";
+import { Injectable, BadRequestException, NotFoundException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 /**
@@ -41,6 +41,24 @@ const DESIGN_ALLOWED_EXT = new Set([
 ]);
 const DESIGN_MAX_BYTES = 50 * 1024 * 1024;
 
+/**
+ * Kurumsal belgeler (vergi levhası / imza sirküleri) — HASSAS, public DEĞİL.
+ * Tasarım dosyası gibi uzantı whitelist'i (MIME güvenilmez), 15MB sınır.
+ * Driver'dan BAĞIMSIZ olarak yalnızca /app/uploads/secure altında saklanır
+ * (main.ts'te /uploads/secure 404'lanır) ve auth-korumalı endpoint üzerinden serve edilir.
+ */
+const CORP_DOC_ALLOWED_EXT = new Set(["pdf", "jpg", "jpeg", "png", "webp", "tif", "tiff"]);
+const CORP_DOC_MAX_BYTES = 15 * 1024 * 1024;
+const CORP_DOC_MIME: Record<string, string> = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+};
+
 export interface UploadInput {
   buffer: Buffer;
   mimetype: string;
@@ -64,6 +82,25 @@ export interface DesignUploadResult {
   fileSize: number;
 }
 
+export interface SecureUploadInput {
+  buffer: Buffer;
+  mimetype: string;
+  originalName: string;
+}
+
+export interface SecureUploadResult {
+  /** örn. "secure/uuid.pdf" — DB'de saklanır; public URL DEĞİL. */
+  key: string;
+  /** sanitize edilmiş orijinal ad — admin gösterimi/indirme adı için. */
+  fileName: string;
+  fileSize: number;
+}
+
+export interface SecureFile {
+  buffer: Buffer;
+  mimetype: string;
+}
+
 /** Dosya adını güvenli hale getir — sadece harf/rakam/._- bırak, son 120 karaktere kırp. */
 function sanitizeFileName(originalName: string): string {
   return (originalName ?? "").replace(/[^\w.\-]+/g, "_").slice(-120);
@@ -82,18 +119,14 @@ export class StorageService {
   async put(file: UploadInput): Promise<UploadResult> {
     const ext = ALLOWED_EXT[file.mimetype];
     if (!ext) {
-      throw new BadRequestException(
-        "Yalnızca JPG, PNG veya WEBP görsel yükleyebilirsiniz.",
-      );
+      throw new BadRequestException("Yalnızca JPG, PNG veya WEBP görsel yükleyebilirsiniz.");
     }
     if (file.buffer.length > MAX_BYTES) {
       throw new BadRequestException("Görsel boyutu en fazla 5MB olabilir.");
     }
 
     const key = `${randomUUID()}.${ext}`;
-    return this.driver === "r2"
-      ? this.putR2(key, file)
-      : this.putLocal(key, file);
+    return this.driver === "r2" ? this.putR2(key, file) : this.putLocal(key, file);
   }
 
   /**
@@ -113,9 +146,7 @@ export class StorageService {
 
     const key = `${randomUUID()}.${ext}`;
     const file: UploadInput = { buffer: input.buffer, mimetype: input.mimetype };
-    const { url } = await (this.driver === "r2"
-      ? this.putR2(key, file)
-      : this.putLocal(key, file));
+    const { url } = await (this.driver === "r2" ? this.putR2(key, file) : this.putLocal(key, file));
     return {
       url,
       key,
@@ -124,10 +155,51 @@ export class StorageService {
     };
   }
 
+  /**
+   * Hassas kurumsal belge yükleme. Driver'dan BAĞIMSIZ — her zaman local kalıcı
+   * volume (/app/uploads/secure). Böylece R2 public-bucket sızıntı riski oluşmaz.
+   * Döndürülen key public URL DEĞİL; serve yalnızca auth-korumalı endpoint üzerinden
+   * (getSecure). Tip uzantı ile doğrulanır (MIME güvenilmez), maks 15MB.
+   */
+  async putSecure(input: SecureUploadInput): Promise<SecureUploadResult> {
+    const ext = (input.originalName.split(".").pop() ?? "").toLowerCase();
+    if (!ext || !CORP_DOC_ALLOWED_EXT.has(ext)) {
+      throw new BadRequestException(
+        "Yalnızca PDF, JPG, PNG, WEBP veya TIFF belge yükleyebilirsiniz.",
+      );
+    }
+    if (input.buffer.length > CORP_DOC_MAX_BYTES) {
+      throw new BadRequestException("Belge boyutu en fazla 15MB olabilir.");
+    }
+    const key = `secure/${randomUUID()}.${ext}`;
+    await mkdir(join(this.uploadDir, "secure"), { recursive: true });
+    await writeFile(join(this.uploadDir, key), input.buffer);
+    return {
+      key,
+      fileName: sanitizeFileName(input.originalName),
+      fileSize: input.buffer.length,
+    };
+  }
+
+  /**
+   * Hassas belgeyi diskten oku — YALNIZCA auth-korumalı controller çağırır.
+   * Key formatı katı doğrulanır (path traversal'a kapalı). Yoksa 404.
+   */
+  async getSecure(key: string): Promise<SecureFile> {
+    if (!/^secure\/[\w.-]+$/.test(key)) {
+      throw new NotFoundException("Belge bulunamadı.");
+    }
+    const ext = (key.split(".").pop() ?? "").toLowerCase();
+    try {
+      const buffer = await readFile(join(this.uploadDir, key));
+      return { buffer, mimetype: CORP_DOC_MIME[ext] ?? "application/octet-stream" };
+    } catch {
+      throw new NotFoundException("Belge bulunamadı.");
+    }
+  }
+
   private get uploadDir(): string {
-    return (
-      this.config.get<string>("UPLOAD_DIR") ?? join(process.cwd(), "uploads")
-    );
+    return this.config.get<string>("UPLOAD_DIR") ?? join(process.cwd(), "uploads");
   }
 
   private async putLocal(key: string, file: UploadInput): Promise<UploadResult> {
@@ -162,10 +234,7 @@ export class StorageService {
       }),
     );
     // Public okuma URL tabanı (prod env: R2_PUBLIC_URL, örn. https://uploads.markala.com.tr).
-    const base = (this.config.get<string>("R2_PUBLIC_URL") ?? "").replace(
-      /\/$/,
-      "",
-    );
+    const base = (this.config.get<string>("R2_PUBLIC_URL") ?? "").replace(/\/$/, "");
     this.logger.log(`R2 upload: ${key}`);
     return { url: `${base}/${key}`, key };
   }

@@ -121,13 +121,11 @@ export class MarkalaApiClient {
       fullName: string;
       phone?: string;
       marketingConsent?: boolean;
-    }) =>
-      this.request<{ accessToken: string; user: User }>("POST", "/auth/register", data),
+    }) => this.request<{ accessToken: string; user: User }>("POST", "/auth/register", data),
     login: (data: { email: string; password: string }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/login", data),
     /** Refresh cookie (mk_refresh, httpOnly) ile yeni access token + user. Body yok; credentials:include. */
-    refresh: () =>
-      this.request<{ accessToken: string; user: User }>("POST", "/auth/refresh"),
+    refresh: () => this.request<{ accessToken: string; user: User }>("POST", "/auth/refresh"),
     logout: () => this.request<{ ok: boolean }>("POST", "/auth/logout"),
     me: () => this.request<User>("GET", "/auth/me", undefined, { auth: true }),
     /** Şifre değiştir — currentPassword backend'de argon2.verify ile doğrulanır; hatalıysa 401. */
@@ -148,10 +146,15 @@ export class MarkalaApiClient {
       this.request<{ ok: boolean; accepted: number }>("POST", "/analytics/collect", { events }),
     /** Admin gösterge paneli — KPI/huni/top ürün/heatmap/CRM segment özetleri. */
     overview: (days = 30) =>
-      this.request<AnalyticsOverviewDto>("GET", "/analytics/overview", undefined, { auth: true, query: { days } }),
+      this.request<AnalyticsOverviewDto>("GET", "/analytics/overview", undefined, {
+        auth: true,
+        query: { days },
+      }),
     /** Bir segmentin müşteri listesi (win-back/kampanya için iletişim bilgili). */
     segment: (key: string) =>
-      this.request<AnalyticsSegmentResultDto>("GET", `/analytics/segments/${key}`, undefined, { auth: true }),
+      this.request<AnalyticsSegmentResultDto>("GET", `/analytics/segments/${key}`, undefined, {
+        auth: true,
+      }),
   };
 
   // === Categories ===
@@ -170,8 +173,15 @@ export class MarkalaApiClient {
 
   // === Products ===
   products = {
-    list: (opts: { category?: string; bestseller?: boolean; take?: number; skip?: number; q?: string } = {}) =>
-      this.request<Product[]>("GET", "/products", undefined, { query: opts }),
+    list: (
+      opts: {
+        category?: string;
+        bestseller?: boolean;
+        take?: number;
+        skip?: number;
+        q?: string;
+      } = {},
+    ) => this.request<Product[]>("GET", "/products", undefined, { query: opts }),
     detail: (slug: string) => this.request<Product>("GET", `/products/${slug}`),
     create: (data: Partial<Product>) =>
       this.request<Product>("POST", "/products", data, { auth: true }),
@@ -196,17 +206,23 @@ export class MarkalaApiClient {
     listMine: () => this.request<Order[]>("GET", "/orders/mine", undefined, { auth: true }),
     listAll: (opts: { status?: string; take?: number; skip?: number } = {}) =>
       this.request<Order[]>("GET", "/orders", undefined, { auth: true, query: opts }),
-    detail: (id: string) =>
-      this.request<Order>("GET", `/orders/${id}`, undefined, { auth: true }),
-    updateStatus: (id: string, body: { status: string; trackingNumber?: string; trackingCarrier?: string }) =>
-      this.request<Order>("PATCH", `/orders/${id}/status`, body, { auth: true }),
+    detail: (id: string) => this.request<Order>("GET", `/orders/${id}`, undefined, { auth: true }),
+    updateStatus: (
+      id: string,
+      body: { status: string; trackingNumber?: string; trackingCarrier?: string },
+    ) => this.request<Order>("PATCH", `/orders/${id}/status`, body, { auth: true }),
   };
 
   // === Payments ===
   payments = {
     /** "Ödeme Yap" tekrar — giriş yapmış müşteri kendi beklemede siparişi için ödemeyi yeniden başlatır. */
     retry: (orderId: string) =>
-      this.request<{ paymentPageUrl?: string }>("POST", "/payments/iyzico/retry", { orderId }, { auth: true }),
+      this.request<{ paymentPageUrl?: string }>(
+        "POST",
+        "/payments/iyzico/retry",
+        { orderId },
+        { auth: true },
+      ),
   };
 
   // === Admin (dashboard stats) ===
@@ -218,7 +234,8 @@ export class MarkalaApiClient {
   users = {
     updateProfile: (data: Partial<User>) =>
       this.request<User>("PATCH", "/users/me", data, { auth: true }),
-    listAddresses: () => this.request<Address[]>("GET", "/users/me/addresses", undefined, { auth: true }),
+    listAddresses: () =>
+      this.request<Address[]>("GET", "/users/me/addresses", undefined, { auth: true }),
     createAddress: (data: Partial<Address>) =>
       this.request<Address>("POST", "/users/me/addresses", data, { auth: true }),
     updateAddress: (id: string, data: Partial<Address>) =>
@@ -239,7 +256,9 @@ export class MarkalaApiClient {
   // === Hero slides ===
   heroSlides = {
     list: (includeInactive = false) =>
-      this.request<HeroSlideDto[]>("GET", "/hero-slides", undefined, { query: { includeInactive } }),
+      this.request<HeroSlideDto[]>("GET", "/hero-slides", undefined, {
+        query: { includeInactive },
+      }),
     create: (data: Partial<HeroSlideDto>) =>
       this.request<HeroSlideDto>("POST", "/hero-slides", data, { auth: true }),
     update: (id: string, data: Partial<HeroSlideDto>) =>
@@ -253,21 +272,22 @@ export class MarkalaApiClient {
     /** Storefront — aktif + tarih penceresi içindeki banner'lar (public). */
     listPublic: () => this.request<BannerDto[]>("GET", "/banners/public"),
     list: () => this.request<BannerDto[]>("GET", "/banners", undefined, { auth: true }),
-    create: (data: Partial<BannerDto>) => this.request<BannerDto>("POST", "/banners", data, { auth: true }),
-    update: (id: string, data: Partial<BannerDto>) => this.request<BannerDto>("PATCH", `/banners/${id}`, data, { auth: true }),
-    remove: (id: string) => this.request<void>("DELETE", `/banners/${id}`, undefined, { auth: true }),
+    create: (data: Partial<BannerDto>) =>
+      this.request<BannerDto>("POST", "/banners", data, { auth: true }),
+    update: (id: string, data: Partial<BannerDto>) =>
+      this.request<BannerDto>("PATCH", `/banners/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/banners/${id}`, undefined, { auth: true }),
   };
 
   // === FAQs ===
   faqs = {
     list: (category?: string) =>
       this.request<FaqDto[]>("GET", "/faqs", undefined, { auth: true, query: { category } }),
-    create: (data: Partial<FaqDto>) =>
-      this.request<FaqDto>("POST", "/faqs", data, { auth: true }),
+    create: (data: Partial<FaqDto>) => this.request<FaqDto>("POST", "/faqs", data, { auth: true }),
     update: (id: string, data: Partial<FaqDto>) =>
       this.request<FaqDto>("PATCH", `/faqs/${id}`, data, { auth: true }),
-    remove: (id: string) =>
-      this.request<void>("DELETE", `/faqs/${id}`, undefined, { auth: true }),
+    remove: (id: string) => this.request<void>("DELETE", `/faqs/${id}`, undefined, { auth: true }),
   };
 
   // === Coupons ===
@@ -276,20 +296,29 @@ export class MarkalaApiClient {
     /** Public: checkout'ta kupon anında doğrulama → geçerlilik + gerçek indirim tutarı. */
     validate: (data: { code: string; subtotal: number; email?: string }) =>
       this.request<CouponValidateResult>("POST", "/coupons/validate", data),
-    create: (data: Partial<CouponDto>) => this.request<CouponDto>("POST", "/coupons", data, { auth: true }),
-    update: (id: string, data: Partial<CouponDto>) => this.request<CouponDto>("PATCH", `/coupons/${id}`, data, { auth: true }),
-    remove: (id: string) => this.request<void>("DELETE", `/coupons/${id}`, undefined, { auth: true }),
+    create: (data: Partial<CouponDto>) =>
+      this.request<CouponDto>("POST", "/coupons", data, { auth: true }),
+    update: (id: string, data: Partial<CouponDto>) =>
+      this.request<CouponDto>("PATCH", `/coupons/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/coupons/${id}`, undefined, { auth: true }),
   };
 
   // === Blog ===
   blog = {
     listPosts: () => this.request<BlogPostDto[]>("GET", "/blog/posts", undefined, { auth: true }),
-    createPost: (data: Partial<BlogPostDto>) => this.request<BlogPostDto>("POST", "/blog/posts", data, { auth: true }),
-    updatePost: (id: string, data: Partial<BlogPostDto>) => this.request<BlogPostDto>("PATCH", `/blog/posts/${id}`, data, { auth: true }),
-    removePost: (id: string) => this.request<void>("DELETE", `/blog/posts/${id}`, undefined, { auth: true }),
-    publishPost: (id: string) => this.request<BlogPostDto>("POST", `/blog/posts/${id}/publish`, undefined, { auth: true }),
-    listCategories: () => this.request<BlogCategoryDto[]>("GET", "/blog/categories", undefined, { auth: true }),
-    createCategory: (data: Partial<BlogCategoryDto>) => this.request<BlogCategoryDto>("POST", "/blog/categories", data, { auth: true }),
+    createPost: (data: Partial<BlogPostDto>) =>
+      this.request<BlogPostDto>("POST", "/blog/posts", data, { auth: true }),
+    updatePost: (id: string, data: Partial<BlogPostDto>) =>
+      this.request<BlogPostDto>("PATCH", `/blog/posts/${id}`, data, { auth: true }),
+    removePost: (id: string) =>
+      this.request<void>("DELETE", `/blog/posts/${id}`, undefined, { auth: true }),
+    publishPost: (id: string) =>
+      this.request<BlogPostDto>("POST", `/blog/posts/${id}/publish`, undefined, { auth: true }),
+    listCategories: () =>
+      this.request<BlogCategoryDto[]>("GET", "/blog/categories", undefined, { auth: true }),
+    createCategory: (data: Partial<BlogCategoryDto>) =>
+      this.request<BlogCategoryDto>("POST", "/blog/categories", data, { auth: true }),
     // --- Public (storefront, auth yok): yalnız yayınlanmış içerik ---
     listPublic: () => this.request<BlogPostDto[]>("GET", "/blog/public/posts"),
     getPublic: (slug: string) => this.request<BlogPostDto>("GET", `/blog/public/posts/${slug}`),
@@ -299,9 +328,12 @@ export class MarkalaApiClient {
   // === Legal pages ===
   legal = {
     list: () => this.request<LegalPageDto[]>("GET", "/legal", undefined, { auth: true }),
-    detail: (slug: string) => this.request<LegalPageDto>("GET", `/legal/${slug}`, undefined, { auth: true }),
-    create: (data: Partial<LegalPageDto>) => this.request<LegalPageDto>("POST", "/legal", data, { auth: true }),
-    update: (id: string, data: Partial<LegalPageDto>) => this.request<LegalPageDto>("PATCH", `/legal/${id}`, data, { auth: true }),
+    detail: (slug: string) =>
+      this.request<LegalPageDto>("GET", `/legal/${slug}`, undefined, { auth: true }),
+    create: (data: Partial<LegalPageDto>) =>
+      this.request<LegalPageDto>("POST", "/legal", data, { auth: true }),
+    update: (id: string, data: Partial<LegalPageDto>) =>
+      this.request<LegalPageDto>("PATCH", `/legal/${id}`, data, { auth: true }),
     remove: (id: string) => this.request<void>("DELETE", `/legal/${id}`, undefined, { auth: true }),
     // --- Public (storefront, auth yok): yalnız aktif sayfalar ---
     listPublic: () => this.request<LegalPageDto[]>("GET", "/legal/public"),
@@ -310,17 +342,24 @@ export class MarkalaApiClient {
 
   // === Campaign packages ===
   campaignPackages = {
-    list: () => this.request<CampaignPackageDto[]>("GET", "/campaign-packages", undefined, { auth: true }),
-    create: (data: Partial<CampaignPackageDto>) => this.request<CampaignPackageDto>("POST", "/campaign-packages", data, { auth: true }),
-    update: (id: string, data: Partial<CampaignPackageDto>) => this.request<CampaignPackageDto>("PATCH", `/campaign-packages/${id}`, data, { auth: true }),
-    remove: (id: string) => this.request<void>("DELETE", `/campaign-packages/${id}`, undefined, { auth: true }),
+    list: () =>
+      this.request<CampaignPackageDto[]>("GET", "/campaign-packages", undefined, { auth: true }),
+    create: (data: Partial<CampaignPackageDto>) =>
+      this.request<CampaignPackageDto>("POST", "/campaign-packages", data, { auth: true }),
+    update: (id: string, data: Partial<CampaignPackageDto>) =>
+      this.request<CampaignPackageDto>("PATCH", `/campaign-packages/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/campaign-packages/${id}`, undefined, { auth: true }),
   };
 
   // === Reviews ===
   reviews = {
-    list: (status?: "pending" | "approved") => this.request<ReviewDto[]>("GET", "/reviews", undefined, { auth: true, query: { status } }),
-    setApproval: (id: string, isApproved: boolean) => this.request<ReviewDto>("PATCH", `/reviews/${id}/approval`, { isApproved }, { auth: true }),
-    remove: (id: string) => this.request<void>("DELETE", `/reviews/${id}`, undefined, { auth: true }),
+    list: (status?: "pending" | "approved") =>
+      this.request<ReviewDto[]>("GET", "/reviews", undefined, { auth: true, query: { status } }),
+    setApproval: (id: string, isApproved: boolean) =>
+      this.request<ReviewDto>("PATCH", `/reviews/${id}/approval`, { isApproved }, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/reviews/${id}`, undefined, { auth: true }),
     // --- Public (storefront): yalnız ürünün ONAYLANMIŞ yorumları ---
     listPublic: (productSlug: string) =>
       this.request<ReviewDto[]>("GET", "/reviews/public", undefined, { query: { productSlug } }),
@@ -339,7 +378,10 @@ export class MarkalaApiClient {
   contact = {
     // Admin: mesaj listesi (opsiyonel durum filtresi: new | read | archived).
     list: (status?: string) =>
-      this.request<ContactMessageDto[]>("GET", "/contact", undefined, { auth: true, query: { status } }),
+      this.request<ContactMessageDto[]>("GET", "/contact", undefined, {
+        auth: true,
+        query: { status },
+      }),
     // Admin: mesaj durumu güncelle.
     setStatus: (id: string, status: string) =>
       this.request<ContactMessageDto>("PATCH", `/contact/${id}`, { status }, { auth: true }),
@@ -361,25 +403,44 @@ export class MarkalaApiClient {
     listPublic: () => this.request<BrandDto[]>("GET", "/brands/public"),
     // --- Admin (auth) ---
     list: () => this.request<BrandDto[]>("GET", "/brands", undefined, { auth: true }),
-    create: (data: Partial<BrandDto>) => this.request<BrandDto>("POST", "/brands", data, { auth: true }),
-    update: (id: string, data: Partial<BrandDto>) => this.request<BrandDto>("PATCH", `/brands/${id}`, data, { auth: true }),
-    remove: (id: string) => this.request<void>("DELETE", `/brands/${id}`, undefined, { auth: true }),
+    create: (data: Partial<BrandDto>) =>
+      this.request<BrandDto>("POST", "/brands", data, { auth: true }),
+    update: (id: string, data: Partial<BrandDto>) =>
+      this.request<BrandDto>("PATCH", `/brands/${id}`, data, { auth: true }),
+    remove: (id: string) =>
+      this.request<void>("DELETE", `/brands/${id}`, undefined, { auth: true }),
   };
 
   // === Settings ===
   settings = {
     get: (group?: string) =>
-      this.request<Record<string, unknown>>("GET", "/settings", undefined, { auth: true, query: { group } }),
+      this.request<Record<string, unknown>>("GET", "/settings", undefined, {
+        auth: true,
+        query: { group },
+      }),
     upsert: (group: string, values: Record<string, unknown>) =>
-      this.request<Record<string, unknown>>("PATCH", "/settings", { group, values }, { auth: true }),
+      this.request<Record<string, unknown>>(
+        "PATCH",
+        "/settings",
+        { group, values },
+        { auth: true },
+      ),
   };
 
   // === Corporate applications ===
   corporateApplications = {
     list: (status?: string) =>
-      this.request<CorporateApplicationDto[]>("GET", "/corporate-applications", undefined, { auth: true, query: { status } }),
-    setStatus: (id: string, body: { status: "approved" | "rejected" | "pending"; reviewNote?: string }) =>
-      this.request<CorporateApplicationDto>("PATCH", `/corporate-applications/${id}`, body, { auth: true }),
+      this.request<CorporateApplicationDto[]>("GET", "/corporate-applications", undefined, {
+        auth: true,
+        query: { status },
+      }),
+    setStatus: (
+      id: string,
+      body: { status: "approved" | "rejected" | "pending"; reviewNote?: string },
+    ) =>
+      this.request<CorporateApplicationDto>("PATCH", `/corporate-applications/${id}`, body, {
+        auth: true,
+      }),
     /** Public (B2B form) — başvuruyu panele düşürür. Auth gerektirmez. */
     createPublic: (data: {
       companyName: string;
@@ -404,21 +465,29 @@ export class MarkalaApiClient {
       this.request<AdminUserDto>("GET", `/admin/users/${id}`, undefined, { auth: true }),
     updateCorporate: (
       id: string,
-      data: { corporateDiscount?: number; corporateCreditLimit?: number; corporatePaymentTermDays?: number },
+      data: {
+        corporateDiscount?: number;
+        corporateCreditLimit?: number;
+        corporatePaymentTermDays?: number;
+      },
     ) => this.request<AdminUserDto>("PATCH", `/admin/users/${id}/corporate`, data, { auth: true }),
   };
 
   // Cari hesap (B2B açık hesap) defteri
   corporateLedger = {
     statement: (userId: string) =>
-      this.request<LedgerStatementDto>("GET", `/admin/corporate-ledger/${userId}`, undefined, { auth: true }),
+      this.request<LedgerStatementDto>("GET", `/admin/corporate-ledger/${userId}`, undefined, {
+        auth: true,
+      }),
     recordPayment: (userId: string, data: { amount: number; description?: string }) =>
-      this.request<LedgerStatementDto>("POST", `/admin/corporate-ledger/${userId}/payment`, data, { auth: true }),
-    mine: () => this.request<LedgerStatementDto>("GET", "/users/me/ledger", undefined, { auth: true }),
+      this.request<LedgerStatementDto>("POST", `/admin/corporate-ledger/${userId}/payment`, data, {
+        auth: true,
+      }),
+    mine: () =>
+      this.request<LedgerStatementDto>("GET", "/users/me/ledger", undefined, { auth: true }),
   };
 
-  adminStats = () =>
-    this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+  adminStats = () => this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
 }
 
 export interface BannerDto {
@@ -531,6 +600,10 @@ export interface CorporateApplicationDto {
   phone: string;
   status: "none" | "pending" | "approved" | "rejected";
   createdAt: string;
+  /** Hassas belge storage key'i (public URL DEĞİL); doluysa belge yüklenmiş demektir.
+   *  İndirme yalnızca auth-korumalı GET /corporate-applications/:id/document/:field ile. */
+  taxCertificateUrl?: string | null;
+  signatureCircularUrl?: string | null;
 }
 
 export interface AdminUserOrderDto {
@@ -792,7 +865,11 @@ export function createMarkalaClient(opts?: Partial<ApiClientConfig>): MarkalaApi
   return new MarkalaApiClient({
     // `||` kullan (`??` değil): NEXT_PUBLIC_API_URL boş string ise de fallback'e düşsün,
     // aksi halde new URL("") → "Failed to construct 'URL': Invalid URL" ile login/kayıt kırılır.
-    baseUrl: opts?.baseUrl || (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000" : "http://localhost:4000"),
+    baseUrl:
+      opts?.baseUrl ||
+      (typeof process !== "undefined"
+        ? process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+        : "http://localhost:4000"),
     getToken: opts?.getToken,
     onError: opts?.onError,
   });

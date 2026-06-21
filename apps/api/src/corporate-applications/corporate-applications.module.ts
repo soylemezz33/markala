@@ -3,9 +3,10 @@ import { CorporateApplicationsController } from "./corporate-applications.contro
 import { CorporateApplicationsPublicController } from "./corporate-applications-public.controller";
 import { CorporateApplicationsService } from "./corporate-applications.service";
 import { MailModule } from "../mail/mail.module";
+import { StorageModule } from "../storage/storage.module";
 
 @Module({
-  imports: [MailModule],
+  imports: [MailModule, StorageModule],
   // Public controller önce: POST / (guard'sız) admin GET/PATCH'ten ayrı route'lar.
   controllers: [CorporateApplicationsPublicController, CorporateApplicationsController],
   providers: [CorporateApplicationsService],

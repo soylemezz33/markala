@@ -37,6 +37,12 @@ async function bootstrap() {
   // CORP cross-origin: helmet varsayılanı same-origin'dir, aksi halde web/admin
   // farklı origin'den <img> yükleyemez. Bunlar public görseller.
   const uploadDir = process.env.UPLOAD_DIR ?? join(process.cwd(), "uploads");
+  // GÜVENLİK: hassas kurumsal belgeler (/uploads/secure altında saklanır) ASLA statik
+  // serve EDİLMEZ — yalnızca auth-korumalı GET /api/corporate-applications/:id/document/:field
+  // üzerinden owner||admin'e açılır. Bu guard statik mount'tan ÖNCE register edilmeli.
+  app.use("/uploads/secure", (_req: Request, res: Response) => {
+    res.status(404).end();
+  });
   app.use(
     "/uploads",
     (_req: Request, res: Response, next: NextFunction) => {
@@ -49,9 +55,13 @@ async function bootstrap() {
   // Auth endpoint'leri için per-IP fixed-window rate limit — standart 429 + Retry-After.
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/register", method: "POST" }));
   app.use(rateLimit({ windowMs: 60_000, max: 5, path: "/auth/login", method: "POST" }));
-  app.use(rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/resend-verification", method: "POST" }));
+  app.use(
+    rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/resend-verification", method: "POST" }),
+  );
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/verify-email", method: "POST" }));
-  app.use(rateLimit({ windowMs: 60 * 60_000, max: 5, path: "/auth/forgot-password", method: "POST" }));
+  app.use(
+    rateLimit({ windowMs: 60 * 60_000, max: 5, path: "/auth/forgot-password", method: "POST" }),
+  );
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/reset-password", method: "POST" }));
   app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/auth/refresh", method: "POST" }));
   // Ödeme başlatma — nonce zaten zorunlu; bu per-IP limit ek savunma (kötüye kullanım/spam).
@@ -60,10 +70,16 @@ async function bootstrap() {
   app.use(rateLimit({ windowMs: 60_000, max: 120, path: "/analytics/collect", method: "POST" }));
   // Müşteri tasarım dosyası yükleme — public + büyük dosya; per-IP kötüye kullanım koruması.
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 40, path: "/uploads/design", method: "POST" }));
+  // Kurumsal başvuru — public + belge yükleme; per-IP spam/kötüye kullanım koruması (10/saat).
+  app.use(
+    rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/corporate-applications", method: "POST" }),
+  );
   // İletişim formu — public; per-IP spam koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/contact", method: "POST" }));
   // Bülten aboneliği — public; per-IP spam koruması (15/saat).
-  app.use(rateLimit({ windowMs: 60 * 60_000, max: 15, path: "/newsletter-subscribers", method: "POST" }));
+  app.use(
+    rateLimit({ windowMs: 60 * 60_000, max: 15, path: "/newsletter-subscribers", method: "POST" }),
+  );
   // Müşteri ürün yorumu — giriş yapmış kullanıcı; per-IP spam/flood koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/reviews/public", method: "POST" }));
 

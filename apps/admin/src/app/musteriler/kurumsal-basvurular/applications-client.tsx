@@ -12,6 +12,7 @@ import {
   FileText,
   MagnifyingGlass,
   X,
+  DownloadSimple,
 } from "@phosphor-icons/react";
 import type { CorporateApplicationDto } from "@markala/api-client";
 import { setApplicationStatus } from "./actions";
@@ -85,13 +86,9 @@ export function ApplicationsClient({ applications }: Props) {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1">
           <Buildings size={22} className="text-brand-700" />
-          <h1 className="text-xl md:text-2xl font-semibold text-ink-900">
-            Kurumsal Başvurular
-          </h1>
+          <h1 className="text-xl md:text-2xl font-semibold text-ink-900">Kurumsal Başvurular</h1>
         </div>
-        <p className="text-sm text-ink-500">
-          B2B hesap başvurularını incele, onayla veya reddet.
-        </p>
+        <p className="text-sm text-ink-500">B2B hesap başvurularını incele, onayla veya reddet.</p>
       </div>
 
       {/* Stats */}
@@ -148,9 +145,7 @@ export function ApplicationsClient({ applications }: Props) {
                   <div className="text-xs text-ink-500">
                     {a.contactName} · {a.email}
                   </div>
-                  {a.phone && (
-                    <div className="text-[11px] text-ink-500 mt-0.5">{a.phone}</div>
-                  )}
+                  {a.phone && <div className="text-[11px] text-ink-500 mt-0.5">{a.phone}</div>}
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell text-xs text-ink-700">
                   <div>{a.taxOffice}</div>
@@ -254,7 +249,11 @@ export function ApplicationsClient({ applications }: Props) {
                 <Buildings size={20} className="text-brand-700" />
                 <h2 className="text-lg font-semibold text-ink-900">{detail.companyName}</h2>
               </div>
-              <button onClick={() => setDetail(null)} className="p-1.5 -mr-1.5 rounded hover:bg-paper-100 text-ink-500" aria-label="Kapat">
+              <button
+                onClick={() => setDetail(null)}
+                className="p-1.5 -mr-1.5 rounded hover:bg-paper-100 text-ink-500"
+                aria-label="Kapat"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -277,6 +276,27 @@ export function ApplicationsClient({ applications }: Props) {
               <DetailRow label="E-posta" value={detail.email} />
               <DetailRow label="Telefon" value={detail.phone} />
               <DetailRow label="Başvuru Tarihi" value={formatDate(detail.createdAt)} />
+
+              <div className="pt-3 border-t border-paper-200">
+                <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider">
+                  Belgeler
+                </span>
+                <div className="mt-2 space-y-2">
+                  {detail.taxCertificateUrl ? (
+                    <DocLink href={`/api/kurumsal-belge/${detail.id}/tax`} label="Vergi Levhası" />
+                  ) : (
+                    <p className="text-xs text-ink-500">Vergi levhası yüklenmedi.</p>
+                  )}
+                  {detail.signatureCircularUrl ? (
+                    <DocLink
+                      href={`/api/kurumsal-belge/${detail.id}/signature`}
+                      label="İmza Sirküleri"
+                    />
+                  ) : (
+                    <p className="text-xs text-ink-500">İmza sirküleri yüklenmedi.</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {detail.status === "pending" && (
@@ -310,10 +330,35 @@ export function ApplicationsClient({ applications }: Props) {
   );
 }
 
-function DetailRow({ label, value, mono }: { label: string; value?: string | null; mono?: boolean }) {
+function DocLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-2 px-3 py-2 rounded-md bg-paper-100 border border-paper-200 text-sm text-ink-900 hover:border-brand-500 hover:bg-brand-50/40"
+    >
+      <FileText size={16} className="flex-none text-brand-700" weight="fill" />
+      <span className="flex-1">{label}</span>
+      <DownloadSimple size={16} className="flex-none text-ink-500" />
+    </a>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value?: string | null;
+  mono?: boolean;
+}) {
   return (
     <div className="flex items-start justify-between gap-4">
-      <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider flex-none pt-0.5">{label}</span>
+      <span className="text-xs font-semibold text-ink-500 uppercase tracking-wider flex-none pt-0.5">
+        {label}
+      </span>
       <span className={`text-sm text-ink-900 text-right break-words ${mono ? "font-mono" : ""}`}>
         {value || "—"}
       </span>

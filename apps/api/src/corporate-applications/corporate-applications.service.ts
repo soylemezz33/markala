@@ -15,8 +15,16 @@ export class CorporateApplicationsService {
     private mail: MailService,
   ) {}
 
-  /** Public B2B başvurusu — panele "pending" olarak düşer. */
-  create(dto: CreateCorporateApplicationDto, userId?: string) {
+  /**
+   * Public B2B başvurusu — panele "pending" olarak düşer.
+   * `docs` controller'da yüklenen hassas belgelerin storage key'leri (public URL DEĞİL);
+   * yalnızca auth-korumalı serve endpoint'i çözer.
+   */
+  create(
+    dto: CreateCorporateApplicationDto,
+    userId?: string,
+    docs?: { taxCertificateUrl?: string; signatureCircularUrl?: string },
+  ) {
     return this.prisma.corporateApplication.create({
       data: {
         userId: userId ?? null,
@@ -31,9 +39,31 @@ export class CorporateApplicationsService {
         phone: dto.phone,
         address: dto.address?.trim() || "-",
         notes: dto.notes ?? null,
+        taxCertificateUrl: docs?.taxCertificateUrl ?? null,
+        signatureCircularUrl: docs?.signatureCircularUrl ?? null,
         status: "pending",
       },
     });
+  }
+
+  /**
+   * Hassas belge storage key'ini sahiplik/yetki kontrolüyle çöz.
+   * `requester` ya admin/super_admin olmalı ya da başvurunun sahibi (userId eşleşmeli).
+   * Yetkisizde 404 (varlık sızdırmamak için), key yoksa 404.
+   */
+  async getDocumentKey(
+    id: string,
+    field: "tax" | "signature",
+    requester: { userId: string; role: string },
+  ): Promise<string> {
+    const app = await this.prisma.corporateApplication.findUnique({ where: { id } });
+    if (!app) throw new NotFoundException("Belge bulunamadı.");
+    const isAdmin = requester.role === "admin" || requester.role === "super_admin";
+    const isOwner = !!app.userId && app.userId === requester.userId;
+    if (!isAdmin && !isOwner) throw new NotFoundException("Belge bulunamadı.");
+    const key = field === "tax" ? app.taxCertificateUrl : app.signatureCircularUrl;
+    if (!key) throw new NotFoundException("Belge bulunamadı.");
+    return key;
   }
 
   findAll(status?: string) {
@@ -114,7 +144,10 @@ export class CorporateApplicationsService {
     }
 
     if (app.userId !== user.id) {
-      await this.prisma.corporateApplication.update({ where: { id: app.id }, data: { userId: user.id } });
+      await this.prisma.corporateApplication.update({
+        where: { id: app.id },
+        data: { userId: user.id },
+      });
     }
 
     if (isNew) {
@@ -132,7 +165,10 @@ export class CorporateApplicationsService {
       data: { consumedAt: new Date() },
     });
     await this.prisma.passwordResetToken.create({ data: { userId, tokenHash, expiresAt } });
-    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(
+      /\/$/,
+      "",
+    );
     const inviteUrl = `${webUrl}/sifre-sifirla?token=${rawToken}`;
     await this.mail.sendCorporateInviteEmail(email, inviteUrl, companyName);
   }
