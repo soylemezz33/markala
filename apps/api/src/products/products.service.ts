@@ -7,7 +7,7 @@ import { BulkPriceDto, CreateProductDto, UpdateProductDto } from "./products.dto
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string; list?: boolean } = {}) {
+  async findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string; list?: boolean } = {}) {
     // Arama: çok-kelimeli sorgu token'lara bölünür, HER token isimde geçmeli (AND).
     // Böylece "kart vizit" → "Klasik Kartvizit" eşleşir (boşluklu yazımda da bulunur).
     const tokens = (opts.q ?? "").trim().split(/\s+/).filter(Boolean);
@@ -31,8 +31,9 @@ export class ProductsService {
     // `parameters` KALIR: kart/filtre fiyatı (getDisplayPrice) configurator parametrelerinden
     // hesaplanır; çıkarılırsa konfigüratörlü ürünlerde fiyat 0/"Teklif Al"a düşer (regresyon).
     // Detay endpoint'i (/products/:slug → findBySlug) tam veriyi döndürmeye devam eder.
+    let products: { id: string; [key: string]: unknown }[];
     if (opts.list) {
-      return this.prisma.product.findMany({
+      products = await this.prisma.product.findMany({
         ...common,
         select: {
           id: true,
@@ -49,18 +50,29 @@ export class ProductsService {
           parameters: true,
           category: { select: { slug: true, name: true } },
         },
-      });
+      }) as { id: string; [key: string]: unknown }[];
+    } else {
+      products = await this.prisma.product.findMany({
+        ...common,
+        include: { category: true },
+      }) as { id: string; [key: string]: unknown }[];
     }
-    return this.prisma.product.findMany({
-      ...common,
-      include: { category: true },
-    });
+    const ids = products.map((p) => p.id);
+    const mins = ids.length
+      ? await this.prisma.productPrice.groupBy({ by: ["productId"], where: { productId: { in: ids } }, _min: { price: true } })
+      : [];
+    const minMap = new Map(mins.map((m: { productId: string; _min: { price: unknown } }) => [m.productId, m._min.price == null ? null : Number(m._min.price)]));
+    return products.map((p) => ({ ...p, displayPrice: minMap.get(p.id) ?? null }));
   }
 
   async findBySlug(slug: string) {
     const product = await this.prisma.product.findUnique({
       where: { slug },
-      include: { category: true },
+      include: {
+        category: true,
+        options: { orderBy: [{ groupSort: "asc" }, { optionSort: "asc" }] },
+        prices: true,
+      },
     });
     if (!product) throw new NotFoundException(`Ürün bulunamadı: ${slug}`);
     return product;

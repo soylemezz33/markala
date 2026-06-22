@@ -4,6 +4,9 @@ import { ProductsService } from "./products.service";
 
 function makePrisma() {
   return {
+    productPrice: {
+      groupBy: vi.fn().mockResolvedValue([]),
+    },
     product: {
       findMany: vi.fn().mockResolvedValue([
         { id: "p1", slug: "kartvizit", name: "Kartvizit", basePrice: "290", isActive: true, category: { slug: "kartvizit" } },
@@ -130,5 +133,29 @@ describe("ProductsService.update", () => {
     const callArg = prisma.product.update.mock.calls[0][0];
     expect(callArg.data.name).toBe("Yeni İsim");
     expect(callArg.data.slug).toBeUndefined();
+  });
+});
+
+describe("ProductsService.findBySlug options+prices", () => {
+  it("findBySlug options+prices içerir", async () => {
+    const prisma = makePrisma();
+    prisma.product.findUnique.mockResolvedValue({ id: "p1", slug: "x", category: {},
+      options: [{ id: "o1" }], prices: [{ id: "pr1", price: "50" }] } as any);
+    const svc = new ProductsService(prisma as never);
+    const r = await svc.findBySlug("x");
+    expect((r as any).options).toBeDefined();
+    expect((r as any).prices).toBeDefined();
+  });
+});
+
+describe("ProductsService.findAll displayPrice", () => {
+  it("findAll displayPrice = MIN(price), satır yoksa null", async () => {
+    const prisma = makePrisma();
+    prisma.product.findMany.mockResolvedValue([{ id: "a" }, { id: "b" }] as any);
+    prisma.productPrice.groupBy = vi.fn().mockResolvedValue([{ productId: "a", _min: { price: "30" } }]);
+    const svc = new ProductsService(prisma as never);
+    const r = await svc.findAll({ list: true });
+    expect(r.find((x: any) => x.id === "a")!.displayPrice).toBe(30);
+    expect(r.find((x: any) => x.id === "b")!.displayPrice).toBeNull();
   });
 });
