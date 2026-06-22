@@ -1,8 +1,9 @@
-import { Controller, Get, Param, UseGuards } from "@nestjs/common";
+import { Controller, Get, Put, Param, Body, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { PricesService } from "./prices.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { SetOptionsDto } from "./prices.dto";
 
 @ApiTags("prices")
 @Controller()
@@ -15,5 +16,13 @@ export class PricesController {
   @ApiBearerAuth()
   getForProduct(@Param("id") id: string) {
     return this.service.getForProduct(id);
+  }
+
+  @Put("products/:id/options")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  setOptions(@Param("id") id: string, @Body() dto: SetOptionsDto) {
+    return this.service.setOptions(id, dto.options);
   }
 }

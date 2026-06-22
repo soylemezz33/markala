@@ -21,4 +21,20 @@ export class PricesService {
     ]);
     return { options, prices };
   }
+
+  async setOptions(productId: string, rows: import("./prices.dto").OptionInputDto[]) {
+    await this.assertProduct(productId);
+    await this.prisma.productOption.deleteMany({ where: { productId } });
+    if (rows.length === 0) return { count: 0 };
+    const { count } = await this.prisma.productOption.createMany({
+      data: rows.map((r) => ({
+        productId,
+        groupKey: r.groupKey, groupLabel: r.groupLabel, groupRole: r.groupRole, groupSort: r.groupSort,
+        optionKey: r.optionKey, optionLabel: r.optionLabel,
+        ...(r.optionSublabel != null && { optionSublabel: r.optionSublabel }),
+        optionSort: r.optionSort,
+      })),
+    });
+    return { count };
+  }
 }
