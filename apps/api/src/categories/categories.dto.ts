@@ -60,6 +60,9 @@ export class CreateCategoryDto {
 }
 
 export class UpdateCategoryDto {
+  @IsOptional()
+  content?: unknown;
+
   @IsString()
   @IsOptional()
   @Matches(SLUG_REGEX, { message: "slug yalnızca küçük harf, rakam ve tire içerebilir" })

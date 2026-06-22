@@ -52,6 +52,7 @@ export class CategoriesService {
       ...(dto.productionTime !== undefined && { productionTime: dto.productionTime }),
       ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
       ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      ...(dto.content !== undefined && { content: dto.content === null ? Prisma.JsonNull : (dto.content as Prisma.InputJsonValue) }),
     };
     return this.prisma.category.update({ where: { id }, data });
   }
