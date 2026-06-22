@@ -118,7 +118,15 @@ export default function CheckoutPage() {
     : appliedCoupon
       ? sub * (KNOWN_COUPONS[appliedCoupon] ?? 0)
       : 0;
-  const subAfterDiscount = Math.max(0, sub - discount);
+  // Kurumsal oransal indirim — yalnız GİRİŞ YAPMIŞ + onaylı kurumsal üyeye gösterilir/uygulanır.
+  // Backend ile aynı formül (subtotal × yüzde); gerçek indirim siparişte yine sunucuda kesinleşir,
+  // bu yalnızca önizleme. "approved" değilse 0 → indirim hiç uygulanmaz (sipariş tarafıyla tutarlı).
+  const corpPct =
+    user && user.accountType === "corporate" && user.corporateStatus === "approved"
+      ? Number(user.corporateDiscount ?? 0) || 0
+      : 0;
+  const corpDiscount = corpPct > 0 ? Math.round(sub * corpPct) / 100 : 0;
+  const subAfterDiscount = Math.max(0, sub - discount - corpDiscount);
   // Kargo eşiği İNDİRİM ÖNCESİ ara toplama göre — sepet ekranı VE backend ile birebir aynı
   // (aksi halde kuponlu siparişte sepet "ücretsiz" derken ödeme 79₺ ekleyebiliyordu).
   // free_shipping kuponu (backend doğruladıysa) kargoyu sıfırlar.
@@ -210,7 +218,12 @@ export default function CheckoutPage() {
    * Başarısızsa { ok:false, error } döner; çağıran payError gösterir.
    */
   async function saveOrder(opts: { channel: string; paymentMethod?: "iyzico" | "cari" }) {
-    const token = useAuthStore.getState().accessToken;
+    // Oturum açıksa siparişi yazmadan ÖNCE token'ı tazele — 15dk access token checkout sırasında
+    // dolmuş olabilir; bayat token authed çağrıyı 401'e düşürür ve proxy siparişi sessizce MİSAFİR
+    // yapar (→ kurumsal indirim + cari uygulanmaz). Oturumsuz misafirde mevcut davranış korunur.
+    const token = user
+      ? await useAuthStore.getState().ensureFreshToken()
+      : useAuthStore.getState().accessToken;
     return fetch("/api/siparis-kaydet", {
       method: "POST",
       headers: {
@@ -653,6 +666,9 @@ export default function CheckoutPage() {
                 <Row label="Ara toplam" value={<Price amount={sub} className="text-ink-900" />} />
                 {discount > 0 && (
                   <Row label={`Kupon (${appliedCoupon})`} value={<Price amount={-discount} className="text-success" />} />
+                )}
+                {corpDiscount > 0 && (
+                  <Row label={`Kurumsal indirim (%${corpPct})`} value={<Price amount={-corpDiscount} className="text-success" />} />
                 )}
                 <Row label="Kargo" value={shipping === 0 ? <span className="text-success font-medium">Ücretsiz</span> : <Price amount={shipping} />} />
                 <Row label="KDV (%20 dahil)" value={<Price amount={vat} className="text-ink-500" />} muted />

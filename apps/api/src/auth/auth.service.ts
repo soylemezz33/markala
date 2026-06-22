@@ -317,6 +317,11 @@ export class AuthService {
         companyName: true,
         taxOffice: true,
         taxNumber: true,
+        // Salt-okunur: kullanıcının KENDİ kurumsal durumu + indirim oranı. Checkout bunu
+        // özet satırı olarak gösterir (gerçek indirim siparişte yine sunucuda hesaplanır).
+        // Mass-assignment riski yok — bu READ; yazma DTO'ları bu alanları içermez.
+        corporateStatus: true,
+        corporateDiscount: true,
       },
     });
     if (!user) throw new UnauthorizedException("Oturum geçersiz.");

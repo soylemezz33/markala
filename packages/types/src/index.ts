@@ -302,6 +302,10 @@ export interface User {
   companyName?: string;
   taxOffice?: string;
   taxNumber?: string;
+  /** Kurumsal onay durumu — indirim yalnız "approved" iken siparişe uygulanır. */
+  corporateStatus?: "none" | "pending" | "approved" | "rejected";
+  /** Müşteriye özel oransal indirim (%). API'den string Decimal gelebilir. */
+  corporateDiscount?: string | number | null;
 }
 
 export interface Address {

@@ -64,6 +64,13 @@ interface AuthState {
   updateProfile: (patch: Partial<User>) => Promise<{ ok: boolean; error?: string }>;
   /** App açılışında bir kez çağrılır (AuthBootstrap). */
   bootstrap: () => Promise<void>;
+  /**
+   * Kritik authed POST'lardan (sipariş yazma gibi) ÖNCE access token'ı tazeler.
+   * 15dk'lık access token checkout sırasında dolmuş olabilir; bayat token authed çağrıyı
+   * 401'e düşürüp siparişi sessizce MİSAFİR yapar (→ kurumsal indirim + cari uygulanmaz).
+   * Döner: kullanılabilir access token (tazelendiyse yeni, refresh olmadıysa eldeki) veya null.
+   */
+  ensureFreshToken: () => Promise<string | null>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -134,6 +141,19 @@ export const useAuthStore = create<AuthState>()(
           set({ user, isBootstrapping: false });
         } catch {
           set({ user: null, accessToken: null, isBootstrapping: false });
+        }
+      },
+
+      ensureFreshToken: async () => {
+        if (!get().user) return null; // oturumsuz → tazelenecek bir şey yok
+        try {
+          const { accessToken } = await client.auth.refresh();
+          set({ accessToken });
+          return accessToken;
+        } catch {
+          // Refresh cookie de geçersiz → eldeki (muhtemelen bayat) token'la yine de dene;
+          // proxy 401'de misafire düşer, sipariş kaybolmaz (yalnız kurumsal avantaj uygulanmaz).
+          return get().accessToken;
         }
       },
     }),

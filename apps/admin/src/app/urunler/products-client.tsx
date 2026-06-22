@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useEffect, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
-import { Plus, MagnifyingGlass, Eye, PencilSimple, Trash, Package, ArrowsDownUp } from "@phosphor-icons/react";
+import { Plus, MagnifyingGlass, Eye, PencilSimple, Trash, Package, ArrowsDownUp, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { removeProduct } from "./actions";
+
+/** Tek sayfada gösterilecek ürün sayısı (client-side sayfalama). */
+const PAGE_SIZE = 25;
 
 export interface CategoryRow {
   id: string;
@@ -34,6 +37,7 @@ interface Props {
 export function ProductsClient({ products, categories }: Props) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
   const [isPending, startTransition] = useTransition();
 
   function handleDelete(p: ProductRow) {
@@ -62,6 +66,22 @@ export function ProductsClient({ products, categories }: Props) {
       return matchSearch && matchCat;
     });
   }, [search, categoryFilter, products]);
+
+  // Sayfalama: filtre/arama değişince başa dön — aksi halde "sayfa 5'te boş ekran" tuzağı.
+  useEffect(() => {
+    setPage(1);
+  }, [search, categoryFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Filtre sonucu küçüldüyse mevcut sayfa aralık dışı kalabilir → güvenli sınıra çek.
+  const currentPage = Math.min(page, pageCount);
+  const paged = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage]);
+
+  const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, filtered.length);
 
   return (
     <AdminShell>
@@ -133,7 +153,7 @@ export function ProductsClient({ products, categories }: Props) {
               </tr>
             </thead>
             <tbody className="divide-y divide-paper-200">
-              {filtered.map((p) => {
+              {paged.map((p) => {
                 const categoryName = p.category?.name ?? "—";
                 const startingPrice = Number(p.startingPrice ?? p.basePrice);
                 return (
@@ -206,6 +226,37 @@ export function ProductsClient({ products, categories }: Props) {
             </tbody>
           </table>
         </div>
+
+        {/* Sayfalama — yalnız birden fazla sayfa varsa göster */}
+        {pageCount > 1 && (
+          <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-3 border-t border-paper-200 bg-paper-100/40">
+            <p className="text-xs text-ink-500">
+              <strong className="text-ink-900">{rangeStart}</strong>–
+              <strong className="text-ink-900">{rangeEnd}</strong> / {filtered.length} ürün
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm border border-paper-200 text-ink-700 hover:bg-paper-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <CaretLeft size={14} weight="bold" /> Önceki
+              </button>
+              <span className="px-3 py-1.5 text-sm text-ink-700 tabular-nums">
+                Sayfa <strong className="text-ink-900">{currentPage}</strong> / {pageCount}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                disabled={currentPage >= pageCount}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-sm border border-paper-200 text-ink-700 hover:bg-paper-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Sonraki <CaretRight size={14} weight="bold" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminShell>
   );

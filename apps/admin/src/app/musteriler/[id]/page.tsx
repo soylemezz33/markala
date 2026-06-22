@@ -94,6 +94,13 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
               <KV label="Vergi Dairesi" value={user.taxOffice ?? "—"} />
               <KV label="Vergi No" value={user.taxNumber ?? "—"} />
               <KV label="Durum" value={user.corporateStatus ?? "—"} />
+              {user.corporateStatus !== "approved" && (
+                <p className="mt-2 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2 leading-relaxed">
+                  ⚠️ Durum <strong>&quot;{user.corporateStatus ?? "yok"}&quot;</strong> — onaylı (approved) değil.
+                  Girilen indirim ve cari hesap <strong>siparişlere UYGULANMAZ</strong>. Kurumsal başvuruyu
+                  &quot;Kurumsal Başvurular&quot; sayfasından onaylayın.
+                </p>
+              )}
               <CorporateSettingsForm
                 userId={user.id}
                 initialDiscount={user.corporateDiscount != null ? Number(user.corporateDiscount) : null}
