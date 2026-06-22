@@ -5,9 +5,8 @@ import { revalidateStorefront } from "@/lib/revalidate-web";
 import type { BulkAdjustInput, CategorySetInput } from "@markala/api-client";
 
 /**
- * Toplu fiyat güncelleme. Yeni model: product_prices.price üzerinde çalışır;
+ * Toplu fiyat güncelleme. Model: product_prices.price üzerinde çalışır;
  * saklı (mevcut) fiyat referans alınır. Yüzde veya sabit tutar artış/azalma uygular.
- * (Eski bulkUpdatePrices → products.bulkPrice, parameters'ı ölçekliyordu — artık kullanılmıyor.)
  */
 export async function bulkAdjustPrices(input: BulkAdjustInput) {
   const api = await getAdminApi();

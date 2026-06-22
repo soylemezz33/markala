@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { BulkPriceDto, CreateProductDto, UpdateProductDto } from "./products.dto";
+import { CreateProductDto, UpdateProductDto } from "./products.dto";
 
 @Injectable()
 export class ProductsService {
@@ -136,83 +136,4 @@ export class ProductsService {
     return this.prisma.product.update({ where: { id }, data: { isActive: false } });
   }
 
-  /**
-   * Toplu fiyat güncelleme — TÜM fiyat sürücülerini birlikte ölçekler.
-   * Yüzde: basePrice + startingPrice + parameters (matris hücreleri, birim fiyat, m² fiyatı,
-   * seçenek ek ücretleri) çarpanla ölçeklenir → matrisli üründe de sitede yansır.
-   * Sabit tutar: yalnız basePrice + startingPrice'a uygulanır (matris hücrelerine eklemek
-   * çift sayım olurdu). Yuvarlama bütün-fiyat alanlarına uygulanır; birim oranları (₺/adet,
-   * ₺/m²) bozulmamak için yuvarlanmaz.
-   */
-  async bulkPrice(input: BulkPriceDto) {
-    const where: Prisma.ProductWhereInput = { isActive: true };
-    if (input.scope === "category" && input.categoryId) where.categoryId = input.categoryId;
-
-    const products = await this.prisma.product.findMany({
-      where,
-      select: { id: true, basePrice: true, startingPrice: true, parameters: true },
-    });
-
-    const sign = input.direction === "decrease" ? -1 : 1;
-    const isPercent = input.op === "percent";
-    const factor = isPercent ? 1 + (sign * input.value) / 100 : 1;
-    const delta = isPercent ? 0 : sign * input.value;
-    const roundTo = input.round && input.round !== "none" ? Number(input.round) : 0;
-
-    // Bütün fiyat (ürün/matris hücresi): ölçekle + (varsa) en yakına yuvarla, negatife düşme.
-    const whole = (n: number): number => {
-      const v = Math.max(0, isPercent ? n * factor : n + delta);
-      return roundTo > 0 ? Math.round(v / roundTo) * roundTo : Math.round(v);
-    };
-    // Birim oranı (₺/adet, ₺/m², çevre ₺/m): yalnız yüzdede ölçeklenir, yuvarlanmaz (2 ondalık).
-    const rate = (n: number): number =>
-      Math.max(0, Math.round((isPercent ? n * factor : n) * 100) / 100);
-
-    const scaleParam = (param: unknown): unknown => {
-      if (!param || typeof param !== "object") return param;
-      const p = { ...(param as Record<string, unknown>) };
-      if (Array.isArray(p.options)) {
-        p.options = p.options.map((o) => {
-          const opt = { ...(o as Record<string, unknown>) };
-          if (typeof opt.priceModifier === "number") opt.priceModifier = whole(opt.priceModifier);
-          return opt;
-        });
-      }
-      if (typeof p.unitPrice === "number") p.unitPrice = rate(p.unitPrice);
-      if (typeof p.pricePerSqm === "number") p.pricePerSqm = rate(p.pricePerSqm);
-      if (Array.isArray(p.cells)) {
-        p.cells = p.cells.map((c) => {
-          const cell = { ...(c as Record<string, unknown>) };
-          if (typeof cell.price === "number") cell.price = whole(cell.price);
-          return cell;
-        });
-      }
-      if (Array.isArray(p.extras)) {
-        p.extras = p.extras.map((e) => {
-          const ex = { ...(e as Record<string, unknown>) };
-          if (typeof ex.flatFee === "number") ex.flatFee = whole(ex.flatFee);
-          if (typeof ex.perimeterPricePerM === "number") ex.perimeterPricePerM = rate(ex.perimeterPricePerM);
-          return ex;
-        });
-      }
-      return p;
-    };
-
-    const ops = products.map((prod) => {
-      const data: Prisma.ProductUpdateInput = {
-        basePrice: new Prisma.Decimal(whole(Number(prod.basePrice))),
-      };
-      if (prod.startingPrice != null) {
-        data.startingPrice = new Prisma.Decimal(whole(Number(prod.startingPrice)));
-      }
-      // Parametreleri yalnız yüzdede ölçekle (sabit tutar matris hücrelerine uygulanmaz).
-      if (isPercent && Array.isArray(prod.parameters) && prod.parameters.length > 0) {
-        data.parameters = (prod.parameters as unknown[]).map(scaleParam) as Prisma.InputJsonValue;
-      }
-      return this.prisma.product.update({ where: { id: prod.id }, data });
-    });
-
-    await this.prisma.$transaction(ops);
-    return { updated: products.length };
-  }
 }

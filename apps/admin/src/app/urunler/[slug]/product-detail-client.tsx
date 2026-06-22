@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
-import { ArrowLeft, FloppyDisk, Eye, Trash, ArrowsClockwise } from "@phosphor-icons/react";
+import { ArrowLeft, FloppyDisk, Eye, Trash } from "@phosphor-icons/react";
 import { ImageGallery } from "@/components/image-uploader";
 import { updateProduct, removeProduct } from "./actions";
 import { PricingStructureEditor } from "./pricing-structure-editor";
@@ -73,69 +73,9 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const matrixParam = product.parameters.find((p) => p.kind === "matrix");
-
-  // Matris hücre fiyatları controlled state: anahtar `${rowId}-${colId}`, değer string (boş = satışta değil).
-  const [cellPrices, setCellPrices] = useState<Record<string, string>>(() => {
-    const init: Record<string, string> = {};
-    for (const cell of matrixParam?.cells ?? []) {
-      init[`${cell.rowId}-${cell.colId}`] = cell.price != null ? String(cell.price) : "";
-    }
-    return init;
-  });
-
-  const setCell = (key: string, val: string) =>
-    setCellPrices((prev) => ({ ...prev, [key]: val }));
-
-  // "%X Toplu Artır" — mevcut (dolu) hücreleri oransal artırır. Sadece controlled state'i değiştirir,
-  // değişiklik "Kaydet"e basınca uygulanır (sahte kayıt yok).
-  function handleBulkIncrease() {
-    const raw = window.prompt("Tüm dolu hücreleri yüzde kaç artıralım? (örn. 10)");
-    if (raw == null) return;
-    const pct = Number(raw);
-    if (!Number.isFinite(pct) || pct === 0) {
-      toast.error("Geçerli bir yüzde girin.");
-      return;
-    }
-    setCellPrices((prev) => {
-      const next: Record<string, string> = {};
-      for (const [k, v] of Object.entries(prev)) {
-        if (v === "" || v == null) {
-          next[k] = v;
-          continue;
-        }
-        const base = Number(v);
-        if (!Number.isFinite(base)) {
-          next[k] = v;
-          continue;
-        }
-        next[k] = String(Math.round(base * (1 + pct / 100) * 100) / 100);
-      }
-      return next;
-    });
-    toast.info(`Dolu hücreler %${pct} güncellendi. Kaydet'e basınca uygulanır.`);
-  }
-
-  /** Controlled matris state'inden updateProduct'a gönderilecek parameters dizisini üretir. */
-  function buildParametersPayload() {
-    if (!matrixParam) return undefined;
-    const updatedMatrix = {
-      ...matrixParam,
-      cells: (matrixParam.cells ?? []).map((cell) => {
-        const key = `${cell.rowId}-${cell.colId}`;
-        const raw = cellPrices[key];
-        const price = raw === "" || raw == null ? 0 : Number(raw);
-        return { ...cell, price: Number.isFinite(price) ? price : 0 };
-      }),
-    };
-    // Diğer parametreleri korur, yalnız matris parametresini günceller.
-    return product.parameters.map((p) => (p.id === matrixParam.id ? updatedMatrix : p));
-  }
-
   async function handleSave() {
     setSaving(true);
     try {
-      const parameters = buildParametersPayload();
       await updateProduct(product.id, {
         name,
         shortDescription: shortDesc,
@@ -146,7 +86,6 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
         bestseller,
         isActive,
         images,
-        ...(parameters ? { parameters } : {}),
         seo: {
           title: seoTitle,
           description: seoDesc,
@@ -219,7 +158,7 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
-        {/* Sol: temel bilgiler + matrix */}
+        {/* Sol: temel bilgiler + fiyat yönetimi */}
         <div className="lg:col-span-2 space-y-5">
           <Card title="Temel Bilgiler">
             <Field label="Ürün Adı">
@@ -276,96 +215,6 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
               </Field>
             </div>
           </Card>
-
-          {/* Matrix Editor */}
-          {matrixParam && (
-            <Card title="Fiyat Matrisi (Paket × Adet)">
-              <p className="text-xs text-ink-500 mb-3">
-                Tabloda her hücre düzenlenebilir. Yapılan değişiklikler
-                "Kaydet"e basınca uygulanır. Boş bırakırsanız o kombinasyon
-                satışa çıkmaz (— işareti).
-              </p>
-              <div className="overflow-x-auto border border-paper-200 rounded-md">
-                <table className="w-full text-xs">
-                  <thead className="bg-paper-100/60 text-ink-500">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-semibold sticky left-0 bg-paper-100/60 z-10">
-                        Paket / Ebat
-                      </th>
-                      {matrixParam.cols?.map((c) => (
-                        <th
-                          key={c.id}
-                          className="text-center px-2 py-2 font-semibold whitespace-nowrap"
-                        >
-                          {c.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-paper-200">
-                    {matrixParam.rows?.map((r) => (
-                      <tr key={r.id} className="hover:bg-paper-100/40">
-                        <th
-                          scope="row"
-                          className="text-left px-3 py-2 font-medium text-ink-900 sticky left-0 bg-paper-50"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-xs">
-                              {r.group && (
-                                <span className="text-[9px] text-brand-700 font-bold mr-1">
-                                  [{r.group}]
-                                </span>
-                              )}
-                              {r.label}
-                            </span>
-                            {r.sublabel && (
-                              <span className="text-[10px] text-ink-500 font-normal mt-0.5 max-w-[300px] truncate">
-                                {r.sublabel}
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                        {matrixParam.cols?.map((c) => {
-                          const key = `${r.id}-${c.id}`;
-                          // Sadece tanımlı hücreler (cells'te var olan kombinasyonlar) düzenlenebilir;
-                          // tanımsız kombinasyon "—" (salt-okunur) kalır.
-                          const hasCell = matrixParam.cells?.some(
-                            (x) => x.rowId === r.id && x.colId === c.id,
-                          );
-                          return (
-                            <td key={c.id} className="px-1.5 py-1 text-center">
-                              {hasCell ? (
-                                <input
-                                  type="number"
-                                  value={cellPrices[key] ?? ""}
-                                  onChange={(e) => setCell(key, e.target.value)}
-                                  placeholder="—"
-                                  className="w-20 px-1.5 py-1 rounded border border-paper-200 text-xs tabular-nums text-center focus:border-ink-900 focus:outline-none"
-                                />
-                              ) : (
-                                <span className="text-ink-400">—</span>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-3 flex items-center gap-2">
-                {/* "Satır/Sütun Ekle" şimdilik yok: yeni eksen (id/etiket) tanımlama akışı
-                    backend'de güvenli şekilde desteklenmiyor — yanlış vaat vermemek için gizli. */}
-                <button
-                  type="button"
-                  onClick={handleBulkIncrease}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100 ml-auto"
-                >
-                  <ArrowsClockwise size={12} weight="bold" /> %X Toplu Artır
-                </button>
-              </div>
-            </Card>
-          )}
 
           {/* Fiyat Yönetimi — Konfigüratör Yapısı */}
           <Card title="Fiyat Yönetimi — Konfigüratör Yapısı">

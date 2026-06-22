@@ -235,14 +235,6 @@ export class MarkalaApiClient {
       this.request<Product>("PATCH", `/products/${id}`, data, { auth: true }),
     remove: (id: string) =>
       this.request<void>("DELETE", `/products/${id}`, undefined, { auth: true }),
-    bulkPrice: (data: {
-      scope: "all" | "category";
-      categoryId?: string;
-      op: "percent" | "fixed";
-      direction: "increase" | "decrease";
-      value: number;
-      round?: string;
-    }) => this.request<{ updated: number }>("POST", "/products/bulk-price", data, { auth: true }),
     /** Ürünün seçenek/boyut gruplarını ve satırlarını döner. */
     getPrices: (id: string) =>
       this.request<{ options: ApiOption[]; prices: ApiPrice[] }>(
