@@ -157,6 +157,35 @@ export interface ProductParameter {
   matrixNote?: string;
 }
 
+// === Faz C — yeni fiyat sistemi tipleri ===
+
+/** Ürün seçeneği (ebat, kağıt türü, baskı yüzü vb.) */
+export interface PricingOption {
+  id: string;
+  label: string;
+  /** Açıklama / alt başlık */
+  description?: string;
+  /** Görsel gruplama (örn. "EKO", "PREMIUM") */
+  group?: string;
+  /** Sıralama */
+  sortOrder?: number;
+}
+
+/** Seçenek kombinasyonuna karşılık gelen fiyat satırı */
+export interface PricingPriceRow {
+  /** Satır id'si — eşsiz */
+  id: string;
+  /** PricingOption.id → seçili option id'si eşlemesi */
+  optionSelections: Record<string, string>;
+  /** KDV dahil birim/toplam fiyat (TL) */
+  price: number;
+  /** Stok kodu (opsiyonel) */
+  sku?: string;
+}
+
+/** Konfigüratör seçim durumu — PricingOption.id → PricingOption.id */
+export type ConfiguratorSelections = Record<string, string>;
+
 export interface Product {
   slug: string;
   name: string;
@@ -172,6 +201,12 @@ export interface Product {
   images: string[];
   badges?: BadgeKind[];
   parameters: ProductParameter[];
+  /** Faz C — yeni seçenek ekseni listesi */
+  options?: PricingOption[];
+  /** Faz C — seçenek kombinasyonu → fiyat satırları */
+  prices?: PricingPriceRow[];
+  /** Faz C — listeleme/kart fiyatı (en düşük geçerli fiyat); null = "Teklif Al" */
+  displayPrice?: number | null;
   rating?: { average: number; count: number };
   /** Bu ürün anasayfada öne çıkacak mı (bestseller) */
   bestseller?: boolean;
