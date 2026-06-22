@@ -2,24 +2,29 @@
 import { getAdminApi } from "@/lib/api";
 import { revalidatePath } from "next/cache";
 import { revalidateStorefront } from "@/lib/revalidate-web";
+import type { BulkAdjustInput, CategorySetInput } from "@markala/api-client";
 
 /**
- * Toplu fiyat güncelleme. Operasyonu SUNUCUYA gönderiyoruz; sunucu hedef ürünlerin
- * basePrice + startingPrice + KONFİGÜRATÖR PARAMETRELERİNİ (matris hücreleri, birim/m² fiyatı,
- * ek ücretler) birlikte ölçekler. Böylece matrisli üründe de fiyat sitede yansır.
- * (Eskiden client tek tek `startingPrice` yazıyordu → matrisli üründe görünen fiyat değişmiyordu.)
+ * Toplu fiyat güncelleme. Yeni model: product_prices.price üzerinde çalışır;
+ * saklı (mevcut) fiyat referans alınır. Yüzde veya sabit tutar artış/azalma uygular.
+ * (Eski bulkUpdatePrices → products.bulkPrice, parameters'ı ölçekliyordu — artık kullanılmıyor.)
  */
-export async function bulkUpdatePrices(input: {
-  scope: "all" | "category";
-  categoryId?: string;
-  op: "percent" | "fixed";
-  direction: "increase" | "decrease";
-  value: number;
-  round?: string;
-}) {
+export async function bulkAdjustPrices(input: BulkAdjustInput) {
   const api = await getAdminApi();
-  const result = await api.products.bulkPrice(input);
+  const result = await api.prices.bulkAdjust(input);
   revalidatePath("/urunler");
   await revalidateStorefront();
-  return result;
+  return result; // { updated }
+}
+
+/**
+ * Kategorideki tüm basit ürünlerin fiyatını sabit değere çeker.
+ * Matrisli/seçenekli ürünler atlanır (skipped).
+ */
+export async function categorySetPrices(input: CategorySetInput) {
+  const api = await getAdminApi();
+  const result = await api.prices.categorySet(input);
+  revalidatePath("/urunler");
+  await revalidateStorefront();
+  return result; // { set, skipped }
 }

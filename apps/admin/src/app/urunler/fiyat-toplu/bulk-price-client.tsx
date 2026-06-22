@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
-import { ArrowLeft, Calculator, ArrowsClockwise, Warning } from "@phosphor-icons/react";
-import { bulkUpdatePrices } from "./actions";
+import { ArrowLeft, Calculator, ArrowsClockwise, Warning, Tag } from "@phosphor-icons/react";
+import { bulkAdjustPrices, categorySetPrices } from "./actions";
 
 export interface CategoryRow {
   id: string;
@@ -33,8 +33,13 @@ export function BulkPriceClient({ products, categories }: Props) {
   const [op, setOp] = useState<"percent" | "fixed">("percent");
   const [value, setValue] = useState(10);
   const [direction, setDirection] = useState<"increase" | "decrease">("increase");
-  const [round, setRound] = useState<"none" | "5" | "10" | "50" | "100">("10");
+  const [round, setRound] = useState<"none" | "1" | "5" | "10">("10");
   const [applying, setApplying] = useState(false);
+
+  // Kategori-tek-fiyat state
+  const [setCatSlug, setSetCatSlug] = useState(categories[0]?.slug ?? "");
+  const [setPrice, setSetPrice] = useState(0);
+  const [isPending, startTransition] = useTransition();
 
   const targetProducts =
     scope === "all"
@@ -75,7 +80,7 @@ export function BulkPriceClient({ products, categories }: Props) {
 
     setApplying(true);
     try {
-      const res = await bulkUpdatePrices({
+      const res = await bulkAdjustPrices({
         scope,
         categoryId:
           scope === "category"
@@ -86,12 +91,32 @@ export function BulkPriceClient({ products, categories }: Props) {
         value,
         round,
       });
-      toast.success(`${res.updated} ürün güncellendi.`);
+      toast.success(`${res.updated} fiyat satırı güncellendi.`);
     } catch {
       toast.error("Güncelleme sırasında hata oluştu.");
     } finally {
       setApplying(false);
     }
+  }
+
+  function applyCategorySet() {
+    const catId = categories.find((c) => c.slug === setCatSlug)?.id;
+    if (!catId) return;
+    if (
+      !confirm(
+        `"${categories.find((c) => c.slug === setCatSlug)?.name}" kategorisindeki basit ürünlerin fiyatı ${setPrice} ₺ yapılacak.\n\nDevam edilsin mi?`,
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const res = await categorySetPrices({ categoryId: catId, price: setPrice });
+        toast.success(`${res.set} basit ürün fiyatlandı, ${res.skipped} seçenekli ürün atlandı.`);
+      } catch {
+        toast.error("Kategori fiyatlandırması sırasında hata oluştu.");
+      }
+    });
   }
 
   return (
@@ -199,10 +224,9 @@ export function BulkPriceClient({ products, categories }: Props) {
                 className="mt-1 w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm"
               >
                 <option value="none">Yuvarlama yok</option>
+                <option value="1">En yakın 1 ₺</option>
                 <option value="5">En yakın 5 ₺</option>
                 <option value="10">En yakın 10 ₺</option>
-                <option value="50">En yakın 50 ₺</option>
-                <option value="100">En yakın 100 ₺</option>
               </select>
             </div>
           </Card>
@@ -223,10 +247,57 @@ export function BulkPriceClient({ products, categories }: Props) {
             <div className="mt-3 flex items-start gap-2 text-[11px] text-ink-500">
               <Warning size={14} className="flex-none mt-0.5 text-warning" />
               <span>
-                Bu işlem geri alınamaz. Yüzde güncellemede konfigüratörlü
-                ürünlerin fiyat matrisi/birim fiyatları da orantılı ölçeklenir;
-                değişiklik siteye otomatik yansır. Önizleme yaklaşıktır.
+                Bu işlem geri alınamaz. Saklı (mevcut) fiyat referans alınır.
+                Değişiklik siteye otomatik yansır. Önizleme yaklaşıktır.
               </span>
+            </div>
+          </Card>
+
+          {/* Kategori Tek Fiyat */}
+          <Card title="Kategoriye Tek Fiyat">
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold uppercase text-ink-500 block mb-1">
+                  Kategori
+                </label>
+                <select
+                  value={setCatSlug}
+                  onChange={(e) => setSetCatSlug(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm"
+                >
+                  {categories.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase text-ink-500 block mb-1">
+                  Fiyat (₺)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  value={setPrice}
+                  onChange={(e) => setSetPrice(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm tabular-nums"
+                />
+              </div>
+              <button
+                onClick={applyCategorySet}
+                disabled={isPending}
+                className="w-full inline-flex items-center justify-center gap-2 bg-ink-900 text-paper-50 px-4 py-2.5 rounded-md text-sm font-semibold hover:bg-ink-700 disabled:opacity-60"
+              >
+                <Tag size={14} weight="bold" />
+                {isPending ? "Uygulanıyor…" : "Uygula"}
+              </button>
+              <div className="flex items-start gap-2 text-[11px] text-ink-500">
+                <Warning size={14} className="flex-none mt-0.5 text-warning" />
+                <span>
+                  Yalnız seçeneksiz (basit) ürünlere uygulanır; matrisli/konfigüratörlü ürünler atlanır.
+                </span>
+              </div>
             </div>
           </Card>
         </div>
