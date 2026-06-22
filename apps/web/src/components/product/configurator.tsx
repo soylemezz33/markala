@@ -104,7 +104,7 @@ export function Configurator({ product }: { product: Product }) {
     const msg = encodeURIComponent(
       `Merhaba, "${product.name}" ürünü için teklif almak istiyorum.`,
     );
-    window.open(`https://wa.me/905XXXXXXXXX?text=${msg}`, "_blank");
+    window.open(`https://wa.me/905319004102?text=${msg}`, "_blank");
   }
 
   return (
