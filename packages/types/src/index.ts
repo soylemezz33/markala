@@ -107,56 +107,6 @@ export interface DimensionExtra {
   autoBelow1Sqm?: boolean;
 }
 
-export interface ProductParameter {
-  id: string;
-  label: string;
-  kind: ParameterKind;
-  required: boolean;
-  /** "checkbox-group" hariç bir seçenek listesi gerektirir */
-  options?: ProductOption[];
-  /** "quantity" tipi için preset adetler */
-  quantityPresets?: number[];
-  /** "quantity" tipi için adet başına TL */
-  unitPrice?: number;
-  /**
-   * Bu select/radio parametresinin seçili opsiyonu, ebat-bazlı fiyatların (priceBySize)
-   * anahtarını belirler. Üründe en fazla bir parametre isSizeDriver olmalı.
-   */
-  isSizeDriver?: boolean;
-  /**
-   * true ise bu parametrenin opsiyon katkısı adet (quantity) ile ÇARPILIR.
-   * (Varsayılan: katkı bir kez eklenir — mevcut matbaa ürünleri böyle.)
-   */
-  perUnit?: boolean;
-  defaultOptionId?: string;
-
-  // === "dimension" tipi için (en + boy → alan/çevre) ===
-  /** TL / m² — temel birim fiyat */
-  pricePerSqm?: number;
-  /** Min en/boy (cm), default 30 */
-  minDimension?: number;
-  /** Max en/boy (cm), default 500 */
-  maxDimension?: number;
-  /** Default en (cm) */
-  defaultWidth?: number;
-  /** Default boy (cm) */
-  defaultHeight?: number;
-  /** Ek seçenekler — kullanıcı seçer (kolon dikiş, germe vb.) veya otomatik (1m² altı) */
-  extras?: DimensionExtra[];
-
-  // === "matrix" tipi için (örn. ebat × adet sabit fiyat tablosu) ===
-  /** Satırlar (genelde ebat ya da paket) */
-  rows?: MatrixAxis[];
-  /** Sütunlar (genelde adet) */
-  cols?: MatrixAxis[];
-  /** Hücreler — her bir kombinasyon için sabit toplam fiyat */
-  cells?: MatrixCell[];
-  /** Default seçili hücre id (yoksa ilk hücre) */
-  defaultCellId?: string;
-  /** Üstte gösterilecek not (örn. "Tek Ebat 82x52 mm — Çift Yön Renkli") */
-  matrixNote?: string;
-}
-
 // === Faz C — yeni fiyat sistemi tipleri ===
 
 /**
@@ -206,7 +156,6 @@ export interface Product {
   sizeLabel?: string;
   images: string[];
   badges?: BadgeKind[];
-  parameters: ProductParameter[];
   /** Faz C — yeni seçenek ekseni listesi */
   options?: PricingOption[];
   /** Faz C — seçenek kombinasyonu → fiyat satırları */

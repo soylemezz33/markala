@@ -1,4 +1,5 @@
-import type { Product, ProductParameter, MatrixCell } from "@markala/types";
+import type { MatrixCell } from "@markala/types";
+import type { ProductParameter, ProductWithParams } from "./legacy-types";
 import { PRODUCTION_TOLERANCE_PARAGRAPH } from "./notes";
 
 const prodImg = (slug: string, i: number = 1) => `/api/mockup?slug=${slug}&v=${i}&w=1200&h=1200`;
@@ -52,7 +53,7 @@ function buildMatrix(args: {
 // ============================================================================
 // 15. ETİKET — 90 gr Kuşe Çıkartma Renkli, 6 varyant × 1.000 adet
 // ============================================================================
-const etiket: Product = {
+const etiket: ProductWithParams = {
   slug: "etiket",
   name: "Etiket — 90 gr Kuşe Çıkartma Renkli",
   categorySlug: "etiket",
@@ -122,7 +123,7 @@ const etiket: Product = {
 // ============================================================================
 // 16. MAKBUZ — 54 gr Kendinden Kopyalı 1 Asıl 1 Suret, 8 cilt varyantı
 // ============================================================================
-const makbuz: Product = {
+const makbuz: ProductWithParams = {
   slug: "makbuz",
   name: "Makbuz — 54 gr Kendinden Kopyalı (1 Asıl + 1 Suret)",
   categorySlug: "makbuz",
@@ -201,7 +202,7 @@ const makbuz: Product = {
 // ============================================================================
 // 17. OTO PASPAS — 85 gr karft 34×49 cm Tek Renk
 // ============================================================================
-const otoPaspas: Product = {
+const otoPaspas: ProductWithParams = {
   slug: "oto-paspas",
   name: "Oto Paspas — 85 gr karft 34×49 cm Tek Renk",
   categorySlug: "oto-paspas",
@@ -267,7 +268,7 @@ const otoPaspas: Product = {
 // ============================================================================
 // 18. KÜP BLOKNOT — 80 gr 1.Hamur 78×78 mm Tek Renk
 // ============================================================================
-const kupBloknot: Product = {
+const kupBloknot: ProductWithParams = {
   slug: "kup-bloknot",
   name: "Küp Bloknot — 78×78 mm 80 gr 1.Hamur",
   categorySlug: "bloknot",
@@ -340,7 +341,7 @@ const kupBloknot: Product = {
 // ============================================================================
 // 19. SPİRALLİ BLOKNOT — 50'lik Cilt, 2 ebat × 5 kapak × 2 cilt sayısı
 // ============================================================================
-const spiralliBloknot: Product = {
+const spiralliBloknot: ProductWithParams = {
   slug: "spiralli-bloknot",
   name: "Spiralli Bloknot — 50'lik Cilt",
   categorySlug: "bloknot",
@@ -419,7 +420,7 @@ const spiralliBloknot: Product = {
 // ============================================================================
 // 20. KAPAKLI BLOKNOT — Amerikan Cilt 50'lik, 2 ebat × 4 kapak × 2 cilt
 // ============================================================================
-const kapakliBloknot: Product = {
+const kapakliBloknot: ProductWithParams = {
   slug: "kapakli-bloknot",
   name: "Kapaklı Bloknot — Amerikan Cilt 50'lik",
   categorySlug: "bloknot",
@@ -493,7 +494,7 @@ const kapakliBloknot: Product = {
 // ============================================================================
 // 21. KAPAKSIZ BLOKNOT — 50'lik Tutkallı Cilt, 2 ebat × 2 cilt
 // ============================================================================
-const kapaksizBloknot: Product = {
+const kapaksizBloknot: ProductWithParams = {
   slug: "kapaksiz-bloknot",
   name: "Kapaksız Bloknot — 50'lik Tutkallı Cilt",
   categorySlug: "bloknot",
@@ -561,7 +562,7 @@ const kapaksizBloknot: Product = {
 // ============================================================================
 // 22. NOTLUK — 7.8×14 cm 70'lik
 // ============================================================================
-const notluk: Product = {
+const notluk: ProductWithParams = {
   slug: "notluk",
   name: "Notluk — 7.8×14 cm 70'lik",
   categorySlug: "bloknot",
@@ -622,7 +623,7 @@ const notluk: Product = {
 // ============================================================================
 // 23. ÇANTALAR — 210 gr Amerikan Bristol Selefonlu, 6 ebat × 2 adet + ekstra
 // ============================================================================
-const canta: Product = {
+const canta: ProductWithParams = {
   slug: "canta",
   name: "Çanta — 210 gr Amerikan Bristol Parlak/Mat Selefon",
   categorySlug: "canta-kese",
@@ -697,7 +698,7 @@ const canta: Product = {
   },
 };
 
-export const matbaaProducts3: Product[] = [
+export const matbaaProducts3: ProductWithParams[] = [
   etiket,
   makbuz,
   otoPaspas,

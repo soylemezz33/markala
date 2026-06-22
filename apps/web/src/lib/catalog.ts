@@ -47,7 +47,6 @@ function mapProduct(p: ApiProduct): Product {
     sizeLabel: (p.sizeLabel as string | null) ?? undefined,
     images: Array.isArray(p.images) ? (p.images as string[]) : [],
     badges: Array.isArray(p.badges) ? (p.badges as Product["badges"]) : [],
-    parameters: Array.isArray(p.parameters) ? (p.parameters as Product["parameters"]) : [],
     options: Array.isArray(p.options) ? (p.options as Product["options"]) : [],
     prices: Array.isArray(p.prices) ? (p.prices as Product["prices"]) : [],
     displayPrice: typeof p.displayPrice === "number" ? p.displayPrice : null,

@@ -109,7 +109,6 @@ describe("getDisplayPrice", () => {
     basePrice: 0,
     productionTime: "1 gün",
     images: [],
-    parameters: [],
   };
 
   it("product.displayPrice döndürür", () => {
@@ -139,7 +138,6 @@ describe("initSelections", () => {
     basePrice: 0,
     productionTime: "1 gün",
     images: [],
-    parameters: [],
   };
 
   it("her grup için optionSort en küçük option'ı seçer", () => {

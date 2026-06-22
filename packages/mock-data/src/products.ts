@@ -1,4 +1,5 @@
 import type { Product } from "@markala/types";
+import type { ProductWithParams } from "./legacy-types";
 import { PRODUCTION_TOLERANCE_PARAGRAPH } from "./notes";
 import { matbaaProducts } from "./products-matbaa";
 import { matbaaProducts2 } from "./products-matbaa-2";
@@ -22,14 +23,14 @@ import { matbaaProducts3 } from "./products-matbaa-3";
 const prodImg = (slug: string, i: number = 1) => `/api/mockup?slug=${slug}&v=${i}&w=1200&h=1200`;
 
 const FIRE_TAIL = PRODUCTION_TOLERANCE_PARAGRAPH.trim();
-const withFireNote = (p: Product): Product => ({
+const withFireNote = (p: ProductWithParams): ProductWithParams => ({
   ...p,
   description: p.description.includes(FIRE_TAIL.slice(0, 40))
     ? p.description
     : `${p.description}${PRODUCTION_TOLERANCE_PARAGRAPH}`,
 });
 
-const legacyRaw: Product[] = [
+const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   // (KARTVİZİT eski varyantları products-matbaa.ts'e taşındı — buradan kaldırıldı)
   // ========================================================================

@@ -189,13 +189,6 @@ test.describe("Kategori navigasyonu", () => {
   });
 });
 
-test.describe("Fiyat hesaplama widget", () => {
-  test("/widget/fiyat-hesapla sayfası erişilebilir", async ({ page }) => {
-    const response = await page.goto("/widget/fiyat-hesapla");
-    expect(response?.status()).toBeLessThan(500);
-  });
-});
-
 test.describe("Kargo takip", () => {
   test("/kargo-takip sayfası erişilebilir ve form görünür", async ({ page }) => {
     const response = await page.goto("/kargo-takip");

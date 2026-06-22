@@ -34,14 +34,6 @@ export interface ProductDetail {
   category?: { id: string; slug: string; name: string } | null;
   images: string[];
   seo?: { title?: string; description?: string; keywords?: string[] } | null;
-  parameters: Array<{
-    id: string;
-    kind: string;
-    label: string;
-    rows?: Array<{ id: string; label: string; sublabel?: string; group?: string }>;
-    cols?: Array<{ id: string; label: string }>;
-    cells?: Array<{ id: string; rowId: string; colId: string; price: number }>;
-  }>;
 }
 
 interface Props {

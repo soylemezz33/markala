@@ -1,4 +1,5 @@
-import type { Product, ProductParameter, MatrixCell } from "@markala/types";
+import type { MatrixCell } from "@markala/types";
+import type { ProductParameter, ProductWithParams } from "./legacy-types";
 import { PRODUCTION_TOLERANCE_PARAGRAPH } from "./notes";
 
 /**
@@ -82,7 +83,7 @@ const adet1kPrices = (p: number) => ({
 // ============================================================================
 // 1. KLASİK KARTVİZİT — 21 paket × 5 adet, tek ebat 82×52 mm
 // ============================================================================
-const klasikKartvizit: Product = {
+const klasikKartvizit: ProductWithParams = {
   slug: "klasik-kartvizit",
   name: "Klasik Kartvizit",
   categorySlug: "kartvizit",
@@ -172,7 +173,7 @@ const klasikKartvizit: Product = {
 // ============================================================================
 // 2. BROŞÜR — 115 gr Kuşe Çift Yön Renkli, 4 ebat × 4 adet
 // ============================================================================
-const brosur: Product = {
+const brosur: ProductWithParams = {
   slug: "brosur",
   name: "Broşür — 115 gr Kuşe Çift Yön Renkli",
   categorySlug: "brosur",
@@ -246,7 +247,7 @@ const brosur: Product = {
 // ============================================================================
 // 3. PRO BROŞÜR — 128 gr Kuşe "Tam Ebat, Tam Gramaj" (sadece markala.com.tr)
 // ============================================================================
-const proBrosur: Product = {
+const proBrosur: ProductWithParams = {
   slug: "pro-brosur",
   name: "Pro Broşür — 128 gr Kuşe Tam Ebat Tam Gramaj",
   categorySlug: "brosur",
@@ -317,7 +318,7 @@ const proBrosur: Product = {
 // ============================================================================
 // 4. SELEFONLU BROŞÜR — 200 gr Kuşe Çift Yön Renkli Parlak Selefonlu
 // ============================================================================
-const selefonluBrosur: Product = {
+const selefonluBrosur: ProductWithParams = {
   slug: "selefonlu-brosur",
   name: "Selefonlu Broşür — 200 gr Kuşe Parlak Selefon",
   categorySlug: "brosur",
@@ -392,7 +393,7 @@ const selefonluBrosur: Product = {
 // ============================================================================
 // 5. EL İLANI — 105 gr Kuşe Tek Yön Renkli
 // ============================================================================
-const elIlani: Product = {
+const elIlani: ProductWithParams = {
   slug: "el-ilani",
   name: "El İlanı — 105 gr Kuşe Tek Yön Renkli",
   categorySlug: "el-ilani",
@@ -466,7 +467,7 @@ const elIlani: Product = {
 // ============================================================================
 // 6. AFİŞLER — 105 gr Kuşe Tek Yön Renkli, 2 ebat × 3 adet
 // ============================================================================
-const afis105gr: Product = {
+const afis105gr: ProductWithParams = {
   slug: "afis-105gr",
   name: "Afiş — 105 gr Kuşe Tek Yön Renkli",
   categorySlug: "afis",
@@ -532,7 +533,7 @@ const afis105gr: Product = {
   },
 };
 
-export const matbaaProducts: Product[] = [
+export const matbaaProducts: ProductWithParams[] = [
   klasikKartvizit,
   brosur,
   proBrosur,

@@ -1,4 +1,5 @@
-import type { Product, ProductParameter, MatrixCell } from "@markala/types";
+import type { MatrixCell } from "@markala/types";
+import type { ProductParameter, ProductWithParams } from "./legacy-types";
 import { PRODUCTION_TOLERANCE_PARAGRAPH } from "./notes";
 
 const prodImg = (slug: string, i: number = 1) => `/api/mockup?slug=${slug}&v=${i}&w=1200&h=1200`;
@@ -54,7 +55,7 @@ function buildMatrix(args: {
 // ============================================================================
 // 7. ANTETLI KAĞIT — 90 gr 1.Hamur Tek Yön Renkli, A5 ve A4
 // ============================================================================
-const antetliKagit: Product = {
+const antetliKagit: ProductWithParams = {
   slug: "antetli-kagit",
   name: "Antetli Kağıt — 90 gr 1.Hamur",
   categorySlug: "antetli-kagit",
@@ -123,7 +124,7 @@ const antetliKagit: Product = {
 // ============================================================================
 // 8-10. ZARF — 110 gr 1.Hamur (3 ayrı ürün: Diplomat Tek Renk / Renkli / Torba)
 // ============================================================================
-const zarfDiplomatTekRenk: Product = {
+const zarfDiplomatTekRenk: ProductWithParams = {
   slug: "zarf-diplomat-tek-renk",
   name: "Diplomat Zarf — 10.5×24 cm Tek Renk",
   categorySlug: "zarf",
@@ -186,7 +187,7 @@ const zarfDiplomatTekRenk: Product = {
   },
 };
 
-const zarfDiplomatRenkli: Product = {
+const zarfDiplomatRenkli: ProductWithParams = {
   slug: "zarf-diplomat-renkli",
   name: "Diplomat Zarf — 10.5×24 cm Renkli Baskı",
   categorySlug: "zarf",
@@ -249,7 +250,7 @@ const zarfDiplomatRenkli: Product = {
   },
 };
 
-const zarfTorba: Product = {
+const zarfTorba: ProductWithParams = {
   slug: "zarf-torba",
   name: "Torba Zarf — 24×32 cm Renkli",
   categorySlug: "zarf",
@@ -314,7 +315,7 @@ const zarfTorba: Product = {
 // ============================================================================
 // 11. MAGNET — 60 mikron 46×68 mm Promosyon Magneti (kartvizit boy)
 // ============================================================================
-const magnetPromosyon: Product = {
+const magnetPromosyon: ProductWithParams = {
   slug: "magnet-promosyon",
   name: "Promosyon Magnet — 60 Mikron 46×68 mm",
   categorySlug: "magnet",
@@ -385,7 +386,7 @@ const magnetPromosyon: Product = {
 // ============================================================================
 // 12. AMERİKAN SERVİS — 3 ebat × 3 adet bandı
 // ============================================================================
-const amerikanServis: Product = {
+const amerikanServis: ProductWithParams = {
   slug: "amerikan-servis",
   name: "Amerikan Servis — Tek Yön Renkli Baskı",
   categorySlug: "amerikan-servis",
@@ -454,7 +455,7 @@ const amerikanServis: Product = {
 // ============================================================================
 // 13. KAPI ASKI BROŞÜRLERİ — 3 varyant × 1.000 adet sabit
 // ============================================================================
-const kapiAskiBrosur: Product = {
+const kapiAskiBrosur: ProductWithParams = {
   slug: "kapi-aski-brosur",
   name: "Kapı Askı Broşür — Çift Yön Renkli Mat Selefon Kabartma Lak",
   categorySlug: "kapi-aski-brosur",
@@ -522,7 +523,7 @@ const kapiAskiBrosur: Product = {
 // ============================================================================
 // 14. CEPLİ DOSYA — 22.5×31 cm Renkli, 7 varyant × 2 adet
 // ============================================================================
-const cepliDosya: Product = {
+const cepliDosya: ProductWithParams = {
   slug: "cepli-dosya",
   name: "Cepli Dosya — Kapalı Hâli 22.5×31 cm",
   categorySlug: "cepli-dosya",
@@ -595,7 +596,7 @@ const cepliDosya: Product = {
   },
 };
 
-export const matbaaProducts2: Product[] = [
+export const matbaaProducts2: ProductWithParams[] = [
   antetliKagit,
   zarfDiplomatTekRenk,
   zarfDiplomatRenkli,
