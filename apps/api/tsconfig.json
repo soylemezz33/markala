@@ -16,6 +16,6 @@
     "isolatedModules": false,
     "incremental": true
   },
-  "include": ["src/**/*", "prisma/**/*.ts"],
+  "include": ["src/**/*", "prisma/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
