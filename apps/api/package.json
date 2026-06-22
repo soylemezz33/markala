@@ -17,7 +17,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1069.0",
+    "@aws-sdk/client-s3": "^3.1073.0",
     "@markala/mock-data": "workspace:*",
     "@markala/types": "workspace:*",
     "@nestjs/common": "^10.4.7",
@@ -34,7 +34,7 @@
     "class-validator": "^0.15.1",
     "express": "^4.22.1",
     "helmet": "^8.2.0",
-    "iyzipay": "^2.0.67",
+    "iyzipay": "^2.0.68",
     "nodemailer": "^8.0.11",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
