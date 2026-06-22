@@ -385,10 +385,13 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
           <Card title="Fiyat Yönetimi — Izgara (Maliyet + Satış)">
             <p className="text-xs text-ink-500 mb-4">
               Seçenek×boyut kombinasyonlarının satış ve maliyet fiyatlarını
-              giriniz. Boş bırakılan hücreler satışa çıkmaz. Yapı değişince
-              sayfayı yenileyip ızgarayı güncelleyiniz.
+              giriniz. Boş bırakılan hücreler satışa çıkmaz. Yapı kaydedilince
+              ızgara otomatik güncellenir.
             </p>
+            {/* key: yapı (options) değişince ızgara remount edilip hücreler yeni yapıya göre
+                yeniden kurulur (router.refresh sonrası stale grid'i önler — final review). */}
             <PricingGridEditor
+              key={JSON.stringify(pricing?.options ?? [])}
               productId={(product as unknown as { id: string }).id}
               options={pricing?.options ?? []}
               initialPrices={pricing?.prices ?? []}
