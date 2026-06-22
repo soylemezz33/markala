@@ -1,14 +1,14 @@
 // Prices modülü DTO'ları — konfigüratör yapısı, fiyat satırları, toplu/kategori araçları.
-import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, MinLength, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 
 export class OptionInputDto {
   @IsString() @MaxLength(60) groupKey!: string;
-  @IsString() @MaxLength(120) groupLabel!: string;
+  @IsString() @MinLength(1) @MaxLength(120) groupLabel!: string;
   @IsIn(["dimension", "priced"]) groupRole!: "dimension" | "priced";
   @IsInt() @Min(0) groupSort!: number;
   @IsString() @MaxLength(80) optionKey!: string;
-  @IsString() @MaxLength(200) optionLabel!: string;
+  @IsString() @MinLength(1) @MaxLength(200) optionLabel!: string;
   @IsString() @IsOptional() @MaxLength(400) optionSublabel?: string;
   @IsInt() @Min(0) optionSort!: number;
   @IsBoolean() @IsOptional() locked?: boolean;

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -39,6 +39,48 @@ export class PricesService {
 
   async setOptions(productId: string, rows: import("./prices.dto").OptionInputDto[]) {
     await this.assertProduct(productId);
+
+    // Kural referans doğrulaması: forcesOption / disablesGroups, gönderilen grup/seçenek setini hedef almalı.
+    if (rows.length > 0) {
+      const validGroupKeys = new Set(rows.map((r) => r.groupKey));
+      const validOptionsByGroup = new Map<string, Set<string>>();
+      for (const r of rows) {
+        if (!validOptionsByGroup.has(r.groupKey)) validOptionsByGroup.set(r.groupKey, new Set());
+        validOptionsByGroup.get(r.groupKey)!.add(r.optionKey);
+      }
+
+      for (const r of rows) {
+        if (!r.rules) continue;
+        const rules = r.rules as Record<string, unknown>;
+
+        // forcesOption: { groupKey, optionKey } referansı geçerli mi?
+        if (rules.forcesOption != null) {
+          const fo = rules.forcesOption as { groupKey?: string; optionKey?: string };
+          if (!fo.groupKey || !validGroupKeys.has(fo.groupKey)) {
+            throw new BadRequestException(
+              `Kural hatası: "${r.groupKey}/${r.optionKey}" seçeneğinin forcesOption.groupKey değeri ("${fo.groupKey}") mevcut gruplar arasında yok.`,
+            );
+          }
+          if (!fo.optionKey || !validOptionsByGroup.get(fo.groupKey)?.has(fo.optionKey)) {
+            throw new BadRequestException(
+              `Kural hatası: "${r.groupKey}/${r.optionKey}" seçeneğinin forcesOption.optionKey değeri ("${fo.optionKey}") "${fo.groupKey}" grubunda yok.`,
+            );
+          }
+        }
+
+        // disablesGroups: string[] — her birinin geçerli groupKey olması gerekir.
+        if (Array.isArray(rules.disablesGroups)) {
+          for (const gk of rules.disablesGroups as string[]) {
+            if (!validGroupKeys.has(gk)) {
+              throw new BadRequestException(
+                `Kural hatası: "${r.groupKey}/${r.optionKey}" seçeneğinin disablesGroups listesinde geçersiz grup: "${gk}".`,
+              );
+            }
+          }
+        }
+      }
+    }
+
     await this.prisma.productOption.deleteMany({ where: { productId } });
     if (rows.length === 0) return { count: 0 };
     const { count } = await this.prisma.productOption.createMany({

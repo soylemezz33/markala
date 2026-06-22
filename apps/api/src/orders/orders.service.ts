@@ -283,6 +283,19 @@ export class OrdersService {
           throw new BadRequestException(`Bu ürün için fiyat belirlenmemiş (Teklif Al), sipariş alınamıyor: ${product.slug}`);
         }
         const unitPrice = round2(configuredUnit);
+        // Denetim kaydı: sunucu-tarafı fiyat hesabı. Client'tan gelen totalPrice ile karşılaştır;
+        // %5'i aşan sapma şüpheli (fiyat manipülasyonu, stale cache, calculator hatası).
+        const clientTotalHint = (i.configuration as Record<string, unknown>)?.totalPrice;
+        if (typeof clientTotalHint === "number" && clientTotalHint > 0) {
+          const pctDiff = Math.abs(unitPrice - clientTotalHint) / unitPrice;
+          if (pctDiff > 0.05) {
+            this.logger.warn(
+              `Fiyat sapması [${product.slug}]: sunucu=${unitPrice}₺ client=${clientTotalHint}₺ (%${(pctDiff * 100).toFixed(1)})`,
+            );
+          }
+        } else {
+          this.logger.debug(`Sunucu fiyat [${product.slug}]: ${unitPrice}₺ × ${quantity}`);
+        }
         return {
           ...common,
           productId: product.id as string | null,
@@ -391,6 +404,10 @@ export class OrdersService {
         if (pct > 0) discount = round2(discount + (subtotal * pct) / 100);
       }
     }
+
+    // İndirim subtotal'ı aşamaz: kupon + kurumsal yığılaması subtotal'ı geçerse kısıt uygula.
+    // Muhasebe kaydı ve Paraşüt e-faturası için indirim <= subtotal garantisi (negatif satır engeli).
+    discount = round2(Math.min(discount, subtotal));
 
     // Kargo: free_shipping kuponu VEYA ara toplam eşiği → ücretsiz; aksi halde settings'ten gelen bedel.
     const { fee: shippingFeeSetting, freeThreshold } = await this.settings.getShipping();

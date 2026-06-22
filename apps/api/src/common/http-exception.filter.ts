@@ -23,6 +23,18 @@ import type { Request, Response } from "express";
  * HttpException'larda davranış EKLEMELİDİR: orijinal status/message/error aynen
  * korunur, sadece makine-okur `code` + `path`/`timestamp` eklenir (kırılma yok).
  */
+
+/**
+ * Log güvenliği: URL sorgu parametrelerinde token/secret/password/key gibi hassas
+ * değerleri maskeler. Yalnızca log satırında kullanılır; yanıta gönderilmez.
+ * Örn. /api/auth/reset?token=abc123 → /api/auth/reset?token=***
+ */
+function redactSensitivePath(path: string): string {
+  return path.replace(
+    /([?&](?:token|secret|password|key|apiKey|api_key|access_token|refresh_token)=)[^&]*/gi,
+    "$1***",
+  );
+}
 const STATUS_CODE_MAP: Record<number, string> = {
   400: "BAD_REQUEST",
   401: "UNAUTHORIZED",
@@ -57,16 +69,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const req = ctx.getRequest<Request>();
 
     const normalized = this.normalize(exception);
+    const rawPath = req?.originalUrl ?? req?.url ?? "";
     const body: ErrorBody = {
       ...normalized,
-      path: req?.originalUrl ?? req?.url ?? "",
+      path: rawPath,
       timestamp: new Date().toISOString(),
     };
 
     // 5xx → tam stack logla (observability). 4xx beklenen istemci hatası, gürültü yapma.
+    // GÜVENLİK: log satırında URL'den hassas sorgu parametreleri maskelenir (token/secret/key/password).
     if (body.statusCode >= 500) {
       this.logger.error(
-        `${req?.method ?? "?"} ${body.path} → ${body.statusCode} ${body.code}`,
+        `${req?.method ?? "?"} ${redactSensitivePath(rawPath)} → ${body.statusCode} ${body.code}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
     }

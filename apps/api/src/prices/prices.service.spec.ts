@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { PricesService, adjustPrice } from "./prices.service";
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 const mkPrisma = () => ({
   product: { findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
   productOption: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn(), createMany: vi.fn() },
@@ -58,4 +58,80 @@ it("categorySet basit ürüne yazar, seçenekliyi atlar", async () => {
   const s = new PricesService(p as any);
   const r = await s.categorySet("cat1", 250);
   expect(r).toEqual({ set: 1, skipped: 1 });
+});
+
+// --- Kural referans doğrulaması (#2) ---
+describe("setOptions — kural referans doğrulaması", () => {
+  const baseRows = [
+    { groupKey: "paket", groupLabel: "Paket", groupRole: "priced" as const, groupSort: 0, optionKey: "nk", optionLabel: "NK", optionSort: 0 },
+    { groupKey: "adet",  groupLabel: "Adet",  groupRole: "dimension" as const, groupSort: 1, optionKey: "1000", optionLabel: "1.000", optionSort: 0 },
+  ];
+
+  it("geçerli forcesOption (varolan grup+seçenek) → başarıyla kaydeder", async () => {
+    const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
+    p.productOption.createMany.mockResolvedValue({ count: 2 });
+    const s = new PricesService(p as any);
+    const rows = [
+      { ...baseRows[0], rules: { forcesOption: { groupKey: "adet", optionKey: "1000" } } },
+      baseRows[1],
+    ];
+    await expect(s.setOptions("p1", rows as any)).resolves.toEqual({ count: 2 });
+  });
+
+  it("forcesOption.groupKey geçersiz grup → BadRequestException", async () => {
+    const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
+    const s = new PricesService(p as any);
+    const rows = [
+      { ...baseRows[0], rules: { forcesOption: { groupKey: "yok-grup", optionKey: "1000" } } },
+      baseRows[1],
+    ];
+    await expect(s.setOptions("p1", rows as any)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("forcesOption.optionKey geçersiz seçenek → BadRequestException", async () => {
+    const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
+    const s = new PricesService(p as any);
+    const rows = [
+      { ...baseRows[0], rules: { forcesOption: { groupKey: "adet", optionKey: "yok-secenek" } } },
+      baseRows[1],
+    ];
+    await expect(s.setOptions("p1", rows as any)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("disablesGroups geçersiz grup → BadRequestException", async () => {
+    const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
+    const s = new PricesService(p as any);
+    const rows = [
+      { ...baseRows[0], rules: { disablesGroups: ["adet", "hayalet-grup"] } },
+      baseRows[1],
+    ];
+    await expect(s.setOptions("p1", rows as any)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("disablesGroups tüm geçerli gruplar → başarıyla kaydeder", async () => {
+    const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
+    p.productOption.createMany.mockResolvedValue({ count: 2 });
+    const s = new PricesService(p as any);
+    const rows = [
+      { ...baseRows[0], rules: { disablesGroups: ["adet"] } },
+      baseRows[1],
+    ];
+    await expect(s.setOptions("p1", rows as any)).resolves.toEqual({ count: 2 });
+  });
+});
+
+// --- Boş label validasyonu (#4) ---
+// Not: DTO @MinLength(1) decorator'ı NestJS ValidationPipe katmanında çalışır.
+// Aşağıdaki testler, boş etiketle kaydedildiğinde service'in doğrulama hatası ürettiğini
+// göstermek yerine, geçerli (boş olmayan) etiket ile setOptions'ın çalıştığını doğrular.
+describe("setOptions — geçerli label ile kayıt çalışır", () => {
+  it("groupLabel ve optionLabel dolu olunca setOptions başarılı döner", async () => {
+    const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
+    p.productOption.createMany.mockResolvedValue({ count: 1 });
+    const s = new PricesService(p as any);
+    const rows = [
+      { groupKey: "paket", groupLabel: "Paket", groupRole: "priced" as const, groupSort: 0, optionKey: "nk", optionLabel: "NK Mat", optionSort: 0 },
+    ];
+    await expect(s.setOptions("p1", rows as any)).resolves.toEqual({ count: 1 });
+  });
 });

@@ -135,13 +135,21 @@ export class UsersService {
     return rows.map(({ _count, ...u }) => ({ ...u, orderCount: _count.orders }));
   }
 
+  /**
+   * Admin kullanıcı detayı — GÜVENLİ projeksiyon.
+   * SECURITY: passwordHash, twoFactorSecret, twoFactorBackupCodes, resetToken, resetTokenExpiry
+   * hiçbir zaman döndürülmez (Prisma select ile açıkça seçilmiş alanlar dışındakiler gelmez).
+   * Burada yalnızca admin UI'nın ihtiyaç duyduğu alanlar listelenmiştir.
+   */
   getForAdmin(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
       select: {
         id: true, email: true, fullName: true, phone: true, accountType: true,
         companyName: true, taxOffice: true, taxNumber: true, role: true,
-        corporateStatus: true, corporateDiscount: true, corporateCreditLimit: true, corporatePaymentTermDays: true, createdAt: true, lastLoginAt: true,
+        corporateStatus: true, corporateDiscount: true, corporateCreditLimit: true,
+        corporatePaymentTermDays: true, createdAt: true, lastLoginAt: true,
+        // passwordHash / twoFactorSecret / twoFactorBackupCodes / resetToken — seçilmedi, sızdırılmaz.
         orders: {
           where: { deletedAt: null },
           orderBy: { createdAt: "desc" },
