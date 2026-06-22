@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@markala/ui";
-import { CheckCircle, User as UserIcon } from "@phosphor-icons/react";
+import { CheckCircle, User as UserIcon, Receipt } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { PhoneInput } from "@/components/forms/phone-input";
 
@@ -15,6 +15,10 @@ export default function ProfilePage() {
 
   const [fullName, setFullName] = useState(user?.fullName ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
+  // Fatura (firma) bilgileri — opsiyonel. Doluysa checkout fatura adımı bundan otomatik dolar.
+  const [companyName, setCompanyName] = useState(user?.companyName ?? "");
+  const [taxNumber, setTaxNumber] = useState(user?.taxNumber ?? "");
+  const [taxOffice, setTaxOffice] = useState(user?.taxOffice ?? "");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +29,13 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const res = await updateProfile({ fullName, phone });
+    const res = await updateProfile({
+      fullName,
+      phone,
+      companyName: companyName.trim(),
+      taxNumber: taxNumber.trim(),
+      taxOffice: taxOffice.trim(),
+    });
     setSaving(false);
     if (res.ok) {
       setSaved(true);
@@ -67,6 +77,48 @@ export default function ProfilePage() {
           label="Telefon"
           inputClassName={inputClass}
         />
+
+        {/* Fatura bilgileri — opsiyonel firma faturası kimliği. Doluysa ödeme adımı otomatik dolar. */}
+        <div className="pt-5 border-t border-paper-200 space-y-4">
+          <div className="flex items-center gap-2">
+            <Receipt size={18} weight="bold" className="text-brand-700" />
+            <div>
+              <h3 className="font-semibold text-ink-900">Fatura Bilgileri</h3>
+              <p className="text-xs text-ink-500">
+                Firma faturası için doldurun; ödeme adımında otomatik dolar. Boş bırakırsanız
+                bireysel fatura kesilir.
+              </p>
+            </div>
+          </div>
+          <Field label="Firma Ünvanı">
+            <input
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Örn. Lisan Fen Eğitim Kurumları"
+              className={inputClass}
+            />
+          </Field>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Field label="Vergi No (VKN)">
+              <input
+                value={taxNumber}
+                onChange={(e) => setTaxNumber(e.target.value)}
+                maxLength={11}
+                inputMode="numeric"
+                placeholder="10-11 haneli"
+                className={inputClass}
+              />
+            </Field>
+            <Field label="Vergi Dairesi">
+              <input
+                value={taxOffice}
+                onChange={(e) => setTaxOffice(e.target.value)}
+                placeholder="Örn. Mersin"
+                className={inputClass}
+              />
+            </Field>
+          </div>
+        </div>
 
         <div className="flex items-center gap-3 pt-3">
           <Button type="submit" disabled={saving}><UserIcon size={16} weight="bold" /> {saving ? "Kaydediliyor…" : "Kaydet"}</Button>

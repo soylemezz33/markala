@@ -46,7 +46,26 @@ export class UsersService {
       taxOffice: data.taxOffice,
       taxNumber: data.taxNumber,
     };
-    return this.prisma.user.update({ where: { id: userId }, data: safe });
+    // GÜVENLİK: yanıtı güvenli alanlarla SINIRLA — aksi halde update() tüm User'ı (passwordHash,
+    // twoFactorSecret…) döndürür ve web auth-store bunu user'a yazıp localStorage'a yazardı.
+    // Şekil /auth/me ile aynı → store'daki user tutarlı kalır.
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: safe,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        accountType: true,
+        role: true,
+        companyName: true,
+        taxOffice: true,
+        taxNumber: true,
+        corporateStatus: true,
+        corporateDiscount: true,
+      },
+    });
   }
 
   listAddresses(userId: string) {

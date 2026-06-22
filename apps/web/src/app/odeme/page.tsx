@@ -224,6 +224,22 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // sadece mount'ta — dependency array boş bırakılması kasıtlı
 
+  // Profil bilgilerinden otomatik doldur: iletişim (alan BOŞSA — auth bootstrap mount'tan sonra
+  // gelirse useState init'i kaçırabilir) + fatura (profilde firma bilgisi varsa "Kurumsal" + doldur).
+  // Kayıtlı kurumsal adres sonradan (async) gelirse onun fatura bilgisi daha özeldir, bunu geçer.
+  useEffect(() => {
+    if (!user) return;
+    setEmail((v) => v || user.email || "");
+    setPhone((v) => v || user.phone || "");
+    setFullName((v) => v || user.fullName || "");
+    if (user.companyName) {
+      setAccountType("corporate");
+      setCompanyName((v) => v || user.companyName || "");
+      setTaxOffice((v) => v || user.taxOffice || "");
+      setTaxNumber((v) => v || user.taxNumber || "");
+    }
+  }, [user]);
+
   // Giriş yapmış kullanıcının kayıtlı adreslerini çek; varsa varsayılanı (yoksa ilkini)
   // otomatik forma uygula (Hasan: "adres seçebilsin, otomatik adres gelsin").
   useEffect(() => {
