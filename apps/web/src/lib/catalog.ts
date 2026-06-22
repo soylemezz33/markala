@@ -158,6 +158,33 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
   }
 }
 
+/** Tam-banner hero görselleri (admin "Anasayfa Slider"). Yalnız AKTİF + görseli olan slide'lar;
+ *  mock fallback YOK (boşsa anasayfa yapısal hero'ya düşer). Banner'lar tasarımın kendisidir. */
+export interface HeroBannerData {
+  id: string;
+  imageUrl: string;
+  mobileImageUrl?: string | null;
+  ctaHref?: string | null;
+  title: string;
+}
+export async function getHeroBanners(): Promise<HeroBannerData[]> {
+  try {
+    const data = await fetchJson("/hero-slides");
+    if (!Array.isArray(data)) return [];
+    return (data as Record<string, unknown>[])
+      .filter((s) => typeof s.imageUrl === "string" && s.imageUrl)
+      .map((s) => ({
+        id: String(s.id),
+        imageUrl: String(s.imageUrl),
+        mobileImageUrl: s.mobileImageUrl ? String(s.mobileImageUrl) : null,
+        ctaHref: s.ctaHref ? String(s.ctaHref) : null,
+        title: String(s.title ?? ""),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 /**
  * API kategorisini storefront Category şekline eşler. Zengin alanlar (seoIntro/features/faqs/seo/
  * productCount) API'de yok → mock'tan (slug ile) doldurulur; görsel yoksa mockup'a düşer.
