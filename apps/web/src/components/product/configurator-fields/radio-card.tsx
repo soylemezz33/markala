@@ -13,6 +13,8 @@ export function RadioCard({ option, selected, onSelect }: Props) {
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={selected}
       onClick={onSelect}
       className={cn(
         "flex items-center justify-between gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 ease-out-expo",

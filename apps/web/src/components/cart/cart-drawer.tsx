@@ -7,7 +7,7 @@ import { X, Trash, ShoppingBagOpen, ArrowRight, Plus, Minus } from "@phosphor-ic
 import { Button, Price } from "@markala/ui";
 import { useCartStore } from "@/lib/cart-store";
 import { track } from "@/lib/analytics";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export function CartDrawer() {
   const { items, isOpen, close, removeItem, updateQuantity, subtotal, itemCount } = useCartStore();
@@ -32,12 +32,52 @@ export function CartDrawer() {
     return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
+  // Focus-trap (WCAG 2.4.3 / 2.1.2): açılışta odak drawer'a girer, Tab içeride döner,
+  // kapanışta odak tetikleyiciye geri verilir. Escape + overlay tıklaması zaten kaçış sağlar.
+  const drawerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const node = drawerRef.current;
+    const prevFocused = document.activeElement as HTMLElement | null;
+    const focusables = () =>
+      node
+        ? Array.from(
+            node.querySelectorAll<HTMLElement>(
+              'a[href], button:not([disabled]), input, textarea, select, [tabindex]:not([tabindex="-1"])',
+            ),
+          ).filter((el) => el.offsetParent !== null)
+        : [];
+    const t = window.setTimeout(() => focusables()[0]?.focus(), 60);
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Tab") return;
+      const list = focusables();
+      if (list.length === 0) return;
+      const first = list[0]!;
+      const last = list[list.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.clearTimeout(t);
+      document.removeEventListener("keydown", onKeyDown);
+      // Odağı tetikleyiciye geri ver (örn. header sepet butonu).
+      prevFocused?.focus?.();
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
           <motion.div
-          initial={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
@@ -46,10 +86,11 @@ export function CartDrawer() {
             className="fixed inset-0 bg-ink-900/50 backdrop-blur-sm z-50"
           />
           <motion.aside
-          initial={{ x: "100%" }}
+            initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 40, mass: 1.0 }}
+            ref={drawerRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="cart-drawer-title"
@@ -64,7 +105,7 @@ export function CartDrawer() {
                 </h2>
               </div>
               <button
-          onClick={close}
+                onClick={close}
                 className="w-11 h-11 grid place-items-center rounded hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 text-ink-700 tap-target"
                 aria-label="Kapat"
               >
@@ -80,38 +121,50 @@ export function CartDrawer() {
                   {items.map((item) => (
                     <article key={item.id} className="flex gap-3">
                       <Link
-          href={`/urun/${item.productSlug}`}
+                        href={`/urun/${item.productSlug}`}
                         onClick={close}
                         className="relative w-20 h-20 rounded-md bg-paper-100 overflow-hidden flex-none"
                       >
-                        <Image src={item.productImage} alt={item.productName} fill
-              sizes="80px" className="object-cover"/>
+                        <Image
+                          src={item.productImage}
+                          alt={item.productName}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
                       </Link>
                       <div className="flex-1 min-w-0">
                         <Link
-          href={`/urun/${item.productSlug}`}
+                          href={`/urun/${item.productSlug}`}
                           onClick={close}
                           className="font-medium text-ink-900 text-sm leading-snug hover:underline line-clamp-2"
                         >
                           {item.productName}
                         </Link>
-                        <p className="mt-1 text-xs text-ink-500 line-clamp-2">{item.configuration.summary}</p>
+                        <p className="mt-1 text-xs text-ink-500 line-clamp-2">
+                          {item.configuration.summary}
+                        </p>
                         {item.configuration.uploadedFileName && (
-                          <p className="mt-1 text-xs text-success">📎 {item.configuration.uploadedFileName}</p>
+                          <p className="mt-1 text-xs text-success">
+                            📎 {item.configuration.uploadedFileName}
+                          </p>
                         )}
                         {item.configuration.needsDesign && (
                           <p className="mt-1 text-xs text-brand-700">✦ Tasarım desteği isteniyor</p>
                         )}
                         <div className="mt-2 flex items-center justify-between">
                           <QtyControl
-          value={item.quantity}
+                            value={item.quantity}
                             onChange={(n) => updateQuantity(item.id, n)}
                           />
-                          <Price amount={item.configuration.totalPrice * item.quantity} className="text-ink-900" />
+                          <Price
+                            amount={item.configuration.totalPrice * item.quantity}
+                            className="text-ink-900"
+                          />
                         </div>
                       </div>
                       <button
-          onClick={() => removeItem(item.id)}
+                        onClick={() => removeItem(item.id)}
                         className="w-11 h-11 grid place-items-center text-ink-500 hover:text-error active:scale-[0.97] active:bg-paper-100 rounded self-start tap-target"
                         aria-label="Sil"
                       >
@@ -126,14 +179,16 @@ export function CartDrawer() {
                     <span className="text-sm text-ink-500">Ara toplam</span>
                     <Price amount={subtotal()} size="lg" className="text-ink-900" />
                   </div>
-                  <p className="text-xs text-ink-500">
-                    Kargo ve KDV sipariş adımında hesaplanır.
-                  </p>
+                  <p className="text-xs text-ink-500">Kargo ve KDV sipariş adımında hesaplanır.</p>
                   <div className="flex flex-col gap-2">
                     <Link
                       href="/odeme"
                       onClick={() => {
-                        track("begin_checkout", { currency: "TRY", value: subtotal(), items: itemCount() });
+                        track("begin_checkout", {
+                          currency: "TRY",
+                          value: subtotal(),
+                          items: itemCount(),
+                        });
                         close();
                       }}
                     >
@@ -161,7 +216,7 @@ function QtyControl({ value, onChange }: { value: number; onChange: (n: number) 
   return (
     <div className="inline-flex items-center border border-paper-200 rounded">
       <button
-          onClick={() => onChange(value - 1)}
+        onClick={() => onChange(value - 1)}
         disabled={value <= 1}
         className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 rounded-l tap-target"
         aria-label="Azalt"
@@ -170,7 +225,7 @@ function QtyControl({ value, onChange }: { value: number; onChange: (n: number) 
       </button>
       <span className="w-10 text-center text-sm tabular-nums">{value}</span>
       <button
-          onClick={() => onChange(value + 1)}
+        onClick={() => onChange(value + 1)}
         className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 rounded-r tap-target"
         aria-label="Arttır"
       >

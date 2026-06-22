@@ -22,9 +22,9 @@ const CONSENT_VERSION = "1.1";
 
 interface ConsentState {
   necessary: true; // her zaman aktif
-  analytics: boolean;    // GA4 — anonim trafik istatistikleri
-  preferences: boolean;  // Microsoft Clarity — oturum kayıtları, ısı haritası
-  marketing: boolean;    // Meta Pixel, Google Ads
+  analytics: boolean; // GA4 — anonim trafik istatistikleri
+  preferences: boolean; // Microsoft Clarity — oturum kayıtları, ısı haritası
+  marketing: boolean; // Meta Pixel, Google Ads
   timestamp: number;
   /** v1.0'dan itibaren zorunlu — eski kayıtlarda undefined olabilir. */
   version?: string;
@@ -45,7 +45,10 @@ function writeConsent(state: ConsentState): void {
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax${secure}`;
   // Google Consent Mode v2 — analytics.tsx'deki `denied` default'u güncelle
-  if (typeof window !== "undefined" && typeof (window as Window & { gtag?: (...args: unknown[]) => void }).gtag === "function") {
+  if (
+    typeof window !== "undefined" &&
+    typeof (window as Window & { gtag?: (...args: unknown[]) => void }).gtag === "function"
+  ) {
     const g = (window as Window & { gtag: (...args: unknown[]) => void }).gtag;
     g("consent", "update", {
       analytics_storage: state.analytics ? "granted" : "denied",
@@ -110,17 +113,38 @@ export function CookieConsent() {
   }, []);
 
   function acceptAll() {
-    writeConsent({ necessary: true, analytics: true, preferences: true, marketing: true, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({
+      necessary: true,
+      analytics: true,
+      preferences: true,
+      marketing: true,
+      timestamp: Date.now(),
+      version: CONSENT_VERSION,
+    });
     setShow(false);
   }
 
   function rejectOptional() {
-    writeConsent({ necessary: true, analytics: false, preferences: false, marketing: false, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({
+      necessary: true,
+      analytics: false,
+      preferences: false,
+      marketing: false,
+      timestamp: Date.now(),
+      version: CONSENT_VERSION,
+    });
     setShow(false);
   }
 
   function saveCustom() {
-    writeConsent({ necessary: true, analytics, preferences, marketing, timestamp: Date.now(), version: CONSENT_VERSION });
+    writeConsent({
+      necessary: true,
+      analytics,
+      preferences,
+      marketing,
+      timestamp: Date.now(),
+      version: CONSENT_VERSION,
+    });
     setShow(false);
   }
 
@@ -159,15 +183,12 @@ export function CookieConsent() {
                   <Cookie size={18} weight="fill" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2
-                    id="cookie-consent-title"
-                    className="font-semibold text-ink-900 text-base"
-                  >
+                  <h2 id="cookie-consent-title" className="font-semibold text-ink-900 text-base">
                     Çerez tercihlerin
                   </h2>
                   <p className="mt-1 text-sm text-ink-700 leading-relaxed">
-                    Site deneyimini iyileştirmek, ölçümleme yapmak ve sana uygun
-                    içerik göstermek için çerez kullanıyoruz.{" "}
+                    Site deneyimini iyileştirmek, ölçümleme yapmak ve sana uygun içerik göstermek
+                    için çerez kullanıyoruz.{" "}
                     <Link
                       href="/yasal/cerez"
                       className="text-brand-700 hover:underline font-medium"
@@ -265,6 +286,7 @@ function ConsentToggle({
         disabled={disabled}
         role="switch"
         aria-checked={checked}
+        aria-label={label}
         className={`relative w-9 h-5 rounded-full transition-colors shrink-0 mt-0.5 ${
           checked ? "bg-success" : "bg-paper-200"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}

@@ -20,14 +20,18 @@ export function ParameterField({ param }: { param: ProductParameter }) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-3">
-        <label className="text-sm font-medium text-ink-900">
+        <label id={`param-${param.id}-label`} className="text-sm font-medium text-ink-900">
           {param.label}
           {param.required && <span className="text-error ml-0.5">*</span>}
         </label>
       </div>
 
       {param.kind === "radio" && param.options && (
-        <div className="grid grid-cols-1 gap-2">
+        <div
+          role="radiogroup"
+          aria-labelledby={`param-${param.id}-label`}
+          className="grid grid-cols-1 gap-2"
+        >
           {param.options.map((opt) => (
             <RadioCard
               key={opt.id}
@@ -42,7 +46,7 @@ export function ParameterField({ param }: { param: ProductParameter }) {
       )}
 
       {param.kind === "checkbox-group" && param.options && (
-        <div className="space-y-2">
+        <div role="group" aria-labelledby={`param-${param.id}-label`} className="space-y-2">
           {param.options.map((opt) => {
             const checked = Array.isArray(value) && value.includes(opt.id);
             return (
@@ -80,9 +84,7 @@ export function ParameterField({ param }: { param: ProductParameter }) {
         <MatrixField
           param={param}
           value={typeof value === "string" ? value : ""}
-          onSelect={(id) =>
-            dispatch({ type: "SELECT_PARAMETER", paramId: param.id, value: id })
-          }
+          onSelect={(id) => dispatch({ type: "SELECT_PARAMETER", paramId: param.id, value: id })}
         />
       )}
     </div>

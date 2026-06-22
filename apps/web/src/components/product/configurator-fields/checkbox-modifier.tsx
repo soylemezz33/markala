@@ -14,6 +14,9 @@ export function CheckboxModifier({ option, checked, onToggle }: Props) {
   return (
     <button
       type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={option.label}
       onClick={onToggle}
       className={cn(
         "w-full flex items-center justify-between gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 ease-out-expo",
