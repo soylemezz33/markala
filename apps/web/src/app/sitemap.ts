@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-import { categories } from "@markala/mock-data";
-import { getProducts } from "@/lib/catalog";
+import { getProducts, getCategories } from "@/lib/catalog";
 import { getBlogPosts, getBlogCategories } from "@/lib/blog";
 import { getLegalSlugs } from "@/lib/legal";
 import { cities, getAllDistrictParams } from "@/lib/cities";
@@ -29,8 +28,9 @@ const STATIC_ROUTES = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const [products, blogPosts, blogCategories, legalSlugs] = await Promise.all([
+  const [products, categories, blogPosts, blogCategories, legalSlugs] = await Promise.all([
     getProducts(),
+    getCategories(),
     getBlogPosts(),
     getBlogCategories(),
     getLegalSlugs(),

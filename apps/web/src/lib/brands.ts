@@ -4,11 +4,10 @@
  * Tasarım (catalog.ts deseni):
  * - Server-only: SUNUCUDA çağrılır. apiClient KULLANILMAZ.
  * - BrandDto → storefront Brand ({ name, logoUrl }) şekline maplenir.
- * - Sadece aktif markalar (/brands/public). API hatası → MOCK fallback (boş dizi → "yakında" durumu).
+ * - Sadece aktif markalar (/brands/public). API hatası/boş → [] (sayfa "yakında" durumu gösterir).
  * - Admin'in eklediği marka sitede görünür.
  */
 
-import { brands as mockBrands } from "@markala/mock-data";
 import type { Brand } from "@markala/types";
 
 const API_BASE =
@@ -34,16 +33,16 @@ async function fetchJson(path: string): Promise<unknown> {
 }
 
 /**
- * Aktif referans markaları. API hatası → mock fallback.
- * Mock şu an boş ([]) → boş dönerse sayfa "yakında" durumunu gösterir.
+ * Aktif referans markaları. API hatası/boş → [].
+ * Boş dönerse sayfa "yakında" durumunu gösterir.
  */
 export async function getBrands(): Promise<StoreBrand[]> {
   try {
     const data = await fetchJson("/brands/public");
-    if (!Array.isArray(data)) return mockBrands;
+    if (!Array.isArray(data)) return [];
     // Logosuz/adsız kayıtları ele; boş kalırsa "yakında" durumu tetiklenir.
     return (data as Record<string, unknown>[]).map(mapBrand).filter((b) => b.name);
   } catch {
-    return mockBrands;
+    return [];
   }
 }

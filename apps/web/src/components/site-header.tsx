@@ -26,7 +26,6 @@ import {
 } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
 import type { Category, Product } from "@markala/types";
-import { categories as mockCategories } from "@markala/mock-data";
 import { apiClient } from "@/lib/api";
 import { useCartStore } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -941,10 +940,10 @@ function saveSearch(query: string) {
 /**
  * Arama + mega-menü kataloğunu CANLI API'den lazy çeker (admin'in eklediği ürün/kategori
  * aramada ve "Popüler Kategoriler"de çıksın). `enabled` true olunca (modal açılınca) bir kez
- * çekilir; API hatası/boş → mock fallback korunur (arama ASLA kırılmaz).
+ * çekilir; API hatası/boş → boş dizi (hiç kategori gösterilmez).
  */
 function useLiveCategories(enabled: boolean): Category[] {
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const fetchedRef = useRef(false);
 
   useEffect(() => {
