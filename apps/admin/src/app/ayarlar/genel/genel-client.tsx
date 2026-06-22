@@ -8,10 +8,12 @@ import { saveSettings } from "../actions";
 
 interface Props {
   initial: Record<string, unknown>;
+  initialShipping: Record<string, unknown>;
 }
 
-export function GenelClient({ initial }: Props) {
+export function GenelClient({ initial, initialShipping }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [isKargoPending, startKargoTransition] = useTransition();
 
   const [siteName, setSiteName] = useState(String(initial["general.siteName"] ?? ""));
   const [siteUrl, setSiteUrl] = useState(String(initial["general.siteUrl"] ?? ""));
@@ -25,14 +27,9 @@ export function GenelClient({ initial }: Props) {
   const [whatsapp, setWhatsapp] = useState(String(initial["general.whatsapp"] ?? ""));
   const [currency, setCurrency] = useState(String(initial["general.currency"] ?? "TRY"));
   const [vatRate, setVatRate] = useState(Number(initial["general.vatRate"] ?? 20));
-  const [freeShippingThreshold, setFreeShippingThreshold] = useState(
-    Number(initial["general.freeShippingThreshold"] ?? 1500),
-  );
-  const [standardShippingFee, setStandardShippingFee] = useState(
-    Number(initial["general.standardShippingFee"] ?? 49),
-  );
-  const [expressShippingFee, setExpressShippingFee] = useState(
-    Number(initial["general.expressShippingFee"] ?? 89),
+  const [shippingFee, setShippingFee] = useState(Number(initialShipping["shipping.fee"] ?? 79));
+  const [freeThreshold, setFreeThreshold] = useState(
+    Number(initialShipping["shipping.freeThreshold"] ?? 750),
   );
 
   function handleSave() {
@@ -53,13 +50,25 @@ export function GenelClient({ initial }: Props) {
             "general.whatsapp": whatsapp,
             "general.currency": currency,
             "general.vatRate": vatRate,
-            "general.freeShippingThreshold": freeShippingThreshold,
-            "general.standardShippingFee": standardShippingFee,
-            "general.expressShippingFee": expressShippingFee,
           },
           "/ayarlar/genel",
         );
         toast.success("Genel ayarlar kaydedildi.");
+      } catch {
+        toast.error("Kayıt başarısız. Lütfen tekrar deneyin.");
+      }
+    });
+  }
+
+  function handleKargoSave() {
+    startKargoTransition(async () => {
+      try {
+        await saveSettings(
+          "shipping",
+          { "shipping.fee": shippingFee, "shipping.freeThreshold": freeThreshold },
+          "/ayarlar/genel",
+        );
+        toast.success("Kargo ayarları kaydedildi.");
       } catch {
         toast.error("Kayıt başarısız. Lütfen tekrar deneyin.");
       }
@@ -146,33 +155,38 @@ export function GenelClient({ initial }: Props) {
         </Card>
 
         <Card title="Kargo Politikası" icon={Truck}>
+          <Field label="Kargo Bedeli (₺)">
+            <input
+              type="number"
+              className={cls + " tabular-nums"}
+              value={shippingFee}
+              onChange={(e) => setShippingFee(Number(e.target.value))}
+            />
+          </Field>
           <Field label="Ücretsiz Kargo Eşiği (₺)">
             <input
               type="number"
               className={cls + " tabular-nums"}
-              value={freeShippingThreshold}
-              onChange={(e) => setFreeShippingThreshold(Number(e.target.value))}
+              value={freeThreshold}
+              onChange={(e) => setFreeThreshold(Number(e.target.value))}
             />
             <span className="text-[11px] text-ink-500 mt-1 block">
               Bu tutar ve üzeri siparişlerde kargo ücretsiz
             </span>
           </Field>
-          <Field label="Standart Kargo Ücreti (₺)">
-            <input
-              type="number"
-              className={cls + " tabular-nums"}
-              value={standardShippingFee}
-              onChange={(e) => setStandardShippingFee(Number(e.target.value))}
-            />
-          </Field>
-          <Field label="Hızlı Kargo Ücreti (₺) — opsiyonel">
-            <input
-              type="number"
-              className={cls + " tabular-nums"}
-              value={expressShippingFee}
-              onChange={(e) => setExpressShippingFee(Number(e.target.value))}
-            />
-          </Field>
+          <p className="text-[11px] text-ink-500 mb-3">
+            Bu değerler sepet, ödeme ve sipariş hesabında anında kullanılır.
+          </p>
+          <div className="flex justify-end">
+            <button
+              onClick={handleKargoSave}
+              disabled={isKargoPending}
+              className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-4 py-2 rounded-md text-sm font-semibold hover:bg-ink-700 disabled:opacity-60"
+            >
+              <FloppyDisk size={14} weight="bold" />
+              {isKargoPending ? "Kaydediliyor…" : "Kargo Ayarlarını Kaydet"}
+            </button>
+          </div>
         </Card>
       </div>
 
