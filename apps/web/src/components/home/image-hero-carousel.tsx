@@ -72,6 +72,9 @@ export function ImageHeroCarousel({ slides }: { slides: HeroBanner[] }) {
                   alt={s.title}
                   fill
                   priority={i === 0}
+                  // Banner'lar metin/gradyan içerir → varsayılan q75 AVIF/WebP metni bulanıklaştırıyor.
+                  // q95 near-lossless; yüksek-DPI'da srcset tam kaynak çözünürlüğü (1525px) servis eder.
+                  quality={95}
                   sizes="(min-width:1280px) 1200px, 100vw"
                   className="object-cover"
                 />
