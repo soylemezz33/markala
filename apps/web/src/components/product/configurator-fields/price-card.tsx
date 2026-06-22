@@ -5,9 +5,10 @@ import { getInstallmentAmount } from "@/lib/configurator";
 
 interface Props {
   total: number;
+  kdvLabel?: string;
 }
 
-export function PriceCard({ total }: Props) {
+export function PriceCard({ total, kdvLabel = "KDV dahil" }: Props) {
   const isQuote = total <= 0;
   const installment = isQuote ? 0 : getInstallmentAmount(total, 3);
 
@@ -29,7 +30,7 @@ export function PriceCard({ total }: Props) {
       </div>
       {!isQuote && (
         <div className="mt-2 flex items-center justify-between text-xs text-paper-100/60">
-          <span>KDV dahil</span>
+          <span>{kdvLabel}</span>
           {total > 100 && (
             <span>
               3 taksitle <Price amount={installment} size="sm" className="text-paper-100" />

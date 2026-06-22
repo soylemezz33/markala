@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useReducer } from "react";
+import { useMemo, useReducer, useState } from "react";
 import { Button } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
@@ -13,6 +13,7 @@ import {
   groupHintMode,
   type OptionRulesLite,
 } from "@/lib/configurator";
+import { exVat } from "@/lib/vat";
 import { useCartStore } from "@/lib/cart-store";
 import {
   ConfiguratorContext,
@@ -78,6 +79,7 @@ function buildGroups(raw: unknown[]): OptionGroupData[] {
 export function Configurator({ product }: { product: Product }) {
   const addItem = useCartStore((s) => s.addItem);
   const [state, dispatch] = useReducer(configuratorReducer, product, initState);
+  const [kdvDahil, setKdvDahil] = useState(true);
 
   // Flat list of all options with their rules — memoized on product.options
   const optionsWithRules = useMemo(
@@ -111,6 +113,24 @@ export function Configurator({ product }: { product: Product }) {
   );
 
   const canBuy = total > 0;
+
+  /** Gösterim dönüşümü: KDV dahil modda ham değer, hariç modda exVat uygular. */
+  const show = (n: number) => (kdvDahil ? n : exVat(n));
+
+  /** Fiyat ipuçlarını kdvDahil durumuna göre dönüştür. */
+  const displayedPriceHints = useMemo(() => {
+    if (kdvDahil) return priceHintsMap;
+    const result: typeof priceHintsMap = {};
+    for (const [groupKey, hints] of Object.entries(priceHintsMap)) {
+      if (!hints) { result[groupKey] = hints; continue; }
+      const converted: Record<string, number> = {};
+      for (const [optionKey, val] of Object.entries(hints)) {
+        converted[optionKey] = Number.isFinite(val) ? exVat(val as number) : (val as number);
+      }
+      result[groupKey] = converted;
+    }
+    return result;
+  }, [priceHintsMap, kdvDahil]);
 
   const groups = useMemo(
     () => buildGroups((product.options ?? []) as unknown[]),
@@ -169,6 +189,26 @@ export function Configurator({ product }: { product: Product }) {
 
         <EstimatedDelivery productionTime={product.productionTime} />
 
+        {/* KDV dahil / hariç toggle */}
+        <div className="flex items-center justify-between py-1">
+          <span className="text-sm text-ink-700">KDV Dahil Fiyatlar</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={kdvDahil}
+            onClick={() => setKdvDahil((v) => !v)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${
+              kdvDahil ? "bg-ink-900" : "bg-paper-300"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-paper-50 shadow transition-transform ${
+                kdvDahil ? "translate-x-6" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+
         <div className="space-y-6 pt-2">
           {groups.map((group) => (
             <OptionGroup
@@ -182,14 +222,14 @@ export function Configurator({ product }: { product: Product }) {
               onSelect={(optionKey) =>
                 dispatch({ type: "SET_SELECTION", groupKey: group.groupKey, optionKey })
               }
-              priceHints={priceHintsMap[group.groupKey]}
+              priceHints={displayedPriceHints[group.groupKey]}
               hintMode={groupHintMode(product, group.groupKey)}
             />
           ))}
           <DesignUpload />
         </div>
 
-        <PriceCard total={total} />
+        <PriceCard total={show(total)} kdvLabel={kdvDahil ? "KDV dahil" : "KDV hariç"} />
 
         {canBuy ? (
           <Button
@@ -220,7 +260,7 @@ export function Configurator({ product }: { product: Product }) {
         )}
 
         <MobileCta
-          total={total}
+          total={show(total)}
           onAddToCart={canBuy ? handleAddToCart : handleQuoteClick}
         />
 

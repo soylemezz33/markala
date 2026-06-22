@@ -13,8 +13,7 @@ import { useCartStore } from "@/lib/cart-store";
 import { track } from "@/lib/analytics";
 import { apiClient } from "@/lib/api";
 import { PromoBanner } from "@/components/promo-banner";
-
-const VAT_RATE = 0.20;
+import { VAT_RATE } from "@/lib/vat";
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
 const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.10 };

@@ -30,8 +30,7 @@ import { whatsappUrl } from "@/lib/whatsapp";
 import { track, trackBeginCheckout } from "@/lib/analytics";
 import { track as trackVisitor } from "@/lib/visitor-analytics";
 import type { Address, Order } from "@markala/types";
-
-const VAT_RATE = 0.2;
+import { VAT_RATE } from "@/lib/vat";
 /** Gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanıp tahsil edilir. */
 const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.1 };
 
