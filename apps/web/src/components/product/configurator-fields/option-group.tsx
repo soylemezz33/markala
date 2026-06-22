@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@markala/ui";
+import { Lock } from "@phosphor-icons/react";
 
 interface OptionItem {
   optionKey: string;
@@ -14,11 +15,43 @@ interface Props {
   groupLabel: string;
   options: OptionItem[];
   selected: string;
+  locked?: boolean;
   onSelect: (optionKey: string) => void;
 }
 
-export function OptionGroup({ groupKey, groupLabel, options, selected, onSelect }: Props) {
+export function OptionGroup({ groupKey, groupLabel, options, selected, locked, onSelect }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
+
+  if (locked) {
+    const displayOpt =
+      sorted.find((o) => o.optionKey === selected) ?? sorted[0];
+    return (
+      <div>
+        <label className="block text-sm font-medium text-ink-900 mb-3">
+          {groupLabel}
+        </label>
+        <div
+          aria-label={`${groupLabel}: ${displayOpt?.optionLabel ?? ""} (yönetici tarafından kilitlendi)`}
+          className={cn(
+            "flex items-center gap-3 px-4 py-3 rounded-md border",
+            "border-paper-200 bg-paper-100 opacity-60 cursor-not-allowed select-none",
+          )}
+        >
+          <Lock size={16} weight="bold" className="flex-none text-ink-400" />
+          <span className="min-w-0">
+            <span className="block font-medium text-ink-700 text-sm">
+              {displayOpt?.optionLabel}
+            </span>
+            {displayOpt?.optionSublabel && (
+              <span className="block text-xs text-ink-500 mt-0.5">
+                {displayOpt.optionSublabel}
+              </span>
+            )}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

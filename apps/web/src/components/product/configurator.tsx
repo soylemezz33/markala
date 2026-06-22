@@ -27,12 +27,14 @@ interface RawOption {
   optionLabel: string;
   optionSublabel?: string | null;
   optionSort: number;
+  locked?: boolean;
 }
 
 interface OptionGroupData {
   groupKey: string;
   groupLabel: string;
   groupSort: number;
+  locked: boolean;
   options: Array<{
     optionKey: string;
     optionLabel: string;
@@ -50,6 +52,7 @@ function buildGroups(raw: unknown[]): OptionGroupData[] {
         groupKey: o.groupKey,
         groupLabel: o.groupLabel,
         groupSort: o.groupSort,
+        locked: !!o.locked,
         options: [],
       });
     }
@@ -139,6 +142,7 @@ export function Configurator({ product }: { product: Product }) {
               groupLabel={group.groupLabel}
               options={group.options}
               selected={state.selections[group.groupKey] ?? ""}
+              locked={group.locked}
               onSelect={(optionKey) =>
                 dispatch({ type: "SET_SELECTION", groupKey: group.groupKey, optionKey })
               }
