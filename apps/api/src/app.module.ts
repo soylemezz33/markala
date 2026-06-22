@@ -5,6 +5,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { IntegrationsModule } from "./integrations/integrations.module";
 import { CategoriesModule } from "./categories/categories.module";
 import { ProductsModule } from "./products/products.module";
+import { PricesModule } from "./prices/prices.module";
 import { OrdersModule } from "./orders/orders.module";
 import { HeroSlidesModule } from "./hero-slides/hero-slides.module";
 import { SettingsModule } from "./settings/settings.module";
@@ -39,6 +40,7 @@ import { NewsletterModule } from "./newsletter/newsletter.module";
     UsersModule,
     CategoriesModule,
     ProductsModule,
+    PricesModule,
     OrdersModule,
     CorporateApplicationsModule,
     CorporateLedgerModule,
