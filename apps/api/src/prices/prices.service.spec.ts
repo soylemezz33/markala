@@ -31,3 +31,13 @@ it("setOptions replace-all yapar (delete+create)", async () => {
   expect(p.productOption.createMany).toHaveBeenCalled();
   expect(r).toEqual({ count: 2 });
 });
+it("setPrices replace-all + Decimal map", async () => {
+  const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
+  p.productPrice.createMany.mockResolvedValue({ count: 1 });
+  const s = new PricesService(p as any);
+  const r = await s.setPrices("p1", [{ groupKey:"paket", optionKey:"nk", dimKey:"1000", price: 50 }] as any);
+  expect(p.productPrice.deleteMany).toHaveBeenCalledWith({ where: { productId: "p1" } });
+  const arg = p.productPrice.createMany.mock.calls[0][0].data[0];
+  expect(arg.productId).toBe("p1"); expect(Number(arg.price)).toBe(50);
+  expect(r).toEqual({ count: 1 });
+});

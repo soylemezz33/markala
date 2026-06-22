@@ -1,5 +1,5 @@
 // Faz B DTO placeholder — Faz B5+ tasks append to this file
-import { IsArray, IsIn, IsInt, IsOptional, IsString, MaxLength, Min, ValidateNested } from "class-validator";
+import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 
 export class OptionInputDto {
@@ -15,4 +15,16 @@ export class OptionInputDto {
 export class SetOptionsDto {
   @IsArray() @ValidateNested({ each: true }) @Type(() => OptionInputDto)
   options!: OptionInputDto[];
+}
+
+export class PriceInputDto {
+  @IsString() @IsOptional() @MaxLength(60) groupKey?: string;
+  @IsString() @IsOptional() @MaxLength(80) optionKey?: string;
+  @IsString() @IsOptional() @MaxLength(80) dimKey?: string;
+  @IsNumber({ maxDecimalPlaces: 2 }) @IsOptional() @Min(0) cost?: number;
+  @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) price!: number;
+}
+export class SetPricesDto {
+  @IsArray() @ValidateNested({ each: true }) @Type(() => PriceInputDto)
+  prices!: PriceInputDto[];
 }

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -33,6 +34,23 @@ export class PricesService {
         optionKey: r.optionKey, optionLabel: r.optionLabel,
         ...(r.optionSublabel != null && { optionSublabel: r.optionSublabel }),
         optionSort: r.optionSort,
+      })),
+    });
+    return { count };
+  }
+
+  async setPrices(productId: string, rows: import("./prices.dto").PriceInputDto[]) {
+    await this.assertProduct(productId);
+    await this.prisma.productPrice.deleteMany({ where: { productId } });
+    if (rows.length === 0) return { count: 0 };
+    const { count } = await this.prisma.productPrice.createMany({
+      data: rows.map((r) => ({
+        productId,
+        ...(r.groupKey != null && { groupKey: r.groupKey }),
+        ...(r.optionKey != null && { optionKey: r.optionKey }),
+        ...(r.dimKey != null && { dimKey: r.dimKey }),
+        ...(r.cost != null && { cost: new Prisma.Decimal(r.cost) }),
+        price: new Prisma.Decimal(r.price),
       })),
     });
     return { count };
