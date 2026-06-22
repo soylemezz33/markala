@@ -1,9 +1,5 @@
 import type { Product, Category } from "@markala/types";
-import {
-  products as mockProducts,
-  heroSlides as mockHeroSlides,
-  type HeroSlide,
-} from "@markala/mock-data";
+import { type HeroSlide } from "@markala/mock-data";
 
 /**
  * Katalog veri katmanı — storefront ürünleri artık CANLI API'den (admin yönetir).
@@ -12,7 +8,7 @@ import {
  * - Sunucu bileşenleri için (server-only). Client bileşenler bunu import EDEMEZ;
  *   onlar veriyi server parent'tan props ile alır.
  * - API container-içi adresten çekilir (CF round-trip yok); yoksa public URL'e düşer.
- * - Ürünler: API hatasında mock-data'ya düşer → storefront kırılmaz.
+ * - Ürünler/hero: API hatasında/boş → [] (graceful empty; mock fallback KALDIRILDI).
  * - Kategoriler: API hatasında/boş → [] (graceful empty; mock fallback KALDIRILDI).
  * - ISR: revalidate 30sn — admin değişiklikleri ~30sn içinde storefront'a yansır.
  */
@@ -32,36 +28,26 @@ function num(v: unknown, fallback = 0): number {
  *
  * Veri kaynağı stratejisi:
  * - Base alanlar (fiyat, isim, görsel, badge, bestseller) → API (admin canlı yönetir).
- * - Zengin içerik (features/specs/faqs/seo) → API content varsa o, YOKSA mock'tan (slug ile).
- *   Böylece API image'i content'i henüz dönmese bile ürün detay sayfası dolu kalır;
- *   API rebuild edilince API content otomatik öne geçer.
+ * - Zengin içerik (features/specs/faqs/seo) → API content JSON; alan yoksa undefined/[].
+ *   Mock fallback KALDIRILDI — tüm verinin tek kaynağı API/DB'dir.
  */
 function mapProduct(p: ApiProduct): Product {
   const content = (p.content ?? {}) as Record<string, unknown>;
   const category = (p.category ?? {}) as Record<string, unknown>;
   const slug = String(p.slug);
-  const mock = mockProducts.find((m) => m.slug === slug); // statik içerik fallback
   return {
     slug,
     name: String(p.name),
-    categorySlug: String(category.slug ?? p.categorySlug ?? mock?.categorySlug ?? ""),
+    categorySlug: String(category.slug ?? p.categorySlug ?? ""),
     shortDescription: String(p.shortDescription ?? ""),
     description: String(p.description ?? ""),
     basePrice: num(p.basePrice),
     startingPrice: p.startingPrice != null ? num(p.startingPrice) : undefined,
     productionTime: String(p.productionTime ?? ""),
     sizeLabel: (p.sizeLabel as string | null) ?? undefined,
-    images:
-      Array.isArray(p.images) && p.images.length > 0
-        ? (p.images as string[])
-        : (mock?.images ?? []),
+    images: Array.isArray(p.images) ? (p.images as string[]) : [],
     badges: Array.isArray(p.badges) ? (p.badges as Product["badges"]) : [],
-    // API (DB) tek kaynak: parameters bir dizi ise (BOŞ [] dahil) olduğu gibi kullan; mock'a YALNIZ
-    // API'de parameters hiç yoksa (legacy) düş. Aksi halde DB'de fiyat sıfırlanınca mock matris
-    // fiyatları "dirilip" storefront'ta fiyat gösteriyordu (fiyat-sıfırlama sızıntısı).
-    parameters: Array.isArray(p.parameters)
-      ? (p.parameters as Product["parameters"])
-      : (mock?.parameters ?? []),
+    parameters: Array.isArray(p.parameters) ? (p.parameters as Product["parameters"]) : [],
     options: Array.isArray(p.options) ? (p.options as Product["options"]) : [],
     prices: Array.isArray(p.prices) ? (p.prices as Product["prices"]) : [],
     displayPrice: typeof p.displayPrice === "number" ? p.displayPrice : null,
@@ -69,16 +55,16 @@ function mapProduct(p: ApiProduct): Product {
     // SAHTE PUAN YOK: content.rating DB'de SEEDED (42 üründe dolu, gerçek yorumla BAĞLANTISIZ) →
     // gösterilince "★4.6 (47 yorum)" derken yorum bölümü "henüz yorum yok" diyordu (çelişki) +
     // sahte JSON-LD aggregateRating (Google cezası). Gerçek yorum aggregate'i (getProductRatingStats)
-    // wire edilene kadar HİÇ rating gösterme. content.rating + mock fallback ikisi de KULLANILMAZ.
+    // wire edilene kadar HİÇ rating gösterme.
     rating: undefined,
-    features: (content.features as string[]) ?? mock?.features,
-    useCases: (content.useCases as string[]) ?? mock?.useCases,
-    specifications: (content.specifications as Product["specifications"]) ?? mock?.specifications,
-    faqs: (content.faqs as Product["faqs"]) ?? mock?.faqs,
-    relatedSlugs: (content.relatedSlugs as string[]) ?? mock?.relatedSlugs,
-    seo: (content.seo as Product["seo"]) ?? mock?.seo,
-    brand: (content.brand as string) ?? mock?.brand,
-    sku: (content.sku as string) ?? mock?.sku,
+    features: content.features as string[] | undefined,
+    useCases: content.useCases as string[] | undefined,
+    specifications: content.specifications as Product["specifications"] | undefined,
+    faqs: content.faqs as Product["faqs"] | undefined,
+    relatedSlugs: content.relatedSlugs as string[] | undefined,
+    seo: content.seo as Product["seo"] | undefined,
+    brand: content.brand as string | undefined,
+    sku: content.sku as string | undefined,
   };
 }
 
@@ -91,34 +77,34 @@ async function fetchJson(path: string): Promise<unknown> {
   return res.json();
 }
 
-/** Tüm aktif ürünler. API hatası/boş → mock fallback. */
+/** Tüm aktif ürünler. API hatası/boş → [] (graceful empty; mock fallback kaldırıldı). */
 export async function getProducts(): Promise<Product[]> {
   try {
     // list=true → hafif yanıt (content/description hariç, parameters dahil): kart/filtre/fiyat
     // için yeterli, payload ~yarıya iner. Detay sayfası getProductBySlug ile tam veriyi alır.
     const data = await fetchJson("/products?take=5000&list=true");
-    if (!Array.isArray(data) || data.length === 0) return mockProducts;
+    if (!Array.isArray(data)) return [];
     return data.map(mapProduct);
   } catch {
-    return mockProducts;
+    return [];
   }
 }
 
 /**
  * Tek ürün (slug). KRİTİK: API 404'ü (ürün silinmiş/pasif) ağ hatasından AYIRIR.
- * - 404 → undefined → sayfa notFound() (silinen ürün stale mock fiyatla GÖRÜNMEZ/satılmaz).
- * - 5xx / ağ hatası → mock fallback (geçici sorunda storefront kırılmasın, dayanıklılık).
+ * - 404 → undefined → sayfa notFound() (silinen ürün görünmez/satılmaz).
+ * - 5xx / ağ hatası → undefined (graceful; mock fallback kaldırıldı).
  */
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   try {
     const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(slug)}`, {
       next: { revalidate: 30 },
     });
-    if (res.status === 404) return undefined; // ürün yok/silinmiş → notFound (mock'a DÜŞME)
-    if (!res.ok) return mockProducts.find((p) => p.slug === slug); // geçici sunucu hatası → fallback
+    if (res.status === 404) return undefined; // ürün yok/silinmiş → notFound
+    if (!res.ok) return undefined; // geçici sunucu hatası → undefined
     return mapProduct((await res.json()) as ApiProduct);
   } catch {
-    return mockProducts.find((p) => p.slug === slug); // ağ hatası → fallback
+    return undefined; // ağ hatası → undefined
   }
 }
 
@@ -156,15 +142,15 @@ function mapHeroSlide(s: Record<string, unknown>, i: number): HeroSlide {
 /**
  * Anasayfa hero slide'ları — CANLI API (admin "Anasayfa Slider"dan yönetir).
  * TÜM aktif slide'lar gösterilir (görseli olmayanlar bespoke visual ile). Aktif slide
- * yoksa/hata → mock slide'lara düşer (anasayfa hero ASLA boş kalmaz).
+ * yoksa/hata → [] (graceful empty; mock fallback kaldırıldı).
  */
 export async function getHeroSlides(): Promise<HeroSlide[]> {
   try {
     const data = await fetchJson("/hero-slides");
-    if (!Array.isArray(data) || data.length === 0) return mockHeroSlides;
+    if (!Array.isArray(data)) return [];
     return (data as Record<string, unknown>[]).map(mapHeroSlide);
   } catch {
-    return mockHeroSlides;
+    return [];
   }
 }
 
@@ -252,15 +238,15 @@ export async function getCategoryBySlug(slug: string): Promise<Category | undefi
   return list.find((c) => c.slug === slug);
 }
 
-/** Bir kategorinin ürünleri. API hatası → mock fallback (boş sonuç gerçek kabul edilir). */
+/** Bir kategorinin ürünleri. API hatası → [] (graceful empty; mock fallback kaldırıldı). */
 export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
   try {
     const data = await fetchJson(
       `/products?category=${encodeURIComponent(categorySlug)}&take=2000&list=true`,
     );
-    if (!Array.isArray(data)) throw new Error("beklenmeyen yanıt");
+    if (!Array.isArray(data)) return [];
     return data.map(mapProduct);
   } catch {
-    return mockProducts.filter((p) => p.categorySlug === categorySlug);
+    return [];
   }
 }
