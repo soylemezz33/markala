@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   CreditCard,
   PaintBrush,
+  MagnifyingGlass,
   Info,
   CheckCircle,
   ListChecks,
@@ -85,6 +86,7 @@ const trustBadges = [
   { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
   { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda iade" },
   { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
+  { icon: MagnifyingGlass, label: "Ücretsiz Hızlı Tasarım Kontrolü", sub: "baskı öncesi uzman ekibimiz kontrol eder" },
 ];
 
 export default async function ProductPage({ params }: Props) {
