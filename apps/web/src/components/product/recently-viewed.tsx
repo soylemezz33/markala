@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Container } from "@markala/ui";
 import { Clock, ArrowRight } from "@phosphor-icons/react";
-import { products as mockProducts } from "@markala/mock-data";
 import type { Product } from "@markala/types";
 import { apiClient } from "@/lib/api";
 import { ProductImageFallback } from "@/components/product/product-image-fallback";
@@ -54,7 +53,7 @@ export function RecentlyViewedRail({
       }
       const liveBySlug = new Map(live.map((p) => [p.slug, p]));
       return slugs
-        .map((s) => liveBySlug.get(s) ?? mockProducts.find((p) => p.slug === s))
+        .map((s) => liveBySlug.get(s))
         .filter((p): p is Product => p !== undefined)
         .slice(0, 8);
     }

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, Sparkle, Tag, ArrowRight } from "@phosphor-icons/react";
-import { campaignBundles } from "@markala/mock-data";
 import type { CampaignBundle, CampaignBundleCategory } from "@markala/types";
 import { useCartStore } from "@/lib/cart-store";
 
@@ -20,9 +19,8 @@ const filters: { id: CampaignBundleCategory | "all"; label: string }[] = [
 
 export default function KampanyalarPage() {
   const [filter, setFilter] = useState<CampaignBundleCategory | "all">("all");
-  // CANLI paketler (admin yönetir, DB'den). Hata/boş → mock fallback. Checkout'un çalışması için
-  // sepetteki paket slug'ı backend'de çözülebilen (DB'deki) paket olmalı.
-  const [bundles, setBundles] = useState<CampaignBundle[]>(campaignBundles);
+  // CANLI paketler (admin yönetir, DB'den). API boş → sayfa boş gösterir.
+  const [bundles, setBundles] = useState<CampaignBundle[]>([]);
   useEffect(() => {
     fetch("/api/kampanyalar")
       .then((r) => (r.ok ? r.json() : null))

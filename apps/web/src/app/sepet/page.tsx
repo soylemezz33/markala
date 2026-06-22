@@ -13,7 +13,6 @@ import { useCartStore } from "@/lib/cart-store";
 import { track } from "@/lib/analytics";
 import { apiClient } from "@/lib/api";
 import { PromoBanner } from "@/components/promo-banner";
-import { categories as mockCategories } from "@markala/mock-data";
 
 const VAT_RATE = 0.20;
 
@@ -177,18 +176,16 @@ export default function CartPage() {
 
 function EmptyCart() {
   // Popüler kategoriler CANLI API'den (admin'in eklediği kategoriler de görünsün);
-  // API hatası/boş → mock fallback ile boş kalmaz.
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  // API boş → kategori listesi gösterilmez.
+  const [categories, setCategories] = useState<Category[]>([]);
   useEffect(() => {
     let active = true;
     apiClient.categories
       .list()
       .then((list) => {
-        if (active && Array.isArray(list) && list.length > 0) setCategories(list);
+        if (active && Array.isArray(list)) setCategories(list);
       })
-      .catch(() => {
-        /* mock fallback korunur */
-      });
+      .catch(() => {});
     return () => {
       active = false;
     };

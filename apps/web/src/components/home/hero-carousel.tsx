@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, CaretLeft, CaretRight, Sparkle } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
-import { heroSlides as mockHeroSlides, type HeroSlide } from "@markala/mock-data";
+import { type HeroSlide } from "@markala/mock-data";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 
 const AUTOPLAY_MS = 6000;
@@ -84,12 +84,13 @@ const themeStyles: Record<
 };
 
 export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
-  // Canlı DB slide'ları (admin) verilirse onları, yoksa mock'u kullan.
-  const heroSlides = slides && slides.length > 0 ? slides : mockHeroSlides;
+  const heroSlides = slides ?? [];
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  if (!heroSlides.length) return null;
 
   const goTo = useCallback(
     (next: number, dir = 1) => {

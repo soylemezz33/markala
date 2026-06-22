@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import { Heart, ArrowRight, ShoppingBag } from "@phosphor-icons/react";
-import { products as mockProducts } from "@markala/mock-data";
 import type { Product } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
 import { apiClient } from "@/lib/api";
@@ -29,7 +28,7 @@ export default function WishlistPage() {
       }
       const liveBySlug = new Map(live.map((p) => [p.slug, p]));
       return slugs
-        .map((s) => liveBySlug.get(s) ?? mockProducts.find((p) => p.slug === s))
+        .map((s) => liveBySlug.get(s))
         .filter((p): p is Product => p !== undefined);
     }
 
