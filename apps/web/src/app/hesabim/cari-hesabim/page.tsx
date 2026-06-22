@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Buildings, ArrowDown, ArrowUp, Wallet, Info } from "@phosphor-icons/react";
+import { Buildings, ArrowDown, ArrowUp, Wallet, Info, CreditCard, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { Button, Price } from "@markala/ui";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
@@ -19,6 +19,11 @@ export default function CorporateLedgerPage() {
   const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const [statement, setStatement] = useState<LedgerStatementDto | null>(null); // null = yükleniyor
   const [error, setError] = useState(false);
+  const [payAmount, setPayAmount] = useState("");
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  // iyzico callback dönüşü: ?odeme=basarili | hata → tek seferlik bildirim.
+  const [notice, setNotice] = useState<"basarili" | "hata" | null>(null);
 
   useEffect(() => {
     if (isBootstrapping || !user) return;
@@ -31,8 +36,37 @@ export default function CorporateLedgerPage() {
     return () => { cancelled = true; };
   }, [user, isBootstrapping]);
 
+  // Ödeme dönüşü bildirimi (URL'den oku, sonra parametreyi temizle).
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("odeme");
+    if (p === "basarili" || p === "hata") {
+      setNotice(p);
+      window.history.replaceState(null, "", "/hesabim/cari-hesabim");
+    }
+  }, []);
+
   const balance = Number(statement?.balance ?? 0);
   const entries = statement?.entries ?? [];
+
+  async function handlePayDebt() {
+    setPayError(null);
+    const amt = Math.round(Number(payAmount.replace(",", ".")) * 100) / 100;
+    if (!Number.isFinite(amt) || amt <= 0) return setPayError("Geçerli bir tutar girin.");
+    if (amt > balance) return setPayError(`Tutar borcunuzu (${balance.toLocaleString("tr-TR")} ₺) aşamaz.`);
+    setPaying(true);
+    try {
+      const res = await withRefresh(() => apiClient.payments.cariInit(amt));
+      if (res?.paymentPageUrl) {
+        window.location.href = res.paymentPageUrl; // iyzico hosted ödeme sayfası
+        return;
+      }
+      setPayError("Ödeme başlatılamadı, lütfen tekrar deneyin.");
+      setPaying(false);
+    } catch (e) {
+      setPayError((e as { message?: string })?.message ?? "Ödeme başlatılamadı, lütfen tekrar deneyin.");
+      setPaying(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -46,6 +80,18 @@ export default function CorporateLedgerPage() {
           tahsilatlar ise alacak olarak listelenir.
         </p>
       </header>
+
+      {/* Ödeme dönüşü bildirimi */}
+      {notice === "basarili" && (
+        <div className="flex items-center gap-2 p-4 bg-success/10 border border-success/30 rounded-xl text-sm text-success font-medium">
+          <CheckCircle size={18} weight="fill" /> Ödemeniz alındı. Cari hesabınıza işlendi; bakiyeniz güncellendi.
+        </div>
+      )}
+      {notice === "hata" && (
+        <div className="flex items-center gap-2 p-4 bg-error/10 border border-error/30 rounded-xl text-sm text-error font-medium">
+          <WarningCircle size={18} weight="fill" /> Ödeme tamamlanmadı. Tutar tahsil edilmediyse tekrar deneyebilirsiniz.
+        </div>
+      )}
 
       {/* Bakiye kartı */}
       <div className="p-6 bg-ink-900 text-paper-50 rounded-xl flex items-center justify-between gap-4">
@@ -68,6 +114,45 @@ export default function CorporateLedgerPage() {
           <Buildings size={28} />
         </div>
       </div>
+
+      {/* Borç öde — yalnız ödenecek borç (pozitif bakiye) varsa. Serbest/kısmi tutar, kartla online. */}
+      {balance > 0 && (
+        <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
+          <h3 className="font-semibold text-ink-900 flex items-center gap-2">
+            <CreditCard size={18} weight="bold" className="text-brand-700" /> Borç Öde (Kartla)
+          </h3>
+          <p className="mt-1 text-sm text-ink-500">
+            Borcunuzun tamamını veya bir kısmını online kartla ödeyebilirsiniz. Tutar girip
+            “Kartla Öde” deyin; güvenli iyzico ödeme sayfasına yönlendirilirsiniz.
+          </p>
+          <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-end">
+            <label className="block flex-1">
+              <span className="text-xs text-ink-500">Ödenecek tutar (₺)</span>
+              <input
+                type="number"
+                min={0}
+                max={balance}
+                step={0.01}
+                value={payAmount}
+                onChange={(e) => { setPayAmount(e.target.value); setPayError(null); }}
+                placeholder={balance.toLocaleString("tr-TR")}
+                className="mt-1 w-full px-4 py-2.5 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm tabular-nums focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => setPayAmount(String(balance))}
+              className="text-xs text-brand-700 hover:underline self-start sm:self-auto sm:pb-3"
+            >
+              Tümünü öde ({balance.toLocaleString("tr-TR")} ₺)
+            </button>
+            <Button onClick={handlePayDebt} disabled={paying}>
+              <CreditCard size={16} weight="bold" /> {paying ? "Yönlendiriliyor…" : "Kartla Öde"}
+            </Button>
+          </div>
+          {payError && <p className="mt-2 text-sm text-error">{payError}</p>}
+        </div>
+      )}
 
       {statement === null ? (
         <div className="space-y-3">

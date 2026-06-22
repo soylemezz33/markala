@@ -223,6 +223,14 @@ export class MarkalaApiClient {
         { orderId },
         { auth: true },
       ),
+    /** Kurumsal müşteri cari (açık hesap) borcunu online kartla öder — serbest/kısmi tutar. */
+    cariInit: (amount: number) =>
+      this.request<{ paymentPageUrl?: string }>(
+        "POST",
+        "/payments/cari/init",
+        { amount },
+        { auth: true },
+      ),
   };
 
   // === Admin (dashboard stats) ===

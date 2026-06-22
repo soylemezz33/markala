@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Iyzipay from "iyzipay";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { IyzicoService } from "../integrations/iyzico/iyzico.service";
 import { verifyPaymentNonce, paymentNonce } from "./payment-nonce";
@@ -226,6 +227,172 @@ export class PaymentsService implements OnModuleInit {
     return this.initCheckout(orderId, paymentNonce(secret, orderId), clientIp);
   }
 
+  /** Cari (açık hesap) bakiyesi: borç(debit) − tahsilat(credit). Pozitif = müşteri borçlu. */
+  private async corporateBalance(userId: string): Promise<number> {
+    const grouped = await this.prisma.corporateLedgerEntry.groupBy({
+      by: ["kind"],
+      where: { userId },
+      _sum: { amount: true },
+    });
+    let debit = 0;
+    let credit = 0;
+    for (const g of grouped) {
+      const v = Number(g._sum.amount ?? 0);
+      if (g.kind === "debit") debit = v;
+      else credit = v;
+    }
+    return Math.round((debit - credit) * 100) / 100;
+  }
+
+  /**
+   * Giriş yapmış kurumsal müşteri cari borcunu online (kart) öder — serbest/kısmi tutar.
+   * Akış: tutarı doğrula (>0, ≤ güncel bakiye) → CorporatePayment(pending) → iyzico checkout
+   * (conversationId "caripay:<id>") → hosted ödeme sayfası. Başarılı callback bir credit
+   * defter kaydı oluşturup bakiyeyi düşürür (handleCallback → handlePaydownCallback).
+   */
+  async initCorporatePaydown(
+    userId: string,
+    amount: number,
+    clientIp?: string,
+  ): Promise<{ paymentPageUrl?: string; checkoutFormContent?: string; token?: string }> {
+    if (!this.iyzico.isConfigured()) {
+      throw new ServiceUnavailableException("Ödeme sistemi şu an kullanılamıyor.");
+    }
+    const amt = Math.round(Number(amount) * 100) / 100;
+    if (!Number.isFinite(amt) || amt <= 0) throw new BadRequestException("Geçersiz tutar.");
+
+    const balance = await this.corporateBalance(userId);
+    if (balance <= 0) throw new BadRequestException("Açık hesabınızda ödenecek borç bulunmuyor.");
+    if (amt > balance) {
+      throw new BadRequestException(`Ödeme tutarı borcunuzu (${balance} ₺) aşamaz.`);
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, fullName: true, phone: true, companyName: true },
+    });
+    if (!user) throw new NotFoundException("Kullanıcı bulunamadı.");
+
+    const payment = await this.prisma.corporatePayment.create({
+      data: { userId, amount: new Prisma.Decimal(amt), status: "pending", description: "Online cari ödeme" },
+    });
+
+    const { name, surname } = this.splitName(user.fullName ?? user.email);
+    const apiBase = this.config.get<string>("API_PUBLIC_URL") ?? "http://localhost:4000";
+    const callbackUrl = `${apiBase}/api/payments/iyzico/callback`;
+    const price = amt.toFixed(2);
+    const contact = user.companyName || user.fullName || "Kurumsal müşteri";
+
+    const request: Record<string, unknown> = {
+      locale: Iyzipay.LOCALE.TR,
+      // "caripay:" öneki callback'te paydown dalını tetikler (sipariş değil).
+      conversationId: `caripay:${payment.id}`,
+      price,
+      paidPrice: price,
+      currency: Iyzipay.CURRENCY.TRY,
+      basketId: `CARI-${payment.id}`,
+      paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
+      callbackUrl,
+      enabledInstallments: [1],
+      buyer: {
+        id: user.id,
+        name,
+        surname,
+        gsmNumber: this.gsm(user.phone ?? undefined),
+        email: user.email,
+        identityNumber: this.safeIdentity(undefined),
+        registrationAddress: contact,
+        ip: clientIp || "0.0.0.0",
+        city: "Bilinmiyor",
+        country: "Turkey",
+      },
+      shippingAddress: { contactName: contact, city: "Bilinmiyor", country: "Turkey", address: "Cari hesap ödemesi" },
+      billingAddress: { contactName: contact, city: "Bilinmiyor", country: "Turkey", address: "Cari hesap ödemesi" },
+      basketItems: [
+        {
+          id: `cari-${payment.id}`.slice(0, 60),
+          name: "Cari Hesap Ödemesi",
+          category1: "Ödeme",
+          itemType: Iyzipay.BASKET_ITEM_TYPE.VIRTUAL,
+          price,
+        },
+      ],
+    };
+
+    const res = await this.iyzico.initializeCheckoutForm(request);
+    if (res.status !== "success") {
+      this.logger.warn(`iyzico cari paydown init başarısız user=${userId}: ${res.errorMessage}`);
+      await this.prisma.corporatePayment
+        .update({ where: { id: payment.id }, data: { status: "failed" } })
+        .catch(() => undefined);
+      throw new ServiceUnavailableException("Ödeme başlatılamadı, lütfen tekrar deneyin.");
+    }
+    if (res.token) {
+      await this.prisma.corporatePayment
+        .update({ where: { id: payment.id }, data: { iyzicoToken: res.token } })
+        .catch(() => undefined);
+    }
+    return { paymentPageUrl: res.paymentPageUrl, checkoutFormContent: res.checkoutFormContent, token: res.token };
+  }
+
+  /**
+   * Cari paydown callback'i — sipariş değil, panelden yapılan online cari ödemesi.
+   * Tutar/sepet bütünlüğü doğrulanır; başarılıysa ATOMİK olarak ödeme "paid" işaretlenip
+   * tek bir credit defter kaydı oluşturulur (updateMany guard → çift callback'te çift-alacak yok).
+   */
+  private async handlePaydownCallback(
+    paymentId: string,
+    result: { status?: string; price?: string | number; basketId?: string; paymentId?: string },
+    webOrigin: string,
+  ): Promise<{ redirectUrl: string }> {
+    const ok = `${webOrigin}/hesabim/cari-hesabim?odeme=basarili`;
+    const err = `${webOrigin}/hesabim/cari-hesabim?odeme=hata`;
+    const payment = await this.prisma.corporatePayment.findUnique({ where: { id: paymentId } });
+    if (!payment) {
+      this.logger.warn(`cari paydown callback: kayıt bulunamadı payment=${paymentId}`);
+      return { redirectUrl: err };
+    }
+
+    const priceKurus = Math.round(Number(result.price) * 100);
+    const expectedKurus = Math.round(Number(payment.amount) * 100);
+    const amountOk = Number.isFinite(priceKurus) && priceKurus === expectedKurus;
+    const basketOk = result.basketId === `CARI-${payment.id}`;
+
+    if (result.status === "success") {
+      if (!amountOk || !basketOk) {
+        this.logger.error(
+          `cari paydown DOĞRULAMA UYUŞMAZLIĞI payment=${paymentId} price=${result.price} beklenen=${payment.amount} basket=${result.basketId}`,
+        );
+        return { redirectUrl: err };
+      }
+      // Atomik claim: yalnız henüz 'paid' olmayan kayıt güncellenir → tek callback kazanır.
+      const claim = await this.prisma.corporatePayment.updateMany({
+        where: { id: payment.id, status: { not: "paid" } },
+        data: { status: "paid", paidAt: new Date(), iyzicoPaymentId: result.paymentId ?? undefined },
+      });
+      if (claim.count > 0) {
+        await this.prisma.corporateLedgerEntry.create({
+          data: {
+            userId: payment.userId,
+            kind: "credit",
+            amount: payment.amount,
+            description: "Online cari ödeme (kart)",
+          },
+        });
+        this.logger.log(`cari paydown BAŞARILI payment=${paymentId} user=${payment.userId} tutar=${payment.amount}`);
+      }
+      return { redirectUrl: ok };
+    }
+
+    if (payment.status === "pending") {
+      await this.prisma.corporatePayment
+        .update({ where: { id: payment.id }, data: { status: "failed" } })
+        .catch(() => undefined);
+    }
+    this.logger.warn(`cari paydown BAŞARISIZ payment=${paymentId}`);
+    return { redirectUrl: err };
+  }
+
   /**
    * GÜVENLİK AĞI — callback kaçan ödemeleri kurtarır. Son 48 saatte 'beklemede' kalan,
    * iyzico token'ı olan siparişleri retrieve eder; iyzico'da BAŞARILI ve tutar/sepet eşleşiyorsa
@@ -290,12 +457,18 @@ export class PaymentsService implements OnModuleInit {
       `iyzico retrieve: status=${result.status} paymentStatus=${result.paymentStatus} conv=${result.conversationId} ` +
         `price=${result.price} paid=${result.paidPrice} basket=${result.basketId} kod=${result.errorCode ?? "-"} mesaj=${result.errorMessage ?? "-"}`,
     );
-    const orderId = result.conversationId;
-    if (!orderId) {
+    const conversationId = result.conversationId;
+    if (!conversationId) {
       this.logger.warn("iyzico callback: conversationId YOK → /odeme/hata");
       return { redirectUrl: `${webOrigin}/odeme/hata` };
     }
 
+    // Cari hesap ödemesi (paydown) — sipariş değil. conversationId "caripay:<paymentId>".
+    if (conversationId.startsWith("caripay:")) {
+      return this.handlePaydownCallback(conversationId.slice("caripay:".length), result, webOrigin);
+    }
+
+    const orderId = conversationId;
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       select: { id: true, paymentStatus: true, orderNumber: true, total: true },

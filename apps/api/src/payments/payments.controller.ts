@@ -1,6 +1,6 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
-import { IsIP, IsOptional, IsString } from "class-validator";
+import { IsIP, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 import type { Request, Response } from "express";
 import { PaymentsService } from "./payments.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
@@ -34,6 +34,18 @@ class RetryPaymentDto {
   clientIp?: string;
 }
 
+/** Kurumsal müşteri cari (açık hesap) borcunu online (kart) öder — serbest/kısmi tutar. */
+class CariPaydownDto {
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  @Max(100000000)
+  amount!: number;
+
+  @IsOptional()
+  @IsIP()
+  clientIp?: string;
+}
+
 @ApiTags("payments")
 @Controller("payments")
 export class PaymentsController {
@@ -61,6 +73,14 @@ export class PaymentsController {
   @ApiBearerAuth()
   async retry(@Body() dto: RetryPaymentDto, @Req() req: Request & { user: { sub: string } }) {
     return this.payments.retryCheckoutForOwner(dto.orderId, req.user.sub, dto.clientIp || req.ip);
+  }
+
+  /** Giriş yapmış kurumsal müşteri cari borcunu online (kart) öder — serbest/kısmi tutar. */
+  @Post("cari/init")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async cariInit(@Body() dto: CariPaydownDto, @Req() req: Request & { user: { sub: string } }) {
+    return this.payments.initCorporatePaydown(req.user.sub, dto.amount, dto.clientIp || req.ip);
   }
 
   /** Admin: callback kaçan ödemeleri elle eşitle (güvenlik ağı). Otomatik de 10 dk'da bir çalışır. */

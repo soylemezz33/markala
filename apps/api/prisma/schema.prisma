@@ -76,6 +76,7 @@ model User {
   designUploads         DesignUpload[]
   corporateApplications CorporateApplication[]
   ledgerEntries         CorporateLedgerEntry[]
+  corporatePayments     CorporatePayment[]
   monthlyInvoices       CorporateMonthlyInvoice[]
   refreshTokens              RefreshToken[]
   emailVerificationTokens    EmailVerificationToken[]
@@ -214,6 +215,26 @@ model CorporateLedgerEntry {
 
   @@index([userId, createdAt])
   @@map("corporate_ledger_entries")
+}
+
+/// Müşterinin panelinden online (iyzico) yaptığı cari hesap ödemesi (tahsilat).
+/// Başarılı callback'te bir CorporateLedgerEntry(credit) oluşturulup bakiye düşürülür.
+/// status: pending (iyzico'ya yönlendirildi) | paid (tahsil edildi) | failed.
+model CorporatePayment {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  amount          Decimal   @db.Decimal(12, 2)
+  status          String    @default("pending")
+  iyzicoToken     String?   @map("iyzico_token")
+  iyzicoPaymentId String?   @map("iyzico_payment_id")
+  description     String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  paidAt          DateTime? @map("paid_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("corporate_payments")
 }
 
 /// Cari hesap (B2B açık hesap) AYLIK toplu faturası — Faz 3 otomatik aylık faturalama.
