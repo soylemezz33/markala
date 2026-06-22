@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { OptionInput } from "@markala/api-client";
+import type { OptionInput, OptionRules } from "@markala/api-client";
 import { toast } from "@/components/toast";
 import { updateProductOptions } from "./actions";
 
@@ -15,6 +15,7 @@ interface OptionRow {
   optionLabel: string;
   optionSublabel: string;
   optionSort: number;
+  rules?: OptionRules;
 }
 
 interface GroupRow {
@@ -24,6 +25,7 @@ interface GroupRow {
   groupLabel: string;
   groupRole: "dimension" | "priced";
   groupSort: number;
+  locked: boolean;
   options: OptionRow[];
 }
 
@@ -61,6 +63,7 @@ function buildGroups(options: OptionInput[]): GroupRow[] {
         groupLabel: o.groupLabel,
         groupRole: o.groupRole,
         groupSort: o.groupSort,
+        locked: !!o.locked,
         options: [],
       });
     }
@@ -72,6 +75,7 @@ function buildGroups(options: OptionInput[]): GroupRow[] {
         optionLabel: o.optionLabel,
         optionSublabel: o.optionSublabel ?? "",
         optionSort: o.optionSort,
+        rules: o.rules ?? undefined,
       });
     }
   }
@@ -88,6 +92,10 @@ function flattenGroups(groups: GroupRow[]): OptionInput[] {
   const result: OptionInput[] = [];
   groups.forEach((g, gi) => {
     g.options.forEach((o, oi) => {
+      const rules = o.rules && (
+        (o.rules.disablesGroups && o.rules.disablesGroups.length > 0) ||
+        o.rules.forcesOption
+      ) ? o.rules : undefined;
       result.push({
         groupKey: g.groupKey,
         groupLabel: g.groupLabel,
@@ -97,6 +105,8 @@ function flattenGroups(groups: GroupRow[]): OptionInput[] {
         optionLabel: o.optionLabel,
         optionSublabel: o.optionSublabel || undefined,
         optionSort: oi,
+        locked: g.locked || undefined,
+        rules: rules ?? undefined,
       });
     });
   });
@@ -121,12 +131,152 @@ function mapOptions(
   return { ...g, options: g.options.map((o, i) => (i === oi ? fn(o) : o)) };
 }
 
+// ===== Kural editörü bileşeni =====
+
+interface RulesEditorProps {
+  rules: OptionRules | undefined;
+  ownGroupKey: string;
+  groups: GroupRow[];
+  onChange: (rules: OptionRules | undefined) => void;
+}
+
+function RulesEditor({ rules, ownGroupKey, groups, onChange }: RulesEditorProps) {
+  const otherGroups = groups.filter((g) => g.groupKey !== ownGroupKey);
+  const disablesGroups = rules?.disablesGroups ?? [];
+  const forcesOption = rules?.forcesOption;
+
+  function toggleDisables(groupKey: string) {
+    const current = disablesGroups;
+    const next = current.includes(groupKey)
+      ? current.filter((k) => k !== groupKey)
+      : [...current, groupKey];
+    const newRules: OptionRules = {
+      ...rules,
+      disablesGroups: next.length > 0 ? next : undefined,
+    };
+    onChange(
+      !newRules.disablesGroups && !newRules.forcesOption ? undefined : newRules,
+    );
+  }
+
+  function updateForcesGroup(groupKey: string) {
+    if (!groupKey) {
+      const newRules: OptionRules = { ...rules, forcesOption: undefined };
+      onChange(!newRules.disablesGroups?.length ? undefined : newRules);
+      return;
+    }
+    const targetGroup = groups.find((g) => g.groupKey === groupKey);
+    const firstOption = targetGroup?.options[0];
+    onChange({
+      ...rules,
+      forcesOption: {
+        groupKey,
+        optionKey: forcesOption?.groupKey === groupKey ? (forcesOption.optionKey) : (firstOption?.optionKey ?? ""),
+      },
+    });
+  }
+
+  function updateForcesOptionKey(optionKey: string) {
+    if (!forcesOption) return;
+    onChange({ ...rules, forcesOption: { ...forcesOption, optionKey } });
+  }
+
+  const forcesTargetGroup = forcesOption
+    ? groups.find((g) => g.groupKey === forcesOption.groupKey)
+    : undefined;
+
+  const labelCls = "text-[11px] font-medium text-ink-500 mb-1 block";
+  const selectCls =
+    "px-2 py-1 rounded border border-paper-200 bg-paper-50 text-ink-900 text-xs focus:border-ink-900 focus:outline-none";
+
+  return (
+    <div className="mt-2 p-2 rounded bg-paper-50 border border-paper-200 space-y-2 text-xs">
+      <div>
+        <span className={labelCls}>Bu seçilince pasifleştir (gruplar):</span>
+        {otherGroups.length === 0 ? (
+          <span className="text-ink-400 text-[11px]">Başka grup yok.</span>
+        ) : (
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {otherGroups.map((og) => (
+              <label key={og.groupKey} className="flex items-center gap-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={disablesGroups.includes(og.groupKey)}
+                  onChange={() => toggleDisables(og.groupKey)}
+                  className="rounded"
+                />
+                <span className="text-ink-700">
+                  {og.groupLabel || og.groupKey}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <span className={labelCls}>Zorla seç (opsiyonel):</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            value={forcesOption?.groupKey ?? ""}
+            onChange={(e) => updateForcesGroup(e.target.value)}
+            className={selectCls}
+          >
+            <option value="">— Grup seç —</option>
+            {otherGroups.map((og) => (
+              <option key={og.groupKey} value={og.groupKey}>
+                {og.groupLabel || og.groupKey}
+              </option>
+            ))}
+          </select>
+          {forcesTargetGroup && (
+            <select
+              value={forcesOption?.optionKey ?? ""}
+              onChange={(e) => updateForcesOptionKey(e.target.value)}
+              className={selectCls}
+            >
+              <option value="">— Seçenek —</option>
+              {forcesTargetGroup.options.map((fo) => (
+                <option key={fo.optionKey} value={fo.optionKey}>
+                  {fo.optionLabel || fo.optionKey}
+                </option>
+              ))}
+            </select>
+          )}
+          {forcesOption && (
+            <button
+              type="button"
+              onClick={() => updateForcesGroup("")}
+              className="text-[11px] text-error hover:underline"
+            >
+              Temizle
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ===== Ana bileşen =====
 
 export function PricingStructureEditor({ productId, initialOptions }: Props) {
   const router = useRouter();
   const [groups, setGroups] = useState<GroupRow[]>(() => buildGroups(initialOptions));
   const [isPending, startTransition] = useTransition();
+  const [expandedRules, setExpandedRules] = useState<Set<string>>(new Set());
+
+  function toggleRulesPanel(key: string) {
+    setExpandedRules((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
 
   // ----- Grup işlemleri -----
 
@@ -139,6 +289,7 @@ export function PricingStructureEditor({ productId, initialOptions }: Props) {
         groupLabel: "",
         groupRole: "dimension",
         groupSort: prev.length,
+        locked: false,
         options: [],
       },
     ]);
@@ -173,6 +324,12 @@ export function PricingStructureEditor({ productId, initialOptions }: Props) {
 
   function updateGroupRole(gi: number, role: "dimension" | "priced") {
     setGroups((prev) => mapGroups(prev, gi, (g): GroupRow => ({ ...g, groupRole: role })));
+  }
+
+  function toggleGroupLocked(gi: number) {
+    setGroups((prev) =>
+      mapGroups(prev, gi, (g): GroupRow => ({ ...g, locked: !g.locked })),
+    );
   }
 
   // ----- Seçenek işlemleri -----
@@ -220,6 +377,14 @@ export function PricingStructureEditor({ productId, initialOptions }: Props) {
     setGroups((prev) =>
       mapGroups(prev, gi, (g) =>
         mapOptions(g, oi, (o): OptionRow => ({ ...o, optionSublabel: sublabel })),
+      ),
+    );
+  }
+
+  function updateOptionRules(gi: number, oi: number, rules: OptionRules | undefined) {
+    setGroups((prev) =>
+      mapGroups(prev, gi, (g) =>
+        mapOptions(g, oi, (o): OptionRow => ({ ...o, rules })),
       ),
     );
   }
@@ -289,6 +454,17 @@ export function PricingStructureEditor({ productId, initialOptions }: Props) {
               <option value="priced">priced</option>
             </select>
 
+            {/* Kilit toggle */}
+            <label className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={g.locked}
+                onChange={() => toggleGroupLocked(gi)}
+                className="rounded"
+              />
+              <span className="text-xs text-ink-700">Kilitle 🔒</span>
+            </label>
+
             {/* Sıralama butonları */}
             <div className="flex gap-1">
               <button
@@ -329,47 +505,79 @@ export function PricingStructureEditor({ productId, initialOptions }: Props) {
                 Bu grupta seçenek yok.
               </p>
             )}
-            {g.options.map((o, oi) => (
-              <div
-                key={`${o._originalKey ?? "new"}-${oi}`}
-                className="flex items-start gap-2 flex-wrap"
-              >
-                <div className="flex-1 min-w-[160px]">
-                  <input
-                    value={o.optionLabel}
-                    onChange={(e) => updateOptionLabel(gi, oi, e.target.value)}
-                    placeholder="Seçenek adı (örn. A4)"
-                    className={inputCls}
-                  />
-                  {o._originalKey !== null && (
-                    <span className="text-[10px] text-ink-400 font-mono mt-0.5 block">
-                      key: {o.optionKey}
-                    </span>
-                  )}
-                  {o._originalKey === null && o.optionLabel && (
-                    <span className="text-[10px] text-ink-400 font-mono mt-0.5 block">
-                      key: {slugify(o.optionLabel) || `secnek-${oi + 1}`}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-[120px]">
-                  <input
-                    value={o.optionSublabel}
-                    onChange={(e) => updateOptionSublabel(gi, oi, e.target.value)}
-                    placeholder="Alt etiket (opsiyonel)"
-                    className={inputCls}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeOption(gi, oi)}
-                  title="Seçeneği sil"
-                  className="mt-0.5 px-2 py-1.5 rounded text-xs border border-error/30 text-error hover:bg-error/10 flex-none"
+            {g.options.map((o, oi) => {
+              const rulesPanelKey = `${gi}-${oi}`;
+              const rulesOpen = expandedRules.has(rulesPanelKey);
+              const hasRules =
+                (o.rules?.disablesGroups && o.rules.disablesGroups.length > 0) ||
+                !!o.rules?.forcesOption;
+              return (
+                <div
+                  key={`${o._originalKey ?? "new"}-${oi}`}
+                  className="border border-paper-100 rounded p-2"
                 >
-                  ×
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-start gap-2 flex-wrap">
+                    <div className="flex-1 min-w-[160px]">
+                      <input
+                        value={o.optionLabel}
+                        onChange={(e) => updateOptionLabel(gi, oi, e.target.value)}
+                        placeholder="Seçenek adı (örn. A4)"
+                        className={inputCls}
+                      />
+                      {o._originalKey !== null && (
+                        <span className="text-[10px] text-ink-400 font-mono mt-0.5 block">
+                          key: {o.optionKey}
+                        </span>
+                      )}
+                      {o._originalKey === null && o.optionLabel && (
+                        <span className="text-[10px] text-ink-400 font-mono mt-0.5 block">
+                          key: {slugify(o.optionLabel) || `secnek-${oi + 1}`}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-[120px]">
+                      <input
+                        value={o.optionSublabel}
+                        onChange={(e) => updateOptionSublabel(gi, oi, e.target.value)}
+                        placeholder="Alt etiket (opsiyonel)"
+                        className={inputCls}
+                      />
+                    </div>
+                    {/* Kural toggle */}
+                    <button
+                      type="button"
+                      onClick={() => toggleRulesPanel(rulesPanelKey)}
+                      title="Koşullu kurallar"
+                      className={`mt-0.5 px-2 py-1.5 rounded text-xs border flex-none ${
+                        hasRules
+                          ? "border-brand-400 text-brand-700 bg-brand-50 hover:bg-brand-100"
+                          : "border-paper-200 text-ink-500 hover:bg-paper-100"
+                      }`}
+                    >
+                      {rulesOpen ? "▲ Kural" : "▼ Kural"}{hasRules ? " ●" : ""}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeOption(gi, oi)}
+                      title="Seçeneği sil"
+                      className="mt-0.5 px-2 py-1.5 rounded text-xs border border-error/30 text-error hover:bg-error/10 flex-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Kural editörü (açılır/kapanır) */}
+                  {rulesOpen && (
+                    <RulesEditor
+                      rules={o.rules}
+                      ownGroupKey={g.groupKey}
+                      groups={groups}
+                      onChange={(newRules) => updateOptionRules(gi, oi, newRules)}
+                    />
+                  )}
+                </div>
+              );
+            })}
 
             <button
               type="button"
