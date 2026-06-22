@@ -21,10 +21,16 @@ const formatter = new Intl.NumberFormat("tr-TR", {
 });
 
 export function Price({ amount, size = "md", className, showCurrency = true }: PriceProps) {
+  const label = showCurrency
+    ? `${formatter.format(amount)} Türk Lirası`
+    : formatter.format(amount);
   return (
-    <span className={cn("font-medium tabular-nums tracking-tight", sizes[size], className)}>
+    <span
+      className={cn("font-medium tabular-nums tracking-tight", sizes[size], className)}
+      aria-label={label}
+    >
       {formatter.format(amount)}
-      {showCurrency && <span className="ml-1">₺</span>}
+      {showCurrency && <span aria-hidden="true" className="ml-1">₺</span>}
     </span>
   );
 }

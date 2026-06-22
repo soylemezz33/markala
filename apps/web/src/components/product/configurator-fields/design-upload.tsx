@@ -108,6 +108,7 @@ export function DesignUpload() {
             accept=".ai,.eps,.pdf,.cdr,.psd,.tif,.tiff,.jpg,.jpeg,.png"
             onChange={handleFileUpload}
             disabled={uploading}
+            aria-label="Tasarım dosyasını seçin (AI, PDF, CDR, PSD, JPG, PNG - maks. 50 MB)"
           />
           {uploading ? (
             <>

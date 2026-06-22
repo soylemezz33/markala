@@ -60,7 +60,11 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
   return (
     <div className="mt-6 max-w-md mx-auto">
       <form onSubmit={submit} className="flex flex-col sm:flex-row gap-2">
+        <label htmlFor="newsletter-email" className="sr-only">
+          E-posta adresi
+        </label>
         <input
+          id="newsletter-email"
           type="email"
           required
           aria-label="E-posta adresi"

@@ -559,6 +559,7 @@ export function SiteHeader() {
 
 function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
   const [open, setOpen] = useState(false);
+  const menuId = `nav-menu-${nav.href.replace(/\//g, "-")}`;
   return (
     <div
       onMouseEnter={() => setOpen(true)}
@@ -567,9 +568,23 @@ function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
     >
       <Link
         href={nav.href}
+        aria-haspopup={nav.groups ? "true" : undefined}
+        aria-expanded={nav.groups ? open : undefined}
+        aria-controls={nav.groups ? menuId : undefined}
+        onFocus={() => nav.groups && setOpen(true)}
+        onBlur={(e) => {
+          // Close if focus leaves the whole nav item (including the dropdown)
+          if (nav.groups && !e.currentTarget.closest("[data-nav-item]")?.contains(e.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+          if (e.key === "ArrowDown" && nav.groups) { e.preventDefault(); setOpen(true); }
+        }}
         className={cn(
           "inline-flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors relative",
-          "text-ink-700 hover:text-ink-900",
+          "text-ink-700 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded",
           open && "text-ink-900",
         )}
       >
@@ -584,6 +599,7 @@ function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
           <CaretDown
             size={10}
             weight="bold"
+            aria-hidden="true"
             className={cn("transition-transform", open && "rotate-180")}
           />
         )}
@@ -595,23 +611,28 @@ function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
       <AnimatePresence>
         {open && nav.groups && (
           <motion.div
+            id={menuId}
+            role="menu"
+            aria-label={nav.label}
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
+            onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
             className="absolute top-full left-0 pt-1 z-50"
           >
             <div className="bg-paper-50 border border-paper-200 rounded-lg shadow-lg min-w-[280px] overflow-hidden">
               {nav.groups.map((g) => (
                 <div key={g.title} className="p-2">
-                  <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-ink-500">
+                  <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-ink-500" aria-hidden="true">
                     {g.title}
                   </div>
                   {g.items.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="flex items-center justify-between px-3 py-2 rounded text-sm text-ink-700 hover:bg-paper-100 hover:text-ink-900 transition-colors"
+                      role="menuitem"
+                      className="flex items-center justify-between px-3 py-2 rounded text-sm text-ink-700 hover:bg-paper-100 hover:text-ink-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
                     >
                       <span>{item.label}</span>
                       {item.badge && (
@@ -625,7 +646,8 @@ function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
               ))}
               <Link
                 href={nav.href}
-                className="block px-5 py-2.5 text-sm font-medium text-brand-700 hover:text-brand-900 border-t border-paper-200 hover:bg-paper-100 transition-colors"
+                role="menuitem"
+                className="block px-5 py-2.5 text-sm font-medium text-brand-700 hover:text-brand-900 border-t border-paper-200 hover:bg-paper-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
               >
                 Tümünü Gör →
               </Link>
@@ -1079,10 +1101,11 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ne bastırmak istiyorsunuz? (kartvizit, branda, kupa...)"
-              className="flex-1 bg-transparent outline-none text-base text-ink-900 placeholder:text-ink-500"
+              className="flex-1 bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded text-base text-ink-900 placeholder:text-ink-500"
               aria-label="Site içi arama"
+              aria-describedby="search-esc-hint"
             />
-            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-ink-500 bg-paper-100 border border-paper-200">
+            <kbd id="search-esc-hint" className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-ink-500 bg-paper-100 border border-paper-200" aria-label="Kapatmak için ESC tuşuna basın">
               ESC
             </kbd>
           </form>

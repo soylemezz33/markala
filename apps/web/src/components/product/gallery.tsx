@@ -33,7 +33,8 @@ export function Gallery({ images, alt }: { images: string[]; alt: string; fallba
               key={src + i}
               type="button"
               onClick={() => setActive(i)}
-              aria-label={`${alt} görsel ${i + 1}`}
+              aria-label={`${alt} — görsel ${i + 1}`}
+              aria-pressed={i === active}
               className={cn(
                 "relative aspect-square bg-paper-100 rounded-md overflow-hidden border transition-all",
                 i === active
@@ -43,7 +44,7 @@ export function Gallery({ images, alt }: { images: string[]; alt: string; fallba
             >
               <Image
                 src={src}
-                alt={`${alt} görsel ${i + 1}`}
+                alt={`${alt} — görsel ${i + 1}`}
                 fill
                 loading="lazy"
                 sizes="100px"

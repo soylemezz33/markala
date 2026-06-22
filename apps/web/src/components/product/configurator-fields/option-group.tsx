@@ -108,10 +108,10 @@ function SearchableDropdown({
     return () => document.removeEventListener("keydown", handler);
   }, [open, close]);
 
-  // Focus search on open
+  // Focus search on open — useEffect prevents race on rapid open/close
   useEffect(() => {
-    if (open) {
-      setTimeout(() => searchRef.current?.focus(), 0);
+    if (open && searchRef.current) {
+      searchRef.current.focus();
     }
   }, [open]);
 
@@ -170,6 +170,7 @@ function SearchableDropdown({
 
       {open && (
         <div
+          id={`group-${groupKey}-listbox`}
           role="listbox"
           aria-labelledby={`group-${groupKey}-label`}
           className={cn(
@@ -189,6 +190,8 @@ function SearchableDropdown({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ara…"
+                aria-label={`${groupLabel} seçeneklerini ara`}
+                aria-controls={`group-${groupKey}-listbox`}
                 className={cn(
                   "w-full pl-8 pr-3 py-2 text-sm rounded border border-paper-200 bg-white",
                   "text-ink-900 placeholder:text-ink-400",

@@ -4,6 +4,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "framer-motion";
 import { ArrowRight, CaretLeft, CaretRight, Sparkle } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
 import { type HeroSlide } from "@markala/mock-data";
@@ -89,6 +90,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   if (!heroSlides.length) return null;
 
@@ -283,7 +285,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                     <div className="relative w-full h-full">
                       <Image
                         src={slide.productImage}
-                        alt={slide.title}
+                        alt={slide.description ? `${slide.title} — ${slide.description}` : slide.title}
                         fill
                         priority
                         sizes="(min-width:1024px) 50vw, 100vw"
@@ -338,14 +340,15 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
             ))}
           </div>
 
-          {/* Progress bar */}
-          {!paused && (
+          {/* Progress bar — gizli motion tercihinde animasyon devre dışı */}
+          {!paused && !shouldReduceMotion && (
             <motion.div
               key={index + "-progress"}
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: AUTOPLAY_MS / 1000, ease: "linear" }}
               className="absolute bottom-0 left-0 right-0 h-1 origin-left bg-paper-50/40"
+              aria-hidden="true"
             />
           )}
         </div>

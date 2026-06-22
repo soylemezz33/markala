@@ -223,7 +223,12 @@ function QtyControl({ value, onChange }: { value: number; onChange: (n: number) 
       >
         <Minus size={14} />
       </button>
-      <span className="w-10 text-center text-sm tabular-nums">{value}</span>
+      <span
+        className="w-10 text-center text-sm tabular-nums"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-label={`Adet: ${value}`}
+      >{value}</span>
       <button
         onClick={() => onChange(value + 1)}
         className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 rounded-r tap-target"

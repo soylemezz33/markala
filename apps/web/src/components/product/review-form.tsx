@@ -135,11 +135,12 @@ export function ReviewForm({ productSlug }: Props) {
           <button
             key={n}
             type="button"
+            role="radio"
             onClick={() => setRating(n)}
             onMouseEnter={() => setHover(n)}
             onMouseLeave={() => setHover(0)}
             aria-label={`${n} yıldız`}
-            aria-pressed={rating === n}
+            aria-checked={rating === n}
             className="p-0.5"
           >
             <Star

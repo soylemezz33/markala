@@ -66,7 +66,8 @@ export function IlIlceSelect({
           value={ilce}
           onChange={(e) => onIlceChange(e.target.value)}
           disabled={!il}
-          className={`${sel} disabled:opacity-50 disabled:cursor-not-allowed`}
+          aria-disabled={!il}
+          className={`${sel} disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-paper-100 disabled:text-ink-400 disabled:border-paper-300`}
         >
           <option value="">{il ? "İlçe seçin" : "Önce il seçin"}</option>
           {ilceler.map((d) => (
