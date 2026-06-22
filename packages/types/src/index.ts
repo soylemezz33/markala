@@ -292,16 +292,9 @@ export interface CampaignBundle {
 
 // === Sepet & Sipariş ===
 
-/** Tek bir konfigüratör değeri — radio (string) / checkbox (string[]) / quantity (number) / dimension (object) */
-export type ConfiguratorSelectionValue =
-  | string
-  | string[]
-  | number
-  | { width: number; height: number; extras: string[] };
-
 export interface CartItemConfiguration {
-  /** Konfigüratör seçimleri — paramId → seçim değeri */
-  selections: Record<string, ConfiguratorSelectionValue>;
+  /** Konfigüratör seçimleri — groupKey → optionKey (string) */
+  selections: ConfiguratorSelections;
   /** Insanca okunabilir özet (sepet satırında görünür) */
   summary: string;
   /** Sepete eklenirken hesaplanan toplam fiyat */
