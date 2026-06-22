@@ -876,9 +876,3 @@ model ProductPrice {
   @@map("product_prices")
 }
 
-model Setting {
-  key       String   @id
-  value     String
-  updatedAt DateTime @updatedAt @map("updated_at")
-  @@map("settings")
-}
