@@ -48,6 +48,8 @@ export class PricesService {
         optionKey: r.optionKey, optionLabel: r.optionLabel,
         ...(r.optionSublabel != null && { optionSublabel: r.optionSublabel }),
         optionSort: r.optionSort,
+        locked: r.locked ?? false,
+        ...(r.rules != null && { rules: r.rules as import("@prisma/client").Prisma.InputJsonValue }),
       })),
     });
     return { count };

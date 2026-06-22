@@ -109,6 +109,14 @@ export interface DimensionExtra {
 
 // === Faz C — yeni fiyat sistemi tipleri ===
 
+/** Seçenek kilitleme/koşul kuralları. */
+export interface OptionRules {
+  /** Bu seçenek seçilince devre dışı bırakılacak grup key'leri. */
+  disablesGroups?: string[];
+  /** Bu seçenek seçilince otomatik seçilecek başka seçenek. */
+  forcesOption?: { groupKey: string; optionKey: string };
+}
+
 /**
  * Konfigüratör seçenek satırı (DB `product_options` ile birebir; API public yanıtında döner).
  * Bir grup (groupKey) altında seçenekler (optionKey). `groupRole`: "dimension" fiyatı indeksler
@@ -124,6 +132,10 @@ export interface PricingOption {
   /** Açıklama / alt başlık (matris satır açıklaması, ebat ölçüsü vb.) */
   optionSublabel?: string | null;
   optionSort: number;
+  /** Seçenek admin tarafından kilitlendi mi (kullanıcı değiştiremez). */
+  locked?: boolean;
+  /** Koşullu seçenek kuralları. */
+  rules?: OptionRules | null;
 }
 
 /**

@@ -1,5 +1,5 @@
 // Prices modülü DTO'ları — konfigüratör yapısı, fiyat satırları, toplu/kategori araçları.
-import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 
 export class OptionInputDto {
@@ -11,6 +11,8 @@ export class OptionInputDto {
   @IsString() @MaxLength(200) optionLabel!: string;
   @IsString() @IsOptional() @MaxLength(400) optionSublabel?: string;
   @IsInt() @Min(0) optionSort!: number;
+  @IsBoolean() @IsOptional() locked?: boolean;
+  @IsOptional() rules?: unknown;
 }
 export class SetOptionsDto {
   @IsArray() @ValidateNested({ each: true }) @Type(() => OptionInputDto)

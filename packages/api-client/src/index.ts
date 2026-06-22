@@ -25,6 +25,11 @@ export interface ApiError {
 
 // ===== Fiyatlama tipleri (Faz D) =====
 
+export interface OptionRules {
+  disablesGroups?: string[];
+  forcesOption?: { groupKey: string; optionKey: string };
+}
+
 export interface ApiOption {
   groupKey: string;
   groupLabel: string;
@@ -34,6 +39,8 @@ export interface ApiOption {
   optionLabel: string;
   optionSublabel?: string | null;
   optionSort: number;
+  locked?: boolean;
+  rules?: OptionRules | null;
 }
 
 export interface ApiPrice {

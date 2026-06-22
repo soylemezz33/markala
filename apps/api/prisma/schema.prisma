@@ -857,6 +857,8 @@ model ProductOption {
   optionLabel    String  @map("option_label")
   optionSublabel String? @map("option_sublabel") @db.Text
   optionSort     Int     @default(0) @map("option_sort")
+  locked         Boolean @default(false)
+  rules          Json?
   product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@index([productId, groupSort, optionSort])
   @@map("product_options")
