@@ -20,9 +20,11 @@ const BASE_PRODUCT = {
   id: "p1",
   slug: "kartvizit",
   name: "Kartvizit",
-  basePrice: 290, // Number.() → 290; round2(290 * 1) = 290 subtotal
+  basePrice: 290,
   images: ["img.jpg"],
   isActive: true,
+  options: [],
+  prices: [{ groupKey: null, optionKey: null, dimKey: null, price: "290" }],
 };
 
 function makeTx() {
@@ -147,9 +149,9 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
     expect(Number(createCall.total)).toBeCloseTo(369, 2);
   });
 
-  it("konfigüratör fiyatı SUNUCUDA parameters + selections'tan hesaplanır (base_price=0)", async () => {
+  it("konfigüratör fiyatı SUNUCUDA options + prices'tan hesaplanır (base_price=0)", async () => {
     const prisma = makePrisma();
-    // Gerçek senaryo: kartvizit base_price=0, matrix parametresi; 1000 adet CYP hücresi = 290.
+    // Gerçek senaryo: kartvizit base_price=0, yeni toplamsal motor; paket=cyp, adet=1000 → 290.
     const CONFIG_PRODUCT = {
       id: "pcfg",
       slug: "klasik-kartvizit",
@@ -157,9 +159,11 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
       basePrice: 0,
       images: ["k.jpg"],
       isActive: true,
-      parameters: [
-        { id: "varyant", kind: "matrix", cells: [{ id: "cyp-1000", price: 290 }] },
+      options: [
+        { groupKey: "paket", groupLabel: "Paket", groupRole: "priced", groupSort: 0, optionKey: "cyp", optionLabel: "CYP", optionSort: 0 },
+        { groupKey: "adet", groupLabel: "Adet", groupRole: "dimension", groupSort: 0, optionKey: "1000", optionLabel: "1.000", optionSort: 0 },
       ],
+      prices: [{ groupKey: "paket", optionKey: "cyp", dimKey: "1000", price: "290" }],
     };
     prisma.product.findMany.mockResolvedValue([CONFIG_PRODUCT]);
     const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
@@ -169,7 +173,7 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
       items: [
         {
           productId: "pcfg",
-          configuration: { selections: { varyant: "cyp-1000" }, summary: "CYP · 1.000 Adet" },
+          configuration: { selections: { paket: "cyp", adet: "1000" }, summary: "CYP · 1.000 Adet" },
           quantity: 1,
         },
       ],
@@ -177,7 +181,7 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
 
     const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
     const item = createCall.items.create[0];
-    // base_price=0 OLMASINA RAĞMEN konfigüratör fiyatı 290 hesaplanır (eski bug: 0 düşerdi)
+    // base_price=0 OLMASINA RAĞMEN konfigüratör fiyatı 290 hesaplanır (yeni motor)
     expect(Number(item.unitPrice)).toBeCloseTo(290, 2);
     expect(item.quantity).toBe(1);
     expect(Number(item.lineTotal)).toBeCloseTo(290, 2);
@@ -194,14 +198,18 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
       basePrice: 0,
       images: ["k.jpg"],
       isActive: true,
-      parameters: [{ id: "varyant", kind: "matrix", cells: [{ id: "cyp-1000", price: 290 }] }],
+      options: [
+        { groupKey: "paket", groupLabel: "Paket", groupRole: "priced", groupSort: 0, optionKey: "cyp", optionLabel: "CYP", optionSort: 0 },
+        { groupKey: "adet", groupLabel: "Adet", groupRole: "dimension", groupSort: 0, optionKey: "1000", optionLabel: "1.000", optionSort: 0 },
+      ],
+      prices: [{ groupKey: "paket", optionKey: "cyp", dimKey: "1000", price: "290" }],
     };
     prisma.product.findMany.mockResolvedValue([CONFIG_PRODUCT]);
     const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.create({
       ...BASE_INPUT,
-      items: [{ productId: "pcfg2", configuration: { selections: { varyant: "cyp-1000" } }, quantity: 3 }],
+      items: [{ productId: "pcfg2", configuration: { selections: { paket: "cyp", adet: "1000" } }, quantity: 3 }],
     });
 
     const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;

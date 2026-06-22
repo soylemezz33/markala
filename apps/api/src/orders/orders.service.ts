@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
 import { SettingsService } from "../settings/settings.service";
-import { calculateConfiguredPrice, extractSelections, pickConfigurationSummary } from "./pricing";
+import { computeConfiguredPrice, extractSelections, pickConfigurationSummary } from "./pricing";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -229,6 +229,7 @@ export class OrdersService {
           ...(productSlugs.length ? [{ slug: { in: productSlugs } }] : []),
         ],
       },
+      include: { options: true, prices: true },
     });
     const productById = new Map(products.map((p) => [p.id, p]));
     const productBySlug = new Map(products.map((p) => [p.slug, p]));
@@ -268,9 +269,13 @@ export class OrdersService {
         (i.productSlug ? productBySlug.get(i.productSlug) : undefined);
 
       if (product) {
-        // Konfigüratör fiyatı: ürünün KENDİ parameters şeması + kullanıcı selections'ından.
+        // Konfigüratör fiyatı: ürünün KENDİ options/prices şeması + kullanıcı selections'ından.
         const selections = extractSelections(i.configuration);
-        const configuredUnit = calculateConfiguredPrice(Number(product.basePrice), product.parameters, selections);
+        const configuredUnit = computeConfiguredPrice(
+          (product.options ?? []).map((o) => ({ ...o, groupRole: o.groupRole as "dimension" | "priced" })),
+          (product.prices ?? []).map((r) => ({ groupKey: r.groupKey, optionKey: r.optionKey, dimKey: r.dimKey, price: Number(r.price) })),
+          selections as Record<string, string>,
+        );
         if (!Number.isFinite(configuredUnit) || configuredUnit < 0) {
           throw new BadRequestException(`Ürün fiyatı geçersiz: ${product.slug}`);
         }
