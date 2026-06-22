@@ -161,6 +161,50 @@ export function getInstallmentAmount(total: number, count = 3): number {
   return total / count;
 }
 
+// ---------------------------------------------------------------------------
+// Task 4 — Koşullu/bağımlı seçenek mantığı
+// ---------------------------------------------------------------------------
+
+export interface OptionRulesLite {
+  disablesGroups?: string[];
+  forcesOption?: { groupKey: string; optionKey: string };
+}
+
+/**
+ * Aktif seçimlerin rules'larını toplar.
+ * Sadece SEÇİLİ olan option'ların rules'ları geçerlidir.
+ */
+export function resolveRules(
+  optionsWithRules: { groupKey: string; optionKey: string; rules?: OptionRulesLite | null }[],
+  selections: Record<string, string>,
+): { disabledGroups: Set<string>; forced: Record<string, string> } {
+  const disabledGroups = new Set<string>();
+  const forced: Record<string, string> = {};
+  for (const o of optionsWithRules) {
+    if (selections[o.groupKey] !== o.optionKey) continue; // sadece SEÇİLİ option'ın rules'ı geçerli
+    const r = o.rules;
+    if (!r) continue;
+    for (const g of r.disablesGroups ?? []) disabledGroups.add(g);
+    if (r.forcesOption) forced[r.forcesOption.groupKey] = r.forcesOption.optionKey;
+  }
+  return { disabledGroups, forced };
+}
+
+/**
+ * Efektif seçimler = selections + forced, pasif gruplar çıkarılmış.
+ * Pasif gruplar fiyata katılmaz.
+ */
+export function effectiveSelections(
+  selections: Record<string, string>,
+  resolved: { disabledGroups: Set<string>; forced: Record<string, string> },
+): Record<string, string> {
+  const result = { ...selections, ...resolved.forced };
+  for (const g of resolved.disabledGroups) {
+    delete result[g];
+  }
+  return result;
+}
+
 /**
  * Kartlarda/listelerde/favorilerde gösterilen fiyat.
  * Faz C: API'nin hesapladığı displayPrice'ı kullanır (en düşük geçerli fiyat).

@@ -3,6 +3,8 @@ import {
   computeConfiguredPrice,
   getDisplayPrice,
   initSelections,
+  resolveRules,
+  effectiveSelections,
 } from "./configurator";
 import type { Product } from "@markala/types";
 
@@ -127,6 +129,51 @@ describe("getDisplayPrice", () => {
 // ---------------------------------------------------------------------------
 // initSelections
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// resolveRules & effectiveSelections — Task 4
+// ---------------------------------------------------------------------------
+
+describe("resolveRules", () => {
+  it("(a) seçili option disablesGroups → disabledGroups kümesine eklenir", () => {
+    const opts = [
+      { groupKey: "malzeme", optionKey: "dijital", rules: { disablesGroups: ["laminasyon"] } },
+    ];
+    const { disabledGroups } = resolveRules(opts, { malzeme: "dijital" });
+    expect(disabledGroups.has("laminasyon")).toBe(true);
+  });
+
+  it("(b) forcesOption seçili option'da ise forced'a eklenir", () => {
+    const opts = [
+      { groupKey: "malzeme", optionKey: "kuşe", rules: { forcesOption: { groupKey: "laminasyon", optionKey: "parlak" } } },
+    ];
+    const { forced } = resolveRules(opts, { malzeme: "kuşe" });
+    expect(forced).toEqual({ laminasyon: "parlak" });
+  });
+
+  it("(c) seçili olmayan option'ın rules'ları uygulanmaz", () => {
+    const opts = [
+      { groupKey: "malzeme", optionKey: "dijital", rules: { disablesGroups: ["laminasyon"] } },
+    ];
+    const { disabledGroups, forced } = resolveRules(opts, { malzeme: "kuşe" }); // dijital seçili değil
+    expect(disabledGroups.size).toBe(0);
+    expect(Object.keys(forced)).toHaveLength(0);
+  });
+});
+
+describe("effectiveSelections", () => {
+  it("(d) pasif gruplar silinir ve forced değerler uygulanır", () => {
+    const selections = { malzeme: "dijital", laminasyon: "parlak", renk: "4+0" };
+    const resolved = {
+      disabledGroups: new Set(["laminasyon"]),
+      forced: { renk: "4+4" },
+    };
+    const result = effectiveSelections(selections, resolved);
+    expect(result.laminasyon).toBeUndefined(); // pasif → çıkarıldı
+    expect(result.renk).toBe("4+4");           // forced → uygulandı
+    expect(result.malzeme).toBe("dijital");    // dokunulmadı
+  });
+});
 
 describe("initSelections", () => {
   const base: Product = {

@@ -16,11 +16,29 @@ interface Props {
   options: OptionItem[];
   selected: string;
   locked?: boolean;
+  disabled?: boolean;
   onSelect: (optionKey: string) => void;
 }
 
-export function OptionGroup({ groupKey, groupLabel, options, selected, locked, onSelect }: Props) {
+export function OptionGroup({ groupKey, groupLabel, options, selected, locked, disabled, onSelect }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
+
+  if (disabled && !locked) {
+    return (
+      <div className="opacity-50 pointer-events-none select-none">
+        <label className="block text-sm font-medium text-ink-900 mb-3">
+          {groupLabel}
+        </label>
+        <div
+          aria-label={`${groupLabel}: bu seçenek aktif konfigürasyonda geçersiz`}
+          aria-disabled="true"
+          className="px-4 py-3 rounded-md border border-paper-200 bg-paper-100 text-center text-sm text-ink-400"
+        >
+          —
+        </div>
+      </div>
+    );
+  }
 
   if (locked) {
     const displayOpt =

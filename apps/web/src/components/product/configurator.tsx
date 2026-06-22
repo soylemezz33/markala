@@ -4,7 +4,13 @@ import { useMemo, useReducer } from "react";
 import { Button } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
-import { calculateTotal, buildSelectionSummary } from "@/lib/configurator";
+import {
+  calculateTotal,
+  buildSelectionSummary,
+  resolveRules,
+  effectiveSelections,
+  type OptionRulesLite,
+} from "@/lib/configurator";
 import { useCartStore } from "@/lib/cart-store";
 import {
   ConfiguratorContext,
@@ -28,6 +34,7 @@ interface RawOption {
   optionSublabel?: string | null;
   optionSort: number;
   locked?: boolean;
+  rules?: OptionRulesLite | null;
 }
 
 interface OptionGroupData {
@@ -70,9 +77,30 @@ export function Configurator({ product }: { product: Product }) {
   const addItem = useCartStore((s) => s.addItem);
   const [state, dispatch] = useReducer(configuratorReducer, product, initState);
 
+  // Flat list of all options with their rules — memoized on product.options
+  const optionsWithRules = useMemo(
+    () =>
+      ((product.options ?? []) as unknown as RawOption[]).map((o) => ({
+        groupKey: o.groupKey,
+        optionKey: o.optionKey,
+        rules: o.rules ?? null,
+      })),
+    [product.options],
+  );
+
+  const resolved = useMemo(
+    () => resolveRules(optionsWithRules, state.selections),
+    [optionsWithRules, state.selections],
+  );
+
+  const effSel = useMemo(
+    () => effectiveSelections(state.selections, resolved),
+    [state.selections, resolved],
+  );
+
   const total = useMemo(
-    () => calculateTotal(product, state.selections),
-    [product, state.selections],
+    () => calculateTotal(product, effSel),
+    [product, effSel],
   );
 
   const canBuy = total > 0;
@@ -90,8 +118,8 @@ export function Configurator({ product }: { product: Product }) {
       productImage:
         product.images[0] || `/api/mockup?slug=${product.slug}&w=200&h=200`,
       configuration: {
-        selections: state.selections,
-        summary: buildSelectionSummary(product, state.selections, state.needsDesign),
+        selections: effSel,
+        summary: buildSelectionSummary(product, effSel, state.needsDesign),
         totalPrice: total,
         needsDesign: state.needsDesign,
         uploadedFileName: state.uploadedFileName,
@@ -141,8 +169,9 @@ export function Configurator({ product }: { product: Product }) {
               groupKey={group.groupKey}
               groupLabel={group.groupLabel}
               options={group.options}
-              selected={state.selections[group.groupKey] ?? ""}
+              selected={effSel[group.groupKey] ?? state.selections[group.groupKey] ?? ""}
               locked={group.locked}
+              disabled={resolved.disabledGroups.has(group.groupKey)}
               onSelect={(optionKey) =>
                 dispatch({ type: "SET_SELECTION", groupKey: group.groupKey, optionKey })
               }
