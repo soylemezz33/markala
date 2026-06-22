@@ -15,6 +15,7 @@ export interface OrderRow {
   total: unknown; // Decimal string from API
   status: string;
   paymentStatus?: string | null;
+  paymentMethod?: string | null;
   items: unknown[];
 }
 
@@ -295,13 +296,17 @@ export function OrdersClient({ orders }: Props) {
                         >
                           {s.label}
                         </span>
-                        {/* Ödeme durumu rozeti — ödenmemiş sipariş ("beklemede") net görünsün. */}
-                        {o.paymentStatus && o.paymentStatus !== "basarili" && toSlug(o.status) !== "iptal-edildi" && (
+                        {/* Açık hesap (cari) siparişi: kartla ödeme yok → cari borç olarak işlendi. */}
+                        {o.paymentMethod === "cari" ? (
+                          <span className="mt-1 block text-[10px] font-semibold text-brand-700">
+                            ● Açık Hesap (Cari)
+                          </span>
+                        ) : o.paymentStatus && o.paymentStatus !== "basarili" && toSlug(o.status) !== "iptal-edildi" ? (
                           <span className="mt-1 block text-[10px] font-semibold text-warning">
                             ● Ödeme Bekliyor
                           </span>
-                        )}
-                        {o.paymentStatus === "basarili" && (
+                        ) : null}
+                        {o.paymentStatus === "basarili" && o.paymentMethod !== "cari" && (
                           <span className="mt-1 block text-[10px] font-semibold text-success">
                             ● Ödeme Yapıldı
                           </span>

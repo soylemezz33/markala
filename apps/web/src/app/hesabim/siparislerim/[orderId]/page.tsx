@@ -96,8 +96,26 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
         </span>
       </header>
 
-      {/* Ödeme durumu — beklemede ise "Ödeme Yap" ile tekrar denenir; ödendiyse onay. */}
-      {order.paymentStatus === "beklemede" && normStatus(order.status as unknown as string) !== "iptal-edildi" ? (
+      {/* Ödeme durumu. Açık hesap (cari) siparişlerinde kartla ödeme YOK → borç cari hesaba
+          işlenir, ödeme oradan yapılır. Diğerlerinde beklemede→"Ödeme Yap", başarılı→onay. */}
+      {order.paymentMethod === "cari" ? (
+        <section className="p-5 bg-brand-50 border border-brand-200 rounded-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-ink-900 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-brand-500" /> Açık Hesap (Cari)
+              </p>
+              <p className="mt-1 text-sm text-ink-700">
+                Bu siparişin tutarı kurumsal cari hesabınıza borç olarak işlendi. Ödemeyi
+                vade dahilinde Cari Hesabım sayfasından yapabilirsiniz.
+              </p>
+            </div>
+            <Link href="/hesabim/cari-hesabim">
+              <Button variant="outline">Cari Hesabım</Button>
+            </Link>
+          </div>
+        </section>
+      ) : order.paymentStatus === "beklemede" && normStatus(order.status as unknown as string) !== "iptal-edildi" ? (
         <section className="p-5 bg-warning/10 border border-warning/30 rounded-xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

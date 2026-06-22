@@ -50,8 +50,10 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
 
   const orders = user.orders ?? [];
   const addresses = user.addresses ?? [];
+  // Harcama: kartla ödenmiş (basarili) + açık hesaba yazılmış (cari) siparişler. Cari siparişler
+  // ödeme "beklemede" görünse de gerçekleşmiş harcamadır (cari hesaba borç olarak işlenir).
   const totalSpent = orders
-    .filter((o) => o.paymentStatus === "basarili")
+    .filter((o) => o.paymentStatus === "basarili" || o.paymentMethod === "cari")
     .reduce((sum, o) => sum + Number(o.total), 0);
 
   // Cari hesap (yalnız kurumsal) — bakiye + ekstre
@@ -176,7 +178,10 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                         </td>
                         <td className="px-5 py-3 text-ink-500 text-xs hidden md:table-cell">{fmtDate(o.createdAt)}</td>
                         <td className="px-5 py-3 text-ink-700 text-xs">
-                          {STATUS_LABEL[toSlug(o.status)] ?? o.status} · {PAYMENT_LABEL[toSlug(o.paymentStatus)] ?? o.paymentStatus}
+                          {STATUS_LABEL[toSlug(o.status)] ?? o.status} ·{" "}
+                          {o.paymentMethod === "cari"
+                            ? "Açık Hesap (Cari)"
+                            : (PAYMENT_LABEL[toSlug(o.paymentStatus)] ?? o.paymentStatus)}
                         </td>
                         <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">{TRY(o.total)}</td>
                       </tr>

@@ -157,10 +157,12 @@ export default function CheckoutPage() {
     }
   }
 
-  // Açık hesap (cari) ödeme seçeneği yalnız GİRİŞ YAPMIŞ KURUMSAL üyeye sunulur.
-  // /auth/me yanıtında accountType var; "approved" durumu client'a gelmediği için onay şartını
-  // backend zorlar (uygun değilse 400 + anlaşılır mesaj → payError). Misafir/bireysel görmez.
-  const canUseCari = Boolean(user && user.accountType === "corporate");
+  // Onaylı kurumsal müşteri SADECE açık hesap (cari) ile sipariş verir — kart seçeneği gösterilmez.
+  // Bireysel ve onaysız kurumsal → kart (iyzico). corporateStatus /auth/me'den gelir; backend de
+  // cari'yi "approved kurumsal + kredi limiti" ile ayrıca zorlar.
+  const isApprovedCorporate = Boolean(
+    user && user.accountType === "corporate" && user.corporateStatus === "approved",
+  );
 
   const sub = subtotal();
   // İndirim önceliği: backend-doğrulanmış couponInfo (gerçek tutar) → yoksa KNOWN_COUPONS tahmini
@@ -207,10 +209,11 @@ export default function CheckoutPage() {
     }
   }, [isBootstrapping, user, processing, router]);
 
-  // Kurumsal değilse cari seçeneği görünmez — yanlışlıkla seçili kalmasın (oturum kapandı vb.).
+  // Ödeme yolu hesap tipine göre SABİTLENİR: onaylı kurumsal → cari, diğer herkes → kart.
+  // (Seçim kutusu yok; kurumsal=sadece cari, bireysel=sadece kart.)
   useEffect(() => {
-    if (!canUseCari && paymentMethod === "cari") setPaymentMethod("iyzico");
-  }, [canUseCari, paymentMethod]);
+    setPaymentMethod(isApprovedCorporate ? "cari" : "iyzico");
+  }, [isApprovedCorporate]);
 
   // begin_checkout: checkout sayfasına ilk girildiğinde ateşlenir (GA4 spec gereği),
   // son adımda değil. Effect mount'ta bir kez çalışır.
@@ -456,7 +459,7 @@ export default function CheckoutPage() {
    * Backend "approved kurumsal + kredi limiti" şartını doğrular; uygun değilse 400 + mesaj döner.
    */
   async function handlePlaceOnAccount() {
-    if (!consentOk || processing || !canUseCari) return;
+    if (!consentOk || processing || !isApprovedCorporate) return;
     setPayError(null);
     setProcessing(true);
 
@@ -726,32 +729,19 @@ export default function CheckoutPage() {
                   </p>
                 </div>
 
-                {/* Ödeme yolu seçimi — yalnız kurumsal üyeye cari (açık hesap) seçeneği sunulur. */}
-                {canUseCari && (
-                  <div>
-                    <p className="text-sm font-medium text-ink-900 mb-2">Ödeme yöntemi</p>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <PaymentOption
-                        active={paymentMethod === "iyzico"}
-                        onClick={() => {
-                          setPaymentMethod("iyzico");
-                          setPayError(null);
-                        }}
-                        icon={<CreditCard size={20} weight="bold" />}
-                        title="Kredi / Banka Kartı"
-                        desc="Online güvenli ödeme (3D Secure)"
-                      />
-                      <PaymentOption
-                        active={paymentMethod === "cari"}
-                        onClick={() => {
-                          setPaymentMethod("cari");
-                          setPayError(null);
-                        }}
-                        icon={<Buildings size={20} weight="bold" />}
-                        title="Açık hesaba yaz (cari)"
-                        desc="Kurumsal cari hesabınıza borç olarak işlenir"
-                      />
-                    </div>
+                {/* Ödeme yolu hesap tipine göre sabit: onaylı kurumsal → cari, bireysel → kart.
+                    Seçim kutusu yok; aşağıdaki bilgi kutusu + buton paymentMethod'a göre değişir. */}
+                {isApprovedCorporate && (
+                  <div className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-ink-700">
+                    <Buildings size={18} weight="bold" className="flex-none text-brand-700" />
+                    <span>
+                      Kurumsal hesabınızda ödemeler <strong>açık hesap (cari)</strong> üzerinden
+                      yürür. Borcunuzu dilediğinizde{" "}
+                      <Link href="/hesabim/cari-hesabim" className="underline font-medium hover:text-ink-900">
+                        Cari Hesabım
+                      </Link>{" "}
+                      sayfasından kartla ödeyebilirsiniz.
+                    </span>
                   </div>
                 )}
 
@@ -1215,44 +1205,3 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
-function PaymentOption({
-  active,
-  onClick,
-  icon,
-  title,
-  desc,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "flex items-start gap-3 p-4 rounded-lg border text-left transition-all",
-        active
-          ? "border-ink-900 bg-paper-50 shadow-sm"
-          : "border-paper-200 bg-paper-50 hover:border-ink-300",
-      )}
-    >
-      <span className={cn("mt-0.5", active ? "text-ink-900" : "text-ink-500")}>{icon}</span>
-      <span className="min-w-0">
-        <span className="block text-sm font-medium text-ink-900">{title}</span>
-        <span className="block text-xs text-ink-500 mt-0.5">{desc}</span>
-      </span>
-      <span
-        className={cn(
-          "ml-auto mt-0.5 w-4 h-4 rounded-full border grid place-items-center flex-none",
-          active ? "border-ink-900 bg-ink-900 text-paper-50" : "border-paper-200",
-        )}
-      >
-        {active && <Check size={10} weight="bold" />}
-      </span>
-    </button>
-  );
-}

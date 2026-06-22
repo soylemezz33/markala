@@ -381,6 +381,8 @@ export interface Order {
   status: OrderStatus;
   /** Ödeme durumu: beklemede | basarili | basarisiz | iade_edildi — "Ödeme Yap" butonu / rozet için */
   paymentStatus?: string;
+  /** Ödeme yolu: "cari" (açık hesap) | "iyzico" | "havale" | null. Cari siparişte kartla ödeme YAPILMAZ. */
+  paymentMethod?: string | null;
   /** Misafir veya kayıtlı müşteri e-postası — kargo takip sayfasında doğrulama için */
   email?: string;
   items: OrderItem[];

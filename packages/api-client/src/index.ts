@@ -612,6 +612,8 @@ export interface AdminUserOrderDto {
   total: string | number;
   status: string;
   paymentStatus: string;
+  /** "cari" (açık hesap) | "iyzico" | "havale" | null — cari sipariş etiketi/harcama sayımı için. */
+  paymentMethod?: string | null;
   createdAt: string;
 }
 

@@ -129,7 +129,7 @@ export class UsersService {
           take: 50,
           select: {
             id: true, orderNumber: true, total: true, status: true,
-            paymentStatus: true, createdAt: true,
+            paymentStatus: true, paymentMethod: true, createdAt: true,
           },
         },
         addresses: {

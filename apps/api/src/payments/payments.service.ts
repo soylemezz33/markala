@@ -139,6 +139,11 @@ export class PaymentsService implements OnModuleInit {
     });
     if (!order) throw new NotFoundException("Sipariş bulunamadı.");
     if (order.paymentStatus === "basarili") throw new BadRequestException("Bu sipariş zaten ödenmiş.");
+    // Açık hesap (cari) siparişi kartla ödenmez — tutar cari hesaba borç olarak işlenmiştir; ödeme
+    // /hesabim/cari-hesabim üzerinden yapılır. (Çift ödeme/çift tahsilat koruması.)
+    if (order.paymentMethod === "cari") {
+      throw new BadRequestException("Açık hesap siparişi kartla ödenmez; ödeme cari hesabınızdan yapılır.");
+    }
     if (Number(order.total) <= 0) throw new BadRequestException("Geçersiz tutar.");
 
     const ship = this.addrOf(order.shippingAddress, order.shippingAddressSnapshot);
