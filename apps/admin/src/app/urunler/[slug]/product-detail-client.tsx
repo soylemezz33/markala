@@ -8,6 +8,8 @@ import { toast } from "@/components/toast";
 import { ArrowLeft, FloppyDisk, Eye, Trash, ArrowsClockwise } from "@phosphor-icons/react";
 import { ImageGallery } from "@/components/image-uploader";
 import { updateProduct, removeProduct } from "./actions";
+import { PricingStructureEditor } from "./pricing-structure-editor";
+import type { OptionInput } from "@markala/api-client";
 
 export interface CategoryRow {
   id: string;
@@ -44,9 +46,10 @@ export interface ProductDetail {
 interface Props {
   product: ProductDetail;
   categories: CategoryRow[];
+  pricing?: { options: OptionInput[]; prices: unknown[] };
 }
 
-export function ProductDetailClient({ product, categories }: Props) {
+export function ProductDetailClient({ product, categories, pricing }: Props) {
   const router = useRouter();
   const [name, setName] = useState(product.name);
   const [shortDesc, setShortDesc] = useState(product.shortDescription);
@@ -362,6 +365,20 @@ export function ProductDetailClient({ product, categories }: Props) {
               </div>
             </Card>
           )}
+
+          {/* Fiyat Yönetimi — Konfigüratör Yapısı */}
+          <Card title="Fiyat Yönetimi — Konfigüratör Yapısı">
+            <p className="text-xs text-ink-500 mb-4">
+              Ürün seçenek gruplarını ve seçeneklerini buradan yönetin. Mevcut
+              seçeneklerin key&apos;leri fiyat matrisine bağlı olduğu için
+              korunur; yalnızca yeni eklenenlere label&apos;dan otomatik key
+              atanır.
+            </p>
+            <PricingStructureEditor
+              productId={(product as { id: string }).id}
+              initialOptions={pricing?.options ?? []}
+            />
+          </Card>
 
           {/* SEO */}
           <Card title="SEO Ayarları">
