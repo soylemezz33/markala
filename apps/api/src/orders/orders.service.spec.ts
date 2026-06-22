@@ -49,6 +49,11 @@ function makeParasut(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** SettingsService mock — varsayılan 79₺ kargo / 750₺ ücretsiz eşiği. */
+function makeSettings() {
+  return { getShipping: vi.fn().mockResolvedValue({ fee: 79, freeThreshold: 750 }) };
+}
+
 function makePrisma(overrides: Record<string, unknown> = {}) {
   const tx = makeTx();
   const prisma = {
@@ -88,14 +93,14 @@ const BASE_INPUT = {
 describe("OrdersService.create — validasyon", () => {
   it("boş items listesi → BadRequestException", async () => {
     const prisma = makePrisma();
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
     await expect(svc.create({ ...BASE_INPUT, items: [] })).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it("pasif / bulunamayan ürün → BadRequestException", async () => {
     const prisma = makePrisma();
     prisma.product.findMany.mockResolvedValue([]); // ürün yok
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
     await expect(svc.create(BASE_INPUT)).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -103,7 +108,7 @@ describe("OrdersService.create — validasyon", () => {
     const prisma = makePrisma();
     // Birinci findFirst (shipping) null döner
     prisma.address.findFirst.mockResolvedValueOnce(null);
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
     await expect(svc.create({ ...BASE_INPUT, userId: "user-x" })).rejects.toBeInstanceOf(ForbiddenException);
   });
 });
@@ -113,7 +118,7 @@ describe("OrdersService.create — idempotency", () => {
     const existingOrder = { id: "ord-existing", orderNumber: "MK-OLD", items: [] };
     const prisma = makePrisma();
     prisma.order.findFirst.mockResolvedValueOnce(existingOrder);
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     const res = await svc.create({ ...BASE_INPUT, idempotencyKey: "my-unique-key-123" });
 
@@ -126,7 +131,7 @@ describe("OrdersService.create — idempotency", () => {
 describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
   it("fiyat Product.basePrice'tan hesaplanır; quantity 1 → subtotal 290", async () => {
     const prisma = makePrisma();
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.create(BASE_INPUT);
 
@@ -157,7 +162,7 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
       ],
     };
     prisma.product.findMany.mockResolvedValue([CONFIG_PRODUCT]);
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.create({
       ...BASE_INPUT,
@@ -192,7 +197,7 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
       parameters: [{ id: "varyant", kind: "matrix", cells: [{ id: "cyp-1000", price: 290 }] }],
     };
     prisma.product.findMany.mockResolvedValue([CONFIG_PRODUCT]);
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.create({
       ...BASE_INPUT,
@@ -221,7 +226,7 @@ describe("OrdersService.create — kupon", () => {
   it("yüzde indirim doğru hesaplanır (%10 off 290 → discount 29)", async () => {
     const prisma = makePrisma();
     prisma.coupon.findUnique.mockResolvedValue({ ...COUPON_BASE, type: "percentage", value: "10" });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.create({ ...BASE_INPUT, couponCode: "SAVE10" });
 
@@ -235,7 +240,7 @@ describe("OrdersService.create — kupon", () => {
   it("free_shipping kupon kargo ücretini sıfırlar", async () => {
     const prisma = makePrisma();
     prisma.coupon.findUnique.mockResolvedValue({ ...COUPON_BASE, type: "free_shipping", value: "0" });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.create({ ...BASE_INPUT, couponCode: "FREESHIP" });
 
@@ -247,7 +252,7 @@ describe("OrdersService.create — kupon", () => {
 
   it("ara toplam 750₺ üstünde kargo ücretsiz (kupon olmadan)", async () => {
     const prisma = makePrisma();
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     // 290 × 3 = 870 ≥ 750 → kargo 0
     await svc.create({ ...BASE_INPUT, items: [{ productId: "p1", configuration: {}, quantity: 3 }] });
@@ -267,7 +272,7 @@ describe("OrdersService.create — kupon", () => {
       value: "10",
       validUntil: yesterday,
     });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await expect(svc.create({ ...BASE_INPUT, couponCode: "EXPIRED" })).rejects.toBeInstanceOf(BadRequestException);
   });
@@ -275,7 +280,7 @@ describe("OrdersService.create — kupon", () => {
   it("pasif kupon → BadRequestException", async () => {
     const prisma = makePrisma();
     prisma.coupon.findUnique.mockResolvedValue({ ...COUPON_BASE, type: "percentage", value: "5", isActive: false });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await expect(svc.create({ ...BASE_INPUT, couponCode: "INACTIVE" })).rejects.toBeInstanceOf(BadRequestException);
   });
@@ -293,7 +298,7 @@ describe("OrdersService.create — misafir / storefront (inline adres + slug)", 
 
   it("inline adres + productSlug → FK null, snapshot dolu, ürün slug'tan çözülür", async () => {
     const prisma = makePrisma();
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.create({
       email: "guest@markala.test",
@@ -327,7 +332,7 @@ describe("OrdersService.create — misafir / storefront (inline adres + slug)", 
 
   it("kalemde ne productId ne productSlug yoksa → BadRequestException", async () => {
     const prisma = makePrisma();
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
     await expect(
       svc.create({
         email: "guest@markala.test",
@@ -340,7 +345,7 @@ describe("OrdersService.create — misafir / storefront (inline adres + slug)", 
 
   it("adres hiç verilmezse (ne id ne inline) → BadRequestException", async () => {
     const prisma = makePrisma();
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
     await expect(
       svc.create({
         email: "guest@markala.test",
@@ -352,7 +357,7 @@ describe("OrdersService.create — misafir / storefront (inline adres + slug)", 
 
   it("ayrı fatura adresi verilince snapshot olarak kendi alanına yazılır", async () => {
     const prisma = makePrisma();
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
     await svc.create({
       email: "guest@markala.test",
       phone: "05001112233",
@@ -378,7 +383,7 @@ describe("OrdersService.findById", () => {
       shippingAddressSnapshot: { fullName: "Ali Veli", fullAddress: "Atatürk Cad.", city: "Mersin" },
       billingAddressSnapshot: { fullName: "Ali Veli" },
     });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     const res = (await svc.findById("ordg")) as never as {
       shippingAddress: { fullName: string; city: string };
@@ -389,7 +394,7 @@ describe("OrdersService.findById", () => {
   it("bulunamayan sipariş → NotFoundException", async () => {
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue(null);
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await expect(svc.findById("nonexistent")).rejects.toBeInstanceOf(NotFoundException);
   });
@@ -403,7 +408,7 @@ describe("OrdersService.findById", () => {
       shippingAddress: {},
       billingAddress: {},
     });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await expect(svc.findById("ord1", "user-other")).rejects.toBeInstanceOf(ForbiddenException);
   });
@@ -412,7 +417,7 @@ describe("OrdersService.findById", () => {
     const order = { id: "ord1", userId: "user-owner", items: [], shippingAddress: {}, billingAddress: {} };
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue(order);
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     const res = await svc.findById("ord1", "user-owner");
     expect(res.id).toBe("ord1");
@@ -425,7 +430,7 @@ describe("OrdersService.updateStatus — durum makinesi", () => {
   it("geçerli geçiş: siparis-alindi → uretimde", async () => {
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue({ status: "siparis_alindi" });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.updateStatus("ord1", "uretimde");
     expect(prisma.order.update).toHaveBeenCalledOnce();
@@ -434,7 +439,7 @@ describe("OrdersService.updateStatus — durum makinesi", () => {
   it("izinsiz geçiş: teslim-edildi → siparis-alindi → BadRequestException", async () => {
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue({ status: "teslim_edildi" });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await expect(svc.updateStatus("ord1", "siparis-alindi")).rejects.toBeInstanceOf(BadRequestException);
   });
@@ -442,7 +447,7 @@ describe("OrdersService.updateStatus — durum makinesi", () => {
   it("kargoya-verildi → shippedAt atanır", async () => {
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue({ status: "uretimde" });
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await svc.updateStatus("ord1", "kargoya-verildi");
     const updateCall = prisma.order.update.mock.calls[0][0];
@@ -452,7 +457,7 @@ describe("OrdersService.updateStatus — durum makinesi", () => {
   it("bulunamayan sipariş → NotFoundException", async () => {
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue(null);
-    const svc = new OrdersService(prisma as never, makeParasut() as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
 
     await expect(svc.updateStatus("ghost", "uretimde")).rejects.toBeInstanceOf(NotFoundException);
   });

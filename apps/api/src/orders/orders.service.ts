@@ -3,6 +3,7 @@ import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
+import { SettingsService } from "../settings/settings.service";
 import { calculateConfiguredPrice, extractSelections, pickConfigurationSummary } from "./pricing";
 
 function generateOrderNumber(): string {
@@ -15,10 +16,6 @@ function generateOrderNumber(): string {
 const VAT_RATE = 0.2;
 /** KDV dahil fiyatları ondalık çarpana çevirmek için (1.20). */
 const VAT_DIVISOR = 1 + VAT_RATE;
-/** Şu an sabit kargo. Gelecekte adres bölgesine göre dinamikleştirilebilir. */
-const DEFAULT_SHIPPING_FEE = 79;
-/** Ara toplam (KDV dahil) bu tutarın üstündeyse kargo ücretsiz — web ekranıyla aynı politika. */
-const FREE_SHIPPING_THRESHOLD = 750;
 /** Konfigürasyonda gelen serbest "miktar" alanları kötüye kullanılmasın diye üst sınır. */
 const MAX_QUANTITY_PER_ITEM = 100_000;
 
@@ -163,7 +160,7 @@ function withAddressView<
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService, private parasut: ParasutService) {}
+  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService) {}
 
   /**
    * SECURITY: never trust client-side pricing.
@@ -387,9 +384,10 @@ export class OrdersService {
       }
     }
 
-    // Kargo: free_shipping kuponu VEYA ara toplam eşiği (750₺) → ücretsiz; aksi halde sabit 79₺.
-    const freeShipping = appliedCoupon?.type === "free_shipping" || subtotal >= FREE_SHIPPING_THRESHOLD;
-    const shippingFee = freeShipping ? 0 : DEFAULT_SHIPPING_FEE;
+    // Kargo: free_shipping kuponu VEYA ara toplam eşiği → ücretsiz; aksi halde settings'ten gelen bedel.
+    const { fee: shippingFeeSetting, freeThreshold } = await this.settings.getShipping();
+    const freeShipping = appliedCoupon?.type === "free_shipping" || subtotal >= freeThreshold;
+    const shippingFee = freeShipping ? 0 : shippingFeeSetting;
 
     // basePrice KDV dahil — vat reverse calculation
     // KDV dahil brüt = subtotal (- discount). KDV = brüt − (brüt / 1.20).
