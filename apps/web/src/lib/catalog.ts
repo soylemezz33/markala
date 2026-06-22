@@ -2,7 +2,6 @@ import type { Product, Category } from "@markala/types";
 import {
   products as mockProducts,
   heroSlides as mockHeroSlides,
-  categories as mockCategories,
   type HeroSlide,
 } from "@markala/mock-data";
 
@@ -13,9 +12,9 @@ import {
  * - Sunucu bileşenleri için (server-only). Client bileşenler bunu import EDEMEZ;
  *   onlar veriyi server parent'tan props ile alır.
  * - API container-içi adresten çekilir (CF round-trip yok); yoksa public URL'e düşer.
- * - HER fonksiyon API hatasında mock-data'ya düşer → storefront ASLA kırılmaz.
- * - ISR: revalidate 60sn — admin değişiklikleri ~1dk içinde storefront'a yansır.
- * - Kategoriler MOCK'ta kalır (API'de SEO alanları yok + düşük değişim); yalnız ürünler API.
+ * - Ürünler: API hatasında mock-data'ya düşer → storefront kırılmaz.
+ * - Kategoriler: API hatasında/boş → [] (graceful empty; mock fallback KALDIRILDI).
+ * - ISR: revalidate 30sn — admin değişiklikleri ~30sn içinde storefront'a yansır.
  */
 
 const API_BASE =
@@ -210,47 +209,47 @@ export async function getHeroBanners(): Promise<HeroBannerData[]> {
 }
 
 /**
- * API kategorisini storefront Category şekline eşler. Zengin alanlar (seoIntro/features/faqs/seo/
- * productCount) API'de yok → mock'tan (slug ile) doldurulur; görsel yoksa mockup'a düşer.
+ * API kategorisini storefront Category şekline eşler. Zengin alanlar (seoIntro/features/faqs/seo)
+ * API'nin content JSON alanından; productCount API'nin _count.products'tan gelir. Mock fallback YOK.
  */
 function mapCategory(c: Record<string, unknown>): Category {
   const slug = String(c.slug);
-  const mock = mockCategories.find((m) => m.slug === slug);
+  const content = (c.content ?? {}) as Record<string, unknown>;
   return {
     slug,
-    name: String(c.name ?? mock?.name ?? slug),
-    shortDescription: String(c.shortDescription ?? mock?.shortDescription ?? ""),
-    longDescription: String(c.longDescription ?? mock?.longDescription ?? ""),
-    imageUrl: String(c.imageUrl || mock?.imageUrl || `/api/mockup?category=${slug}&w=1200&h=900`),
-    accentColor: (c.accentColor as string) ?? mock?.accentColor,
-    startingPrice: c.startingPrice != null ? num(c.startingPrice) : (mock?.startingPrice ?? 0),
-    productionTime: String(c.productionTime ?? mock?.productionTime ?? "1-3 iş günü"),
-    productCount: mock?.productCount ?? 0,
-    seoIntro: mock?.seoIntro,
-    features: mock?.features,
-    faqs: mock?.faqs,
-    seo: mock?.seo,
+    name: String(c.name ?? slug),
+    shortDescription: String(c.shortDescription ?? ""),
+    longDescription: String(c.longDescription ?? ""),
+    imageUrl: String(c.imageUrl || `/api/mockup?category=${slug}&w=1200&h=900`),
+    accentColor: (c.accentColor as string) ?? undefined,
+    startingPrice: c.startingPrice != null ? num(c.startingPrice) : 0,
+    productionTime: String(c.productionTime ?? "1-3 iş günü"),
+    productCount: (c._count as { products?: number } | undefined)?.products ?? 0,
+    seoIntro: content.seoIntro as string | undefined,
+    features: content.features as string[] | undefined,
+    faqs: content.faqs as Category["faqs"],
+    seo: content.seo as Category["seo"],
   };
 }
 
 /**
- * Tüm aktif kategoriler — CANLI API (admin "Kategoriler"den yönetir). Hata/boş → mock fallback.
- * Böylece admin'in eklediği yeni kategori (örn. İş Güvenliği) sitede görünür.
+ * Tüm aktif kategoriler — CANLI API (admin "Kategoriler"den yönetir).
+ * Hata veya boş yanıt → [] döner (graceful empty; mock fallback kaldırıldı).
  */
 export async function getCategories(): Promise<Category[]> {
   try {
     const data = await fetchJson("/categories");
-    if (!Array.isArray(data) || data.length === 0) return mockCategories;
+    if (!Array.isArray(data) || data.length === 0) return [];
     return (data as Record<string, unknown>[]).map(mapCategory);
   } catch {
-    return mockCategories;
+    return [];
   }
 }
 
-/** Tek kategori (slug). API'de yoksa/hata → mock fallback. */
+/** Tek kategori (slug). API'de yoksa → undefined (mock fallback kaldırıldı). */
 export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
   const list = await getCategories();
-  return list.find((c) => c.slug === slug) ?? mockCategories.find((c) => c.slug === slug);
+  return list.find((c) => c.slug === slug);
 }
 
 /** Bir kategorinin ürünleri. API hatası → mock fallback (boş sonuç gerçek kabul edilir). */
