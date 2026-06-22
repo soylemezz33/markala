@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
         # Versiyon package.json "packageManager" alanından okunur (pnpm@10.33.3).
@@ -83,7 +83,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Versiyon package.json "packageManager"dan; `version:` verme → "Multiple versions" hatası.
       - uses: pnpm/action-setup@v4
@@ -104,7 +104,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Versiyon package.json "packageManager"dan; `version:` verme → "Multiple versions" hatası.
       - uses: pnpm/action-setup@v4
