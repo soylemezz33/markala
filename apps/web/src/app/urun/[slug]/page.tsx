@@ -19,6 +19,7 @@ import {
   getProductsByCategory,
   getProducts,
 } from "@/lib/catalog";
+import { getProductRatingStats } from "@/lib/reviews";
 import { Configurator } from "@/components/product/configurator";
 import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product-card";
@@ -90,9 +91,10 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const [category, related] = await Promise.all([
+  const [category, related, ratingStats] = await Promise.all([
     getCategoryBySlug(product.categorySlug),
     getProductsByCategory(product.categorySlug),
+    getProductRatingStats(product.slug),
   ]);
   const relatedProducts = related.filter((p) => p.slug !== product.slug).slice(0, 4);
 
@@ -304,7 +306,10 @@ export default async function ProductPage({ params }: Props) {
           {/* Sağ: Sticky configurator */}
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-24">
-              <Configurator product={product} />
+              <Configurator
+                product={product}
+                rating={ratingStats.count > 0 ? { average: ratingStats.average, count: ratingStats.count } : undefined}
+              />
 
               {/* Trust badges */}
               <ul className="mt-6 grid grid-cols-2 gap-3">
