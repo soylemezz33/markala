@@ -65,9 +65,15 @@ export default function WishlistPage() {
 
       <Container className="py-12 md:py-16">
         {!mounted ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div
+            role="status"
+            aria-busy="true"
+            aria-label="Favoriler yükleniyor"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+          >
+            <span className="sr-only">Favoriler yükleniyor…</span>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="space-y-3 animate-pulse">
+              <div key={i} className="space-y-3 animate-pulse" aria-hidden="true">
                 <div className="aspect-square bg-paper-200 rounded-lg" />
                 <div className="h-4 bg-paper-200 rounded w-3/4" />
                 <div className="h-3 bg-paper-200 rounded w-1/2" />

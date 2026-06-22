@@ -3,7 +3,7 @@
 import { cn } from "@markala/ui";
 import { Lock, CaretDown, MagnifyingGlass } from "@phosphor-icons/react";
 import { formatPrice } from "@/lib/format";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { memo, useRef, useState, useEffect, useCallback } from "react";
 
 interface OptionItem {
   optionKey: string;
@@ -249,7 +249,7 @@ function SearchableDropdown({
   );
 }
 
-export function OptionGroup({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none" }: Props) {
+function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none" }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
 
   if (disabled && !locked) {
@@ -316,7 +316,7 @@ export function OptionGroup({ groupKey, groupLabel, options, selected, locked, d
     );
   }
 
-  // Few options → existing radio cards
+  // Few options → radio cards
   return (
     <div>
       <label
@@ -387,3 +387,5 @@ export function OptionGroup({ groupKey, groupLabel, options, selected, locked, d
     </div>
   );
 }
+
+export const OptionGroup = memo(OptionGroupInner);

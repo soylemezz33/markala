@@ -84,23 +84,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const trustBadges = [
-  // TODO(Faz D): "750₺ üzeri ücretsiz" metni statik — sunucu bileşeni olduğundan /settings/shipping'e bağlanamaz; admin kargo eşiği değiştiğinde burası da güncellenmeli.
-  { icon: Truck, label: "Türkiye geneli kargo", sub: "1-3 iş günü · 750₺ üzeri ücretsiz" },
-  { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
-  { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda iade" },
-  { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
-  { icon: MagnifyingGlass, label: "Ücretsiz Hızlı Tasarım Kontrolü", sub: "baskı öncesi uzman ekibimiz kontrol eder" },
-];
+const API_BASE =
+  process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
+
+async function getShippingThreshold(): Promise<number> {
+  try {
+    const res = await fetch(`${API_BASE}/api/settings/shipping`, { next: { revalidate: 300 } });
+    if (!res.ok) return 750;
+    const data = (await res.json()) as { freeThreshold?: number };
+    return typeof data.freeThreshold === "number" ? data.freeThreshold : 750;
+  } catch {
+    return 750;
+  }
+}
+
+function makeTrustBadges(freeThreshold: number) {
+  return [
+    { icon: Truck, label: "Türkiye geneli kargo", sub: `1-3 iş günü · ${freeThreshold}₺ üzeri ücretsiz` },
+    { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
+    { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda iade" },
+    { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
+    { icon: MagnifyingGlass, label: "Ücretsiz Hızlı Tasarım Kontrolü", sub: "baskı öncesi uzman ekibimiz kontrol eder" },
+  ];
+}
 
 export default async function ProductPage({ params }: Props) {
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const [category, related, ratingStats] = await Promise.all([
+  const [category, related, ratingStats, shippingThreshold] = await Promise.all([
     getCategoryBySlug(product.categorySlug),
     getProductsByCategory(product.categorySlug),
     getProductRatingStats(product.slug),
+    getShippingThreshold(),
   ]);
   const relatedProducts = related.filter((p) => p.slug !== product.slug).slice(0, 4);
 
@@ -319,7 +335,7 @@ export default async function ProductPage({ params }: Props) {
 
               {/* Trust badges */}
               <ul className="mt-6 grid grid-cols-2 gap-3">
-                {trustBadges.map((t) => (
+                {makeTrustBadges(shippingThreshold).map((t) => (
                   <li
                     key={t.label}
                     className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg"

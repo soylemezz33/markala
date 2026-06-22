@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useReducer, useState } from "react";
+import { useCallback, useMemo, useReducer, useState } from "react";
 import { Button } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
@@ -158,6 +158,12 @@ export function Configurator({ product, rating: ratingProp }: { product: Product
     setTimeout(() => dispatch({ type: "JUST_ADDED", value: false }), 1500);
   }
 
+  const handleSelect = useCallback(
+    (groupKey: string, optionKey: string) =>
+      dispatch({ type: "SET_SELECTION", groupKey, optionKey }),
+    [],
+  );
+
   function handleQuoteClick() {
     const msg = encodeURIComponent(
       `Merhaba, "${product.name}" ürünü için teklif almak istiyorum.`,
@@ -219,9 +225,7 @@ export function Configurator({ product, rating: ratingProp }: { product: Product
               selected={effSel[group.groupKey] ?? state.selections[group.groupKey] ?? ""}
               locked={group.locked}
               disabled={resolved.disabledGroups.has(group.groupKey)}
-              onSelect={(optionKey) =>
-                dispatch({ type: "SET_SELECTION", groupKey: group.groupKey, optionKey })
-              }
+              onSelect={(optionKey) => handleSelect(group.groupKey, optionKey)}
               priceHints={displayedPriceHints[group.groupKey]}
               hintMode={groupHintMode(product, group.groupKey)}
             />

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Button } from "@markala/ui";
 import { ArrowsClockwise, Package, ArrowRight, Star, ShoppingBag } from "@phosphor-icons/react";
@@ -94,9 +95,15 @@ export default function TekrarSiparisPage() {
               className="flex items-center gap-4 p-4 bg-paper-50 border border-paper-200 rounded-xl hover:border-ink-300 transition-colors"
             >
               {/* Ürün thumbnail */}
-              <Link href={`/urun/${p.slug}`} className="flex-none w-20 h-20 rounded-lg overflow-hidden bg-paper-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.image || `/api/mockup?slug=${p.slug}&w=400&h=400`} alt={p.name} className="w-full h-full object-cover" />
+              <Link href={`/urun/${p.slug}`} className="relative flex-none w-20 h-20 rounded-lg overflow-hidden bg-paper-100">
+                <Image
+                  src={p.image || `/api/mockup?slug=${p.slug}&w=400&h=400`}
+                  alt={p.name}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                  unoptimized={!p.image}
+                />
               </Link>
 
               <div className="flex-1 min-w-0">

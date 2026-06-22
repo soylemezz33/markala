@@ -54,25 +54,45 @@ export default async function BlogPage() {
       </div>
 
       <Container className="py-12 md:py-16">
-        {/* Kategori filtresi */}
-        <div className="flex flex-wrap items-center gap-2 mb-10">
-          <span className="text-xs text-ink-500 mr-1">Kategoriler:</span>
-          <Link
-            href="/blog"
-            className="px-3 py-1.5 rounded-full text-xs font-medium bg-ink-900 text-paper-50"
-          >
-            Tümü
-          </Link>
-          {blogCategories.map((c) => (
+        {blogPosts.length === 0 ? (
+          <div className="py-20 text-center bg-paper-50 border border-paper-200 rounded-xl max-w-xl mx-auto">
+            <div className="w-16 h-16 mx-auto rounded-full bg-paper-100 grid place-items-center text-ink-400">
+              <ArrowRight size={28} />
+            </div>
+            <h2 className="mt-4 text-xl font-semibold text-ink-900">Henüz yazı yok</h2>
+            <p className="mt-2 text-sm text-ink-500 max-w-sm mx-auto">
+              Blog yazıları yakında yayınlanacak. Bu arada ürünlerimizi inceleyebilirsiniz.
+            </p>
             <Link
-              key={c.slug}
-              href={`/blog/kategori/${c.slug}`}
-              className="px-3 py-1.5 rounded-full text-xs font-medium bg-paper-100 text-ink-700 hover:bg-paper-200"
+              href="/urunler"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-md text-sm font-semibold"
             >
-              {c.name}
+              Ürünlere Göz At <ArrowRight size={14} weight="bold" />
             </Link>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <>
+        {/* Kategori filtresi — yalnız kategoriler varsa göster */}
+        {blogCategories.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mb-10">
+            <span className="text-xs text-ink-500 mr-1">Kategoriler:</span>
+            <Link
+              href="/blog"
+              className="px-3 py-1.5 rounded-full text-xs font-medium bg-ink-900 text-paper-50"
+            >
+              Tümü
+            </Link>
+            {blogCategories.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/blog/kategori/${c.slug}`}
+                className="px-3 py-1.5 rounded-full text-xs font-medium bg-paper-100 text-ink-700 hover:bg-paper-200"
+              >
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Featured */}
         {featured && (
@@ -162,6 +182,8 @@ export default async function BlogPage() {
           </p>
           <NewsletterForm source="blog-newsletter" />
         </section>
+          </>
+        )}
       </Container>
     </>
   );

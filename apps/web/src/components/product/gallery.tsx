@@ -5,7 +5,7 @@ import { useState } from "react";
 import { cn } from "@markala/ui";
 import { ProductImageFallback } from "@/components/product/product-image-fallback";
 
-export function Gallery({ images, alt }: { images: string[]; alt: string; fallbackSrc?: string }) {
+export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: string; fallbackSrc?: string }) {
   const [active, setActive] = useState(0);
   const hasImages = images.length > 0;
   const safeImages = images;
@@ -21,6 +21,16 @@ export function Gallery({ images, alt }: { images: string[]; alt: string; fallba
             priority
             sizes="(min-width:1024px) 50vw, 100vw"
             className="object-cover"
+          />
+        ) : fallbackSrc ? (
+          <Image
+            src={fallbackSrc}
+            alt={alt}
+            fill
+            priority
+            sizes="(min-width:1024px) 50vw, 100vw"
+            className="object-cover"
+            unoptimized
           />
         ) : (
           <ProductImageFallback name={alt} />

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
-import { ArrowLeft, ArrowRight, Clock } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, ArrowRight, Clock, Article } from "@phosphor-icons/react/dist/ssr";
 import {
   getBlogCategories,
   getBlogCategoryBySlug,
@@ -77,8 +77,22 @@ export default async function BlogCategoryPage({ params }: Props) {
 
       <Container className="py-12 md:py-16">
         {posts.length === 0 ? (
-          <div className="text-center text-ink-500 py-12">
-            Bu kategoride henüz yazı yok.
+          <div className="py-20 text-center bg-paper-50 border border-paper-200 rounded-xl max-w-xl mx-auto">
+            <div className="w-16 h-16 mx-auto rounded-full bg-paper-100 grid place-items-center text-ink-400">
+              <Article size={28} />
+            </div>
+            <h2 className="mt-4 text-xl font-semibold text-ink-900">
+              Bu kategoride henüz yazı yok
+            </h2>
+            <p className="mt-2 text-sm text-ink-500 max-w-sm mx-auto">
+              Yakında içerik eklenecek. Diğer blog yazılarına göz atabilirsiniz.
+            </p>
+            <Link
+              href="/blog"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-md text-sm font-semibold"
+            >
+              <ArrowLeft size={14} /> Tüm Yazılar
+            </Link>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
