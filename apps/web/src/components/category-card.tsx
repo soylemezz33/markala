@@ -9,9 +9,14 @@ interface CategoryCardProps {
   category: Category;
   /** Geriye dönük uyum için tutuluyor — artık her iki değer aynı görünür. */
   surface?: "light" | "dark";
+  /**
+   * Above-the-fold ilk satır kartları için `true` verin → görsel `priority`
+   * (eager + fetchpriority="high" + preload) ile yüklenir, LCP gecikmez.
+   */
+  priority?: boolean;
 }
 
-export function CategoryCard({ category }: CategoryCardProps) {
+export function CategoryCard({ category, priority = false }: CategoryCardProps) {
   return (
     <Link
       href={`/kategori/${category.slug}`}
@@ -22,6 +27,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
           src={category.imageUrl}
           alt={category.name}
           fill
+          priority={priority}
           sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
           className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
         />

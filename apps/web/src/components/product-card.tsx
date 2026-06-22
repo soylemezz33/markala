@@ -19,9 +19,16 @@ interface ProductCardProps {
   product: Product;
   /** Geriye dönük uyum için kaldı; artık her iki değer de aynı görünür. */
   surface?: "light" | "dark";
+  /**
+   * Above-the-fold (ilk satır) kartlar için `true` verin. Next.js <Image>
+   * varsayılan `loading="lazy"` üretir; liste sayfalarında ilk satır LCP
+   * elementi olduğundan lazy yükleme LCP'yi geciktirir. `priority` →
+   * eager + fetchpriority="high" + preload. Yalnız ilk satırda kullanın.
+   */
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   // Detayın açılıştaki fiyatıyla AYNI (tek kaynak: configurator). startingPrice'a güvenme.
   const startingPrice = getDisplayPrice(product);
 
@@ -41,6 +48,7 @@ export function ProductCard({ product }: ProductCardProps) {
             src={product.images[0]}
             alt={product.name}
             fill
+            priority={priority}
             sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
           />

@@ -55,7 +55,7 @@ export default async function CategoriesPage() {
 
       <Container className="py-12 md:py-16">
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-          {sorted.map((cat) => {
+          {sorted.map((cat, i) => {
             const productCount = products.filter(
               (p) => p.categorySlug === cat.slug,
             ).length;
@@ -70,6 +70,8 @@ export default async function CategoriesPage() {
                     src={cat.imageUrl}
                     alt={cat.name}
                     fill
+                    // İlk satır (xl'de 4 sütun) above-the-fold → LCP adayı; eager yükle.
+                    priority={i < 4}
                     sizes="(min-width:1280px) 25vw, (min-width:640px) 33vw, 50vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
