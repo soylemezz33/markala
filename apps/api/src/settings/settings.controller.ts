@@ -10,6 +10,11 @@ import { UpsertSettingsDto } from "./settings.dto";
 export class SettingsController {
   constructor(private service: SettingsService) {}
 
+  @Get("shipping")
+  shipping() {
+    return this.service.getShipping();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")

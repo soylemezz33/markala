@@ -35,3 +35,22 @@ describe("SettingsService", () => {
     expect(prisma.siteSetting.upsert).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("getShipping", () => {
+  it("site_settings'ten fee+freeThreshold okur", async () => {
+    const prisma = mockPrisma();
+    prisma.siteSetting.findMany.mockResolvedValue([
+      { key: "shipping.fee", value: 99, group: "shipping", updatedAt: new Date() },
+      { key: "shipping.freeThreshold", value: 1000, group: "shipping", updatedAt: new Date() },
+    ] as any);
+    const svc = new SettingsService(prisma as never);
+    expect(await svc.getShipping()).toEqual({ fee: 99, freeThreshold: 1000 });
+  });
+
+  it("eksikse 79/750 fallback", async () => {
+    const prisma = mockPrisma();
+    prisma.siteSetting.findMany.mockResolvedValue([] as any);
+    const svc = new SettingsService(prisma as never);
+    expect(await svc.getShipping()).toEqual({ fee: 79, freeThreshold: 750 });
+  });
+});
