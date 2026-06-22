@@ -9,7 +9,8 @@ import { ArrowLeft, FloppyDisk, Eye, Trash, ArrowsClockwise } from "@phosphor-ic
 import { ImageGallery } from "@/components/image-uploader";
 import { updateProduct, removeProduct } from "./actions";
 import { PricingStructureEditor } from "./pricing-structure-editor";
-import type { OptionInput } from "@markala/api-client";
+import { PricingGridEditor } from "./pricing-grid-editor";
+import type { OptionInput, ApiPrice } from "@markala/api-client";
 
 export interface CategoryRow {
   id: string;
@@ -46,7 +47,7 @@ export interface ProductDetail {
 interface Props {
   product: ProductDetail;
   categories: CategoryRow[];
-  pricing?: { options: OptionInput[]; prices: unknown[] };
+  pricing?: { options: OptionInput[]; prices: ApiPrice[] };
 }
 
 export function ProductDetailClient({ product, categories, pricing }: Props) {
@@ -377,6 +378,20 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
             <PricingStructureEditor
               productId={(product as { id: string }).id}
               initialOptions={pricing?.options ?? []}
+            />
+          </Card>
+
+          {/* Fiyat Yönetimi — Izgara */}
+          <Card title="Fiyat Yönetimi — Izgara (Maliyet + Satış)">
+            <p className="text-xs text-ink-500 mb-4">
+              Seçenek×boyut kombinasyonlarının satış ve maliyet fiyatlarını
+              giriniz. Boş bırakılan hücreler satışa çıkmaz. Yapı değişince
+              sayfayı yenileyip ızgarayı güncelleyiniz.
+            </p>
+            <PricingGridEditor
+              productId={(product as unknown as { id: string }).id}
+              options={pricing?.options ?? []}
+              initialPrices={pricing?.prices ?? []}
             />
           </Card>
 
