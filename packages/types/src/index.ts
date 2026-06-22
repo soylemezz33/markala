@@ -159,31 +159,37 @@ export interface ProductParameter {
 
 // === Faz C — yeni fiyat sistemi tipleri ===
 
-/** Ürün seçeneği (ebat, kağıt türü, baskı yüzü vb.) */
+/**
+ * Konfigüratör seçenek satırı (DB `product_options` ile birebir; API public yanıtında döner).
+ * Bir grup (groupKey) altında seçenekler (optionKey). `groupRole`: "dimension" fiyatı indeksler
+ * (kendi fiyatı yok — örn. ebat/adet), "priced" seçenekleri fiyatlıdır (örn. paket/malzeme).
+ */
 export interface PricingOption {
-  id: string;
-  label: string;
-  /** Açıklama / alt başlık */
-  description?: string;
-  /** Görsel gruplama (örn. "EKO", "PREMIUM") */
-  group?: string;
-  /** Sıralama */
-  sortOrder?: number;
+  groupKey: string;
+  groupLabel: string;
+  groupRole: "dimension" | "priced";
+  groupSort: number;
+  optionKey: string;
+  optionLabel: string;
+  /** Açıklama / alt başlık (matris satır açıklaması, ebat ölçüsü vb.) */
+  optionSublabel?: string | null;
+  optionSort: number;
 }
 
-/** Seçenek kombinasyonuna karşılık gelen fiyat satırı */
+/**
+ * Fiyat satırı (DB `product_prices` ile birebir). Toplamsal motor için:
+ * fiyatlı grup (groupKey) + seçili option (optionKey) + fiyat-boyutu değeri (dimKey) → price.
+ * Basit üründe groupKey/optionKey/dimKey boş, tek satır. `price`/`cost` API'den string (Decimal) gelebilir.
+ */
 export interface PricingPriceRow {
-  /** Satır id'si — eşsiz */
-  id: string;
-  /** PricingOption.id → seçili option id'si eşlemesi */
-  optionSelections: Record<string, string>;
-  /** KDV dahil birim/toplam fiyat (TL) */
-  price: number;
-  /** Stok kodu (opsiyonel) */
-  sku?: string;
+  groupKey?: string | null;
+  optionKey?: string | null;
+  dimKey?: string | null;
+  cost?: number | string | null;
+  price: number | string;
 }
 
-/** Konfigüratör seçim durumu — PricingOption.id → PricingOption.id */
+/** Konfigüratör seçim durumu — groupKey → seçili optionKey. */
 export type ConfiguratorSelections = Record<string, string>;
 
 export interface Product {

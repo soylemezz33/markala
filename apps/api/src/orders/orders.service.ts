@@ -276,8 +276,11 @@ export class OrdersService {
           (product.prices ?? []).map((r) => ({ groupKey: r.groupKey, optionKey: r.optionKey, dimKey: r.dimKey, price: Number(r.price) })),
           selections as Record<string, string>,
         );
-        if (!Number.isFinite(configuredUnit) || configuredUnit < 0) {
-          throw new BadRequestException(`Ürün fiyatı geçersiz: ${product.slug}`);
+        // Fiyatı belirlenmemiş ürün (configuredUnit=0 → "Teklif Al") sipariş edilemez:
+        // storefront sepete eklemeyi zaten engeller; bu sunucu-tarafı savunma (doğrudan API
+        // çağrısıyla 0-toplamlı sipariş oluşturulmasını önler).
+        if (!Number.isFinite(configuredUnit) || configuredUnit <= 0) {
+          throw new BadRequestException(`Bu ürün için fiyat belirlenmemiş (Teklif Al), sipariş alınamıyor: ${product.slug}`);
         }
         const unitPrice = round2(configuredUnit);
         return {

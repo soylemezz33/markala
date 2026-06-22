@@ -189,6 +189,26 @@ describe("OrdersService.create — sunucu tarafı fiyat hesabı", () => {
     expect(Number(createCall.subtotal)).toBeCloseTo(290, 2);
   });
 
+  it("fiyatı belirlenmemiş ürün (options var, prices boş → 0) sipariş REDDEDİLİR", async () => {
+    const prisma = makePrisma();
+    const UNPRICED = {
+      id: "punp", slug: "fiyatsiz-urun", name: "Fiyatsız Ürün", basePrice: 0, images: ["x.jpg"], isActive: true,
+      options: [
+        { groupKey: "paket", groupLabel: "Paket", groupRole: "priced", groupSort: 0, optionKey: "cyp", optionLabel: "CYP", optionSort: 0 },
+        { groupKey: "adet", groupLabel: "Adet", groupRole: "dimension", groupSort: 0, optionKey: "1000", optionLabel: "1.000", optionSort: 0 },
+      ],
+      prices: [], // BOŞ → computeConfiguredPrice 0 → sipariş alınamaz
+    };
+    prisma.product.findMany.mockResolvedValue([UNPRICED]);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never);
+    await expect(
+      svc.create({
+        ...BASE_INPUT,
+        items: [{ productId: "punp", configuration: { selections: { paket: "cyp", adet: "1000" }, summary: "x" }, quantity: 1 }],
+      }),
+    ).rejects.toThrow();
+  });
+
   it("sepet adedi (cart quantity) konfigüre kalem sayısıdır → fiyatla çarpılır", async () => {
     const prisma = makePrisma();
     const CONFIG_PRODUCT = {
