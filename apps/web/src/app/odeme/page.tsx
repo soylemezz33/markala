@@ -48,7 +48,6 @@ export default function CheckoutPage() {
   const couponCode = useCartStore((s) => s.couponCode);
   const setCoupon = useCartStore((s) => s.setCoupon);
   const user = useAuthStore((s) => s.user);
-  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const addOrder = useOrdersStore((s) => s.add);
 
   const [step, setStep] = useState<Step>("iletisim");
@@ -196,15 +195,6 @@ export default function CheckoutPage() {
       router.replace("/sepet");
     }
   }, [cartItems.length, processing, router]);
-
-  // Sipariş GİRİŞ ZORUNLU — misafir checkout kapatıldı. Bootstrap (refresh) bitene kadar bekle
-  // (kalıcı user anında gelir; oturum gerçekten yoksa user null kalır) → /giris'e yönlendir,
-  // giriş sonrası checkout'a dön. Sepet Zustand persist ile korunur.
-  useEffect(() => {
-    if (!isBootstrapping && !user && !processing) {
-      router.replace(`/giris?next=${encodeURIComponent("/odeme")}`);
-    }
-  }, [isBootstrapping, user, processing, router]);
 
   // Kurumsal değilse cari seçeneği görünmez — yanlışlıkla seçili kalmasın (oturum kapandı vb.).
   useEffect(() => {
