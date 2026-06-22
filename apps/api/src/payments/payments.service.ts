@@ -35,8 +35,8 @@ export class PaymentsService implements OnModuleInit {
   onModuleInit() {
     // GÜVENLİK AĞI: callback kaçan ("para çekildi ama işaretlenmedi") ödemeleri periyodik kurtar.
     // Başlangıçtan 30sn sonra bir kez + her 10 dk. Tek api instance'ı olduğundan setInterval yeterli.
-    setTimeout(() => void this.reconcilePendingPayments().catch(() => undefined), 30_000);
-    setInterval(() => void this.reconcilePendingPayments().catch(() => undefined), 10 * 60_000).unref?.();
+    setTimeout(() => void this.reconcilePendingPayments().catch((e) => this.logger.error('reconcile bootstrap failed', e)), 30_000);
+    setInterval(() => void this.reconcilePendingPayments().catch((e) => this.logger.error('reconcile interval failed', e)), 10 * 60_000).unref?.();
   }
 
   private addrOf(fk: unknown, snap: unknown): AddressView {
@@ -431,8 +431,9 @@ export class PaymentsService implements OnModuleInit {
         });
         recovered++;
         this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı)`);
-      } catch {
-        /* tek sipariş hatası tüm taramayı bozmasın */
+      } catch (e) {
+        /* tek sipariş hatası tüm taramayı bozmasın — ama logla */
+        this.logger.error(`reconcile HATA order=${o.id} orderNumber=${o.orderNumber}: ${(e as Error).message ?? e}`);
       }
     }
     if (recovered) this.logger.warn(`reconcile tamam: ${recovered}/${pending.length} sipariş kurtarıldı`);

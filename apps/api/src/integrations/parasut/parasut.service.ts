@@ -267,7 +267,11 @@ export class ParasutService {
       this.logger.log(`Paraşüt fatura oluşturuldu: order=${order.orderNumber} invoice=${created.data.id}`);
       return { invoiceId: created.data.id, status: "issued" };
     } catch (e) {
-      this.logger.error(`Paraşüt fatura hatası order=${orderId}: ${(e as Error).message}`);
+      const err = e as Error & { status?: number; code?: string };
+      const isNetwork = err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND';
+      const isAuth = err.status === 401 || err.status === 403 || String(err.message).toLowerCase().includes('unauthorized');
+      const reason = isNetwork ? 'AĞ/BAĞLANTI' : isAuth ? 'KİMLİK DOĞRULAMA' : 'API';
+      this.logger.error(`Paraşüt fatura hatası [${reason}] order=${orderId}: ${err.message}`);
       return { invoiceId: "", status: "failed" };
     }
   }
@@ -360,7 +364,11 @@ export class ParasutService {
       this.logger.log(`Paraşüt aylık ekstre faturası: ${input.contact.email} ${input.period} invoice=${created.data.id}`);
       return { invoiceId: created.data.id, status: "issued" };
     } catch (e) {
-      this.logger.error(`Paraşüt aylık ekstre fatura hatası ${input.contact.email} ${input.period}: ${(e as Error).message}`);
+      const err = e as Error & { status?: number; code?: string };
+      const isNetwork = err.code === 'ECONNREFUSED' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND';
+      const isAuth = err.status === 401 || err.status === 403 || String(err.message).toLowerCase().includes('unauthorized');
+      const reason = isNetwork ? 'AĞ/BAĞLANTI' : isAuth ? 'KİMLİK DOĞRULAMA' : 'API';
+      this.logger.error(`Paraşüt aylık ekstre fatura hatası [${reason}] ${input.contact.email} ${input.period}: ${err.message}`);
       return { invoiceId: "", status: "failed" };
     }
   }

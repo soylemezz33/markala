@@ -44,8 +44,8 @@ export class CorporateInvoicingService implements OnModuleInit {
   onModuleInit() {
     // Başlangıçtan 60sn sonra bir kez + her 24 saatte bir önceki ayı kontrol et.
     // Faturalama idempotent olduğundan günlük tetik güvenli: ay zaten faturalanmışsa atlanır.
-    setTimeout(() => void this.runForPreviousMonthIfDue().catch(() => undefined), 60_000);
-    setInterval(() => void this.runForPreviousMonthIfDue().catch(() => undefined), 24 * 60 * 60_000).unref?.();
+    setTimeout(() => void this.runForPreviousMonthIfDue().catch((e) => this.logger.error('aylık faturalama bootstrap hatası', e)), 60_000);
+    setInterval(() => void this.runForPreviousMonthIfDue().catch((e) => this.logger.error('aylık faturalama interval hatası', e)), 24 * 60 * 60_000).unref?.();
   }
 
   /** "YYYY-MM" → o ayın [başlangıç, sonraki ay başlangıcı) UTC aralığı. */
@@ -220,7 +220,7 @@ export class CorporateInvoicingService implements OnModuleInit {
     });
 
     // Ekstre özetini müşteriye e-postayla bildir (fatura kesilmese de özet gönderilir).
-    await this.mail.sendCorporateMonthlyStatementEmail({
+    const mailSent = await this.mail.sendCorporateMonthlyStatementEmail({
       to: user.email,
       companyName,
       period,
@@ -232,6 +232,9 @@ export class CorporateInvoicingService implements OnModuleInit {
       total,
       invoiceIssued: issued,
     });
+    if (!mailSent) {
+      this.logger.warn(`aylık ekstre maili GÖNDERİLEMEDİ userId=${userId} email=${user.email} period=${period}`);
+    }
 
     return {
       ...baseResult,

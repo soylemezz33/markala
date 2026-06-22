@@ -13,7 +13,8 @@ export async function GET() {
     const api = await getAdminApi();
     const stats = await api.adminStats();
     return NextResponse.json({ integrations: stats.integrations ?? null });
-  } catch {
+  } catch (e) {
+    console.error('[integration-status] API bağlantı hatası:', (e as Error).message ?? e);
     return NextResponse.json({ integrations: null }, { status: 200 });
   }
 }

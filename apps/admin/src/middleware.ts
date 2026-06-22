@@ -69,8 +69,9 @@ export async function middleware(req: NextRequest) {
       const res = NextResponse.redirect(url);
       res.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
       return res;
-    } catch {
+    } catch (e) {
       // API ulaşılamıyorsa mevcut (muhtemelen geçerli) token ile devam et
+      console.warn('[middleware] refresh token API ulaşılamadı, mevcut token ile devam:', (e as Error).message ?? e);
       return NextResponse.next();
     }
   }
