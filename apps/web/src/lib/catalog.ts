@@ -167,6 +167,19 @@ export interface HeroBannerData {
   ctaHref?: string | null;
   title: string;
 }
+/** ctaHref güvenlik süzgeci: yalnız site-içi mutlak yol VEYA http(s) URL. javascript:/data:
+ *  gibi şemalar (admin/DB ele geçse bile XSS yüzeyi) reddedilir → link basılmaz. */
+function safeHref(v: unknown): string | null {
+  if (typeof v !== "string" || !v.trim()) return null;
+  const t = v.trim();
+  if (t.startsWith("/") && !t.startsWith("//")) return t;
+  try {
+    const u = new URL(t);
+    return u.protocol === "http:" || u.protocol === "https:" ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
 export async function getHeroBanners(): Promise<HeroBannerData[]> {
   try {
     const data = await fetchJson("/hero-slides");
@@ -177,7 +190,7 @@ export async function getHeroBanners(): Promise<HeroBannerData[]> {
         id: String(s.id),
         imageUrl: String(s.imageUrl),
         mobileImageUrl: s.mobileImageUrl ? String(s.mobileImageUrl) : null,
-        ctaHref: s.ctaHref ? String(s.ctaHref) : null,
+        ctaHref: safeHref(s.ctaHref),
         title: String(s.title ?? ""),
       }));
   } catch {
