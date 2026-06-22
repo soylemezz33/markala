@@ -233,8 +233,20 @@ export class PaymentsService implements OnModuleInit {
   }
 
   /** Cari (açık hesap) bakiyesi: borç(debit) − tahsilat(credit). Pozitif = müşteri borçlu. */
-  private async corporateBalance(userId: string): Promise<number> {
-    const grouped = await this.prisma.corporateLedgerEntry.groupBy({
+  private corporateBalance(userId: string): Promise<number> {
+    return this.ledgerBalanceVia(this.prisma, userId);
+  }
+
+  /**
+   * Verilen Prisma client VEYA transaction client üzerinden cari bakiye hesaplar.
+   * Transaction içinde çağrıldığında bakiye, o transaction'ın görünümüyle (callback'te kilit
+   * sonrası güncel haliyle) okunur → fazla-alacak yeniden-doğrulaması doğru bakiyeyi görür.
+   */
+  private async ledgerBalanceVia(
+    client: Prisma.TransactionClient,
+    userId: string,
+  ): Promise<number> {
+    const grouped = await client.corporateLedgerEntry.groupBy({
       by: ["kind"],
       where: { userId },
       _sum: { amount: true },
@@ -370,21 +382,44 @@ export class PaymentsService implements OnModuleInit {
         );
         return { redirectUrl: err };
       }
-      // Atomik claim: yalnız henüz 'paid' olmayan kayıt güncellenir → tek callback kazanır.
-      const claim = await this.prisma.corporatePayment.updateMany({
-        where: { id: payment.id, status: { not: "paid" } },
-        data: { status: "paid", paidAt: new Date(), iyzicoPaymentId: result.paymentId ?? undefined },
-      });
-      if (claim.count > 0) {
-        await this.prisma.corporateLedgerEntry.create({
+      // ATOMİK + IDEMPOTENT + YENİDEN-DOĞRULAMALI tahsilat işlemesi.
+      // (a) Idempotency/çift-callback: claim (updateMany status≠paid) ile credit kaydı oluşturma
+      //     AYNI transaction'da → iki eşzamanlı/yinelenen callback yalnız BİR credit kaydı üretir.
+      // (b) Yeniden-doğrulama: init'te bakiye doğrulandı ancak init↔callback arasında admin manuel
+      //     tahsilat girebilir → fazla-alacak (negatif bakiye) riski. Callback'te güncel bakiyeyi
+      //     transaction içinde yeniden okuyup tahsilatı bakiyeyle KIRPARIZ (clamp), böylece bakiye
+      //     0'ın altına inmez. Meşru tam ödeme (amount ≤ bakiye) aynen geçer.
+      const credited = await this.prisma.$transaction(async (tx) => {
+        // Atomik claim: yalnız henüz 'paid' olmayan kayıt güncellenir → tek callback kazanır.
+        const claim = await tx.corporatePayment.updateMany({
+          where: { id: payment.id, status: { not: "paid" } },
+          data: { status: "paid", paidAt: new Date(), iyzicoPaymentId: result.paymentId ?? undefined },
+        });
+        if (claim.count === 0) return null; // başka callback zaten işledi → idempotent no-op
+
+        // Güncel bakiyeyi transaction içinden yeniden hesapla (admin manuel tahsilatı dahil).
+        const balance = await this.ledgerBalanceVia(tx, payment.userId);
+        const requested = Number(payment.amount);
+        // Fazla-alacağı engelle: bakiye kalanından fazlasını alacaklandırma (clamp ≥ 0).
+        const creditAmount = Math.round(Math.min(requested, Math.max(0, balance)) * 100) / 100;
+        if (creditAmount <= 0) {
+          this.logger.warn(
+            `cari paydown: borç kapanmış, alacak kaydı atlandı payment=${paymentId} user=${payment.userId} bakiye=${balance} talep=${requested}`,
+          );
+          return 0;
+        }
+        await tx.corporateLedgerEntry.create({
           data: {
             userId: payment.userId,
             kind: "credit",
-            amount: payment.amount,
+            amount: new Prisma.Decimal(creditAmount),
             description: "Online cari ödeme (kart)",
           },
         });
-        this.logger.log(`cari paydown BAŞARILI payment=${paymentId} user=${payment.userId} tutar=${payment.amount}`);
+        return creditAmount;
+      });
+      if (credited && credited > 0) {
+        this.logger.log(`cari paydown BAŞARILI payment=${paymentId} user=${payment.userId} tutar=${credited}`);
       }
       return { redirectUrl: ok };
     }
@@ -430,10 +465,14 @@ export class PaymentsService implements OnModuleInit {
           );
           continue;
         }
-        await this.prisma.order.update({
-          where: { id: o.id },
+        // IDEMPOTENT kurtarma: koşullu updateMany (yalnız hâlâ "beklemede") → bu sipariş için
+        // gerçek callback findMany ile bu update arasında çoktan "basarili" yaptıysa reconcile
+        // onu yeniden işlemez (count=0). Çift-işleme/yarış kapatılır.
+        const claimed = await this.prisma.order.updateMany({
+          where: { id: o.id, paymentStatus: "beklemede" },
           data: { paymentStatus: "basarili", iyzicoPaymentId: result.paymentId ?? undefined, iyzicoConversationId: o.id },
         });
+        if (claimed.count === 0) continue; // callback zaten işlemişti → no-op
         recovered++;
         this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı)`);
       } catch (e) {
@@ -501,16 +540,17 @@ export class PaymentsService implements OnModuleInit {
         );
         return { redirectUrl: `${webOrigin}/odeme/hata?siparis=${orderId}` };
       }
-      if (order.paymentStatus !== "basarili") {
-        await this.prisma.order.update({
-          where: { id: orderId },
-          data: {
-            paymentStatus: "basarili",
-            iyzicoPaymentId: result.paymentId ?? undefined,
-            iyzicoConversationId: orderId,
-          },
-        });
-      }
+      // IDEMPOTENT işaretleme: koşullu updateMany ile yalnız HÂLÂ "basarili" OLMAYAN sipariş
+      // güncellenir → iki eşzamanlı/yinelenen iyzico callback'i (retry/dup POST) lost-update
+      // anomalisine yol açmaz; ilk yazım kazanır, ikincisi count=0 ile sessiz no-op olur.
+      await this.prisma.order.updateMany({
+        where: { id: orderId, paymentStatus: { not: "basarili" } },
+        data: {
+          paymentStatus: "basarili",
+          iyzicoPaymentId: result.paymentId ?? undefined,
+          iyzicoConversationId: orderId,
+        },
+      });
       this.logger.log(
         `iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} price=${result.price} paid=${result.paidPrice}`,
       );
@@ -518,8 +558,13 @@ export class PaymentsService implements OnModuleInit {
     }
 
     // Başarısız: yalnız hâlâ beklemede VE bu siparişe ait callback ise işaretle (griefing/çapraz koruması).
-    if (order.paymentStatus === "beklemede" && basketOk) {
-      await this.prisma.order.update({ where: { id: orderId }, data: { paymentStatus: "basarisiz" } });
+    // Koşullu updateMany: where'e paymentStatus="beklemede" eklenir → eşzamanlı bir başarı callback'i
+    // siparişi "basarili" yaptıysa, geç gelen başarısızlık onu EZEMEZ (count=0, no-op).
+    if (basketOk) {
+      await this.prisma.order.updateMany({
+        where: { id: orderId, paymentStatus: "beklemede" },
+        data: { paymentStatus: "basarisiz" },
+      });
     }
     this.logger.warn(
       `iyzico ödeme BAŞARISIZ order=${orderId}: status=${result.paymentStatus} kod=${result.errorCode ?? "-"} mesaj=${result.errorMessage ?? "-"}`,
