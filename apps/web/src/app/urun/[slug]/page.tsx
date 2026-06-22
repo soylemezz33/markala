@@ -79,6 +79,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const trustBadges = [
+  // TODO(Faz D): "750₺ üzeri ücretsiz" metni statik — sunucu bileşeni olduğundan /settings/shipping'e bağlanamaz; admin kargo eşiği değiştiğinde burası da güncellenmeli.
   { icon: Truck, label: "Türkiye geneli kargo", sub: "1-3 iş günü · 750₺ üzeri ücretsiz" },
   { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
   { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda iade" },

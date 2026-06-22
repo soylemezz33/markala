@@ -15,9 +15,6 @@ import { apiClient } from "@/lib/api";
 import { PromoBanner } from "@/components/promo-banner";
 import { categories as mockCategories } from "@markala/mock-data";
 
-const SHIPPING_FEE = 79;
-/** Ara toplam bu tutarın üstündeyse kargo ücretsiz (backend ile aynı). */
-const FREE_SHIPPING_THRESHOLD = 750;
 const VAT_RATE = 0.20;
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
@@ -29,13 +26,18 @@ export default function CartPage() {
   const setStoreCoupon = useCartStore((s) => s.setCoupon);
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
+  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/750 fallback korunur. */
+  const [shipping, setShipping] = useState({ fee: 79, freeThreshold: 750 });
+  useEffect(() => {
+    apiClient.settings.shipping().then(setShipping).catch(() => {});
+  }, []);
 
   const sub = subtotal();
   // Uygulanan kupon cart-store'da tutulur → /odeme'ye taşınır (eskiden yalnız bu sayfanın
   // local state'indeydi, ödemeye geçince sessizce düşüyordu = bait-and-switch).
   const appliedCode = storedCoupon && KNOWN_COUPONS[storedCoupon] ? storedCoupon : null;
   const discount = appliedCode ? sub * (KNOWN_COUPONS[appliedCode] ?? 0) : 0;
-  const shippingFee = sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+  const shippingFee = sub >= shipping.freeThreshold ? 0 : sub > 0 ? shipping.fee : 0;
   const subAfterDiscount = Math.max(0, sub - discount);
   // Fiyatlar KDV DAHİL → gösterilen KDV, tutarın İÇİNDEKİ paydır (gross − gross/1.2), üstüne EKLENMEZ.
   const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE);
@@ -125,10 +127,10 @@ export default function CartPage() {
                     <Row label={<span className="text-base font-semibold text-ink-900">Toplam</span>} value={<Price amount={total} size="lg" className="text-ink-900" />} />
                   </div>
                 </dl>
-                {sub > 0 && sub < FREE_SHIPPING_THRESHOLD && (
+                {sub > 0 && sub < shipping.freeThreshold && (
                   <div className="mt-4 p-3 bg-brand-50 border border-brand-200 rounded-md flex items-center gap-2 text-xs text-ink-700">
                     <Truck size={14} className="text-brand-700 flex-none" />
-                    <span><Price amount={FREE_SHIPPING_THRESHOLD - sub} size="sm" /> daha ekleyin → kargo ücretsiz</span>
+                    <span><Price amount={shipping.freeThreshold - sub} size="sm" /> daha ekleyin → kargo ücretsiz</span>
                   </div>
                 )}
                 <Link

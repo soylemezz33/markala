@@ -31,9 +31,6 @@ import { track, trackBeginCheckout } from "@/lib/analytics";
 import { track as trackVisitor } from "@/lib/visitor-analytics";
 import type { Address, Order } from "@markala/types";
 
-const SHIPPING_FEE = 79;
-/** Ara toplam bu tutarın üstündeyse kargo ücretsiz (backend ile aynı). */
-const FREE_SHIPPING_THRESHOLD = 750;
 const VAT_RATE = 0.2;
 /** Gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanıp tahsil edilir. */
 const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.1 };
@@ -87,6 +84,11 @@ export default function CheckoutPage() {
   // Kullanıcının hesabında kayıtlı adresleri — giriş yapmışsa çekilir, seçilebilir + varsayılan otomatik dolar.
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/750 fallback korunur. */
+  const [shippingConfig, setShippingConfig] = useState({ fee: 79, freeThreshold: 750 });
+  useEffect(() => {
+    apiClient.settings.shipping().then(setShippingConfig).catch(() => {});
+  }, []);
 
   // Kupon ANINDA backend'de doğrulanır → gerçek geçerlilik (tarih/min-tutar/ilk-sipariş/limit)
   // + gerçek indirim tutarı. Tüm DB kuponları çalışır (yalnız HOSGELDIN değil); geçersizde
@@ -189,7 +191,7 @@ export default function CheckoutPage() {
   // (aksi halde kuponlu siparişte sepet "ücretsiz" derken ödeme 79₺ ekleyebiliyordu).
   // free_shipping kuponu (backend doğruladıysa) kargoyu sıfırlar.
   const shipping =
-    backendCoupon?.freeShipping || sub >= FREE_SHIPPING_THRESHOLD ? 0 : sub > 0 ? SHIPPING_FEE : 0;
+    backendCoupon?.freeShipping || sub >= shippingConfig.freeThreshold ? 0 : sub > 0 ? shippingConfig.fee : 0;
   const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE); // KDV DAHİL fiyat → içindeki KDV payı (üstüne eklenmez)
   const total = subAfterDiscount + shipping;
 
