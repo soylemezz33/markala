@@ -127,9 +127,21 @@ export default async function PriceListPage() {
             Matbaa Fiyat Listesi 2026
           </h1>
           <p className="mt-4 text-lg text-ink-700">
-            Markala'nın tüm matbaa ve reklam ürünleri için güncel başlangıç fiyatları —
-            <strong className="text-ink-900"> {minPrice.toLocaleString("tr-TR")} ₺'den </strong>
-            başlar, KDV dahil. Mayıs 2026 itibarıyla geçerli.
+            {minPrice > 0 ? (
+              <>
+                Markala'nın tüm matbaa ve reklam ürünleri için güncel başlangıç fiyatları —
+                <strong className="text-ink-900"> {minPrice.toLocaleString("tr-TR")} ₺'den </strong>
+                başlar, KDV dahil.
+              </>
+            ) : (
+              <>
+                Fiyatlarımız güncelleniyor. Güncel fiyat ve teklif için ürün sayfalarından veya{" "}
+                <Link href="/iletisim" className="font-semibold underline hover:text-brand-700">
+                  iletişim
+                </Link>{" "}
+                üzerinden bize ulaşabilirsiniz.
+              </>
+            )}
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
