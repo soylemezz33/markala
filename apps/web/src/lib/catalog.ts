@@ -1,5 +1,10 @@
 import type { Product, Category } from "@markala/types";
-import { products as mockProducts, heroSlides as mockHeroSlides, categories as mockCategories, type HeroSlide } from "@markala/mock-data";
+import {
+  products as mockProducts,
+  heroSlides as mockHeroSlides,
+  categories as mockCategories,
+  type HeroSlide,
+} from "@markala/mock-data";
 
 /**
  * Katalog veri katmanı — storefront ürünleri artık CANLI API'den (admin yönetir).
@@ -14,9 +19,7 @@ import { products as mockProducts, heroSlides as mockHeroSlides, categories as m
  */
 
 const API_BASE =
-  process.env.API_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://api:4000";
+  process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
 
 type ApiProduct = Record<string, unknown>;
 
@@ -49,12 +52,17 @@ function mapProduct(p: ApiProduct): Product {
     startingPrice: p.startingPrice != null ? num(p.startingPrice) : undefined,
     productionTime: String(p.productionTime ?? ""),
     sizeLabel: (p.sizeLabel as string | null) ?? undefined,
-    images: Array.isArray(p.images) && p.images.length > 0 ? (p.images as string[]) : (mock?.images ?? []),
+    images:
+      Array.isArray(p.images) && p.images.length > 0
+        ? (p.images as string[])
+        : (mock?.images ?? []),
     badges: Array.isArray(p.badges) ? (p.badges as Product["badges"]) : [],
-    parameters:
-      Array.isArray(p.parameters) && p.parameters.length > 0
-        ? (p.parameters as Product["parameters"])
-        : (mock?.parameters ?? []),
+    // API (DB) tek kaynak: parameters bir dizi ise (BOŞ [] dahil) olduğu gibi kullan; mock'a YALNIZ
+    // API'de parameters hiç yoksa (legacy) düş. Aksi halde DB'de fiyat sıfırlanınca mock matris
+    // fiyatları "dirilip" storefront'ta fiyat gösteriyordu (fiyat-sıfırlama sızıntısı).
+    parameters: Array.isArray(p.parameters)
+      ? (p.parameters as Product["parameters"])
+      : (mock?.parameters ?? []),
     bestseller: Boolean(p.bestseller),
     // SAHTE PUAN YOK: content.rating DB'de SEEDED (42 üründe dolu, gerçek yorumla BAĞLANTISIZ) →
     // gösterilince "★4.6 (47 yorum)" derken yorum bölümü "henüz yorum yok" diyordu (çelişki) +
@@ -245,7 +253,9 @@ export async function getCategoryBySlug(slug: string): Promise<Category | undefi
 /** Bir kategorinin ürünleri. API hatası → mock fallback (boş sonuç gerçek kabul edilir). */
 export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
   try {
-    const data = await fetchJson(`/products?category=${encodeURIComponent(categorySlug)}&take=2000&list=true`);
+    const data = await fetchJson(
+      `/products?category=${encodeURIComponent(categorySlug)}&take=2000&list=true`,
+    );
     if (!Array.isArray(data)) throw new Error("beklenmeyen yanıt");
     return data.map(mapProduct);
   } catch {
