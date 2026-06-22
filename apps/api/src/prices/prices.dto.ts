@@ -1,4 +1,4 @@
-// Faz B DTO placeholder — Faz B5+ tasks append to this file
+// Prices modülü DTO'ları — konfigüratör yapısı, fiyat satırları, toplu/kategori araçları.
 import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsString, MaxLength, Min, ValidateNested } from "class-validator";
 import { Type } from "class-transformer";
 
