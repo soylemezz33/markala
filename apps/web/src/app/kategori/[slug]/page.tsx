@@ -14,6 +14,10 @@ interface Props {
   params: { slug: string };
 }
 
+// ISR — admin kategori/ürün değişiklikleri ~30sn içinde storefront'a yansısın;
+// /api/revalidate webhook anlık tazeleme için ek güvence sağlar.
+export const revalidate = 30;
+
 export async function generateStaticParams() {
   const cats = await getCategories();
   return cats.map((c) => ({ slug: c.slug }));

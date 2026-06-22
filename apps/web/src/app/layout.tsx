@@ -43,10 +43,8 @@ export const metadata: Metadata = {
   category: "business",
   alternates: {
     canonical: "/",
-    languages: {
-      "tr-TR": "/",
-      "x-default": "/",
-    },
+    // hreflang / languages kasıtlı kaldırıldı: site tek dilli (Türkçe).
+    // Çok dil eklenince buraya geri dön.
   },
   openGraph: {
     type: "website",

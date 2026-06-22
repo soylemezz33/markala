@@ -43,16 +43,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: r.priority,
   }));
 
+  // updatedAt Product/Category tipinde expose edilmiyor (catalog.ts mapProduct/mapCategory):
+  // gerçek timestamp olmayınca lastModified atlanır — bugünün tarihini sahtecilik olarak
+  // yazmak tüm kataloğun her gün güncelleniyormuş gibi görünmesine yol açar (crawl budget israfı).
   const productEntries: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${SITE}/urun/${p.slug}`,
-    lastModified: now,
+    // lastModified: p.updatedAt — eklenmeli; Product tipine updatedAt eklenince bağla
     changeFrequency: "weekly",
     priority: p.bestseller ? 0.85 : 0.7,
   }));
 
   const categoryEntries: MetadataRoute.Sitemap = categories.map((c) => ({
     url: `${SITE}/kategori/${c.slug}`,
-    lastModified: now,
+    // lastModified: c.updatedAt — eklenmeli; Category tipine updatedAt eklenince bağla
     changeFrequency: "weekly",
     priority: 0.8,
   }));

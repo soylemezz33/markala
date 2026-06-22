@@ -15,6 +15,22 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const SITE = "https://markala.com.tr";
 
+/**
+ * Blog yazısı og:image — gerçek raster URL varsa onu döner; /api/mockup SVG ise
+ * /og-default.png'e düşer (sosyal crawler'lar SVG'yi reddeder).
+ * coverTheme genellikle /api/mockup?theme=card&... şeklinde SVG endpoint'tir.
+ */
+function blogOgImage(coverTheme: string): string {
+  if (
+    coverTheme &&
+    !coverTheme.includes("/api/mockup") &&
+    (coverTheme.startsWith("http") || coverTheme.startsWith("/"))
+  ) {
+    return coverTheme;
+  }
+  return "/og-default.png";
+}
+
 interface Props {
   params: { slug: string };
 }
@@ -40,13 +56,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       authors: [post.authorName],
       tags: post.tags,
       url: `/blog/${post.slug}`,
-      images: [{ url: blogCoverSrc(post.coverTheme, 1200, 630), width: 1200, height: 630, alt: post.title }],
+      // og:image: gerçek raster görsel (http/https veya /uploads/...) varsa onu kullan;
+      // /api/mockup SVG ise /og-default.png'e düş — sosyal crawler'lar SVG'yi reddeder.
+      // TODO(SEO): raster og:image varsayılanı gerekir (mockup SVG sosyal crawler'larda render olmaz)
+      //   — blog yazısına özel kapak görseli eklenince buraya bağla; /og-default.png geçici.
+      images: [{ url: blogOgImage(post.coverTheme), width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: [blogCoverSrc(post.coverTheme, 1200, 630)],
+      images: [blogOgImage(post.coverTheme)],
     },
   };
 }

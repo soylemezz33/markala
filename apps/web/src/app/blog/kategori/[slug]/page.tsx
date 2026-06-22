@@ -24,7 +24,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cat = await getBlogCategoryBySlug(params.slug);
   if (!cat) return { title: "Kategori bulunamadı" };
   return {
-    title: `${cat.name} — Markala Blog`,
+    // Layout template "%s · Markala" uygulanır; suffix'i tekrarlamamak için "— Markala" dahil etme.
+    title: `${cat.name} — Blog`,
     description: cat.description,
     alternates: { canonical: `/blog/kategori/${cat.slug}` },
     openGraph: {
