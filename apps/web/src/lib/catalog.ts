@@ -63,6 +63,9 @@ function mapProduct(p: ApiProduct): Product {
     parameters: Array.isArray(p.parameters)
       ? (p.parameters as Product["parameters"])
       : (mock?.parameters ?? []),
+    options: Array.isArray(p.options) ? (p.options as Product["options"]) : [],
+    prices: Array.isArray(p.prices) ? (p.prices as Product["prices"]) : [],
+    displayPrice: typeof p.displayPrice === "number" ? p.displayPrice : null,
     bestseller: Boolean(p.bestseller),
     // SAHTE PUAN YOK: content.rating DB'de SEEDED (42 üründe dolu, gerçek yorumla BAĞLANTISIZ) →
     // gösterilince "★4.6 (47 yorum)" derken yorum bölümü "henüz yorum yok" diyordu (çelişki) +
