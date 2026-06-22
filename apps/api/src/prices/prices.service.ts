@@ -86,4 +86,21 @@ export class PricesService {
     await this.prisma.$transaction(ops);
     return { updated: rows.length };
   }
+
+  async categorySet(categoryId: string, price: number) {
+    const products = await this.prisma.product.findMany({ where: { categoryId }, select: { id: true } });
+    const ids = products.map((p) => p.id);
+    if (ids.length === 0) return { set: 0, skipped: 0 };
+    const withOpts = await this.prisma.productOption.findMany({
+      where: { productId: { in: ids } }, select: { productId: true }, distinct: ["productId"],
+    });
+    const hasOpts = new Set(withOpts.map((o) => o.productId));
+    const simple = ids.filter((id) => !hasOpts.has(id));
+    const ops = simple.flatMap((id) => [
+      this.prisma.productPrice.deleteMany({ where: { productId: id } }),
+      this.prisma.productPrice.createMany({ data: [{ productId: id, price: new Prisma.Decimal(price) }] }),
+    ]);
+    if (ops.length) await this.prisma.$transaction(ops);
+    return { set: simple.length, skipped: ids.length - simple.length };
+  }
 }

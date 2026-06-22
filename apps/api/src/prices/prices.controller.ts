@@ -3,7 +3,7 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { PricesService } from "./prices.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { SetOptionsDto, SetPricesDto, BulkAdjustDto } from "./prices.dto";
+import { SetOptionsDto, SetPricesDto, BulkAdjustDto, CategorySetDto } from "./prices.dto";
 
 @ApiTags("prices")
 @Controller()
@@ -40,5 +40,13 @@ export class PricesController {
   @ApiBearerAuth()
   bulkAdjust(@Body() dto: BulkAdjustDto) {
     return this.service.bulkAdjust(dto);
+  }
+
+  @Post("prices/category-set")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  categorySet(@Body() dto: CategorySetDto) {
+    return this.service.categorySet(dto.categoryId, dto.price);
   }
 }

@@ -37,3 +37,8 @@ export class BulkAdjustDto {
   @IsNumber() @Min(0) value!: number;
   @IsIn(["none", "1", "5", "10"]) @IsOptional() round?: "none" | "1" | "5" | "10";
 }
+
+export class CategorySetDto {
+  @IsString() categoryId!: string;
+  @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) price!: number;
+}

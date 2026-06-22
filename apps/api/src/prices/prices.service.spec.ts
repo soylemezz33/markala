@@ -2,9 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import { PricesService, adjustPrice } from "./prices.service";
 import { NotFoundException } from "@nestjs/common";
 const mkPrisma = () => ({
-  product: { findUnique: vi.fn() },
+  product: { findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
   productOption: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn(), createMany: vi.fn() },
-  productPrice: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn(), createMany: vi.fn() },
+  productPrice: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn(), createMany: vi.fn(), update: vi.fn() },
+  $transaction: vi.fn().mockResolvedValue([]),
 });
 it("getForProduct ürün yoksa NotFound", async () => {
   const p = mkPrisma(); p.product.findUnique.mockResolvedValue(null);
@@ -47,3 +48,14 @@ it("percent decrease 20% → 80", () => expect(adjustPrice(100,"percent","decrea
 it("fixed increase 15 → 115", () => expect(adjustPrice(100,"fixed","increase",15,"none")).toBe(115));
 it("round 5 → en yakın 5", () => expect(adjustPrice(103,"percent","increase",0,"5")).toBe(105));
 it("negatife düşmez", () => expect(adjustPrice(10,"fixed","decrease",999,"none")).toBe(0));
+
+it("categorySet basit ürüne yazar, seçenekliyi atlar", async () => {
+  const p = mkPrisma();
+  p.product.findMany = vi.fn().mockResolvedValue([{ id: "simple" }, { id: "matrix" }]);
+  p.productOption.findMany = vi.fn().mockResolvedValue([{ productId: "matrix" }]); // matrix'in option'ı var
+  p.productPrice.deleteMany = vi.fn(); p.productPrice.createMany = vi.fn().mockResolvedValue({ count: 1 });
+  p.$transaction = vi.fn().mockResolvedValue([]);
+  const s = new PricesService(p as any);
+  const r = await s.categorySet("cat1", 250);
+  expect(r).toEqual({ set: 1, skipped: 1 });
+});
