@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container, Button } from "@markala/ui";
 import { Sparkle, Gift, Lightning, Receipt } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
@@ -35,6 +35,16 @@ export default function RegisterPage() {
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Kayıt sonrası dönülecek site-içi hedef (HOSGELDIN ile gelip checkout'a dönen yeni müşteri).
+  // Açık yönlendirme/oltalama yollarını ("//host", "http(s)://") reddet. Render'da window okuma
+  // hydration uyumsuzluğu yapar → mount'ta state'e al.
+  const [nextParam, setNextParam] = useState<string | null>(null);
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    setNextParam(n && n.startsWith("/") && !n.startsWith("//") ? n : null);
+  }, []);
+  const girisHref = nextParam ? `/giris?next=${encodeURIComponent(nextParam)}` : "/giris";
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -56,8 +66,10 @@ export default function RegisterPage() {
       }
     }
     const res = await register({ email, password, fullName, phone: normalizedPhone, marketingConsent: marketingOptIn });
-    if (res.ok) router.replace("/hesabim");
-    else setError(res.error ?? "Kayıt başarısız.");
+    if (res.ok) {
+      const n = new URLSearchParams(window.location.search).get("next");
+      router.replace(n && n.startsWith("/") && !n.startsWith("//") ? n : "/hesabim");
+    } else setError(res.error ?? "Kayıt başarısız.");
   }
 
   return (
@@ -118,7 +130,7 @@ export default function RegisterPage() {
           <div className="mt-8 pt-8 border-t border-paper-200 text-center">
             <p className="text-sm text-ink-700">
               Zaten hesabın var mı?{" "}
-              <Link href="/giris" className="text-brand-700 hover:underline font-semibold">Giriş yapın</Link>
+              <Link href={girisHref} className="text-brand-700 hover:underline font-semibold">Giriş yapın</Link>
             </p>
           </div>
         </Container>

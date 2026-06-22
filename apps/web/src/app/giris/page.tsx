@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Container, Button } from "@markala/ui";
 import { Sparkle, ShieldCheck, PaintBrush, Truck } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
@@ -19,11 +19,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // Giriş sonrası dönülecek hedef. Yalnız site-içi mutlak yol kabul edilir ("//host" veya
+  // "http(s)://" gibi açık yönlendirme/oltalama yolları reddedilir). Yoksa /hesabim.
+  function safeNext(): string {
+    if (typeof window === "undefined") return "/hesabim";
+    const n = new URLSearchParams(window.location.search).get("next");
+    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/hesabim";
+  }
+  // "next"i mount'ta state'e al (render sırasında window okumak hydration uyumsuzluğu yapar).
+  const [nextParam, setNextParam] = useState<string | null>(null);
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    setNextParam(n && n.startsWith("/") && !n.startsWith("//") ? n : null);
+  }, []);
+  // Kayıt linki de "next"i taşısın — HOSGELDIN ile gelen yeni müşteri kayıt olup checkout'a dönsün.
+  const kayitHref = nextParam ? `/kayit?next=${encodeURIComponent(nextParam)}` : "/kayit";
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     const res = await login(email, password);
-    if (res.ok) router.replace("/hesabim");
+    if (res.ok) router.replace(safeNext());
     else setError(res.error ?? "Giriş başarısız.");
   }
 
@@ -76,7 +92,7 @@ export default function LoginPage() {
           <div className="mt-8 pt-8 border-t border-paper-200 text-center">
             <p className="text-sm text-ink-700">
               Hesabınız yok mu?{" "}
-              <Link href="/kayit" className="text-brand-700 hover:underline font-semibold">
+              <Link href={kayitHref} className="text-brand-700 hover:underline font-semibold">
                 Hemen kayıt olun
               </Link>
             </p>

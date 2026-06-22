@@ -342,10 +342,15 @@ export class OrdersService {
       // → tekrar kullanımı engeller. (Beklemede sipariş "Ödeme Yap" ile aynı sipariş üzerinden öder,
       //  yeni sipariş açmaz; bu yüzden önceki sipariş = ilk değil.)
       if (coupon.firstOrderOnly) {
-        const or: Array<{ userId?: string; email?: string }> = [];
-        if (input.userId) or.push({ userId: input.userId });
-        if (input.email) or.push({ email: input.email });
-        const priorCount = or.length ? await this.prisma.order.count({ where: { OR: or } }) : 0;
+        // İlk-sipariş kuponu HESABA bağlıdır — misafir kullanamaz. /orders/guest kaldırıldığı için
+        // normalde userId hep dolu gelir; bu, API doğrudan çağrılsa bile taze e-posta ile istismarı kapatır.
+        if (!input.userId) {
+          throw new BadRequestException("Bu kupon yalnızca giriş yapan üyelerin ilk siparişinde geçerlidir.");
+        }
+        // userId VEYA e-posta ile önceki sipariş varsa reddet (aynı e-postayla 2. hesap denemesini de yakalar).
+        const priorCount = await this.prisma.order.count({
+          where: { OR: [{ userId: input.userId }, ...(input.email ? [{ email: input.email }] : [])] },
+        });
         if (priorCount > 0) {
           throw new BadRequestException("Bu kupon yalnızca ilk siparişinizde geçerlidir.");
         }

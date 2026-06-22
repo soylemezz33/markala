@@ -34,11 +34,9 @@ export class OrdersController {
     return this.withNonce(order as { id: string });
   }
 
-  @Post("guest")
-  async createGuest(@Body() dto: CreateOrderDto, @Headers("idempotency-key") idempotencyKey?: string) {
-    const order = await this.service.create({ ...dto, idempotencyKey });
-    return this.withNonce(order as { id: string });
-  }
+  // NOT: Misafir sipariş (POST /orders/guest) KALDIRILDI — sipariş vermek için giriş zorunlu.
+  // Gerekçe: ilk-sipariş kuponunun (HOSGELDIN) misafir istismarı + her siparişin hesaba bağlanması.
+  // Tek çağıran web checkout proxy'siydi; o da artık yalnız authed /orders'a gider.
 
   @Get("mine")
   @UseGuards(JwtAuthGuard)

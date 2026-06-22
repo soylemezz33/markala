@@ -202,7 +202,7 @@ export class MarkalaApiClient {
   // === Orders ===
   orders = {
     create: (data: any) => this.request<Order>("POST", "/orders", data, { auth: true }),
-    createGuest: (data: any) => this.request<Order>("POST", "/orders/guest", data),
+    // createGuest kaldırıldı — sipariş vermek için giriş zorunlu (misafir sipariş yolu yok).
     listMine: () => this.request<Order[]>("GET", "/orders/mine", undefined, { auth: true }),
     listAll: (opts: { status?: string; take?: number; skip?: number } = {}) =>
       this.request<Order[]>("GET", "/orders", undefined, { auth: true, query: opts }),

@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Backend'e (NestJS) sunucu-içinden çağrı — gerçek client IP/CORS derdi yok, token gerekmez (guest).
+// Backend'e (NestJS) sunucu-içinden çağrı — gerçek client IP/CORS derdi yok.
+// Sipariş GİRİŞ ZORUNLU: Authorization header (access token) gelmezse 401 döner, misafire düşmez.
 export const runtime = "nodejs";
 
 /**
  * Storefront siparişini KALICI olarak backend DB'ye yazar (admin panelde görünmesi için).
  *
- * Neden ayrı route: checkout (WhatsApp/telefon ile) sipariş veriyordu ama sipariş yalnızca
- * tarayıcı Zustand store'unda kalıyor, DB'ye düşmüyordu → admin panel boş. Bu route checkout'tan
- * gelen sepeti backend'in misafir sipariş sözleşmesine (POST /api/orders/guest) eşler:
+ * Neden ayrı route: checkout'tan gelen sepeti backend'in sipariş sözleşmesine (authed POST
+ * /api/orders) eşler:
  *   - kalemler: storefront yalnız `productSlug` taşır → backend slug'tan ürünü bulur, fiyatı
  *     Product.basePrice'tan SUNUCUDA yeniden hesaplar (client fiyatına güvenmez).
  *   - adres: kayıtlı Address yok → satır-içi (inline) snapshot olarak gönderilir.
  *
- * Best-effort değil — admin görünürlüğü buna bağlı; ama hata olsa bile checkout akışını (WhatsApp)
- * bloke etmemek için 502 + { ok:false } döner, client tarafı bunu yutup WhatsApp'a devam eder.
+ * Sipariş GİRİŞ ZORUNLU: Authorization header yoksa veya token geçersizse 401 döner (misafire
+ * düşmez). Client 401'de kullanıcıyı /giris'e yönlendirir; sepet korunur.
  */
 
 const API_BASE =
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     return s ? s.slice(0, n) : undefined;
   };
 
-  const guestOrder = {
+  const orderPayload = {
     email: body.email,
     phone: clamp(body.phone, 32),
     items,
@@ -140,27 +140,34 @@ export async function POST(req: NextRequest) {
     notes: noteParts.length ? noteParts.join(" · ") : undefined,
   };
 
-  // Giriş yapmış kullanıcı → authed /orders (sipariş userId ile HESABA bağlanır, "siparişlerim"de görünür).
-  // Token yoksa veya authed çağrı 401/403 dönerse misafir /orders/guest'e düşeriz (sipariş asla kaybolmaz).
+  // Sipariş vermek GİRİŞ ZORUNLU — misafir sipariş (/orders/guest) kaldırıldı.
+  // Gerekçe: ilk-sipariş kuponunun (HOSGELDIN) misafir istismarı + her siparişin hesaba bağlanması.
   const authHeader = req.headers.get("authorization") ?? undefined;
 
-  async function postOrder(authed: boolean) {
-    return fetch(`${API_BASE}/api/orders${authed ? "" : "/guest"}`, {
+  // Token yoksa hiç deneme — misafire DÜŞME, "giriş gerekli" döndür (client /giris'e yönlendirir).
+  if (!authHeader) {
+    return NextResponse.json(
+      { ok: false, status: 401, error: "Sipariş vermek için giriş yapmalısınız." },
+      { status: 401 },
+    );
+  }
+
+  async function postOrder() {
+    return fetch(`${API_BASE}/api/orders`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(authed && authHeader ? { Authorization: authHeader } : {}),
-      },
-      body: JSON.stringify(guestOrder),
+      headers: { "Content-Type": "application/json", Authorization: authHeader as string },
+      body: JSON.stringify(orderPayload),
     });
   }
 
   try {
-    let res = await postOrder(Boolean(authHeader));
-    // Token süresi geçmiş/geçersizse misafir olarak tekrar dene (sipariş oluşsun).
-    if (!res.ok && authHeader && (res.status === 401 || res.status === 403)) {
-      console.warn("[siparis-kaydet] authed sipariş 401/403 → guest fallback");
-      res = await postOrder(false);
+    const res = await postOrder();
+    // Token süresi dolmuş/geçersizse misafire DÜŞMEYİZ — yeniden giriş iste (kupon/cari kaybı + istismar olmasın).
+    if (res.status === 401 || res.status === 403) {
+      return NextResponse.json(
+        { ok: false, status: res.status, error: "Oturumunuz sona ermiş. Lütfen tekrar giriş yapın." },
+        { status: 401 },
+      );
     }
 
     if (!res.ok) {
