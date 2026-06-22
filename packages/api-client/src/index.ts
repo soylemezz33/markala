@@ -23,6 +23,52 @@ export interface ApiError {
   details?: unknown;
 }
 
+// ===== Fiyatlama tipleri (Faz D) =====
+
+export interface ApiOption {
+  groupKey: string;
+  groupLabel: string;
+  groupRole: "dimension" | "priced";
+  groupSort: number;
+  optionKey: string;
+  optionLabel: string;
+  optionSublabel?: string | null;
+  optionSort: number;
+}
+
+export interface ApiPrice {
+  groupKey?: string | null;
+  optionKey?: string | null;
+  dimKey?: string | null;
+  cost?: number | string | null;
+  price: number | string;
+}
+
+/** Seçenek girişi — ApiOption ile aynı şekil. */
+export type OptionInput = ApiOption;
+
+export interface PriceInput {
+  groupKey?: string | null;
+  optionKey?: string | null;
+  dimKey?: string | null;
+  cost?: number | null;
+  price: number;
+}
+
+export interface BulkAdjustInput {
+  scope: "all" | "category";
+  categoryId?: string;
+  op: "percent" | "fixed";
+  direction: "increase" | "decrease";
+  value: number;
+  round?: "none" | "1" | "5" | "10";
+}
+
+export interface CategorySetInput {
+  categoryId: string;
+  price: number;
+}
+
 export interface AdminStats {
   revenue: { total: number; today: number };
   orders: { total: number; today: number; inProduction: number; byStatus: Record<string, number> };
@@ -197,6 +243,20 @@ export class MarkalaApiClient {
       value: number;
       round?: string;
     }) => this.request<{ updated: number }>("POST", "/products/bulk-price", data, { auth: true }),
+    /** Ürünün seçenek/boyut gruplarını ve satırlarını döner. */
+    getPrices: (id: string) =>
+      this.request<{ options: ApiOption[]; prices: ApiPrice[] }>(
+        "GET",
+        `/products/${id}/prices`,
+        undefined,
+        { auth: true },
+      ),
+    /** Ürünün seçenek tanımlarını toplu günceller (SetOptionsDto: { options }). */
+    setOptions: (id: string, options: OptionInput[]) =>
+      this.request<{ count: number }>("PUT", `/products/${id}/options`, { options }, { auth: true }),
+    /** Ürünün fiyat matrisini toplu günceller (SetPricesDto: { prices }). */
+    setPrices: (id: string, prices: PriceInput[]) =>
+      this.request<{ count: number }>("PUT", `/products/${id}/prices`, { prices }, { auth: true }),
   };
 
   // === Orders ===
@@ -436,6 +496,21 @@ export class MarkalaApiClient {
     /** Kargo bedeli ve ücretsiz kargo eşiği — public, auth gerekmez. Fallback: 79/750. */
     shipping: () =>
       this.request<{ fee: number; freeThreshold: number }>("GET", "/settings/shipping"),
+  };
+
+  // === Prices (toplu fiyat işlemleri) ===
+  prices = {
+    /** Tüm/kategori ürünlerini yüzde veya sabit tutar ile artır/azalt. */
+    bulkAdjust: (input: BulkAdjustInput) =>
+      this.request<{ updated: number }>("POST", "/prices/bulk-adjust", input, { auth: true }),
+    /** Bir kategorideki tüm ürünlerin başlangıç fiyatını sabit değere çeker. */
+    categorySet: (input: CategorySetInput) =>
+      this.request<{ set: number; skipped: number }>(
+        "POST",
+        "/prices/category-set",
+        input,
+        { auth: true },
+      ),
   };
 
   // === Corporate applications ===
