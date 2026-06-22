@@ -341,9 +341,11 @@ model Product {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  category   Category    @relation(fields: [categoryId], references: [id])
+  category   Category       @relation(fields: [categoryId], references: [id])
   orderItems OrderItem[]
   reviews    Review[]
+  prices     ProductPrice[]
+  options    ProductOption[]
 
   @@index([categoryId, isActive])
   @@index([bestseller, isActive])
@@ -839,4 +841,44 @@ model Brand {
 
   @@index([isActive, sortOrder])
   @@map("brands")
+}
+
+// === Fiyat şeması (Task A1) ===
+
+model ProductOption {
+  id             String  @id @default(cuid())
+  productId      String  @map("product_id")
+  groupKey       String  @map("group_key")
+  groupLabel     String  @map("group_label")
+  groupRole      String  @map("group_role")
+  groupSort      Int     @default(0) @map("group_sort")
+  optionKey      String  @map("option_key")
+  optionLabel    String  @map("option_label")
+  optionSublabel String? @map("option_sublabel") @db.Text
+  optionSort     Int     @default(0) @map("option_sort")
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@index([productId, groupSort, optionSort])
+  @@map("product_options")
+}
+
+model ProductPrice {
+  id        String   @id @default(cuid())
+  productId String   @map("product_id")
+  groupKey  String?  @map("group_key")
+  optionKey String?  @map("option_key")
+  dimKey    String?  @map("dim_key")
+  cost      Decimal? @db.Decimal(10, 2)
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@index([productId])
+  @@map("product_prices")
+}
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("settings")
 }
