@@ -25,13 +25,19 @@ export class FixedWindowCounter {
 }
 
 /** Express middleware: belirli path+method için per-IP fixed-window limit. */
-export function rateLimit(opts: { windowMs: number; max: number; path: string; method?: string }) {
+export function rateLimit(opts: { windowMs: number; max: number; path: string; method?: string; prefix?: boolean }) {
   const counter = new FixedWindowCounter(opts);
   setInterval(() => counter.sweep(Date.now()), opts.windowMs).unref?.();
 
   return (req: Request, res: Response, next: NextFunction) => {
     if (opts.method && req.method !== opts.method) return next();
-    if (!req.path.endsWith(opts.path)) return next();
+    // prefix=true → opts.path bir SEGMENT öneki (örn "/admin" → "/api/admin/users/:id" yakalanır;
+    //   global "/api" öneki nedeniyle includes("/admin/") + tam tail-eşitlik kullanılır).
+    // prefix yok → leaf route (örn "/auth/login") için endsWith (mevcut davranış).
+    const matched = opts.prefix
+      ? req.path.includes(`${opts.path}/`) || req.path.endsWith(opts.path)
+      : req.path.endsWith(opts.path);
+    if (!matched) return next();
     const ip = req.ip ?? "unknown"; // trust proxy=1 → req.ip = gerçek client (CF-Connecting-IP / Nginx real_ip)
     const { allowed, retryAfterSec } = counter.hit(`${opts.path}:${ip}`, Date.now());
     if (!allowed) {

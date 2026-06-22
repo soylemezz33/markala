@@ -85,15 +85,18 @@ async function bootstrap() {
   // Müşteri ürün yorumu — giriş yapmış kullanıcı; per-IP spam/flood koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/reviews/public", method: "POST" }));
   // Admin mutation endpoint'leri — JWT+RolesGuard korumalı; per-IP ek savunma (ele geçirilmiş JWT senyaroya karşı).
-  // Limitler gerçek admin kullanımına göre geniş tutulmuştur.
-  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/admin", method: "PATCH" }));
-  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/admin", method: "POST" }));
-  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/admin", method: "DELETE" }));
+  // Limitler gerçek admin kullanımına göre GENİŞ — sıkıştırılmış JWT istismarını sınırlar ama
+  // meşru yoğun admin kullanımını (örn. ürün-ürün toplu fiyatlama) engellemez.
+  // prefix:true → alt-route'ları yakalar (/api/admin/users/:id, /api/prices/bulk-adjust, /api/orders/:id/status).
+  app.use(rateLimit({ windowMs: 60_000, max: 120, path: "/admin", method: "PATCH", prefix: true }));
+  app.use(rateLimit({ windowMs: 60_000, max: 120, path: "/admin", method: "POST", prefix: true }));
+  app.use(rateLimit({ windowMs: 60_000, max: 120, path: "/admin", method: "DELETE", prefix: true }));
   // Sipariş durumu güncelleme (PATCH /orders/:id/status) — admin işlemi.
-  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/orders", method: "PATCH" }));
-  // Fiyat mutasyonları (POST/PUT /prices/*) — yüksek hassasiyetli; daha sıkı limit.
-  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/prices", method: "POST" }));
-  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/prices", method: "PUT" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/orders", method: "PATCH", prefix: true }));
+  // Fiyat mutasyonları: PUT /products/:id/prices (ürün-ürün fiyatlama, hızlı oturum) GENİŞ;
+  // POST /prices/* (bulk-adjust/category-set, tek çağrı çok ürün) daha düşük yeter.
+  app.use(rateLimit({ windowMs: 60_000, max: 200, path: "/prices", method: "PUT", prefix: true }));
+  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/prices", method: "POST", prefix: true }));
 
   app.setGlobalPrefix("api");
   app.useGlobalPipes(
