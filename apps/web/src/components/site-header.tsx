@@ -64,7 +64,11 @@ const MAIN_NAV: Array<{
       {
         title: "Kartvizit",
         items: [
-          { label: "Klasik Kartvizit (21 paket)", href: "/urun/klasik-kartvizit", badge: "POPÜLER" },
+          {
+            label: "Klasik Kartvizit (21 paket)",
+            href: "/urun/klasik-kartvizit",
+            badge: "POPÜLER",
+          },
         ],
       },
       {
@@ -197,7 +201,11 @@ const MAIN_NAV: Array<{
       {
         title: "İş Güvenliği Levhaları",
         items: [
-          { label: "Uyarı / İkaz Levhaları", href: "/kategori/is-guvenligi-uyari-ikaz", badge: "YENİ" },
+          {
+            label: "Uyarı / İkaz Levhaları",
+            href: "/kategori/is-guvenligi-uyari-ikaz",
+            badge: "YENİ",
+          },
           { label: "Yasaklayıcı Levhalar", href: "/kategori/is-guvenligi-yasaklayici" },
           { label: "Emredici / KKD Levhaları", href: "/kategori/is-guvenligi-emredici-kkd" },
           { label: "Acil Durum & İlk Yardım", href: "/kategori/is-guvenligi-acil-ilk-yardim" },
@@ -211,7 +219,10 @@ const MAIN_NAV: Array<{
           { label: "Güneş Enerjisi (GES)", href: "/kategori/is-guvenligi-ges" },
           { label: "Trafik, Saha & Otopark", href: "/kategori/is-guvenligi-trafik-saha" },
           { label: "Kalite Kontrol Etiketleri", href: "/kategori/is-guvenligi-kalite-kontrol" },
-          { label: "Bilgilendirme & Talimat", href: "/kategori/is-guvenligi-bilgilendirme-talimat" },
+          {
+            label: "Bilgilendirme & Talimat",
+            href: "/kategori/is-guvenligi-bilgilendirme-talimat",
+          },
         ],
       },
     ],
@@ -315,7 +326,10 @@ export function SiteHeader() {
             >
               <Container className="flex items-center justify-between py-2 text-xs whitespace-nowrap">
                 <div className="flex items-center gap-4 md:gap-5">
-                  <a href="tel:+903244333351" className="flex items-center gap-1.5 hover:text-brand-400 transition-colors">
+                  <a
+                    href="tel:+903244333351"
+                    className="flex items-center gap-1.5 hover:text-brand-400 transition-colors"
+                  >
                     <Phone size={12} weight="fill" /> 0324 433 33 51
                   </a>
                   <a
@@ -357,8 +371,11 @@ export function SiteHeader() {
             {/* Logo */}
             <Link href="/" className="flex-none group">
               <span className="text-2xl md:text-[28px] font-semibold tracking-tight text-ink-900">
-                markala<span className="inline-flex items-baseline">
-                  <span className="ml-0.5 px-1.5 py-0.5 rounded-md bg-brand-500 text-ink-900 text-xs font-bold tracking-tight">.com.tr</span>
+                markala
+                <span className="inline-flex items-baseline">
+                  <span className="ml-0.5 px-1.5 py-0.5 rounded-md bg-brand-500 text-ink-900 text-xs font-bold tracking-tight">
+                    .com.tr
+                  </span>
                 </span>
               </span>
             </Link>
@@ -369,7 +386,9 @@ export function SiteHeader() {
               className="hidden md:flex flex-1 items-center gap-3 max-w-2xl px-5 h-12 rounded-xl bg-paper-100 border border-paper-200 hover:border-ink-300 hover:bg-paper-50 transition-all group"
             >
               <MagnifyingGlass size={18} className="text-ink-500 group-hover:text-ink-700" />
-              <span className="text-ink-500 text-sm flex-1 text-left">Ne bastırmak istiyorsunuz?</span>
+              <span className="text-ink-500 text-sm flex-1 text-left">
+                Ne bastırmak istiyorsunuz?
+              </span>
               <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-ink-500 bg-paper-50 border border-paper-200">
                 ⌘K
               </kbd>
@@ -486,11 +505,21 @@ export function SiteHeader() {
                   <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5">
                     Yardım & İletişim
                   </div>
-                  <MobileLink href="/iletisim" onClick={() => setMenuOpen(false)}>💬 Tasarım Desteği</MobileLink>
-                  <MobileLink href="/kargo-takip" onClick={() => setMenuOpen(false)}>📦 Kargo Takip</MobileLink>
-                  <MobileLink href="/yardim" onClick={() => setMenuOpen(false)}>❓ Yardım Merkezi</MobileLink>
-                  <MobileLink href="/iletisim" onClick={() => setMenuOpen(false)}>📞 İletişim</MobileLink>
-                  <MobileLink href="/hakkimizda" onClick={() => setMenuOpen(false)}>ℹ️ Hakkımızda</MobileLink>
+                  <MobileLink href="/iletisim" onClick={() => setMenuOpen(false)}>
+                    💬 Tasarım Desteği
+                  </MobileLink>
+                  <MobileLink href="/kargo-takip" onClick={() => setMenuOpen(false)}>
+                    📦 Kargo Takip
+                  </MobileLink>
+                  <MobileLink href="/yardim" onClick={() => setMenuOpen(false)}>
+                    ❓ Yardım Merkezi
+                  </MobileLink>
+                  <MobileLink href="/iletisim" onClick={() => setMenuOpen(false)}>
+                    📞 İletişim
+                  </MobileLink>
+                  <MobileLink href="/hakkimizda" onClick={() => setMenuOpen(false)}>
+                    ℹ️ Hakkımızda
+                  </MobileLink>
 
                   <div className="border-t border-paper-200 my-3" />
 
@@ -545,15 +574,23 @@ function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
           open && "text-ink-900",
         )}
       >
-        {nav.highlight === "fire" && (
-          <Lightning size={14} weight="fill" className="text-error" />
-        )}
+        {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
         {nav.label}
         {nav.highlight === "new" && (
-          <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
+          <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">
+            YENİ
+          </span>
         )}
-        {nav.groups && <CaretDown size={10} weight="bold" className={cn("transition-transform", open && "rotate-180")} />}
-        {open && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />}
+        {nav.groups && (
+          <CaretDown
+            size={10}
+            weight="bold"
+            className={cn("transition-transform", open && "rotate-180")}
+          />
+        )}
+        {open && (
+          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />
+        )}
       </Link>
 
       <AnimatePresence>
@@ -618,9 +655,7 @@ function MobileLink({
       onClick={onClick}
       className={cn(
         "block py-2.5 px-3 rounded text-sm transition-colors",
-        highlight
-          ? "text-error font-medium"
-          : "text-ink-700 hover:text-ink-900 hover:bg-paper-100",
+        highlight ? "text-error font-medium" : "text-ink-700 hover:text-ink-900 hover:bg-paper-100",
       )}
     >
       {children}
@@ -628,13 +663,7 @@ function MobileLink({
   );
 }
 
-function MobileNavGroup({
-  nav,
-  onClose,
-}: {
-  nav: (typeof MAIN_NAV)[number];
-  onClose: () => void;
-}) {
+function MobileNavGroup({ nav, onClose }: { nav: (typeof MAIN_NAV)[number]; onClose: () => void }) {
   const [open, setOpen] = useState(false);
   if (!nav.groups || nav.groups.length === 0) {
     return (
@@ -654,7 +683,11 @@ function MobileNavGroup({
         className="w-full flex items-center justify-between py-2.5 px-3 rounded text-sm font-medium text-ink-900 hover:bg-paper-100 transition-colors"
       >
         <span>{nav.label}</span>
-        <CaretDown size={12} weight="bold" className={cn("transition-transform text-ink-500", open && "rotate-180")} />
+        <CaretDown
+          size={12}
+          weight="bold"
+          className={cn("transition-transform text-ink-500", open && "rotate-180")}
+        />
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -748,7 +781,9 @@ function UserBlock({
         </span>
         <div className="text-left leading-tight">
           <div className="text-[11px] text-ink-500">Merhaba</div>
-          <div className="text-sm font-medium text-ink-900 truncate max-w-[100px]">{user.fullName.split(" ")[0]}</div>
+          <div className="text-sm font-medium text-ink-900 truncate max-w-[100px]">
+            {user.fullName.split(" ")[0]}
+          </div>
         </div>
         <CaretDown size={10} weight="bold" className="text-ink-500" />
       </button>
@@ -759,10 +794,18 @@ function UserBlock({
             <div className="text-xs text-ink-500 truncate">{user.email}</div>
           </div>
           <div className="p-1">
-            <UserMenuLink href="/hesabim" icon={<House size={14} />}>Hesap Özeti</UserMenuLink>
-            <UserMenuLink href="/hesabim/siparislerim" icon={<Package size={14} />}>Siparişlerim</UserMenuLink>
-            <UserMenuLink href="/favorilerim" icon={<Heart size={14} />}>Favorilerim</UserMenuLink>
-            <UserMenuLink href="/hesabim/bilgilerim" icon={<User size={14} />}>Bilgilerim</UserMenuLink>
+            <UserMenuLink href="/hesabim" icon={<House size={14} />}>
+              Hesap Özeti
+            </UserMenuLink>
+            <UserMenuLink href="/hesabim/siparislerim" icon={<Package size={14} />}>
+              Siparişlerim
+            </UserMenuLink>
+            <UserMenuLink href="/favorilerim" icon={<Heart size={14} />}>
+              Favorilerim
+            </UserMenuLink>
+            <UserMenuLink href="/hesabim/bilgilerim" icon={<User size={14} />}>
+              Bilgilerim
+            </UserMenuLink>
             <button
               onClick={() => {
                 logout();
@@ -779,7 +822,15 @@ function UserBlock({
   );
 }
 
-function UserMenuLink({ href, icon, children }: { href: string; icon: React.ReactNode; children: React.ReactNode }) {
+function UserMenuLink({
+  href,
+  icon,
+  children,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       href={href}
@@ -1018,7 +1069,10 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           role="dialog"
           aria-modal="true"
         >
-          <form onSubmit={onSubmit} className="flex items-center gap-3 px-5 py-4 border-b border-paper-200">
+          <form
+            onSubmit={onSubmit}
+            className="flex items-center gap-3 px-5 py-4 border-b border-paper-200"
+          >
             <MagnifyingGlass size={20} className="text-ink-500" />
             <input
               data-search-input
@@ -1102,19 +1156,35 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                   Hızlı Erişim
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <QuickLink href="/kampanyalar" onClose={onClose} icon={<Sparkle size={12} weight="fill" />}>
+                  <QuickLink
+                    href="/kampanyalar"
+                    onClose={onClose}
+                    icon={<Sparkle size={12} weight="fill" />}
+                  >
                     Kampanyalar
                   </QuickLink>
-                  <QuickLink href="/kargo-takip" onClose={onClose} icon={<Truck size={12} weight="fill" />}>
+                  <QuickLink
+                    href="/kargo-takip"
+                    onClose={onClose}
+                    icon={<Truck size={12} weight="fill" />}
+                  >
                     Kargo Takip
                   </QuickLink>
                   <QuickLink href="/iletisim" onClose={onClose}>
                     Tasarım Desteği
                   </QuickLink>
-                  <QuickLink href="/yardim" onClose={onClose} icon={<Question size={12} weight="fill" />}>
+                  <QuickLink
+                    href="/yardim"
+                    onClose={onClose}
+                    icon={<Question size={12} weight="fill" />}
+                  >
                     Yardım
                   </QuickLink>
-                  <QuickLink href="/iletisim" onClose={onClose} icon={<EnvelopeSimple size={12} weight="fill" />}>
+                  <QuickLink
+                    href="/iletisim"
+                    onClose={onClose}
+                    icon={<EnvelopeSimple size={12} weight="fill" />}
+                  >
                     İletişim
                   </QuickLink>
                 </div>
@@ -1128,7 +1198,9 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                 <div className="p-5 text-center text-sm text-ink-500">
                   "<span className="text-ink-900 font-medium">{query}</span>" için sonuç bulunamadı.
                   <br />
-                  <span className="text-xs">Farklı bir kelime deneyin veya kategorilere göz atın.</span>
+                  <span className="text-xs">
+                    Farklı bir kelime deneyin veya kategorilere göz atın.
+                  </span>
                 </div>
               ) : (
                 <ul className="divide-y divide-paper-200">
@@ -1136,10 +1208,13 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                     <li key={p.slug}>
                       <Link
                         href={`/urun/${p.slug}`}
-                        onClick={() => { saveSearch(query); onClose(); }}
+                        onClick={() => {
+                          saveSearch(query);
+                          onClose();
+                        }}
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors"
                       >
-                        <MagnifyingGlass size={15} className="text-ink-400 flex-none" />
+                        <MagnifyingGlass size={15} className="text-ink-500 flex-none" />
                         <span className="text-sm font-medium text-ink-900 truncate">{p.name}</span>
                       </Link>
                     </li>
@@ -1154,7 +1229,17 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   );
 }
 
-function QuickLink({ href, icon, children, onClose }: { href: string; icon?: React.ReactNode; children: React.ReactNode; onClose: () => void }) {
+function QuickLink({
+  href,
+  icon,
+  children,
+  onClose,
+}: {
+  href: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
   return (
     <Link
       href={href}

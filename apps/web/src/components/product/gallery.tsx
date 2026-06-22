@@ -30,17 +30,25 @@ export function Gallery({ images, alt }: { images: string[]; alt: string; fallba
         <div className="mt-3 grid grid-cols-5 gap-2">
           {safeImages.map((src, i) => (
             <button
-          key={src + i}
+              key={src + i}
               type="button"
               onClick={() => setActive(i)}
               aria-label={`${alt} görsel ${i + 1}`}
               className={cn(
                 "relative aspect-square bg-paper-100 rounded-md overflow-hidden border transition-all",
-                i === active ? "border-ink-900 ring-2 ring-ink-900/10" : "border-paper-200 hover:border-ink-300",
+                i === active
+                  ? "border-ink-900 ring-2 ring-ink-900/10"
+                  : "border-paper-200 hover:border-ink-300",
               )}
             >
-              <Image src={src} alt="" fill
-              sizes="100px" className="object-cover" />
+              <Image
+                src={src}
+                alt={`${alt} görsel ${i + 1}`}
+                fill
+                loading="lazy"
+                sizes="100px"
+                className="object-cover"
+              />
             </button>
           ))}
         </div>

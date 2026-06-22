@@ -10,6 +10,9 @@ import { ProcessTimeline } from "@/components/home/process-timeline";
 import { PromoBanner } from "@/components/promo-banner";
 import { HowToProductionJsonLd } from "@/components/seo/json-ld";
 
+// ISR — katalog fetch'iyle (lib/catalog.ts revalidate:30) aynı pencere; bayat anasayfa cache'ini önler.
+export const revalidate = 30;
+
 // Anasayfa — reklam kampanyalarının #1 iniş hedefi: kök varsayılan yerine elle ayarlı
 // başlık + açıklama + açık canonical.
 export const metadata: Metadata = {
@@ -27,9 +30,7 @@ export default async function HomePage() {
   // Yeni gelenler — "yeni" badge'li ürünler + diğerleri
   const newArrivals = [
     ...products.filter((p) => p.badges?.includes("yeni")),
-    ...products.filter(
-      (p) => !p.badges?.includes("yeni") && !p.bestseller,
-    ),
+    ...products.filter((p) => !p.badges?.includes("yeni") && !p.bestseller),
   ].slice(0, 12);
 
   return (

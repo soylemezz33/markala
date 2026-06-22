@@ -12,9 +12,7 @@ import { brands as mockBrands } from "@markala/mock-data";
 import type { Brand } from "@markala/types";
 
 const API_BASE =
-  process.env.API_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://api:4000";
+  process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
 
 export interface StoreBrand extends Brand {
   /** Opsiyonel dış site linki (admin girerse). */
@@ -30,7 +28,7 @@ function mapBrand(b: Record<string, unknown>): StoreBrand {
 }
 
 async function fetchJson(path: string): Promise<unknown> {
-  const res = await fetch(`${API_BASE}/api${path}`, { next: { revalidate: 60 } });
+  const res = await fetch(`${API_BASE}/api${path}`, { next: { revalidate: 30 } });
   if (!res.ok) throw new Error(`brands API ${path} -> ${res.status}`);
   return res.json();
 }

@@ -156,6 +156,7 @@ export function ReviewForm({ productSlug }: Props) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Başlık (opsiyonel)"
+        aria-label="Yorum başlığı"
         maxLength={120}
         className="mt-3 w-full px-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
       />
@@ -164,6 +165,7 @@ export function ReviewForm({ productSlug }: Props) {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder="Bu ürünle ilgili deneyiminizi paylaşın…"
+        aria-label="Yorum metni"
         rows={4}
         maxLength={2000}
         className="mt-2 w-full px-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm leading-relaxed focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 resize-y"

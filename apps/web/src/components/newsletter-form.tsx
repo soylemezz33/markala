@@ -30,7 +30,11 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: value, source }),
       });
-      const d = (await r.json().catch(() => ({}))) as { ok?: boolean; message?: string; error?: string };
+      const d = (await r.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+        error?: string;
+      };
       if (r.ok && d.ok) {
         setState("ok");
         setMsg(d.message || "Abone olundun, teşekkürler!");
@@ -59,6 +63,7 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
         <input
           type="email"
           required
+          aria-label="E-posta adresi"
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);

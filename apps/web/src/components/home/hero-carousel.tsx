@@ -11,9 +11,13 @@ import { MagneticButton } from "@/components/ui/magnetic-button";
 
 const AUTOPLAY_MS = 6000;
 
-// Eşit boyutlu placeholder (visual yüklenirken layout shift olmasın)
+// Eşit boyutlu placeholder (visual yüklenirken layout shift olmasın) — yüklenirken
+// hafif shimmer (animate-pulse) ile boş-alan algısını azaltır.
 const VisualPlaceholder = () => (
-  <div className="relative w-full max-w-[440px] h-[440px] md:h-[480px] mx-auto" aria-hidden="true" />
+  <div
+    className="relative w-full max-w-[440px] h-[440px] md:h-[480px] mx-auto rounded-3xl bg-gradient-to-br from-paper-100 via-paper-200 to-paper-50 animate-pulse"
+    aria-hidden="true"
+  />
 );
 
 // 4 visual variant — dynamic import (ssr: false ile bundle'dan çıkarılır)
@@ -25,23 +29,26 @@ const CardStackVisual = dynamic(
   () => import("./hero-visuals/card-stack").then((m) => m.CardStackVisual),
   { loading: () => <VisualPlaceholder />, ssr: false },
 );
-const MugVisual = dynamic(
-  () => import("./hero-visuals/mug").then((m) => m.MugVisual),
-  { loading: () => <VisualPlaceholder />, ssr: false },
-);
+const MugVisual = dynamic(() => import("./hero-visuals/mug").then((m) => m.MugVisual), {
+  loading: () => <VisualPlaceholder />,
+  ssr: false,
+});
 const BannerDisplayVisual = dynamic(
   () => import("./hero-visuals/banner-display").then((m) => m.BannerDisplayVisual),
   { loading: () => <VisualPlaceholder />, ssr: false },
 );
 
-const themeStyles: Record<HeroSlide["theme"], {
-  bg: string;
-  text: string;
-  textMuted: string;
-  badge: string;
-  decor: string;
-  ctaVariant: "primary" | "ghost-cyan" | "ghost-light";
-}> = {
+const themeStyles: Record<
+  HeroSlide["theme"],
+  {
+    bg: string;
+    text: string;
+    textMuted: string;
+    badge: string;
+    decor: string;
+    ctaVariant: "primary" | "ghost-cyan" | "ghost-light";
+  }
+> = {
   yellow: {
     bg: "bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600",
     text: "text-ink-900",
@@ -84,10 +91,13 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
   const [paused, setPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const goTo = useCallback((next: number, dir = 1) => {
-    setDirection(dir);
-    setIndex(((next % heroSlides.length) + heroSlides.length) % heroSlides.length);
-  }, [heroSlides.length]);
+  const goTo = useCallback(
+    (next: number, dir = 1) => {
+      setDirection(dir);
+      setIndex(((next % heroSlides.length) + heroSlides.length) % heroSlides.length);
+    },
+    [heroSlides.length],
+  );
 
   const next = useCallback(() => goTo(index + 1, 1), [index, goTo]);
   const prev = useCallback(() => goTo(index - 1, -1), [index, goTo]);
@@ -126,7 +136,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
         >
           <AnimatePresence custom={direction} mode="popLayout" initial={false}>
             <motion.div
-          key={slide.id}
+              key={slide.id}
               custom={direction}
               initial={{ opacity: 0, x: direction * 40 }}
               animate={{ opacity: 1, x: 0 }}
@@ -136,56 +146,75 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
             >
               {/* Decorative blob 1 */}
               <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 1.2, delay: 0.1 }}
-                className={cn("absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl", theme.decor)}
+                className={cn(
+                  "absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full blur-3xl",
+                  theme.decor,
+                )}
                 aria-hidden="true"
               />
               <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 1.2, delay: 0.3 }}
-                className={cn("absolute -bottom-40 -left-32 w-[400px] h-[400px] rounded-full blur-3xl", theme.decor)}
+                className={cn(
+                  "absolute -bottom-40 -left-32 w-[400px] h-[400px] rounded-full blur-3xl",
+                  theme.decor,
+                )}
                 aria-hidden="true"
               />
 
               {/* Content */}
               <div className="relative lg:col-span-6 px-8 md:px-14 lg:px-16 py-12 md:py-16 z-10">
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.15 }}
-                  className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium tracking-wide", theme.badge)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium tracking-wide",
+                    theme.badge,
+                  )}
                 >
                   <Sparkle size={12} weight="fill" />
                   {slide.eyebrow}
                 </motion.div>
 
                 <motion.h1
-          initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                  className={cn("mt-5 text-display-xl font-serif leading-[1.02] max-w-xl", theme.text)}
+                  className={cn(
+                    "mt-5 text-display-xl font-serif leading-[1.02] max-w-xl",
+                    theme.text,
+                  )}
                 >
                   {slide.highlightWord ? (
-                    <SplitTitle title={slide.title} highlight={slide.highlightWord} themeName={slide.theme} />
+                    <SplitTitle
+                      title={slide.title}
+                      highlight={slide.highlightWord}
+                      themeName={slide.theme}
+                    />
                   ) : (
                     slide.title
                   )}
                 </motion.h1>
 
                 <motion.p
-          initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
-                  className={cn("mt-6 text-lg md:text-xl leading-relaxed max-w-lg", theme.textMuted)}
+                  className={cn(
+                    "mt-6 text-lg md:text-xl leading-relaxed max-w-lg",
+                    theme.textMuted,
+                  )}
                 >
                   {slide.description}
                 </motion.p>
 
                 <motion.div
-          initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.55 }}
                   className="mt-8 flex flex-wrap items-center gap-3"
@@ -195,8 +224,11 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                   </MagneticButton>
                   {slide.secondaryCtaHref && (
                     <a
-          href={slide.secondaryCtaHref}
-                      className={cn("text-sm font-medium underline-offset-4 hover:underline transition-colors", theme.text)}
+                      href={slide.secondaryCtaHref}
+                      className={cn(
+                        "text-sm font-medium underline-offset-4 hover:underline transition-colors",
+                        theme.text,
+                      )}
                     >
                       {slide.secondaryCtaLabel} →
                     </a>
@@ -205,7 +237,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
 
                 {(slide.size || slide.badge) && (
                   <motion.div
-          initial={{ opacity: 0 }}
+                    initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.7 }}
                     className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm"
@@ -243,7 +275,10 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                     transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     className="relative w-full max-w-[520px] aspect-square"
                   >
-                    <div className="absolute inset-0 rounded-full blur-3xl opacity-40" style={{ background: "radial-gradient(circle, white 0%, transparent 70%)" }} />
+                    <div
+                      className="absolute inset-0 rounded-full blur-3xl opacity-40"
+                      style={{ background: "radial-gradient(circle, white 0%, transparent 70%)" }}
+                    />
                     <div className="relative w-full h-full">
                       <Image
                         src={slide.productImage}
@@ -272,14 +307,14 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
 
           {/* Nav arrows */}
           <button
-          onClick={prev}
+            onClick={prev}
             className="hidden md:grid place-items-center absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-paper-50/85 backdrop-blur hover:bg-paper-50 text-ink-900 shadow-lg transition-all hover:scale-105 z-20"
             aria-label="Önceki"
           >
             <CaretLeft size={20} weight="bold" />
           </button>
           <button
-          onClick={next}
+            onClick={next}
             className="hidden md:grid place-items-center absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-paper-50/85 backdrop-blur hover:bg-paper-50 text-ink-900 shadow-lg transition-all hover:scale-105 z-20"
             aria-label="Sonraki"
           >
@@ -290,15 +325,13 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
           <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
             {heroSlides.map((s, i) => (
               <button
-          key={s.id}
+                key={s.id}
                 onClick={() => goTo(i, i > index ? 1 : -1)}
                 aria-label={`Slide ${i + 1}: ${s.title}`}
                 className={cn(
                   // before: ile tıklanabilir alan ~32px (görsel dot aynı kalır) — mobil dokunma hedefi
                   "relative h-2 rounded-full transition-all duration-300 before:absolute before:-inset-3 before:content-['']",
-                  i === index
-                    ? "w-10 bg-paper-50/95"
-                    : "w-2 bg-paper-50/50 hover:bg-paper-50/70",
+                  i === index ? "w-10 bg-paper-50/95" : "w-2 bg-paper-50/50 hover:bg-paper-50/70",
                 )}
               />
             ))}
@@ -307,7 +340,7 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
           {/* Progress bar */}
           {!paused && (
             <motion.div
-          key={index + "-progress"}
+              key={index + "-progress"}
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ duration: AUTOPLAY_MS / 1000, ease: "linear" }}
@@ -320,7 +353,15 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
   );
 }
 
-function SplitTitle({ title, highlight, themeName }: { title: string; highlight: string; themeName: HeroSlide["theme"] }) {
+function SplitTitle({
+  title,
+  highlight,
+  themeName,
+}: {
+  title: string;
+  highlight: string;
+  themeName: HeroSlide["theme"];
+}) {
   const idx = title.toLowerCase().indexOf(highlight.toLowerCase());
   if (idx === -1) return <>{title}</>;
   const before = title.slice(0, idx);

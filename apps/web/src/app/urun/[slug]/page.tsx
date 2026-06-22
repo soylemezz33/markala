@@ -13,7 +13,12 @@ import {
   Question,
 } from "@phosphor-icons/react/dist/ssr";
 import { PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
-import { getCategoryBySlug, getProductBySlug, getProductsByCategory, getProducts } from "@/lib/catalog";
+import {
+  getCategoryBySlug,
+  getProductBySlug,
+  getProductsByCategory,
+  getProducts,
+} from "@/lib/catalog";
 import { Configurator } from "@/components/product/configurator";
 import { Gallery } from "@/components/product/gallery";
 import { ProductCard } from "@/components/product-card";
@@ -21,10 +26,7 @@ import { ProductTabs } from "@/components/product/product-tabs";
 import { ProductReviewsSection } from "@/components/product/reviews-section";
 import { WishlistButton } from "@/components/product/wishlist-button";
 import { ShareButton } from "@/components/product/share-button";
-import {
-  TrackRecentlyViewed,
-  RecentlyViewedRail,
-} from "@/components/product/recently-viewed";
+import { TrackRecentlyViewed, RecentlyViewedRail } from "@/components/product/recently-viewed";
 import { TrackViewItem } from "@/components/product/track-view-item";
 import { ProductViewTracker } from "@/components/product-view-tracker";
 import { ProductJsonLd, BreadcrumbJsonLd, HowToProductJsonLd } from "@/components/seo/json-ld";
@@ -77,7 +79,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const trustBadges = [
-  { icon: Truck, label: "Türkiye geneli kargo", sub: "1-3 iş günü" },
+  { icon: Truck, label: "Türkiye geneli kargo", sub: "1-3 iş günü · 750₺ üzeri ücretsiz" },
   { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
   { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda iade" },
   { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
@@ -91,9 +93,7 @@ export default async function ProductPage({ params }: Props) {
     getCategoryBySlug(product.categorySlug),
     getProductsByCategory(product.categorySlug),
   ]);
-  const relatedProducts = related
-    .filter((p) => p.slug !== product.slug)
-    .slice(0, 4);
+  const relatedProducts = related.filter((p) => p.slug !== product.slug).slice(0, 4);
 
   const breadcrumbs = [
     { name: "Anasayfa", href: "/" },
@@ -119,13 +119,20 @@ export default async function ProductPage({ params }: Props) {
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-4">
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-ink-500">
-            <Link href="/" className="hover:text-ink-900 transition-colors">Anasayfa</Link>
+            <Link href="/" className="hover:text-ink-900 transition-colors">
+              Anasayfa
+            </Link>
             <CaretRight size={12} />
-            <Link href="/urunler" className="hover:text-ink-900 transition-colors">Ürünler</Link>
+            <Link href="/urunler" className="hover:text-ink-900 transition-colors">
+              Ürünler
+            </Link>
             {category && (
               <>
                 <CaretRight size={12} />
-                <Link href={`/kategori/${category.slug}`} className="hover:text-ink-900 transition-colors">
+                <Link
+                  href={`/kategori/${category.slug}`}
+                  className="hover:text-ink-900 transition-colors"
+                >
                   {category.name}
                 </Link>
               </>
@@ -140,7 +147,11 @@ export default async function ProductPage({ params }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           {/* Sol: Galeri + Tabs */}
           <div className="lg:col-span-7 space-y-10">
-            <Gallery images={product.images} alt={product.name} fallbackSrc={`/api/mockup?slug=${product.slug}&w=800&h=800`} />
+            <Gallery
+              images={product.images}
+              alt={product.name}
+              fallbackSrc={`/api/mockup?slug=${product.slug}&w=800&h=800`}
+            />
 
             {/* Hızlı aksiyonlar — Beğen / Paylaş */}
             <div className="flex items-center gap-2">
@@ -160,8 +171,15 @@ export default async function ProductPage({ params }: Props) {
                 </header>
                 <ul className="grid sm:grid-cols-2 gap-2.5">
                   {product.features.map((f: string, i: number) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-ink-700 leading-relaxed">
-                      <CheckCircle size={16} weight="fill" className="text-brand-500 mt-0.5 flex-none" />
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-sm text-ink-700 leading-relaxed"
+                    >
+                      <CheckCircle
+                        size={16}
+                        weight="fill"
+                        className="text-brand-500 mt-0.5 flex-none"
+                      />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -178,7 +196,10 @@ export default async function ProductPage({ params }: Props) {
                 </header>
                 <div className="flex flex-wrap gap-2">
                   {product.useCases.map((u, i) => (
-                    <span key={i} className="px-3 py-1.5 bg-paper-100 border border-paper-200 rounded-full text-xs text-ink-700">
+                    <span
+                      key={i}
+                      className="px-3 py-1.5 bg-paper-100 border border-paper-200 rounded-full text-xs text-ink-700"
+                    >
                       {u}
                     </span>
                   ))}
@@ -195,7 +216,12 @@ export default async function ProductPage({ params }: Props) {
                     <tbody>
                       {product.specifications.map((s, i) => (
                         <tr key={i} className={i % 2 === 0 ? "bg-paper-50" : "bg-paper-100/50"}>
-                          <th scope="row" className="text-left px-4 py-2.5 font-medium text-ink-900 align-top w-2/5">{s.label}</th>
+                          <th
+                            scope="row"
+                            className="text-left px-4 py-2.5 font-medium text-ink-900 align-top w-2/5"
+                          >
+                            {s.label}
+                          </th>
                           <td className="px-4 py-2.5 text-ink-700">{s.value}</td>
                         </tr>
                       ))}
@@ -207,7 +233,11 @@ export default async function ProductPage({ params }: Props) {
 
             {/* FAQs */}
             {product.faqs && product.faqs.length > 0 && (
-              <section className="border-t border-paper-200 pt-8" itemScope itemType="https://schema.org/FAQPage">
+              <section
+                className="border-t border-paper-200 pt-8"
+                itemScope
+                itemType="https://schema.org/FAQPage"
+              >
                 <header className="flex items-center gap-2 mb-4">
                   <Question size={20} weight="fill" className="text-brand-700" />
                   <h2 className="text-xl font-semibold text-ink-900">Sık Sorulan Sorular</h2>
@@ -223,9 +253,18 @@ export default async function ProductPage({ params }: Props) {
                     >
                       <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
                         <span itemProp="name">{f.q}</span>
-                        <CaretRight size={14} weight="bold" className="transition-transform group-open:rotate-90 text-ink-500" />
+                        <CaretRight
+                          size={14}
+                          weight="bold"
+                          className="transition-transform group-open:rotate-90 text-ink-500"
+                        />
                       </summary>
-                      <div className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30" itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                      <div
+                        className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30"
+                        itemScope
+                        itemProp="acceptedAnswer"
+                        itemType="https://schema.org/Answer"
+                      >
                         <span itemProp="text">{f.a}</span>
                       </div>
                     </details>
@@ -242,10 +281,20 @@ export default async function ProductPage({ params }: Props) {
               <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
                 <Info size={22} weight="fill" className="text-amber-600 flex-none mt-0.5" />
                 <div className="text-sm text-amber-900 leading-relaxed">
-                  <strong>Üretim Toleransı:</strong> {PRODUCTION_TOLERANCE_NOTE} Bu sektör standardı tolerans aralığı,
-                  sipariş onayında otomatik olarak kabul edilmiş sayılır.
-                  Detay için <Link href="/yasal/mesafeli-satis" className="underline font-medium hover:text-amber-700">Mesafeli Satış Sözleşmesi Madde 7.A</Link> ve
-                  {" "}<Link href="/yasal/iade" className="underline font-medium hover:text-amber-700">İade Politikası</Link>'na bakınız.
+                  <strong>Üretim Toleransı:</strong> {PRODUCTION_TOLERANCE_NOTE} Bu sektör standardı
+                  tolerans aralığı, sipariş onayında otomatik olarak kabul edilmiş sayılır. Detay
+                  için{" "}
+                  <Link
+                    href="/yasal/mesafeli-satis"
+                    className="underline font-medium hover:text-amber-700"
+                  >
+                    Mesafeli Satış Sözleşmesi Madde 7.A
+                  </Link>{" "}
+                  ve{" "}
+                  <Link href="/yasal/iade" className="underline font-medium hover:text-amber-700">
+                    İade Politikası
+                  </Link>
+                  'na bakınız.
                 </div>
               </div>
             </section>
@@ -259,7 +308,10 @@ export default async function ProductPage({ params }: Props) {
               {/* Trust badges */}
               <ul className="mt-6 grid grid-cols-2 gap-3">
                 {trustBadges.map((t) => (
-                  <li key={t.label} className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg">
+                  <li
+                    key={t.label}
+                    className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg"
+                  >
                     <div className="flex-none w-9 h-9 rounded-md bg-paper-50 grid place-items-center text-brand-700">
                       <t.icon size={18} />
                     </div>
@@ -278,7 +330,9 @@ export default async function ProductPage({ params }: Props) {
         {relatedProducts.length > 0 && (
           <section className="mt-24 md:mt-32 pt-16 border-t border-paper-200">
             <header className="mb-10">
-              <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Aynı kategoride</p>
+              <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
+                Aynı kategoride
+              </p>
               <h2 className="mt-2 text-3xl md:text-4xl font-semibold text-ink-900">
                 Bunları da inceleyin
               </h2>

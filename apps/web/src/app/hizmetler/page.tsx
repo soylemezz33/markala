@@ -1,9 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
-import {
-  PaintBrush, Stack, ArrowRight,
-} from "@phosphor-icons/react/dist/ssr";
+import { PaintBrush, Stack, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { services } from "@/lib/services";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
@@ -19,6 +17,15 @@ export const metadata: Metadata = {
     title: "Markala Matbaa Hizmetleri",
     description: "Tasarım desteği ve toplu baskı hizmetleri.",
     url: "/hizmetler",
+    images: [
+      { url: "/og-default.png", width: 1200, height: 630, alt: "Markala Matbaa Hizmetleri" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markala Matbaa Hizmetleri",
+    description: "Tasarım desteği ve toplu baskı hizmetleri.",
+    images: ["/og-default.png"],
   },
 };
 
@@ -47,8 +54,8 @@ export default function HizmetlerHubPage() {
             Sadece baskı değil — tam matbaa çözümü
           </h1>
           <p className="mt-4 text-lg text-ink-700">
-            Ücretsiz tasarım desteğinden toplu kurumsal indirime kadar her
-            ihtiyaca özel hizmet. 324 Ajans deneyimiyle 10+ yıldır.
+            Ücretsiz tasarım desteğinden toplu kurumsal indirime kadar her ihtiyaca özel hizmet. 324
+            Ajans deneyimiyle 10+ yıldır.
           </p>
         </Container>
       </div>
@@ -69,9 +76,7 @@ export default function HizmetlerHubPage() {
                 <h2 className="text-xl font-semibold text-ink-900 group-hover:text-brand-700 transition-colors">
                   {s.title}
                 </h2>
-                <p className="mt-3 text-sm text-ink-700 leading-relaxed flex-1">
-                  {s.intro}
-                </p>
+                <p className="mt-3 text-sm text-ink-700 leading-relaxed flex-1">{s.intro}</p>
                 <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 group-hover:gap-2.5 transition-all">
                   Detayları gör <ArrowRight size={12} weight="bold" />
                 </span>

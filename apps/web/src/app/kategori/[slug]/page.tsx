@@ -35,7 +35,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: seoTitle,
     description: seoDesc.slice(0, 160),
-    keywords: cat.seo?.keywords ?? [`${cat.name} baskı`, `${cat.name} fiyat`, "online matbaa", "markala"],
+    keywords: cat.seo?.keywords ?? [
+      `${cat.name} baskı`,
+      `${cat.name} fiyat`,
+      "online matbaa",
+      "markala",
+    ],
     alternates: { canonical: url },
     openGraph: {
       type: "website",
@@ -71,14 +76,28 @@ export default async function CategoryPage({ params }: Props) {
 
       <section className="relative bg-paper-100 border-b border-paper-200 overflow-hidden">
         <div className="absolute inset-0 opacity-25">
-          <Image src={cat.imageUrl} alt="" fill priority sizes="100vw" className="object-cover" />
+          <Image
+            src={cat.imageUrl}
+            alt={cat.name}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-paper-100 via-paper-100/90 to-paper-100/40" />
         </div>
         <Container className="relative py-12 md:py-20">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-ink-500 mb-6">
-            <Link href="/" className="hover:text-ink-900 transition-colors">Anasayfa</Link>
+          <nav
+            aria-label="Breadcrumb"
+            className="flex items-center gap-1.5 text-sm text-ink-500 mb-6"
+          >
+            <Link href="/" className="hover:text-ink-900 transition-colors">
+              Anasayfa
+            </Link>
             <CaretRight size={12} />
-            <Link href="/urunler" className="hover:text-ink-900 transition-colors">Ürünler</Link>
+            <Link href="/urunler" className="hover:text-ink-900 transition-colors">
+              Ürünler
+            </Link>
             <CaretRight size={12} />
             <span className="text-ink-900 font-medium">{cat.name}</span>
           </nav>
@@ -87,14 +106,29 @@ export default async function CategoryPage({ params }: Props) {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 text-brand-900 text-xs font-semibold uppercase tracking-wider">
               <Sparkle size={12} weight="fill" /> {cat.productCount} farklı ürün
             </span>
-            <h1 className="mt-4 text-4xl md:text-6xl font-semibold text-ink-900 leading-[1.05]">{cat.name}</h1>
-            <p className="mt-4 text-lg md:text-xl text-ink-700 leading-relaxed max-w-2xl">{cat.longDescription}</p>
+            <h1 className="mt-4 text-4xl md:text-6xl font-semibold text-ink-900 leading-[1.05]">
+              {cat.name}
+            </h1>
+            <p className="mt-4 text-lg md:text-xl text-ink-700 leading-relaxed max-w-2xl">
+              {cat.longDescription}
+            </p>
             <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-500">
-              <span className="inline-flex items-center gap-1.5"><Truck size={14} className="text-brand-700" /> {cat.productionTime}</span>
-              <span className="inline-flex items-center gap-1.5"><ShieldCheck size={14} className="text-brand-700" /> Kalite garantili</span>
+              <span className="inline-flex items-center gap-1.5">
+                <Truck size={14} className="text-brand-700" /> {cat.productionTime}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-brand-700" /> Kalite garantili
+              </span>
               <span className="inline-flex items-center gap-2">
                 {cat.startingPrice > 0 ? (
-                  <>Başlangıç: <Price amount={cat.startingPrice} size="sm" className="text-ink-900 font-semibold" /></>
+                  <>
+                    Başlangıç:{" "}
+                    <Price
+                      amount={cat.startingPrice}
+                      size="sm"
+                      className="text-ink-900 font-semibold"
+                    />
+                  </>
                 ) : (
                   <span className="text-ink-900 font-semibold">Teklif Al</span>
                 )}
@@ -106,7 +140,9 @@ export default async function CategoryPage({ params }: Props) {
 
       <Container className="py-12 md:py-16">
         <div className="flex items-center justify-between mb-6 text-sm">
-          <span className="text-ink-500"><span className="font-semibold text-ink-900">{products.length}</span> ürün</span>
+          <span className="text-ink-500">
+            <span className="font-semibold text-ink-900">{products.length}</span> ürün
+          </span>
           <select className="px-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm">
             <option>En çok satan</option>
             <option>Yeniler önce</option>
@@ -119,9 +155,13 @@ export default async function CategoryPage({ params }: Props) {
           <div className="py-20 text-center bg-paper-100 rounded-xl border border-paper-200">
             <p className="text-ink-700 font-medium text-lg">{cat.name} için ürünler hazırlanıyor</p>
             <p className="mt-2 text-sm text-ink-500 max-w-md mx-auto">
-              Bu kategoride şu an aktif ürün yok. İhtiyacınızı bize iletin, size özel teklif hazırlayalım.
+              Bu kategoride şu an aktif ürün yok. İhtiyacınızı bize iletin, size özel teklif
+              hazırlayalım.
             </p>
-            <Link href="/iletisim" className="mt-5 inline-block text-sm font-semibold text-brand-700 hover:text-brand-900">
+            <Link
+              href="/iletisim"
+              className="mt-5 inline-block text-sm font-semibold text-brand-700 hover:text-brand-900"
+            >
               İletişim formuna git →
             </Link>
           </div>
@@ -139,7 +179,10 @@ export default async function CategoryPage({ params }: Props) {
         <Container>
           <div className="flex items-end justify-between gap-4 mb-6">
             <h2 className="text-2xl font-semibold text-ink-900">Diğer Kategoriler</h2>
-            <Link href="/kategoriler" className="text-sm text-brand-700 hover:text-brand-900 font-medium">
+            <Link
+              href="/kategoriler"
+              className="text-sm text-brand-700 hover:text-brand-900 font-medium"
+            >
               Tümü →
             </Link>
           </div>
@@ -156,7 +199,7 @@ export default async function CategoryPage({ params }: Props) {
                   <div className="relative w-16 h-16 rounded-lg bg-paper-100 overflow-hidden mb-3">
                     <Image
                       src={c.imageUrl}
-                      alt=""
+                      alt={c.name}
                       fill
                       sizes="64px"
                       className="object-cover transition-transform duration-300 group-hover:scale-110"

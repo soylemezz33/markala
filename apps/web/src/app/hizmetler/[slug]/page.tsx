@@ -3,7 +3,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  ArrowRight, CheckCircle, Phone, WhatsappLogo, Question, CaretRight,
+  ArrowRight,
+  CheckCircle,
+  Phone,
+  WhatsappLogo,
+  Question,
+  CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { services, getServiceBySlug } from "@/lib/services";
 import { getProducts } from "@/lib/catalog";
@@ -34,6 +39,13 @@ export function generateMetadata({ params }: Props): Metadata {
       title: s.title,
       description: s.intro.slice(0, 200),
       url: `/hizmetler/${s.slug}`,
+      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: s.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: s.title,
+      description: s.intro.slice(0, 200),
+      images: ["/og-default.png"],
     },
   };
 }
@@ -43,9 +55,7 @@ export default async function ServicePage({ params }: Props) {
   if (!service) notFound();
 
   const products = await getProducts();
-  const relatedProducts = products.filter((p) =>
-    service.relatedProductSlugs?.includes(p.slug),
-  );
+  const relatedProducts = products.filter((p) => service.relatedProductSlugs?.includes(p.slug));
 
   return (
     <>
@@ -69,14 +79,15 @@ export default async function ServicePage({ params }: Props) {
             description: service.intro,
             provider: { "@id": `${SITE}/#localbusiness` },
             serviceType: service.title,
-            ...(service.priceRange && service.priceRange.max > 0 && {
-              offers: {
-                "@type": "AggregateOffer",
-                priceCurrency: "TRY",
-                lowPrice: service.priceRange.min,
-                highPrice: service.priceRange.max,
-              },
-            }),
+            ...(service.priceRange &&
+              service.priceRange.max > 0 && {
+                offers: {
+                  "@type": "AggregateOffer",
+                  priceCurrency: "TRY",
+                  lowPrice: service.priceRange.min,
+                  highPrice: service.priceRange.max,
+                },
+              }),
             availableChannel: {
               "@type": "ServiceChannel",
               servicePhone: "+90-324-433-3351",
@@ -128,10 +139,7 @@ export default async function ServicePage({ params }: Props) {
       />
 
       {/* Breadcrumb visual */}
-      <nav
-        aria-label="Breadcrumb"
-        className="bg-paper-100 border-b border-paper-200"
-      >
+      <nav aria-label="Breadcrumb" className="bg-paper-100 border-b border-paper-200">
         <Container className="py-3 flex items-center gap-1.5 text-sm text-ink-500 overflow-x-auto">
           <Link href="/" className="hover:text-ink-900 whitespace-nowrap">
             Anasayfa
@@ -141,24 +149,18 @@ export default async function ServicePage({ params }: Props) {
             Hizmetler
           </Link>
           <CaretRight size={12} className="shrink-0" />
-          <span className="text-ink-900 font-medium whitespace-nowrap">
-            {service.title}
-          </span>
+          <span className="text-ink-900 font-medium whitespace-nowrap">{service.title}</span>
         </Container>
       </nav>
 
       {/* Hero */}
       <section className="bg-paper-50 border-b border-paper-200">
         <Container className="py-12 md:py-16 max-w-4xl">
-          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
-            Hizmet
-          </p>
+          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Hizmet</p>
           <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
             {service.title}
           </h1>
-          <p className="mt-5 text-lg md:text-xl text-ink-700 leading-relaxed">
-            {service.intro}
-          </p>
+          <p className="mt-5 text-lg md:text-xl text-ink-700 leading-relaxed">{service.intro}</p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/urunler"
@@ -190,26 +192,13 @@ export default async function ServicePage({ params }: Props) {
           <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
             Neler kazanırsınız?
           </h2>
-          <p className="text-ink-700 mb-6 max-w-2xl">
-            Bu hizmetin sağladığı somut faydalar:
-          </p>
+          <p className="text-ink-700 mb-6 max-w-2xl">Bu hizmetin sağladığı somut faydalar:</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {service.benefits.map((b) => (
-              <article
-                key={b.title}
-                className="p-5 bg-paper-50 border border-paper-200 rounded-xl"
-              >
-                <CheckCircle
-                  size={20}
-                  weight="fill"
-                  className="text-success mb-3"
-                />
-                <h3 className="font-semibold text-ink-900 text-base">
-                  {b.title}
-                </h3>
-                <p className="mt-2 text-sm text-ink-700 leading-relaxed">
-                  {b.desc}
-                </p>
+              <article key={b.title} className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
+                <CheckCircle size={20} weight="fill" className="text-success mb-3" />
+                <h3 className="font-semibold text-ink-900 text-base">{b.title}</h3>
+                <p className="mt-2 text-sm text-ink-700 leading-relaxed">{b.desc}</p>
               </article>
             ))}
           </div>
@@ -217,12 +206,8 @@ export default async function ServicePage({ params }: Props) {
 
         {/* Süreç */}
         <section>
-          <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            Nasıl çalışır?
-          </h2>
-          <p className="text-ink-700 mb-8 max-w-2xl">
-            {service.process.length} adımda süreç:
-          </p>
+          <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">Nasıl çalışır?</h2>
+          <p className="text-ink-700 mb-8 max-w-2xl">{service.process.length} adımda süreç:</p>
           <ol className="space-y-4">
             {service.process.map((step, i) => (
               <li
@@ -234,18 +219,14 @@ export default async function ServicePage({ params }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h3 className="font-semibold text-ink-900 text-lg">
-                      {step.title}
-                    </h3>
+                    <h3 className="font-semibold text-ink-900 text-lg">{step.title}</h3>
                     {step.duration && (
                       <span className="text-xs font-semibold text-brand-700 px-2 py-1 rounded-full bg-brand-100 tabular-nums">
                         ⏱ {step.duration}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-ink-700 leading-relaxed">
-                    {step.desc}
-                  </p>
+                  <p className="mt-1 text-ink-700 leading-relaxed">{step.desc}</p>
                 </div>
               </li>
             ))}
@@ -298,12 +279,10 @@ export default async function ServicePage({ params }: Props) {
 
         {/* Final CTA */}
         <section className="text-center p-10 md:p-14 bg-ink-900 text-paper-50 rounded-2xl">
-          <h2 className="text-2xl md:text-4xl font-semibold">
-            {service.title} için hazırız
-          </h2>
+          <h2 className="text-2xl md:text-4xl font-semibold">{service.title} için hazırız</h2>
           <p className="mt-4 text-paper-100/70 max-w-xl mx-auto">
-            Detaylar için bize ulaşın — WhatsApp en hızlı kanal, ortalama 5
-            dakikada yanıt veriyoruz.
+            Detaylar için bize ulaşın — WhatsApp en hızlı kanal, ortalama 5 dakikada yanıt
+            veriyoruz.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link

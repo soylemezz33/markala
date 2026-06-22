@@ -2,8 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  CurrencyCircleDollar, ArrowRight, Phone, WhatsappLogo, Info, CheckCircle,
-  Truck, Tag, Lightning,
+  CurrencyCircleDollar,
+  ArrowRight,
+  Phone,
+  WhatsappLogo,
+  Info,
+  CheckCircle,
+  Truck,
+  Tag,
+  Lightning,
 } from "@phosphor-icons/react/dist/ssr";
 import { getCategories, getProducts } from "@/lib/catalog";
 import { getDisplayPrice } from "@/lib/configurator";
@@ -37,6 +44,15 @@ export const metadata: Metadata = {
     title: "Matbaa Fiyat Listesi 2026 — Markala",
     description: "Tüm matbaa ürünleri için güncel başlangıç fiyatları (KDV dahil).",
     url: "/fiyat-listesi",
+    images: [
+      { url: "/og-default.png", width: 1200, height: 630, alt: "Markala Matbaa Fiyat Listesi" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Matbaa Fiyat Listesi 2026 — Markala",
+    description: "Tüm matbaa ürünleri için güncel başlangıç fiyatları (KDV dahil).",
+    images: ["/og-default.png"],
   },
 };
 
@@ -138,13 +154,10 @@ export default async function PriceListPage() {
         <section className="mb-10 p-5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
           <Info size={20} weight="fill" className="text-amber-700 shrink-0 mt-0.5" />
           <div className="text-sm text-amber-900 leading-relaxed">
-            <strong>Bu fiyatlar minimum sipariş adetleri için başlangıç fiyatlarıdır.</strong>{" "}
-            Ürün konfigüratöründe paket (eko/lak/vip), adet, ek özellikler (UV lak, yaldız, selefon)
+            <strong>Bu fiyatlar minimum sipariş adetleri için başlangıç fiyatlarıdır.</strong> Ürün
+            konfigüratöründe paket (eko/lak/vip), adet, ek özellikler (UV lak, yaldız, selefon)
             seçildikçe fiyat anında güncellenir. Toplu siparişlerde indirimler mevcuttur.{" "}
-            <Link
-              href="/kurumsal"
-              className="font-semibold underline hover:text-amber-700"
-            >
+            <Link href="/kurumsal" className="font-semibold underline hover:text-amber-700">
               Kurumsal hesap (B2B) firmanıza özel avantajlı fiyat
             </Link>
             .
@@ -164,9 +177,7 @@ export default async function PriceListPage() {
                   className="block px-3 py-2 rounded-md text-sm font-medium text-ink-900 hover:bg-paper-100 hover:text-brand-700"
                 >
                   {g.cat.name}{" "}
-                  <span className="text-ink-500 font-normal text-xs">
-                    ({g.items.length})
-                  </span>
+                  <span className="text-ink-500 font-normal text-xs">({g.items.length})</span>
                 </a>
               </li>
             ))}
@@ -217,12 +228,8 @@ export default async function PriceListPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-3 text-xs text-ink-700">
-                          {p.sizeLabel ?? "—"}
-                        </td>
-                        <td className="px-3 py-3 text-xs text-ink-500">
-                          {p.productionTime}
-                        </td>
+                        <td className="px-3 py-3 text-xs text-ink-700">{p.sizeLabel ?? "—"}</td>
+                        <td className="px-3 py-3 text-xs text-ink-500">{p.productionTime}</td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-semibold text-ink-900 tabular-nums">
                             {formatPriceDisplay(getDisplayPrice(p))}
@@ -250,9 +257,7 @@ export default async function PriceListPage() {
 
         {/* Fiyatlama mantığı açıklaması */}
         <section className="mt-16 p-6 md:p-8 bg-paper-50 border border-paper-200 rounded-xl">
-          <h2 className="text-xl font-semibold text-ink-900 mb-4">
-            Fiyatlamamız nasıl çalışır?
-          </h2>
+          <h2 className="text-xl font-semibold text-ink-900 mb-4">Fiyatlamamız nasıl çalışır?</h2>
           <ul className="space-y-3 text-sm text-ink-700">
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
@@ -265,38 +270,39 @@ export default async function PriceListPage() {
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
-                <strong className="text-ink-900">Paket seçimi:</strong> Eko, Lak, VIP gibi
-                paketler farklı malzeme/işlem içerir. Örneğin EKO 350 gr mat kuşe iken VIP
-                400 gr Bristol + lokal UV içerebilir.
+                <strong className="text-ink-900">Paket seçimi:</strong> Eko, Lak, VIP gibi paketler
+                farklı malzeme/işlem içerir. Örneğin EKO 350 gr mat kuşe iken VIP 400 gr Bristol +
+                lokal UV içerebilir.
               </span>
             </li>
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
                 <strong className="text-ink-900">Ek işlemler:</strong> Selefon, UV lak, yaldız,
-                kabartma gibi ek işlemler %20-50 oranında fiyatı artırır. Konfigüratörde
-                anında görürsünüz.
+                kabartma gibi ek işlemler %20-50 oranında fiyatı artırır. Konfigüratörde anında
+                görürsünüz.
               </span>
             </li>
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
-                <strong className="text-ink-900">Tasarım desteği:</strong> Ücretsiz. Hazır
-                dosyanız yoksa grafik ekibimiz tasarlar — fiyata dahildir.
+                <strong className="text-ink-900">Tasarım desteği:</strong> Ücretsiz. Hazır dosyanız
+                yoksa grafik ekibimiz tasarlar — fiyata dahildir.
               </span>
             </li>
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
-                <strong className="text-ink-900">Kargo:</strong> 750 ₺ üzeri sipariş Türkiye
-                geneli ücretsiz. Altında 79 ₺ kargo ücreti eklenir.
+                <strong className="text-ink-900">Kargo:</strong> 750 ₺ üzeri sipariş Türkiye geneli
+                ücretsiz. Altında 79 ₺ kargo ücreti eklenir.
               </span>
             </li>
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
                 <strong className="text-ink-900">Kurumsal indirim:</strong> Düzenli sipariş veren
-                B2B müşterilere firmanıza özel avantajlı fiyatlandırma, açık fatura, ay sonu kapanış.
+                B2B müşterilere firmanıza özel avantajlı fiyatlandırma, açık fatura, ay sonu
+                kapanış.
               </span>
             </li>
           </ul>
@@ -304,14 +310,8 @@ export default async function PriceListPage() {
 
         {/* Final CTA */}
         <section className="mt-12 p-8 md:p-12 bg-ink-900 text-paper-50 rounded-2xl text-center">
-          <Lightning
-            size={28}
-            weight="fill"
-            className="text-brand-400 mx-auto mb-3"
-          />
-          <h2 className="text-2xl md:text-3xl font-semibold">
-            Özel teklif ister misin?
-          </h2>
+          <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
+          <h2 className="text-2xl md:text-3xl font-semibold">Özel teklif ister misin?</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
             Toplu siparişler ({minPrice.toLocaleString("tr-TR")} ₺ ile{" "}
             {maxPrice.toLocaleString("tr-TR")} ₺ arası fiyat aralığında) için size özel teklif —
@@ -344,8 +344,8 @@ export default async function PriceListPage() {
         {/* Yasal not */}
         <p className="mt-8 text-xs text-ink-500 text-center max-w-2xl mx-auto">
           Bu fiyat listesi <strong>Mayıs 2026</strong> tarihinde güncellenmiştir. Hammadde
-          maliyetlerine bağlı olarak fiyatlar değişebilir; sipariş onaylandığında fiyat
-          sabitlenir. Kayıtlı kullanıcılar için fiyat geçmişi hesap panelinde görüntülenir.
+          maliyetlerine bağlı olarak fiyatlar değişebilir; sipariş onaylandığında fiyat sabitlenir.
+          Kayıtlı kullanıcılar için fiyat geçmişi hesap panelinde görüntülenir.
         </p>
       </Container>
     </>
