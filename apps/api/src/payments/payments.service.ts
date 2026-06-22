@@ -77,6 +77,11 @@ export class PaymentsService implements OnModuleInit {
     const subtotalKurus = Math.round(Number(order.subtotal) * 100);
     const discountKurus = Math.round(Number(order.discount) * 100);
     const shippingKurus = Math.round(Number(order.shippingFee) * 100);
+    // GÜVENLİK: Kargo bedeli geçerli bir sayı olmalı (NaN/Infinity/negatif → iyzico reddeder veya
+    // hesap manipülasyonuna kapı açar). DB bozukluğu veya migration hatası durumuna karşı defansif kontrol.
+    if (!Number.isFinite(shippingKurus) || shippingKurus < 0) {
+      throw new BadRequestException("Geçersiz kargo bedeli; ödeme başlatılamadı.");
+    }
     const itemsNetKurus = Math.max(0, subtotalKurus - discountKurus);
 
     const productItems: Array<{ id: string; name: string; kurus: number; shipping?: boolean }> = [];

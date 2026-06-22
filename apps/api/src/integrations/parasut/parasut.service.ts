@@ -66,8 +66,9 @@ export class ParasutService {
     });
     if (!res.ok) {
       this.token = null; // refresh başarısızsa bir sonraki sefer password grant'a düş
-      // Ham gövdeyi Error'a KOYMA (token/PII sızabilir) — yalnız debug'da ayrı logla.
-      this.logger.debug(`Paraşüt OAuth hata gövdesi: ${(await res.text()).slice(0, 200)}`);
+      // OAuth yanıt gövdesini ASLA loglamayın — kısmi credential/token bilgisi içerebilir.
+      // Yalnızca HTTP status kodu loglanır; hata ayıklama için Paraşüt dashboard'unu kullanın.
+      await res.text(); // body'yi tüket (connection leak'i önle), içeriği atmıyor
       throw new Error(`Paraşüt OAuth ${res.status}`);
     }
     const j = (await res.json()) as { access_token: string; refresh_token: string; expires_in: number };

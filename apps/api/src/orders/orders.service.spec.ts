@@ -75,6 +75,14 @@ function makePrisma(overrides: Record<string, unknown> = {}) {
     coupon: {
       findUnique: vi.fn().mockResolvedValue(null),
     },
+    // Kurumsal kullanıcı sorgusunu karşıla (B2B indirim/cari kontrol); normal müşteri → null.
+    user: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
+    // Kampanya paketi sorgusu (çözülemeyen slug'lar için).
+    campaignPackage: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     $transaction: vi.fn().mockImplementation(
       (fn: (t: typeof tx) => Promise<unknown>) => fn(tx),
     ),
@@ -84,7 +92,10 @@ function makePrisma(overrides: Record<string, unknown> = {}) {
   return prisma;
 }
 
+// userId eklendi: shippingAddressId/billingAddressId kullanan her test sahiplik
+// doğrulamasından (assertOwned) geçmek için bir userId'ye ihtiyaç duyar (IDOR fix).
 const BASE_INPUT = {
+  userId: "user-1",
   email: "musteri@markala.test",
   phone: "05001234567",
   items: [{ productId: "p1", configuration: {}, quantity: 1 }],

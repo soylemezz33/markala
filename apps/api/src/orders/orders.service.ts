@@ -543,9 +543,15 @@ export class OrdersService {
     shippingAddressSnapshot: InlineAddress | null;
     billingAddressSnapshot: InlineAddress | null;
   }> {
-    // Auth kullanıcıda kayıtlı adres id'sinin kullanıcıya ait olduğunu doğrula (IDOR).
+    // Kayıtlı adres id'sinin doğrulanması — IDOR koruması.
+    // Kural: addressId YALNIZCA giriş yapan kullanıcılar için kullanılabilir (userId zorunlu).
+    // Misafir/anonim akışı zaten /orders/guest kaldırıldığından normal akışta userId her zaman doludur;
+    // ancak servis doğrudan çağrılsa veya gelecekte misafir yolu eklenirse savunma hattı burada.
     const assertOwned = async (id: string) => {
-      if (!input.userId) return; // misafir: id'ye dokunma (mevcut /orders/guest davranışı)
+      if (!input.userId) {
+        // userId olmadan addressId kullanmak IDOR riski — reddet.
+        throw new ForbiddenException("Kayıtlı adres kullanmak için giriş yapmanız gereklidir.");
+      }
       const found = await this.prisma.address.findFirst({ where: { id, userId: input.userId } });
       if (!found) throw new ForbiddenException("Belirtilen adrese erişim izniniz yok.");
     };

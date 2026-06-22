@@ -84,6 +84,16 @@ async function bootstrap() {
   );
   // Müşteri ürün yorumu — giriş yapmış kullanıcı; per-IP spam/flood koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/reviews/public", method: "POST" }));
+  // Admin mutation endpoint'leri — JWT+RolesGuard korumalı; per-IP ek savunma (ele geçirilmiş JWT senyaroya karşı).
+  // Limitler gerçek admin kullanımına göre geniş tutulmuştur.
+  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/admin", method: "PATCH" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/admin", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/admin", method: "DELETE" }));
+  // Sipariş durumu güncelleme (PATCH /orders/:id/status) — admin işlemi.
+  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/orders", method: "PATCH" }));
+  // Fiyat mutasyonları (POST/PUT /prices/*) — yüksek hassasiyetli; daha sıkı limit.
+  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/prices", method: "POST" }));
+  app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/prices", method: "PUT" }));
 
   app.setGlobalPrefix("api");
   app.useGlobalPipes(

@@ -23,6 +23,8 @@ const MAX_BYTES = 5 * 1024 * 1024;
 /**
  * Müşteri tasarım dosyası — admin görsel yüklemeden FARKLI kurallar:
  * matbaa kaynak dosyaları (CDR/AI/PSD) MIME tipi güvenilmez → UZANTI whitelist'i ile doğrulanır.
+ * Ek savunma: bilinen metin/görsel uzantıları için mimetype de kontrol edilir (CDR/AI/EPS/PSD için
+ * tarayıcı/multer rastgele mimetype verebilir → yalnız uzantıya güvenilir, whitelist geçerli).
  */
 const DESIGN_ALLOWED_EXT = new Set([
   "pdf",
@@ -38,6 +40,22 @@ const DESIGN_ALLOWED_EXT = new Set([
   "tif",
   "tiff",
 ]);
+
+/**
+ * Tasarım dosyası için uzantıya göre KABUL EDİLEBİLİR mimetype'lar.
+ * CDR/AI/EPS/PSD: vendor-spesifik; tarayıcı/multer bunları genellikle
+ * "application/octet-stream" veya sahte Content-Type ile gönderir → tüm mimetype'lar kabul edilir.
+ * Sadece standart görsel/belge formatları kısıtlanır.
+ */
+const DESIGN_MIME_WHITELIST: Record<string, Set<string>> = {
+  pdf: new Set(["application/pdf"]),
+  jpg: new Set(["image/jpeg"]),
+  jpeg: new Set(["image/jpeg"]),
+  png: new Set(["image/png"]),
+  tif: new Set(["image/tiff"]),
+  tiff: new Set(["image/tiff"]),
+  // ai/eps/cdr/psd: vendor mimetype'lar standart değil → octet-stream de kabul edilir (herhangi mimetype)
+};
 const DESIGN_MAX_BYTES = 50 * 1024 * 1024;
 
 /**
@@ -137,6 +155,15 @@ export class StorageService {
     if (!ext || !DESIGN_ALLOWED_EXT.has(ext)) {
       throw new BadRequestException(
         "Yalnızca PDF, AI, EPS, CDR, PSD, JPG, PNG veya TIFF dosyası yükleyebilirsiniz.",
+      );
+    }
+    // Mimetype doğrulama: PDF/JPG/PNG/TIFF için izin verilen mimetype listesi kontrol edilir.
+    // CDR/AI/EPS/PSD gibi vendor formatlar için whitelist yoksa herhangi mimetype kabul edilir
+    // (tarayıcı/multer bunları genellikle "application/octet-stream" olarak gönderir).
+    const allowedMimes = DESIGN_MIME_WHITELIST[ext];
+    if (allowedMimes && !allowedMimes.has(input.mimetype)) {
+      throw new BadRequestException(
+        `Dosya tipi uyuşmazlığı: .${ext} uzantısı için beklenen MIME tipi geçersiz.`,
       );
     }
     if (input.buffer.length > DESIGN_MAX_BYTES) {

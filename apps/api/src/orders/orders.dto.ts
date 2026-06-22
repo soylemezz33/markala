@@ -14,8 +14,59 @@ import {
   MaxLength,
   Min,
   ValidateNested,
+  registerDecorator,
+  ValidationOptions,
 } from "class-validator";
 import { PaginationQueryDto } from "../common/pagination.dto";
+
+/**
+ * Konfigürasyon JSON'u derinlik/boyut koruması — DoS savunması.
+ * Gerçek konfigüratör seçimleri düz (flat) bir kayıt + özet string'dir;
+ * derin iç içe geçmiş yapıya ihtiyaç yoktur.
+ */
+function jsonDepth(value: unknown, depth = 0): number {
+  if (depth > 8) return depth; // erken çıkış (sayım gereksiz)
+  if (Array.isArray(value)) {
+    return value.reduce((max: number, v: unknown) => Math.max(max, jsonDepth(v, depth + 1)), depth);
+  }
+  if (value !== null && typeof value === "object") {
+    return Object.values(value as Record<string, unknown>).reduce(
+      (max: number, v: unknown) => Math.max(max, jsonDepth(v, depth + 1)),
+      depth,
+    );
+  }
+  return depth;
+}
+
+function jsonKeyCount(value: unknown): number {
+  if (value === null || typeof value !== "object") return 0;
+  if (Array.isArray(value)) return value.reduce((s: number, v: unknown) => s + jsonKeyCount(v), 0);
+  const keys = Object.keys(value as Record<string, unknown>);
+  return keys.length + keys.reduce((s, k) => s + jsonKeyCount((value as Record<string, unknown>)[k]), 0);
+}
+
+/** Decorator: configuration alanı için derinlik ≤ 6, toplam anahtar sayısı ≤ 200. */
+function IsShallowConfig(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: "isShallowConfig",
+      target: object.constructor,
+      propertyName,
+      options: {
+        message: "Konfigürasyon nesnesi çok derin veya çok fazla alan içeriyor.",
+        ...validationOptions,
+      },
+      validator: {
+        validate(value: unknown) {
+          if (value === null || value === undefined) return true;
+          if (jsonDepth(value) > 6) return false;
+          if (jsonKeyCount(value) > 200) return false;
+          return true;
+        },
+      },
+    });
+  };
+}
 
 /**
  * SECURITY NOTE
@@ -46,8 +97,10 @@ export class CreateOrderItemDto {
    * Konfigüratör seçimleri snapshot'ı — esnek JSON, sunucu fiyatlandırırken kullanır.
    * @Allow(): tipsiz/dekoratörsüz alan ValidationPipe whitelist:true tarafından silinmesin
    * (aksi halde storefront'un summary/selections snapshot'ı kaybolur, admin özet boş kalırdı).
+   * @IsShallowConfig: derinlik > 6 veya toplam anahtar > 200 → 400 (DoS savunması).
    */
   @Allow()
+  @IsShallowConfig()
   configuration: unknown;
 
   @IsInt()
