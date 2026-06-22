@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { PricesService } from "./prices.service";
+import { PricesService, adjustPrice } from "./prices.service";
 import { NotFoundException } from "@nestjs/common";
 const mkPrisma = () => ({
   product: { findUnique: vi.fn() },
@@ -41,3 +41,9 @@ it("setPrices replace-all + Decimal map", async () => {
   expect(arg.productId).toBe("p1"); expect(Number(arg.price)).toBe(50);
   expect(r).toEqual({ count: 1 });
 });
+
+it("percent increase 10% → 110", () => expect(adjustPrice(100,"percent","increase",10,"none")).toBe(110));
+it("percent decrease 20% → 80", () => expect(adjustPrice(100,"percent","decrease",20,"none")).toBe(80));
+it("fixed increase 15 → 115", () => expect(adjustPrice(100,"fixed","increase",15,"none")).toBe(115));
+it("round 5 → en yakın 5", () => expect(adjustPrice(103,"percent","increase",0,"5")).toBe(105));
+it("negatife düşmez", () => expect(adjustPrice(10,"fixed","decrease",999,"none")).toBe(0));

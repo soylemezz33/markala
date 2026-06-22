@@ -28,3 +28,12 @@ export class SetPricesDto {
   @IsArray() @ValidateNested({ each: true }) @Type(() => PriceInputDto)
   prices!: PriceInputDto[];
 }
+
+export class BulkAdjustDto {
+  @IsIn(["all", "category"]) scope!: "all" | "category";
+  @IsString() @IsOptional() categoryId?: string;
+  @IsIn(["percent", "fixed"]) op!: "percent" | "fixed";
+  @IsIn(["increase", "decrease"]) direction!: "increase" | "decrease";
+  @IsNumber() @Min(0) value!: number;
+  @IsIn(["none", "1", "5", "10"]) @IsOptional() round?: "none" | "1" | "5" | "10";
+}

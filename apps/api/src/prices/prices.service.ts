@@ -2,6 +2,20 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
+export function adjustPrice(
+  price: number,
+  op: "percent" | "fixed",
+  direction: "increase" | "decrease",
+  value: number,
+  round: "none" | "1" | "5" | "10" = "none",
+): number {
+  const sign = direction === "decrease" ? -1 : 1;
+  let v = op === "percent" ? price * (1 + (sign * value) / 100) : price + sign * value;
+  v = Math.max(0, v);
+  const step = round && round !== "none" ? Number(round) : 0;
+  return step > 0 ? Math.round(v / step) * step : Math.round(v * 100) / 100;
+}
+
 @Injectable()
 export class PricesService {
   constructor(private prisma: PrismaService) {}
@@ -54,5 +68,22 @@ export class PricesService {
       })),
     });
     return { count };
+  }
+
+  async bulkAdjust(dto: import("./prices.dto").BulkAdjustDto) {
+    const productWhere: Prisma.ProductWhereInput =
+      dto.scope === "category" && dto.categoryId ? { categoryId: dto.categoryId } : {};
+    const products = await this.prisma.product.findMany({ where: productWhere, select: { id: true } });
+    const ids = products.map((p) => p.id);
+    if (ids.length === 0) return { updated: 0 };
+    const rows = await this.prisma.productPrice.findMany({ where: { productId: { in: ids } } });
+    const ops = rows.map((r) =>
+      this.prisma.productPrice.update({
+        where: { id: r.id },
+        data: { price: new Prisma.Decimal(adjustPrice(Number(r.price), dto.op, dto.direction, dto.value, dto.round ?? "none")) },
+      }),
+    );
+    await this.prisma.$transaction(ops);
+    return { updated: rows.length };
   }
 }
