@@ -27,6 +27,38 @@ const client = createMarkalaClient({
   getToken: () => useAuthStore.getState().accessToken,
 });
 
+/** Kullanıcı admin/super_admin mi? (Tip role içermese de runtime değerini defansif okur.) */
+function isAdminRole(user: unknown): boolean {
+  const role = (user as { role?: string } | null | undefined)?.role;
+  return role === "admin" || role === "super_admin";
+}
+
+/**
+ * Bakım modu bypass çerezini yaz — admin storefront'a girince siteyi canlı gezebilsin.
+ * Same-origin route handler rolü API ile YENİDEN doğrular (istemciye güvenmez); burada yalnız
+ * gereksiz istek atmamak için kapı koyuyoruz. Çerez set/return'den ÖNCE await edilir (redirect race).
+ */
+async function syncMaintenanceBypass(token: string | null | undefined): Promise<void> {
+  if (!token) return;
+  try {
+    await fetch("/api/maintenance/bypass", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    // yazılamazsa kritik değil — admin /giris'ten tekrar deneyebilir
+  }
+}
+
+/** Çıkışta bypass çerezini sil — paylaşılan cihazda oturum kapanınca bakım yine görünsün. */
+async function clearMaintenanceBypass(): Promise<void> {
+  try {
+    await fetch("/api/maintenance/bypass", { method: "DELETE" });
+  } catch {
+    // sessiz geç
+  }
+}
+
 /** Authlı bir çağrı 401 dönerse bir kez refresh dene, token'ı güncelle, çağrıyı tekrarla. */
 async function withRefresh<T>(fn: () => Promise<T>): Promise<T> {
   try {
@@ -87,6 +119,8 @@ export const useAuthStore = create<AuthState>()(
           const { accessToken } = await client.auth.login({ email, password });
           set({ accessToken });
           const user = await client.auth.me();
+          // Admin ise: user'ı set ETMEDEN ÖNCE bypass çerezini yaz (redirect race'i önler).
+          if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
           set({ user, isLoading: false });
           return { ok: true };
         } catch (e) {
@@ -115,6 +149,7 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // refresh cookie zaten geçersizse sorun değil — yerel state'i temizle
         }
+        await clearMaintenanceBypass();
         set({ user: null, accessToken: null });
       },
 
@@ -138,6 +173,8 @@ export const useAuthStore = create<AuthState>()(
           const { accessToken } = await client.auth.refresh();
           set({ accessToken });
           const user = await client.auth.me();
+          // Girişli admin /giris'e gelince çerez user set edilmeden yazılsın ki yönlendirmede 503'e takılmasın.
+          if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
           set({ user, isBootstrapping: false });
         } catch {
           set({ user: null, accessToken: null, isBootstrapping: false });

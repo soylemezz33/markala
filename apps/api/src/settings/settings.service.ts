@@ -2,9 +2,20 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
+/** Storefront'un her istekte okuyacağı public site config (bakım modu + iletişim). */
+export interface PublicConfig {
+  maintenance: { enabled: boolean; title: string; message: string };
+  contact: { phone: string; whatsapp: string; email: string };
+}
+
 @Injectable()
 export class SettingsService {
   constructor(private prisma: PrismaService) {}
+
+  // Middleware her istekte /settings/public'i çağırır → DB'yi korumak için kısa TTL cache.
+  // upsertMany cache'i sıfırlar, böylece admin toggle'ı en geç TTL kadar sonra yansır.
+  private publicCache: { at: number; data: PublicConfig } | null = null;
+  private static readonly PUBLIC_TTL_MS = 10_000;
 
   async findByGroup(group?: string): Promise<Record<string, unknown>> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,6 +72,34 @@ export class SettingsService {
         }),
       ),
     );
+    this.publicCache = null; // toggle/iletişim değişikliği public config'i etkileyebilir → cache'i düşür
     return this.findByGroup(group);
+  }
+
+  /** Public (unauth) site config. Bakım bayrağı + iletişim. ~10sn cache. */
+  async getPublicConfig(): Promise<PublicConfig> {
+    const now = Date.now();
+    if (this.publicCache && now - this.publicCache.at < SettingsService.PUBLIC_TTL_MS) {
+      return this.publicCache.data;
+    }
+    const rows = await this.prisma.siteSetting.findMany({
+      where: { group: { in: ["maintenance", "general"] } },
+    });
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    const data: PublicConfig = {
+      maintenance: {
+        enabled: map["maintenance.enabled"] === true,
+        title: str(map["maintenance.title"]),
+        message: str(map["maintenance.message"]),
+      },
+      contact: {
+        phone: str(map["general.phone"]),
+        whatsapp: str(map["general.whatsapp"]),
+        email: str(map["general.email"]),
+      },
+    };
+    this.publicCache = { at: now, data };
+    return data;
   }
 }

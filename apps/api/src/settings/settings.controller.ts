@@ -27,6 +27,13 @@ export class SettingsController {
     return this.service.getHeaderNav();
   }
 
+  // PUBLIC (guard YOK) — storefront middleware her istekte bunu okur: bakım bayrağı + iletişim.
+  // Hassas veri içermez; "public" path'i @Get() ("/settings") ile çakışmaz.
+  @Get("public")
+  getPublic() {
+    return this.service.getPublicConfig();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
