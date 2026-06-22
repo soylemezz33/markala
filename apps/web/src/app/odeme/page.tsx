@@ -48,6 +48,7 @@ export default function CheckoutPage() {
   const couponCode = useCartStore((s) => s.couponCode);
   const setCoupon = useCartStore((s) => s.setCoupon);
   const user = useAuthStore((s) => s.user);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const addOrder = useOrdersStore((s) => s.add);
 
   const [step, setStep] = useState<Step>("iletisim");
@@ -196,6 +197,15 @@ export default function CheckoutPage() {
     }
   }, [cartItems.length, processing, router]);
 
+  // Sipariş GİRİŞ ZORUNLU — misafir checkout kapatıldı. Bootstrap (refresh) bitene kadar bekle
+  // (kalıcı user anında gelir; oturum gerçekten yoksa user null kalır) → /giris'e yönlendir,
+  // giriş sonrası checkout'a dön. Sepet Zustand persist ile korunur.
+  useEffect(() => {
+    if (!isBootstrapping && !user && !processing) {
+      router.replace(`/giris?next=${encodeURIComponent("/odeme")}`);
+    }
+  }, [isBootstrapping, user, processing, router]);
+
   // Kurumsal değilse cari seçeneği görünmez — yanlışlıkla seçili kalmasın (oturum kapandı vb.).
   useEffect(() => {
     if (!canUseCari && paymentMethod === "cari") setPaymentMethod("iyzico");
@@ -300,51 +310,70 @@ export default function CheckoutPage() {
    * `paymentMethod`: "cari" gönderilirse backend onaylı kurumsal + kredi limiti şartını zorlar.
    * Başarısızsa { ok:false, error } döner; çağıran payError gösterir.
    */
-  async function saveOrder(opts: { channel: string; paymentMethod?: "iyzico" | "cari" }) {
+  async function saveOrder(opts: { channel: string; paymentMethod?: "iyzico" | "cari" }): Promise<{
+    ok?: boolean;
+    orderId?: string;
+    orderNumber?: string;
+    paymentNonce?: string;
+    error?: string;
+  } | null> {
     // Oturum açıksa siparişi yazmadan ÖNCE token'ı tazele — 15dk access token checkout sırasında
     // dolmuş olabilir; bayat token authed çağrıyı 401'e düşürür ve proxy siparişi sessizce MİSAFİR
     // yapar (→ kurumsal indirim + cari uygulanmaz). Oturumsuz misafirde mevcut davranış korunur.
     const token = user
       ? await useAuthStore.getState().ensureFreshToken()
       : useAuthStore.getState().accessToken;
-    return fetch("/api/siparis-kaydet", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        email,
-        phone,
-        customerName: accountType === "individual" ? fullName : companyName,
-        city,
-        district,
-        fullAddress,
-        zipCode,
-        channel: opts.channel,
-        accountType,
-        taxOffice,
-        taxNumber,
-        couponCode: appliedCoupon ?? undefined,
-        paymentMethod: opts.paymentMethod,
-        items: cartItems.map((i) => ({
-          productSlug: i.productSlug,
-          configuration: i.configuration,
-          quantity: i.quantity,
-        })),
-      }),
-    })
-      .then(
-        (r) =>
-          r.json() as Promise<{
-            ok?: boolean;
-            orderId?: string;
-            orderNumber?: string;
-            paymentNonce?: string;
-            error?: string;
-          }>,
-      )
-      .catch(() => null);
+    // 20sn timeout — yanıt gelmezse isteği iptal et; kullanıcıyı belirsiz "Yönlendiriliyor…"
+    // ekranında sonsuz bırakma. Sunucu fiyatı yeniden hesaplar, 20sn makul üst sınır.
+    const ctrl = new AbortController();
+    const timer = window.setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch("/api/siparis-kaydet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          email,
+          phone,
+          customerName: accountType === "individual" ? fullName : companyName,
+          city,
+          district,
+          fullAddress,
+          zipCode,
+          channel: opts.channel,
+          accountType,
+          taxOffice,
+          taxNumber,
+          couponCode: appliedCoupon ?? undefined,
+          paymentMethod: opts.paymentMethod,
+          items: cartItems.map((i) => ({
+            productSlug: i.productSlug,
+            configuration: i.configuration,
+            quantity: i.quantity,
+          })),
+        }),
+        signal: ctrl.signal,
+      });
+      return (await res.json()) as {
+        ok?: boolean;
+        orderId?: string;
+        orderNumber?: string;
+        paymentNonce?: string;
+        error?: string;
+      };
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") {
+        return {
+          ok: false,
+          error: "Bağlantı zaman aşımı. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+        };
+      }
+      return { ok: false, error: "Sunucuya ulaşılamadı. Lütfen tekrar deneyin." };
+    } finally {
+      window.clearTimeout(timer);
+    }
   }
 
   /**
@@ -457,6 +486,9 @@ export default function CheckoutPage() {
   }
 
   if (cartItems.length === 0 && !processing) return null;
+  // Giriş zorunlu: oturum yoksa formu hiç gösterme (yukarıdaki effect /giris'e yönlendirir);
+  // bootstrap sürerken de bekle — yanlışlıkla giriş ekranını flaşlamayalım.
+  if (!user && !processing) return null;
 
   const consentOk = acceptedTerms && acceptedTolerance && acceptedKvkk;
 
@@ -500,13 +532,10 @@ export default function CheckoutPage() {
                 />
                 <PhoneInput value={phone} onChange={setPhone} label="Telefon" required />
               </div>
-              {!user && (
+              {user && (
                 <p className="mt-3 text-xs text-ink-500">
-                  Üye değil misiniz? Misafir olarak devam edin veya{" "}
-                  <Link href="/giris" className="text-brand-700 hover:underline">
-                    giriş yapın
-                  </Link>
-                  .
+                  <strong className="text-ink-900">{user.email}</strong> olarak giriş yaptınız —
+                  siparişiniz hesabınıza bağlanacak.
                 </p>
               )}
             </Section>
@@ -838,9 +867,9 @@ export default function CheckoutPage() {
                           ? "Yönlendiriliyor…"
                           : `Kartla Güvenli Öde — ${total.toLocaleString("tr-TR")} ₺`}
                       </Button>
-                      <div className="flex items-center justify-center gap-1.5 text-xs text-ink-500">
-                        <ShieldCheck size={14} /> 256-bit SSL · iyzico 3D Secure · Kart bilgisi
-                        sitemizde saklanmaz
+                      <div className="flex items-center justify-center gap-1.5 rounded-md border border-success/20 bg-success/[0.06] px-3 py-2 text-xs text-ink-600">
+                        <ShieldCheck size={14} weight="fill" className="flex-none text-success" />
+                        256-bit SSL · iyzico 3D Secure · Kart bilgisi sitemizde saklanmaz
                       </div>
                     </>
                   )}
