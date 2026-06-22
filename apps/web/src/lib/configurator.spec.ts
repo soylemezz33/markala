@@ -5,6 +5,8 @@ import {
   initSelections,
   resolveRules,
   effectiveSelections,
+  optionPriceHints,
+  groupHintMode,
 } from "./configurator";
 import type { Product } from "@markala/types";
 
@@ -172,6 +174,125 @@ describe("effectiveSelections", () => {
     expect(result.laminasyon).toBeUndefined(); // pasif → çıkarıldı
     expect(result.renk).toBe("4+4");           // forced → uygulandı
     expect(result.malzeme).toBe("dijital");    // dokunulmadı
+  });
+});
+
+// ---------------------------------------------------------------------------
+// optionPriceHints & groupHintMode — Task 5
+// ---------------------------------------------------------------------------
+
+describe("optionPriceHints", () => {
+  const base: Product = {
+    slug: "test",
+    name: "Test",
+    categorySlug: "test",
+    shortDescription: "",
+    description: "",
+    basePrice: 0,
+    productionTime: "1 gün",
+    images: [],
+  };
+
+  it("priced grup: delta (en ucuz=0, pahalı=fark)", () => {
+    const product: Product = {
+      ...base,
+      options: [
+        opt("paket", "priced", "ekonomi", 0, 0) as any,
+        opt("paket", "priced", "premium", 0, 1) as any,
+        opt("adet", "dimension", "100", 1, 0) as any,
+        opt("adet", "dimension", "500", 1, 1) as any,
+      ] as any,
+      prices: [
+        { groupKey: "paket", optionKey: "ekonomi", dimKey: "100", price: 200 },
+        { groupKey: "paket", optionKey: "premium", dimKey: "100", price: 350 },
+      ] as any,
+    };
+    const hints = optionPriceHints(product, { paket: "ekonomi", adet: "100" });
+    // priced: delta — ekonomi=0, premium=150
+    expect(hints["paket"]!["ekonomi"]).toBe(0);
+    expect(hints["paket"]!["premium"]).toBe(150);
+  });
+
+  it("adet dimension (ebat de varsa çarpan): her option için calculateTotal toplam", () => {
+    // ISG tipi: ebat=dimension (priceDim), baski=priced, adet=dimension (multiplier)
+    // adet priceDim DEĞİL → multiplier → hint = calculateTotal
+    const product: Product = {
+      ...base,
+      options: [
+        opt("ebat", "dimension", "a4", 0, 0) as any,
+        opt("baski", "priced", "normal", 1, 0) as any,
+        opt("adet", "dimension", "10", 2, 0) as any,
+        opt("adet", "dimension", "50", 2, 1) as any,
+      ] as any,
+      prices: [
+        { groupKey: "baski", optionKey: "normal", dimKey: "a4", price: 20 },
+      ] as any,
+    };
+    const hints = optionPriceHints(product, { ebat: "a4", baski: "normal", adet: "10" });
+    // adet "10" → qty=10, unit=20 → total=200
+    expect(hints["adet"]!["10"]).toBe(200);
+    // adet "50" → qty=50, unit=20 → total=1000
+    expect(hints["adet"]!["50"]).toBe(1000);
+  });
+
+  it("priced grup fiyat satırı yoksa hint=null", () => {
+    const product: Product = {
+      ...base,
+      options: [
+        opt("paket", "priced", "cyp", 0, 0) as any,
+        opt("adet", "dimension", "1000", 1, 0) as any,
+      ] as any,
+      prices: [] as any,
+    };
+    const hints = optionPriceHints(product, { paket: "cyp", adet: "1000" });
+    expect(hints["paket"]!["cyp"]).toBeNull();
+  });
+
+  it("ebat (diğer dimension) → hint=null", () => {
+    const product: Product = {
+      ...base,
+      options: [
+        opt("ebat", "dimension", "a4", 0, 0) as any,
+        opt("baski", "priced", "reflektif", 1, 0) as any,
+        opt("adet", "dimension", "10", 2, 0) as any,
+      ] as any,
+      prices: [
+        { groupKey: "baski", optionKey: "reflektif", dimKey: "a4", price: 100 },
+      ] as any,
+    };
+    const hints = optionPriceHints(product, { ebat: "a4", baski: "reflektif", adet: "10" });
+    // ebat = non-adet non-priced dimension → null
+    expect(hints["ebat"]!["a4"]).toBeNull();
+  });
+});
+
+describe("groupHintMode", () => {
+  const base: Product = {
+    slug: "test",
+    name: "Test",
+    categorySlug: "test",
+    shortDescription: "",
+    description: "",
+    basePrice: 0,
+    productionTime: "1 gün",
+    images: [],
+    options: [
+      opt("paket", "priced", "cyp", 0, 0) as any,
+      opt("adet", "dimension", "100", 1, 0) as any,
+      opt("ebat", "dimension", "a4", 2, 0) as any,
+    ] as any,
+  };
+
+  it("priced grup → delta", () => {
+    expect(groupHintMode(base, "paket")).toBe("delta");
+  });
+
+  it("adet multiplier → total", () => {
+    expect(groupHintMode(base, "adet")).toBe("total");
+  });
+
+  it("ebat (diğer dim) → none", () => {
+    expect(groupHintMode(base, "ebat")).toBe("none");
   });
 });
 

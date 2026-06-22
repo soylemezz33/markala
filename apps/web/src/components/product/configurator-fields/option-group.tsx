@@ -2,6 +2,7 @@
 
 import { cn } from "@markala/ui";
 import { Lock } from "@phosphor-icons/react";
+import { formatPrice } from "@/lib/format";
 
 interface OptionItem {
   optionKey: string;
@@ -18,9 +19,11 @@ interface Props {
   locked?: boolean;
   disabled?: boolean;
   onSelect: (optionKey: string) => void;
+  priceHints?: Record<string, number | null>;
+  hintMode?: "delta" | "total" | "none";
 }
 
-export function OptionGroup({ groupKey, groupLabel, options, selected, locked, disabled, onSelect }: Props) {
+export function OptionGroup({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none" }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
 
   if (disabled && !locked) {
@@ -86,6 +89,17 @@ export function OptionGroup({ groupKey, groupLabel, options, selected, locked, d
       >
         {sorted.map((opt) => {
           const isSelected = selected === opt.optionKey;
+          const hint = priceHints?.[opt.optionKey];
+          const showHint = hintMode !== "none" && hint !== null && hint !== undefined && Number.isFinite(hint);
+          let hintLabel: string | null = null;
+          if (showHint) {
+            if (hintMode === "delta") {
+              hintLabel = hint > 0 ? `+${formatPrice(hint)} ₺` : null;
+            } else {
+              // total mode: adet başına toplam
+              hintLabel = hint > 0 ? `${formatPrice(hint)} ₺` : null;
+            }
+          }
           return (
             <button
               key={opt.optionKey}
@@ -108,7 +122,7 @@ export function OptionGroup({ groupKey, groupLabel, options, selected, locked, d
               >
                 {isSelected && <span className="w-2 h-2 rounded-full bg-ink-900" />}
               </span>
-              <span className="min-w-0">
+              <span className="min-w-0 flex-1">
                 <span className="block font-medium text-ink-900 text-sm">
                   {opt.optionLabel}
                 </span>
@@ -118,6 +132,11 @@ export function OptionGroup({ groupKey, groupLabel, options, selected, locked, d
                   </span>
                 )}
               </span>
+              {hintLabel && (
+                <span className="text-sm tabular-nums text-ink-500 flex-none">
+                  {hintLabel}
+                </span>
+              )}
             </button>
           );
         })}

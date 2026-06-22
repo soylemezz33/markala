@@ -162,6 +162,123 @@ export function getInstallmentAmount(total: number, count = 3): number {
 }
 
 // ---------------------------------------------------------------------------
+// Task 5 — Seçenek kartı fiyat ipucu
+// ---------------------------------------------------------------------------
+
+/**
+ * Her grubun her option'ı için gösterilecek fiyat ipucu (KDV-dahil, ham TL).
+ *
+ * - priced grup: grup içi en ucuza göre delta (en ucuz → 0, diğerleri pozitif).
+ * - adet dimension (fiyat-boyutu DEĞİLSE): o adet seçiliyken hesaplanan TOPLAM.
+ * - diğer dimension (ebat vb.): null (ipucu yok).
+ *
+ * Dönüş: { [groupKey]: { [optionKey]: number | null } }
+ * Sayı 0 ise "en ucuz" (delta=0), pozitif ise delta, negatif olamaz.
+ * adet grubu için değer tam toplam fiyattır (hintMode="total").
+ */
+export function optionPriceHints(
+  product: Product,
+  selections: Record<string, string>,
+): Record<string, Record<string, number | null>> {
+  const opts = (product.options ?? []) as unknown as PricingOption[];
+  const rows = (product.prices ?? []) as unknown as PricingPriceRow[];
+
+  // Grup metadata'sını çıkar
+  const groupMap = new Map<string, { key: string; role: "dimension" | "priced"; sort: number }>();
+  for (const o of opts) {
+    if (!groupMap.has(o.groupKey))
+      groupMap.set(o.groupKey, { key: o.groupKey, role: o.groupRole, sort: o.groupSort });
+  }
+  const groups = [...groupMap.values()].sort((a, b) => a.sort - b.sort);
+
+  if (groups.length === 0) return {};
+
+  // Fiyat-boyutu: ilk non-adet dimension
+  const dims = groups.filter((g) => g.role === "dimension");
+  const priceDimGroup = dims.length ? (dims.find((g) => g.key !== "adet") ?? dims[0]) : null;
+  const priceDimKey = priceDimGroup?.key ?? null;
+  const dimSel = priceDimKey ? selections[priceDimKey] : undefined;
+
+  // adet dimension (quantity çarpanı — fiyat-boyutu DEĞİL)
+  const adetGroup = groups.find(
+    (g) => g.role === "dimension" && g.key === "adet" && g.key !== priceDimKey,
+  );
+
+  const result: Record<string, Record<string, number | null>> = {};
+
+  for (const g of groups) {
+    const optKeysInGroup = opts.filter((o) => o.groupKey === g.key).map((o) => o.optionKey);
+    const hints: Record<string, number | null> = {};
+
+    if (g.role === "priced") {
+      // Priced grup: delta (grup içi en ucuza göre)
+      const prices: Record<string, number> = {};
+      for (const optKey of optKeysInGroup) {
+        const row = rows.find(
+          (p) =>
+            p.groupKey === g.key &&
+            p.optionKey === optKey &&
+            (dimSel ? p.dimKey === dimSel : p.dimKey == null),
+        );
+        if (row) prices[optKey] = _num(row.price);
+      }
+      const vals = Object.values(prices);
+      if (vals.length === 0) {
+        // Fiyat satırı yok → hepsi null
+        for (const optKey of optKeysInGroup) hints[optKey] = null;
+      } else {
+        const minPrice = Math.min(...vals);
+        for (const optKey of optKeysInGroup) {
+          const p = prices[optKey];
+          hints[optKey] = p !== undefined ? p - minPrice : null;
+        }
+      }
+    } else if (adetGroup && g.key === adetGroup.key) {
+      // adet dimension: her option için tam toplam hesapla
+      for (const optKey of optKeysInGroup) {
+        const hypothetical = { ...selections, adet: optKey };
+        hints[optKey] = calculateTotal(product, hypothetical);
+      }
+    } else {
+      // Diğer dimension (ebat vb.): hint yok
+      for (const optKey of optKeysInGroup) hints[optKey] = null;
+    }
+
+    result[g.key] = hints;
+  }
+
+  return result;
+}
+
+/**
+ * Grup için hangi gösterim modunun kullanılacağını döndürür.
+ * "delta" → "+X ₺" (priced gruplar)
+ * "total" → "X ₺" (adet multiplier gruplar)
+ * "none"  → hint gösterilmez
+ */
+export function groupHintMode(
+  product: Product,
+  groupKey: string,
+): "delta" | "total" | "none" {
+  const opts = (product.options ?? []) as unknown as PricingOption[];
+  const groups = new Map<string, { role: "dimension" | "priced" }>();
+  for (const o of opts) {
+    if (!groups.has(o.groupKey)) groups.set(o.groupKey, { role: o.groupRole });
+  }
+
+  const dims = [...groups.entries()]
+    .filter(([, g]) => g.role === "dimension")
+    .map(([k]) => k);
+  const priceDimKey = dims.find((k) => k !== "adet") ?? dims[0] ?? null;
+
+  const g = groups.get(groupKey);
+  if (!g) return "none";
+  if (g.role === "priced") return "delta";
+  if (groupKey === "adet" && groupKey !== priceDimKey) return "total";
+  return "none";
+}
+
+// ---------------------------------------------------------------------------
 // Task 4 — Koşullu/bağımlı seçenek mantığı
 // ---------------------------------------------------------------------------
 

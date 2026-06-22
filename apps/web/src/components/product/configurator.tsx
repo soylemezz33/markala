@@ -9,6 +9,8 @@ import {
   buildSelectionSummary,
   resolveRules,
   effectiveSelections,
+  optionPriceHints,
+  groupHintMode,
   type OptionRulesLite,
 } from "@/lib/configurator";
 import { useCartStore } from "@/lib/cart-store";
@@ -103,6 +105,11 @@ export function Configurator({ product }: { product: Product }) {
     [product, effSel],
   );
 
+  const priceHintsMap = useMemo(
+    () => optionPriceHints(product, effSel),
+    [product, effSel],
+  );
+
   const canBuy = total > 0;
 
   const groups = useMemo(
@@ -175,6 +182,8 @@ export function Configurator({ product }: { product: Product }) {
               onSelect={(optionKey) =>
                 dispatch({ type: "SET_SELECTION", groupKey: group.groupKey, optionKey })
               }
+              priceHints={priceHintsMap[group.groupKey]}
+              hintMode={groupHintMode(product, group.groupKey)}
             />
           ))}
           <DesignUpload />
