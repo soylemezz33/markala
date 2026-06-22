@@ -47,6 +47,8 @@ async function bootstrap() {
     "/uploads",
     (_req: Request, res: Response, next: NextFunction) => {
       res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+      // Yüklenen dosya MIME-sniffing ile yanlış (örn. HTML/script) yorumlanmasın — XSS/drive-by savunması.
+      res.setHeader("X-Content-Type-Options", "nosniff");
       next();
     },
     serveStatic(uploadDir),

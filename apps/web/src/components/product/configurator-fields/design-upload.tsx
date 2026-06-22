@@ -19,7 +19,9 @@ export function DesignUpload() {
     if (!file) return;
 
     if (file.size > MAX_MB * 1024 * 1024) {
-      setError(`Dosya çok büyük (maks. ${MAX_MB} MB). Lütfen sipariş sonrası WhatsApp ile gönderin.`);
+      setError(
+        `Dosya çok büyük (maks. ${MAX_MB} MB). Lütfen sipariş sonrası WhatsApp ile gönderin.`,
+      );
       input.value = "";
       return;
     }
@@ -103,7 +105,7 @@ export function DesignUpload() {
           <input
             type="file"
             className="hidden"
-            accept=".ai,.eps,.pdf,.cdr,.psd,.tif,.tiff,.zip,.rar,.jpg,.jpeg,.png"
+            accept=".ai,.eps,.pdf,.cdr,.psd,.tif,.tiff,.jpg,.jpeg,.png"
             onChange={handleFileUpload}
             disabled={uploading}
           />

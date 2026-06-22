@@ -34,10 +34,9 @@ const DESIGN_ALLOWED_EXT = new Set([
   "jpeg",
   "png",
   // SVG BİLEREK YOK — XML+script içerebilir; public upload + admin görüntüleme = stored XSS riski.
+  // ZIP/RAR de KALDIRILDI — public servis edilen keyfi arşiv = kötüye kullanım/barındırma riski.
   "tif",
   "tiff",
-  "zip",
-  "rar",
 ]);
 const DESIGN_MAX_BYTES = 50 * 1024 * 1024;
 
@@ -137,7 +136,7 @@ export class StorageService {
     const ext = (input.originalName.split(".").pop() ?? "").toLowerCase();
     if (!ext || !DESIGN_ALLOWED_EXT.has(ext)) {
       throw new BadRequestException(
-        "Yalnızca PDF, AI, EPS, CDR, PSD, JPG, PNG, SVG, TIFF, ZIP veya RAR dosyası yükleyebilirsiniz.",
+        "Yalnızca PDF, AI, EPS, CDR, PSD, JPG, PNG veya TIFF dosyası yükleyebilirsiniz.",
       );
     }
     if (input.buffer.length > DESIGN_MAX_BYTES) {
