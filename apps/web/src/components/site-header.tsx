@@ -14,6 +14,9 @@ import {
   Package,
   House,
   CaretDown,
+  CaretRight,
+  Star,
+  PencilSimple,
   Lightning,
   Sparkle,
   Truck,
@@ -54,6 +57,8 @@ const MAIN_NAV: Array<{
   href: string;
   /** Mega menu — alt kategori listesi gösterilir */
   groups?: Array<{ title: string; items: Array<{ label: string; href: string; badge?: string }> }>;
+  /** Mega menu sağ blok — öne çıkan ürünler (fiyat YOK; /api/mockup görselli) */
+  featured?: Array<{ slug: string; label: string; theme?: "brand" | "paper" | "ink" }>;
   highlight?: "fire" | "new";
 }> = [
   {
@@ -82,6 +87,10 @@ const MAIN_NAV: Array<{
         ],
       },
     ],
+    featured: [
+      { slug: "klasik-kartvizit", label: "Klasik Kartvizit", theme: "brand" },
+      { slug: "antetli-kagit", label: "Antetli Kağıt", theme: "paper" },
+    ],
   },
   {
     label: "Broşür & El İlanı",
@@ -105,6 +114,10 @@ const MAIN_NAV: Array<{
         ],
       },
     ],
+    featured: [
+      { slug: "selefonlu-brosur", label: "Selefonlu Broşür", theme: "paper" },
+      { slug: "el-ilani", label: "El İlanı 105 gr", theme: "brand" },
+    ],
   },
   {
     label: "Bayrak & Branda",
@@ -127,6 +140,10 @@ const MAIN_NAV: Array<{
           { label: "Roll-up 85×200", href: "/urun/rollup-standart" },
         ],
       },
+    ],
+    featured: [
+      { slug: "yelken-bayrak-damla", label: "Yelken Bayrak", theme: "ink" },
+      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
     ],
   },
   {
@@ -152,6 +169,10 @@ const MAIN_NAV: Array<{
         ],
       },
     ],
+    featured: [
+      { slug: "klasik-beyaz-kupa", label: "Sublime Kupa", theme: "brand" },
+      { slug: "magnet-promosyon", label: "Promosyon Magnet", theme: "paper" },
+    ],
   },
   {
     label: "Reklam Tabela",
@@ -176,6 +197,10 @@ const MAIN_NAV: Array<{
         ],
       },
     ],
+    featured: [
+      { slug: "lightbox-led-100cm", label: "Lightbox LED", theme: "ink" },
+      { slug: "dekota-baski-5mm", label: "Dekota Baskı", theme: "paper" },
+    ],
   },
   {
     label: "Restoran & Otel",
@@ -191,6 +216,10 @@ const MAIN_NAV: Array<{
           { label: "Trodat Kaşe", href: "/urun/trodat-printy-4912" },
         ],
       },
+    ],
+    featured: [
+      { slug: "amerikan-servis", label: "Amerikan Servis", theme: "paper" },
+      { slug: "trodat-printy-4912", label: "Trodat Kaşe", theme: "brand" },
     ],
   },
   {
@@ -233,8 +262,26 @@ export function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  // Mega menü (Varyant B) — tek paylaşılan panel, aktif kategori indexi
+  const [megaOpen, setMegaOpen] = useState(false);
+  const [megaIndex, setMegaIndex] = useState(0);
+  const megaCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
+
+  const openMega = (i: number) => {
+    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    setMegaIndex(i);
+    setMegaOpen(true);
+  };
+  // Küçük gecikmeli kapanma — sekme→panel geçişinde yanlışlıkla kapanmayı önler
+  const scheduleMegaClose = () => {
+    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    megaCloseTimer.current = setTimeout(() => setMegaOpen(false), 120);
+  };
+  const cancelMegaClose = () => {
+    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+  };
 
   const itemCount = useCartStore((s) => s.itemCount());
   const openCart = useCartStore((s) => s.open);
@@ -281,9 +328,10 @@ export function SiteHeader() {
     };
   }, []);
 
-  // Effect 3: route değişince mobil menüyü kapat
+  // Effect 3: route değişince mobil menüyü + mega menüyü kapat
   useEffect(() => {
     setMenuOpen(false);
+    setMegaOpen(false);
   }, [pathname]);
 
   // Effect 4: Search modal return-focus (WCAG 2.4.3 Focus Order)
@@ -344,6 +392,12 @@ export function SiteHeader() {
                   </span>
                 </div>
                 <nav className="flex items-center gap-4 md:gap-5">
+                  <Link
+                    href="/kurumsal"
+                    className="rounded-md bg-brand-500 px-2.5 py-1 font-semibold text-ink-900 hover:bg-brand-400 transition-colors"
+                  >
+                    Kurumsal / Teklif Al
+                  </Link>
                   {TOP_LINKS.map((l) => (
                     <Link
                       key={l.href}
@@ -419,11 +473,40 @@ export function SiteHeader() {
             </div>
           </Container>
 
-          {/* Bottom category nav */}
-          <div className="hidden lg:block border-t border-paper-200">
+          {/* Bottom category nav — sekmeler + tek paylaşılan mega panel (Varyant B) */}
+          <div
+            className="hidden lg:block border-t border-paper-200 relative"
+            onMouseEnter={cancelMegaClose}
+            onMouseLeave={scheduleMegaClose}
+          >
             <Container className="flex items-center gap-1">
-              {MAIN_NAV.map((nav) => (
-                <NavItem key={nav.label} nav={nav} />
+              {MAIN_NAV.map((nav, i) => (
+                <Link
+                  key={nav.label}
+                  href={nav.href}
+                  onMouseEnter={() => openMega(i)}
+                  onFocus={() => openMega(i)}
+                  aria-haspopup="true"
+                  aria-expanded={megaOpen && megaIndex === i}
+                  className={cn(
+                    "relative inline-flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors",
+                    megaOpen && megaIndex === i ? "text-ink-900" : "text-ink-700 hover:text-ink-900",
+                  )}
+                >
+                  {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
+                  {nav.label}
+                  {nav.highlight === "new" && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
+                  )}
+                  <CaretDown
+                    size={10}
+                    weight="bold"
+                    className={cn("transition-transform", megaOpen && megaIndex === i && "rotate-180")}
+                  />
+                  {megaOpen && megaIndex === i && (
+                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />
+                  )}
+                </Link>
               ))}
               <Link
                 href="/urunler"
@@ -432,6 +515,14 @@ export function SiteHeader() {
                 Tüm Ürünler <ArrowRight size={14} weight="bold" />
               </Link>
             </Container>
+
+            <MegaPanel
+              items={MAIN_NAV}
+              activeIndex={megaIndex}
+              open={megaOpen}
+              onActive={setMegaIndex}
+              onClose={() => setMegaOpen(false)}
+            />
           </div>
         </div>
 
@@ -557,105 +648,174 @@ export function SiteHeader() {
   );
 }
 
-function NavItem({ nav }: { nav: (typeof MAIN_NAV)[number] }) {
-  const [open, setOpen] = useState(false);
-  const menuId = `nav-menu-${nav.href.replace(/\//g, "-")}`;
+/**
+ * Öne çıkan ürün kartı — mega menü sağ bloğu.
+ * Görsel /api/mockup'tan (marka tonunda SVG). FİYAT GÖSTERİLMEZ
+ * (canlıda çoğu ürün "Teklif Al" — yanlış fiyat yanıltır).
+ */
+function FeaturedCard({
+  slug,
+  label,
+  theme = "brand",
+}: {
+  slug: string;
+  label: string;
+  theme?: "brand" | "paper" | "ink";
+}) {
   return (
-    <div
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      className="relative"
+    <Link
+      href={`/urun/${slug}`}
+      className="group block bg-paper-50 border border-paper-200 rounded-xl overflow-hidden transition-all hover:border-ink-300 hover:shadow-sm hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
     >
-      <Link
-        href={nav.href}
-        aria-haspopup={nav.groups ? "true" : undefined}
-        aria-expanded={nav.groups ? open : undefined}
-        aria-controls={nav.groups ? menuId : undefined}
-        onFocus={() => nav.groups && setOpen(true)}
-        onBlur={(e) => {
-          // Close if focus leaves the whole nav item (including the dropdown)
-          if (nav.groups && !e.currentTarget.closest("[data-nav-item]")?.contains(e.relatedTarget as Node)) {
-            setOpen(false);
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") setOpen(false);
-          if (e.key === "ArrowDown" && nav.groups) { e.preventDefault(); setOpen(true); }
-        }}
-        className={cn(
-          "inline-flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors relative",
-          "text-ink-700 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded",
-          open && "text-ink-900",
-        )}
-      >
-        {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
-        {nav.label}
-        {nav.highlight === "new" && (
-          <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">
-            YENİ
-          </span>
-        )}
-        {nav.groups && (
-          <CaretDown
-            size={10}
-            weight="bold"
-            aria-hidden="true"
-            className={cn("transition-transform", open && "rotate-180")}
-          />
-        )}
-        {open && (
-          <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />
-        )}
-      </Link>
+      <div className="relative aspect-[4/3] bg-paper-100 overflow-hidden">
+        <span className="absolute top-2 left-2 z-10 text-[9px] font-bold tracking-wide bg-ink-900 text-brand-400 px-1.5 py-0.5 rounded">
+          ÖNE ÇIKAN
+        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/api/mockup?slug=${encodeURIComponent(slug)}&theme=${theme}&w=320&h=240`}
+          alt={label}
+          loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      </div>
+      <div className="px-3 py-2.5">
+        <div className="text-[13px] font-semibold text-ink-900 leading-tight">{label}</div>
+        <div className="mt-1 inline-flex items-center gap-1 text-xs text-brand-700 group-hover:text-brand-900">
+          İncele <ArrowRight size={12} weight="bold" />
+        </div>
+      </div>
+    </Link>
+  );
+}
 
-      <AnimatePresence>
-        {open && nav.groups && (
-          <motion.div
-            id={menuId}
-            role="menu"
-            aria-label={nav.label}
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.15 }}
-            onKeyDown={(e) => { if (e.key === "Escape") setOpen(false); }}
-            className="absolute top-full left-0 pt-1 z-50"
-          >
-            <div className="bg-paper-50 border border-paper-200 rounded-lg shadow-lg min-w-[280px] overflow-hidden">
-              {nav.groups.map((g) => (
-                <div key={g.title} className="p-2">
-                  <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-ink-500" aria-hidden="true">
-                    {g.title}
-                  </div>
-                  {g.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      role="menuitem"
-                      className="flex items-center justify-between px-3 py-2 rounded text-sm text-ink-700 hover:bg-paper-100 hover:text-ink-900 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
-                    >
-                      <span>{item.label}</span>
-                      {item.badge && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-brand-500 text-ink-900">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
+/**
+ * Tek paylaşılan mega menü paneli — Varyant B (kategori-index rail).
+ * Sol: tüm kategoriler dikey rail (aktif vurgulu). Sağ: aktif kategorinin
+ * alt-grup sütunları + öne çıkan kartlar. Alt: "Tümünü gör" + güven rozetleri.
+ * Panel .catnav'a (tam genişlik) tutturulur; Container ile aynı max-w/padding
+ * kullanılarak nav ile hizalanır. NOT: framer-motion `y` animasyonu transform'u
+ * inline yazdığı için ortalama `-translate-x-1/2` ile DEĞİL `left-0 right-0 mx-auto`
+ * ile yapılır (yoksa transform çakışıp panel sağa kayar).
+ */
+function MegaPanel({
+  items,
+  activeIndex,
+  open,
+  onActive,
+  onClose,
+}: {
+  items: typeof MAIN_NAV;
+  activeIndex: number;
+  open: boolean;
+  onActive: (i: number) => void;
+  onClose: () => void;
+}) {
+  const nav = items[activeIndex];
+  return (
+    <AnimatePresence>
+      {open && nav && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.16, ease: "easeOut" }}
+          className="absolute left-0 right-0 top-full mx-auto max-w-content px-6 md:px-10 lg:px-16 z-50"
+          role="region"
+          aria-label={`${nav.label} kategorisi menüsü`}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onClose();
+          }}
+        >
+          <div className="bg-paper-50 border border-paper-200 border-t-[3px] border-t-brand-500 rounded-b-2xl shadow-lg overflow-hidden">
+            <div className="grid grid-cols-[248px_1fr]">
+              {/* Sol rail — tüm kategoriler */}
+              <div className="bg-paper-100 border-r border-paper-200 p-3">
+                {items.map((it, i) => (
+                  <button
+                    key={it.label}
+                    type="button"
+                    onMouseEnter={() => onActive(i)}
+                    onFocus={() => onActive(i)}
+                    className={cn(
+                      "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium text-left transition-colors",
+                      i === activeIndex
+                        ? "bg-paper-50 text-brand-700 shadow-sm"
+                        : "text-ink-700 hover:bg-paper-50 hover:text-ink-900",
+                    )}
+                  >
+                    <span>{it.label}</span>
+                    <CaretRight
+                      size={13}
+                      weight="bold"
+                      className={i === activeIndex ? "text-brand-600" : "text-ink-300"}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              {/* Sağ içerik — aktif kategori */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1.15fr] min-h-[280px]">
+                <div className="grid grid-cols-2 gap-x-7 gap-y-1 p-7">
+                  {nav.groups?.map((g) => (
+                    <div key={g.title}>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 pb-2.5">
+                        {g.title}
+                      </div>
+                      {g.items.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className="flex items-center justify-between gap-2 -mx-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-ink-700 hover:bg-paper-100 hover:text-ink-900 transition-colors"
+                        >
+                          <span>{item.label}</span>
+                          {item.badge && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-500 text-ink-900">
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
                   ))}
                 </div>
-              ))}
+
+                {nav.featured && nav.featured.length > 0 && (
+                  <div className="hidden xl:block bg-paper-100 border-l border-paper-200 p-6">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-3.5">
+                      <Star size={12} weight="fill" className="text-brand-600" /> Öne Çıkanlar
+                    </div>
+                    <div className="grid grid-cols-2 gap-3.5">
+                      {nav.featured.map((f) => (
+                        <FeaturedCard key={f.slug} {...f} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Alt şerit */}
+            <div className="flex items-center justify-between gap-4 px-7 py-3.5 border-t border-paper-200 bg-paper-50">
               <Link
                 href={nav.href}
-                role="menuitem"
-                className="block px-5 py-2.5 text-sm font-medium text-brand-700 hover:text-brand-900 border-t border-paper-200 hover:bg-paper-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset"
+                className="inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-brand-700 hover:text-brand-900"
               >
-                Tümünü Gör →
+                Tüm {nav.label} ürünlerini gör <ArrowRight size={14} weight="bold" />
               </Link>
+              <div className="hidden md:flex items-center gap-4 text-xs text-ink-500">
+                <span className="inline-flex items-center gap-1.5">
+                  <Truck size={13} weight="fill" className="text-brand-600" /> 1-2 iş günü üretim
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <PencilSimple size={13} weight="fill" className="text-brand-600" /> Ücretsiz tasarım desteği
+                </span>
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
