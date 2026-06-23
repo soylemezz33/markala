@@ -355,6 +355,12 @@ export class OrdersService {
     // basePrice KDV dahil — bu yüzden subtotal da KDV dahil bir "brüt" toplamdır.
     const subtotal = round2(recalculatedItems.reduce((s, it) => s + it.lineTotal, 0));
 
+    // Son savunma: item bazında 0-fiyat guard'larına ek olarak toplam sıfır sipariş de reddedilir.
+    // (Teorik kenar durum: tüm item'lar geçse de toplam yuvarlama/edge nedeniyle 0 çıkabilir.)
+    if (!Number.isFinite(subtotal) || subtotal <= 0) {
+      throw new BadRequestException("Sipariş tutarı sıfır olamaz; fiyatsız ürünler sipariş edilemiyor.");
+    }
+
     // === Kupon validation (server-side) ===
     // Kupon yalnızca sunucuda doğrulanır; client'tan gelen tutarlar yok sayılır.
     let discount = 0;

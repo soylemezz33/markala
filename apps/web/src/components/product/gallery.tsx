@@ -7,13 +7,21 @@ import { ProductImageFallback } from "@/components/product/product-image-fallbac
 
 export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: string; fallbackSrc?: string }) {
   const [active, setActive] = useState(0);
+  // Yüklenemez (404/ağ hatası) olan görsellerin index setini takip et.
+  const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
   const hasImages = images.length > 0;
   const safeImages = images;
+
+  function markBroken(index: number) {
+    setBrokenImages((prev) => new Set(prev).add(index));
+  }
+
+  const activeIsBroken = brokenImages.has(active);
 
   return (
     <div>
       <div className="relative aspect-square bg-paper-100 rounded-lg overflow-hidden">
-        {hasImages ? (
+        {hasImages && !activeIsBroken ? (
           <Image
             src={safeImages[active] ?? ""}
             alt={alt}
@@ -21,7 +29,10 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
             priority
             sizes="(min-width:1024px) 50vw, 100vw"
             className="object-cover"
+            onError={() => markBroken(active)}
           />
+        ) : hasImages && activeIsBroken ? (
+          <ProductImageFallback name={alt} />
         ) : fallbackSrc ? (
           <Image
             src={fallbackSrc}
@@ -52,14 +63,19 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
                   : "border-paper-200 hover:border-ink-300",
               )}
             >
-              <Image
-                src={src}
-                alt={`${alt} — görsel ${i + 1}`}
-                fill
-                loading="lazy"
-                sizes="100px"
-                className="object-cover"
-              />
+              {brokenImages.has(i) ? (
+                <ProductImageFallback />
+              ) : (
+                <Image
+                  src={src}
+                  alt={`${alt} — görsel ${i + 1}`}
+                  fill
+                  loading="lazy"
+                  sizes="100px"
+                  className="object-cover"
+                  onError={() => markBroken(i)}
+                />
+              )}
             </button>
           ))}
         </div>

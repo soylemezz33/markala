@@ -42,7 +42,7 @@ const popularFaqs = [
   { q: "Tasarım dosyamı hangi formatta göndermeliyim?", href: "/yardim/dosya-hazirlama" },
   { q: "Kaç günde elime ulaşır?", href: "/yardim/kargo" },
   { q: "Selefon ile UV lak farkı nedir?", href: "/yardim/sss#selefon-uv" },
-  { q: "Üretim toleransı nedir? %1-5 fire ne demek?", href: "/yasal/iade" },
+  { q: "Üretim toleransı nedir? %1-5 fire ne demek?", href: "/yardim/iade" },
   { q: "Kurumsal cari hesap nasıl açılır?", href: "/yardim/kurumsal" },
   { q: "Siparişimi nasıl iptal ederim?", href: "/yardim/iade" },
 ];

@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { Star } from "@phosphor-icons/react/dist/ssr";
+import { useState } from "react";
+import { Star } from "@phosphor-icons/react";
 import { Price, cn } from "@markala/ui";
 import type { BadgeKind, Product } from "@markala/types";
 import { WishlistButton } from "@/components/product/wishlist-button";
@@ -24,6 +27,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   // Detayın açılıştaki fiyatıyla AYNI (tek kaynak: configurator). startingPrice'a güvenme.
   const startingPrice = getDisplayPrice(product);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <Link
@@ -36,13 +40,14 @@ export function ProductCard({ product }: ProductCardProps) {
       )}
     >
       <div className="relative aspect-square overflow-hidden bg-paper-100">
-        {product.images[0] ? (
+        {product.images[0] && !imgError ? (
           <Image
             src={product.images[0]}
             alt={product.name}
             fill
             sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            onError={() => setImgError(true)}
           />
         ) : (
           <ProductImageFallback name={product.name} />

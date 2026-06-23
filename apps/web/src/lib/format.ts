@@ -60,7 +60,9 @@ const orderStatusLabels: Record<string, string> = {
 };
 
 export function orderStatusLabel(status: string): string {
-  return orderStatusLabels[status] ?? status;
+  // normStatus (underscore→hyphen) zaten çağrılmış olmalı; bunu burada da uygula (çift güvence).
+  const normalized = status.replace(/_/g, "-");
+  return orderStatusLabels[normalized] ?? orderStatusLabels[status] ?? "Bilinmeyen Durum";
 }
 
 export function generateOrderNumber(): string {

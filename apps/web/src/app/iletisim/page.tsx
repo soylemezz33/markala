@@ -286,6 +286,9 @@ export default function ContactPage() {
                 <a href="https://wa.me/905319004102" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-400 hover:text-brand-300">
                   B2B WhatsApp hattı <ArrowRight size={14} weight="bold" />
                 </a>
+                <a href="mailto:kurumsal@markala.com.tr" className="mt-2 inline-flex items-center gap-1.5 text-sm text-paper-100/60 hover:text-paper-100">
+                  kurumsal@markala.com.tr
+                </a>
               </div>
             </div>
           </aside>

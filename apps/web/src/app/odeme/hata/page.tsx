@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { Container, Button } from "@markala/ui";
 import { XCircle, ClipboardText, WhatsappLogo } from "@phosphor-icons/react";
 import { whatsappUrl } from "@/lib/whatsapp";
@@ -8,12 +10,18 @@ import { whatsappUrl } from "@/lib/whatsapp";
 /**
  * iyzico ödeme başarısız/iptal yönlendirmesi.
  *
- * NOT: Sipariş ödeme BAŞLATILIRKEN backend'e KALICI yazılır (paymentStatus=beklemede) ve
- * sepet o anda boşaltılır. Bu yüzden burada "tekrar dene" akışı sepetten DEĞİL, oluşmuş
- * siparişten devam eder: müşteri "Siparişlerim → Ödeme Yap" ile aynı siparişin ödemesini
- * tamamlar (yeni/çift sipariş oluşmaz). Kartından tahsilat yapılmamıştır.
+ * Backend ?siparis=<orderId> parametresini URL'e ekler (payments.service.ts handleCallback).
+ * Bu sayfa orderId'yi okuyup "Bu Siparişin Ödemesini Tamamla" linki oluşturur — birden fazla
+ * bekleyen siparişi olan müşteri hangi siparişin ödemesinin başarısız olduğunu doğrudan görür.
+ *
+ * Sepet: clearCart() yalnızca iyzico yönlendirme URL'si başarıyla alındıktan sonra çağrılır
+ * (odeme/page.tsx — payRes?.ok && payRes.paymentPageUrl şartı). Sipariş oluşturulamaz ya da
+ * ödeme başlatılamazsa sepet korunur; müşteri sepetten tekrar deneyebilir.
  */
-export default function PaymentFailedPage() {
+function PaymentFailedContent() {
+  const params = useSearchParams();
+  const orderId = params.get("siparis");
+
   return (
     <Container className="py-16 md:py-24 max-w-xl text-center">
       <div className="w-16 h-16 mx-auto rounded-full bg-red-50 grid place-items-center text-red-500">
@@ -27,11 +35,19 @@ export default function PaymentFailedPage() {
       </p>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <Link href="/hesabim/siparislerim">
-          <Button size="lg">
-            <ClipboardText size={18} weight="bold" /> Siparişlerim → Ödeme Yap
-          </Button>
-        </Link>
+        {orderId ? (
+          <Link href={`/hesabim/siparislerim/${orderId}`}>
+            <Button size="lg">
+              <ClipboardText size={18} weight="bold" /> Bu Siparişin Ödemesini Tamamla
+            </Button>
+          </Link>
+        ) : (
+          <Link href="/hesabim/siparislerim">
+            <Button size="lg">
+              <ClipboardText size={18} weight="bold" /> Siparişlerim → Ödeme Yap
+            </Button>
+          </Link>
+        )}
         <a
           href={whatsappUrl("Merhaba, ödeme sırasında sorun yaşadım. Yardımcı olur musunuz?")}
           target="_blank"
@@ -56,5 +72,13 @@ export default function PaymentFailedPage() {
         , sipariş numaranla ödeme bağlantısını ilet edelim.
       </p>
     </Container>
+  );
+}
+
+export default function PaymentFailedPage() {
+  return (
+    <Suspense fallback={null}>
+      <PaymentFailedContent />
+    </Suspense>
   );
 }
