@@ -308,7 +308,13 @@ export function BulkPriceClient({ products, categories }: Props) {
 
         {/* Sağ: Önizleme */}
         <div className="lg:col-span-2">
-          <Card title="Önizleme (ilk 10)">
+          <Card title={`Önizleme — ${targetProducts.length} ürün etkilenecek`}>
+            {targetProducts.length > 10 && (
+              <div className="mb-3 px-3 py-2 rounded-md bg-warning/10 border border-warning/20 text-[12px] text-warning font-semibold flex items-center gap-2">
+                <Warning size={14} className="flex-none" />
+                {targetProducts.length} ürün etkilenecek — aşağıda ilk 10 önizlemesi gösterilmektedir.
+              </div>
+            )}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase">

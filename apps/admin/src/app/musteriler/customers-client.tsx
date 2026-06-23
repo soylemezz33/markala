@@ -111,6 +111,23 @@ export function CustomersClient({ customers }: Props) {
                       )}
                       {c.accountType === "corporate" ? "Kurumsal" : "Bireysel"}
                     </span>
+                    {c.accountType === "corporate" && c.corporateStatus && (
+                      <span
+                        className={`mt-1 block text-[10px] font-semibold ${
+                          c.corporateStatus === "approved"
+                            ? "text-success"
+                            : c.corporateStatus === "rejected"
+                              ? "text-error"
+                              : "text-warning"
+                        }`}
+                      >
+                        {c.corporateStatus === "approved"
+                          ? "● Onaylı"
+                          : c.corporateStatus === "rejected"
+                            ? "● Reddedildi"
+                            : "● Onay Bekliyor"}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-center text-ink-700 hidden md:table-cell tabular-nums">
                     {c.orderCount ?? "—"}

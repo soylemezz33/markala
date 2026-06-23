@@ -26,7 +26,8 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
             src={safeImages[active] ?? ""}
             alt={alt}
             fill
-            priority
+            priority={active === 0}
+            loading={active === 0 ? "eager" : "lazy"}
             sizes="(min-width:1024px) 50vw, 100vw"
             className="object-cover"
             onError={() => markBroken(active)}

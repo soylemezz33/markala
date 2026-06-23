@@ -252,6 +252,7 @@ export function OrdersClient({ orders }: Props) {
                 <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
                 <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Tarih</th>
                 <th className="text-right px-4 py-3 font-semibold">Tutar</th>
+                <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Tür</th>
                 <th className="text-center px-4 py-3 font-semibold">Durum</th>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
               </tr>
@@ -259,7 +260,7 @@ export function OrdersClient({ orders }: Props) {
             <tbody className="divide-y divide-paper-200">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-ink-500">
+                  <td colSpan={7} className="px-4 py-12 text-center text-ink-500">
                     <Package size={32} className="mx-auto mb-3 text-ink-300" />
                     <p className="text-sm font-medium">Henüz sipariş bulunmuyor</p>
                     <p className="text-xs mt-1 text-ink-400">
@@ -289,6 +290,17 @@ export function OrdersClient({ orders }: Props) {
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-ink-900 tabular-nums">
                         ₺ {Number(o.total).toLocaleString("tr-TR")}
+                      </td>
+                      <td className="px-4 py-3 text-center hidden lg:table-cell">
+                        {o.paymentMethod === "cari" ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-100 text-brand-900">
+                            Kurumsal
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-paper-100 text-ink-700">
+                            Bireysel
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
