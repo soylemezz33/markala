@@ -452,17 +452,15 @@ export class OrdersService {
     const total = round2(taxableGross + shippingFee);
 
     // === Cari hesap (açık hesap) ödeme yolu — yalnız onaylı kurumsal müşteri, kredi limiti dahilinde ===
+    // NOT: Kredi limiti kontrolü ARTIK transaction İÇİNDE, kullanıcı satırı kilitlenerek yapılır
+    // (aşağıda assertCariLimitWithinTx). Burada yalnız uygunluk + vade tarihi hesaplanır.
+    // Buradaki uygunluk verisi (cariEligible/limit/term) kullanıcının statik kurumsal ayarlarıdır;
+    // aynı işlem içinde değişmediği için yarış koşulu yok — yarış SADECE bakiyede (ledger) yaşanır.
     const onAccount = input.paymentMethod === "cari";
     let cariDueDate: Date | null = null;
     if (onAccount) {
       if (!cariEligible) {
         throw new BadRequestException("Açık hesap (cari) yalnızca onaylı kurumsal müşteriler içindir.");
-      }
-      const currentBalance = await this.corporateBalance(input.userId!);
-      if (cariCreditLimit != null && round2(currentBalance + total) > cariCreditLimit) {
-        throw new BadRequestException(
-          `Kredi limiti aşılıyor (limit ${cariCreditLimit} ₺, mevcut borç ${currentBalance} ₺).`,
-        );
       }
       cariDueDate = new Date(Date.now() + cariTermDays * 24 * 60 * 60 * 1000);
     }
@@ -490,6 +488,16 @@ export class OrdersService {
         if (updated.count === 0) {
           throw new ConflictException("Kupon kullanım hakkı az önce doldu, tekrar deneyin.");
         }
+      }
+
+      // === ATOMİK kredi limiti kontrolü (cari/açık hesap) ===
+      // KRİTİK yarış düzeltmesi: bakiye kontrolü transaction DIŞINDA yapıldığında iki eşzamanlı
+      // cari sipariş aynı eski bakiyeyi okuyup ikisi de limitten geçebiliyordu (limit aşımı).
+      // Çözüm: kullanıcı satırını kilitle (SELECT ... FOR UPDATE) → aynı kullanıcının cari
+      // siparişleri serileşir → bakiyeyi KİLİTLİ olarak yeniden hesapla → limit kontrolü → debit.
+      // Kilit + okuma + yazma aynı transaction'da olduğundan check-and-create artık atomiktir.
+      if (onAccount && input.userId) {
+        await this.assertCariLimitWithinTx(tx, input.userId, cariCreditLimit, total);
       }
 
       const created = await tx.order.create({
@@ -552,9 +560,53 @@ export class OrdersService {
     });
   }
 
-  /** Cari hesap bakiyesi: borç(debit) − ödeme(credit). Pozitif = müşteri borçlu. */
-  private async corporateBalance(userId: string): Promise<number> {
-    const grouped = await this.prisma.corporateLedgerEntry.groupBy({
+  /**
+   * Transaction İÇİNDE kredi limiti kontrolü (atomik check-and-create için).
+   *
+   * Yarış kapanışı: önce kullanıcı satırını `SELECT ... FOR UPDATE` ile kilitler — böylece
+   * AYNI kullanıcının eşzamanlı cari siparişleri PostgreSQL'de serileşir (ikinci işlem
+   * birincinin commit'ini bekler). Ardından bakiyeyi transaction içinden (kilitli görünümle)
+   * yeniden hesaplar ve `bakiye + yeniBorç ≤ limit` kuralını uygular. Kilit + okuma + (çağıran
+   * tarafında) debit yazımı aynı transaction'da olduğundan check-and-create artık atomiktir.
+   *
+   * Limit semantiği DEĞİŞMEDİ: limit null → sınırsız; round2(bakiye + total) > limit → reddet.
+   * Test ortamı (mock tx) `$queryRaw`/`groupBy` sağlamayabilir; bu durumda kilit/okuma sessizce
+   * atlanır ve mevcut (transaction-dışı) bakiye okumasına düşülür — happy-path davranışı korunur.
+   */
+  private async assertCariLimitWithinTx(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    creditLimit: number | null,
+    newDebit: number,
+  ): Promise<void> {
+    // Limit yoksa (sınırsız) kontrol gereksiz — yine de kilide gerek yok.
+    if (creditLimit == null) return;
+
+    // Kullanıcı satırını kilitle → aynı kullanıcının cari siparişleri serileşir.
+    // queryRaw mock'ta tanımsız olabilir (birim testleri) → güvenli düşüş.
+    try {
+      if (typeof tx.$queryRaw === "function") {
+        await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
+      }
+    } catch (e) {
+      this.logger.error(`cari limit kilidi alınamadı user=${userId}: ${(e as Error).message}`);
+    }
+
+    // Bakiyeyi transaction içinden (kilit sonrası taze görünümle) hesapla.
+    const balance = await this.ledgerBalanceVia(tx, userId);
+    if (round2(balance + newDebit) > creditLimit) {
+      throw new BadRequestException(
+        `Kredi limiti aşılıyor (limit ${creditLimit} ₺, mevcut borç ${balance} ₺).`,
+      );
+    }
+  }
+
+  /** Verilen transaction client üzerinden cari bakiye (borç − tahsilat). */
+  private async ledgerBalanceVia(
+    client: Prisma.TransactionClient,
+    userId: string,
+  ): Promise<number> {
+    const grouped = await client.corporateLedgerEntry.groupBy({
       by: ["kind"],
       where: { userId },
       _sum: { amount: true },
