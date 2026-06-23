@@ -193,49 +193,54 @@ export default async function ProductPage({ params }: Props) {
             {/* Tabs */}
             <ProductTabs description={product.description} />
 
-            {/* Features */}
-            {product.features && product.features.length > 0 && (
-              <section className="border-t border-paper-200 pt-8">
-                <header className="flex items-center gap-2 mb-4">
-                  <CheckCircle size={20} weight="fill" className="text-brand-700" />
-                  <h2 className="text-xl font-semibold text-ink-900">Öne Çıkan Özellikler</h2>
-                </header>
-                <ul className="grid sm:grid-cols-2 gap-2.5">
-                  {product.features.map((f: string, i: number) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 text-sm text-ink-700 leading-relaxed"
-                    >
-                      <CheckCircle
-                        size={16}
-                        weight="fill"
-                        className="text-brand-500 mt-0.5 flex-none"
-                      />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            {/* Öne Çıkan Özellikler + Kullanım Alanları — masaüstünde yan yana (aşağıda seyrek
+                durmasın, daha derli toplu). Biri yoksa diğeri tam genişlik akar. */}
+            {((product.features && product.features.length > 0) ||
+              (product.useCases && product.useCases.length > 0)) && (
+              <div className="grid md:grid-cols-2 gap-8 md:gap-10 border-t border-paper-200 pt-8">
+                {product.features && product.features.length > 0 && (
+                  <section>
+                    <header className="flex items-center gap-2 mb-4">
+                      <CheckCircle size={20} weight="fill" className="text-brand-700" />
+                      <h2 className="text-xl font-semibold text-ink-900">Öne Çıkan Özellikler</h2>
+                    </header>
+                    <ul className="space-y-2.5">
+                      {product.features.map((f: string, i: number) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-2 text-sm text-ink-700 leading-relaxed"
+                        >
+                          <CheckCircle
+                            size={16}
+                            weight="fill"
+                            className="text-brand-500 mt-0.5 flex-none"
+                          />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
 
-            {/* Use cases */}
-            {product.useCases && product.useCases.length > 0 && (
-              <section className="border-t border-paper-200 pt-8">
-                <header className="flex items-center gap-2 mb-4">
-                  <ListChecks size={20} weight="fill" className="text-brand-700" />
-                  <h2 className="text-xl font-semibold text-ink-900">Kullanım Alanları</h2>
-                </header>
-                <div className="flex flex-wrap gap-2">
-                  {product.useCases.map((u, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1.5 bg-paper-100 border border-paper-200 rounded-full text-xs text-ink-700"
-                    >
-                      {u}
-                    </span>
-                  ))}
-                </div>
-              </section>
+                {product.useCases && product.useCases.length > 0 && (
+                  <section>
+                    <header className="flex items-center gap-2 mb-4">
+                      <ListChecks size={20} weight="fill" className="text-brand-700" />
+                      <h2 className="text-xl font-semibold text-ink-900">Kullanım Alanları</h2>
+                    </header>
+                    <div className="flex flex-wrap gap-2">
+                      {product.useCases.map((u, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-paper-100 border border-paper-200 rounded-full text-xs text-ink-700"
+                        >
+                          {u}
+                        </span>
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
             )}
 
             {/* Specifications */}

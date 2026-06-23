@@ -316,6 +316,18 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
     );
   }
 
+  // Kompakt mod: kısa etiketli, alt-etiketsiz gruplar (ör. Adet) → çok-sütunlu pill ızgara.
+  // Konfigüratörü kısaltır → fiyat + "Sepete Ekle" ürün görseliyle aynı ekrana çıkar.
+  const compact =
+    sorted.length >= 3 && sorted.every((o) => !o.optionSublabel && o.optionLabel.length <= 20);
+
+  function hintFor(optionKey: string): string | null {
+    const hint = priceHints?.[optionKey];
+    if (hintMode === "none" || hint === null || hint === undefined || !Number.isFinite(hint) || hint <= 0)
+      return null;
+    return hintMode === "delta" ? `+${formatPrice(hint)} ₺` : `${formatPrice(hint)} ₺`;
+  }
+
   // Few options → radio cards
   return (
     <div>
@@ -328,21 +340,42 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
       <div
         role="radiogroup"
         aria-labelledby={`group-${groupKey}-label`}
-        className="grid grid-cols-1 gap-2"
+        className={cn("grid gap-2", compact ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1")}
       >
         {sorted.map((opt) => {
           const isSelected = selected === opt.optionKey;
-          const hint = priceHints?.[opt.optionKey];
-          const showHint = hintMode !== "none" && hint !== null && hint !== undefined && Number.isFinite(hint);
-          let hintLabel: string | null = null;
-          if (showHint) {
-            if (hintMode === "delta") {
-              hintLabel = hint > 0 ? `+${formatPrice(hint)} ₺` : null;
-            } else {
-              // total mode: adet başına toplam
-              hintLabel = hint > 0 ? `${formatPrice(hint)} ₺` : null;
-            }
+          const hintLabel = hintFor(opt.optionKey);
+
+          if (compact) {
+            return (
+              <button
+                key={opt.optionKey}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => onSelect(opt.optionKey)}
+                className={cn(
+                  "flex flex-col items-center justify-center px-2 py-2.5 rounded-md border text-center transition-all duration-200 ease-out-expo",
+                  isSelected
+                    ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
+                    : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
+                )}
+              >
+                <span className="font-medium text-sm leading-tight">{opt.optionLabel}</span>
+                {hintLabel && (
+                  <span
+                    className={cn(
+                      "text-[11px] tabular-nums mt-0.5",
+                      isSelected ? "text-paper-200" : "text-ink-500",
+                    )}
+                  >
+                    {hintLabel}
+                  </span>
+                )}
+              </button>
+            );
           }
+
           return (
             <button
               key={opt.optionKey}
