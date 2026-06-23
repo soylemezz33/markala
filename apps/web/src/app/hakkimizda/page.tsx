@@ -6,7 +6,7 @@ import {
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Hakkımızda — 324 Ajans Çatısı Altında Matbaa & Reklam",
+  title: "Hakkımızda — Markala & 324 Ajans",
   description:
     "Markala, 324 Ajans çatısı altında matbaa ve reklam ürünlerinde 10+ yıllık tecrübeyi e-ticaret modeline taşıyan butik markadır. Mersin merkezli, Türkiye geneli teslimat.",
   alternates: { canonical: "/hakkimizda" },

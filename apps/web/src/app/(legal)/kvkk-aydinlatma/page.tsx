@@ -5,7 +5,7 @@ import { Shield, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "KVKK Aydınlatma Metni [TASLAK]",
+  title: "KVKK Aydınlatma Metni",
   description:
     "Markala (markala.com.tr) — 6698 sayılı KVKK kapsamında hazırlanmış aydınlatma metni taslağı. Hukuk müşaviri onayı beklenmektedir.",
   robots: { index: false, follow: false },
