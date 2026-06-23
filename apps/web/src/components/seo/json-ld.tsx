@@ -39,7 +39,7 @@ export function OrganizationJsonLd() {
           {
             "@type": "ContactPoint",
             contactType: "customer service",
-            email: "info@markala.com.tr",
+            email: "bilgi@markala.com.tr",
             telephone: "+90-324-433-3351",
             areaServed: "TR",
             availableLanguage: ["Turkish"],
@@ -229,7 +229,7 @@ export function LocalBusinessJsonLd() {
     image: `${SITE}/og-default.png`,
     url: SITE,
     telephone: "+90-324-433-3351",
-    email: "info@markala.com.tr",
+    email: "bilgi@markala.com.tr",
     priceRange: "₺₺",
     address: {
       "@type": "PostalAddress",
