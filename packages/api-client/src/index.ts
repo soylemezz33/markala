@@ -499,6 +499,8 @@ export class MarkalaApiClient {
     /** Kargo bedeli ve ücretsiz kargo eşiği — public, auth gerekmez. Fallback: 79/750. */
     shipping: () =>
       this.request<{ fee: number; freeThreshold: number }>("GET", "/settings/shipping"),
+    /** Header menüsü JSON'u — public; admin /menu yönetir, yoksa null (storefront DEFAULT_NAV'a düşer). */
+    headerNav: () => this.request<unknown>("GET", "/settings/header-nav"),
   };
 
   // === Prices (toplu fiyat işlemleri) ===

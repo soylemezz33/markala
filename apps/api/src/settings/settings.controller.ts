@@ -15,6 +15,12 @@ export class SettingsController {
     return this.service.getShipping();
   }
 
+  /** Public — storefront header menüsünü buradan okur (admin /menu yönetir). */
+  @Get("header-nav")
+  headerNav() {
+    return this.service.getHeaderNav();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")

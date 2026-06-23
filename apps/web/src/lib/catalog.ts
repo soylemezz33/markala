@@ -1,5 +1,6 @@
 import type { Product, Category } from "@markala/types";
 import { type HeroSlide } from "@markala/mock-data";
+import type { NavCategory } from "@/components/site-header";
 
 /**
  * Katalog veri katmanı — storefront ürünleri artık CANLI API'den (admin yönetir).
@@ -235,6 +236,28 @@ export async function getCategories(): Promise<Category[]> {
 export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
   const list = await getCategories();
   return list.find((c) => c.slug === slug);
+}
+
+/**
+ * Header menüsü — CANLI API (admin /menu yönetir → header_nav SiteSetting).
+ * Geçerli (her öğede label+href olan) bir dizi DEĞİLSE null → SiteHeader koddaki
+ * DEFAULT_NAV yedeğine düşer (kayıt yokken/bozukken site eskisi gibi çalışır).
+ */
+export async function getHeaderNav(): Promise<NavCategory[] | null> {
+  try {
+    const data = await fetchJson("/settings/header-nav");
+    if (!Array.isArray(data) || data.length === 0) return null;
+    const valid = data.every(
+      (c) =>
+        c != null &&
+        typeof c === "object" &&
+        typeof (c as NavCategory).label === "string" &&
+        typeof (c as NavCategory).href === "string",
+    );
+    return valid ? (data as NavCategory[]) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Bir kategorinin ürünleri. API hatası → [] (graceful empty; mock fallback kaldırıldı). */

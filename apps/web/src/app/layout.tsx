@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
+import { getHeaderNav } from "@/lib/catalog";
 import { SiteFooter } from "@/components/site-footer";
 import { CtaBanner } from "@/components/home/cta-banner";
 import { ThemeBody } from "@/components/theme-body";
@@ -104,7 +105,9 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Header menüsü — admin /menu yönetir (header_nav); yoksa SiteHeader DEFAULT_NAV'a düşer.
+  const headerNav = await getHeaderNav();
   return (
     <html lang="tr" className={fontSans.variable}>
       <head>
@@ -128,7 +131,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           className="mx-auto w-full flex flex-col flex-1"
           style={{ maxWidth: "1440px" }}
         >
-          <SiteHeader />
+          <SiteHeader nav={headerNav ?? undefined} />
           <main id="main" className="flex-1">{children}</main>
         </div>
 

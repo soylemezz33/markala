@@ -8,7 +8,7 @@ import {
   Gear, SignOut, Sliders, ImageSquare, Bell, List, X,
   PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
   ChatCircle, CurrencyCircleDollar, Receipt, Buildings, CaretDown, UserCircle,
-  Pulse, Medal, EnvelopeSimple, PaperPlaneTilt,
+  Pulse, Medal, EnvelopeSimple, PaperPlaneTilt, ListBullets,
 } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
@@ -48,6 +48,7 @@ const navGroups: Array<{
   {
     title: "İçerik & Medya",
     links: [
+      { href: "/menu", label: "Header Menü", icon: ListBullets },
       { href: "/slider", label: "Anasayfa Slider", icon: Sliders },
       { href: "/banner", label: "Banner Yönetimi", icon: ImageSquare },
       { href: "/blog", label: "Blog Yazıları", icon: FileText },

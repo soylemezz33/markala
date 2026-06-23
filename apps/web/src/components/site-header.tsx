@@ -51,16 +51,20 @@ const TOP_LINKS = [
   { href: "/iletisim", label: "İletişim" },
 ];
 
-// Alt nav — ana kategori grupları (mega menu için)
-const MAIN_NAV: Array<{
+// === Header navigasyon tipi (Faz 1: admin /menu yönetir, storefront API'den okur) ===
+export type NavFeatured = { slug: string; label: string; theme?: "brand" | "paper" | "ink" };
+export type NavCategory = {
   label: string;
   href: string;
   /** Mega menu — alt kategori listesi gösterilir */
   groups?: Array<{ title: string; items: Array<{ label: string; href: string; badge?: string }> }>;
   /** Mega menu sağ blok — öne çıkan ürünler (fiyat YOK; /api/mockup görselli) */
-  featured?: Array<{ slug: string; label: string; theme?: "brand" | "paper" | "ink" }>;
+  featured?: NavFeatured[];
   highlight?: "fire" | "new";
-}> = [
+};
+
+// Varsayılan/yedek menü — admin /menu kaydı (header_nav) yoksa/boş/bozuksa bu kullanılır.
+const DEFAULT_NAV: NavCategory[] = [
   {
     label: "Kartvizit & Kırtasiye",
     href: "/urunler",
@@ -257,7 +261,9 @@ const MAIN_NAV: Array<{
   },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
+  // Admin /menu kaydı (header_nav) varsa onu, yoksa koddaki DEFAULT_NAV'ı kullan.
+  const NAV: NavCategory[] = nav && nav.length > 0 ? nav : DEFAULT_NAV;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -480,7 +486,7 @@ export function SiteHeader() {
             onMouseLeave={scheduleMegaClose}
           >
             <Container className="flex items-center gap-1">
-              {MAIN_NAV.map((nav, i) => (
+              {NAV.map((nav, i) => (
                 <Link
                   key={nav.label}
                   href={nav.href}
@@ -517,7 +523,7 @@ export function SiteHeader() {
             </Container>
 
             <MegaPanel
-              items={MAIN_NAV}
+              items={NAV}
               activeIndex={megaIndex}
               open={megaOpen}
               onActive={setMegaIndex}
@@ -590,7 +596,7 @@ export function SiteHeader() {
                   <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5 mt-3">
                     Kategoriler
                   </div>
-                  {MAIN_NAV.map((n) => (
+                  {NAV.map((n) => (
                     // key'e menuOpen durumunu ekleyerek drawer kapanınca remount → nested
                     // submenu state'i (açık/kapalı) otomatik reset.
                     <MobileNavGroup
@@ -715,7 +721,7 @@ function MegaPanel({
   onActive,
   onClose,
 }: {
-  items: typeof MAIN_NAV;
+  items: NavCategory[];
   activeIndex: number;
   open: boolean;
   onActive: (i: number) => void;
@@ -854,7 +860,7 @@ function MobileLink({
   );
 }
 
-function MobileNavGroup({ nav, onClose }: { nav: (typeof MAIN_NAV)[number]; onClose: () => void }) {
+function MobileNavGroup({ nav, onClose }: { nav: NavCategory; onClose: () => void }) {
   const [open, setOpen] = useState(false);
   if (!nav.groups || nav.groups.length === 0) {
     return (

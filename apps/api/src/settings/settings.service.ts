@@ -12,6 +12,15 @@ export class SettingsService {
     return Object.fromEntries(rows.map((r) => [r.key, r.value]));
   }
 
+  /**
+   * Header menüsü (Faz 1) — admin'in yönettiği navigasyon JSON'u.
+   * Yoksa null döner → storefront koddaki DEFAULT_NAV yedeğine düşer.
+   */
+  async getHeaderNav(): Promise<unknown | null> {
+    const row = await this.prisma.siteSetting.findUnique({ where: { key: "header_nav" } });
+    return row?.value ?? null;
+  }
+
   async getShipping(): Promise<{ fee: number; freeThreshold: number }> {
     const rows = await this.prisma.siteSetting.findMany({ where: { group: "shipping" } });
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
