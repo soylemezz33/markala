@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
 
@@ -17,8 +17,11 @@ import { PrismaService } from "../../prisma/prisma.service";
  *
  * Config eksikse servis sessizce no-op döner (sipariş akışını bozmaz). Docs: apidocs.parasut.com
  */
+/** Fix 3: OAuth2/API fetch için timeout süresi (ms). Turnstile pattern'ı ile aynı yaklaşım. */
+const PARASUT_FETCH_TIMEOUT_MS = 12_000;
+
 @Injectable()
-export class ParasutService {
+export class ParasutService implements OnModuleInit {
   private readonly logger = new Logger(ParasutService.name);
   private readonly oauthUrl = "https://api.parasut.com/oauth/token";
   private readonly redirectUri = "urn:ietf:wg:oauth:2.0:oob";
@@ -27,6 +30,26 @@ export class ParasutService {
   private productCache = new Map<string, string>();
 
   constructor(private config: ConfigService, private prisma: PrismaService) {}
+
+  /** Fix 4: Başlangıçta zorunlu env var kontrolü — eksikse belirgin WARN (crash etmez). */
+  onModuleInit(): void {
+    const required = [
+      "PARASUT_CLIENT_ID",
+      "PARASUT_CLIENT_SECRET",
+      "PARASUT_USERNAME",
+      "PARASUT_PASSWORD",
+      "PARASUT_COMPANY_ID",
+    ] as const;
+    const missing = required.filter((k) => !this.cfg(k));
+    if (missing.length > 0) {
+      this.logger.warn(
+        `[Paraşüt] YAPILANDIRMA EKSİK — ${missing.join(", ")} env var(lar) tanımlı değil. ` +
+          "Paraşüt e-fatura entegrasyonu devre dışı (sipariş akışı etkilenmez).",
+      );
+    } else {
+      this.logger.log("[Paraşüt] Tüm zorunlu env var mevcut — entegrasyon etkin.");
+    }
+  }
 
   private cfg(k: string): string | undefined {
     return this.config.get<string>(k);
@@ -54,47 +77,77 @@ export class ParasutService {
       ? { grant_type: "refresh_token", refresh_token: this.token.refresh }
       : { grant_type: "password", username: this.cfg("PARASUT_USERNAME"), password: this.cfg("PARASUT_PASSWORD") };
 
-    const res = await fetch(this.oauthUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...grant,
-        client_id: this.cfg("PARASUT_CLIENT_ID"),
-        client_secret: this.cfg("PARASUT_CLIENT_SECRET"),
-        redirect_uri: this.redirectUri,
-      }),
-    });
-    if (!res.ok) {
-      this.token = null; // refresh başarısızsa bir sonraki sefer password grant'a düş
-      // OAuth yanıt gövdesini ASLA loglamayın — kısmi credential/token bilgisi içerebilir.
-      // Yalnızca HTTP status kodu loglanır; hata ayıklama için Paraşüt dashboard'unu kullanın.
-      await res.text(); // body'yi tüket (connection leak'i önle), içeriği atmıyor
-      throw new Error(`Paraşüt OAuth ${res.status}`);
+    // Fix 3: AbortController timeout — Turnstile pattern ile aynı yaklaşım.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PARASUT_FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(this.oauthUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...grant,
+          client_id: this.cfg("PARASUT_CLIENT_ID"),
+          client_secret: this.cfg("PARASUT_CLIENT_SECRET"),
+          redirect_uri: this.redirectUri,
+        }),
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        this.token = null; // refresh başarısızsa bir sonraki sefer password grant'a düş
+        // OAuth yanıt gövdesini ASLA loglamayın — kısmi credential/token bilgisi içerebilir.
+        // Yalnızca HTTP status kodu loglanır; hata ayıklama için Paraşüt dashboard'unu kullanın.
+        await res.text(); // body'yi tüket (connection leak'i önle), içeriği atmıyor
+        throw new Error(`Paraşüt OAuth ${res.status}`);
+      }
+      const j = (await res.json()) as { access_token: string; refresh_token: string; expires_in: number };
+      this.token = { access: j.access_token, refresh: j.refresh_token, expiresAt: now + j.expires_in * 1000 };
+      return this.token.access;
+    } catch (err) {
+      const e = err as Error;
+      if (e.name === "AbortError") {
+        this.logger.error(`Paraşüt OAuth timeout (>${PARASUT_FETCH_TIMEOUT_MS}ms) — bağlantı zaman aşımı`);
+        throw new Error(`Paraşüt OAuth timeout`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
     }
-    const j = (await res.json()) as { access_token: string; refresh_token: string; expires_in: number };
-    this.token = { access: j.access_token, refresh: j.refresh_token, expiresAt: now + j.expires_in * 1000 };
-    return this.token.access;
   }
 
-  /** v4 JSON:API çağrısı. */
+  /** v4 JSON:API çağrısı. Fix 3: AbortController timeout eklendi. */
   private async api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
     const token = await this.getAccessToken();
-    const res = await fetch(`${this.apiBase}${path}`, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      // Ham yanıt gövdesini Error mesajına KOYMA (logger.error'a sızmasın) — debug'da ayrı tut.
-      this.logger.debug(`Paraşüt API hata gövdesi (${method} ${path}): ${text.slice(0, 300)}`);
-      throw new Error(`Paraşüt ${method} ${path} → ${res.status}`);
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PARASUT_FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(`${this.apiBase}${path}`, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        // Ham yanıt gövdesini Error mesajına KOYMA (logger.error'a sızmasın) — debug'da ayrı tut.
+        this.logger.debug(`Paraşüt API hata gövdesi (${method} ${path}): ${text.slice(0, 300)}`);
+        throw new Error(`Paraşüt ${method} ${path} → ${res.status}`);
+      }
+      return (text ? JSON.parse(text) : {}) as T;
+    } catch (err) {
+      const e = err as Error;
+      if (e.name === "AbortError") {
+        this.logger.error(`Paraşüt API timeout (>${PARASUT_FETCH_TIMEOUT_MS}ms) ${method} ${path}`);
+        throw new Error(`Paraşüt API timeout: ${method} ${path}`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
     }
-    return (text ? JSON.parse(text) : {}) as T;
   }
 
   // === Contact (müşteri) upsert ===

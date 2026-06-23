@@ -19,8 +19,88 @@ function num(v: unknown): number {
 // Toplamsal motor — Global Constraints sözleşmesi (product_options/product_prices)
 // ---------------------------------------------------------------------------
 
-interface PricingOption { groupKey: string; groupLabel: string; groupRole: "dimension"|"priced"; groupSort: number; optionKey: string; optionLabel: string; optionSublabel?: string|null; optionSort: number; }
+interface PricingOption { groupKey: string; groupLabel: string; groupRole: "dimension"|"priced"; groupSort: number; optionKey: string; optionLabel: string; optionSublabel?: string|null; optionSort: number; locked?: boolean; rules?: OptionRules | null; }
 interface PricingPriceRow { groupKey?: string|null; optionKey?: string|null; dimKey?: string|null; price: number|string; cost?: number|string|null; }
+
+// ---------------------------------------------------------------------------
+// Fix 1+2 — Kural (rules) ve kilitli (locked) seçenek normalizasyonu
+// Web configurator.ts ile birebir aynı mantık (resolveRules + effectiveSelections).
+// ---------------------------------------------------------------------------
+
+/** Option başına kurallar şeması — web configurator.ts OptionRulesLite ile birebir. */
+export interface OptionRules {
+  disablesGroups?: string[];
+  forcesOption?: { groupKey: string; optionKey: string };
+}
+
+/**
+ * Aktif seçimlerin rules'larını toplar.
+ * Sadece SEÇİLİ olan option'ların rules'ları geçerlidir (web ile birebir davranış).
+ */
+export function resolveRules(
+  opts: PricingOption[],
+  selections: Record<string, string>,
+): { disabledGroups: Set<string>; forced: Record<string, string> } {
+  const disabledGroups = new Set<string>();
+  const forced: Record<string, string> = {};
+  for (const o of opts) {
+    if (selections[o.groupKey] !== o.optionKey) continue; // sadece SEÇİLİ option'ın rules'ı
+    const r = o.rules;
+    if (!r) continue;
+    for (const g of r.disablesGroups ?? []) disabledGroups.add(g);
+    if (r.forcesOption) forced[r.forcesOption.groupKey] = r.forcesOption.optionKey;
+  }
+  return { disabledGroups, forced };
+}
+
+/**
+ * Efektif seçimler = selections + forced, pasif gruplar çıkarılmış.
+ * Ayrıca locked=true olan gruplar için client seçimi yok sayılır → grubun
+ * optionSort en küçük option'ı (default) zorlanır.
+ * Pasif gruplar (disabledGroups) fiyata katılmaz.
+ */
+export function effectiveSelections(
+  opts: PricingOption[],
+  selections: Record<string, string>,
+  resolved: { disabledGroups: Set<string>; forced: Record<string, string> },
+): Record<string, string> {
+  const result = { ...selections, ...resolved.forced };
+
+  // locked=true → o grup için client seçimi yok sayılır; optionSort en küçük default zorlanır
+  const lockedDefaults = new Map<string, { optionKey: string; optionSort: number }>();
+  for (const o of opts) {
+    if (!o.locked) continue;
+    const cur = lockedDefaults.get(o.groupKey);
+    if (!cur || o.optionSort < cur.optionSort) {
+      lockedDefaults.set(o.groupKey, { optionKey: o.optionKey, optionSort: o.optionSort });
+    }
+  }
+  for (const [groupKey, { optionKey }] of lockedDefaults) {
+    result[groupKey] = optionKey;
+  }
+
+  // disabledGroups çıkar
+  for (const g of resolved.disabledGroups) {
+    delete result[g];
+  }
+  return result;
+}
+
+/**
+ * Ürün option'larından rules+locked normalizasyonu uygulanmış efektif selections döndürür.
+ * Kural/locked yoksa selections değişmeden gelir (geriye uyumlu, sıfır maliyet).
+ */
+export function normalizeSelections(
+  opts: PricingOption[],
+  rawSelections: Record<string, string>,
+): Record<string, string> {
+  // Hiç rules/locked yoksa erken çık (yaygın durum — performans)
+  const hasRulesOrLocked = opts.some((o) => o.rules || o.locked);
+  if (!hasRulesOrLocked) return rawSelections;
+
+  const resolved = resolveRules(opts, rawSelections);
+  return effectiveSelections(opts, rawSelections, resolved);
+}
 
 export function computeConfiguredPrice(options: PricingOption[], prices: PricingPriceRow[], selections: Record<string, string>): number {
   const sels = selections && typeof selections === "object" ? selections : {};

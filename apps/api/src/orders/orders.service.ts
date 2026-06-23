@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
 import { SettingsService } from "../settings/settings.service";
-import { computeConfiguredPrice, extractSelections, pickConfigurationSummary } from "./pricing";
+import { computeConfiguredPrice, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -112,7 +112,9 @@ function buildNotesWithIdem(notes: string | undefined, idemHash: string | undefi
   return notes ? `${tag}\n${notes}` : tag;
 }
 
-/** Satır-içi (misafir/storefront) adres — kayıtlı Address yoksa Order'a snapshot olarak yazılır. */
+/** Satır-içi (misafir/storefront) adres — kayıtlı Address yoksa Order'a snapshot olarak yazılır.
+ * Fix 5: type/companyName/taxNumber/taxOffice eklendi — sipariş detay sayfası (a.type==="corporate")
+ * kontrolünün ve Paraşüt fatura kurumsal sınıflandırmasının snapshot üzerinde de çalışması için. */
 export interface InlineAddress {
   fullName: string;
   phone: string;
@@ -121,6 +123,14 @@ export interface InlineAddress {
   fullAddress: string;
   zipCode?: string;
   label?: string;
+  /** "individual" | "corporate" — AddressBlock ve Paraşüt kurumsal tespiti için */
+  type?: string;
+  /** Fatura adresi kurumsal ise firma adı */
+  companyName?: string;
+  /** Vergi kimlik numarası (kurumsal) */
+  taxNumber?: string;
+  /** Vergi dairesi (kurumsal) */
+  taxOffice?: string;
 }
 
 /** Sadece izinli alanları al — client'tan gelebilecek fazlalık alanları snapshot'a sızdırma. */
@@ -133,6 +143,11 @@ function normalizeAddressSnapshot(a: InlineAddress): InlineAddress {
     fullAddress: a.fullAddress,
     ...(a.zipCode ? { zipCode: a.zipCode } : {}),
     label: a.label ?? "Teslimat",
+    // Fix 5: kurumsal fatura alanları — varsa snapshot'a dahil et
+    ...(a.type ? { type: a.type } : {}),
+    ...(a.companyName ? { companyName: a.companyName } : {}),
+    ...(a.taxNumber ? { taxNumber: a.taxNumber } : {}),
+    ...(a.taxOffice ? { taxOffice: a.taxOffice } : {}),
   };
 }
 
@@ -270,11 +285,19 @@ export class OrdersService {
 
       if (product) {
         // Konfigüratör fiyatı: ürünün KENDİ options/prices şeması + kullanıcı selections'ından.
-        const selections = extractSelections(i.configuration);
+        // Fix 1+2: rules (forcesOption/disablesGroups) ve locked normalizasyonu web ile parity.
+        const rawSelections = extractSelections(i.configuration) as Record<string, string>;
+        const mappedOpts = (product.options ?? []).map((o) => ({
+          ...o,
+          groupRole: o.groupRole as "dimension" | "priced",
+          locked: (o as unknown as { locked?: boolean }).locked ?? false,
+          rules: (o as unknown as { rules?: unknown }).rules as import("./pricing").OptionRules | null ?? null,
+        }));
+        const selections = normalizeSelections(mappedOpts, rawSelections);
         const configuredUnit = computeConfiguredPrice(
-          (product.options ?? []).map((o) => ({ ...o, groupRole: o.groupRole as "dimension" | "priced" })),
+          mappedOpts,
           (product.prices ?? []).map((r) => ({ groupKey: r.groupKey, optionKey: r.optionKey, dimKey: r.dimKey, price: Number(r.price) })),
-          selections as Record<string, string>,
+          selections,
         );
         // Fiyatı belirlenmemiş ürün (configuredUnit=0 → "Teklif Al") sipariş edilemez:
         // storefront sepete eklemeyi zaten engeller; bu sunucu-tarafı savunma (doğrudan API
