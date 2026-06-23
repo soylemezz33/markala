@@ -577,6 +577,16 @@ export function SiteHeader() {
                     </Link>
                   </div>
 
+                  {/* Kurumsal / Teklif Al — kurumsal sinyal (masaüstü utility bar paritesi) */}
+                  <Link
+                    href="/kurumsal"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-between gap-2 p-3 mb-1 rounded-lg bg-ink-900 text-paper-50 font-semibold text-sm"
+                  >
+                    <span className="flex items-center gap-2">🏢 Kurumsal / Teklif Al</span>
+                    <span className="text-[11px] font-normal text-paper-100/70">Açık hesap · özel fiyat</span>
+                  </Link>
+
                   <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5 mt-3">
                     Kategoriler
                   </div>
@@ -902,6 +912,38 @@ function MobileNavGroup({ nav, onClose }: { nav: (typeof MAIN_NAV)[number]; onCl
                   ))}
                 </div>
               ))}
+
+              {nav.featured && nav.featured.length > 0 && (
+                <div className="px-3 pt-2 pb-1">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-ink-500 mb-2">
+                    <Star size={11} weight="fill" className="text-brand-600" /> Öne Çıkanlar
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {nav.featured.map((f) => (
+                      <Link
+                        key={f.slug}
+                        href={`/urun/${f.slug}`}
+                        onClick={onClose}
+                        className="group flex flex-col rounded-lg border border-paper-200 overflow-hidden bg-paper-50 active:bg-paper-100"
+                      >
+                        <span className="relative block aspect-[4/3] bg-paper-100 overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/api/mockup?slug=${encodeURIComponent(f.slug)}&theme=${f.theme ?? "brand"}&w=240&h=180`}
+                            alt={f.label}
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        </span>
+                        <span className="px-2 py-1.5 text-[12px] font-medium text-ink-900 leading-tight">
+                          {f.label}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <Link
                 href={nav.href}
                 onClick={onClose}
