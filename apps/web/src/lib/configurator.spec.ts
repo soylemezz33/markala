@@ -97,6 +97,46 @@ describe("computeConfiguredPrice", () => {
       computeConfiguredPrice(options, [], { paket: "cyp", adet: "1000" }),
     ).toBe(0);
   });
+
+  it("sadece dimension gruplar + prices=[] → 0", () => {
+    // Dimension-only: ebat + adet, fiyat satırı yok
+    const options = [opt("ebat", "dimension", "a4"), opt("adet", "dimension", "10")];
+    expect(
+      computeConfiguredPrice(options, [], { ebat: "a4", adet: "10" }),
+    ).toBe(0);
+  });
+
+  it("sadece priced gruplar + prices=[] → 0", () => {
+    // Priced-only: baski + laminasyon, fiyat satırı yok
+    const options = [
+      opt("baski", "priced", "renkli"),
+      opt("laminasyon", "priced", "parlak"),
+    ];
+    expect(
+      computeConfiguredPrice(options, [], { baski: "renkli", laminasyon: "parlak" }),
+    ).toBe(0);
+  });
+
+  it("eksik selection (bir grup seçilmemiş) → 0 katkı (çökmez)", () => {
+    // baski seçili, laminasyon SEÇİLMEMİŞ → laminasyon katkısı 0, sadece baski sayılır
+    const options = [
+      opt("baski", "priced", "renkli"),
+      opt("laminasyon", "priced", "parlak"),
+    ];
+    const prices = [
+      { groupKey: "baski", optionKey: "renkli", dimKey: null, price: 100 },
+      { groupKey: "laminasyon", optionKey: "parlak", dimKey: null, price: 50 },
+    ];
+    expect(
+      computeConfiguredPrice(options, prices, { baski: "renkli" /* laminasyon yok */ }),
+    ).toBe(100);
+  });
+
+  it("selections={} (tamamen boş) → 0, çökmez", () => {
+    const options = [opt("paket", "priced", "cyp"), opt("adet", "dimension", "1000")];
+    const prices = [{ groupKey: "paket", optionKey: "cyp", dimKey: "1000", price: 290 }];
+    expect(computeConfiguredPrice(options, prices, {})).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

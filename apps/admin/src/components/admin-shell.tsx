@@ -93,7 +93,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       .then((d) => {
         if (!cancelled) setUser(d.user);
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("[admin-shell] /api/auth/me fetch başarısız:", err);
+      });
     return () => {
       cancelled = true;
     };
@@ -107,7 +109,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       .then((d) => {
         if (!cancelled) setNotifs({ count: d.count ?? 0, items: d.items ?? [] });
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("[admin-shell] /api/notifications fetch başarısız:", err);
+      });
     return () => {
       cancelled = true;
     };

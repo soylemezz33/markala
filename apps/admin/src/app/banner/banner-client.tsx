@@ -135,8 +135,16 @@ export function BannerClient({ banners }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.title.trim()) {
+      toast.error("Banner başlığı zorunludur.");
+      return;
+    }
     if (!form.imageUrl.trim()) {
       toast.error("Lütfen bir görsel yükleyin.");
+      return;
+    }
+    if (form.startDate && form.endDate && form.startDate > form.endDate) {
+      toast.error("Bitiş tarihi başlangıç tarihinden önce olamaz.");
       return;
     }
     const payload = buildPayload(form);
@@ -151,8 +159,10 @@ export function BannerClient({ banners }: Props) {
           toast.success("Banner oluşturuldu.");
         }
         closeModal();
-      } catch {
-        toast.error(editingId ? "Güncelleme başarısız." : "Oluşturma başarısız.");
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : undefined;
+        const base = editingId ? "Güncelleme başarısız." : "Oluşturma başarısız.";
+        toast.error(msg ? `${base} ${msg}` : base);
       }
     });
   }

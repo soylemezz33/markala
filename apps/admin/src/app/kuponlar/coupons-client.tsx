@@ -126,8 +126,9 @@ export function CouponsClient({ coupons }: Props) {
       try {
         await updateCoupon(c.id, { isActive: false });
         toast.success(`"${c.code}" pasifleştirildi.`);
-      } catch {
-        toast.error("Pasifleştirme başarısız.");
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : undefined;
+        toast.error(msg ? `Pasifleştirme başarısız: ${msg}` : "Pasifleştirme başarısız.");
       }
     });
   }
@@ -135,6 +136,19 @@ export function CouponsClient({ coupons }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const payload = buildPayload(form);
+    // Temel istemci tarafı doğrulama
+    if (!form.code.trim()) {
+      toast.error("Kupon kodu zorunludur.");
+      return;
+    }
+    if (form.type !== "free_shipping" && (!form.value || Number(form.value) <= 0)) {
+      toast.error("İndirim değeri 0'dan büyük olmalıdır.");
+      return;
+    }
+    if (form.validFrom && form.validUntil && form.validFrom > form.validUntil) {
+      toast.error("Bitiş tarihi başlangıç tarihinden önce olamaz.");
+      return;
+    }
 
     startTransition(async () => {
       try {
@@ -146,8 +160,10 @@ export function CouponsClient({ coupons }: Props) {
           toast.success("Kupon oluşturuldu.");
         }
         closeModal();
-      } catch {
-        toast.error(editingId ? "Güncelleme başarısız." : "Oluşturma başarısız.");
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : undefined;
+        const base = editingId ? "Güncelleme başarısız." : "Oluşturma başarısız.";
+        toast.error(msg ? `${base} ${msg}` : base);
       }
     });
   }

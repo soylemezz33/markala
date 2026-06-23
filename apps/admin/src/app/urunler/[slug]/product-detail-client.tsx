@@ -40,9 +40,10 @@ interface Props {
   product: ProductDetail;
   categories: CategoryRow[];
   pricing?: { options: OptionInput[]; prices: ApiPrice[] };
+  pricingLoadError?: boolean;
 }
 
-export function ProductDetailClient({ product, categories, pricing }: Props) {
+export function ProductDetailClient({ product, categories, pricing, pricingLoadError }: Props) {
   const router = useRouter();
   const [name, setName] = useState(product.name);
   const [shortDesc, setShortDesc] = useState(product.shortDescription);
@@ -210,6 +211,11 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
 
           {/* Fiyat Yönetimi — Konfigüratör Yapısı */}
           <Card title="Fiyat Yönetimi — Konfigüratör Yapısı">
+            {pricingLoadError && (
+              <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+                ⚠️ Fiyat yönetimi yüklenemedi — mevcut yapı gösterilemiyor. Kaydetmeden önce sayfayı yenileyin; aksi hâlde tüm seçenek yapısı silinebilir.
+              </div>
+            )}
             <p className="text-xs text-ink-500 mb-4">
               Ürün seçenek gruplarını ve seçeneklerini buradan yönetin. Mevcut
               seçeneklerin key&apos;leri fiyat matrisine bağlı olduğu için
@@ -224,6 +230,11 @@ export function ProductDetailClient({ product, categories, pricing }: Props) {
 
           {/* Fiyat Yönetimi — Izgara */}
           <Card title="Fiyat Yönetimi — Izgara (Maliyet + Satış)">
+            {pricingLoadError && (
+              <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
+                ⚠️ Fiyat ızgarası yüklenemedi. Kaydetmeden önce sayfayı yenileyin.
+              </div>
+            )}
             <p className="text-xs text-ink-500 mb-4">
               Seçenek×boyut kombinasyonlarının satış ve maliyet fiyatlarını
               giriniz. Boş bırakılan hücreler satışa çıkmaz. Yapı kaydedilince

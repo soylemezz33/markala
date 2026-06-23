@@ -170,6 +170,18 @@ export function BlogClient({ posts, categories }: Props) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!form.title.trim()) {
+      toast.error("Yazı başlığı zorunludur.");
+      return;
+    }
+    if (!form.slug.trim()) {
+      toast.error("URL kısa adı (slug) zorunludur.");
+      return;
+    }
+    if (!form.content.trim()) {
+      toast.error("Yazı içeriği boş olamaz.");
+      return;
+    }
     const payload = buildPayload(form);
 
     startTransition(async () => {
@@ -182,8 +194,10 @@ export function BlogClient({ posts, categories }: Props) {
           toast.success("Yazı oluşturuldu.");
         }
         closeModal();
-      } catch {
-        toast.error(editingId ? "Güncelleme başarısız." : "Oluşturma başarısız.");
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : undefined;
+        const base = editingId ? "Güncelleme başarısız." : "Oluşturma başarısız.";
+        toast.error(msg ? `${base} ${msg}` : base);
       }
     });
   }

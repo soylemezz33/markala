@@ -234,10 +234,14 @@ export function optionPriceHints(
         }
       }
     } else if (adetGroup && g.key === adetGroup.key) {
-      // adet dimension: her option için tam toplam hesapla
+      // adet dimension: her option için tam toplam hesapla.
+      // hypothetical'a rules yeniden uygulanır (farklı adet seçimi kendi rule'larını tetikleyebilir).
+      const optsWithRules = opts as unknown as { groupKey: string; optionKey: string; rules?: OptionRulesLite | null }[];
       for (const optKey of optKeysInGroup) {
-        const hypothetical = { ...selections, adet: optKey };
-        hints[optKey] = calculateTotal(product, hypothetical);
+        const raw = { ...selections, adet: optKey };
+        const resolved = resolveRules(optsWithRules, raw);
+        const hyp = effectiveSelections(raw, resolved);
+        hints[optKey] = calculateTotal(product, hyp);
       }
     } else {
       // Diğer dimension (ebat vb.): hint yok

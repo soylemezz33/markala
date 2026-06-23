@@ -91,7 +91,11 @@ export function BulkPriceClient({ products, categories }: Props) {
         value,
         round,
       });
-      toast.success(`${res.updated} fiyat satırı güncellendi.`);
+      if (res.updated === 0) {
+        toast.error("Güncellenen fiyat satırı yok — kapsam boş olabilir.");
+      } else {
+        toast.success(`${res.updated} fiyat satırı güncellendi.`);
+      }
     } catch {
       toast.error("Güncelleme sırasında hata oluştu.");
     } finally {

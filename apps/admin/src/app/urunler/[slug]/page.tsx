@@ -31,10 +31,11 @@ export default async function ProductEditPage({ params }: Props) {
 
   // Fiyatlama yapısı (options + prices) — hata toleranslı, boş yapıyla açılsın.
   let pricing: { options: unknown[]; prices: unknown[] } = { options: [], prices: [] };
+  let pricingLoadError = false;
   try {
     pricing = await api.products.getPrices((product as unknown as { id: string }).id);
   } catch {
-    /* boş kalsın */
+    pricingLoadError = true;
   }
 
   return (
@@ -42,6 +43,7 @@ export default async function ProductEditPage({ params }: Props) {
       product={product as never}
       categories={categories as never}
       pricing={pricing as never}
+      pricingLoadError={pricingLoadError}
     />
   );
 }

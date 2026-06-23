@@ -77,7 +77,11 @@ export function extractSelections(config: unknown): Selections {
 export function pickConfigurationSummary(config: unknown, fallback: string): string {
   if (config && typeof config === "object") {
     const s = (config as Record<string, unknown>).summary;
-    if (typeof s === "string" && s.trim()) return s.trim().slice(0, 500);
+    if (typeof s === "string" && s.trim()) {
+      const trimmed = s.trim();
+      if (trimmed.length > 500) return trimmed.slice(0, 497) + "…";
+      return trimmed;
+    }
   }
   return fallback;
 }

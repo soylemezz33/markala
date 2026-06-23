@@ -146,7 +146,9 @@ export function ApiSettingsClient({ initial }: Props) {
     fetch("/api/integration-status")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setLiveStatus(d?.integrations ?? null))
-      .catch(() => {});
+      .catch((err) => {
+        console.error("[api-settings] /api/integration-status fetch başarısız:", err);
+      });
   }, []);
 
   // Sabit "connected" yerine gerçek durumu uygula (veri gelene kadar "Bilinmiyor").
