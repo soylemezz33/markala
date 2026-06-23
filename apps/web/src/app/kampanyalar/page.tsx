@@ -4,7 +4,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, Sparkle, Tag, ArrowRight } from "@phosphor-icons/react";
+import {
+  ShoppingBagOpen,
+  CheckCircle,
+  Sparkle,
+  Tag,
+  ArrowRight,
+  PaintBrush,
+  Lightning,
+  Package,
+  Storefront,
+  Buildings,
+  Confetti,
+  Gift,
+} from "@phosphor-icons/react";
 import type { CampaignBundle, CampaignBundleCategory } from "@markala/types";
 import { useCartStore } from "@/lib/cart-store";
 
@@ -17,9 +30,25 @@ const filters: { id: CampaignBundleCategory | "all"; label: string }[] = [
   { id: "promosyon", label: "Promosyon" },
 ];
 
+// Boş durum + hero için sektör kartları (paket eklenince de "neler var" hissi verir).
+const sectors: { id: CampaignBundleCategory; label: string; desc: string; icon: typeof Storefront }[] = [
+  { id: "esnaf", label: "Esnaf", desc: "Dükkan & küçük işletme", icon: Storefront },
+  { id: "kurumsal", label: "Kurumsal", desc: "Ofis & marka kimliği", icon: Buildings },
+  { id: "etkinlik", label: "Etkinlik", desc: "Fuar, lansman, organizasyon", icon: Confetti },
+  { id: "acilis", label: "Açılış", desc: "Yeni açılan mekanlar", icon: Sparkle },
+  { id: "promosyon", label: "Promosyon", desc: "Hediyelik & tanıtım", icon: Gift },
+];
+
+const valueProps = [
+  { icon: Lightning, title: "Tek tıkla sepet", desc: "Paket hazır, anında ekle" },
+  { icon: Package, title: "Tek seferde teslim", desc: "Tüm ürünler birlikte gelir" },
+  { icon: PaintBrush, title: "Tasarım dahil", desc: "Ücretsiz tasarım desteği" },
+  { icon: Tag, title: "Paket indirimi", desc: "Tek tek almaktan ucuz" },
+];
+
 export default function KampanyalarPage() {
   const [filter, setFilter] = useState<CampaignBundleCategory | "all">("all");
-  // CANLI paketler (admin yönetir, DB'den). API boş → sayfa boş gösterir.
+  // CANLI paketler (admin yönetir, DB'den). API boş → zengin boş durum gösterilir.
   const [bundles, setBundles] = useState<CampaignBundle[]>([]);
   useEffect(() => {
     fetch("/api/kampanyalar")
@@ -33,64 +62,145 @@ export default function KampanyalarPage() {
     () => (filter === "all" ? bundles : bundles.filter((b) => b.category === filter)),
     [filter, bundles],
   );
+  const hasBundles = bundles.length > 0;
 
   return (
     <div className="bg-paper-50 min-h-screen">
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 text-ink-900">
-        <Container className="py-16 md:py-24">
-          <div className="max-w-3xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ink-900 text-brand-300 text-xs font-medium tracking-wide">
-              <Sparkle size={12} weight="fill" /> AÇILIŞA ÖZEL
+      {/* Hero — kompakt, koyu premium, sağda tasarruf görseli */}
+      <section className="relative overflow-hidden bg-ink-900 text-paper-50">
+        <div
+          aria-hidden
+          className="absolute -top-32 -right-24 w-[460px] h-[460px] rounded-full opacity-30 blur-3xl"
+          style={{ background: "radial-gradient(circle, #F5B800, transparent 70%)" }}
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-40 -left-20 w-[380px] h-[380px] rounded-full opacity-15 blur-3xl"
+          style={{ background: "radial-gradient(circle, #00D9FF, transparent 70%)" }}
+        />
+        <Container className="relative py-12 md:py-16 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          {/* Sol — metin */}
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 text-brand-400 text-xs font-semibold uppercase tracking-wider">
+              <Sparkle size={12} weight="fill" /> Kampanya Paketleri
             </span>
-            <h1 className="mt-5 text-display-xl font-serif leading-[1.05]">
-              Hazır kampanya paketleri
+            <h1 className="mt-5 text-display-lg font-serif leading-[1.05]">
+              Hazır paketlerle <span className="text-brand-400">daha az öde</span>, tek teslimde al
             </h1>
-            <p className="mt-5 text-lg md:text-xl leading-relaxed max-w-2xl">
-              Açılış, esnaf, kurumsal ve etkinlik için önceden kurgulanmış paketler. Tek tıkla sepete, tek seferde teslim — tasarım desteği dahil.
+            <p className="mt-4 text-paper-100/70 text-lg leading-relaxed max-w-xl">
+              Açılış, esnaf, kurumsal ve etkinlik için önceden kurgulanmış paketler. Tek tıkla
+              sepete, tek seferde teslim — tasarım desteği dahil.
             </p>
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-paper-100/80">
+              {["Tek tıkla sepet", "Tasarım dahil", "Tek teslim"].map((c) => (
+                <span key={c} className="inline-flex items-center gap-1.5">
+                  <CheckCircle size={16} weight="fill" className="text-brand-400" /> {c}
+                </span>
+              ))}
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#paketler">
+                <Button size="lg">
+                  Paketleri Gör <ArrowRight size={16} weight="bold" />
+                </Button>
+              </a>
+              <Link
+                href="/iletisim"
+                className="inline-flex items-center gap-2 px-5 h-12 rounded-lg border border-paper-100/20 text-paper-50 hover:bg-paper-50/10 transition-colors font-medium"
+              >
+                Özel Teklif Al
+              </Link>
+            </div>
+          </div>
+
+          {/* Sağ — tasarruf görseli (CSS, görsel gerektirmez) */}
+          <div className="relative hidden lg:block">
+            <div className="relative mx-auto max-w-sm">
+              <div className="rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-ink-900 p-7 shadow-2xl">
+                <div className="text-xs font-bold uppercase tracking-wider opacity-70">
+                  Paket avantajı
+                </div>
+                <div className="mt-1 text-5xl font-serif font-semibold leading-none">
+                  %25<span className="text-2xl">'e varan</span>
+                </div>
+                <div className="mt-1 text-lg font-semibold">tasarruf</div>
+                <div className="mt-4 pt-4 border-t border-ink-900/15 text-sm font-medium">
+                  Tek tek almak yerine paketle al, hem indirim kazan hem tek teslimde topla.
+                </div>
+              </div>
+              {/* Floating mini paket çipleri */}
+              <div className="absolute -top-4 -left-6 rotate-[-6deg] rounded-xl bg-surface-2 border border-surface-4 px-3 py-2 shadow-card-dark text-xs text-on-dark-200 inline-flex items-center gap-1.5">
+                <Package size={14} className="text-brand-400" /> Açılış Paketi
+              </div>
+              <div className="absolute -bottom-5 -right-4 rotate-[5deg] rounded-xl bg-surface-2 border border-surface-4 px-3 py-2 shadow-card-dark text-xs text-on-dark-200 inline-flex items-center gap-1.5">
+                <Storefront size={14} className="text-brand-400" /> Esnaf Paketi
+              </div>
+            </div>
           </div>
         </Container>
       </section>
 
-      <Container className="py-10 md:py-14">
-        {/* Filtre tabs */}
-        <div className="flex flex-wrap gap-2 mb-10">
-          {filters.map((f) => (
-            <button
-          key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-all",
-                filter === f.id
-                  ? "bg-ink-900 text-paper-50"
-                  : "bg-paper-100 text-ink-700 hover:bg-paper-200",
-              )}
-            >
-              {f.label}
-            </button>
+      {/* Değer şeridi */}
+      <section className="border-b border-paper-200 bg-paper-50">
+        <Container className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-paper-200 overflow-hidden rounded-none">
+          {valueProps.map((v) => (
+            <div key={v.title} className="bg-paper-50 px-4 py-5 flex items-start gap-3">
+              <div className="flex-none w-10 h-10 rounded-lg bg-brand-100 text-brand-700 grid place-items-center">
+                <v.icon size={20} weight="fill" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-ink-900">{v.title}</div>
+                <div className="text-xs text-ink-500 mt-0.5">{v.desc}</div>
+              </div>
+            </div>
           ))}
-        </div>
+        </Container>
+      </section>
 
-        {/* Bundle grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-          {items.map((bundle) => (
-            <BundleCard key={bundle.slug} bundle={bundle} />
-          ))}
-        </div>
-
-        {items.length === 0 && (
-          <div className="py-16 text-center bg-paper-100 rounded-lg border border-paper-200">
-            <p className="text-ink-700">Bu kategoride henüz paket yok.</p>
+      <Container className="py-10 md:py-14" id="paketler">
+        {/* Filtre tabs — yalnız paket varken anlamlı */}
+        {hasBundles && (
+          <div className="flex flex-wrap gap-2 mb-10">
+            {filters.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-all",
+                  filter === f.id
+                    ? "bg-ink-900 text-paper-50"
+                    : "bg-paper-100 text-ink-700 hover:bg-paper-200",
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         )}
 
+        {hasBundles ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
+            {items.map((bundle) => (
+              <BundleCard key={bundle.slug} bundle={bundle} />
+            ))}
+            {items.length === 0 && (
+              <div className="md:col-span-2 lg:col-span-3 py-16 text-center bg-paper-100 rounded-lg border border-paper-200">
+                <p className="text-ink-700">Bu kategoride henüz paket yok.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Zengin boş durum — paket yokken sayfa yine değerli ve çekici */
+          <EmptyState />
+        )}
+
         {/* B2B kurumsal CTA */}
-        <section className="mt-16 p-8 md:p-10 bg-paper-100 rounded-xl border border-paper-200 grid md:grid-cols-3 gap-6 items-center">
+        <section className="mt-16 overflow-hidden rounded-2xl border border-paper-200 bg-gradient-to-br from-paper-100 to-paper-50 p-8 md:p-10 grid md:grid-cols-3 gap-6 items-center">
           <div className="md:col-span-2">
             <h3 className="text-2xl font-serif text-ink-900">İhtiyacın özel mi?</h3>
-            <p className="mt-2 text-ink-700">
-              Yukarıdaki paketler işine uymuyorsa size özel bir kombinasyon hazırlayalım. Toplu siparişlerde ek indirim.
+            <p className="mt-2 text-ink-700 max-w-xl">
+              Hazır paketler işine uymuyorsa sana özel bir kombinasyon hazırlayalım. Toplu
+              siparişlerde ek indirim, kurumsal cari hesap imkânı.
             </p>
           </div>
           <div className="md:text-right">
@@ -102,6 +212,59 @@ export default function KampanyalarPage() {
           </div>
         </section>
       </Container>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="text-center">
+      <div className="mx-auto max-w-xl">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-brand-100 text-brand-700 grid place-items-center">
+          <Gift size={30} weight="fill" />
+        </div>
+        <h2 className="mt-5 text-2xl md:text-3xl font-serif text-ink-900">
+          Sana özel paket hazırlayalım
+        </h2>
+        <p className="mt-3 text-ink-700 leading-relaxed">
+          Hazır paketlerimiz çok yakında burada. O zamana kadar ürünlerimizi keşfedebilir ya da
+          işine birebir uyan bir kombinasyon için özel teklif alabilirsin.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link href="/urunler">
+            <Button size="lg">
+              Ürünleri Keşfet <ArrowRight size={16} weight="bold" />
+            </Button>
+          </Link>
+          <Link
+            href="/iletisim"
+            className="inline-flex items-center gap-2 px-5 h-12 rounded-lg border border-paper-200 text-ink-900 hover:bg-paper-100 transition-colors font-medium"
+          >
+            Özel Paket İste
+          </Link>
+        </div>
+      </div>
+
+      {/* Sektör kartları — "neler hazırlıyoruz" */}
+      <div className="mt-12">
+        <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 mb-4">
+          Sektörüne göre paketler
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {sectors.map((s) => (
+            <div
+              key={s.id}
+              className="flex flex-col items-center text-center gap-2 rounded-xl border border-paper-200 bg-paper-50 px-3 py-5"
+            >
+              <div className="w-11 h-11 rounded-lg bg-paper-100 text-brand-700 grid place-items-center">
+                <s.icon size={22} weight="fill" />
+              </div>
+              <div className="text-sm font-semibold text-ink-900">{s.label}</div>
+              <div className="text-[11px] text-ink-500 leading-snug">{s.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -151,7 +314,7 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
           src={imgSrc}
           alt={bundle.name}
           fill
-              sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw"
+          sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw"
           className="object-cover"
         />
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
