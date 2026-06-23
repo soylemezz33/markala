@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { getProducts, getHeroSlides, getHeroBanners } from "@/lib/catalog";
-import { HeroCarousel } from "@/components/home/hero-carousel";
-import { ImageHeroCarousel } from "@/components/home/image-hero-carousel";
+import { getProducts } from "@/lib/catalog";
+import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { ProductRail } from "@/components/home/product-rail";
 import { CategoryGrid } from "@/components/home/category-grid";
@@ -24,11 +23,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [products, heroSlides, heroBanners] = await Promise.all([
-    getProducts(),
-    getHeroSlides(),
-    getHeroBanners(),
-  ]);
+  const products = await getProducts();
   // Çok satılanlar (bestseller flag)
   const bestsellers = products.filter((p) => p.bestseller).slice(0, 12);
 
@@ -41,12 +36,8 @@ export default async function HomePage() {
   return (
     <>
       <HowToProductionJsonLd />
-      {/* Admin'den tam-banner slider eklendiyse onu göster; yoksa yapısal/3D hero (mock fallback). */}
-      {heroBanners.length > 0 ? (
-        <ImageHeroCarousel slides={heroBanners} />
-      ) : (
-        <HeroCarousel slides={heroSlides} />
-      )}
+      {/* Anasayfa hero — kodlu premium slider (dark, 3 slayt; kampanyalar hero diliyle). */}
+      <PremiumHeroSlider />
       <PromoBanner location="hero" />
       <TrustBadges />
 
