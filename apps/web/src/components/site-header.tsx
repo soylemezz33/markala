@@ -426,7 +426,13 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             scrolled ? "shadow-sm border-b border-paper-200" : "border-b border-paper-200",
           )}
         >
-          <Container className="flex items-center gap-4 md:gap-8 py-4 md:py-5">
+          <Container
+            className={cn(
+              "flex items-center gap-4 md:gap-8 transition-all duration-200",
+              // Scroll'da daha kompakt (Trendyol tarzı slim sticky); normalde de eskisinden alçak
+              scrolled ? "py-2 md:py-2.5" : "py-3 md:py-3.5",
+            )}
+          >
             {/* Logo */}
             <Link href="/" className="flex-none group">
               <span className="text-2xl md:text-[28px] font-semibold tracking-tight text-ink-900">
@@ -442,7 +448,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             {/* Search — büyük command-bar */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="hidden md:flex flex-1 items-center gap-3 max-w-2xl px-5 h-12 rounded-xl bg-paper-100 border border-paper-200 hover:border-ink-300 hover:bg-paper-50 transition-all group"
+              className="hidden md:flex flex-1 items-center gap-3 max-w-2xl px-5 h-11 rounded-xl bg-paper-100 border border-paper-200 hover:border-ink-300 hover:bg-paper-50 transition-all group"
             >
               <MagnifyingGlass size={18} className="text-ink-500 group-hover:text-ink-700" />
               <span className="text-ink-500 text-sm flex-1 text-left">
@@ -479,7 +485,9 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             </div>
           </Container>
 
-          {/* Bottom category nav — sekmeler + tek paylaşılan mega panel (Varyant B) */}
+          {/* Bottom category nav — sekmeler + tek paylaşılan mega panel (Varyant B).
+              Scroll'da gizlenir → üstte yalnız kompakt ana bar kalır (Trendyol tarzı). */}
+          {!scrolled && (
           <div
             className="hidden lg:block border-t border-paper-200 relative"
             onMouseEnter={cancelMegaClose}
@@ -495,7 +503,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                   aria-haspopup="true"
                   aria-expanded={megaOpen && megaIndex === i}
                   className={cn(
-                    "relative inline-flex items-center gap-1.5 px-3 py-3 text-sm font-medium transition-colors",
+                    "relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
                     megaOpen && megaIndex === i ? "text-ink-900" : "text-ink-700 hover:text-ink-900",
                   )}
                 >
@@ -530,6 +538,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
               onClose={() => setMegaOpen(false)}
             />
           </div>
+          )}
         </div>
 
         {/* Mobile drawer — full-width slide-in with accordion mega-menu */}

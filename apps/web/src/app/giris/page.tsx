@@ -45,13 +45,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[80vh] grid lg:grid-cols-12">
-      {/* Sol: Form */}
-      <div className="lg:col-span-6 xl:col-span-5 flex items-center">
-        <Container className="py-16 md:py-24 max-w-md mx-auto w-full">
-          <div className="mb-8">
+      {/* Sol: Form — üste hizalı + ölçülü boşluk (ikinci alan ilk ekranda görünsün, fold altında kalmasın) */}
+      <div className="lg:col-span-6 xl:col-span-5 flex items-start">
+        <Container className="py-8 md:py-12 max-w-md mx-auto w-full">
+          <div className="mb-6">
             <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Hesap</p>
-            <h1 className="mt-2 text-3xl md:text-4xl font-semibold text-ink-900">Giriş yapın</h1>
-            <p className="mt-3 text-ink-700">
+            <h1 className="mt-1.5 text-3xl md:text-4xl font-semibold text-ink-900">Giriş yapın</h1>
+            <p className="mt-2 text-ink-700">
               Sipariş takibi, kayıtlı tasarımlar ve cari hesap için.
             </p>
           </div>
@@ -89,7 +89,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-paper-200 text-center">
+          <div className="mt-6 pt-6 border-t border-paper-200 text-center">
             <p className="text-sm text-ink-700">
               Hesabınız yok mu?{" "}
               <Link href={kayitHref} className="text-brand-700 hover:underline font-semibold">
