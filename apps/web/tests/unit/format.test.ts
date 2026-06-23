@@ -52,9 +52,9 @@ describe("orderStatusLabel", () => {
     expect(orderStatusLabel("iptal-edildi")).toBe("İptal Edildi");
   });
 
-  it("bilinmeyen statü aynen döner (fallback)", () => {
-    expect(orderStatusLabel("yeni-durum-xyz")).toBe("yeni-durum-xyz");
-    expect(orderStatusLabel("")).toBe("");
+  it("bilinmeyen statü → 'Bilinmeyen Durum' (fallback; ham anahtar UI'de gösterilmez)", () => {
+    expect(orderStatusLabel("yeni-durum-xyz")).toBe("Bilinmeyen Durum");
+    expect(orderStatusLabel("")).toBe("Bilinmeyen Durum");
   });
 });
 
