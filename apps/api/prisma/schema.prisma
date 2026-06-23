@@ -674,6 +674,30 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
+/// Teklif talepleri (/teklif-al) — işletme + sektör + çoğunlukla kullanılan ürünler (çoktan-seçmeli).
+/// ContactMessage ile aynı DB-first deseni; admin "Teklif Talepleri" gelen kutusundan yönetilir.
+model QuoteRequest {
+  id          String   @id @default(cuid())
+  ticketId    String   @unique @map("ticket_id")
+  name        String
+  email       String
+  phone       String
+  companyName String?  @map("company_name")
+  sector      String?
+  products    String[] @default([]) // seçilen ürün etiketleri (+ "Diğer" serbest metin dahil)
+  budget      String?  // tahmini bütçe aralığı (opsiyonel)
+  quantity    String?  // tahmini adet/sıklık (opsiyonel)
+  message     String?  @db.Text
+  source      String   @default("teklif-al")
+  status      String   @default("new") // new | contacted | quoted | closed
+  mailSent    Boolean  @default(false) @map("mail_sent")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("quote_requests")
+}
+
 /// Bülten aboneleri — SMTP'den BAĞIMSIZ kalıcı liste (signup kaybolmaz). E-posta benzersiz → idempotent.
 model NewsletterSubscriber {
   id        String   @id @default(cuid())

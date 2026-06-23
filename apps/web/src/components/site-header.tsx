@@ -399,10 +399,10 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 </div>
                 <nav className="flex items-center gap-4 md:gap-5">
                   <Link
-                    href="/kurumsal"
+                    href="/teklif-al"
                     className="rounded-md bg-brand-500 px-2.5 py-1 font-semibold text-ink-900 hover:bg-brand-400 transition-colors"
                   >
-                    Kurumsal / Teklif Al
+                    Teklif Al
                   </Link>
                   {TOP_LINKS.map((l) => (
                     <Link
@@ -592,14 +592,14 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                     </Link>
                   </div>
 
-                  {/* Kurumsal / Teklif Al — kurumsal sinyal (masaüstü utility bar paritesi) */}
+                  {/* Teklif Al — birincil dönüşüm CTA'sı (masaüstü utility bar paritesi) */}
                   <Link
-                    href="/kurumsal"
+                    href="/teklif-al"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center justify-between gap-2 p-3 mb-1 rounded-lg bg-ink-900 text-paper-50 font-semibold text-sm"
                   >
-                    <span className="flex items-center gap-2">🏢 Kurumsal / Teklif Al</span>
-                    <span className="text-[11px] font-normal text-paper-100/70">Açık hesap · özel fiyat</span>
+                    <span className="flex items-center gap-2">📝 Teklif Al</span>
+                    <span className="text-[11px] font-normal text-paper-100/70">Özel fiyat · 24 saatte dönüş</span>
                   </Link>
 
                   <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 px-2 py-1.5 mt-3">

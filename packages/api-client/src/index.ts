@@ -458,6 +458,33 @@ export class MarkalaApiClient {
       this.request<ContactMessageDto>("PATCH", `/contact/${id}`, { status }, { auth: true }),
   };
 
+  // === Quote Requests (Teklif Talepleri) ===
+  quoteRequests = {
+    // Public: /teklif-al formundan gelen talep.
+    createPublic: (data: {
+      name: string;
+      email: string;
+      phone: string;
+      companyName?: string;
+      sector?: string;
+      products?: string[];
+      budget?: string;
+      quantity?: string;
+      message?: string;
+      ticketId?: string;
+      source?: string;
+    }) => this.request<QuoteRequestDto>("POST", "/quote-requests", data),
+    // Admin: talep listesi (opsiyonel durum filtresi: new | contacted | quoted | closed).
+    list: (status?: string) =>
+      this.request<QuoteRequestDto[]>("GET", "/quote-requests", undefined, {
+        auth: true,
+        query: { status },
+      }),
+    // Admin: talep durumu güncelle.
+    setStatus: (id: string, status: string) =>
+      this.request<QuoteRequestDto>("PATCH", `/quote-requests/${id}`, { status }, { auth: true }),
+  };
+
   // === Newsletter (Bülten Aboneleri) ===
   newsletter = {
     // Admin: abone listesi (opsiyonel durum: active | unsubscribed).
@@ -642,6 +669,25 @@ export interface ContactMessageDto {
   status: string;
   mailSent: boolean;
   createdAt: string;
+}
+
+export interface QuoteRequestDto {
+  id: string;
+  ticketId: string;
+  name: string;
+  email: string;
+  phone: string;
+  companyName?: string | null;
+  sector?: string | null;
+  products: string[];
+  budget?: string | null;
+  quantity?: string | null;
+  message?: string | null;
+  source: string;
+  status: string;
+  mailSent: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NewsletterSubscriberDto {

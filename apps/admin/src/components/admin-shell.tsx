@@ -32,6 +32,7 @@ const navGroups: Array<{
       { href: "/musteriler", label: "Müşteriler", icon: Users },
       { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings },
       { href: "/iletisim-mesajlari", label: "Gelen Kutusu", icon: EnvelopeSimple },
+      { href: "/teklif-talepleri", label: "Teklif Talepleri", icon: Receipt },
       { href: "/bulten-aboneleri", label: "Bülten Aboneleri", icon: PaperPlaneTilt },
     ],
   },

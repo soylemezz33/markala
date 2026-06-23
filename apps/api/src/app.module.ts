@@ -28,6 +28,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { BrandsModule } from "./brands/brands.module";
 import { ContactModule } from "./contact/contact.module";
+import { QuoteRequestsModule } from "./quote-requests/quote-requests.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
 
 @Module({
@@ -61,6 +62,7 @@ import { NewsletterModule } from "./newsletter/newsletter.module";
     AnalyticsModule,
     BrandsModule,
     ContactModule,
+    QuoteRequestsModule,
     NewsletterModule,
   ],
 })
