@@ -98,9 +98,15 @@ async function getShippingThreshold(): Promise<number> {
   }
 }
 
-function makeTrustBadges(freeThreshold: number) {
+function makeTrustBadges(freeThreshold: number, productionTime?: string) {
   return [
-    { icon: Truck, label: "Türkiye geneli kargo", sub: `1-3 iş günü · ${freeThreshold}₺ üzeri ücretsiz` },
+    {
+      icon: Truck,
+      label: "Toplam teslimat süresi",
+      sub: productionTime
+        ? `Üretim: ${productionTime} + kargo 1-3 iş günü · ${freeThreshold}₺ üzeri ücretsiz`
+        : `1-3 iş günü kargo · ${freeThreshold}₺ üzeri ücretsiz`,
+    },
     { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
     { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda iade" },
     { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
@@ -335,7 +341,7 @@ export default async function ProductPage({ params }: Props) {
 
               {/* Trust badges */}
               <ul className="mt-6 grid grid-cols-2 gap-3">
-                {makeTrustBadges(shippingThreshold).map((t) => (
+                {makeTrustBadges(shippingThreshold, product.productionTime).map((t) => (
                   <li
                     key={t.label}
                     className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg"

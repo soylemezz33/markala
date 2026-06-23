@@ -180,8 +180,9 @@ export default function CheckoutPage() {
   // Kurumsal oransal indirim — yalnız GİRİŞ YAPMIŞ + onaylı kurumsal üyeye gösterilir/uygulanır.
   // Backend ile aynı formül (subtotal × yüzde); gerçek indirim siparişte yine sunucuda kesinleşir,
   // bu yalnızca önizleme. "approved" değilse 0 → indirim hiç uygulanmaz (sipariş tarafıyla tutarlı).
+  // FORM'daki accountType'a bakılır: kullanıcı formda "bireysel"e geçerse indirim sıfırlanır (görsel tutarlılık).
   const corpPct =
-    user && user.accountType === "corporate" && user.corporateStatus === "approved"
+    user && user.accountType === "corporate" && user.corporateStatus === "approved" && accountType === "corporate"
       ? Number(user.corporateDiscount ?? 0) || 0
       : 0;
   const corpDiscount = corpPct > 0 ? Math.round(sub * corpPct) / 100 : 0;

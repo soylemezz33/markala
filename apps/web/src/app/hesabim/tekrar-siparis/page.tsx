@@ -28,7 +28,7 @@ export default function TekrarSiparisPage() {
   const loading = orders === null;
 
   // Aynı ürünün birden fazla siparişini birleştir, en güncel siparişi kullan
-  const productMap = new Map<string, { name: string; image: string; lastOrder: string; orderId: string; orderNumber: string; orderCount: number }>();
+  const productMap = new Map<string, { name: string; image: string; lastOrder: string; orderId: string; orderNumber: string; orderCount: number; configSummary: string; quantity: number }>();
   for (const order of orders ?? []) {
     for (const item of order.items) {
       const existing = productMap.get(item.productSlug);
@@ -38,6 +38,8 @@ export default function TekrarSiparisPage() {
           existing.lastOrder = order.createdAt;
           existing.orderId = order.id;
           existing.orderNumber = order.orderNumber;
+          existing.configSummary = item.configurationSummary ?? "";
+          existing.quantity = item.quantity;
         }
       } else {
         productMap.set(item.productSlug, {
@@ -47,6 +49,8 @@ export default function TekrarSiparisPage() {
           orderId: order.id,
           orderNumber: order.orderNumber,
           orderCount: 1,
+          configSummary: item.configurationSummary ?? "",
+          quantity: item.quantity,
         });
       }
     }
@@ -112,8 +116,14 @@ export default function TekrarSiparisPage() {
                     {p.name}
                   </Link>
                 </h3>
-                <p className="text-xs text-ink-500 mt-1">
-                  Son sipariş: <span className="font-medium text-ink-700">{formatDate(p.lastOrder)}</span>
+                {p.configSummary && (
+                  <p className="text-xs text-ink-600 mt-0.5 truncate" title={p.configSummary}>
+                    {p.configSummary}
+                  </p>
+                )}
+                <p className="text-xs text-ink-500 mt-0.5">
+                  Adet: <span className="font-medium text-ink-700">{p.quantity}</span>
+                  {" · "}Son sipariş: <span className="font-medium text-ink-700">{formatDate(p.lastOrder)}</span>
                   {" · "}
                   <Link href={`/hesabim/siparislerim/${p.orderId}`} className="text-brand-700 hover:underline">
                     {p.orderNumber}

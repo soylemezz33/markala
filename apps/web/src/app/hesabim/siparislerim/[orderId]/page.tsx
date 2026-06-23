@@ -205,15 +205,30 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           <AddressBlock a={order.billingAddress ?? order.shippingAddress} billing />
         </section>
       </div>
+
+      {/* İade / değişim politikası erişimi */}
+      <div className="text-sm text-ink-500 pt-2 border-t border-paper-200">
+        Ürününüzle ilgili sorun mu var?{" "}
+        <Link href="/yasal/iade" className="text-brand-700 hover:underline font-medium">
+          İade ve Değişim Politikası
+        </Link>
+        {" "}sayfasını inceleyin veya{" "}
+        <Link href="/iletisim" className="text-brand-700 hover:underline">
+          bizimle iletişime geçin
+        </Link>
+        .
+      </div>
     </div>
   );
 }
 
 function AddressBlock({ a, billing }: { a: Address; billing?: boolean }) {
+  // Snapshot adreslerinde a.type tanımsız olabilir; companyName varlığını fallback olarak kullan.
+  const isCorporate = a.type === "corporate" || (!a.type && !!a.companyName);
   return (
     <div className="text-sm text-ink-700 leading-relaxed space-y-0.5">
       <p className="font-medium text-ink-900">{a.fullName}</p>
-      {billing && a.type === "corporate" && a.companyName && (
+      {billing && isCorporate && a.companyName && (
         <p className="text-xs text-ink-500">{a.companyName}{a.taxNumber ? ` · VKN: ${a.taxNumber}` : ""}{a.taxOffice ? ` · ${a.taxOffice}` : ""}</p>
       )}
       <p className="text-ink-600">{a.fullAddress}</p>

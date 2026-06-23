@@ -36,7 +36,7 @@ const values = [
 const stats = [
   { value: "10+", label: "Yıllık ajans tecrübesi" },
   { value: "20+", label: "Ürün kategorisi" },
-  { value: "Aynı gün", label: "Üretim sonrası kargo" },
+  { value: "2-5 iş günü", label: "Üretim + kargo toplam süre" },
   { value: "0 ₺", label: "Tasarım ücreti" },
 ];
 
