@@ -64,7 +64,10 @@ export function effectiveSelections(
   selections: Record<string, string>,
   resolved: { disabledGroups: Set<string>; forced: Record<string, string> },
 ): Record<string, string> {
-  const result = { ...selections, ...resolved.forced };
+  // SIRA web ile BİREBİR olmalı (görülen=tahsil): locked-default ÖNCE, forced SONRA.
+  // Web'de initSelections locked grubu default'a tohumlar, sonra effectiveSelections forced'ı
+  // üstüne yazar → forcesOption locked gruba da uygulanır (forced kazanır). Burada da aynı sıra.
+  const result: Record<string, string> = { ...selections };
 
   // locked=true → o grup için client seçimi yok sayılır; optionSort en küçük default zorlanır
   const lockedDefaults = new Map<string, { optionKey: string; optionSort: number }>();
@@ -78,6 +81,9 @@ export function effectiveSelections(
   for (const [groupKey, { optionKey }] of lockedDefaults) {
     result[groupKey] = optionKey;
   }
+
+  // forced (locked-default'u dahil ezer — web davranışıyla aynı, forcesOption locked gruba da uygulanır)
+  Object.assign(result, resolved.forced);
 
   // disabledGroups çıkar
   for (const g of resolved.disabledGroups) {

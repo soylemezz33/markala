@@ -126,6 +126,19 @@ describe("effectiveSelections (web parity)", () => {
     const eff = effectiveSelections(opts, { malzeme: "dokusuz" }, resolved);
     expect(eff.malzeme).toBe("kuse");
   });
+
+  it("forcesOption locked grubu hedeflerse FORCED kazanır (web parity: görülen=tahsil — review fix)", () => {
+    // A=a1 seçilince locked grup B "b2"ye zorlanır. B locked default sort=0 b1 olsa da,
+    // web forced'ı locked-default'un üstüne yazdığı için server de b2 vermeli (aksi: görülen≠tahsil).
+    const opts = [
+      optWithRules("A", "priced", "a1", 0, 0, { forcesOption: { groupKey: "B", optionKey: "b2" } }),
+      optWithRules("B", "priced", "b1", 1, 0, null, true), // locked default (sort 0)
+      optWithRules("B", "priced", "b2", 1, 1, null, true), // locked sort 1
+    ];
+    const resolved = resolveRules(opts, { A: "a1", B: "b1" });
+    const eff = effectiveSelections(opts, { A: "a1", B: "b1" }, resolved);
+    expect(eff.B).toBe("b2");
+  });
 });
 
 describe("normalizeSelections (web parity — uçtan uca)", () => {
