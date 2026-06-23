@@ -5,7 +5,7 @@ import { FileText, ArrowRight, Info } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Mesafeli Satış Sözleşmesi",
+  title: "Mesafeli Satış Sözleşmesi [TASLAK]",
   description:
     "Markala (markala.com.tr) — Mesafeli Sözleşmeler Yönetmeliği (RG: 27/11/2014) kapsamında hazırlanmış mesafeli satış sözleşmesi taslağı.",
   robots: { index: false, follow: false },
