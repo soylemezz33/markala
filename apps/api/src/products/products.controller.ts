@@ -34,6 +34,31 @@ export class ProductsController {
     });
   }
 
+  /**
+   * ADMIN: pasif ürünler dahil TÜM ürünleri döndürür (storefront `GET /products` daima
+   * aktif-filtreli). ":slug" rotasından ÖNCE tanımlanmalı (yoksa "admin-list" slug sanılır).
+   */
+  @Get("admin-list")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  @ApiQuery({ name: "take", required: false })
+  @ApiQuery({ name: "q", required: false })
+  adminList(
+    @Query("category") category?: string,
+    @Query("take") take?: string,
+    @Query("skip") skip?: string,
+    @Query("q") q?: string,
+  ) {
+    return this.service.findAll({
+      categorySlug: category,
+      take: take ? parseInt(take) : undefined,
+      skip: skip ? parseInt(skip) : undefined,
+      q,
+      includeInactive: true,
+    });
+  }
+
   @Get(":slug")
   detail(@Param("slug") slug: string) {
     return this.service.findBySlug(slug);

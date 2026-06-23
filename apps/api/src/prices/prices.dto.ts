@@ -44,3 +44,7 @@ export class CategorySetDto {
   @IsString() categoryId!: string;
   @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) price!: number;
 }
+
+export class ApplyToCategoryDto {
+  @IsString() sourceProductId!: string;
+}

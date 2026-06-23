@@ -3,7 +3,7 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { PricesService } from "./prices.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { SetOptionsDto, SetPricesDto, BulkAdjustDto, CategorySetDto } from "./prices.dto";
+import { SetOptionsDto, SetPricesDto, BulkAdjustDto, CategorySetDto, ApplyToCategoryDto } from "./prices.dto";
 
 @ApiTags("prices")
 @Controller()
@@ -48,5 +48,23 @@ export class PricesController {
   @ApiBearerAuth()
   categorySet(@Body() dto: CategorySetDto) {
     return this.service.categorySet(dto.categoryId, dto.price);
+  }
+
+  /** Kaynak ürünle aynı kategori+yapıdaki kardeş sayısı (buton rozeti için). */
+  @Get("prices/:productId/siblings")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  siblings(@Param("productId") productId: string) {
+    return this.service.countStructureSiblings(productId);
+  }
+
+  /** Kaynak ürünün fiyat ızgarasını aynı kategori+yapıdaki kardeşlere kopyalar. */
+  @Post("prices/apply-to-category")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  applyToCategory(@Body() dto: ApplyToCategoryDto) {
+    return this.service.applyToCategory(dto.sourceProductId);
   }
 }

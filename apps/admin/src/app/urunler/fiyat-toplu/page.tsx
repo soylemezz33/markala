@@ -9,7 +9,7 @@ export default async function BulkPriceUpdatePage() {
   try {
     const api = await getAdminApi();
     [products, categories] = await Promise.all([
-      api.products.list({ take: 200 }),
+      api.products.adminList({ take: 5000 }), // TÜM ürünler (önizleme/sayım eksik kalmasın) + pasif dahil
       api.categories.list(true),
     ]);
   } catch {

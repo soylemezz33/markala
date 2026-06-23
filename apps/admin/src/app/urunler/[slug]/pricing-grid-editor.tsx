@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import type { OptionInput, ApiPrice, PriceInput } from "@markala/api-client";
 import { toast } from "@/components/toast";
-import { updateProductPrices } from "./actions";
+import { updateProductPrices, applyGridToCategory } from "./actions";
 
 // ===== Tipler =====
 
@@ -16,6 +16,8 @@ interface Props {
   productId: string;
   options: OptionInput[];
   initialPrices: ApiPrice[];
+  /** Aynı kategori+yapıdaki kardeş ürün sayısı — "Kategoriye Uygula" butonu için. */
+  siblingCount?: number;
 }
 
 // ===== Izgara türetme yardımcıları =====
@@ -186,7 +188,7 @@ function flattenCells(
 
 // ===== Ana bileşen =====
 
-export function PricingGridEditor({ productId, options, initialPrices }: Props) {
+export function PricingGridEditor({ productId, options, initialPrices, siblingCount = 0 }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const groups = deriveGroups(options);
@@ -214,6 +216,35 @@ export function PricingGridEditor({ productId, options, initialPrices }: Props) 
         toast.success("Fiyatlar kaydedildi.");
       } catch {
         toast.error("Fiyatlar kaydedilemedi.");
+      }
+    });
+  }
+
+  function handleApplyToCategory() {
+    const prices = flattenCells(cells, groups, priceDim);
+    if (prices.length === 0) {
+      toast.error("Önce en az bir hücreye fiyat girin.");
+      return;
+    }
+    if (
+      !confirm(
+        `Bu fiyat ızgarası, kategorideki AYNI yapıdaki ${siblingCount} ürüne kopyalanacak.\n\n` +
+          `Her birinin mevcut fiyatları SİLİNİP bu ızgarayla değiştirilecek (geri alınamaz).\n` +
+          `Önce bu ürünün ızgarası da kaydedilir.\n\nDevam edilsin mi?`,
+      )
+    ) {
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const res = await applyGridToCategory(productId, prices);
+        toast.success(
+          `${res.applied} ürüne uygulandı` +
+            (res.skipped ? `, ${res.skipped} farklı yapı atlandı` : "") +
+            ".",
+        );
+      } catch {
+        toast.error("Kategoriye uygulama başarısız.");
       }
     });
   }
@@ -259,7 +290,12 @@ export function PricingGridEditor({ productId, options, initialPrices }: Props) 
             />
           </label>
         </div>
-        <SaveButton isPending={isPending} onClick={handleSave} />
+        <GridFooter
+          isPending={isPending}
+          onSave={handleSave}
+          onApply={handleApplyToCategory}
+          siblingCount={siblingCount}
+        />
       </div>
     );
   }
@@ -386,22 +422,56 @@ export function PricingGridEditor({ productId, options, initialPrices }: Props) 
         );
       })}
 
-      <SaveButton isPending={isPending} onClick={handleSave} />
+      <GridFooter
+        isPending={isPending}
+        onSave={handleSave}
+        onApply={handleApplyToCategory}
+        siblingCount={siblingCount}
+      />
     </div>
   );
 }
 
-function SaveButton({ isPending, onClick }: { isPending: boolean; onClick: () => void }) {
+function GridFooter({
+  isPending,
+  onSave,
+  onApply,
+  siblingCount,
+}: {
+  isPending: boolean;
+  onSave: () => void;
+  onApply: () => void;
+  siblingCount: number;
+}) {
   return (
-    <div className="flex justify-end pt-1">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={isPending}
-        className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-4 py-2 rounded text-sm font-medium hover:bg-ink-700 disabled:opacity-60"
-      >
-        {isPending ? "Kaydediliyor…" : "Fiyatları Kaydet"}
-      </button>
+    <div className="pt-1 space-y-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {siblingCount > 0 && (
+          <button
+            type="button"
+            onClick={onApply}
+            disabled={isPending}
+            className="inline-flex items-center gap-2 border border-brand-300 text-brand-700 bg-brand-50 px-4 py-2 rounded text-sm font-medium hover:bg-brand-100 disabled:opacity-60"
+            title="Bu ızgarayı kategorideki aynı yapıdaki ürünlere kopyala"
+          >
+            Kategoriye Uygula ({siblingCount} ürün)
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={isPending}
+          className="inline-flex items-center gap-2 bg-ink-900 text-paper-50 px-4 py-2 rounded text-sm font-medium hover:bg-ink-700 disabled:opacity-60"
+        >
+          {isPending ? "Kaydediliyor…" : "Fiyatları Kaydet"}
+        </button>
+      </div>
+      {siblingCount > 0 && (
+        <p className="text-[11px] text-ink-500 text-right">
+          “Kategoriye Uygula”, önce bu ızgarayı kaydeder, sonra aynı yapıdaki{" "}
+          {siblingCount} kardeş ürüne kopyalar.
+        </p>
+      )}
     </div>
   );
 }

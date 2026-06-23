@@ -38,12 +38,22 @@ export default async function ProductEditPage({ params }: Props) {
     pricingLoadError = true;
   }
 
+  // Aynı kategori+yapıdaki kardeş sayısı ("Kategoriye Uygula" rozeti) — ikincil, hata yutulur.
+  let siblingCount = 0;
+  try {
+    const r = await api.prices.structureSiblings((product as unknown as { id: string }).id);
+    siblingCount = r.count;
+  } catch {
+    siblingCount = 0;
+  }
+
   return (
     <ProductDetailClient
       product={product as never}
       categories={categories as never}
       pricing={pricing as never}
       pricingLoadError={pricingLoadError}
+      siblingCount={siblingCount}
     />
   );
 }

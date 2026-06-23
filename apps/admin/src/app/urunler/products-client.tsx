@@ -23,6 +23,7 @@ export interface ProductRow {
   sku?: string | null;
   basePrice: unknown; // Decimal string from API
   startingPrice?: unknown | null; // Decimal string from API
+  displayPrice?: number | null; // GERÇEK fiyat = min(product_prices); null → henüz fiyatlanmadı
   productionTime: string;
   isActive?: boolean;
   categoryId?: string | null;
@@ -146,7 +147,7 @@ export function ProductsClient({ products, categories }: Props) {
                 <th className="text-left px-4 py-3 font-semibold">Ürün</th>
                 <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">SKU</th>
                 <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Kategori</th>
-                <th className="text-right px-4 py-3 font-semibold">Başlangıç ₺</th>
+                <th className="text-right px-4 py-3 font-semibold">Fiyat (min) ₺</th>
                 <th className="text-center px-4 py-3 font-semibold hidden md:table-cell">Üretim</th>
                 <th className="text-center px-4 py-3 font-semibold">Durum</th>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
@@ -155,7 +156,8 @@ export function ProductsClient({ products, categories }: Props) {
             <tbody className="divide-y divide-paper-200">
               {paged.map((p) => {
                 const categoryName = p.category?.name ?? "—";
-                const startingPrice = Number(p.startingPrice ?? p.basePrice);
+                // GERÇEK fiyat = displayPrice (min product_prices). null/0 → henüz fiyatlanmadı.
+                const displayPrice = p.displayPrice ?? null;
                 return (
                   <tr key={p.slug} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
@@ -172,7 +174,13 @@ export function ProductsClient({ products, categories }: Props) {
                     <td className="px-4 py-3 font-mono text-xs text-ink-500 hidden md:table-cell">{p.sku ?? "—"}</td>
                     <td className="px-4 py-3 text-ink-700 hidden lg:table-cell">{categoryName}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                      {startingPrice > 0 ? `${startingPrice.toLocaleString("tr-TR")} ₺` : "—"}
+                      {displayPrice && displayPrice > 0 ? (
+                        `${displayPrice.toLocaleString("tr-TR")} ₺`
+                      ) : (
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-warning/10 text-warning">
+                          Fiyatsız
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center text-xs text-ink-500 hidden md:table-cell">{p.productionTime}</td>
                     <td className="px-4 py-3 text-center">

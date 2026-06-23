@@ -19,6 +19,7 @@ export interface ProductRow {
   name: string;
   basePrice: unknown;
   startingPrice?: unknown | null;
+  displayPrice?: number | null; // GERÇEK fiyat = min(product_prices); bulkAdjust SADECE bunu olan ürünleri etkiler
   category?: { id: string; slug: string; name: string } | null;
 }
 
@@ -61,16 +62,24 @@ export function BulkPriceClient({ products, categories }: Props) {
     return Math.max(0, Math.round(result));
   };
 
+  // bulkAdjust SADECE fiyatı girilmiş (product_prices satırı olan) ürünleri çarpar.
+  // Fiyatsız ürünler etkilenmez → sayım ve önizleme bunu dürüstçe göstermeli.
+  const pricedTargets = targetProducts.filter((p) => (p.displayPrice ?? 0) > 0);
   const previews = targetProducts.slice(0, 10).map((p) => {
-    const current = Number(p.startingPrice ?? p.basePrice);
-    const next = computeNew(current);
-    return { slug: p.slug, name: p.name, current, next, diff: next - current };
+    const current = p.displayPrice ?? 0;
+    const hasPrice = current > 0;
+    const next = hasPrice ? computeNew(current) : 0;
+    return { slug: p.slug, name: p.name, current, next, diff: next - current, hasPrice };
   });
 
   async function applyChanges() {
+    if (pricedTargets.length === 0) {
+      toast.error("Kapsamda fiyatı girilmiş ürün yok — toplu zam/indirim mevcut fiyatı çarpar. Önce fiyat girin.");
+      return;
+    }
     if (
       !confirm(
-        `${targetProducts.length} ürünün fiyatı güncellenecek.\n\nİşlem: ${
+        `${pricedTargets.length} fiyatlı ürün güncellenecek (fiyatsız ürünler etkilenmez).\n\nİşlem: ${
           direction === "increase" ? "Artır" : "Düşür"
         } · ${value}${op === "percent" ? "%" : " ₺"}\nYuvarlama: ${round === "none" ? "Yok" : `En yakın ${round} ₺`}\n\nDevam edilsin mi?`,
       )
@@ -237,9 +246,17 @@ export function BulkPriceClient({ products, categories }: Props) {
 
           <Card title="Etkilenen Sayı">
             <div className="text-3xl font-semibold text-ink-900 tabular-nums">
-              {targetProducts.length}
+              {pricedTargets.length}
             </div>
-            <div className="text-sm text-ink-500 mt-1">ürün güncellenecek</div>
+            <div className="text-sm text-ink-500 mt-1">
+              fiyatlı ürün güncellenecek
+              {targetProducts.length !== pricedTargets.length && (
+                <span className="text-ink-400">
+                  {" "}· kapsamda toplam {targetProducts.length}
+                  {" "}({targetProducts.length - pricedTargets.length} fiyatsız, etkilenmez)
+                </span>
+              )}
+            </div>
             <button
               onClick={applyChanges}
               disabled={applying}
@@ -251,11 +268,21 @@ export function BulkPriceClient({ products, categories }: Props) {
             <div className="mt-3 flex items-start gap-2 text-[11px] text-ink-500">
               <Warning size={14} className="flex-none mt-0.5 text-warning" />
               <span>
-                Bu işlem geri alınamaz. Saklı (mevcut) fiyat referans alınır.
-                Değişiklik siteye otomatik yansır. Önizleme yaklaşıktır.
+                Bu işlem geri alınamaz. <strong>Yalnız fiyatı girilmiş</strong> ürünlerin
+                mevcut fiyatı referans alınır (zam/indirim). Fiyatsız ürünler için önce fiyat
+                girin. Değişiklik siteye otomatik yansır.
               </span>
             </div>
           </Card>
+
+          {/* İSG katalog ipucu — bu sayfa fiyat SET etmez, ÇARPArr */}
+          <div className="p-4 rounded-lg bg-brand-50 border border-brand-200 text-[12px] text-ink-700 leading-relaxed">
+            <strong className="text-brand-700 block mb-1">Fiyatı sıfırdan mı gireceksiniz?</strong>
+            Bu sayfa mevcut fiyatlara <strong>zam/indirim</strong> uygular. Seçenekli (İSG levha
+            vb.) ürünlerin fiyatını ilk kez girmek için: bir ürünün <strong>Fiyat ızgarasını</strong>{" "}
+            doldurun, ardından <strong>“Kategoriye Uygula”</strong> ile aynı yapıdaki tüm kategori
+            ürünlerine kopyalayın.
+          </div>
 
           {/* Kategori Tek Fiyat */}
           <Card title="Kategoriye Tek Fiyat">
@@ -328,31 +355,42 @@ export function BulkPriceClient({ products, categories }: Props) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-paper-200">
-                  {previews.map((p) => (
-                    <tr key={p.slug} className="hover:bg-paper-100/40">
-                      <td className="px-3 py-2.5 text-ink-900 font-medium truncate max-w-[300px]">
-                        {p.name}
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-ink-500">
-                        {p.current.toLocaleString("tr-TR")} ₺
-                      </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-ink-900">
-                        {p.next.toLocaleString("tr-TR")} ₺
-                      </td>
-                      <td
-                        className={`px-3 py-2.5 text-right tabular-nums text-xs font-medium ${
-                          p.diff > 0
-                            ? "text-success"
-                            : p.diff < 0
-                              ? "text-error"
-                              : "text-ink-500"
-                        }`}
-                      >
-                        {p.diff > 0 ? "+" : ""}
-                        {p.diff.toLocaleString("tr-TR")} ₺
-                      </td>
-                    </tr>
-                  ))}
+                  {previews.map((p) =>
+                    p.hasPrice ? (
+                      <tr key={p.slug} className="hover:bg-paper-100/40">
+                        <td className="px-3 py-2.5 text-ink-900 font-medium truncate max-w-[300px]">
+                          {p.name}
+                        </td>
+                        <td className="px-3 py-2.5 text-right tabular-nums text-ink-500">
+                          {p.current.toLocaleString("tr-TR")} ₺
+                        </td>
+                        <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-ink-900">
+                          {p.next.toLocaleString("tr-TR")} ₺
+                        </td>
+                        <td
+                          className={`px-3 py-2.5 text-right tabular-nums text-xs font-medium ${
+                            p.diff > 0
+                              ? "text-success"
+                              : p.diff < 0
+                                ? "text-error"
+                                : "text-ink-500"
+                          }`}
+                        >
+                          {p.diff > 0 ? "+" : ""}
+                          {p.diff.toLocaleString("tr-TR")} ₺
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={p.slug} className="hover:bg-paper-100/40">
+                        <td className="px-3 py-2.5 text-ink-500 truncate max-w-[300px]">
+                          {p.name}
+                        </td>
+                        <td colSpan={3} className="px-3 py-2.5 text-right text-[11px] font-medium text-warning">
+                          fiyatsız — etkilenmez
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>

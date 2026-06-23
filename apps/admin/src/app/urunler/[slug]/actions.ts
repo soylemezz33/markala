@@ -33,3 +33,16 @@ export async function updateProductPrices(id: string, prices: PriceInput[]) {
   await revalidateStorefront();
   return res;
 }
+
+/**
+ * ŞABLON IZGARA → KATEGORİYE UYGULA: önce kaynak ürünün ızgarasını kaydeder
+ * (uygulanan = ekranda görülen), sonra aynı kategori+yapıdaki kardeşlere kopyalar.
+ */
+export async function applyGridToCategory(id: string, prices: PriceInput[]) {
+  const api = await getAdminApi();
+  await api.products.setPrices(id, prices); // kaynak ızgarayı kaydet
+  const res = await api.prices.applyToCategory(id); // kategoriye kopyala
+  revalidatePath(`/urunler`);
+  await revalidateStorefront();
+  return res; // { applied, skipped, priceRowsPerProduct }
+}

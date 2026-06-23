@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { PricesService, adjustPrice } from "./prices.service";
+import { PricesService, adjustPrice, structureSignature } from "./prices.service";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 const mkPrisma = () => ({
   product: { findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
@@ -117,6 +117,97 @@ describe("setOptions — kural referans doğrulaması", () => {
       baseRows[1],
     ];
     await expect(s.setOptions("p1", rows as any)).resolves.toEqual({ count: 2 });
+  });
+});
+
+// --- Şablon ızgara → kategoriye uygula ---
+describe("structureSignature", () => {
+  it("sıralamadan bağımsız aynı imza (key seti + rol)", () => {
+    const a = structureSignature([
+      { groupKey: "ebat", optionKey: "25x35", groupRole: "dimension" },
+      { groupKey: "malzeme", optionKey: "dekota", groupRole: "priced" },
+    ]);
+    const b = structureSignature([
+      { groupKey: "malzeme", optionKey: "dekota", groupRole: "priced" },
+      { groupKey: "ebat", optionKey: "25x35", groupRole: "dimension" },
+    ]);
+    expect(a).toBe(b);
+  });
+  it("farklı key seti → farklı imza", () => {
+    const a = structureSignature([{ groupKey: "ebat", optionKey: "25x35", groupRole: "dimension" }]);
+    const b = structureSignature([{ groupKey: "ebat", optionKey: "50x70", groupRole: "dimension" }]);
+    expect(a).not.toBe(b);
+  });
+  it("aynı key farklı rol → farklı imza", () => {
+    const a = structureSignature([{ groupKey: "ebat", optionKey: "x", groupRole: "dimension" }]);
+    const b = structureSignature([{ groupKey: "ebat", optionKey: "x", groupRole: "priced" }]);
+    expect(a).not.toBe(b);
+  });
+});
+
+describe("countStructureSiblings", () => {
+  it("aynı kategori + aynı yapı kardeşleri sayar (kendisi hariç)", async () => {
+    const p = mkPrisma();
+    p.product.findUnique.mockResolvedValue({ id: "src", categoryId: "cat1" });
+    // src yapısı: ebat:a + malzeme:m
+    p.product.findMany.mockResolvedValue([{ id: "sib1" }, { id: "sib2" }, { id: "sibDiff" }]);
+    p.productOption.findMany
+      .mockResolvedValueOnce([
+        { groupKey: "ebat", optionKey: "a", groupRole: "dimension" },
+        { groupKey: "malzeme", optionKey: "m", groupRole: "priced" },
+      ]) // src
+      .mockResolvedValueOnce([
+        { productId: "sib1", groupKey: "ebat", optionKey: "a", groupRole: "dimension" },
+        { productId: "sib1", groupKey: "malzeme", optionKey: "m", groupRole: "priced" },
+        { productId: "sib2", groupKey: "ebat", optionKey: "a", groupRole: "dimension" },
+        { productId: "sib2", groupKey: "malzeme", optionKey: "m", groupRole: "priced" },
+        { productId: "sibDiff", groupKey: "ebat", optionKey: "z", groupRole: "dimension" },
+      ]); // siblings
+    const s = new PricesService(p as any);
+    expect(await s.countStructureSiblings("src")).toEqual({ count: 2 });
+  });
+
+  it("kategorisiz ürün → 0", async () => {
+    const p = mkPrisma();
+    p.product.findUnique.mockResolvedValue({ id: "src", categoryId: null });
+    const s = new PricesService(p as any);
+    expect(await s.countStructureSiblings("src")).toEqual({ count: 0 });
+  });
+});
+
+describe("applyToCategory", () => {
+  it("kaynak fiyatı yoksa BadRequest", async () => {
+    const p = mkPrisma();
+    p.product.findUnique.mockResolvedValue({ id: "src", categoryId: "cat1" });
+    p.productOption.findMany.mockResolvedValue([{ groupKey: "ebat", optionKey: "a", groupRole: "dimension" }]);
+    p.productPrice.findMany.mockResolvedValue([]); // fiyat yok
+    const s = new PricesService(p as any);
+    await expect(s.applyToCategory("src")).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("aynı yapıdaki kardeşlere fiyat kopyalar, farklı yapıyı atlar", async () => {
+    const p = mkPrisma();
+    p.product.findUnique.mockResolvedValue({ id: "src", categoryId: "cat1" });
+    p.productOption.findMany
+      .mockResolvedValueOnce([
+        { groupKey: "ebat", optionKey: "a", groupRole: "dimension" },
+        { groupKey: "baski", optionKey: "tek", groupRole: "priced" },
+      ]) // src options
+      .mockResolvedValueOnce([
+        { productId: "sib1", groupKey: "ebat", optionKey: "a", groupRole: "dimension" },
+        { productId: "sib1", groupKey: "baski", optionKey: "tek", groupRole: "priced" },
+        { productId: "sibDiff", groupKey: "ebat", optionKey: "FARKLI", groupRole: "dimension" },
+      ]); // sibling options
+    p.productPrice.findMany.mockResolvedValue([
+      { groupKey: "baski", optionKey: "tek", dimKey: "a", cost: null, price: "120" },
+    ]); // src prices
+    p.product.findMany.mockResolvedValue([{ id: "sib1" }, { id: "sibDiff" }]);
+    p.productPrice.createMany.mockResolvedValue({ count: 1 });
+    const s = new PricesService(p as any);
+    const r = await s.applyToCategory("src");
+    expect(r).toEqual({ applied: 1, skipped: 1, priceRowsPerProduct: 1 });
+    // sib1 için delete+create çağrıldı (transaction ops)
+    expect(p.$transaction).toHaveBeenCalled();
   });
 });
 

@@ -16,6 +16,22 @@ export function adjustPrice(
   return step > 0 ? Math.round(v / step) * step : Math.round(v * 100) / 100;
 }
 
+/**
+ * Ürünün opsiyon yapısının kanonik imzası. Fiyat satırları
+ * (groupKey/optionKey/dimKey) seçenek anahtarlarına göre eşlendiğinden,
+ * AYNI imzaya sahip iki ürünün fiyat ızgarası birebir uyumludur — bu yüzden
+ * bir ürünün ızgarası aynı imzadaki kategori kardeşlerine güvenle kopyalanabilir.
+ * Sıralamadan bağımsız (sort), ama grup ROLÜNE duyarlı (dimension≠priced fiyatı değiştirir).
+ */
+export function structureSignature(
+  options: { groupKey: string; optionKey: string; groupRole: string }[],
+): string {
+  return options
+    .map((o) => `${o.groupKey}:${o.optionKey}:${o.groupRole}`)
+    .sort()
+    .join("|");
+}
+
 @Injectable()
 export class PricesService {
   constructor(private prisma: PrismaService) {}
@@ -129,6 +145,121 @@ export class PricesService {
     );
     await this.prisma.$transaction(ops);
     return { updated: rows.length };
+  }
+
+  /** Bir ürünün opsiyon yapısının imzasını DB'den hesaplar. */
+  private async signatureOf(productId: string): Promise<string> {
+    const opts = await this.prisma.productOption.findMany({
+      where: { productId },
+      select: { groupKey: true, optionKey: true, groupRole: true },
+    });
+    return structureSignature(opts);
+  }
+
+  /**
+   * Kaynak ürünle AYNI kategoride ve AYNI opsiyon yapısında olan (kendisi hariç)
+   * kardeş ürün sayısını döndürür — "Kategoriye Uygula" butonunun rozetinde gösterilir.
+   */
+  async countStructureSiblings(productId: string) {
+    const source = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true, categoryId: true },
+    });
+    if (!source) throw new NotFoundException(`Ürün bulunamadı: ${productId}`);
+    if (!source.categoryId) return { count: 0 };
+    const sourceSig = await this.signatureOf(productId);
+    const siblings = await this.prisma.product.findMany({
+      where: { categoryId: source.categoryId, id: { not: productId } },
+      select: { id: true },
+    });
+    if (siblings.length === 0) return { count: 0 };
+    const ids = siblings.map((s) => s.id);
+    const opts = await this.prisma.productOption.findMany({
+      where: { productId: { in: ids } },
+      select: { productId: true, groupKey: true, optionKey: true, groupRole: true },
+    });
+    const byProduct = new Map<string, { groupKey: string; optionKey: string; groupRole: string }[]>();
+    for (const o of opts) {
+      const arr = byProduct.get(o.productId) ?? [];
+      arr.push({ groupKey: o.groupKey, optionKey: o.optionKey, groupRole: o.groupRole });
+      byProduct.set(o.productId, arr);
+    }
+    let count = 0;
+    for (const id of ids) {
+      if (structureSignature(byProduct.get(id) ?? []) === sourceSig) count++;
+    }
+    return { count };
+  }
+
+  /**
+   * ŞABLON IZGARA → KATEGORİYE UYGULA: kaynak ürünün fiyat ızgarasını, aynı kategorideki
+   * ve aynı opsiyon yapısındaki tüm kardeş ürünlere kopyalar (her birinin mevcut fiyatları
+   * silinip kaynağınkiyle değiştirilir). Yapısı farklı kardeşler atlanır.
+   * 827 İSG ürününün ~10 işlemde fiyatlanmasını sağlar.
+   */
+  async applyToCategory(sourceProductId: string) {
+    const source = await this.prisma.product.findUnique({
+      where: { id: sourceProductId },
+      select: { id: true, categoryId: true },
+    });
+    if (!source) throw new NotFoundException(`Ürün bulunamadı: ${sourceProductId}`);
+    if (!source.categoryId) {
+      throw new BadRequestException("Ürünün kategorisi yok; kategoriye toplu uygulama yapılamaz.");
+    }
+    const [sourceOpts, sourcePrices] = await Promise.all([
+      this.prisma.productOption.findMany({
+        where: { productId: sourceProductId },
+        select: { groupKey: true, optionKey: true, groupRole: true },
+      }),
+      this.prisma.productPrice.findMany({ where: { productId: sourceProductId } }),
+    ]);
+    if (sourcePrices.length === 0) {
+      throw new BadRequestException("Önce bu ürünün fiyatlarını girip kaydedin; sonra kategoriye uygulayın.");
+    }
+    const sourceSig = structureSignature(sourceOpts);
+
+    const siblings = await this.prisma.product.findMany({
+      where: { categoryId: source.categoryId, id: { not: sourceProductId } },
+      select: { id: true },
+    });
+    const ids = siblings.map((s) => s.id);
+    const opts = ids.length
+      ? await this.prisma.productOption.findMany({
+          where: { productId: { in: ids } },
+          select: { productId: true, groupKey: true, optionKey: true, groupRole: true },
+        })
+      : [];
+    const byProduct = new Map<string, { groupKey: string; optionKey: string; groupRole: string }[]>();
+    for (const o of opts) {
+      const arr = byProduct.get(o.productId) ?? [];
+      arr.push({ groupKey: o.groupKey, optionKey: o.optionKey, groupRole: o.groupRole });
+      byProduct.set(o.productId, arr);
+    }
+    const matching = ids.filter((id) => structureSignature(byProduct.get(id) ?? []) === sourceSig);
+
+    // Kaynak fiyat satırlarından şablon — null alanlar atlanır (createMany ile birebir).
+    const template = sourcePrices.map((r) => ({
+      groupKey: r.groupKey,
+      optionKey: r.optionKey,
+      dimKey: r.dimKey,
+      cost: r.cost,
+      price: r.price,
+    }));
+    const ops = matching.flatMap((id) => [
+      this.prisma.productPrice.deleteMany({ where: { productId: id } }),
+      this.prisma.productPrice.createMany({
+        data: template.map((t) => ({
+          productId: id,
+          ...(t.groupKey != null && { groupKey: t.groupKey }),
+          ...(t.optionKey != null && { optionKey: t.optionKey }),
+          ...(t.dimKey != null && { dimKey: t.dimKey }),
+          ...(t.cost != null && { cost: new Prisma.Decimal(t.cost) }),
+          price: new Prisma.Decimal(t.price),
+        })),
+      }),
+    ]);
+    if (ops.length) await this.prisma.$transaction(ops);
+    return { applied: matching.length, skipped: ids.length - matching.length, priceRowsPerProduct: template.length };
   }
 
   async categorySet(categoryId: string, price: number) {

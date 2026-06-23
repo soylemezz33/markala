@@ -41,9 +41,11 @@ interface Props {
   categories: CategoryRow[];
   pricing?: { options: OptionInput[]; prices: ApiPrice[] };
   pricingLoadError?: boolean;
+  /** Aynı kategori+yapıdaki kardeş ürün sayısı — "Kategoriye Uygula" için. */
+  siblingCount?: number;
 }
 
-export function ProductDetailClient({ product, categories, pricing, pricingLoadError }: Props) {
+export function ProductDetailClient({ product, categories, pricing, pricingLoadError, siblingCount = 0 }: Props) {
   const router = useRouter();
   const [name, setName] = useState(product.name);
   const [shortDesc, setShortDesc] = useState(product.shortDescription);
@@ -247,6 +249,7 @@ export function ProductDetailClient({ product, categories, pricing, pricingLoadE
               productId={(product as unknown as { id: string }).id}
               options={pricing?.options ?? []}
               initialPrices={pricing?.prices ?? []}
+              siblingCount={siblingCount}
             />
           </Card>
 

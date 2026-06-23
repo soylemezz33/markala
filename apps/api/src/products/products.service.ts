@@ -7,12 +7,13 @@ import { CreateProductDto, UpdateProductDto } from "./products.dto";
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string; list?: boolean } = {}) {
+  async findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string; list?: boolean; includeInactive?: boolean } = {}) {
     // Arama: çok-kelimeli sorgu token'lara bölünür, HER token isimde geçmeli (AND).
     // Böylece "kart vizit" → "Klasik Kartvizit" eşleşir (boşluklu yazımda da bulunur).
     const tokens = (opts.q ?? "").trim().split(/\s+/).filter(Boolean);
+    // includeInactive YALNIZ admin (guarded admin-list) için: storefront daima aktif-filtreli.
     const where = {
-      isActive: true,
+      ...(opts.includeInactive ? {} : { isActive: true }),
       ...(opts.bestseller !== undefined && { bestseller: opts.bestseller }),
       ...(opts.categorySlug && { category: { slug: opts.categorySlug } }),
       ...(tokens.length

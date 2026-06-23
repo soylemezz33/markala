@@ -242,6 +242,10 @@ export class MarkalaApiClient {
       this.request<Product>("PATCH", `/products/${id}`, data, { auth: true }),
     remove: (id: string) =>
       this.request<void>("DELETE", `/products/${id}`, undefined, { auth: true }),
+    /** ADMIN: pasif ürünler dahil tüm ürünler (storefront list daima aktif-filtreli). */
+    adminList: (
+      opts: { category?: string; take?: number; skip?: number; q?: string } = {},
+    ) => this.request<Product[]>("GET", "/products/admin-list", undefined, { auth: true, query: opts }),
     /** Ürünün seçenek/boyut gruplarını ve satırlarını döner. */
     getPrices: (id: string) =>
       this.request<{ options: ApiOption[]; prices: ApiPrice[] }>(
@@ -508,6 +512,17 @@ export class MarkalaApiClient {
         "POST",
         "/prices/category-set",
         input,
+        { auth: true },
+      ),
+    /** Kaynak ürünle aynı kategori+yapıdaki kardeş ürün sayısı. */
+    structureSiblings: (productId: string) =>
+      this.request<{ count: number }>("GET", `/prices/${productId}/siblings`, undefined, { auth: true }),
+    /** Kaynak ürünün fiyat ızgarasını aynı kategori+yapıdaki kardeşlere kopyalar. */
+    applyToCategory: (sourceProductId: string) =>
+      this.request<{ applied: number; skipped: number; priceRowsPerProduct: number }>(
+        "POST",
+        "/prices/apply-to-category",
+        { sourceProductId },
         { auth: true },
       ),
   };
