@@ -73,7 +73,11 @@ async function fetchJson(path: string): Promise<unknown> {
     // 30sn ISR + admin düzenlemesinde /api/revalidate ile anlık tazeleme (cross-app).
     next: { revalidate: 30 },
   });
-  if (!res.ok) throw new Error(`catalog API ${path} -> ${res.status}`);
+  if (!res.ok) {
+    // Sessiz boş-dönüş yerine sunucu logu: API 5xx ile gerçek boş veriyi ayırt edebilmek için.
+    console.error(`[catalog] API ${path} -> HTTP ${res.status}`);
+    throw new Error(`catalog API ${path} -> ${res.status}`);
+  }
   return res.json();
 }
 

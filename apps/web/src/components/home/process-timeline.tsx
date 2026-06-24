@@ -31,7 +31,7 @@ const steps = [
     icon: PackageIcon,
     title: "Paketleme",
     desc: "Hasarsız ulaşması için özel ambalaj. Fotoğraflı tutanak.",
-    duration: "Aynı gün",
+    duration: "Üretim sonrası",
   },
   {
     n: "05",

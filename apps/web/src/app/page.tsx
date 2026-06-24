@@ -4,6 +4,7 @@ import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { ProductRail } from "@/components/home/product-rail";
 import { CategoryGrid } from "@/components/home/category-grid";
+import { SectorShowcase } from "@/components/home/sector-showcase";
 import { TrustedBy } from "@/components/home/trusted-by";
 import { CustomerReviews } from "@/components/home/customer-reviews";
 import { ProcessTimeline } from "@/components/home/process-timeline";
@@ -64,6 +65,8 @@ export default async function HomePage() {
       />
 
       <CategoryGrid />
+
+      <SectorShowcase />
 
       <CustomerReviews />
     </>

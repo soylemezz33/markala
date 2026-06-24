@@ -10,6 +10,7 @@ export class ReviewsService {
       where: opts.approved === undefined ? {} : { isApproved: opts.approved },
       include: { product: { select: { slug: true, name: true } } },
       orderBy: { createdAt: "desc" },
+      take: 500, // sınırsız yükleme/bellek riskini önle (admin listesi)
     });
   }
 

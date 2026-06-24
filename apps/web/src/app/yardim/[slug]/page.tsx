@@ -72,7 +72,7 @@ const articles: Record<string, HelpArticle> = {
       { heading: "1. Ürün ve Konfigürasyon Seç", body: "Ürün sayfasından paket, ebat ve adet seçin. Sağdaki sticky konfigüratörde anlık fiyat görünür." },
       { heading: "2. Sepete Ekle", body: "İhtiyacınız varsa farklı ürünler de ekleyebilirsiniz. Sepet sağda drawer olarak açılır." },
       { heading: "3. Tasarım Yükle veya Destek İste", body: "Hazır tasarımınız varsa CMYK PDF olarak yükleyin. Yoksa 'Tasarım desteği' seçeneğiyle ücretsiz şablon veya 89 TL+ özel tasarım hizmeti." },
-      { heading: "4. Adres ve Ödeme", body: "Teslimat adresinizi seçin/ekleyin, iyzico ile 3D Secure ödeme yapın. 1.500 TL ve üzeri kargo ücretsiz." },
+      { heading: "4. Adres ve Ödeme", body: "Teslimat adresinizi seçin/ekleyin, iyzico ile 3D Secure ödeme yapın. 750 TL ve üzeri kargo ücretsiz." },
       { heading: "5. Tasarım Onayı (varsa)", body: "Tasarım desteği istediyseniz 24 saat içinde 2 alternatif e-postanıza gelir. Onayınız sonrası üretim başlar." },
       { heading: "6. Üretim", body: "Ürüne göre 1-7 iş günü. Her aşamada SMS/e-posta ile bilgilendirme alırsınız." },
       { heading: "7. Kargoya Teslim", body: "Üretim biter bitmez aynı gün DHL kargoya teslim edilir. Takip kodunuz e-postanıza gönderilir." },
@@ -86,7 +86,7 @@ const articles: Record<string, HelpArticle> = {
     content: [
       { heading: "DHL Anlaşmamız", body: "Markala olarak Türkiye geneli kargolarımızı DHL ile yapıyoruz. 81 il + 970+ ilçeye 1-3 iş günü içinde teslimat." },
       { heading: "Kargo Süreleri", body: "İstanbul-Ankara-İzmir-Bursa-Mersin gibi büyük şehirler 24-48 saat. Doğu Anadolu illeri 2-3 iş günü. Adalar ve uzak köyler 3-5 iş günü." },
-      { heading: "Kargo Ücretleri", body: "1.500 TL ve üzeri tüm siparişler için kargo ücretsizdir. Altındaki siparişlerde 49 TL standart kargo ücreti uygulanır. Hızlı kargo (1 iş günü) +89 TL ile mümkün (sipariş notunda belirtilmeli)." },
+      { heading: "Kargo Ücretleri", body: "750 TL ve üzeri tüm siparişler için kargo ücretsizdir. Altındaki siparişlerde 79 TL standart kargo ücreti uygulanır. Hızlı kargo (1 iş günü) +89 TL ile mümkün (sipariş notunda belirtilmeli)." },
       { heading: "Sipariş Takibi", body: "Kargoya verildikten sonra DHL takip kodu e-postanıza gönderilir. Aynı zamanda sitedeki '/kargo-takip' sayfasından sipariş numaranız ve e-postanızla sorgulayabilirsiniz." },
       { heading: "Teslim Alma", body: "Kapıda DHL kuryesi tarafından imza karşılığı teslim edilir. Adreste yoksanız komşuya bırakılmaz; bir sonraki iş günü tekrar denenir veya en yakın DHL şubesine bırakılır." },
       { heading: "Hasar Durumunda", body: "Teslim sırasında pakette belirgin bir hasar varsa kuryeye 'Hasarlı teslim alındı' tutanağı tutturun. 7 gün içinde fotoğraflı bildirim ile iade/değişim talep edebilirsiniz." },

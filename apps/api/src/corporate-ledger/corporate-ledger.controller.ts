@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import type { Request } from "express";
 import { IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { CorporateLedgerService } from "./corporate-ledger.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";

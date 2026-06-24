@@ -435,6 +435,7 @@ model Order {
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@index([paymentStatus, createdAt])
+  @@index([paymentMethod, createdAt]) // aylık cari faturalama paymentMethod='cari' taraması
   @@index([iyzicoConversationId])
   @@index([deletedAt])
   @@map("orders")

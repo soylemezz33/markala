@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Container, Button, cn } from "@markala/ui";
 import {
@@ -85,6 +85,12 @@ export default function TeklifAlPage() {
   const [otherChecked, setOtherChecked] = useState(false);
   const [otherText, setOtherText] = useState("");
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
+
+  // Anasayfa "Sektörünüze Özel" kartlarından gelen ?sektor= → sektörü ön-seç (geçerliyse).
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("sektor");
+    if (s && SECTORS.includes(s)) setForm((f) => ({ ...f, sector: s }));
+  }, []);
 
   function update<K extends keyof typeof form>(key: K, val: string) {
     setForm((f) => ({ ...f, [key]: val }));

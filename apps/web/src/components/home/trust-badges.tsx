@@ -17,8 +17,8 @@ const badges = [
   },
   {
     icon: ArrowCounterClockwise,
-    title: "İade Garantisi",
-    desc: "Ürünlerinizde iade kolaylığı.",
+    title: "Kalite Garantisi",
+    desc: "Hatalı baskıda ücretsiz değişim.",
   },
   {
     icon: Clock,
