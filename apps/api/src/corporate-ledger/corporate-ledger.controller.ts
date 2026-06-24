@@ -18,11 +18,20 @@ export class RecordPaymentDto {
   description?: string;
 }
 
-/** Admin: kurumsal müşterinin cari hesabını görüntüle + tahsilat gir. */
+/**
+ * Admin: kurumsal müşterinin cari hesabını görüntüle + tahsilat gir.
+ *
+ * ERİŞİM MODELİ: Markala tek-operatörlü bir işletme — admin paneli tasarım gereği
+ * TÜM müşterilere erişir (per-müşteri "atanmış temsilci" kavramı yoktur; bu klasik
+ * IDOR değil, admin'in doğal kapsamıdır). Yine de least-privilege: cari (finansal)
+ * uçlar yalnız `super_admin`e açıktır — ileride destek/içerik seviyesinde bir `admin`
+ * rolü eklenirse finansal veriye/tahsilata dokunamaz. Çok-admin + per-müşteri atama
+ * gerekirse ownership/ACL kontrolü BURAYA eklenmelidir.
+ */
 @ApiTags("corporate-ledger")
 @Controller("admin/corporate-ledger")
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles("admin", "super_admin")
+@Roles("super_admin")
 @ApiBearerAuth()
 export class CorporateLedgerAdminController {
   constructor(private service: CorporateLedgerService) {}
