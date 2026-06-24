@@ -438,6 +438,9 @@ model Order {
   @@index([paymentMethod, createdAt]) // aylık cari faturalama paymentMethod='cari' taraması
   @@index([iyzicoConversationId])
   @@index([deletedAt])
+  // Defense-in-depth: aynı iyzico ödemesi iki siparişe yazılamaz (DB seviyesinde garanti).
+  // Postgres unique index çoklu NULL'a izin verir → ödenmemiş siparişler etkilenmez.
+  @@unique([iyzicoPaymentId])
   @@map("orders")
 }
 
