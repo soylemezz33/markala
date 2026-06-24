@@ -283,6 +283,65 @@ export function groupHintMode(
 }
 
 // ---------------------------------------------------------------------------
+// Seyrek matris — fiyat-boyutu (adet) grubunu seçili ebata göre filtreleme
+// ---------------------------------------------------------------------------
+
+/**
+ * Fiyat-boyutu (priceDim, tipik "adet") grubunun, MEVCUT seçimlerle GEÇERLİ
+ * (toplam fiyatı > 0) olan option anahtarlarını döndürür. Seyrek ızgarada
+ * (örn. antetli: A5 yalnız 4000/8000/12000, A4 yalnız 2000/4000/6000) seçili
+ * ebat için fiyatı OLMAYAN adetleri UI'da gizlemek/atlamak için kullanılır.
+ *
+ * Dönüş:
+ * - `null` → filtreleme YOK. İki durum: (a) tüm option'lar geçerli (tam ızgara →
+ *   davranış değişmez), (b) hiçbiri geçerli değil (ürün o seçimde fiyatsız →
+ *   hepsini göster, "Teklif Al"a düş). Her iki halde de option gizlenmez.
+ * - `{ groupKey, keys }` → o grupta yalnız `keys` içindeki option'lar gösterilmeli.
+ *
+ * Not: optionPriceHints'teki adet-hesabıyla aynı yöntem (resolveRules+effectiveSelections)
+ * kullanıldığından kural/kilit (rules/locked) davranışı korunur.
+ */
+export function availablePriceDimKeys(
+  product: Product,
+  selections: Record<string, string>,
+): { groupKey: string; keys: Set<string> } | null {
+  const opts = (product.options ?? []) as unknown as PricingOption[];
+  if (opts.length === 0) return null;
+
+  const groupMap = new Map<string, { key: string; role: "dimension" | "priced"; sort: number }>();
+  for (const o of opts) {
+    if (!groupMap.has(o.groupKey))
+      groupMap.set(o.groupKey, { key: o.groupKey, role: o.groupRole, sort: o.groupSort });
+  }
+  const groups = [...groupMap.values()];
+  const dims = groups.filter((g) => g.role === "dimension");
+  const priceDimGroup = dims.length ? (dims.find((g) => g.key !== "adet") ?? dims[0]) : null;
+  if (!priceDimGroup) return null;
+  const priceDimKey = priceDimGroup.key;
+
+  const optKeys = opts.filter((o) => o.groupKey === priceDimKey).map((o) => o.optionKey);
+  if (optKeys.length === 0) return null;
+
+  const optsWithRules = opts as unknown as {
+    groupKey: string;
+    optionKey: string;
+    rules?: OptionRulesLite | null;
+  }[];
+
+  const valid = new Set<string>();
+  for (const d of optKeys) {
+    const raw = { ...selections, [priceDimKey]: d };
+    const resolved = resolveRules(optsWithRules, raw);
+    const hyp = effectiveSelections(raw, resolved);
+    if (calculateTotal(product, hyp) > 0) valid.add(d);
+  }
+
+  // Hiç filtre gerekmiyor (tam ızgara) ya da hiçbiri geçerli değil (fiyatsız) → filtreleme yapma.
+  if (valid.size === 0 || valid.size === optKeys.length) return null;
+  return { groupKey: priceDimKey, keys: valid };
+}
+
+// ---------------------------------------------------------------------------
 // Task 4 — Koşullu/bağımlı seçenek mantığı
 // ---------------------------------------------------------------------------
 

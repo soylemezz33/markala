@@ -11,6 +11,7 @@ import {
   effectiveSelections,
   optionPriceHints,
   groupHintMode,
+  availablePriceDimKeys,
   type OptionRulesLite,
 } from "@/lib/configurator";
 import { exVat } from "@/lib/vat";
@@ -92,14 +93,37 @@ export function Configurator({ product, rating: ratingProp }: { product: Product
     [product.options],
   );
 
+  // Seyrek matris: fiyat-boyutu (adet) grubunun, seçili ebat için GEÇERLİ değerleri.
+  // null → filtreleme yok (tam ızgara veya fiyatsız ürün).
+  const dimFilter = useMemo(
+    () => availablePriceDimKeys(product, state.selections),
+    [product, state.selections],
+  );
+
+  // Geçersiz kalan fiyat-boyutu seçimini (örn. A5 + 2000) ilk GEÇERLİ değere çek —
+  // sayfa "Teklif Al" yerine doğrudan fiyatlı açılsın. Ham kullanıcı niyeti state'te kalır;
+  // düzeltme türetilmiştir (gizli option seçili kalmaz).
+  const baseSelections = useMemo(() => {
+    if (!dimFilter) return state.selections;
+    const cur = state.selections[dimFilter.groupKey];
+    if (cur && dimFilter.keys.has(cur)) return state.selections;
+    const firstValid = ((product.options ?? []) as unknown as RawOption[])
+      .filter((o) => o.groupKey === dimFilter.groupKey)
+      .sort((a, b) => a.optionSort - b.optionSort)
+      .find((o) => dimFilter.keys.has(o.optionKey));
+    return firstValid
+      ? { ...state.selections, [dimFilter.groupKey]: firstValid.optionKey }
+      : state.selections;
+  }, [state.selections, dimFilter, product.options]);
+
   const resolved = useMemo(
-    () => resolveRules(optionsWithRules, state.selections),
-    [optionsWithRules, state.selections],
+    () => resolveRules(optionsWithRules, baseSelections),
+    [optionsWithRules, baseSelections],
   );
 
   const effSel = useMemo(
-    () => effectiveSelections(state.selections, resolved),
-    [state.selections, resolved],
+    () => effectiveSelections(baseSelections, resolved),
+    [baseSelections, resolved],
   );
 
   const total = useMemo(
@@ -221,8 +245,12 @@ export function Configurator({ product, rating: ratingProp }: { product: Product
               key={group.groupKey}
               groupKey={group.groupKey}
               groupLabel={group.groupLabel}
-              options={group.options}
-              selected={effSel[group.groupKey] ?? state.selections[group.groupKey] ?? ""}
+              options={
+                dimFilter && group.groupKey === dimFilter.groupKey
+                  ? group.options.filter((o) => dimFilter.keys.has(o.optionKey))
+                  : group.options
+              }
+              selected={effSel[group.groupKey] ?? baseSelections[group.groupKey] ?? ""}
               locked={group.locked}
               disabled={resolved.disabledGroups.has(group.groupKey)}
               onSelect={(optionKey) => handleSelect(group.groupKey, optionKey)}

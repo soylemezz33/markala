@@ -7,6 +7,7 @@ import {
   effectiveSelections,
   optionPriceHints,
   groupHintMode,
+  availablePriceDimKeys,
 } from "./configurator";
 import type { Product } from "@markala/types";
 
@@ -364,5 +365,76 @@ describe("initSelections", () => {
 
   it("options yoksa boş obje döner", () => {
     expect(initSelections(base)).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// availablePriceDimKeys — seyrek matris (antetli: ebata göre geçerli adetler)
+// ---------------------------------------------------------------------------
+
+describe("availablePriceDimKeys", () => {
+  const base: Product = {
+    slug: "test",
+    name: "Test",
+    categorySlug: "test",
+    shortDescription: "",
+    description: "",
+    basePrice: 0,
+    productionTime: "1 gün",
+    images: [],
+  };
+
+  // antetli: paket(ebat) a5/a4 × adet 2000/4000/6000/8000/12000 (seyrek)
+  const antetli: Product = {
+    ...base,
+    options: [
+      opt("adet", "dimension", "2000", 0, 0) as any,
+      opt("adet", "dimension", "4000", 0, 1) as any,
+      opt("adet", "dimension", "6000", 0, 2) as any,
+      opt("adet", "dimension", "8000", 0, 3) as any,
+      opt("adet", "dimension", "12000", 0, 4) as any,
+      opt("paket", "priced", "a5", 1, 0) as any,
+      opt("paket", "priced", "a4", 1, 1) as any,
+    ] as any,
+    prices: [
+      { groupKey: "paket", optionKey: "a5", dimKey: "4000", price: 3240 },
+      { groupKey: "paket", optionKey: "a5", dimKey: "8000", price: 6300 },
+      { groupKey: "paket", optionKey: "a5", dimKey: "12000", price: 9000 },
+      { groupKey: "paket", optionKey: "a4", dimKey: "2000", price: 3060 },
+      { groupKey: "paket", optionKey: "a4", dimKey: "4000", price: 5940 },
+      { groupKey: "paket", optionKey: "a4", dimKey: "6000", price: 8730 },
+    ] as any,
+  };
+
+  it("A5 seçiliyken yalnız 4000/8000/12000 geçerli", () => {
+    const r = availablePriceDimKeys(antetli, { paket: "a5", adet: "2000" });
+    expect(r?.groupKey).toBe("adet");
+    expect([...(r?.keys ?? [])].sort()).toEqual(["12000", "4000", "8000"]);
+  });
+
+  it("A4 seçiliyken yalnız 2000/4000/6000 geçerli", () => {
+    const r = availablePriceDimKeys(antetli, { paket: "a4", adet: "2000" });
+    expect([...(r?.keys ?? [])].sort()).toEqual(["2000", "4000", "6000"]);
+  });
+
+  it("tam ızgara → null (filtreleme yok, davranış değişmez)", () => {
+    const full: Product = {
+      ...base,
+      options: [
+        opt("paket", "priced", "a5", 1, 0) as any,
+        opt("adet", "dimension", "1000", 0, 0) as any,
+        opt("adet", "dimension", "2000", 0, 1) as any,
+      ] as any,
+      prices: [
+        { groupKey: "paket", optionKey: "a5", dimKey: "1000", price: 100 },
+        { groupKey: "paket", optionKey: "a5", dimKey: "2000", price: 180 },
+      ] as any,
+    };
+    expect(availablePriceDimKeys(full, { paket: "a5", adet: "1000" })).toBeNull();
+  });
+
+  it("fiyatsız ürün → null (hepsini göster, Teklif Al)", () => {
+    const unpriced: Product = { ...antetli, prices: [] as any };
+    expect(availablePriceDimKeys(unpriced, { paket: "a5", adet: "2000" })).toBeNull();
   });
 });
