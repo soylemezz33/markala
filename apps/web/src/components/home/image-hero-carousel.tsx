@@ -24,12 +24,38 @@ const AUTOPLAY_MS = 6000;
 export function ImageHeroCarousel({ slides }: { slides: HeroBanner[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  // İlk slide (LCP adayı) dışındaki slide'ları ilk boyamadan sonra mount et. Hepsi
+  // absolute inset-0 + opacity:0 olduğu için IntersectionObserver "görünür" sayıp
+  // eager yükler ve LCP görseliyle bant genişliği için yarışır (yavaş 4G'de LCP'yi
+  // ~2-3s geciktirir). Idle veya ilk etkileşimde mount → kritik yol yarışı biter.
+  const [deferred, setDeferred] = useState(false);
   const count = slides.length;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const goTo = useCallback((n: number) => setIndex(((n % count) + count) % count), [count]);
+  const goTo = useCallback(
+    (n: number) => {
+      setDeferred(true); // herhangi bir navigasyon tüm slide'ların mount olmasını garanti eder
+      setIndex(((n % count) + count) % count);
+    },
+    [count],
+  );
   const next = useCallback(() => goTo(index + 1), [index, goTo]);
   const prev = useCallback(() => goTo(index - 1), [index, goTo]);
+
+  // Geri kalan slide'ları tarayıcı boşa çıkınca (LCP boyandıktan sonra) yükle.
+  useEffect(() => {
+    if (count <= 1) return;
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (typeof w.requestIdleCallback === "function") {
+      const id = w.requestIdleCallback(() => setDeferred(true), { timeout: 2500 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(() => setDeferred(true), 1500);
+    return () => clearTimeout(t);
+  }, [count]);
 
   useEffect(() => {
     if (paused || count <= 1) return;
@@ -66,7 +92,10 @@ export function ImageHeroCarousel({ slides }: { slides: HeroBanner[] }) {
           <div className="relative w-full aspect-[1525/540]">
             {slides.map((s, i) => {
               const active = i === index;
-              const img = (
+              // İlk slide hemen yüklenir (LCP adayı + priority); kalanlar idle/etkileşime
+              // kadar ertelenir, böylece LCP görseliyle bant genişliği yarışı olmaz.
+              const mounted = i === 0 || deferred;
+              const img = mounted ? (
                 <Image
                   src={s.imageUrl}
                   alt={s.title}
@@ -78,7 +107,7 @@ export function ImageHeroCarousel({ slides }: { slides: HeroBanner[] }) {
                   sizes="(min-width:1280px) 1200px, 100vw"
                   className="object-cover"
                 />
-              );
+              ) : null;
               return (
                 <div
                   key={s.id}
@@ -88,13 +117,14 @@ export function ImageHeroCarousel({ slides }: { slides: HeroBanner[] }) {
                   )}
                   aria-hidden={!active}
                 >
-                  {s.ctaHref ? (
-                    <Link href={s.ctaHref} aria-label={s.title} className="block w-full h-full">
-                      {img}
-                    </Link>
-                  ) : (
-                    img
-                  )}
+                  {img &&
+                    (s.ctaHref ? (
+                      <Link href={s.ctaHref} aria-label={s.title} className="block w-full h-full">
+                        {img}
+                      </Link>
+                    ) : (
+                      img
+                    ))}
                 </div>
               );
             })}
