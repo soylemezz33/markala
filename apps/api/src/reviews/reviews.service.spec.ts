@@ -33,6 +33,7 @@ describe("ReviewsService", () => {
       where: { isApproved: true },
       include: { product: { select: { slug: true, name: true } } },
       orderBy: { createdAt: "desc" },
+      take: 500,
     });
   });
 
@@ -44,6 +45,7 @@ describe("ReviewsService", () => {
       where: {},
       include: { product: { select: { slug: true, name: true } } },
       orderBy: { createdAt: "desc" },
+      take: 500,
     });
   });
 
