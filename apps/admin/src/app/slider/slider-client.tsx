@@ -161,6 +161,18 @@ export function SliderClient({ slides }: Props) {
         </button>
       </header>
 
+      {/* Bilgi: anasayfa hero'su artık kodlu premium slider — bu slide'lar geçici olarak gösterilmiyor */}
+      <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg flex gap-3">
+        <div className="flex-none w-9 h-9 rounded-md bg-amber-400 text-ink-900 grid place-items-center">
+          <Info size={18} weight="fill" />
+        </div>
+        <div className="text-sm text-ink-800">
+          <strong>Not:</strong> Anasayfa hero alanı şu an <strong>kodlu premium slider</strong> kullanıyor;
+          buradaki slide&apos;lar geçici olarak anasayfada gösterilmiyor. Bu slider&apos;ı tekrar devreye almak
+          (admin&apos;den yönetilebilir hero) istersen geliştirme ekibine bildir.
+        </div>
+      </div>
+
       {/* Boyut bilgisi */}
       <div className="mb-6 p-5 bg-brand-100 border border-brand-300 rounded-lg flex gap-4">
         <div className="flex-none w-10 h-10 rounded-md bg-brand-500 text-ink-900 grid place-items-center">

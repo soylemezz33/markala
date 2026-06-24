@@ -108,7 +108,7 @@ function makeTrustBadges(freeThreshold: number, productionTime?: string) {
         : `1-3 iş günü kargo · ${freeThreshold}₺ üzeri ücretsiz`,
     },
     { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
-    { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda iade" },
+    { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda ücretsiz değişim" },
     { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
     { icon: MagnifyingGlass, label: "Ücretsiz Hızlı Tasarım Kontrolü", sub: "baskı öncesi uzman ekibimiz kontrol eder" },
   ];

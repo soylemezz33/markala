@@ -46,6 +46,7 @@ export class ReviewsService {
       where: { productId: product.id, isApproved: true },
       orderBy: { createdAt: "desc" },
       include: { product: { select: { slug: true, name: true } } },
+      take: 200, // tek ürünün onaylı yorumları — sınırsız yükleme riskini önle
     });
   }
 
