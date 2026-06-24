@@ -10,7 +10,9 @@ export const metadata: Metadata = {
     title: "Markala Referanslar",
     description: "Hizmet verdiğimiz markalar ve gerçek müşteri yorumları.",
     url: "/referanslar",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Referanslar" }],
   },
+  twitter: { card: "summary_large_image", images: ["/og-default.png"] },
 };
 
 export default function ReferanslarLayout({ children }: { children: React.ReactNode }) {
