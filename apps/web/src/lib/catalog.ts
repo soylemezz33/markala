@@ -95,21 +95,24 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 /**
- * Tek ürün (slug). KRİTİK: API 404'ü (ürün silinmiş/pasif) ağ hatasından AYIRIR.
+ * Tek ürün (slug). KRİTİK: API 404'ünü (ürün yok/silinmiş) GEÇİCİ hatadan (5xx/ağ) AYIRIR.
  * - 404 → undefined → sayfa notFound() (silinen ürün görünmez/satılmaz).
- * - 5xx / ağ hatası → undefined (graceful; mock fallback kaldırıldı).
+ * - 5xx / ağ hatası → THROW (undefined DÖNMEZ). Sebep: ISR yenilemesi sırasında geçici bir API
+ *   blip'inde undefined dönersek sayfa notFound() çağırır ve Next bu 404'ü CACHE'LER → ürün, API
+ *   toparlasa bile sonraki başarılı yenilemeye (≥30sn) kadar kaybolur (aralıklı 404). Throw edince
+ *   Next son başarılı (stale) sayfayı sunmaya devam eder ve yenilemeyi sonradan tekrar dener —
+ *   404'ü asla cache'lemez. (try/catch yok: fetch ağ hatası da bilinçli olarak yukarı fırlar.)
  */
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  try {
-    const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(slug)}`, {
-      next: { revalidate: 30 },
-    });
-    if (res.status === 404) return undefined; // ürün yok/silinmiş → notFound
-    if (!res.ok) return undefined; // geçici sunucu hatası → undefined
-    return mapProduct((await res.json()) as ApiProduct);
-  } catch {
-    return undefined; // ağ hatası → undefined
+  const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(slug)}`, {
+    next: { revalidate: 30 },
+  });
+  if (res.status === 404) return undefined; // ürün gerçekten yok/silinmiş → notFound()
+  if (!res.ok) {
+    console.error(`[catalog] getProductBySlug ${slug} -> HTTP ${res.status}`);
+    throw new Error(`getProductBySlug ${slug} -> ${res.status}`); // geçici → ISR stale'i korur
   }
+  return mapProduct((await res.json()) as ApiProduct);
 }
 
 const HERO_THEMES: HeroSlide["theme"][] = ["yellow", "ink", "cyan", "cream"];
