@@ -333,6 +333,8 @@ model Product {
   ratingAverage    Decimal? @map("rating_average") @db.Decimal(3, 2)
   ratingCount      Int      @default(0) @map("rating_count")
   isActive         Boolean  @default(true) @map("is_active")
+  /// Fiyatlama modu: "additive" (hücre-bazlı, mevcut) | "area" (m² bazlı maliyet motoru)
+  pricingMode      String   @default("additive") @map("pricing_mode")
   /// Konfigüratör parametreleri JSON: { id, label, kind, options, ... }
   parameters       Json     @default("[]")
   /// SEO/içerik JSON: { features, useCases, specifications, faqs, relatedSlugs, seo, brand, sku, rating }
