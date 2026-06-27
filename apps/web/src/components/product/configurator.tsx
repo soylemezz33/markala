@@ -157,7 +157,21 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     [product, effSel],
   );
 
-  const canBuy = total > 0;
+  // Area: seçili malzemenin maxM2'sini aşan ölçü sipariş edilemez (basılamaz).
+  const areaMaxExceeded = useMemo(() => {
+    if (!isArea) return false;
+    const en = Number(effSel.en) || 0;
+    const boy = Number(effSel.boy) || 0;
+    const alan = (en * boy) / 10000;
+    if (alan <= 0) return false;
+    const opt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number } | null }>).find(
+      (o) => o.groupKey === "malzeme" && o.optionKey === effSel.malzeme,
+    );
+    const maxM2 = opt?.rules?.maxM2;
+    return typeof maxM2 === "number" && maxM2 > 0 && alan > maxM2;
+  }, [isArea, effSel, product.options]);
+
+  const canBuy = total > 0 && !areaMaxExceeded;
 
   /** Gösterim dönüşümü: KDV dahil modda ham değer, hariç modda exVat uygular. */
   const show = (n: number) => (kdvDahil ? n : exVat(n));

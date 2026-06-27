@@ -15,6 +15,12 @@ export class SettingsController {
     return this.service.getShipping();
   }
 
+  /** Public — storefront m² konfigüratörü kur/marj/kdv/minM2'yi buradan okur. */
+  @Get("pricing")
+  pricing() {
+    return this.service.getPricing();
+  }
+
   /** Public — storefront header menüsünü buradan okur (admin /menu yönetir). */
   @Get("header-nav")
   headerNav() {

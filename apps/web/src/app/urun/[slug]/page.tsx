@@ -98,6 +98,23 @@ async function getShippingThreshold(): Promise<number> {
   }
 }
 
+async function getPricingSettings(): Promise<{ kur: number; marj: number; kdv: number; minM2: number }> {
+  const fallback = { kur: 46, marj: 1.5, kdv: 0.2, minM2: 1 };
+  try {
+    const res = await fetch(`${API_BASE}/api/settings/pricing`, { next: { revalidate: 300 } });
+    if (!res.ok) return fallback;
+    const d = (await res.json()) as Partial<typeof fallback>;
+    return {
+      kur: typeof d.kur === "number" ? d.kur : fallback.kur,
+      marj: typeof d.marj === "number" ? d.marj : fallback.marj,
+      kdv: typeof d.kdv === "number" ? d.kdv : fallback.kdv,
+      minM2: typeof d.minM2 === "number" ? d.minM2 : fallback.minM2,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 function makeTrustBadges(freeThreshold: number, productionTime?: string) {
   return [
     {
@@ -118,11 +135,12 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const [category, related, ratingStats, shippingThreshold] = await Promise.all([
+  const [category, related, ratingStats, shippingThreshold, pricingSettings] = await Promise.all([
     getCategoryBySlug(product.categorySlug),
     getProductsByCategory(product.categorySlug),
     getProductRatingStats(product.slug),
     getShippingThreshold(),
+    getPricingSettings(),
   ]);
   const relatedProducts = related.filter((p) => p.slug !== product.slug).slice(0, 4);
 
@@ -342,6 +360,7 @@ export default async function ProductPage({ params }: Props) {
               <Configurator
                 product={product}
                 rating={ratingStats.count > 0 ? { average: ratingStats.average, count: ratingStats.count } : undefined}
+                pricing={pricingSettings}
               />
 
               {/* Trust badges */}

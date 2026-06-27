@@ -14,7 +14,7 @@ const PRESETS: Array<[number, number]> = [
  * Değerleri selections.en / selections.boy / selections.adet'e yazar — computeAreaPrice bunları okur.
  */
 export function AreaField({ minM2 = 1 }: { minM2?: number }) {
-  const { state, dispatch } = useConfigurator();
+  const { state, dispatch, product } = useConfigurator();
   const sel = state.selections;
   const en = sel.en ?? "";
   const boy = sel.boy ?? "";
@@ -29,6 +29,13 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const alan = (enN * boyN) / 10000;
   const toplamAlan = Math.max(minM2, alan * adetN);
   const minApplied = alan > 0 && toplamAlan > alan * adetN + 1e-9;
+
+  // Seçili malzemenin maxM2 sınırı (tek parça) — aşılırsa uyarı.
+  const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number } | null }>).find(
+    (o) => o.groupKey === "malzeme" && o.optionKey === sel.malzeme,
+  );
+  const maxM2 = matOpt?.rules?.maxM2;
+  const maxExceeded = typeof maxM2 === "number" && maxM2 > 0 && alan > maxM2;
 
   const inputCls =
     "w-full rounded-lg border border-paper-300 px-3 py-2.5 text-ink-900 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-300/40";
@@ -110,6 +117,12 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
               min 1 m² uygulandı
             </span>
           )}
+        </p>
+      )}
+
+      {maxExceeded && (
+        <p className="text-xs font-medium text-red-600">
+          Bu malzeme tek parçada en fazla {maxM2} m² basılabilir. Daha küçük ölçü girin ya da işi bölün.
         </p>
       )}
     </div>
