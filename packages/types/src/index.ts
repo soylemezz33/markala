@@ -174,6 +174,8 @@ export interface Product {
   prices?: PricingPriceRow[];
   /** Faz C — listeleme/kart fiyatı (en düşük geçerli fiyat); null = "Teklif Al" */
   displayPrice?: number | null;
+  /** Fiyatlama modu: "additive" (hücre-bazlı) | "area" (m² bazlı, özel ölçü) */
+  pricingMode?: string;
   rating?: { average: number; count: number };
   /** Bu ürün anasayfada öne çıkacak mı (bestseller) */
   bestseller?: boolean;
