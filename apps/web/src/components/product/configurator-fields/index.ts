@@ -5,5 +5,6 @@ export type { ConfiguratorAction, ConfiguratorState } from "./reducer";
 export { OptionGroup } from "./option-group";
 export { RadioCard } from "./radio-card";
 export { DesignUpload } from "./design-upload";
+export { AreaField } from "./area-field";
 export { PriceCard } from "./price-card";
 export { MobileCta } from "./mobile-cta";

@@ -12,6 +12,9 @@ import {
   optionPriceHints,
   groupHintMode,
   availablePriceDimKeys,
+  computeAreaPrice,
+  DEFAULT_PRICING,
+  type PricingSettings,
   type OptionRulesLite,
 } from "@/lib/configurator";
 import { exVat } from "@/lib/vat";
@@ -22,6 +25,7 @@ import {
   initState,
   OptionGroup,
   DesignUpload,
+  AreaField,
   PriceCard,
   MobileCta,
 } from "./configurator-fields";
@@ -77,7 +81,7 @@ function buildGroups(raw: unknown[]): OptionGroupData[] {
   return [...map.values()].sort((a, b) => a.groupSort - b.groupSort);
 }
 
-export function Configurator({ product, rating: ratingProp }: { product: Product; rating?: { average: number; count: number } }) {
+export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PRICING }: { product: Product; rating?: { average: number; count: number }; pricing?: PricingSettings }) {
   const addItem = useCartStore((s) => s.addItem);
   const [state, dispatch] = useReducer(configuratorReducer, product, initState);
   const [kdvDahil, setKdvDahil] = useState(true);
@@ -126,10 +130,27 @@ export function Configurator({ product, rating: ratingProp }: { product: Product
     [baseSelections, resolved],
   );
 
-  const total = useMemo(
-    () => calculateTotal(product, effSel),
-    [product, effSel],
-  );
+  const isArea = (product as { pricingMode?: string }).pricingMode === "area";
+
+  const total = useMemo(() => {
+    if (isArea) {
+      const rows = ((product.prices ?? []) as unknown as Array<{
+        groupKey: string | null;
+        optionKey: string | null;
+        dimKey: string | null;
+        price: unknown;
+        cost?: unknown;
+      }>).map((r) => ({
+        groupKey: r.groupKey,
+        optionKey: r.optionKey,
+        dimKey: r.dimKey,
+        price: Number(r.price),
+        cost: r.cost == null ? null : Number(r.cost),
+      }));
+      return computeAreaPrice(product.options as never, rows, effSel, pricing).dahil;
+    }
+    return calculateTotal(product, effSel);
+  }, [isArea, product, effSel, pricing]);
 
   const priceHintsMap = useMemo(
     () => optionPriceHints(product, effSel),
@@ -240,6 +261,7 @@ export function Configurator({ product, rating: ratingProp }: { product: Product
         </div>
 
         <div className="space-y-6 pt-2">
+          {isArea && <AreaField minM2={pricing.minM2} />}
           {groups.map((group) => (
             <OptionGroup
               key={group.groupKey}
