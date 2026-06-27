@@ -10,6 +10,7 @@ import { ImageGallery } from "@/components/image-uploader";
 import { updateProduct, removeProduct } from "./actions";
 import { PricingStructureEditor } from "./pricing-structure-editor";
 import { PricingGridEditor } from "./pricing-grid-editor";
+import { AreaPricingEditor } from "./area-pricing-editor";
 import type { OptionInput, ApiPrice } from "@markala/api-client";
 
 export interface CategoryRow {
@@ -43,9 +44,11 @@ interface Props {
   pricingLoadError?: boolean;
   /** Aynı kategori+yapıdaki kardeş ürün sayısı — "Kategoriye Uygula" için. */
   siblingCount?: number;
+  /** m² motoru global ayarları — area editör satış önizlemesi için. */
+  pricingSettings?: { kur: number; marj: number; kdv: number };
 }
 
-export function ProductDetailClient({ product, categories, pricing, pricingLoadError, siblingCount = 0 }: Props) {
+export function ProductDetailClient({ product, categories, pricing, pricingLoadError, siblingCount = 0, pricingSettings = { kur: 46, marj: 1.5, kdv: 0.2 } }: Props) {
   const router = useRouter();
   const [name, setName] = useState(product.name);
   const [shortDesc, setShortDesc] = useState(product.shortDescription);
@@ -227,6 +230,22 @@ export function ProductDetailClient({ product, categories, pricing, pricingLoadE
             <PricingStructureEditor
               productId={(product as { id: string }).id}
               initialOptions={pricing?.options ?? []}
+            />
+          </Card>
+
+          {/* m² Fiyatlandırma (area) */}
+          <Card title="m² Fiyatlandırma (vinilturk maliyet)">
+            <p className="text-xs text-ink-500 mb-4">
+              Ölçü-değişkenli ürünler için. m² modunu açın, malzemeleri ve $/m² maliyetlerini
+              girin; satış (KDV dahil) kur/marj ile otomatik hesaplanır. Ekstra gruplar (dikiş/
+              kesim/kuşgözü) korunur. Bu modda yukarıdaki ızgara kullanılmaz.
+            </p>
+            <AreaPricingEditor
+              productId={(product as { id: string }).id}
+              initialPricingMode={(product as unknown as { pricingMode?: string }).pricingMode}
+              initialOptions={pricing?.options ?? []}
+              initialPrices={pricing?.prices ?? []}
+              pricing={pricingSettings}
             />
           </Card>
 

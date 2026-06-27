@@ -47,6 +47,23 @@ export default async function ProductEditPage({ params }: Props) {
     siblingCount = 0;
   }
 
+  // m² motoru global ayarları (area editör satış önizlemesi) — eksikse default.
+  let pricingSettings = { kur: 46, marj: 1.5, kdv: 0.2 };
+  try {
+    const s = (await api.settings.get("pricing")) as Record<string, unknown>;
+    const num = (v: unknown, d: number) => {
+      const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : NaN;
+      return Number.isFinite(n) && n > 0 ? n : d;
+    };
+    pricingSettings = {
+      kur: num(s["pricing.kur"], 46),
+      marj: num(s["pricing.marj"], 1.5),
+      kdv: num(s["pricing.kdv"], 0.2),
+    };
+  } catch {
+    // default kalır
+  }
+
   return (
     <ProductDetailClient
       product={product as never}
@@ -54,6 +71,7 @@ export default async function ProductEditPage({ params }: Props) {
       pricing={pricing as never}
       pricingLoadError={pricingLoadError}
       siblingCount={siblingCount}
+      pricingSettings={pricingSettings}
     />
   );
 }
