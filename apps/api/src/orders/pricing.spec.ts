@@ -1,5 +1,50 @@
 import { describe, it, expect } from "vitest";
-import { extractSelections, pickConfigurationSummary, computeConfiguredPrice, resolveRules, effectiveSelections, normalizeSelections } from "./pricing";
+import { extractSelections, pickConfigurationSummary, computeConfiguredPrice, resolveRules, effectiveSelections, normalizeSelections, computeAreaPrice, DEFAULT_PRICING } from "./pricing";
+
+const aopt = (groupKey: string, role: "dimension"|"priced", optionKey: string, rules?: object) =>
+  ({ groupKey, groupLabel: groupKey, groupRole: role, groupSort: 0, optionKey, optionLabel: optionKey, optionSort: 0, rules: rules ?? null });
+
+describe("computeAreaPrice", () => {
+  const malzeme = (cost: number, rules: object) => ({
+    options: [aopt("malzeme", "priced", "m", rules)],
+    prices: [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost }],
+  });
+
+  it("Çin 440 (2.20$/m², dolar) 100x100=1m² → haric 151.80, dahil 182.16", () => {
+    const { options, prices } = malzeme(2.20, { effect: "perM2", birim: "dolar" });
+    const r = computeAreaPrice(options, prices, { malzeme: "m", en: "100", boy: "100", adet: "1" }, DEFAULT_PRICING);
+    expect(r.haric).toBe(151.8);
+    expect(r.dahil).toBe(182.16);
+  });
+
+  it("min 1 m²: 60x150=0.9m² → 1 m² sayılır (Saten Kırlangıç 3.75$ → dahil 310.50)", () => {
+    const { options, prices } = malzeme(3.75, { effect: "perM2", birim: "dolar" });
+    const r = computeAreaPrice(options, prices, { malzeme: "m", en: "60", boy: "150", adet: "1" }, DEFAULT_PRICING);
+    expect(r.dahil).toBe(310.5);
+  });
+
+  it("perPiece TL (Yelken takım 550₺) × adet 2 → dahil 1980", () => {
+    const { options, prices } = malzeme(550, { effect: "perPiece", birim: "tl" });
+    const r = computeAreaPrice(options, prices, { malzeme: "m", en: "0", boy: "0", adet: "2" }, DEFAULT_PRICING);
+    expect(r.dahil).toBe(1980);
+  });
+
+  it("perPerimeter (kolon dikiş 0.50$/m) 100x200, çevre 6m → haric 207", () => {
+    const opts = [aopt("kolon", "priced", "k", { effect: "perPerimeter", birim: "dolar" })];
+    const prices = [{ groupKey: "kolon", optionKey: "k", dimKey: null, price: 0, cost: 0.5 }];
+    const r = computeAreaPrice(opts, prices, { kolon: "k", en: "100", boy: "200", adet: "1" }, DEFAULT_PRICING);
+    expect(r.haric).toBe(207);
+  });
+
+  it("conditional (<1m² dikiş 0.20$) sadece alan<1'de eklenir", () => {
+    const opts = [aopt("dikis", "priced", "d", { effect: "conditional", birim: "dolar" })];
+    const prices = [{ groupKey: "dikis", optionKey: "d", dimKey: null, price: 0, cost: 0.2 }];
+    const small = computeAreaPrice(opts, prices, { dikis: "d", en: "50", boy: "50", adet: "1" }, DEFAULT_PRICING);
+    const big = computeAreaPrice(opts, prices, { dikis: "d", en: "200", boy: "200", adet: "1" }, DEFAULT_PRICING);
+    expect(small.haric).toBeGreaterThan(0);
+    expect(big.haric).toBe(0);
+  });
+});
 
 const opt = (groupKey: string, groupRole: "dimension"|"priced", optionKey: string, groupSort=0, optionSort=0) =>
   ({ groupKey, groupLabel: groupKey, groupRole, groupSort, optionKey, optionLabel: optionKey, optionSort });
