@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
 import { SettingsService } from "../settings/settings.service";
-import { computeConfiguredPrice, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
+import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -257,6 +257,10 @@ export class OrdersService {
       : [];
     const bundleBySlug = new Map(bundles.map((b) => [b.slug, b]));
 
+    // m² (area) ürünleri için global fiyat ayarları — yalnız area ürünü varsa tek sefer çek.
+    const hasAreaProduct = products.some((p) => (p as { pricingMode?: string }).pricingMode === "area");
+    const pricing = hasAreaProduct ? await this.settings.getPricing() : DEFAULT_PRICING;
+
     // SECURITY: kalem fiyatlarını her zaman SUNUCUDA hesapla (Product konfigüratörü veya paket
     // packagePrice'ı). Client'tan gelen herhangi bir fiyat alanı tamamen yok sayılır.
     const recalculatedItems = input.items.map((i) => {
@@ -294,11 +298,18 @@ export class OrdersService {
           rules: (o as unknown as { rules?: unknown }).rules as import("./pricing").OptionRules | null ?? null,
         }));
         const selections = normalizeSelections(mappedOpts, rawSelections);
-        const configuredUnit = computeConfiguredPrice(
-          mappedOpts,
-          (product.prices ?? []).map((r) => ({ groupKey: r.groupKey, optionKey: r.optionKey, dimKey: r.dimKey, price: Number(r.price) })),
-          selections,
-        );
+        const mappedPrices = (product.prices ?? []).map((r) => ({
+          groupKey: r.groupKey,
+          optionKey: r.optionKey,
+          dimKey: r.dimKey,
+          price: Number(r.price),
+          cost: r.cost == null ? null : Number(r.cost),
+        }));
+        // m² maliyet motoru (area) vs mevcut toplamsal (additive) — ürünün pricingMode'una göre.
+        const configuredUnit =
+          (product as { pricingMode?: string }).pricingMode === "area"
+            ? computeAreaPrice(mappedOpts as never, mappedPrices, selections, pricing).dahil
+            : computeConfiguredPrice(mappedOpts, mappedPrices, selections);
         // Fiyatı belirlenmemiş ürün (configuredUnit=0 → "Teklif Al") sipariş edilemez:
         // storefront sepete eklemeyi zaten engeller; bu sunucu-tarafı savunma (doğrudan API
         // çağrısıyla 0-toplamlı sipariş oluşturulmasını önler).
