@@ -53,4 +53,25 @@ describe("getShipping", () => {
     const svc = new SettingsService(prisma as never);
     expect(await svc.getShipping()).toEqual({ fee: 79, freeThreshold: 750 });
   });
+
+  it("getPricing eksik anahtarlarda default döner", async () => {
+    const prisma = mockPrisma();
+    prisma.siteSetting.findMany.mockResolvedValue([] as any);
+    const svc = new SettingsService(prisma as never);
+    expect(await svc.getPricing()).toEqual({ kur: 46, marj: 1.5, kdv: 0.2, minM2: 1 });
+  });
+
+  it("getPricing DB değerlerini okur, eksiği default'lar", async () => {
+    const prisma = mockPrisma();
+    prisma.siteSetting.findMany.mockResolvedValue([
+      { key: "pricing.kur", value: 50, group: "pricing" },
+      { key: "pricing.marj", value: 1.6, group: "pricing" },
+    ] as any);
+    const svc = new SettingsService(prisma as never);
+    const p = await svc.getPricing();
+    expect(p.kur).toBe(50);
+    expect(p.marj).toBe(1.6);
+    expect(p.kdv).toBe(0.2);
+    expect(p.minM2).toBe(1);
+  });
 });

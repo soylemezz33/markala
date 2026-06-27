@@ -31,6 +31,26 @@ export class SettingsService {
     return { fee: num(map["shipping.fee"], 79), freeThreshold: num(map["shipping.freeThreshold"], 750) };
   }
 
+  /**
+   * m² maliyet motoru global ayarları (group "pricing").
+   * kur: dolar→TL · marj: net kâr çarpanı · kdv: oran · minM2: min faturalanan alan.
+   * Eksik anahtarlarda default'a düşer.
+   */
+  async getPricing(): Promise<{ kur: number; marj: number; kdv: number; minM2: number }> {
+    const rows = await this.prisma.siteSetting.findMany({ where: { group: "pricing" } });
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    const num = (v: unknown, d: number) => {
+      const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : NaN;
+      return Number.isFinite(n) && n > 0 ? n : d;
+    };
+    return {
+      kur: num(map["pricing.kur"], 46),
+      marj: num(map["pricing.marj"], 1.5),
+      kdv: num(map["pricing.kdv"], 0.2),
+      minM2: num(map["pricing.minM2"], 1),
+    };
+  }
+
   async upsertMany(group: string, values: Record<string, unknown>) {
     await Promise.all(
       Object.entries(values).map(([key, value]) =>
