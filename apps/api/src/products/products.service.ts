@@ -2,10 +2,12 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto, UpdateProductDto } from "./products.dto";
+import { SettingsService } from "../settings/settings.service";
+import { computeAreaPrice } from "../orders/pricing";
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private settings: SettingsService) {}
 
   async findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string; list?: boolean; includeInactive?: boolean } = {}) {
     // Arama: çok-kelimeli sorgu token'lara bölünür, HER token isimde geçmeli (AND).
@@ -49,6 +51,7 @@ export class ProductsService {
           badges: true,
           bestseller: true,
           parameters: true,
+          pricingMode: true,
           category: { select: { slug: true, name: true } },
         },
       }) as { id: string; [key: string]: unknown }[];
@@ -63,7 +66,36 @@ export class ProductsService {
       ? await this.prisma.productPrice.groupBy({ by: ["productId"], where: { productId: { in: ids } }, _min: { price: true } })
       : [];
     const minMap = new Map(mins.map((m: { productId: string; _min: { price: unknown } }) => [m.productId, m._min.price == null ? null : Number(m._min.price)]));
-    return products.map((p) => ({ ...p, displayPrice: minMap.get(p.id) ?? null }));
+
+    // area ürünleri: ProductPrice.price=0 → minMap işe yaramaz. displayPrice = en ucuz ana
+    // malzeme × 1 m² (KDV dahil), motordan. Sadece area ürünleri için ek hafif sorgu.
+    const areaIds = products.filter((p) => p.pricingMode === "area").map((p) => p.id);
+    const areaDisplay = new Map<string, number | null>();
+    if (areaIds.length) {
+      const pricing = await this.settings.getPricing();
+      const areaProducts = await this.prisma.product.findMany({
+        where: { id: { in: areaIds } },
+        select: { id: true, options: true, prices: true },
+      });
+      for (const ap of areaProducts) {
+        const opts = ap.options as unknown as { groupKey: string; groupRole: string; optionKey: string; rules?: { effect?: string } | null }[];
+        const rows = ap.prices.map((pr) => ({ groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey, price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost) }));
+        let min: number | null = null;
+        for (const opt of opts) {
+          if (opt.groupRole !== "priced") continue;
+          const eff = opt.rules?.effect ?? "perM2";
+          if (eff !== "perM2" && eff !== "perPiece") continue; // yalnız ana malzeme/takım
+          const r = computeAreaPrice(ap.options as never, rows, { [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
+          if (r > 0 && (min === null || r < min)) min = r;
+        }
+        areaDisplay.set(ap.id, min);
+      }
+    }
+
+    return products.map((p) => ({
+      ...p,
+      displayPrice: p.pricingMode === "area" ? (areaDisplay.get(p.id) ?? null) : (minMap.get(p.id) ?? null),
+    }));
   }
 
   async findBySlug(slug: string) {
