@@ -50,9 +50,16 @@ export function AreaPricingEditor({ productId, initialPricingMode, initialOption
       })),
   );
 
-  // Ekstra grupları (malzeme dışı) AYNEN korunur — kaydederken kaybolmasın
-  const preservedOptions = initialOptions.filter((o) => o.groupKey !== "malzeme");
-  const preservedPrices = initialPrices.filter((p) => p.groupKey !== "malzeme");
+  // SADECE area ekstralarını koru (dikiş/kesim/kuşgözü...). Eski additive yapı (ebat/baskı
+  // vb.) area'ya TAŞINMAZ — aksi halde string/null fiyatları validasyona takılır + yapı bozulur.
+  const AREA_EFFECTS = new Set(["perM2Add", "perPerimeter", "conditional", "perPiece"]);
+  const preservedOptions = initialOptions.filter(
+    (o) => o.groupRole === "priced" && o.groupKey !== "malzeme" && AREA_EFFECTS.has((o.rules?.effect as string) ?? ""),
+  );
+  const preservedKeys = new Set(preservedOptions.map((o) => `${o.groupKey}::${o.optionKey}`));
+  const preservedPrices: ApiPrice[] = initialPrices
+    .filter((p) => preservedKeys.has(`${p.groupKey}::${p.optionKey}`))
+    .map((p) => ({ groupKey: p.groupKey, optionKey: p.optionKey, dimKey: p.dimKey ?? null, cost: p.cost == null ? null : Number(p.cost), price: Number(p.price) || 0 }));
 
   const sellPerM2 = (m: MaterialRow): number => {
     const tl = m.birim === "tl" ? m.cost : m.cost * pricing.kur;
