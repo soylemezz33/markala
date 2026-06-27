@@ -394,3 +394,74 @@ export function getDisplayPrice(product: Product): number {
   return product.displayPrice ?? 0;
 }
 
+// ---------------------------------------------------------------------------
+// m² Maliyet Motoru (pricingMode="area") — API pricing.ts ile BİREBİR aynı.
+// ---------------------------------------------------------------------------
+
+export interface PricingSettings { kur: number; marj: number; kdv: number; minM2: number }
+export const DEFAULT_PRICING: PricingSettings = { kur: 46, marj: 1.5, kdv: 0.2, minM2: 1 };
+export interface AreaOptionRules {
+  effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
+  birim?: "dolar" | "tl";
+  maxM2?: number;
+}
+type AreaOption = PricingOption & { rules?: AreaOptionRules | null };
+
+const _round2 = (n: number) => Math.round(n * 100) / 100;
+
+export function computeAreaPrice(
+  options: AreaOption[],
+  prices: PricingPriceRow[],
+  selections: Record<string, string>,
+  settings: PricingSettings = DEFAULT_PRICING,
+): { haric: number; dahil: number } {
+  const sels = selections && typeof selections === "object" ? selections : {};
+  const opts = Array.isArray(options) ? options : [];
+  const rows = Array.isArray(prices) ? prices : [];
+  const { kur, marj, kdv, minM2 } = settings;
+
+  const en = _num(sels.en);
+  const boy = _num(sels.boy);
+  let adet = Number(sels.adet);
+  if (!Number.isFinite(adet) || adet < 1) adet = 1;
+
+  const alan = (en * boy) / 10000;
+  const toplamAlan = Math.max(minM2, alan * adet);
+  const cevre = ((en + boy) * 2) / 100;
+
+  const role = new Map<string, "dimension" | "priced">();
+  for (const o of opts) if (!role.has(o.groupKey)) role.set(o.groupKey, o.groupRole);
+
+  let maliyet = 0;
+  for (const [gKey, r] of role) {
+    if (r !== "priced") continue;
+    const sel = sels[gKey];
+    if (!sel) continue;
+    const optMeta = opts.find((o) => o.groupKey === gKey && o.optionKey === sel);
+    const row = rows.find((p) => p.groupKey === gKey && p.optionKey === sel);
+    if (!row) continue;
+    const cost = _num(row.cost ?? row.price);
+    const rules: AreaOptionRules = optMeta?.rules ?? {};
+    const tl = rules.birim === "tl" ? cost : cost * kur;
+    switch (rules.effect ?? "perM2") {
+      case "perM2":
+      case "perM2Add":
+        maliyet += tl * toplamAlan;
+        break;
+      case "perPerimeter":
+        maliyet += tl * cevre * adet;
+        break;
+      case "conditional":
+        if (alan < 1) maliyet += tl * adet;
+        break;
+      case "perPiece":
+        maliyet += tl * adet;
+        break;
+    }
+  }
+
+  const haric = Math.max(0, maliyet * marj);
+  const dahil = haric * (1 + kdv);
+  return { haric: _round2(haric), dahil: _round2(dahil) };
+}
+
