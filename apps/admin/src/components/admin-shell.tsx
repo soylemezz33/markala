@@ -64,6 +64,7 @@ const navGroups: Array<{
     links: [
       { href: "/yasal", label: "Yasal Sayfalar", icon: Receipt },
       { href: "/ayarlar/genel", label: "Genel Ayarlar", icon: Gear },
+      { href: "/ayarlar/fiyat", label: "Fiyat Ayarları (m²)", icon: CurrencyCircleDollar },
       { href: "/ayarlar/api", label: "API & Entegrasyonlar", icon: Plug },
       { href: "/ayarlar/seo", label: "SEO Ayarları", icon: PaintBrush },
       { href: "/ayarlar/bildirim", label: "Bildirim Tercihleri", icon: Bell },
