@@ -3,25 +3,33 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@markala/ui";
-import { Info, Wrench, FileArrowUp, ChatCircle } from "@phosphor-icons/react";
+import { Wrench, FileArrowUp } from "@phosphor-icons/react";
 
-const tabs = [
-  { id: "description", label: "Açıklama", icon: Info },
-  { id: "tech", label: "Teknik Detaylar", icon: Wrench },
+interface Spec {
+  label: string;
+  value: string;
+}
+
+const TABS = [
+  { id: "tech", label: "Teknik Özellikler", icon: Wrench },
   { id: "files", label: "Dosya Hazırlama", icon: FileArrowUp },
-  { id: "reviews", label: "Yorumlar", icon: ChatCircle },
 ] as const;
 
-type TabId = (typeof tabs)[number]["id"];
+type TabId = (typeof TABS)[number]["id"];
 
-export function ProductTabs({ description }: { description: string }) {
-  const [active, setActive] = useState<TabId>("description");
+/**
+ * Ürün detayları — tam genişlik sekmeli alan (hero'nun altında).
+ * Teknik Özellikler GERÇEK product.specifications'tan gelir (eski jenerik veri kaldırıldı).
+ * Açıklama hero'da, SSS + Yorumlar ayrı tam-genişlik bölümlerde (SEO microdata + server render).
+ */
+export function ProductTabs({ specifications = [] }: { specifications?: Spec[] }) {
+  const [active, setActive] = useState<TabId>("tech");
 
   return (
     <div>
       {/* Tab nav */}
       <div className="border-b border-paper-200 flex gap-1 overflow-x-auto">
-        {tabs.map((t) => {
+        {TABS.map((t) => {
           const isActive = active === t.id;
           return (
             <button
@@ -55,57 +63,41 @@ export function ProductTabs({ description }: { description: string }) {
           transition={{ duration: 0.2 }}
           className="py-8"
         >
-          {active === "description" && (
-            <div className="prose-content">
-              <p className="text-ink-700 leading-relaxed text-lg">{description}</p>
-            </div>
-          )}
-
-          {active === "tech" && (
-            <dl className="grid sm:grid-cols-2 gap-4">
-              {[
-                { k: "Üretim süresi", v: "1-3 iş günü" },
-                { k: "Kâğıt çözünürlüğü", v: "300 DPI" },
-                { k: "Renk profili", v: "CMYK" },
-                { k: "Taşma payı", v: "3 mm" },
-                { k: "Dosya formatı", v: "PDF, AI, PSD, JPG, PNG" },
-                { k: "Maks. dosya boyutu", v: "200 MB" },
-              ].map((row) => (
-                <div key={row.k} className="flex items-baseline justify-between p-4 bg-paper-100 rounded-lg border border-paper-200">
-                  <dt className="text-sm text-ink-500">{row.k}</dt>
-                  <dd className="text-sm font-medium text-ink-900">{row.v}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
+          {active === "tech" &&
+            (specifications.length > 0 ? (
+              <dl className="grid sm:grid-cols-2 gap-3">
+                {specifications.map((s) => (
+                  <div
+                    key={s.label}
+                    className="flex items-baseline justify-between gap-4 p-4 bg-paper-100 rounded-lg border border-paper-200"
+                  >
+                    <dt className="text-sm text-ink-500">{s.label}</dt>
+                    <dd className="text-sm font-medium text-ink-900 text-right">{s.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="text-sm text-ink-500">Teknik özellik bilgisi yakında eklenecek.</p>
+            ))}
 
           {active === "files" && (
-            <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="p-5 bg-paper-100 border border-paper-200 rounded-lg">
                 <h3 className="font-semibold text-ink-900 mb-2">📐 Dosya hazırlama önerileri</h3>
                 <ul className="space-y-2 text-sm text-ink-700">
                   <li>• <strong>3 mm taşma payı</strong> bırakın — kesim hatasını önler</li>
                   <li>• <strong>CMYK</strong> renk profili kullanın — RGB baskıda renkler değişebilir</li>
                   <li>• <strong>300 DPI</strong> minimum çözünürlük</li>
-                  <li>• Yazıları <strong>"outline" / "convert to curves"</strong> yapın</li>
+                  <li>• Yazıları <strong>&quot;outline&quot; / &quot;convert to curves&quot;</strong> yapın</li>
                 </ul>
               </div>
               <div className="p-5 bg-brand-50 border border-brand-200 rounded-lg">
                 <h3 className="font-semibold text-ink-900">💡 Tasarımınız yok mu?</h3>
                 <p className="mt-1 text-sm text-ink-700">
-                  Konfigüratörde <strong>"Tasarım desteği istiyorum"</strong> seçeneğini açın — profesyonel grafik ekibimiz sizin için hazırlasın.
+                  Konfigüratörde <strong>&quot;Tasarım desteği istiyorum&quot;</strong> seçeneğini açın —
+                  profesyonel grafik ekibimiz sizin için hazırlasın.
                 </p>
               </div>
-            </div>
-          )}
-
-          {active === "reviews" && (
-            <div className="text-center py-12 bg-paper-100 border border-paper-200 rounded-lg">
-              <ChatCircle size={40} className="mx-auto text-ink-300" />
-              <h3 className="mt-4 font-semibold text-ink-900">Henüz yorum yok</h3>
-              <p className="mt-2 text-sm text-ink-500">
-                Bu ürünü ilk değerlendiren siz olun — sipariş verdikten sonra yorum yazabilirsiniz.
-              </p>
             </div>
           )}
         </motion.div>

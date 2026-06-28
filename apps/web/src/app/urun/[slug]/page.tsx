@@ -208,8 +208,12 @@ export default async function ProductPage({ params }: Props) {
               <ShareButton title={product.name} />
             </div>
 
-            {/* Tabs */}
-            <ProductTabs description={product.description} />
+            {/* Kısa açıklama — hero'da, hızlı bilgi */}
+            {product.description && (
+              <p className="text-ink-700 leading-relaxed text-[15px] border-t border-paper-200 pt-6">
+                {product.description}
+              </p>
+            )}
 
             {/* Öne Çıkan Özellikler + Kullanım Alanları — masaüstünde yan yana (aşağıda seyrek
                 durmasın, daha derli toplu). Biri yoksa diğeri tam genişlik akar. */}
@@ -261,97 +265,6 @@ export default async function ProductPage({ params }: Props) {
               </div>
             )}
 
-            {/* Specifications */}
-            {product.specifications && product.specifications.length > 0 && (
-              <section className="border-t border-paper-200 pt-8">
-                <h2 className="text-xl font-semibold text-ink-900 mb-4">Teknik Özellikler</h2>
-                <div className="overflow-hidden border border-paper-200 rounded-lg bg-paper-50">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {product.specifications.map((s, i) => (
-                        <tr key={i} className={i % 2 === 0 ? "bg-paper-50" : "bg-paper-100/50"}>
-                          <th
-                            scope="row"
-                            className="text-left px-4 py-2.5 font-medium text-ink-900 align-top w-2/5"
-                          >
-                            {s.label}
-                          </th>
-                          <td className="px-4 py-2.5 text-ink-700">{s.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            )}
-
-            {/* FAQs */}
-            {product.faqs && product.faqs.length > 0 && (
-              <section
-                className="border-t border-paper-200 pt-8"
-                itemScope
-                itemType="https://schema.org/FAQPage"
-              >
-                <header className="flex items-center gap-2 mb-4">
-                  <Question size={20} weight="fill" className="text-brand-700" />
-                  <h2 className="text-xl font-semibold text-ink-900">Sık Sorulan Sorular</h2>
-                </header>
-                <div className="space-y-3">
-                  {product.faqs.map((f, i) => (
-                    <details
-                      key={i}
-                      className="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm"
-                      itemScope
-                      itemProp="mainEntity"
-                      itemType="https://schema.org/Question"
-                    >
-                      <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
-                        <span itemProp="name">{f.q}</span>
-                        <CaretRight
-                          size={14}
-                          weight="bold"
-                          className="transition-transform group-open:rotate-90 text-ink-500"
-                        />
-                      </summary>
-                      <div
-                        className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30"
-                        itemScope
-                        itemProp="acceptedAnswer"
-                        itemType="https://schema.org/Answer"
-                      >
-                        <span itemProp="text">{f.a}</span>
-                      </div>
-                    </details>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Müşteri yorumları */}
-            <ProductReviewsSection productSlug={product.slug} />
-
-            {/* Üretim toleransı (fire) bandı — yasal zorunluluk */}
-            <section className="border-t border-paper-200 pt-8">
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
-                <Info size={22} weight="fill" className="text-amber-600 flex-none mt-0.5" />
-                <div className="text-sm text-amber-900 leading-relaxed">
-                  <strong>Üretim Toleransı:</strong> {PRODUCTION_TOLERANCE_NOTE} Bu sektör standardı
-                  tolerans aralığı, sipariş onayında otomatik olarak kabul edilmiş sayılır. Detay
-                  için{" "}
-                  <Link
-                    href="/yasal/mesafeli-satis"
-                    className="underline font-medium hover:text-amber-700"
-                  >
-                    Mesafeli Satış Sözleşmesi Madde 7.A
-                  </Link>{" "}
-                  ve{" "}
-                  <Link href="/yasal/iade" className="underline font-medium hover:text-amber-700">
-                    İade Politikası
-                  </Link>
-                  'na bakınız.
-                </div>
-              </div>
-            </section>
           </div>
 
           {/* Sağ: Sticky configurator */}
@@ -362,27 +275,103 @@ export default async function ProductPage({ params }: Props) {
                 rating={ratingStats.count > 0 ? { average: ratingStats.average, count: ratingStats.count } : undefined}
                 pricing={pricingSettings}
               />
-
-              {/* Trust badges */}
-              <ul className="mt-6 grid grid-cols-2 gap-3">
-                {makeTrustBadges(shippingThreshold, product.productionTime).map((t) => (
-                  <li
-                    key={t.label}
-                    className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg"
-                  >
-                    <div className="flex-none w-9 h-9 rounded-md bg-paper-50 grid place-items-center text-brand-700">
-                      <t.icon size={18} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium text-ink-900">{t.label}</div>
-                      <div className="text-[11px] text-ink-500 mt-0.5">{t.sub}</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </div>
+
+        {/* Güven rozetleri — tam genişlik şerit (hero'nun altında) */}
+        <ul className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 border-t border-paper-200 pt-8">
+          {makeTrustBadges(shippingThreshold, product.productionTime).map((t) => (
+            <li
+              key={t.label}
+              className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg"
+            >
+              <div className="flex-none w-9 h-9 rounded-md bg-paper-50 grid place-items-center text-brand-700">
+                <t.icon size={18} />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-medium text-ink-900">{t.label}</div>
+                <div className="text-[11px] text-ink-500 mt-0.5">{t.sub}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        {/* Ürün detayları — tam genişlik sekmeli (Teknik Özellikler | Dosya Hazırlama) */}
+        <div className="mt-12 lg:mt-16 border-t border-paper-200 pt-10">
+          <h2 className="text-2xl font-semibold text-ink-900 mb-4">Ürün Detayları</h2>
+          <ProductTabs specifications={product.specifications ?? []} />
+        </div>
+
+        {/* SSS — tam genişlik (SEO FAQPage microdata korunur, daima render) */}
+        {product.faqs && product.faqs.length > 0 && (
+          <section
+            className="mt-12 border-t border-paper-200 pt-10"
+            itemScope
+            itemType="https://schema.org/FAQPage"
+          >
+            <header className="flex items-center gap-2 mb-5">
+              <Question size={22} weight="fill" className="text-brand-700" />
+              <h2 className="text-2xl font-semibold text-ink-900">Sık Sorulan Sorular</h2>
+            </header>
+            <div className="space-y-3 max-w-3xl">
+              {product.faqs.map((f, i) => (
+                <details
+                  key={i}
+                  className="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm"
+                  itemScope
+                  itemProp="mainEntity"
+                  itemType="https://schema.org/Question"
+                >
+                  <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
+                    <span itemProp="name">{f.q}</span>
+                    <CaretRight
+                      size={14}
+                      weight="bold"
+                      className="transition-transform group-open:rotate-90 text-ink-500"
+                    />
+                  </summary>
+                  <div
+                    className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30"
+                    itemScope
+                    itemProp="acceptedAnswer"
+                    itemType="https://schema.org/Answer"
+                  >
+                    <span itemProp="text">{f.a}</span>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Müşteri yorumları — tam genişlik */}
+        <div className="mt-12 border-t border-paper-200 pt-10">
+          <ProductReviewsSection productSlug={product.slug} />
+        </div>
+
+        {/* Üretim toleransı (fire) bandı — yasal zorunluluk */}
+        <section className="mt-8">
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
+            <Info size={22} weight="fill" className="text-amber-600 flex-none mt-0.5" />
+            <div className="text-sm text-amber-900 leading-relaxed">
+              <strong>Üretim Toleransı:</strong> {PRODUCTION_TOLERANCE_NOTE} Bu sektör standardı
+              tolerans aralığı, sipariş onayında otomatik olarak kabul edilmiş sayılır. Detay
+              için{" "}
+              <Link
+                href="/yasal/mesafeli-satis"
+                className="underline font-medium hover:text-amber-700"
+              >
+                Mesafeli Satış Sözleşmesi Madde 7.A
+              </Link>{" "}
+              ve{" "}
+              <Link href="/yasal/iade" className="underline font-medium hover:text-amber-700">
+                İade Politikası
+              </Link>
+              'na bakınız.
+            </div>
+          </div>
+        </section>
 
         {/* Related products */}
         {relatedProducts.length > 0 && (
