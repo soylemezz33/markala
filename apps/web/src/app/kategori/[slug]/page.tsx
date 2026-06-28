@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container, Price } from "@markala/ui";
 import { CaretRight, Truck, ShieldCheck, Sparkle } from "@phosphor-icons/react/dist/ssr";
-import { getProducts, getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
+import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
 import { AllProductsClient } from "@/app/urunler/all-products-client";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -63,12 +63,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const [cat, allCategories, allProducts] = await Promise.all([
+  const [cat, allCategories] = await Promise.all([
     getCategoryBySlug(params.slug),
     getCategories(),
-    getProducts(),
   ]);
   if (!cat) notFound();
+  // API kategori kapsamını (hiyerarşi dahil) doğru döndürür — client filtresine güvenme.
   const products = await getProductsByCategory(cat.slug);
 
   const breadcrumbs = [
@@ -163,12 +163,13 @@ export default async function CategoryPage({ params }: Props) {
           </div>
         </Container>
       ) : (
-        /* /urunler ile aynı çalışan toolbar/filtre/sort/sayfalama — kategori ön-seçili, hero gizli */
+        /* /urunler ile aynı çalışan toolbar/sort/fiyat/arama/sayfalama — ürünler zaten kategoriye
+           kapsamlı (API), hero ve kategori filtresi gizli. */
         <AllProductsClient
-          products={allProducts}
+          products={products}
           categories={allCategories}
-          initialCategory={cat.slug}
           hideHero
+          hideCategoryFilter
         />
       )}
 

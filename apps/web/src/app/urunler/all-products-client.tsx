@@ -36,6 +36,7 @@ export function AllProductsClient({
   categories,
   initialCategory = null,
   hideHero = false,
+  hideCategoryFilter = false,
 }: {
   products: Product[];
   categories: Category[];
@@ -43,6 +44,8 @@ export function AllProductsClient({
   initialCategory?: string | null;
   /** Kategori sayfası kendi SEO hero'sunu gösterdiğinden buradaki hero gizlenir. */
   hideHero?: boolean;
+  /** Kategori sayfasında ürünler zaten kategoriye-kapsamlı geldiğinden kategori filtresi gizlenir. */
+  hideCategoryFilter?: boolean;
 }) {
   // Fiyat aralığı max — gelen ürünlerden hesaplanır
   const allPrices = products.map((p) => getDisplayPrice(p));
@@ -250,6 +253,7 @@ export function AllProductsClient({
           >
             <div className="lg:sticky lg:top-24 space-y-5">
               {/* Kategoriler */}
+              {!hideCategoryFilter && (
               <FilterCard title="Kategoriler">
                 <ul
                   className="space-y-1 max-h-80 overflow-y-auto pr-1"
@@ -288,6 +292,7 @@ export function AllProductsClient({
                   })}
                 </ul>
               </FilterCard>
+              )}
 
               {/* Fiyat */}
               <FilterCard title="Fiyat Aralığı">
