@@ -30,13 +30,20 @@ const filters: { id: CampaignBundleCategory | "all"; label: string }[] = [
   { id: "promosyon", label: "Promosyon" },
 ];
 
-// Boş durum + hero için sektör kartları (paket eklenince de "neler var" hissi verir).
-const sectors: { id: CampaignBundleCategory; label: string; desc: string; icon: typeof Storefront }[] = [
-  { id: "esnaf", label: "Esnaf", desc: "Dükkan & küçük işletme", icon: Storefront },
-  { id: "kurumsal", label: "Kurumsal", desc: "Ofis & marka kimliği", icon: Buildings },
-  { id: "etkinlik", label: "Etkinlik", desc: "Fuar, lansman, organizasyon", icon: Confetti },
-  { id: "acilis", label: "Açılış", desc: "Yeni açılan mekanlar", icon: Sparkle },
-  { id: "promosyon", label: "Promosyon", desc: "Hediyelik & tanıtım", icon: Gift },
+// Boş durum + hero için sektör kartları. `quote` = /teklif-al SECTORS listesindeki BİREBİR değer
+// (tıklanınca sektörü ön-seçer; eşleşmeyen değer sessizce hiçbir şey yapar).
+const sectors: {
+  id: CampaignBundleCategory;
+  label: string;
+  desc: string;
+  icon: typeof Storefront;
+  quote: string;
+}[] = [
+  { id: "esnaf", label: "Esnaf", desc: "Dükkan & küçük işletme", icon: Storefront, quote: "Mağaza & Perakende" },
+  { id: "kurumsal", label: "Kurumsal", desc: "Ofis & marka kimliği", icon: Buildings, quote: "Kurumsal / Ofis" },
+  { id: "etkinlik", label: "Etkinlik", desc: "Fuar, lansman, organizasyon", icon: Confetti, quote: "Etkinlik & Organizasyon" },
+  { id: "acilis", label: "Açılış", desc: "Yeni açılan mekanlar", icon: Sparkle, quote: "Diğer" },
+  { id: "promosyon", label: "Promosyon", desc: "Hediyelik & tanıtım", icon: Gift, quote: "Diğer" },
 ];
 
 const valueProps = [
@@ -105,7 +112,7 @@ export default function KampanyalarPage() {
                 </Button>
               </a>
               <Link
-                href="/iletisim"
+                href="/teklif-al"
                 className="inline-flex items-center gap-2 px-5 h-12 rounded-lg border border-paper-100/20 text-paper-50 hover:bg-paper-50/10 transition-colors font-medium"
               >
                 Özel Teklif Al
@@ -127,13 +134,6 @@ export default function KampanyalarPage() {
                 <div className="mt-4 pt-4 border-t border-ink-900/15 text-sm font-medium">
                   Tek tek almak yerine paketle al, hem indirim kazan hem tek teslimde topla.
                 </div>
-              </div>
-              {/* Floating mini paket çipleri */}
-              <div className="absolute -top-4 -left-6 rotate-[-6deg] rounded-xl bg-surface-2 border border-surface-4 px-3 py-2 shadow-card-dark text-xs text-on-dark-200 inline-flex items-center gap-1.5">
-                <Package size={14} className="text-brand-400" /> Açılış Paketi
-              </div>
-              <div className="absolute -bottom-5 -right-4 rotate-[5deg] rounded-xl bg-surface-2 border border-surface-4 px-3 py-2 shadow-card-dark text-xs text-on-dark-200 inline-flex items-center gap-1.5">
-                <Storefront size={14} className="text-brand-400" /> Esnaf Paketi
               </div>
             </div>
           </div>
@@ -194,29 +194,37 @@ export default function KampanyalarPage() {
           <EmptyState />
         )}
 
-        {/* B2B kurumsal CTA */}
-        <section className="mt-16 overflow-hidden rounded-2xl border border-paper-200 bg-gradient-to-br from-paper-100 to-paper-50 p-8 md:p-10 grid md:grid-cols-3 gap-6 items-center">
-          <div className="md:col-span-2">
-            <h3 className="text-2xl font-serif text-ink-900">İhtiyacın özel mi?</h3>
-            <p className="mt-2 text-ink-700 max-w-xl">
-              Hazır paketler işine uymuyorsa sana özel bir kombinasyon hazırlayalım. Toplu
-              siparişlerde ek indirim, kurumsal cari hesap imkânı.
-            </p>
-          </div>
-          <div className="md:text-right">
-            <Link href="/iletisim">
-              <Button size="lg">
-                Özel Teklif Al <ArrowRight size={16} weight="bold" />
-              </Button>
-            </Link>
-          </div>
-        </section>
+        {/* B2B kurumsal CTA — yalnız paket VARKEN göster (boş durumda EmptyState zaten
+            özel-teklif CTA'sını taşıyor; tekrar + boşluk olmasın). */}
+        {hasBundles && (
+          <section className="mt-16 overflow-hidden rounded-2xl border border-paper-200 bg-gradient-to-br from-paper-100 to-paper-50 p-8 md:p-10 grid md:grid-cols-3 gap-6 items-center">
+            <div className="md:col-span-2">
+              <h3 className="text-2xl font-serif text-ink-900">İhtiyacın özel mi?</h3>
+              <p className="mt-2 text-ink-700 max-w-xl">
+                Hazır paketler işine uymuyorsa sana özel bir kombinasyon hazırlayalım. Toplu
+                siparişlerde ek indirim, kurumsal cari hesap imkânı.
+              </p>
+            </div>
+            <div className="md:text-right">
+              <Link href="/teklif-al">
+                <Button size="lg">
+                  Özel Teklif Al <ArrowRight size={16} weight="bold" />
+                </Button>
+              </Link>
+            </div>
+          </section>
+        )}
       </Container>
     </div>
   );
 }
 
 function EmptyState() {
+  const steps = [
+    { n: "1", icon: CheckCircle, title: "İhtiyacını seç", desc: "Ürünleri ve adetleri birlikte belirleyelim" },
+    { n: "2", icon: Lightning, title: "24 saatte teklif", desc: "Paket fiyatını ve tasarımı hazırlayalım" },
+    { n: "3", icon: Package, title: "Tek teslimde al", desc: "Hepsi birlikte basılır, tek seferde gelir" },
+  ];
   return (
     <div className="text-center">
       <div className="mx-auto max-w-xl">
@@ -224,44 +232,63 @@ function EmptyState() {
           <Gift size={30} weight="fill" />
         </div>
         <h2 className="mt-5 text-2xl md:text-3xl font-serif text-ink-900">
-          Sana özel paket hazırlayalım
+          Sana özel paket kuruyoruz
         </h2>
         <p className="mt-3 text-ink-700 leading-relaxed">
-          Hazır paketlerimiz çok yakında burada. O zamana kadar ürünlerimizi keşfedebilir ya da
-          işine birebir uyan bir kombinasyon için özel teklif alabilirsin.
+          İşine göre ürünleri seçip indirimli tek pakette topluyoruz — tasarım dahil, tek
+          teslimde. Ne lazım olduğunu söyle, 24 saat içinde sana özel teklifi hazırlayalım.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/urunler">
+          <Link href="/teklif-al">
             <Button size="lg">
-              Ürünleri Keşfet <ArrowRight size={16} weight="bold" />
+              Özel Paket İste <ArrowRight size={16} weight="bold" />
             </Button>
           </Link>
           <Link
-            href="/iletisim"
+            href="/urunler"
             className="inline-flex items-center gap-2 px-5 h-12 rounded-lg border border-paper-200 text-ink-900 hover:bg-paper-100 transition-colors font-medium"
           >
-            Özel Paket İste
+            Ürünleri Keşfet
           </Link>
         </div>
       </div>
 
-      {/* Sektör kartları — "neler hazırlıyoruz" */}
+      {/* Nasıl çalışır — 3 adım (boş sayfayı bilgilendirici içerikle doldurur) */}
+      <div className="mt-12 grid sm:grid-cols-3 gap-3 max-w-3xl mx-auto text-left">
+        {steps.map((s) => (
+          <div key={s.n} className="rounded-xl border border-paper-200 bg-paper-50 p-5">
+            <div className="flex items-center gap-2">
+              <span className="flex-none w-7 h-7 rounded-full bg-brand-500 text-ink-900 grid place-items-center text-sm font-bold tabular-nums">
+                {s.n}
+              </span>
+              <s.icon size={18} weight="fill" className="text-brand-700" />
+            </div>
+            <div className="mt-3 text-sm font-semibold text-ink-900">{s.title}</div>
+            <div className="mt-1 text-[13px] text-ink-500 leading-snug">{s.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Sektör kartları — tıklanınca sektör ön-seçili teklif formuna gider */}
       <div className="mt-12">
         <div className="text-[11px] font-bold uppercase tracking-wider text-ink-500 mb-4">
-          Sektörüne göre paketler
+          Sektörüne göre paket iste
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {sectors.map((s) => (
-            <div
+            <Link
               key={s.id}
-              className="flex flex-col items-center text-center gap-2 rounded-xl border border-paper-200 bg-paper-50 px-3 py-5"
+              href={`/teklif-al?sektor=${encodeURIComponent(s.quote)}`}
+              className="group flex flex-col items-center text-center gap-2 rounded-xl border border-paper-200 bg-paper-50 px-3 py-5 hover:border-ink-300 hover:shadow-sm transition-all"
             >
-              <div className="w-11 h-11 rounded-lg bg-paper-100 text-brand-700 grid place-items-center">
+              <div className="w-11 h-11 rounded-lg bg-paper-100 text-brand-700 grid place-items-center group-hover:bg-brand-100 transition-colors">
                 <s.icon size={22} weight="fill" />
               </div>
-              <div className="text-sm font-semibold text-ink-900">{s.label}</div>
+              <div className="text-sm font-semibold text-ink-900 group-hover:text-brand-700 transition-colors">
+                {s.label}
+              </div>
               <div className="text-[11px] text-ink-500 leading-snug">{s.desc}</div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
