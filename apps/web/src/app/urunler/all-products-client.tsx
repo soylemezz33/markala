@@ -31,12 +31,24 @@ const PAGE_SIZE = 12;
 const PRICE_MIN = 0;
 
 /** Ürünler API'den (server parent) props ile gelir; filtreleme/sıralama client-side. */
-export function AllProductsClient({ products, categories }: { products: Product[]; categories: Category[] }) {
+export function AllProductsClient({
+  products,
+  categories,
+  initialCategory = null,
+  hideHero = false,
+}: {
+  products: Product[];
+  categories: Category[];
+  /** Kategori sayfasında ön-seçili kategori slug'ı. */
+  initialCategory?: string | null;
+  /** Kategori sayfası kendi SEO hero'sunu gösterdiğinden buradaki hero gizlenir. */
+  hideHero?: boolean;
+}) {
   // Fiyat aralığı max — gelen ürünlerden hesaplanır
   const allPrices = products.map((p) => getDisplayPrice(p));
   const PRICE_MAX = allPrices.length > 0 ? Math.ceil(Math.max(...allPrices) / 100) * 100 : 1000;
 
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
   const [activeBadges, setActiveBadges] = useState<Set<BadgeKind>>(new Set());
   const [priceMax, setPriceMax] = useState(PRICE_MAX);
   const [sort, setSort] = useState<SortKey>("popular");
@@ -119,21 +131,23 @@ export function AllProductsClient({ products, categories }: { products: Product[
 
   return (
     <>
-      <div className="bg-paper-100 border-b border-paper-200">
-        <Container className="py-10 md:py-14">
-          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
-            Katalog
-          </p>
-          <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
-            {activeCat ? activeCat.name : "Tüm Ürünler"}
-          </h1>
-          <p className="mt-3 text-lg text-ink-700 max-w-2xl">
-            {activeCat
-              ? activeCat.longDescription
-              : "Matbaa baskıdan büyük format reklam ürünlerine — tüm katalog tek ekranda. Tasarım desteği her siparişte ücretsiz."}
-          </p>
-        </Container>
-      </div>
+      {!hideHero && (
+        <div className="bg-paper-100 border-b border-paper-200">
+          <Container className="py-10 md:py-14">
+            <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
+              Katalog
+            </p>
+            <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
+              {activeCat ? activeCat.name : "Tüm Ürünler"}
+            </h1>
+            <p className="mt-3 text-lg text-ink-700 max-w-2xl">
+              {activeCat
+                ? activeCat.longDescription
+                : "Matbaa baskıdan büyük format reklam ürünlerine — tüm katalog tek ekranda. Tasarım desteği her siparişte ücretsiz."}
+            </p>
+          </Container>
+        </div>
+      )}
 
       <Container className="py-10 md:py-14">
         {/* Toolbar */}

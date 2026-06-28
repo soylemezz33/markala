@@ -161,6 +161,28 @@ export class InlineAddressDto {
   @IsOptional()
   @MaxLength(40)
   label?: string;
+
+  // Kurumsal fatura alanları — fatura adresinde gelir; servis snapshot'a alır, Paraşüt e-fatura
+  // kurumsal/bireysel sınıflandırması bunu okur. (whitelist bunlar olmadan soyuyordu.)
+  @IsString()
+  @IsOptional()
+  @IsIn(["individual", "corporate"])
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(160)
+  companyName?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(20)
+  taxNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(80)
+  taxOffice?: string;
 }
 
 export class CreateOrderDto {

@@ -157,7 +157,7 @@ export const legalPages: Record<string, LegalPage> = {
       <h2>8. Başvuru Yöntemi</h2>
       <p>KVKK kapsamındaki haklarınızı kullanmak için aşağıdaki yollarla başvurabilirsiniz:</p>
       <ul>
-        <li><strong>Online Form (Önerilen):</strong> <a href="${BRAND}/kvkk-basvuru">markala.com.tr/kvkk-basvuru</a> — Kimlik doğrulamalı dijital başvuru kanalı</li>
+        <li><strong>Online Form (Önerilen):</strong> <a href="/kvkk-basvuru">markala.com.tr/kvkk-basvuru</a> — Kimlik doğrulamalı dijital başvuru kanalı</li>
         <li><strong>E-posta:</strong> <a href="mailto:${EMAIL}">${EMAIL}</a> (Konu: KVKK Başvuru)</li>
         <li><strong>Yazılı başvuru:</strong> ${COMPANY}, ${ADDRESS}</li>
         <li><strong>KEP:</strong> ${KEP}</li>

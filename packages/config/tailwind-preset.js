@@ -20,7 +20,7 @@ module.exports = {
           400: "#F8C32C",
           500: "#F5B800", // ana sarı
           600: "#D99A00",
-          700: "#B57F00",
+          700: "#946800", // koyulaştırıldı: link/metin WCAG AA (≈4.5:1) — eski #B57F00 3.35:1 idi
           800: "#8C6200",
           900: "#5C4100",
         },

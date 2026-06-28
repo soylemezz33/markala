@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container, Price } from "@markala/ui";
 import { CaretRight, Truck, ShieldCheck, Sparkle } from "@phosphor-icons/react/dist/ssr";
-import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
-import { ProductCard } from "@/components/product-card";
+import { getProducts, getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
+import { AllProductsClient } from "@/app/urunler/all-products-client";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { formatPriceDisplay } from "@/lib/format";
@@ -63,7 +63,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const [cat, allCategories] = await Promise.all([getCategoryBySlug(params.slug), getCategories()]);
+  const [cat, allCategories, allProducts] = await Promise.all([
+    getCategoryBySlug(params.slug),
+    getCategories(),
+    getProducts(),
+  ]);
   if (!cat) notFound();
   const products = await getProductsByCategory(cat.slug);
 
@@ -142,20 +146,8 @@ export default async function CategoryPage({ params }: Props) {
         </Container>
       </section>
 
-      <Container className="py-12 md:py-16">
-        <div className="flex items-center justify-between mb-6 text-sm">
-          <span className="text-ink-500">
-            <span className="font-semibold text-ink-900">{products.length}</span> ürün
-          </span>
-          <select className="px-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm">
-            <option>En çok satan</option>
-            <option>Yeniler önce</option>
-            <option>Fiyat (artan)</option>
-            <option>Fiyat (azalan)</option>
-          </select>
-        </div>
-
-        {products.length === 0 ? (
+      {products.length === 0 ? (
+        <Container className="py-12 md:py-16">
           <div className="py-20 text-center bg-paper-100 rounded-xl border border-paper-200">
             <p className="text-ink-700 font-medium text-lg">{cat.name} için ürünler hazırlanıyor</p>
             <p className="mt-2 text-sm text-ink-500 max-w-md mx-auto">
@@ -169,14 +161,16 @@ export default async function CategoryPage({ params }: Props) {
               İletişim formuna git →
             </Link>
           </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-            {products.map((p) => (
-              <ProductCard key={p.slug} product={p} />
-            ))}
-          </div>
-        )}
-      </Container>
+        </Container>
+      ) : (
+        /* /urunler ile aynı çalışan toolbar/filtre/sort/sayfalama — kategori ön-seçili, hero gizli */
+        <AllProductsClient
+          products={allProducts}
+          categories={allCategories}
+          initialCategory={cat.slug}
+          hideHero
+        />
+      )}
 
       {/* İlgili kategoriler */}
       <section className="bg-paper-100 border-t border-paper-200 py-12 md:py-16">

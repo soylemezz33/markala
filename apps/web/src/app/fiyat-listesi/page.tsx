@@ -22,7 +22,7 @@ const SITE = "https://markala.com.tr";
 export const metadata: Metadata = {
   title: "Matbaa Fiyat Listesi 2026 — Kartvizit, Broşür, Afiş Fiyatları",
   description:
-    "Güncel matbaa fiyatları (Mayıs 2026): kartvizit 200 TL'den, broşür 380 TL'den, afiş 250 TL'den. KDV dahil, Türkiye geneli kargo. 30+ ürün için tablo.",
+    "Güncel matbaa başlangıç fiyatları, KDV dahil. Türkiye geneli kargo. 30+ ürün için fiyat tablosu — kartvizit, broşür, afiş ve daha fazlası.",
   keywords: [
     "matbaa fiyatları 2026",
     "kartvizit fiyatları",
@@ -77,7 +77,8 @@ export default async function PriceListPage() {
     name: "Matbaa Fiyat Listesi 2026",
     description: "Markala'nın tüm matbaa ürünleri için başlangıç fiyatları.",
     numberOfItems: products.length,
-    itemListElement: products.slice(0, 50).map((p, i) => ({
+    // price:0 (Teklif Al) ürünleri JSON-LD Offer'a girmesin — yanlış "ücretsiz" sinyali / Google ihlali.
+    itemListElement: products.filter((p) => getDisplayPrice(p) > 0).slice(0, 50).map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
       item: {
@@ -355,7 +356,7 @@ export default async function PriceListPage() {
 
         {/* Yasal not */}
         <p className="mt-8 text-xs text-ink-500 text-center max-w-2xl mx-auto">
-          Bu fiyat listesi <strong>Mayıs 2026</strong> tarihinde güncellenmiştir. Hammadde
+          Bu fiyat listesi düzenli olarak güncellenmektedir. Hammadde
           maliyetlerine bağlı olarak fiyatlar değişebilir; sipariş onaylandığında fiyat sabitlenir.
           Kayıtlı kullanıcılar için fiyat geçmişi hesap panelinde görüntülenir.
         </p>

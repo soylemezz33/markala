@@ -130,6 +130,25 @@ export async function POST(req: NextRequest) {
       zipCode: clamp(body.zipCode, 16),
       label: "Teslimat",
     },
+    // Kurumsal sipariş → fatura adresini kurumsal işaretle + vergi bilgisini snapshot'a koy
+    // (Paraşüt e-fatura kurumsal/bireysel ayrımı bunu okur; notlar yetersizdi).
+    ...(body.accountType === "corporate"
+      ? {
+          billingAddress: {
+            fullName: clamp(body.customerName, 120) || clamp(body.email, 120) || "Misafir",
+            phone: clamp(body.phone, 32) || "-",
+            city: clamp(body.city, 80) || "-",
+            district: clamp(body.district, 80) || "-",
+            fullAddress: clamp(body.fullAddress, 500) || "-",
+            zipCode: clamp(body.zipCode, 16),
+            label: "Fatura",
+            type: "corporate",
+            companyName: clamp(body.customerName, 160),
+            taxNumber: clamp(body.taxNumber, 20),
+            taxOffice: clamp(body.taxOffice, 80),
+          },
+        }
+      : {}),
     // Kupon kodu → backend gerçek indirimi sunucuda hesaplar/doğrular (geçersizse 400 döner).
     couponCode: clamp(body.couponCode, 40)?.toUpperCase(),
     // Ödeme yolu → backend doğrular: "cari" yalnız onaylı kurumsal müşteri + kredi limiti dahilinde.

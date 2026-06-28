@@ -266,7 +266,7 @@ export function LocalBusinessJsonLd() {
       { "@type": "City", name: "Ankara" },
       { "@type": "City", name: "İzmir" },
     ],
-    paymentAccepted: ["Kredi Kartı", "Havale/EFT", "Kapıda Ödeme"],
+    paymentAccepted: ["Kredi Kartı", "Banka Kartı", "Havale/EFT"],
     currenciesAccepted: "TRY",
     sameAs: [
       "https://www.instagram.com/markala.com.tr",
