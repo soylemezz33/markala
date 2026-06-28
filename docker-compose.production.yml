@@ -37,6 +37,9 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: markala-api
     restart: unless-stopped
+    # Graceful shutdown payı — prisma migrate + bağlantı kapanışı 10sn varsayılanı aşabilir;
+    # SIGKILL'i geciktirip "Error while Stopping" + dangling container kalıntısını önler.
+    stop_grace_period: 30s
     depends_on:
       postgres:
         condition: service_healthy

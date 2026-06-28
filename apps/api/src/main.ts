@@ -128,6 +128,20 @@ async function bootstrap() {
     SwaggerModule.setup("api/docs", app, doc);
   }
 
+  // Graceful shutdown — deploy/recreate sırasında SIGTERM'de temiz kapanış (Prisma bağlantısı
+  // kapanır, HTTP listener durur). Bu olmadan container stop'ta takılıp dangling kalıntı bırakıyordu.
+  app.enableShutdownHooks();
+  const shutdown = async (signal: string) => {
+    Logger.log(`${signal} alındı — graceful kapanış başlıyor`, "Bootstrap");
+    try {
+      await app.close();
+    } finally {
+      process.exit(0);
+    }
+  };
+  process.on("SIGTERM", () => void shutdown("SIGTERM"));
+  process.on("SIGINT", () => void shutdown("SIGINT"));
+
   const port = config.get<number>("PORT") ?? 4000;
   await app.listen(port);
   Logger.log(
