@@ -24,7 +24,7 @@ export function PriceCard({ total, kdvLabel = "KDV dahil" }: Props) {
           <Price
             amount={total}
             size="xl"
-            className="text-brand-300 transition-all duration-200 tabular-nums break-all text-right min-w-0"
+            className="text-brand-300 transition-all duration-200 tabular-nums whitespace-nowrap text-right min-w-0"
           />
         )}
       </div>

@@ -120,6 +120,12 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
         </p>
       )}
 
+      {minApplied && (
+        <p className="text-[11px] text-ink-500">
+          Üretim minimumu 1 m² olduğundan, daha küçük işler 1 m² üzerinden fiyatlanır.
+        </p>
+      )}
+
       {maxExceeded && (
         <p className="text-xs font-medium text-red-600">
           Bu malzeme tek parçada en fazla {maxM2} m² basılabilir. Daha küçük ölçü girin ya da işi bölün.

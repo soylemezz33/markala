@@ -134,8 +134,13 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
   const isArea = (product as { pricingMode?: string }).pricingMode === "area";
 
+  // Area: geçerli ölçü = en>0 && boy>0. Ölçü girilmeden min-1m² clamp'i ile sahte fiyat
+  // göstermeyi önler (müşteri ölçü girmeden fiyat görmesin / ölçüsüz sepete eklemesin).
+  const hasValidSize = !isArea || (Number(effSel.en) > 0 && Number(effSel.boy) > 0);
+
   const total = useMemo(() => {
     if (isArea) {
+      if (!(Number(effSel.en) > 0 && Number(effSel.boy) > 0)) return 0; // ölçü yok → fiyat yok
       const rows = ((product.prices ?? []) as unknown as Array<{
         groupKey: string | null;
         optionKey: string | null;
@@ -190,6 +195,14 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
   }, [isArea, effSel, product.options]);
 
   const canBuy = total > 0 && !areaMaxExceeded;
+
+  // CTA "Teklif Al"a düştüğünde sebebi açıkla (buton sessizce değişmesin).
+  const ctaReason = useMemo(() => {
+    if (!isArea || canBuy) return null;
+    if (!hasValidSize) return "Fiyat için en ve boy ölçüsünü girin.";
+    if (areaMaxExceeded) return "Bu ölçü tek parça üretim sınırını aşıyor — özel teklif alın.";
+    return null;
+  }, [isArea, canBuy, hasValidSize, areaMaxExceeded]);
 
   /** Gösterim dönüşümü: KDV dahil modda ham değer, hariç modda exVat uygular. */
   const show = (n: number) => (kdvDahil ? n : exVat(n));
@@ -316,6 +329,10 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         </div>
 
         <PriceCard total={show(total)} kdvLabel={kdvDahil ? "KDV dahil" : "KDV hariç"} />
+
+        {ctaReason && (
+          <p className="text-xs text-ink-500 -mt-2">{ctaReason}</p>
+        )}
 
         <div ref={ctaRef}>
           {canBuy ? (

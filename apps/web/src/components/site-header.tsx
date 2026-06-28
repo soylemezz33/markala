@@ -418,7 +418,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                     <Link
                       key={l.href}
                       href={l.href}
-                      className="text-paper-100/80 hover:text-paper-50 transition-colors"
+                      className="hidden md:inline-block text-paper-100/80 hover:text-paper-50 transition-colors"
                     >
                       {l.label}
                     </Link>

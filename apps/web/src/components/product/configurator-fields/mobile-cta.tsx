@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { cn, Button } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
@@ -23,6 +24,16 @@ interface Props {
 export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName, visible = true }: Props) {
   const { state } = useConfigurator();
   const { justAdded } = state;
+
+  // Sabit bar fixed bottom → sayfa sonunda (footer) içeriği örtmesin: bar mount olduğu sürece
+  // body'ye alt boşluk ver. Bar zaten yalnızca aşağı kaydırınca (footer'a yakın) görünür olduğundan
+  // bu boşluk her breakpoint'te doğru clearance sağlar; sayfadan ayrılınca temizlenir.
+  useEffect(() => {
+    document.body.style.paddingBottom = "5rem";
+    return () => {
+      document.body.style.paddingBottom = "";
+    };
+  }, []);
 
   return (
     <>
@@ -64,8 +75,6 @@ export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName,
           </Button>
         </div>
       </div>
-      {/* Mobil: içerik bar altında kalmasın diye boşluk. Masaüstünde bar gerçek CTA'yı örtmediği için gerekmez. */}
-      <div className="lg:hidden h-20" />
     </>
   );
 }

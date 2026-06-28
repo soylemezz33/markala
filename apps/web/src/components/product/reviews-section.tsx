@@ -22,7 +22,7 @@ export async function ProductReviewsSection({ productSlug }: Props) {
 
   if (stats.count === 0) {
     return (
-      <section className="mt-10 py-10 border-t border-paper-200">
+      <section>
         <h2 className="text-2xl font-semibold text-ink-900 mb-4">Müşteri Yorumları</h2>
         <p className="text-ink-500">
           Bu ürün için henüz yorum yok. Sipariş sonrası ilk yorumu sen yaz!
@@ -35,7 +35,7 @@ export async function ProductReviewsSection({ productSlug }: Props) {
   }
 
   return (
-    <section className="mt-10 py-10 border-t border-paper-200">
+    <section>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Özet sol */}
         <div className="lg:col-span-4">

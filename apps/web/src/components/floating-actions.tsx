@@ -42,7 +42,7 @@ export function FloatingActions() {
   if (!mounted) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 flex flex-col items-end gap-3">
+    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 flex flex-col items-end gap-3">
       {/* Açılır mini panel */}
       <AnimatePresence>
         {open && (

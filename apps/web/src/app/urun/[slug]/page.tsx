@@ -193,38 +193,50 @@ export default async function ProductPage({ params }: Props) {
       </div>
 
       <Container className="py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
-          {/* Sol: Galeri + Tabs */}
-          <div className="lg:col-span-7 space-y-8">
+        {/* Hero: 3 hücreli grid. Masaüstü → galeri (sol üst) + bilgi (sol alt) + konfigüratör
+            (sağ, 2 satır). Mobil (tek kolon, DOM sırası) → galeri → KONFİGÜRATÖR → bilgi:
+            müşteri fiyatı/seçenekleri hemen galeri altında görür, pazarlama metni aşağıda. */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_auto] gap-y-8 gap-x-8 lg:gap-x-12 items-start">
+          {/* 1) Galeri + hızlı aksiyon — mobilde 1. */}
+          <div className="lg:col-span-7 lg:col-start-1 lg:row-start-1 space-y-4">
             <Gallery
               images={product.images}
               alt={product.name}
               fallbackSrc={`/api/mockup?slug=${product.slug}&w=800&h=800`}
             />
-
-            {/* Hızlı aksiyonlar — Beğen / Paylaş */}
             <div className="flex items-center gap-2">
               <WishlistButton slug={product.slug} variant="labeled" />
               <ShareButton title={product.name} />
             </div>
+          </div>
 
-            {/* Kısa açıklama — hero'da, hızlı bilgi */}
+          {/* 2) Konfigüratör — sağ kolon, iki satır boyunca; MOBİLDE galerinin hemen altında (2.) */}
+          <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2">
+            <div className="lg:sticky lg:top-24">
+              <Configurator
+                product={product}
+                rating={ratingStats.count > 0 ? { average: ratingStats.average, count: ratingStats.count } : undefined}
+                pricing={pricingSettings}
+              />
+            </div>
+          </div>
+
+          {/* 3) Açıklama + özellikler/kullanım — masaüstünde galerinin altında, mobilde konfigüratörden sonra (3.) */}
+          <div className="lg:col-span-7 lg:col-start-1 lg:row-start-2 space-y-8">
             {product.description && (
-              <p className="text-ink-700 leading-relaxed text-[15px] border-t border-paper-200 pt-6">
+              <p className="text-ink-700 leading-relaxed text-[15px]">
                 {product.description}
               </p>
             )}
 
-            {/* Öne Çıkan Özellikler + Kullanım Alanları — masaüstünde yan yana (aşağıda seyrek
-                durmasın, daha derli toplu). Biri yoksa diğeri tam genişlik akar. */}
             {((product.features && product.features.length > 0) ||
               (product.useCases && product.useCases.length > 0)) && (
-              <div className="grid md:grid-cols-2 gap-8 md:gap-10 border-t border-paper-200 pt-8">
+              <div className="grid md:grid-cols-2 gap-8 md:gap-10">
                 {product.features && product.features.length > 0 && (
                   <section>
                     <header className="flex items-center gap-2 mb-4">
                       <CheckCircle size={20} weight="fill" className="text-brand-700" />
-                      <h2 className="text-xl font-semibold text-ink-900">Öne Çıkan Özellikler</h2>
+                      <h3 className="text-lg font-semibold text-ink-900">Öne Çıkan Özellikler</h3>
                     </header>
                     <ul className="space-y-2.5">
                       {product.features.map((f: string, i: number) => (
@@ -248,7 +260,7 @@ export default async function ProductPage({ params }: Props) {
                   <section>
                     <header className="flex items-center gap-2 mb-4">
                       <ListChecks size={20} weight="fill" className="text-brand-700" />
-                      <h2 className="text-xl font-semibold text-ink-900">Kullanım Alanları</h2>
+                      <h3 className="text-lg font-semibold text-ink-900">Kullanım Alanları</h3>
                     </header>
                     <div className="flex flex-wrap gap-2">
                       {product.useCases.map((u, i) => (
@@ -264,18 +276,6 @@ export default async function ProductPage({ params }: Props) {
                 )}
               </div>
             )}
-
-          </div>
-
-          {/* Sağ: Sticky configurator */}
-          <div className="lg:col-span-5">
-            <div className="lg:sticky lg:top-24">
-              <Configurator
-                product={product}
-                rating={ratingStats.count > 0 ? { average: ratingStats.average, count: ratingStats.count } : undefined}
-                pricing={pricingSettings}
-              />
-            </div>
           </div>
         </div>
 
@@ -286,19 +286,19 @@ export default async function ProductPage({ params }: Props) {
               key={t.label}
               className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg"
             >
-              <div className="flex-none w-9 h-9 rounded-md bg-paper-50 grid place-items-center text-brand-700">
+              <div className="flex-none w-9 h-9 rounded-md bg-brand-100 grid place-items-center text-brand-700">
                 <t.icon size={18} />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-medium text-ink-900">{t.label}</div>
-                <div className="text-[11px] text-ink-500 mt-0.5">{t.sub}</div>
+                <div className="text-sm font-medium text-ink-900">{t.label}</div>
+                <div className="text-xs text-ink-500 mt-0.5">{t.sub}</div>
               </div>
             </li>
           ))}
         </ul>
 
         {/* Ürün detayları — tam genişlik sekmeli (Teknik Özellikler | Dosya Hazırlama) */}
-        <div className="mt-12 lg:mt-16 border-t border-paper-200 pt-10">
+        <div className="mt-14 lg:mt-16">
           <h2 className="text-2xl font-semibold text-ink-900 mb-4">Ürün Detayları</h2>
           <ProductTabs specifications={product.specifications ?? []} />
         </div>
@@ -306,7 +306,7 @@ export default async function ProductPage({ params }: Props) {
         {/* SSS — tam genişlik (SEO FAQPage microdata korunur, daima render) */}
         {product.faqs && product.faqs.length > 0 && (
           <section
-            className="mt-12 border-t border-paper-200 pt-10"
+            className="mt-14"
             itemScope
             itemType="https://schema.org/FAQPage"
           >
@@ -346,7 +346,7 @@ export default async function ProductPage({ params }: Props) {
         )}
 
         {/* Müşteri yorumları — tam genişlik */}
-        <div className="mt-12 border-t border-paper-200 pt-10">
+        <div className="mt-14">
           <ProductReviewsSection productSlug={product.slug} />
         </div>
 
