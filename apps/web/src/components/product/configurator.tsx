@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useReducer, useState } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { Button } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
@@ -84,7 +84,9 @@ function buildGroups(raw: unknown[]): OptionGroupData[] {
 export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PRICING }: { product: Product; rating?: { average: number; count: number }; pricing?: PricingSettings }) {
   const addItem = useCartStore((s) => s.addItem);
   const [state, dispatch] = useReducer(configuratorReducer, product, initState);
-  const [kdvDahil, setKdvDahil] = useState(true);
+  // Fiyatlar tüm sitede DAİMA KDV dahil gösterilir (B2C yasal gereği + sepet/ödeme ile tutarlı).
+  // Eski KDV dahil/hariç toggle'ı kaldırıldı; gösterim mantığı sabit dahil olarak korunur.
+  const kdvDahil = true;
 
   // Flat list of all options with their rules — memoized on product.options
   const optionsWithRules = useMemo(
@@ -269,26 +271,6 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         <p className="text-ink-700 leading-relaxed">{product.shortDescription}</p>
 
         <EstimatedDelivery productionTime={product.productionTime} />
-
-        {/* KDV dahil / hariç toggle */}
-        <div className="flex items-center justify-between py-1">
-          <span className="text-sm text-ink-700">KDV Dahil Fiyatlar</span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={kdvDahil}
-            onClick={() => setKdvDahil((v) => !v)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 ${
-              kdvDahil ? "bg-ink-900" : "bg-paper-300"
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-paper-50 shadow transition-transform ${
-                kdvDahil ? "translate-x-6" : "translate-x-1"
-              }`}
-            />
-          </button>
-        </div>
 
         <div className="space-y-6 pt-2">
           {isArea && <AreaField minM2={pricing.minM2} />}
