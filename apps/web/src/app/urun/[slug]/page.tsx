@@ -195,7 +195,7 @@ export default async function ProductPage({ params }: Props) {
       <Container className="py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
           {/* Sol: Galeri + Tabs */}
-          <div className="lg:col-span-7 space-y-10">
+          <div className="lg:col-span-7 space-y-8">
             <Gallery
               images={product.images}
               alt={product.name}

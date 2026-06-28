@@ -20,7 +20,9 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
 
   return (
     <div>
-      <div className="relative aspect-square bg-paper-100 rounded-lg overflow-hidden">
+      {/* Mobilde kare (dikey alan bol), masaüstünde 4:3 → görsel ekranı kaplamasın,
+          açıklama/özellikler yukarı çıksın. Premium his korunur (makul tavan). */}
+      <div className="relative aspect-square lg:aspect-[4/3] bg-paper-100 rounded-lg overflow-hidden">
         {hasImages && !activeIsBroken ? (
           <Image
             src={safeImages[active] ?? ""}
