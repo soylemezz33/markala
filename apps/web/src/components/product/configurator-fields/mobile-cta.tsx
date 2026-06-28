@@ -1,48 +1,70 @@
 "use client";
 
-import { Button } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle } from "@phosphor-icons/react";
+import { cn, Button } from "@markala/ui";
+import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
 import { formatPriceDisplay } from "@/lib/format";
 
 interface Props {
   total: number;
   onAddToCart: () => void;
+  /** true → "Sepete Ekle"; false → "Teklif Al" (ölçü girilmemiş ya da maxM2 aşımı). */
+  canBuy?: boolean;
+  /** Masaüstü barında solda gösterilir. */
+  productName?: string;
+  /** Masaüstünde bar yalnızca bu true iken görünür (gerçek CTA ekran dışındayken). Mobilde daima görünür. */
+  visible?: boolean;
 }
 
 /**
- * Mobil sticky bottom bar — fiyat + sepete ekle.
- * lg breakpoint altında görünür, üzerinde gizli.
+ * Sabit alt bar — fiyat + Sepete Ekle. Mobilde DAİMA görünür; masaüstünde yalnızca
+ * kolon-içi gerçek CTA ekran dışındayken (visible) görünür → footer örtülmez, çift buton olmaz.
  */
-export function MobileCta({ total, onAddToCart }: Props) {
+export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName, visible = true }: Props) {
   const { state } = useConfigurator();
   const { justAdded } = state;
-  const canBuy = total > 0;
 
   return (
     <>
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-paper-50 border-t border-paper-200 shadow-2xl px-4 py-3 flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="text-[11px] uppercase tracking-wider text-ink-500 font-semibold">
-            Toplam
-          </div>
-          <div className="text-lg font-bold text-ink-900 tabular-nums truncate">
-            {total > 0 ? formatPriceDisplay(total) : "—"}
-          </div>
-        </div>
-        <Button onClick={onAddToCart} disabled={justAdded || !canBuy} className="flex-none">
-          {justAdded ? (
-            <>
-              <CheckCircle size={16} weight="bold" /> Eklendi
-            </>
-          ) : (
-            <>
-              <ShoppingBagOpen size={16} weight="bold" /> Sepete Ekle
-            </>
+      <div
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-30 border-t border-paper-200 bg-paper-50/95 shadow-2xl backdrop-blur",
+          "flex", // mobil: daima görünür
+          visible ? "lg:block" : "lg:hidden", // masaüstü: yalnızca gerekince
+        )}
+      >
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          {productName && (
+            <div className="hidden min-w-0 flex-1 lg:block">
+              <div className="truncate text-sm font-semibold text-ink-900">{productName}</div>
+            </div>
           )}
-        </Button>
+          <div className="min-w-0 flex-1 lg:flex-none">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+              Toplam · KDV dahil
+            </div>
+            <div className="truncate text-lg font-bold tabular-nums text-ink-900">
+              {total > 0 ? formatPriceDisplay(total) : "—"}
+            </div>
+          </div>
+          <Button onClick={onAddToCart} disabled={justAdded} className="flex-none">
+            {justAdded ? (
+              <>
+                <CheckCircle size={16} weight="bold" /> Eklendi
+              </>
+            ) : canBuy ? (
+              <>
+                <ShoppingBagOpen size={16} weight="bold" /> Sepete Ekle
+              </>
+            ) : (
+              <>
+                <ChatCircleText size={16} weight="bold" /> Teklif Al
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-      {/* Sticky bar için alt boşluk — mobilde içerik kapanmasın */}
+      {/* Mobil: içerik bar altında kalmasın diye boşluk. Masaüstünde bar gerçek CTA'yı örtmediği için gerekmez. */}
       <div className="lg:hidden h-20" />
     </>
   );

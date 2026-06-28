@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useReducer } from "react";
+import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
 import { Button } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
@@ -214,6 +214,24 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     [product.options],
   );
 
+  // Sabit alt bar (fiyat + Sepete Ekle) görünürlüğü: gerçek (kolon-içi) CTA ekranda
+  // görünürken bar gizlenir → footer örtülmez, çift buton olmaz; aksi halde bar görünür.
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [stickyBarVisible, setStickyBarVisible] = useState(true);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) setStickyBarVisible(!entry.isIntersecting);
+      },
+      { rootMargin: "0px 0px -80px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   function handleAddToCart() {
     if (!canBuy) return;
     addItem({
@@ -299,36 +317,41 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
         <PriceCard total={show(total)} kdvLabel={kdvDahil ? "KDV dahil" : "KDV hariç"} />
 
-        {canBuy ? (
-          <Button
-            size="lg"
-            fullWidth
-            onClick={handleAddToCart}
-            disabled={state.justAdded}
-          >
-            {state.justAdded ? (
-              <>
-                <CheckCircle size={20} weight="bold" /> Sepete Eklendi
-              </>
-            ) : (
-              <>
-                <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
-              </>
-            )}
-          </Button>
-        ) : (
-          <Button
-            size="lg"
-            fullWidth
-            variant="secondary"
-            onClick={handleQuoteClick}
-          >
-            <ChatCircleText size={20} weight="bold" /> Teklif Al / WhatsApp
-          </Button>
-        )}
+        <div ref={ctaRef}>
+          {canBuy ? (
+            <Button
+              size="lg"
+              fullWidth
+              onClick={handleAddToCart}
+              disabled={state.justAdded}
+            >
+              {state.justAdded ? (
+                <>
+                  <CheckCircle size={20} weight="bold" /> Sepete Eklendi
+                </>
+              ) : (
+                <>
+                  <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              size="lg"
+              fullWidth
+              variant="secondary"
+              onClick={handleQuoteClick}
+            >
+              <ChatCircleText size={20} weight="bold" /> Teklif Al / WhatsApp
+            </Button>
+          )}
+        </div>
 
         <MobileCta
           total={show(total)}
+          canBuy={canBuy}
+          productName={product.name}
+          visible={stickyBarVisible}
           onAddToCart={canBuy ? handleAddToCart : handleQuoteClick}
         />
 
