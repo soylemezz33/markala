@@ -22,6 +22,10 @@ interface Props {
   onSelect: (optionKey: string) => void;
   priceHints?: Record<string, number | null>;
   hintMode?: "delta" | "total" | "none";
+  /** "cards" → 2 sütun etiket+fiyat kart ızgarası (area malzeme). "auto" → mevcut davranış. */
+  layout?: "auto" | "cards";
+  /** Fiyat ipucu sonekine eklenir (ör. "/m²"). */
+  unitSuffix?: string;
 }
 
 const MANY = 8;
@@ -249,7 +253,7 @@ function SearchableDropdown({
   );
 }
 
-function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none" }: Props) {
+function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
 
   if (disabled && !locked) {
@@ -295,6 +299,55 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
               </span>
             )}
           </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Kart ızgarası (area malzeme): 2 sütun, etiket + birim fiyat (ör. "144,90 ₺/m²).
+  // Uzun etiketlerde bile kompakt kalır; müşteri malzeme farkını fiyatla görür.
+  if (layout === "cards") {
+    return (
+      <div>
+        <label id={`group-${groupKey}-label`} className="block text-sm font-medium text-ink-900 mb-3">
+          {groupLabel}
+        </label>
+        <div role="radiogroup" aria-labelledby={`group-${groupKey}-label`} className="grid grid-cols-2 gap-2">
+          {sorted.map((opt) => {
+            const isSelected = selected === opt.optionKey;
+            const hint = priceHints?.[opt.optionKey];
+            const priceLabel =
+              hint !== null && hint !== undefined && Number.isFinite(hint) && hint > 0
+                ? `${formatPrice(hint)} ₺${unitSuffix ?? ""}`
+                : null;
+            return (
+              <button
+                key={opt.optionKey}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => onSelect(opt.optionKey)}
+                className={cn(
+                  "flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-md border text-left transition-all duration-200 ease-out-expo",
+                  isSelected
+                    ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
+                    : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
+                )}
+              >
+                <span className="font-medium text-sm leading-tight">{opt.optionLabel}</span>
+                {priceLabel && (
+                  <span
+                    className={cn(
+                      "text-[11px] tabular-nums",
+                      isSelected ? "text-paper-200" : "text-ink-500",
+                    )}
+                  >
+                    {priceLabel}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     );

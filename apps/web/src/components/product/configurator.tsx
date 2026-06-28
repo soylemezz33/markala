@@ -152,10 +152,26 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     return calculateTotal(product, effSel);
   }, [isArea, product, effSel, pricing]);
 
-  const priceHintsMap = useMemo(
-    () => optionPriceHints(product, effSel),
-    [product, effSel],
-  );
+  const priceHintsMap = useMemo(() => {
+    // Area: her malzemenin 1 m² (KDV dahil) fiyatını ipucu olarak göster → müşteri
+    // malzeme seçmeden fiyat farkını görür. computeAreaPrice ile birim-m² fiyat.
+    if (isArea) {
+      const rows = ((product.prices ?? []) as unknown as Array<{
+        groupKey: string | null; optionKey: string | null; dimKey: string | null; price: unknown; cost?: unknown;
+      }>).map((r) => ({
+        groupKey: r.groupKey, optionKey: r.optionKey, dimKey: r.dimKey,
+        price: Number(r.price), cost: r.cost == null ? null : Number(r.cost),
+      }));
+      const opts = (product.options ?? []) as never[];
+      const matHints: Record<string, number> = {};
+      for (const o of (product.options ?? []) as Array<{ groupKey: string; optionKey: string }>) {
+        if (o.groupKey !== "malzeme") continue;
+        matHints[o.optionKey] = computeAreaPrice(opts, rows, { malzeme: o.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
+      }
+      return { malzeme: matHints };
+    }
+    return optionPriceHints(product, effSel);
+  }, [isArea, product, effSel, pricing]);
 
   // Area: seçili malzemenin maxM2'sini aşan ölçü sipariş edilemez (basılamaz).
   const areaMaxExceeded = useMemo(() => {
@@ -291,7 +307,9 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
               disabled={resolved.disabledGroups.has(group.groupKey)}
               onSelect={(optionKey) => handleSelect(group.groupKey, optionKey)}
               priceHints={displayedPriceHints[group.groupKey]}
-              hintMode={groupHintMode(product, group.groupKey)}
+              hintMode={isArea && group.groupKey === "malzeme" ? "total" : groupHintMode(product, group.groupKey)}
+              layout={isArea && group.groupKey === "malzeme" ? "cards" : "auto"}
+              unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
             />
           ))}
           <DesignUpload />
