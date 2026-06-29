@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DesignEditorLoader } from "@/components/design/design-editor-loader";
+import { getCanvasSpec } from "@/lib/design/canvas-spec";
 
 // Editör ağır client bundle + ssr:false → boş SSR HTML. SEO değersiz, indexleme kapalı.
 export const metadata: Metadata = {
@@ -8,7 +9,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Şu an POC: ürün/şablon parametreleri (urun, design) sonraki fazda bağlanacak.
-export default function TasarimAraciPage() {
-  return <DesignEditorLoader />;
+// ?urun=<key> → editör canvas ebadı (geçersizse kartvizit). ?design= sonraki fazda (kaydet/yükle).
+export default function TasarimAraciPage({
+  searchParams,
+}: {
+  searchParams?: { urun?: string };
+}) {
+  const spec = getCanvasSpec(searchParams?.urun);
+  return <DesignEditorLoader specKey={spec.key} />;
 }
