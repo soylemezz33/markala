@@ -39,11 +39,10 @@ export function OrganizationJsonLd() {
           {
             "@type": "ContactPoint",
             contactType: "customer service",
-            email: "bilgi@markala.com.tr",
+            email: "merhaba@markala.com.tr",
             telephone: "+90-324-433-3351",
             areaServed: "TR",
             availableLanguage: ["Turkish"],
-            contactOption: "TollFree",
             hoursAvailable: {
               "@type": "OpeningHoursSpecification",
               dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
@@ -229,7 +228,7 @@ export function LocalBusinessJsonLd() {
     image: `${SITE}/og-default.png`,
     url: SITE,
     telephone: "+90-324-433-3351",
-    email: "bilgi@markala.com.tr",
+    email: "merhaba@markala.com.tr",
     priceRange: "₺₺",
     address: {
       "@type": "PostalAddress",

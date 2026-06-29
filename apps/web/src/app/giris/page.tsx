@@ -51,9 +51,15 @@ export default function LoginPage() {
           <div className="mb-6">
             <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Hesap</p>
             <h1 className="mt-1.5 text-3xl md:text-4xl font-semibold text-ink-900">Giriş yapın</h1>
-            <p className="mt-2 text-ink-700">
-              Sipariş takibi, kayıtlı tasarımlar ve cari hesap için.
-            </p>
+            {nextParam === "/odeme" ? (
+              <p className="mt-2 text-ink-700">
+                Siparişinizi tamamlamak için giriş yapın veya 30 saniyede ücretsiz hesap oluşturun — <strong className="text-ink-900">sepetiniz korunuyor.</strong>
+              </p>
+            ) : (
+              <p className="mt-2 text-ink-700">
+                Sipariş takibi, kayıtlı tasarımlar ve cari hesap için.
+              </p>
+            )}
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">

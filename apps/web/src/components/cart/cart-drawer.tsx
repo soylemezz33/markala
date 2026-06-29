@@ -179,7 +179,7 @@ export function CartDrawer() {
                     <span className="text-sm text-ink-500">Ara toplam</span>
                     <Price amount={subtotal()} size="lg" className="text-ink-900" />
                   </div>
-                  <p className="text-xs text-ink-500">Kargo ve KDV sipariş adımında hesaplanır.</p>
+                  <p className="text-xs text-ink-500">Fiyatlar KDV dahildir. Kargo, sipariş adımında hesaplanır.</p>
                   <div className="flex flex-col gap-2">
                     <Link
                       href="/odeme"

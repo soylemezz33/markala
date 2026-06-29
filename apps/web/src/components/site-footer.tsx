@@ -36,7 +36,6 @@ export function SiteFooter() {
           <FooterLink href="/referanslar">Referanslarımız</FooterLink>
           <FooterLink href="/iletisim">İletişim</FooterLink>
           <FooterLink href="/iletisim#teklif">Teklif Al</FooterLink>
-          <FooterLink href="/blog">Blog</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Müşteriler için">
