@@ -257,6 +257,24 @@ export class OrdersService {
       : [];
     const bundleBySlug = new Map(bundles.map((b) => [b.slug, b]));
 
+    // Online tasarım aracı tasarımları — kalem `configuration.designId` ile referans verir.
+    // Var olan tasarımın baskı-PDF'i (printFileUrl) OrderItem.uploadedFileUrl'e konur ki üretim
+    // ekibi admin sipariş-detaydan indirebilsin. FK için yalnız GERÇEKTEN var olan designId bağlanır.
+    const designIds = Array.from(
+      new Set(
+        input.items
+          .map((i) => (i.configuration as { designId?: unknown } | undefined)?.designId)
+          .filter((v): v is string => typeof v === "string" && v.length > 0),
+      ),
+    );
+    const designs = designIds.length
+      ? await this.prisma.design.findMany({
+          where: { id: { in: designIds }, deletedAt: null },
+          select: { id: true, printFileUrl: true },
+        })
+      : [];
+    const designById = new Map(designs.map((d) => [d.id, d]));
+
     // m² (area) ürünleri için global fiyat ayarları — yalnız area ürünü varsa tek sefer çek.
     const hasAreaProduct = products.some((p) => (p as { pricingMode?: string }).pricingMode === "area");
     const pricing = hasAreaProduct ? await this.settings.getPricing() : DEFAULT_PRICING;
@@ -274,13 +292,17 @@ export class OrdersService {
       }
       const configuration = i.configuration ?? {};
       const configurationSummary = pickConfigurationSummary(i.configuration, summarizeConfiguration(i.configuration));
+      const designRef = (i.configuration as { designId?: unknown } | undefined)?.designId;
+      const design = typeof designRef === "string" ? designById.get(designRef) : undefined;
       const common = {
         configuration,
         configurationSummary,
         quantity,
         needsDesignSupport: i.needsDesignSupport ?? false,
         uploadedFileName: i.uploadedFileName,
-        uploadedFileUrl: i.uploadedFileUrl,
+        // Online tasarımın baskı-PDF'i varsa onu indir bağlantısı yap; yoksa client'ın yüklediği dosya.
+        uploadedFileUrl: design?.printFileUrl ?? i.uploadedFileUrl,
+        designId: design?.id ?? null,
       };
 
       const product =
@@ -546,6 +568,7 @@ export class OrdersService {
               needsDesignSupport: i.needsDesignSupport,
               uploadedFileName: i.uploadedFileName,
               uploadedFileUrl: i.uploadedFileUrl,
+              designId: i.designId ?? undefined,
             })),
           },
         },

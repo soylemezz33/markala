@@ -18,6 +18,7 @@ import {
   CloudArrowUp,
   CheckCircle,
   Printer,
+  ShoppingBagOpen,
   type Icon,
 } from "@phosphor-icons/react";
 import {
@@ -29,6 +30,17 @@ import {
 import { templatesFor, type DesignTemplate } from "@/lib/design/templates";
 import { getSessionId } from "@/lib/visitor-analytics";
 import { useAuthStore } from "@/lib/auth-store";
+import { useCartStore } from "@/lib/cart-store";
+
+type DesignCtx = {
+  productSlug: string;
+  productName: string;
+  productImage: string;
+  selections?: Record<string, string>;
+  summary?: string;
+  totalPrice?: number;
+  quantity?: number;
+};
 
 /**
  * Markala Online Tasarım Aracı — free-form editör (Fabric.js v7, %100 açık kaynak).
@@ -67,6 +79,19 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
   const [rendering, setRendering] = useState(false);
   const [preflightItems, setPreflightItems] = useState<PreflightUI[]>([]);
   const [printReady, setPrintReady] = useState(false);
+  const [addingCart, setAddingCart] = useState(false);
+  const addItem = useCartStore((s) => s.addItem);
+  const [designCtx, setDesignCtx] = useState<DesignCtx | null>(null);
+
+  // PDP "Online Tasarla" CTA'sından gelen bağlam (ürün + seçim + fiyat) → "Sepete Ekle" için.
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("mk_design_ctx");
+      if (raw) setDesignCtx(JSON.parse(raw) as DesignCtx);
+    } catch {
+      /* sessionStorage yoksa standalone editör */
+    }
+  }, []);
 
   const templates = useMemo(() => templatesFor(spec.key), [spec.key]);
 
@@ -146,14 +171,14 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
     return resultId;
   }
 
-  async function renderPrint() {
+  async function renderPrint(forceId?: string) {
     const fc = fcRef.current;
     if (!fc || rendering) return;
     setRendering(true);
     setPreflightItems([]);
     setPrintReady(false);
     try {
-      const id = savedId ?? (await saveDesign());
+      const id = forceId ?? savedId ?? (await saveDesign());
       if (!id) {
         setSaveMsg("Önce kaydedilemedi");
         return;
@@ -198,6 +223,44 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
       triggerDownload(await res.blob(), "tasarim-baski.pdf");
     } catch {
       setSaveMsg("İndirilemedi");
+    }
+  }
+
+  // PDP'den gelen tasarımı sepete ekle: kaydet → baskı-PDF üret (best-effort) → cart'a designId ile koy.
+  async function addDesignToCart() {
+    const fc = fcRef.current;
+    if (!fc || !designCtx || addingCart) return;
+    setAddingCart(true);
+    try {
+      const id = savedId ?? (await saveDesign());
+      if (!id) {
+        setSaveMsg("Sepete eklenemedi");
+        return;
+      }
+      await renderPrint(id).catch(() => {});
+      fc.discardActiveObject();
+      fc.renderAll();
+      const preview = fc.toDataURL({ format: "jpeg", quality: 0.6, multiplier: Math.min(1, 320 / W) });
+      addItem({
+        productSlug: designCtx.productSlug,
+        productName: designCtx.productName,
+        productImage: preview || designCtx.productImage,
+        configuration: {
+          selections: designCtx.selections ?? {},
+          summary: `${designCtx.summary ?? "Online tasarım"} · Online tasarım`,
+          totalPrice: Number(designCtx.totalPrice) || 0,
+          needsDesign: false,
+          designId: id,
+          designPreviewUrl: preview,
+        },
+        quantity: Number(designCtx.quantity) || 1,
+      });
+      setSaveMsg("Sepete eklendi ✓");
+      setTimeout(() => router.push("/sepet"), 700);
+    } catch {
+      setSaveMsg("Sepete eklenemedi");
+    } finally {
+      setAddingCart(false);
     }
   }
 
@@ -477,6 +540,17 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
 
       {/* Sağ özellik paneli */}
       <aside className="w-full lg:w-64 p-4 bg-paper-50 border-t lg:border-t-0 lg:border-l border-paper-200 space-y-5">
+        {designCtx && (
+          <button
+            onClick={addDesignToCart}
+            disabled={addingCart || rendering || saving}
+            className="w-full inline-flex items-center justify-center gap-1.5 h-11 rounded-lg bg-brand-500 text-sm font-bold text-ink-900 hover:bg-brand-600 disabled:opacity-60"
+          >
+            <ShoppingBagOpen size={18} weight="bold" />
+            {addingCart ? "Sepete ekleniyor…" : "Sepete Ekle"}
+          </button>
+        )}
+
         <div className="space-y-2">
           <button
             onClick={saveDesign}
@@ -499,7 +573,7 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
         {/* Baskıya-hazır PDF (CMYK, bleed, TrimBox) */}
         <div className="space-y-2 border-t border-paper-200 pt-4">
           <button
-            onClick={renderPrint}
+            onClick={() => renderPrint()}
             disabled={rendering || saving}
             className="w-full inline-flex items-center justify-center gap-1.5 h-10 rounded-lg bg-ink-900 text-sm font-semibold text-paper-50 hover:bg-ink-800 disabled:opacity-60"
           >

@@ -274,6 +274,10 @@ export interface CartItemConfiguration {
   uploadedFileName?: string;
   /** Yüklenen tasarım dosyasının indirilebilir URL'i (backend storage) */
   uploadedFileUrl?: string;
+  /** Online tasarım aracıyla oluşturulan tasarım id'si (backend Design) */
+  designId?: string;
+  /** Tasarım önizleme görseli (sepet satırında gösterilir) */
+  designPreviewUrl?: string;
 }
 
 export interface CartItem {

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle, ChatCircleText, PaintBrush } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import {
   calculateTotal,
@@ -19,6 +20,7 @@ import {
 } from "@/lib/configurator";
 import { exVat } from "@/lib/vat";
 import { useCartStore } from "@/lib/cart-store";
+import { designSpecKeyForProduct } from "@/lib/design/canvas-spec";
 import {
   ConfiguratorContext,
   configuratorReducer,
@@ -245,6 +247,41 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     return () => io.disconnect();
   }, []);
 
+  const router = useRouter();
+  // Online tasarım aracı: ürün editör spec'ine eşleşiyorsa "Online Tasarla" CTA gösterilir.
+  const designSpecKey = useMemo(
+    () =>
+      designSpecKeyForProduct({
+        slug: product.slug,
+        name: product.name,
+        categorySlug: (product as { categorySlug?: string }).categorySlug,
+      }),
+    [product],
+  );
+
+  // Mevcut konfigürasyon (seçim + fiyat) editöre taşınır → "Sepete Ekle"de doğru fiyatla geri döner.
+  function openDesigner() {
+    if (!designSpecKey) return;
+    try {
+      sessionStorage.setItem(
+        "mk_design_ctx",
+        JSON.stringify({
+          productSlug: product.slug,
+          productName: product.name,
+          productImage: product.images[0] || `/api/mockup?slug=${product.slug}&w=200&h=200`,
+          selections: effSel,
+          summary: buildSelectionSummary(product, effSel, state.needsDesign),
+          totalPrice: total,
+          quantity: state.quantity,
+          specKey: designSpecKey,
+        }),
+      );
+    } catch {
+      /* sessionStorage erişilemezse editör boş bağlamla açılır */
+    }
+    router.push(`/tasarim-araci?urun=${designSpecKey}&from=${encodeURIComponent(product.slug)}`);
+  }
+
   function handleAddToCart() {
     if (!canBuy) return;
     addItem({
@@ -325,6 +362,15 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
               unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
             />
           ))}
+          {designSpecKey && (
+            <button
+              type="button"
+              onClick={openDesigner}
+              className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-lg bg-ink-900 text-paper-50 font-semibold hover:bg-ink-800 transition-colors"
+            >
+              <PaintBrush size={18} weight="fill" /> Online Tasarla
+            </button>
+          )}
           <DesignUpload />
         </div>
 

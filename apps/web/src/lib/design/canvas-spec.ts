@@ -41,6 +41,26 @@ export function getCanvasSpec(key?: string | null): CanvasSpec {
 
 export const ALL_SPECS: CanvasSpec[] = Object.values(SPECS);
 
+/**
+ * Katalog ürününü editör spec anahtarına eşler (slug/kategori/ad anahtar kelimeleriyle).
+ * Eşleşme yoksa null → PDP'de "Online Tasarla" CTA gösterilmez (güvenli varsayılan).
+ */
+export function designSpecKeyForProduct(p: {
+  slug?: string;
+  name?: string;
+  categorySlug?: string;
+}): string | null {
+  const hay = `${p.slug ?? ""} ${p.name ?? ""} ${p.categorySlug ?? ""}`.toLowerCase();
+  if (hay.includes("kartvizit")) return "kartvizit";
+  if (hay.includes("yuvarlak") && (hay.includes("sticker") || hay.includes("etiket"))) return "yuvarlak-sticker";
+  if (hay.includes("sticker") || hay.includes("etiket")) return "kare-sticker";
+  if (hay.includes("kaşe") || hay.includes("kase")) return "dikdortgen-kase";
+  if (hay.includes("broşür") || hay.includes("brosur")) return "a5-brosur";
+  if (hay.includes("el ilanı") || hay.includes("el-ilani")) return "a6-el-ilani";
+  if (hay.includes("roll")) return "rollup";
+  return null;
+}
+
 /** mm → ekran px ölçeği: artboard hedef kutuya sığsın (büyük format küçülür). */
 export function displayScale(spec: CanvasSpec, maxPx = 560): number {
   const wmm = spec.widthMm + spec.bleedMm * 2;
