@@ -107,7 +107,9 @@ export function ProductJsonLd({
   category?: Category;
 }) {
   const productUrl = `${SITE}/urun/${product.slug}`;
-  const startingPrice = product.startingPrice ?? product.basePrice;
+  // Gerçek "başlangıç" fiyatı = API'nin hesapladığı displayPrice (en düşük geçerli yapılandırma).
+  // startingPrice/basePrice DB alanları 0 (fiyatlar product_prices'ta) → onları KULLANMA.
+  const displayPrice = product.displayPrice ?? 0;
 
   const productNode: Record<string, unknown> = {
     "@type": "Product",
@@ -129,12 +131,12 @@ export function ProductJsonLd({
 
   // Offer SADECE fiyatı olan üründe eklenir. "Teklif Al" (price:0) ürünlerde Offer atlanır —
   // aksi halde Google Merchant/Shopping price:0'ı geçersiz sayıp ürünü reddeder (disapproval).
-  if (Number(startingPrice) > 0) {
+  if (Number(displayPrice) > 0) {
     productNode.offers = {
       "@type": "Offer",
       url: productUrl,
       priceCurrency: "TRY",
-      price: startingPrice,
+      price: displayPrice,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "Markala", url: SITE },

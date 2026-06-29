@@ -108,7 +108,32 @@ export class ProductsService {
       },
     });
     if (!product) throw new NotFoundException(`Ürün bulunamadı: ${slug}`);
-    return product;
+
+    // displayPrice — liste endpoint'iyle AYNI tanım (kart/JSON-LD ile tutarlı): non-area =
+    // MIN(ProductPrice.price > 0); area = en ucuz priced malzeme × 1 m² (KDV dahil). Fiyatsız
+    // ("Teklif Al") üründe null. Detay yanıtında eksikti → JSON-LD Offer price:0'a düşüyordu.
+    const priceRows = product.prices ?? [];
+    let displayPrice: number | null = null;
+    if (product.pricingMode === "area") {
+      if (priceRows.length) {
+        const pricing = await this.settings.getPricing();
+        const rows = priceRows.map((pr) => ({ groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey, price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost) }));
+        const opts = product.options as unknown as { groupKey: string; groupRole: string; optionKey: string; rules?: { effect?: string } | null }[];
+        let min: number | null = null;
+        for (const opt of opts) {
+          if (opt.groupRole !== "priced") continue;
+          const eff = opt.rules?.effect ?? "perM2";
+          if (eff !== "perM2" && eff !== "perPiece") continue;
+          const r = computeAreaPrice(product.options as never, rows, { [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
+          if (r > 0 && (min === null || r < min)) min = r;
+        }
+        displayPrice = min;
+      }
+    } else if (priceRows.length) {
+      const positive = priceRows.map((pr) => Number(pr.price)).filter((v) => v > 0);
+      displayPrice = positive.length ? Math.min(...positive) : null;
+    }
+    return { ...product, displayPrice };
   }
 
   create(dto: CreateProductDto) {
