@@ -125,7 +125,12 @@ export function ProductJsonLd({
       name: product.brand ?? "Markala",
     },
     category: category?.name,
-    offers: {
+  };
+
+  // Offer SADECE fiyatı olan üründe eklenir. "Teklif Al" (price:0) ürünlerde Offer atlanır —
+  // aksi halde Google Merchant/Shopping price:0'ı geçersiz sayıp ürünü reddeder (disapproval).
+  if (Number(startingPrice) > 0) {
+    productNode.offers = {
       "@type": "Offer",
       url: productUrl,
       priceCurrency: "TRY",
@@ -151,8 +156,8 @@ export function ProductJsonLd({
           transitTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 3, unitCode: "DAY" },
         },
       },
-    },
-  };
+    };
+  }
 
   if (product.rating) {
     productNode.aggregateRating = {
