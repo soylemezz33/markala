@@ -8,6 +8,16 @@
 >
 > **Tech Stack:** Polotno SDK, polotno-node, @nestjs/bullmq (mevcut Redis), Ghostscript 10.x, sharp, pdf-lib(+fontkit fallback), Cloudflare R2, Prisma/Postgres, Next.js 14, NestJS.
 
+> ## ⚠️ REVİZYON 2026-06-29 (akşam): Polotno → %100 AÇIK KAYNAK (Fabric.js) — bu blok yukarıdaki Polotno satırlarını EZER
+>
+> Hasan ücretli SDK istemiyor; free-form, bidolubaski'den gelişmiş, %100 açık kaynak. **Tech Stack revize:**
+> - **Editör:** `fabric` (Fabric.js v7, MIT) — `apps/web`, `dynamic(ssr:false)`, kendi toolbar/panel/katman UI'ımız. (Polotno SDK/polotno-node ÇIKARILDI.)
+> - **Baskı PDF/X:** Fabric `toSVG()` → **Ghostscript** (AGPL, internal CLI shell-out — hukuken güvenli) veya **Scribus** (GPL `-g -py`+xvfb, gerçek PDF/X-1a+bleed) + **lcms2** (RGB→CMYK ICC). sharp = preview/DPI.
+> - **Font:** OFL/Apache woff2 (Noto Sans/Inter), self-host R2, embed/subset. **ICC:** ISO Coated v2 (ECI) ücretsiz, embed-only.
+> - Geri kalan mimari (BullMQ render-worker, Redis EKLE[B1], secure storage, admin indirme, `designId`, yeni Prisma modelleri) AYNEN geçerli. `Design.document` = **Fabric.js JSON** (Polotno JSON değil).
+> - **Faz 0** artık "Polotno trial" değil: Fabric.js POC + tek baskı-PDF (Ghostscript/Scribus CMYK) + **matbaada fiziksel prova**. Lisans/trial/Grass Roots görevleri İPTAL.
+> - **Efor:** free-form MVP ~2-3 kişi-ay (Polotno'nun 1-1.5 avantajı yok); olgun ~9-12. Takas: $0 + tam sahiplik.
+
 ## Global Kısıtlar (her görev için geçerli)
 - **Fiyat DAİMA sunucuda** (`orders.service.ts:181-184`); client fiyatına güvenme.
 - **Baskı PDF DAİMA backend'de** üretilir; Polotno render key client'a sızmaz (`NEXT_PUBLIC_POLOTNO_KEY` sadece editör UI key'i, domain-kilitli).

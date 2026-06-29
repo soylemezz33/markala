@@ -6,6 +6,20 @@
 
 ---
 
+## 0.0 ⚠️ REVİZYON 2026-06-29 (akşam): Polotno → %100 AÇIK KAYNAK (Fabric.js)
+
+> **Hasan kararı:** "Ücretli yazılım (Polotno) istemiyorum; açık kaynak profesyonel bir şey. bidolubaski'den farklı, daha gelişmiş/profesyonel free-form bir hizmet." → **Polotno BUY İPTAL. %100 açık kaynak, free-form editör.**
+>
+> 9 alt-ajanlık derin araştırma sonucu (bu blok §0-§16'daki Polotno kararını EZER):
+>
+> - **Hazır bedava profesyonel web-to-print editör YOK** (doğrulandı): layerhub=terk, lidojs=lisanssız, salgum1114/react-design-editor=baskı için değil, tldraw=$6k/yıl, Penpot/Excalidraw=baskı değil+embed-SDK yok, Pixie/Pintura=ücretli. → Editörü **biz Fabric.js üstüne kuracağız.**
+> - **Revize %100-OSS yığın:** Editör **Fabric.js v7 (MIT)** — SVG export + inline metin + JSON, web-to-print için Konva'yı eler (Konva SVG export edemez). Renk **lcms2 (MIT)** gerçek ICC motoru. Baskı PDF/X **Scribus (GPL v2+, çıktı yükümlülüksüz, gerçek PDF/X-1a + CMYK + bleed + ICC, headless `-g -py` + xvfb)** veya **Ghostscript (AGPL — bizim değiştirmeden internal CLI shell-out kullanımımız hukuken güvenli/ücretsiz; FSF "mere aggregation" + §13 "if you modify" tetiklenmez; Artifex v. Hancom = dağıtım davası, bizim durum değil)**. Font **OFL/Apache (Noto Sans/Inter, ş/ğ/ı/₺)** — baskıya gömme serbest. ICC **ISO Coated v2 (ECI)** ücretsiz, kullan+çıktıya-göm serbest (dosyayı dağıtma → embed-only temiz yol). **SIFIR ücretli bağımlılık.**
+> - **Efor gerçeği:** free-form Fabric.js MVP ~2-3 kişi-ay, olgun (CMYK/bleed/PDF-X/çoklu-sayfa/şablon/undo) ~9-12 kişi-ay. Polotno'nun MVP ~1-1.5 kişi-ay avantajı kayboldu — takas: $0 + tam sahiplik.
+> - **Aşağıdaki Polotno-özel kısımlar (B2 @polotno/pdf-export, lisans, Grass Roots, trial) artık geçersiz.** Render pipeline (§6) Ghostscript/Scribus + lcms2 ile aynı mantıkta kalır; B1 (Redis), B3 (headless render RAM — Scribus/Chromium), B4-B6, O1-O7 düzeltmeleri GEÇERLİ kalır. Yeni Prisma modelleri (§5) aynen geçerli (`Design.document` = Fabric.js JSON).
+> - **Pilot:** Hasan "free-form, gelişmiş" dedi → şablon-tabanlı pdfme yolu elendi; Fabric.js free-form. Pilot ürün hâlâ kartvizit (en temiz) önerilir.
+
+---
+
 ## 0. Tek Cümle Karar
 
 **Polotno SDK'yı (self-host, React-native) satın al; baskıya-hazır CMYK/PDF-X-1a/bleed/crop çıktısını backend'de (`@polotno/pdf-export` + Ghostscript) üret; "Online Tasarla" editörünü mevcut "Hazır Dosya Yükle" akışıyla yan yana, zorunlu önizleme kapısıyla sun; bir üründe (İSG levhası veya kartvizit) 60-günlük ücretsiz denemede pilotla, baskı provası tutarsa ($249/ay Grass Roots) yaygınlaştır.**
