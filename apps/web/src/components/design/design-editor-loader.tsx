@@ -16,6 +16,6 @@ const DesignEditor = dynamic(
   },
 );
 
-export function DesignEditorLoader({ specKey }: { specKey?: string }) {
-  return <DesignEditor specKey={specKey} />;
+export function DesignEditorLoader({ specKey, designId }: { specKey?: string; designId?: string }) {
+  return <DesignEditor specKey={specKey} designId={designId} />;
 }

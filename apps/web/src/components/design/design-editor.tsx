@@ -15,6 +15,8 @@ import {
   DownloadSimple,
   ArrowCounterClockwise,
   SquaresFour,
+  CloudArrowUp,
+  CheckCircle,
   type Icon,
 } from "@phosphor-icons/react";
 import {
@@ -24,6 +26,8 @@ import {
   ALL_SPECS,
 } from "@/lib/design/canvas-spec";
 import { templatesFor, type DesignTemplate } from "@/lib/design/templates";
+import { getSessionId } from "@/lib/visitor-analytics";
+import { useAuthStore } from "@/lib/auth-store";
 
 /**
  * Markala Online Tasarım Aracı — free-form editör (Fabric.js v7, %100 açık kaynak).
@@ -35,7 +39,7 @@ const PALETTE = ["#1A1A1A", "#FFFFFF", "#F5B800", "#E11D48", "#2563EB", "#059669
 
 type SelKind = "none" | "text" | "shape" | "image";
 
-export function DesignEditor({ specKey }: { specKey?: string }) {
+export function DesignEditor({ specKey, designId }: { specKey?: string; designId?: string }) {
   const router = useRouter();
   const spec = useMemo(() => getCanvasSpec(specKey), [specKey]);
   const pxPerMm = useMemo(() => displayScale(spec), [spec]);
@@ -55,8 +59,82 @@ export function DesignEditor({ specKey }: { specKey?: string }) {
   const [fontSize, setFontSize] = useState<number>(24);
   const [ready, setReady] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(designId ?? null);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<string | null>(null);
 
   const templates = useMemo(() => templatesFor(spec.key), [spec.key]);
+
+  // Kayıtlı tasarımı yükle (?design=id)
+  useEffect(() => {
+    if (!ready || !designId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await useAuthStore.getState().ensureFreshToken().catch(() => null);
+        const headers: Record<string, string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const res = await fetch(
+          `/api/tasarim-getir/${designId}?sessionId=${encodeURIComponent(getSessionId())}`,
+          { headers, cache: "no-store" },
+        );
+        const data = await res.json();
+        const fc = fcRef.current;
+        if (!cancelled && data?.ok && data.design?.document && fc) {
+          await fc.loadFromJSON(data.design.document);
+          fc.renderAll();
+          undoStack.current = [JSON.stringify(fc.toJSON())];
+        }
+      } catch {
+        /* yüklenemezse boş tuvalle devam */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, designId]);
+
+  async function saveDesign() {
+    const fc = fcRef.current;
+    if (!fc || saving) return;
+    setSaving(true);
+    setSaveMsg(null);
+    try {
+      fc.discardActiveObject();
+      fc.renderAll();
+      const document = fc.toJSON();
+      const previewUrl = fc.toDataURL({ format: "jpeg", quality: 0.6, multiplier: Math.min(1, 320 / W) });
+      const token = await useAuthStore.getState().ensureFreshToken().catch(() => null);
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch("/api/tasarim-kaydet", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          id: savedId ?? undefined,
+          name: `${spec.name} tasarımı`,
+          document,
+          widthMm: spec.widthMm,
+          heightMm: spec.heightMm,
+          bleedMm: spec.bleedMm,
+          previewUrl,
+          sessionId: getSessionId(),
+        }),
+      });
+      const data = await res.json();
+      if (data?.ok && data.id) {
+        setSavedId(data.id);
+        setSaveMsg("Kaydedildi ✓");
+      } else {
+        setSaveMsg("Kaydedilemedi");
+      }
+    } catch {
+      setSaveMsg("Kaydedilemedi");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveMsg(null), 2500);
+    }
+  }
 
   const snapshot = useCallback(() => {
     const fc = fcRef.current;
@@ -334,13 +412,23 @@ export function DesignEditor({ specKey }: { specKey?: string }) {
 
       {/* Sağ özellik paneli */}
       <aside className="w-full lg:w-64 p-4 bg-paper-50 border-t lg:border-t-0 lg:border-l border-paper-200 space-y-5">
-        <div className="flex items-center gap-2">
-          <button onClick={downloadJSON} className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-lg border border-paper-200 text-sm font-medium text-ink-900 hover:bg-paper-100">
-            <FloppyDisk size={16} /> JSON
+        <div className="space-y-2">
+          <button
+            onClick={saveDesign}
+            disabled={saving}
+            className="w-full inline-flex items-center justify-center gap-1.5 h-10 rounded-lg bg-brand-500 text-sm font-semibold text-ink-900 hover:bg-brand-600 disabled:opacity-60"
+          >
+            {saveMsg === "Kaydedildi ✓" ? <CheckCircle size={16} weight="bold" /> : <CloudArrowUp size={16} />}
+            {saving ? "Kaydediliyor…" : saveMsg ?? (savedId ? "Güncelle" : "Tasarımı Kaydet")}
           </button>
-          <button onClick={downloadPNG} className="flex-1 inline-flex items-center justify-center gap-1.5 h-10 rounded-lg bg-brand-500 text-sm font-semibold text-ink-900 hover:bg-brand-600">
-            <DownloadSimple size={16} /> PNG
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={downloadJSON} className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-paper-200 text-xs font-medium text-ink-900 hover:bg-paper-100">
+              <FloppyDisk size={14} /> JSON
+            </button>
+            <button onClick={downloadPNG} className="flex-1 inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-paper-200 text-xs font-medium text-ink-900 hover:bg-paper-100">
+              <DownloadSimple size={14} /> PNG
+            </button>
+          </div>
         </div>
 
         {selKind === "none" ? (

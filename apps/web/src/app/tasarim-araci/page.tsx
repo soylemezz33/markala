@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 export default function TasarimAraciPage({
   searchParams,
 }: {
-  searchParams?: { urun?: string };
+  searchParams?: { urun?: string; design?: string };
 }) {
   const spec = getCanvasSpec(searchParams?.urun);
-  return <DesignEditorLoader specKey={spec.key} />;
+  return <DesignEditorLoader specKey={spec.key} designId={searchParams?.design} />;
 }
