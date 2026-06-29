@@ -30,7 +30,8 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
-RUN apk add --no-cache openssl tini
+# ghostscript: baskı pipeline'ında RGB PDF → CMYK dönüşümü (RenderService). Yoksa kod RGB'ye düşer.
+RUN apk add --no-cache openssl tini ghostscript
 
 # Non-root user
 RUN addgroup --system --gid 1001 nodejs \

@@ -45,3 +45,11 @@ export class UpdateDesignDto {
 export class ClaimDesignsDto {
   @IsString() @MaxLength(100) sessionId!: string;
 }
+
+export class RenderDesignDto {
+  /** Client'ta üretilen 300dpi PNG (data URL veya base64). Backend CMYK PDF'e çevirir. */
+  @IsString() @MaxLength(28_000_000)
+  pngBase64!: string;
+
+  @IsOptional() @IsString() @MaxLength(100) sessionId?: string;
+}

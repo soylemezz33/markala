@@ -17,6 +17,7 @@ import {
   SquaresFour,
   CloudArrowUp,
   CheckCircle,
+  Printer,
   type Icon,
 } from "@phosphor-icons/react";
 import {
@@ -38,6 +39,7 @@ import { useAuthStore } from "@/lib/auth-store";
 const PALETTE = ["#1A1A1A", "#FFFFFF", "#F5B800", "#E11D48", "#2563EB", "#059669", "#7C3AED", "#92400E"];
 
 type SelKind = "none" | "text" | "shape" | "image";
+type PreflightUI = { level: string; code?: string; message: string };
 
 export function DesignEditor({ specKey, designId }: { specKey?: string; designId?: string }) {
   const router = useRouter();
@@ -62,6 +64,9 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
   const [savedId, setSavedId] = useState<string | null>(designId ?? null);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [rendering, setRendering] = useState(false);
+  const [preflightItems, setPreflightItems] = useState<PreflightUI[]>([]);
+  const [printReady, setPrintReady] = useState(false);
 
   const templates = useMemo(() => templatesFor(spec.key), [spec.key]);
 
@@ -94,22 +99,25 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
     };
   }, [ready, designId]);
 
-  async function saveDesign() {
+  async function authHeaders(base: Record<string, string> = {}): Promise<Record<string, string>> {
+    const token = await useAuthStore.getState().ensureFreshToken().catch(() => null);
+    return token ? { ...base, Authorization: `Bearer ${token}` } : base;
+  }
+
+  async function saveDesign(): Promise<string | null> {
     const fc = fcRef.current;
-    if (!fc || saving) return;
+    if (!fc || saving) return savedId;
     setSaving(true);
     setSaveMsg(null);
+    let resultId: string | null = null;
     try {
       fc.discardActiveObject();
       fc.renderAll();
       const document = fc.toJSON();
       const previewUrl = fc.toDataURL({ format: "jpeg", quality: 0.6, multiplier: Math.min(1, 320 / W) });
-      const token = await useAuthStore.getState().ensureFreshToken().catch(() => null);
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch("/api/tasarim-kaydet", {
         method: "POST",
-        headers,
+        headers: await authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           id: savedId ?? undefined,
           name: `${spec.name} tasarımı`,
@@ -123,6 +131,7 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
       });
       const data = await res.json();
       if (data?.ok && data.id) {
+        resultId = data.id;
         setSavedId(data.id);
         setSaveMsg("Kaydedildi ✓");
       } else {
@@ -133,6 +142,62 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
     } finally {
       setSaving(false);
       setTimeout(() => setSaveMsg(null), 2500);
+    }
+    return resultId;
+  }
+
+  async function renderPrint() {
+    const fc = fcRef.current;
+    if (!fc || rendering) return;
+    setRendering(true);
+    setPreflightItems([]);
+    setPrintReady(false);
+    try {
+      const id = savedId ?? (await saveDesign());
+      if (!id) {
+        setSaveMsg("Önce kaydedilemedi");
+        return;
+      }
+      fc.discardActiveObject();
+      fc.renderAll();
+      const pngBase64 = fc.toDataURL({ format: "png", multiplier: EXPORT_MULTIPLIER });
+      const res = await fetch("/api/tasarim-render", {
+        method: "POST",
+        headers: await authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ id, pngBase64, sessionId: getSessionId() }),
+      });
+      const data = await res.json();
+      const pf = Array.isArray(data?.preflight) ? data.preflight : [];
+      setPreflightItems(pf.filter((p: PreflightUI) => p.level !== "info"));
+      if (data?.ok) {
+        setPrintReady(true);
+        setSaveMsg("Baskı dosyası hazır ✓");
+      } else if (pf.some((p: PreflightUI) => p.level === "block")) {
+        setSaveMsg("Baskı engellendi — uyarılara bak");
+      } else {
+        setSaveMsg("Baskı oluşturulamadı");
+      }
+    } catch {
+      setSaveMsg("Baskı oluşturulamadı");
+    } finally {
+      setRendering(false);
+    }
+  }
+
+  async function downloadPrint() {
+    if (!savedId) return;
+    try {
+      const res = await fetch(
+        `/api/tasarim-baski/${savedId}?sessionId=${encodeURIComponent(getSessionId())}`,
+        { headers: await authHeaders() },
+      );
+      if (!res.ok) {
+        setSaveMsg("İndirilemedi");
+        return;
+      }
+      triggerDownload(await res.blob(), "tasarim-baski.pdf");
+    } catch {
+      setSaveMsg("İndirilemedi");
     }
   }
 
@@ -429,6 +494,39 @@ export function DesignEditor({ specKey, designId }: { specKey?: string; designId
               <DownloadSimple size={14} /> PNG
             </button>
           </div>
+        </div>
+
+        {/* Baskıya-hazır PDF (CMYK, bleed, TrimBox) */}
+        <div className="space-y-2 border-t border-paper-200 pt-4">
+          <button
+            onClick={renderPrint}
+            disabled={rendering || saving}
+            className="w-full inline-flex items-center justify-center gap-1.5 h-10 rounded-lg bg-ink-900 text-sm font-semibold text-paper-50 hover:bg-ink-800 disabled:opacity-60"
+          >
+            <Printer size={16} />
+            {rendering ? "Hazırlanıyor…" : "Baskı Dosyası Oluştur"}
+          </button>
+          {preflightItems.length > 0 && (
+            <ul className="space-y-1 pt-1">
+              {preflightItems.map((p, i) => (
+                <li
+                  key={i}
+                  className={`text-[11px] leading-snug ${p.level === "block" ? "text-error" : "text-amber-600"}`}
+                >
+                  {p.level === "block" ? "⛔ " : "⚠️ "}
+                  {p.message}
+                </li>
+              ))}
+            </ul>
+          )}
+          {printReady && (
+            <button
+              onClick={downloadPrint}
+              className="w-full inline-flex items-center justify-center gap-1.5 h-9 rounded-lg border border-brand-500 text-xs font-semibold text-brand-700 hover:bg-brand-100"
+            >
+              <DownloadSimple size={14} /> Baskı PDF indir
+            </button>
+          )}
         </div>
 
         {selKind === "none" ? (

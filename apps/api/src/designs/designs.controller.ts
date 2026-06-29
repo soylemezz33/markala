@@ -1,15 +1,20 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Put, Query, Req, Res, UseGuards } from "@nestjs/common";
+import type { Response } from "express";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { OptionalJwtAuthGuard } from "./optional-jwt.guard";
-import { ClaimDesignsDto, CreateDesignDto, UpdateDesignDto } from "./designs.dto";
+import { ClaimDesignsDto, CreateDesignDto, RenderDesignDto, UpdateDesignDto } from "./designs.dto";
 import { DesignsService } from "./designs.service";
+import { RenderService } from "./render.service";
 
 type AuthedReq = { user?: { sub?: string } };
 const uid = (req: AuthedReq) => req.user?.sub;
 
 @Controller("designs")
 export class DesignsController {
-  constructor(private readonly svc: DesignsService) {}
+  constructor(
+    private readonly svc: DesignsService,
+    private readonly render: RenderService,
+  ) {}
 
   /** Public — aktif başlangıç şablonları. */
   @Get("templates/active")
@@ -48,5 +53,28 @@ export class DesignsController {
   @UseGuards(OptionalJwtAuthGuard)
   update(@Param("id") id: string, @Body() dto: UpdateDesignDto, @Req() req: AuthedReq) {
     return this.svc.update(id, dto, uid(req), dto.sessionId);
+  }
+
+  /** Tasarımı baskıya-hazır CMYK PDF'e dönüştür (client 300dpi PNG gönderir). */
+  @Post(":id/render")
+  @UseGuards(OptionalJwtAuthGuard)
+  renderDesign(@Param("id") id: string, @Body() dto: RenderDesignDto, @Req() req: AuthedReq) {
+    return this.render.renderDesign(id, dto.pngBase64, { userId: uid(req), sessionId: dto.sessionId });
+  }
+
+  /** Baskı-PDF'i indir (sahiplik kontrollü — auth veya sessionId). */
+  @Get(":id/print")
+  @UseGuards(OptionalJwtAuthGuard)
+  async print(
+    @Param("id") id: string,
+    @Req() req: AuthedReq,
+    @Res() res: Response,
+    @Query("sessionId") sessionId?: string,
+  ) {
+    const file = await this.render.getPrintFile(id, { userId: uid(req), sessionId });
+    res.setHeader("Content-Type", file.mimetype);
+    res.setHeader("Content-Disposition", 'attachment; filename="tasarim-baski.pdf"');
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(file.buffer);
   }
 }
