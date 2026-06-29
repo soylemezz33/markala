@@ -4,6 +4,7 @@ import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
 import { SettingsService } from "../settings/settings.service";
+import { MailService } from "../mail/mail.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 
 function generateOrderNumber(): string {
@@ -175,7 +176,7 @@ function withAddressView<
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService) {}
+  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService) {}
 
   /**
    * SECURITY: never trust client-side pricing.
@@ -479,7 +480,7 @@ export class OrdersService {
     const finalNotes = buildNotesWithIdem(input.notes, idemHash);
 
     // Kupon kullanım sayısını atomic artırmak için transaction.
-    return this.prisma.$transaction(async (tx) => {
+    const placed = await this.prisma.$transaction(async (tx) => {
       if (appliedCoupon) {
         // Atomic increment + race koşulu: kupon hala geçerliyse usedCount++ ;
         // maxUses dolduysa updateMany 0 satır günceller ve hata fırlatılır.
@@ -569,6 +570,13 @@ export class OrdersService {
       // Misafir siparişinde FK relation null gelir; snapshot'ı adres olarak yüzeye çıkar.
       return withAddressView(created);
     });
+
+    // Cari (açık hesap) sipariş ödemesiz oluşur → onay maili BURADA gönderilir. Ödemeli
+    // siparişler ödeme başarısında (payments.handleCallback) mail alır. Fire-and-forget.
+    if (onAccount && input.userId) {
+      void this.mail.sendOrderConfirmationEmail((placed as { id: string }).id).catch(() => undefined);
+    }
+    return placed;
   }
 
   /**

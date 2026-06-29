@@ -12,6 +12,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { IyzicoService } from "../integrations/iyzico/iyzico.service";
 import { verifyPaymentNonce, paymentNonce } from "./payment-nonce";
+import { MailService } from "../mail/mail.service";
 
 interface AddressView {
   fullName?: string;
@@ -30,6 +31,7 @@ export class PaymentsService implements OnModuleInit {
     private prisma: PrismaService,
     private iyzico: IyzicoService,
     private config: ConfigService,
+    private mail: MailService,
   ) {}
 
   onModuleInit() {
@@ -543,7 +545,7 @@ export class PaymentsService implements OnModuleInit {
       // IDEMPOTENT işaretleme: koşullu updateMany ile yalnız HÂLÂ "basarili" OLMAYAN sipariş
       // güncellenir → iki eşzamanlı/yinelenen iyzico callback'i (retry/dup POST) lost-update
       // anomalisine yol açmaz; ilk yazım kazanır, ikincisi count=0 ile sessiz no-op olur.
-      await this.prisma.order.updateMany({
+      const upd = await this.prisma.order.updateMany({
         where: { id: orderId, paymentStatus: { not: "basarili" } },
         data: {
           paymentStatus: "basarili",
@@ -551,6 +553,11 @@ export class PaymentsService implements OnModuleInit {
           iyzicoConversationId: orderId,
         },
       });
+      // Yalnız İLK başarı işaretlemesinde (count>0) MÜŞTERİYE onay maili → yinelenen
+      // callback'lerde çift mail gitmez. Fire-and-forget: redirect'i geciktirmez, akışı bloke etmez.
+      if (upd.count > 0) {
+        void this.mail.sendOrderConfirmationEmail(orderId).catch(() => undefined);
+      }
       this.logger.log(
         `iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} price=${result.price} paid=${result.paidPrice}`,
       );

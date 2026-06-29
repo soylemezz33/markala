@@ -70,7 +70,7 @@ describe("PaymentsService.handlePaydownCallback — cari tahsilat idempotency + 
     // Mevcut borç 100, tahsilat 100 → tam ödeme, kırpma yok.
     const tx = makePaydownTx({ claimCount: 1, debit: 100, credit: 0 });
     const prisma = makePrisma({ ...PAYMENT }, tx);
-    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS()) as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS()) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     const res = await svc.handleCallback("tok");
 
@@ -86,7 +86,7 @@ describe("PaymentsService.handlePaydownCallback — cari tahsilat idempotency + 
     // İkinci/duplike callback: updateMany 0 satır (zaten 'paid') → no-op.
     const tx = makePaydownTx({ claimCount: 0, debit: 0, credit: 100 });
     const prisma = makePrisma({ ...PAYMENT, status: "paid" }, tx);
-    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS()) as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS()) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     const res = await svc.handleCallback("tok");
 
@@ -101,7 +101,7 @@ describe("PaymentsService.handlePaydownCallback — cari tahsilat idempotency + 
     // → credit 100 değil 40 (bakiye 0'ın altına inmez).
     const tx = makePaydownTx({ claimCount: 1, debit: 100, credit: 60 }); // bakiye = 40
     const prisma = makePrisma({ ...PAYMENT, amount: 100 }, tx);
-    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS("pay1", 100)) as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS("pay1", 100)) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await svc.handleCallback("tok");
 
@@ -113,7 +113,7 @@ describe("PaymentsService.handlePaydownCallback — cari tahsilat idempotency + 
   it("borç tamamen kapanmışsa (bakiye 0) credit kaydı atlanır (negatif bakiye önlenir)", async () => {
     const tx = makePaydownTx({ claimCount: 1, debit: 100, credit: 100 }); // bakiye = 0
     const prisma = makePrisma({ ...PAYMENT, amount: 100 }, tx);
-    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS("pay1", 100)) as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS("pay1", 100)) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await svc.handleCallback("tok");
 
@@ -125,7 +125,7 @@ describe("PaymentsService.handlePaydownCallback — cari tahsilat idempotency + 
     const tx = makePaydownTx({ claimCount: 1, debit: 100, credit: 0 });
     const prisma = makePrisma({ ...PAYMENT, amount: 100 }, tx);
     // price 999 ≠ beklenen 100 → doğrulama başarısız.
-    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS("pay1", 999)) as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, makeIyzico(SUCCESS("pay1", 999)) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     const res = await svc.handleCallback("tok");
     expect(res.redirectUrl).toContain("odeme=hata");
@@ -157,7 +157,7 @@ describe("PaymentsService.handleCallback — sipariş ödemesi idempotency (koş
 
   it("başarı: koşullu updateMany (paymentStatus≠basarili) ile işaretler → idempotent", async () => {
     const prisma = makeOrderPrisma({ ...ORDER });
-    const svc = new PaymentsService(prisma as never, makeIyzico(OK) as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, makeIyzico(OK) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     const res = await svc.handleCallback("tok");
 
@@ -173,7 +173,7 @@ describe("PaymentsService.handleCallback — sipariş ödemesi idempotency (koş
   it("başarısız ödeme: koşullu updateMany (paymentStatus=beklemede) ile işaretler", async () => {
     const prisma = makeOrderPrisma({ ...ORDER });
     const failResult = { ...OK, status: "failure", paymentStatus: "FAILURE", errorCode: "10", errorMessage: "red" };
-    const svc = new PaymentsService(prisma as never, makeIyzico(failResult) as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, makeIyzico(failResult) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await svc.handleCallback("tok");
 
@@ -200,7 +200,7 @@ describe("PaymentsService.reconcilePendingPayments — kurtarma yarışı (koşu
       price: 200,
       paymentId: "iyz-1",
     });
-    const svc = new PaymentsService(prisma as never, iyzico as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, iyzico as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     const res = await svc.reconcilePendingPayments();
 
@@ -225,7 +225,7 @@ describe("PaymentsService.reconcilePendingPayments — kurtarma yarışı (koşu
       price: 200,
       paymentId: "iyz-1",
     });
-    const svc = new PaymentsService(prisma as never, iyzico as never, makeConfig() as never);
+    const svc = new PaymentsService(prisma as never, iyzico as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
 
     const res = await svc.reconcilePendingPayments();
     expect(res.recovered).toBe(1);

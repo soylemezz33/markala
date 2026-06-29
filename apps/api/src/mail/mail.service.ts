@@ -182,6 +182,93 @@ export class MailService {
     }
   }
 
+  /**
+   * MÜŞTERİYE sipariş onay maili — ödeme başarısında (paid) veya cari sipariş oluşturulduğunda
+   * gönderilir. orderId ile siparişi + kalemleri çeker, KDV-dahil özet + tutar tablosu yollar.
+   * HATA FIRLATMAZ — sipariş/ödeme akışını bloke etmez (fire-and-forget güvenli).
+   */
+  async sendOrderConfirmationEmail(orderId: string): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, user: { select: { fullName: true } } },
+    });
+    if (!order || !order.email) {
+      this.logger.warn(`mail.orderConfirmation: sipariş/e-posta yok order=${orderId}`);
+      return false;
+    }
+    const esc = (s: unknown) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const fmt = (n: unknown) =>
+      new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0);
+
+    const isCari = order.paymentMethod === "cari";
+    const name = order.user?.fullName?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const orderUrl = `${webUrl}/hesabim/siparislerim`;
+
+    const rowsHtml = (order.items ?? [])
+      .map(
+        (i) =>
+          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${esc(i.productName)}` +
+          `${i.configurationSummary ? `<br><span style="color:#a8a29e;font-size:12px">${esc(i.configurationSummary)}</span>` : ""}</td>` +
+          `<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td>` +
+          `<td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${fmt(i.lineTotal)} ₺</td></tr>`,
+      )
+      .join("");
+
+    const totalsHtml =
+      `<tr><td colspan="2" style="padding:4px 8px;text-align:right;color:#78716c">Ara toplam</td><td style="padding:4px 8px;text-align:right">${fmt(order.subtotal)} ₺</td></tr>` +
+      (Number(order.discount) > 0
+        ? `<tr><td colspan="2" style="padding:4px 8px;text-align:right;color:#16a34a">İndirim</td><td style="padding:4px 8px;text-align:right;color:#16a34a">-${fmt(order.discount)} ₺</td></tr>`
+        : "") +
+      `<tr><td colspan="2" style="padding:4px 8px;text-align:right;color:#78716c">Kargo</td><td style="padding:4px 8px;text-align:right">${Number(order.shippingFee) > 0 ? fmt(order.shippingFee) + " ₺" : "Ücretsiz"}</td></tr>` +
+      `<tr><td colspan="2" style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">Toplam (KDV dahil)</td><td style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">${fmt(order.total)} ₺</td></tr>`;
+
+    const statusNote = isCari
+      ? "Siparişiniz <strong>açık hesap (cari)</strong> ile alınmıştır; ay sonunda faturalandırılır."
+      : "Ödemeniz alınmıştır, siparişiniz onaylandı.";
+
+    const subject = `Markala — Siparişiniz alındı (${order.orderNumber})`;
+    const text =
+      `${name ? `Merhaba ${name},` : "Merhaba,"}\n\nSiparişinizi aldık. Sipariş No: ${order.orderNumber}\n\n` +
+      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} — ${fmt(i.lineTotal)} ₺`).join("\n") +
+      `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
+      `${isCari ? "Açık hesap (cari) ile alındı; ay sonu faturalandırılır." : "Ödemeniz alındı, siparişiniz onaylandı."}\n\n` +
+      `Siparişlerim: ${orderUrl}\n\nMarkala — 324 Ajans güvencesiyle.`;
+
+    const html = renderEmail({
+      title: "Siparişiniz Alındı 🎉",
+      intro: `${greeting} siparişinizi aldık ve hazırlamaya başlıyoruz.`,
+      preheader: `Sipariş ${order.orderNumber} alındı — toplam ${fmt(order.total)} ₺`,
+      bodyHtml: `<p style="margin:0 0 4px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
+        <p style="margin:0 0 14px;color:#78716c;font-size:13px">${statusNote}</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
+          <thead><tr>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #1A1410;color:#1A1410">Ürün</th>
+            <th style="padding:8px;text-align:center;border-bottom:2px solid #1A1410;color:#1A1410">Adet</th>
+            <th style="padding:8px;text-align:right;border-bottom:2px solid #1A1410;color:#1A1410">Tutar</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot>${totalsHtml}</tfoot>
+        </table>
+        ${emailButton("Siparişimi görüntüle", orderUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Üretim tamamlanınca kargo bilgisini ayrıca ileteceğiz. Sorularınız için bu e-postayı yanıtlayabilirsiniz.</p>`,
+    });
+
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-confirmation", orderNumber: order.orderNumber });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.orderConfirmation failed to=${order.email}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-confirmation", orderNumber: order.orderNumber });
+      return false;
+    }
+  }
+
   private async logNotification(recipient: string, status: "sent" | "failed", metadata: Record<string, unknown>) {
     await this.prisma.notificationLog
       .create({
