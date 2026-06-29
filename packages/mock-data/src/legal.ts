@@ -551,6 +551,38 @@ export const legalPages: Record<string, LegalPage> = {
         hakkını saklı tutar.
       </p>
 
+      <!-- TASLAK: Online Tasarım Aracı maddesi — HUKUK MÜŞAVİRİ ONAYI sonrası canlı (legal_pages DB) yayınlanacak. -->
+      <h2>3.A. Online Tasarım Aracı Kullanımı</h2>
+      <p>
+        3.A.1. Site'de sunulan tarayıcı-içi tasarım aracı ("Tasarım Aracı"), Kullanıcı'ya hazır
+        şablon, ikon, şekil, illüstrasyon, yazı tipi ve arka plan ("Tasarım Öğeleri") sunar. Bu
+        öğeler ${COMPANY} tarafından açık kaynak (MIT, CC0, SIL Open Font License vb.) veya geçerli
+        lisanslar kapsamında temin edilmiştir ve yalnızca Site üzerinden verilen baskı siparişinin
+        son ürününde kullanılmak üzere sunulmuştur.
+      </p>
+      <p>
+        3.A.2. Kullanıcı, Tasarım Öğeleri'ni veya bunları içeren düzenlenebilir tasarım dosyalarını
+        tek başına çıkarıp yeniden dağıtamaz, satamaz veya başka bir tasarım/şablon hizmetinde
+        kullanamaz. Tasarım Öğeleri'nin hakları ilgili hak sahiplerinde/${COMPANY}'de saklıdır.
+      </p>
+      <p>
+        3.A.3. Kullanıcı, Tasarım Aracı'na yüklediği her türlü logo, görsel, fotoğraf, metin ve
+        içeriğin telif, marka ve diğer fikri mülkiyet haklarının kendisine ait olduğunu veya bunları
+        kullanmaya tam yetkili olduğunu beyan ve taahhüt eder. Üçüncü kişilerin tescilli markası,
+        logosu, telifli görseli veya kişilik hakkı içeren içeriğin yüklenip basılmasından doğan tüm
+        hukuki ve mali sorumluluk münhasıran Kullanıcı'ya aittir; Şirket aleyhine yöneltilecek her
+        türlü talep ve zarardan Kullanıcı sorumludur.
+      </p>
+      <p>
+        3.A.4. Şirket, hukuka aykırı veya üçüncü kişi haklarını ihlal eden tasarımları üretmeyi
+        reddetme ve siparişi iptal etme hakkını saklı tutar. Şirket bu kontrolü yapmakla yükümlü
+        değildir; kontrol yapılmaması Kullanıcı'nın 3.A.3'teki sorumluluğunu ortadan kaldırmaz.
+      </p>
+      <p>
+        3.A.5. Kullanıcı'nın oluşturduğu tasarımlar üzerindeki haklar Kullanıcı'ya aittir; Şirket
+        bu tasarımları yalnızca siparişin üretimi ve yasal saklama yükümlülükleri için işler.
+      </p>
+
       <h2>4. Site İçeriğinin Mülkiyeti</h2>
       <p>
         Site'de yer alan tüm tasarım, logo, marka, metin ve görseller ${COMPANY}'ye
