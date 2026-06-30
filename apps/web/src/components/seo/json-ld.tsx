@@ -14,7 +14,7 @@ export function OrganizationJsonLd() {
         legalName: "324 Ajans · Markala",
         alternateName: ["Markala Matbaa", "markala.com.tr"],
         url: SITE,
-        logo: `${SITE}/api/mockup?theme=ink&w=512&h=512`,
+        logo: `${SITE}/og-default.png`,
         description:
           "Markala, 324 Ajans çatısı altında matbaa ve reklam ürünleri e-ticareti yapan butik markadır.",
         foundingDate: "2024-01-01",
@@ -427,7 +427,7 @@ export function ArticleJsonLd({
       name: "Markala",
       logo: {
         "@type": "ImageObject",
-        url: `${SITE}/api/mockup?theme=ink&w=512&h=512`,
+        url: `${SITE}/og-default.png`,
       },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE}${url}` },
@@ -473,7 +473,7 @@ export function VideoObjectJsonLd({
       name: "Markala",
       logo: {
         "@type": "ImageObject",
-        url: `${SITE}/api/mockup?theme=ink&w=512&h=512`,
+        url: `${SITE}/og-default.png`,
       },
     },
   };

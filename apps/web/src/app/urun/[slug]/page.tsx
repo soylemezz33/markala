@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const seoTitle = product.seo?.title ?? `${product.name} — ${category?.name ?? ""} Baskı`;
   const seoDesc =
     product.seo?.description ??
-    `${product.name} baskı ${product.startingPrice ? `${product.startingPrice} TL'den` : ""}. ${product.shortDescription}`;
+    `${product.name} baskı ${product.displayPrice ? `${product.displayPrice} TL'den` : ""}. ${product.shortDescription}`;
   const url = `/urun/${product.slug}`;
   // og:image = GERÇEK ürün görseli (raster JPEG) varsa onu kullan; gerçek foto yoksa
   // (images[0] bir /api/mockup SVG fallback'i ise) markalı PNG. Sosyal crawler SVG'yi reddeder.
