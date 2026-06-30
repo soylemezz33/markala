@@ -54,7 +54,6 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [accountType, setAccountType] = useState<"individual" | "corporate">("individual");
   const [fullName, setFullName] = useState(user?.fullName ?? "");
-  const [tcNo, setTcNo] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [taxOffice, setTaxOffice] = useState("");
   const [taxNumber, setTaxNumber] = useState("");
@@ -445,9 +444,9 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           orderId: saveRes.orderId,
           paymentNonce: saveRes.paymentNonce,
-          // TC opsiyonel: yalnız tam 11 hane girildiyse gönder; boşsa backend "kimlik yok"
-          // yer tutucusunu (11111111111) kullanır → iyzico TC sormadan çalışır (324ajans gibi).
-          identityNumber: accountType === "individual" && tcNo.length === 11 ? tcNo : undefined,
+          // TC alanı checkout'tan kaldırıldı (324ajans gibi frictionless) → her zaman undefined;
+          // backend iyzico "kimlik yok" sentinel'i 11111111111 kullanır.
+          identityNumber: undefined,
         }),
       })
         .then((r) => r.json())
@@ -598,14 +597,8 @@ export default function CheckoutPage() {
                 </button>
               </div>
               {accountType === "individual" ? (
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid gap-3">
                   <Input label="Ad Soyad" value={fullName} onChange={setFullName} required />
-                  <Input
-                    label="T.C. Kimlik No (opsiyonel)"
-                    value={tcNo}
-                    onChange={setTcNo}
-                    maxLength={11}
-                  />
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-3">
