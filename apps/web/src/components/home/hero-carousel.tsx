@@ -12,6 +12,11 @@ import { MagneticButton } from "@/components/ui/magnetic-button";
 
 const AUTOPLAY_MS = 6000;
 
+/** href XSS guard: yalnız güvenli şemaları/yolları geçir, aksi halde "#" (javascript: vb. engellenir). */
+function safeHref(href: string): string {
+  return /^(https?:|\/|#|mailto:|tel:)/i.test(href) ? href : "#";
+}
+
 // Eşit boyutlu placeholder (visual yüklenirken layout shift olmasın) — yüklenirken
 // hafif shimmer (animate-pulse) ile boş-alan algısını azaltır.
 const VisualPlaceholder = () => (
@@ -222,12 +227,12 @@ export function HeroCarousel({ slides }: { slides?: HeroSlide[] }) {
                   transition={{ duration: 0.6, delay: 0.55 }}
                   className="mt-8 flex flex-wrap items-center gap-3"
                 >
-                  <MagneticButton href={slide.ctaHref} variant={theme.ctaVariant}>
+                  <MagneticButton href={safeHref(slide.ctaHref)} variant={theme.ctaVariant}>
                     {slide.ctaLabel} <ArrowRight size={18} weight="bold" />
                   </MagneticButton>
                   {slide.secondaryCtaHref && (
                     <a
-                      href={slide.secondaryCtaHref}
+                      href={safeHref(slide.secondaryCtaHref)}
                       className={cn(
                         "text-sm font-medium underline-offset-4 hover:underline transition-colors",
                         theme.text,

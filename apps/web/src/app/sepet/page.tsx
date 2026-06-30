@@ -97,7 +97,7 @@ export default function CartPage() {
                     <QtyControl value={item.quantity} onChange={(n) => updateQuantity(item.id, n)} />
                     <div className="flex items-center gap-4">
                       <Price amount={item.configuration.totalPrice * item.quantity} size="lg" className="text-ink-900" />
-                      <button onClick={() => removeItem(item.id)} className="p-2 text-ink-500 hover:text-error rounded transition-colors" aria-label="Sil">
+                      <button onClick={() => removeItem(item.id)} className="p-2 text-ink-500 hover:text-error rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Sil">
                         <Trash size={18} />
                       </button>
                     </div>
@@ -149,11 +149,11 @@ export default function CartPage() {
                     <input type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(null); }} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
                     <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!coupon.trim()}>Uygula</Button>
                   </div>
-                  {couponError && <p className="mt-2 text-xs text-error">{couponError}</p>}
+                  {couponError && <p role="alert" className="mt-2 text-xs text-error">{couponError}</p>}
                   {appliedCode && (
                     <p className="mt-2 text-xs text-success flex items-center gap-2">
                       ✓ {appliedCode} kuponu uygulandı
-                      <button onClick={handleRemoveCoupon} className="text-ink-500 hover:text-error underline">kaldır</button>
+                      <button onClick={handleRemoveCoupon} className="text-ink-500 hover:text-error underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1">kaldır</button>
                     </p>
                   )}
                   <p className="mt-2 text-xs text-ink-500">İpucu: yeni müşteriler için <code className="font-mono bg-paper-100 px-1.5 py-0.5 rounded">HOSGELDIN</code></p>
@@ -227,9 +227,9 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
 function QtyControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
     <div className="inline-flex items-center border border-paper-200 rounded">
-      <button onClick={() => onChange(value - 1)} disabled={value <= 1} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30" aria-label="Azalt"><Minus size={14} /></button>
-      <span className="w-10 text-center text-sm tabular-nums font-medium">{value}</span>
-      <button onClick={() => onChange(value + 1)} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100" aria-label="Arttır"><Plus size={14} /></button>
+      <button onClick={() => onChange(value - 1)} disabled={value <= 1} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Azalt"><Minus size={14} /></button>
+      <span aria-live="polite" aria-atomic="true" className="w-10 text-center text-sm tabular-nums font-medium">{value}</span>
+      <button onClick={() => onChange(value + 1)} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Arttır"><Plus size={14} /></button>
     </div>
   );
 }

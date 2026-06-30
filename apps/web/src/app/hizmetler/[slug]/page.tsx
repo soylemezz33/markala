@@ -94,7 +94,7 @@ export default async function ServicePage({ params }: Props) {
               serviceUrl: `${SITE}/hizmetler/${service.slug}`,
             },
             areaServed: { "@type": "Country", name: "TR" },
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
 
@@ -117,7 +117,7 @@ export default async function ServicePage({ params }: Props) {
                 timeRequired: p.duration,
               }),
             })),
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
 
@@ -134,7 +134,7 @@ export default async function ServicePage({ params }: Props) {
               name: f.q,
               acceptedAnswer: { "@type": "Answer", text: f.a },
             })),
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
 

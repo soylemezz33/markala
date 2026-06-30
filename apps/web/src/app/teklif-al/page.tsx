@@ -366,6 +366,7 @@ export default function TeklifAlPage() {
                     <input
                       className={inputClass}
                       required
+                      autoComplete="name"
                       value={form.name}
                       onChange={(e) => update("name", e.target.value)}
                     />
@@ -375,6 +376,8 @@ export default function TeklifAlPage() {
                       type="email"
                       className={inputClass}
                       required
+                      autoComplete="email"
+                      inputMode="email"
                       value={form.email}
                       onChange={(e) => update("email", e.target.value)}
                     />

@@ -133,7 +133,7 @@ export function DesignUpload() {
       )}
 
       {error && (
-        <p className="mt-3 flex items-start gap-2 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2">
+        <p role="alert" className="mt-3 flex items-start gap-2 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2">
           <WarningCircle size={14} className="flex-none mt-0.5" weight="fill" />
           <span>{error}</span>
         </p>

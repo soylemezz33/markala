@@ -79,7 +79,7 @@ export default function GlossaryPage() {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(definedTermSet) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(definedTermSet).replace(/</g, "\\u003c") }}
       />
 
       {/* Hero */}

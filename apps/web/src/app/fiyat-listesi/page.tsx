@@ -112,7 +112,7 @@ export default async function PriceListPage() {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(priceSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(priceSchema).replace(/</g, "\\u003c") }}
       />
 
       {/* Hero */}

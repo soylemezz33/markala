@@ -36,7 +36,7 @@ export function ProductTabs({ specifications = [] }: { specifications?: Spec[] }
               key={t.id}
               onClick={() => setActive(t.id)}
               className={cn(
-                "relative flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors",
+                "relative flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                 isActive ? "text-ink-900" : "text-ink-500 hover:text-ink-700",
               )}
             >

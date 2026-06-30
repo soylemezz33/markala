@@ -40,7 +40,7 @@ export function ShareButton({ title }: { title: string }) {
       type="button"
       onClick={onShare}
       aria-label="Ürünü paylaş"
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-paper-200 text-sm text-ink-700 hover:border-ink-300 hover:bg-paper-100 transition-colors"
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-paper-200 text-sm text-ink-700 hover:border-ink-300 hover:bg-paper-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1"
     >
       {copied ? (
         <>

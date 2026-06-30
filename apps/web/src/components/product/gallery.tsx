@@ -60,7 +60,7 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
               aria-label={`${alt} — görsel ${i + 1}`}
               aria-pressed={i === active}
               className={cn(
-                "relative aspect-square bg-paper-100 rounded-md overflow-hidden border transition-all",
+                "relative aspect-square bg-paper-100 rounded-md overflow-hidden border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                 i === active
                   ? "border-ink-900 ring-2 ring-ink-900/10"
                   : "border-paper-200 hover:border-ink-300",

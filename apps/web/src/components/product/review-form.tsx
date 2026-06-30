@@ -172,7 +172,7 @@ export function ReviewForm({ productSlug }: Props) {
         className="mt-2 w-full px-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm leading-relaxed focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 resize-y"
       />
 
-      {error && <p className="mt-2 text-xs text-error">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-xs text-error">{error}</p>}
 
       <div className="mt-3">
         <Button type="submit" disabled={status === "submitting"}>

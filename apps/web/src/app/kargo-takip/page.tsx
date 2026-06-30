@@ -56,10 +56,10 @@ export default function TrackingPage() {
             <input value={orderNumber} onChange={(e) => setOrderNumber(e.target.value.toUpperCase())} placeholder="MK-..." className={`${inputClass} font-mono`} required />
           </Field>
           <Field label="E-posta Adresi" hint="Sipariş verirken kullandığınız e-posta">
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ornek@firma.com" className={inputClass} required />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ornek@firma.com" className={inputClass} autoComplete="email" required />
           </Field>
 
-          {error && <div className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>}
+          {error && <div role="alert" className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>}
 
           <Button type="submit" size="lg" fullWidth>
             <MagnifyingGlass size={18} weight="bold" /> Siparişi Sorgula

@@ -183,6 +183,7 @@ export function AllProductsClient({
                   setSearch(e.target.value);
                   setPage(1);
                 }}
+                aria-label="Ürün ara"
                 placeholder="Ürün ara..."
                 className="pl-9 pr-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 w-44 md:w-56"
               />
@@ -190,6 +191,7 @@ export function AllProductsClient({
 
             <button
               onClick={() => setFilterOpen((s) => !s)}
+              aria-expanded={filterOpen}
               className="lg:hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-paper-200 text-ink-900 text-sm bg-paper-50"
             >
               <FunnelSimple size={14} /> Filtre
@@ -202,6 +204,7 @@ export function AllProductsClient({
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
+                aria-label="Sırala"
                 className="appearance-none pl-3 pr-9 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm cursor-pointer"
               >
                 {sortOptions.map((o) => (
@@ -306,6 +309,7 @@ export function AllProductsClient({
                     setPriceMax(Number(e.target.value));
                     setPage(1);
                   }}
+                  aria-label="En fazla fiyat"
                   className="w-full accent-brand-500"
                 />
                 <div className="mt-2 flex items-baseline justify-between text-xs text-ink-700">
@@ -402,9 +406,10 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <button
       onClick={onRemove}
+      aria-label={`${label} filtresini kaldır`}
       className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-100 text-brand-900 text-xs font-medium hover:bg-brand-200"
     >
-      {label} <X size={12} weight="bold" />
+      {label} <X size={12} weight="bold" aria-hidden="true" />
     </button>
   );
 }

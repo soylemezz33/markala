@@ -81,7 +81,7 @@ export default function LoginPage() {
             </Field>
 
             {error && (
-              <div className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>
+              <div role="alert" className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>
             )}
 
             <Button type="submit" size="lg" fullWidth disabled={isLoading}>

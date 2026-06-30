@@ -68,6 +68,8 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
           type="email"
           required
           aria-label="E-posta adresi"
+          autoComplete="email"
+          inputMode="email"
           value={email}
           onChange={(e) => {
             setEmail(e.target.value);
@@ -84,7 +86,7 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
           {state === "loading" ? "Gönderiliyor…" : "Abone Ol"}
         </button>
       </form>
-      {state === "err" && <p className="mt-2 text-sm text-red-300">{msg}</p>}
+      {state === "err" && <p role="alert" className="mt-2 text-sm text-red-300">{msg}</p>}
     </div>
   );
 }

@@ -236,7 +236,7 @@ export default async function ProductPage({ params }: Props) {
                   <section>
                     <header className="flex items-center gap-2 mb-4">
                       <CheckCircle size={20} weight="fill" className="text-brand-700" />
-                      <h3 className="text-lg font-semibold text-ink-900">Öne Çıkan Özellikler</h3>
+                      <h2 className="text-lg font-semibold text-ink-900">Öne Çıkan Özellikler</h2>
                     </header>
                     <ul className="space-y-2.5">
                       {product.features.map((f: string, i: number) => (
@@ -260,7 +260,7 @@ export default async function ProductPage({ params }: Props) {
                   <section>
                     <header className="flex items-center gap-2 mb-4">
                       <ListChecks size={20} weight="fill" className="text-brand-700" />
-                      <h3 className="text-lg font-semibold text-ink-900">Kullanım Alanları</h3>
+                      <h2 className="text-lg font-semibold text-ink-900">Kullanım Alanları</h2>
                     </header>
                     <div className="flex flex-wrap gap-2">
                       {product.useCases.map((u, i) => (

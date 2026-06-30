@@ -126,7 +126,7 @@ export default async function CityLandingPage({ params }: Props) {
               highPrice: 8500,
               offerCount: 32,
             },
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
 
@@ -143,7 +143,7 @@ export default async function CityLandingPage({ params }: Props) {
               name: f.q,
               acceptedAnswer: { "@type": "Answer", text: f.a },
             })),
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
 

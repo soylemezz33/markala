@@ -551,6 +551,8 @@ export default function CheckoutPage() {
                   onChange={setEmail}
                   type="email"
                   placeholder="ornek@firma.com"
+                  autoComplete="email"
+                  inputMode="email"
                   required
                 />
                 <PhoneInput value={phone} onChange={setPhone} label="Telefon" required />
@@ -598,7 +600,7 @@ export default function CheckoutPage() {
               </div>
               {accountType === "individual" ? (
                 <div className="grid gap-3">
-                  <Input label="Ad Soyad" value={fullName} onChange={setFullName} required />
+                  <Input label="Ad Soyad" value={fullName} onChange={setFullName} autoComplete="name" required />
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -607,6 +609,7 @@ export default function CheckoutPage() {
                     value={companyName}
                     onChange={setCompanyName}
                     className="sm:col-span-2"
+                    autoComplete="organization"
                     required
                   />
                   <Input label="Vergi Dairesi" value={taxOffice} onChange={setTaxOffice} required />
@@ -615,6 +618,7 @@ export default function CheckoutPage() {
                     value={taxNumber}
                     onChange={setTaxNumber}
                     maxLength={11}
+                    inputMode="numeric"
                     required
                   />
                 </div>
@@ -695,6 +699,7 @@ export default function CheckoutPage() {
                   onChange={setFullAddress}
                   placeholder="Mahalle, sokak, bina no, daire"
                   className="sm:col-span-2"
+                  autoComplete="street-address"
                   multiline
                   required
                 />
@@ -703,6 +708,8 @@ export default function CheckoutPage() {
                   value={zipCode}
                   onChange={setZipCode}
                   maxLength={10}
+                  autoComplete="postal-code"
+                  inputMode="numeric"
                 />
               </div>
               <label className="mt-3 flex items-center gap-2 text-sm text-ink-700">
@@ -876,7 +883,7 @@ export default function CheckoutPage() {
                       </div>
                     </>
                   )}
-                  {payError && <p className="text-sm text-red-600 text-center">{payError}</p>}
+                  {payError && <p role="alert" className="text-sm text-red-600 text-center">{payError}</p>}
                   {!consentOk && (
                     <p className="text-xs text-ink-500 text-center">
                       Ödemeye geçmek için sözleşmeleri onaylayın.
@@ -1143,6 +1150,8 @@ function Input({
   className,
   multiline,
   required,
+  autoComplete,
+  inputMode,
 }: {
   label: string;
   value: string;
@@ -1153,6 +1162,8 @@ function Input({
   className?: string;
   multiline?: boolean;
   required?: boolean;
+  autoComplete?: string;
+  inputMode?: "text" | "email" | "tel" | "numeric" | "decimal" | "search" | "url" | "none";
 }) {
   return (
     <label className={cn("block", className)}>
@@ -1172,6 +1183,7 @@ function Input({
           maxLength={maxLength}
           required={required}
           aria-required={required ? "true" : undefined}
+          autoComplete={autoComplete}
           rows={3}
           className="mt-1.5 w-full px-3 py-2 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 resize-none"
         />
@@ -1184,6 +1196,8 @@ function Input({
           maxLength={maxLength}
           required={required}
           aria-required={required ? "true" : undefined}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
           className="mt-1.5 w-full px-3 py-2.5 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
         />
       )}

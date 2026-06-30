@@ -71,7 +71,7 @@ export default function MatbaaHubPage() {
               offerCount: 32,
               priceSpecification: { "@type": "UnitPriceSpecification", priceCurrency: "TRY" },
             },
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
 

@@ -12,6 +12,11 @@ interface Props {
   className?: string;
 }
 
+/** Admin girdisi href'i için XSS guard: yalnız güvenli şemaları/yolları geçir, aksi halde "#". */
+function safeHref(href: string): string {
+  return /^(https?:|\/|#|mailto:|tel:)/i.test(href) ? href : "#";
+}
+
 /**
  * Admin Banner kayıtlarını siteye bağlar (client).
  * - apiClient.banners.listPublic() ile çeker (backend zaten pasif/süresi geçeni filtreler).
@@ -77,7 +82,7 @@ export function PromoBanner({ location, className }: Props) {
             return b.ctaHref ? (
               <Link
                 key={b.id}
-                href={b.ctaHref}
+                href={safeHref(b.ctaHref)}
                 className="relative block overflow-hidden rounded-xl"
                 aria-label={b.ctaLabel || b.title || "Kampanya"}
               >

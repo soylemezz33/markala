@@ -93,7 +93,7 @@ function RequestForm() {
             autoComplete="email"
           />
         </label>
-        {error && <p className="text-sm text-error">{error}</p>}
+        {error && <p role="alert" className="text-sm text-error">{error}</p>}
         <Button type="submit" fullWidth size="lg" disabled={sending}>
           {sending ? "Gönderiliyor…" : "Sıfırlama bağlantısı gönder"}
         </Button>
@@ -191,7 +191,7 @@ function ResetForm({ token }: { token: string }) {
           />
         </label>
         <p className="text-xs text-ink-500">En az 8 karakter · büyük harf · küçük harf · rakam</p>
-        {error && <p className="text-sm text-error">{error}</p>}
+        {error && <p role="alert" className="text-sm text-error">{error}</p>}
         <Button type="submit" fullWidth size="lg" disabled={saving}>
           {saving ? "Kaydediliyor…" : "Şifreyi güncelle"}
         </Button>

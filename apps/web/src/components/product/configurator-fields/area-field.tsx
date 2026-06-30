@@ -55,7 +55,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
                 set("en", String(e));
                 set("boy", String(b));
               }}
-              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1 ${
                 on
                   ? "border-ink-900 bg-ink-900 text-paper-50"
                   : "border-paper-300 text-ink-700 hover:border-ink-300"
@@ -127,7 +127,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
       )}
 
       {maxExceeded && (
-        <p className="text-xs font-medium text-red-600">
+        <p role="alert" className="text-xs font-medium text-red-600">
           Bu malzeme tek parçada en fazla {maxM2} m² basılabilir. Daha küçük ölçü girin ya da işi bölün.
         </p>
       )}

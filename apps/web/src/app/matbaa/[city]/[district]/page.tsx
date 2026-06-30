@@ -100,7 +100,7 @@ export default async function DistrictLandingPage({ params }: Props) {
               servicePhone: "+90-324-433-3351",
               serviceUrl: `${SITE}/urunler`,
             },
-          }),
+          }).replace(/</g, "\\u003c"),
         }}
       />
 

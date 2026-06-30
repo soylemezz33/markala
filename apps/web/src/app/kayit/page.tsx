@@ -120,7 +120,7 @@ export default function RegisterPage() {
               </span>
             </label>
 
-            {error && <div className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>}
+            {error && <div role="alert" className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>}
 
             <Button type="submit" size="lg" fullWidth disabled={isLoading}>
               {isLoading ? "Hesap oluşturuluyor..." : "Hesabı Oluştur"}

@@ -140,7 +140,7 @@ function SearchableDropdown({
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
         className={cn(
-          "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200",
+          "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
           open
             ? "border-ink-900 bg-paper-50 shadow-sm"
             : "border-paper-200 bg-paper-50 hover:border-ink-300",
@@ -221,7 +221,7 @@ function SearchableDropdown({
                     aria-selected={isSelected}
                     onClick={() => handleSelect(opt.optionKey)}
                     className={cn(
-                      "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150",
+                      "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                       isSelected
                         ? "bg-ink-900 text-paper-50"
                         : "hover:bg-paper-100 text-ink-900",
@@ -328,7 +328,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 aria-checked={isSelected}
                 onClick={() => onSelect(opt.optionKey)}
                 className={cn(
-                  "flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-md border text-left transition-all duration-200 ease-out-expo",
+                  "flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-md border text-left transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                   isSelected
                     ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
                     : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
@@ -408,7 +408,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 aria-checked={isSelected}
                 onClick={() => onSelect(opt.optionKey)}
                 className={cn(
-                  "flex flex-col items-center justify-center px-2 py-2.5 rounded-md border text-center transition-all duration-200 ease-out-expo",
+                  "flex flex-col items-center justify-center px-2 py-2.5 rounded-md border text-center transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                   isSelected
                     ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
                     : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
@@ -437,7 +437,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
               aria-checked={isSelected}
               onClick={() => onSelect(opt.optionKey)}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 ease-out-expo",
+                "flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                 isSelected
                   ? "border-ink-900 bg-paper-50 shadow-sm"
                   : "border-paper-200 bg-paper-50 hover:border-ink-300",
