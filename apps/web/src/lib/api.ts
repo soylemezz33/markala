@@ -1,7 +1,7 @@
 "use client";
 
 import { createMarkalaClient, type ApiError, type BannerDto } from "@markala/api-client";
-import { useAuthStore } from "./auth-store";
+import { useAuthStore, refreshOnce } from "./auth-store";
 
 /** Banner DTO ve konum tipi — banner bileşenleri için yeniden dışa aktarılır. */
 export type Banner = BannerDto;
@@ -28,11 +28,8 @@ export async function withRefresh<T>(fn: () => Promise<T>): Promise<T> {
     return await fn();
   } catch (e) {
     if ((e as ApiError)?.status === 401) {
-      const refreshed = await apiClient.auth.refresh().catch(() => null);
-      if (refreshed) {
-        useAuthStore.setState({ accessToken: refreshed.accessToken });
-        return await fn();
-      }
+      const token = await refreshOnce();
+      if (token) return await fn();
     }
     throw e;
   }

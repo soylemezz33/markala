@@ -59,17 +59,37 @@ async function clearMaintenanceBypass(): Promise<void> {
   }
 }
 
-/** Authlı bir çağrı 401 dönerse bir kez refresh dene, token'ı güncelle, çağrıyı tekrarla. */
+/**
+ * Refresh'i TEKLEŞTİR (single-flight). Eş zamanlı authed çağrılar 401 olunca HER BİRİ ayrı
+ * refresh atarsa, backend refresh-token ROTATION'u ikinci (artık eski) token'ı "replay" görüp
+ * kullanıcının TÜM refresh'lerini iptal eder → oturum/checkout çöker (refresh.replay_detected).
+ * Bu yüzden aynı anda yalnız BİR refresh çalışır; bekleyen tüm çağrılar aynı sonucu paylaşır.
+ * Başarıda accessToken'ı store'a yazar; başarısızlıkta null döner.
+ */
+let refreshInFlight: Promise<string | null> | null = null;
+export function refreshOnce(): Promise<string | null> {
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = client.auth
+    .refresh()
+    .then(({ accessToken }) => {
+      useAuthStore.setState({ accessToken });
+      return accessToken;
+    })
+    .catch(() => null)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
+
+/** Authlı bir çağrı 401 dönerse single-flight refresh dene, token'ı güncelle, çağrıyı tekrarla. */
 async function withRefresh<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (e) {
     if ((e as ApiError)?.status === 401) {
-      const refreshed = await client.auth.refresh().catch(() => null);
-      if (refreshed) {
-        useAuthStore.setState({ accessToken: refreshed.accessToken });
-        return await fn();
-      }
+      const token = await refreshOnce();
+      if (token) return await fn();
     }
     throw e;
   }
@@ -170,11 +190,11 @@ export const useAuthStore = create<AuthState>()(
 
       bootstrap: async () => {
         try {
-          const { accessToken } = await client.auth.refresh();
-          set({ accessToken });
+          const token = await refreshOnce();
+          if (!token) throw new Error("refresh-failed");
           const user = await client.auth.me();
           // Girişli admin /giris'e gelince çerez user set edilmeden yazılsın ki yönlendirmede 503'e takılmasın.
-          if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
+          if (isAdminRole(user)) await syncMaintenanceBypass(token);
           set({ user, isBootstrapping: false });
         } catch {
           set({ user: null, accessToken: null, isBootstrapping: false });
@@ -183,15 +203,11 @@ export const useAuthStore = create<AuthState>()(
 
       ensureFreshToken: async () => {
         if (!get().user) return null; // oturumsuz → tazelenecek bir şey yok
-        try {
-          const { accessToken } = await client.auth.refresh();
-          set({ accessToken });
-          return accessToken;
-        } catch {
-          // Refresh cookie de geçersiz → eldeki (muhtemelen bayat) token'la yine de dene;
-          // proxy 401'de misafire düşer, sipariş kaybolmaz (yalnız kurumsal avantaj uygulanmaz).
-          return get().accessToken;
-        }
+        // Single-flight refresh: checkout'taki paralel çağrılarla yarışıp oturumu DÜŞÜRMESİN.
+        const token = await refreshOnce();
+        // Refresh başarısızsa eldeki (muhtemelen bayat) token'la yine de dene; proxy 401'de
+        // misafire düşer, sipariş kaybolmaz (yalnız kurumsal avantaj uygulanmaz).
+        return token ?? get().accessToken;
       },
     }),
     {
