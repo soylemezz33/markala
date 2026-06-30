@@ -708,9 +708,17 @@ function FeaturedCard({
         </span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`/api/mockup?slug=${encodeURIComponent(slug)}&theme=${theme}&w=320&h=240`}
+          src={`https://api.markala.com.tr/uploads/products/${slug}.jpg?v=3`}
           alt={label}
           loading="lazy"
+          onError={(e) => {
+            // Gerçek foto yoksa marka-tonlu mockup'a düş (tek seferlik, döngü önler)
+            const t = e.currentTarget;
+            if (t.dataset.fb !== "1") {
+              t.dataset.fb = "1";
+              t.src = `/api/mockup?slug=${encodeURIComponent(slug)}&theme=${theme}&w=320&h=240`;
+            }
+          }}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       </div>
@@ -954,9 +962,16 @@ function MobileNavGroup({ nav, onClose }: { nav: NavCategory; onClose: () => voi
                         <span className="relative block aspect-[4/3] bg-paper-100 overflow-hidden">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={`/api/mockup?slug=${encodeURIComponent(f.slug)}&theme=${f.theme ?? "brand"}&w=240&h=180`}
+                            src={`https://api.markala.com.tr/uploads/products/${f.slug}.jpg?v=3`}
                             alt={f.label}
                             loading="lazy"
+                            onError={(e) => {
+                              const t = e.currentTarget;
+                              if (t.dataset.fb !== "1") {
+                                t.dataset.fb = "1";
+                                t.src = `/api/mockup?slug=${encodeURIComponent(f.slug)}&theme=${f.theme ?? "brand"}&w=240&h=180`;
+                              }
+                            }}
                             className="w-full h-full object-cover"
                           />
                         </span>

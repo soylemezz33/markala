@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
-import { Button } from "@markala/ui";
+import { Button, Price } from "@markala/ui";
 import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import {
@@ -300,6 +300,22 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         </div>
 
         <p className="text-ink-700 leading-relaxed">{product.shortDescription}</p>
+
+        {/* Büyük per-adet fiyat — ürünün yanında (KDV dahil). Fiyatsız üründe gizli;
+            alttaki PriceCard zaten "Teklif Al"ı gösterir. Diğer içerik değişmedi. */}
+        {canBuy && (
+          <div className="border-t border-paper-200 pt-5">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <Price amount={show(total)} size="xl" className="text-brand-600 tabular-nums" />
+              <span className="text-base text-ink-500">/ {state.quantity} adet</span>
+            </div>
+            <p className="mt-1 text-sm text-ink-500">
+              Birim:{" "}
+              <Price amount={show(total / state.quantity)} size="sm" className="text-ink-700 align-baseline" />{" "}
+              / adet · KDV dahil
+            </p>
+          </div>
+        )}
 
         <EstimatedDelivery productionTime={product.productionTime} />
 
