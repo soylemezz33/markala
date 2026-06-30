@@ -266,7 +266,7 @@ export default function CheckoutPage() {
   function canProceed(): boolean {
     if (step === "iletisim") return email.includes("@") && phone.length >= 10;
     if (step === "fatura") {
-      if (accountType === "individual") return fullName.length >= 3 && tcNo.length === 11;
+      if (accountType === "individual") return fullName.length >= 3; // TC opsiyonel (iyzico yer tutucuyla çalışır)
       return companyName.length >= 2 && taxNumber.length >= 9 && taxOffice.length >= 2;
     }
     if (step === "teslimat")
@@ -445,7 +445,9 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           orderId: saveRes.orderId,
           paymentNonce: saveRes.paymentNonce,
-          identityNumber: accountType === "individual" ? tcNo : undefined,
+          // TC opsiyonel: yalnız tam 11 hane girildiyse gönder; boşsa backend "kimlik yok"
+          // yer tutucusunu (11111111111) kullanır → iyzico TC sormadan çalışır (324ajans gibi).
+          identityNumber: accountType === "individual" && tcNo.length === 11 ? tcNo : undefined,
         }),
       })
         .then((r) => r.json())
@@ -599,11 +601,10 @@ export default function CheckoutPage() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   <Input label="Ad Soyad" value={fullName} onChange={setFullName} required />
                   <Input
-                    label="T.C. Kimlik No"
+                    label="T.C. Kimlik No (opsiyonel)"
                     value={tcNo}
                     onChange={setTcNo}
                     maxLength={11}
-                    required
                   />
                 </div>
               ) : (

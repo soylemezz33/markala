@@ -120,10 +120,13 @@ export class PaymentsService implements OnModuleInit {
   }
 
   /** Sipariş için iyzico Checkout Form başlatır; hosted ödeme sayfası URL'ini döndürür. */
-  /** iyzico identityNumber 11 haneli olmalı; geçersizse checksum-geçerli yer tutucu kullan
-   *  ("11111111111" checksum GEÇERSİZ → iyzico prod reddedebilir). */
+  /** iyzico identityNumber 11 haneli olmalı. Müşteri TC girmezse iyzico'nun "kimlik yok"
+   *  yer tutucusu "11111111111" kullanılır — iyzico bunu ÖZEL kabul eder (doğrulamaz; 324ajans
+   *  prod'da TC sormadan bununla çalışıyor). Checksum-GEÇERLİ sahte TC (örn. 11111111110) ise
+   *  iyzico GERÇEK TC sanıp 3DS'te kart sahibiyle doğrular → eşleşmezse "genel hata". Bu yüzden
+   *  yer tutucu 11111111111 OLMALI (eski "checksum-geçerli" fix ödemeyi bozmuştu). */
   private safeIdentity(tc?: string): string {
-    return tc && /^\d{11}$/.test(tc) ? tc : "11111111110";
+    return tc && /^\d{11}$/.test(tc) ? tc : "11111111111";
   }
 
   async initCheckout(
@@ -505,25 +508,33 @@ export class PaymentsService implements OnModuleInit {
         `price=${result.price} paid=${result.paidPrice} basket=${result.basketId} kod=${result.errorCode ?? "-"} mesaj=${result.errorMessage ?? "-"}`,
     );
     const conversationId = result.conversationId;
-    if (!conversationId) {
-      this.logger.warn("iyzico callback: conversationId YOK → /odeme/hata");
-      return { redirectUrl: `${webOrigin}/odeme/hata` };
-    }
 
     // Cari hesap ödemesi (paydown) — sipariş değil. conversationId "caripay:<paymentId>".
-    if (conversationId.startsWith("caripay:")) {
+    if (conversationId?.startsWith("caripay:")) {
       return this.handlePaydownCallback(conversationId.slice("caripay:".length), result, webOrigin);
     }
 
-    const orderId = conversationId;
-    const order = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      select: { id: true, paymentStatus: true, orderNumber: true, total: true },
-    });
+    // Sipariş ödemesi: normalde conversationId = order.id. ANCAK iyzico checkoutForm.retrieve
+    // conversationId'yi BOŞ döndürebiliyor → bu durumda basketId (= order.orderNumber) ile çöz.
+    // Aksi halde iyzico kartı çekmişken sipariş "beklemede" kalır (para çekildi, işaretlenmedi).
+    const order = conversationId
+      ? await this.prisma.order.findUnique({
+          where: { id: conversationId },
+          select: { id: true, paymentStatus: true, orderNumber: true, total: true },
+        })
+      : result.basketId
+        ? await this.prisma.order.findFirst({
+            where: { orderNumber: result.basketId },
+            select: { id: true, paymentStatus: true, orderNumber: true, total: true },
+          })
+        : null;
     if (!order) {
-      this.logger.warn(`iyzico callback: sipariş bulunamadı order=${orderId} → /odeme/hata`);
+      this.logger.warn(
+        `iyzico callback: sipariş bulunamadı conv=${conversationId ?? "-"} basket=${result.basketId ?? "-"} → /odeme/hata`,
+      );
       return { redirectUrl: `${webOrigin}/odeme/hata` };
     }
+    const orderId = order.id;
 
     // Callback özgünlüğü: kayıt bu siparişe ait (basketId=orderNumber) ve tutar BEKLENEN ile aynı mı?
     // ÖNEMLİ: iyzico `price` = sepet toplamı (bizim gönderdiğimiz). `paidPrice` TAKSİT komisyonuyla
