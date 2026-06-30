@@ -72,7 +72,7 @@ function mapProduct(p: ApiProduct): Product {
 async function fetchJson(path: string): Promise<unknown> {
   const res = await fetch(`${API_BASE}/api${path}`, {
     // 30sn ISR + admin düzenlemesinde /api/revalidate ile anlık tazeleme (cross-app).
-    next: { revalidate: 30 },
+    next: { revalidate: 300 },
   });
   if (!res.ok) {
     // Sessiz boş-dönüş yerine sunucu logu: API 5xx ile gerçek boş veriyi ayırt edebilmek için.
@@ -106,7 +106,7 @@ export async function getProducts(): Promise<Product[]> {
  */
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(slug)}`, {
-    next: { revalidate: 30 },
+    next: { revalidate: 300 },
   });
   if (res.status === 404) return undefined; // ürün gerçekten yok/silinmiş → notFound()
   if (!res.ok) {

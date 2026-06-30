@@ -93,8 +93,9 @@ const nextConfig = {
         ],
       },
       {
-        // API endpoint'leri için no-cache
-        source: "/api/:path*",
+        // API endpoint'leri için no-cache — ANCAK /api/mockup HARİÇ (o route kendi 7-günlük
+        // s-maxage'ini set ediyor; no-store onu eziyordu → mega-menü görselleri cache'lenmiyordu).
+        source: "/api/:path((?!mockup).*)",
         headers: [
           {
             key: "Cache-Control",

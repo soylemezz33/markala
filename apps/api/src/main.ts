@@ -51,7 +51,10 @@ async function bootstrap() {
       res.setHeader("X-Content-Type-Options", "nosniff");
       next();
     },
-    serveStatic(uploadDir),
+    // Yüklenen görseller slug/UUID-adlı + içerik değişince ?v= ile busted → uzun immutable
+    // cache GÜVENLİ. Express varsayılanı max-age=0 idi → Cloudflare hiç cache'leyemiyor, her
+    // istek origin'e geliyordu (ana yavaşlık). 1 yıl immutable + zayıf-ETag kapalı (Last-Modified yeter).
+    serveStatic(uploadDir, { maxAge: "365d", immutable: true, etag: false, lastModified: true }),
   );
 
   // Auth endpoint'leri için per-IP fixed-window rate limit — standart 429 + Retry-After.

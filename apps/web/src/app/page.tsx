@@ -12,7 +12,7 @@ import { PromoBanner } from "@/components/promo-banner";
 import { HowToProductionJsonLd } from "@/components/seo/json-ld";
 
 // ISR — katalog fetch'iyle (lib/catalog.ts revalidate:30) aynı pencere; bayat anasayfa cache'ini önler.
-export const revalidate = 30;
+export const revalidate = 300;
 
 // Anasayfa — reklam kampanyalarının #1 iniş hedefi: kök varsayılan yerine elle ayarlı
 // başlık + açıklama + açık canonical.
