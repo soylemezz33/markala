@@ -138,26 +138,34 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
   // göstermeyi önler (müşteri ölçü girmeden fiyat görmesin / ölçüsüz sepete eklemesin).
   const hasValidSize = !isArea || (Number(effSel.en) > 0 && Number(effSel.boy) > 0);
 
-  const total = useMemo(() => {
-    if (isArea) {
-      if (!(Number(effSel.en) > 0 && Number(effSel.boy) > 0)) return 0; // ölçü yok → fiyat yok
-      const rows = ((product.prices ?? []) as unknown as Array<{
-        groupKey: string | null;
-        optionKey: string | null;
-        dimKey: string | null;
-        price: unknown;
-        cost?: unknown;
-      }>).map((r) => ({
-        groupKey: r.groupKey,
-        optionKey: r.optionKey,
-        dimKey: r.dimKey,
-        price: Number(r.price),
-        cost: r.cost == null ? null : Number(r.cost),
-      }));
-      return computeAreaPrice(product.options as never, rows, effSel, pricing).dahil;
-    }
-    return calculateTotal(product, effSel);
+  // Area: BİRİM (tek parça) fiyat — "adet" HARİÇ hesaplanır (adet artık sepet adedidir).
+  const unitArea = useMemo(() => {
+    if (!isArea) return 0;
+    if (!(Number(effSel.en) > 0 && Number(effSel.boy) > 0)) return 0; // ölçü yok → fiyat yok
+    const rows = ((product.prices ?? []) as unknown as Array<{
+      groupKey: string | null;
+      optionKey: string | null;
+      dimKey: string | null;
+      price: unknown;
+      cost?: unknown;
+    }>).map((r) => ({
+      groupKey: r.groupKey,
+      optionKey: r.optionKey,
+      dimKey: r.dimKey,
+      price: Number(r.price),
+      cost: r.cost == null ? null : Number(r.cost),
+    }));
+    // adet="1" ZORLA → tek parça birim fiyatı. Toplam = birim × adet (aşağıda).
+    return computeAreaPrice(product.options as never, rows, { ...effSel, adet: "1" }, pricing).dahil;
   }, [isArea, product, effSel, pricing]);
+
+  // Girilen "adet" area'da SEPET ADEDİ olur (additive'de sepet adedi state.quantity=1).
+  const areaAdet = isArea ? Math.max(1, Number(effSel.adet) || 1) : state.quantity;
+
+  const total = useMemo(
+    () => (isArea ? unitArea * areaAdet : calculateTotal(product, effSel)),
+    [isArea, unitArea, areaAdet, product, effSel],
+  );
 
   const priceHintsMap = useMemo(() => {
     // Area: her malzemenin 1 m² (KDV dahil) fiyatını ipucu olarak göster → müşteri
@@ -253,14 +261,16 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       productImage:
         product.images[0] || `/api/mockup?slug=${product.slug}&w=200&h=200`,
       configuration: {
-        selections: effSel,
+        // Area: "adet" sepet adedine taşınır → saklanan selections'ta adet="1"
+        // (server computeAreaPrice(adet=1) × quantity = birim × adet ile aynı sonuç).
+        selections: isArea ? { ...effSel, adet: "1" } : effSel,
         summary: buildSelectionSummary(product, effSel, state.needsDesign),
-        totalPrice: total,
+        totalPrice: isArea ? unitArea : total, // BİRİM fiyat (sepet satırı = totalPrice × quantity)
         needsDesign: state.needsDesign,
         uploadedFileName: state.uploadedFileName,
         uploadedFileUrl: state.uploadedFileUrl,
       },
-      quantity: state.quantity,
+      quantity: areaAdet, // area: girilen adet; additive: 1
     });
     dispatch({ type: "JUST_ADDED", value: true });
     setTimeout(() => dispatch({ type: "JUST_ADDED", value: false }), 1500);
@@ -307,13 +317,17 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
           <div className="border-t border-paper-200 pt-5">
             <div className="flex items-baseline gap-2 flex-wrap">
               <Price amount={show(total)} size="xl" className="text-brand-600 tabular-nums" />
-              <span className="text-base text-ink-500">/ {state.quantity} adet</span>
+              {areaAdet > 1 && (
+                <span className="text-base text-ink-500">/ {areaAdet} adet</span>
+              )}
             </div>
-            <p className="mt-1 text-sm text-ink-500">
-              Birim:{" "}
-              <Price amount={show(total / state.quantity)} size="sm" className="text-ink-700 align-baseline" />{" "}
-              / adet · KDV dahil
-            </p>
+            {areaAdet > 1 && (
+              <p className="mt-1 text-sm text-ink-500">
+                Birim:{" "}
+                <Price amount={show(total / areaAdet)} size="sm" className="text-ink-700 align-baseline" />{" "}
+                / adet · KDV dahil
+              </p>
+            )}
           </div>
         )}
 

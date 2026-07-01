@@ -146,6 +146,10 @@ export function buildSelectionSummary(
   const groups = [...groupMap.entries()].sort((a, b) => a[1].sort - b[1].sort);
 
   const parts: string[] = [];
+  // Area ürünlerinde ölçü (en×boy) bir opsiyon grubu değil; özete elle ekle.
+  if (selections.en && selections.boy) {
+    parts.push(`${selections.en}×${selections.boy} cm`);
+  }
   for (const [groupKey] of groups) {
     const sel = selections[groupKey];
     if (!sel) continue;
