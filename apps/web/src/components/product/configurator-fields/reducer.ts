@@ -46,7 +46,7 @@ export function configuratorReducer(
         selections: { ...state.selections, [action.groupKey]: action.optionKey },
       };
     case "SET_QUANTITY":
-      return { ...state, quantity: Math.max(1, action.value) };
+      return { ...state, quantity: Math.min(100000, Math.max(1, action.value)) };
     case "SET_NEEDS_DESIGN":
       return { ...state, needsDesign: action.value };
     case "TOGGLE_DESIGN_HELP":

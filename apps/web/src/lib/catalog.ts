@@ -243,6 +243,10 @@ export async function getCategories(): Promise<Category[]> {
 /** Tek kategori (slug). API'de yoksa → undefined (mock fallback kaldırıldı). */
 export async function getCategoryBySlug(slug: string): Promise<Category | undefined> {
   const list = await getCategories();
+  // Boş liste = geçici API blip (canlı sitede kategori her zaman var). Throw et ki sayfa
+  // notFound() çağırıp 404'ü CACHE'lemesin → ISR son başarılı (stale) sayfayı korur.
+  // (getProductBySlug'daki 5xx≠404 mantığının kategori tarafı karşılığı; aralıklı-404 önlemi.)
+  if (list.length === 0) throw new Error("getCategoryBySlug: kategori listesi boş (API blip?)");
   return list.find((c) => c.slug === slug);
 }
 

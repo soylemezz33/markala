@@ -99,6 +99,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
         <input
           type="number"
           min={1}
+          max={100000}
           inputMode="numeric"
           value={adet}
           onChange={(e) => set("adet", e.target.value)}

@@ -30,6 +30,7 @@ export function OrganizationJsonLd() {
         ],
         address: {
           "@type": "PostalAddress",
+          streetAddress: "Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61",
           addressCountry: "TR",
           addressRegion: "Mersin",
           addressLocality: "Yenişehir",
@@ -239,8 +240,8 @@ export function LocalBusinessJsonLd() {
     priceRange: "₺₺",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Yenişehir",
-      addressLocality: "Mersin",
+      streetAddress: "Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61",
+      addressLocality: "Yenişehir",
       addressRegion: "Mersin",
       postalCode: "33060",
       addressCountry: "TR",

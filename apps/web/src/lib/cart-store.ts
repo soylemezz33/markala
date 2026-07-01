@@ -35,7 +35,7 @@ export const useCartStore = create<CartState>()(
 
       addItem: (item) => {
         const id = `${item.productSlug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
-        const qty = item.quantity ?? 1;
+        const qty = Math.min(100000, Math.max(1, item.quantity ?? 1));
         set((state) => ({
           items: [...state.items, { ...item, id, quantity: qty }],
           isOpen: true,
@@ -61,7 +61,7 @@ export const useCartStore = create<CartState>()(
       updateQuantity: (id, quantity) => {
         set((state) => ({
           items: state.items.map((i) =>
-            i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i,
+            i.id === id ? { ...i, quantity: Math.min(100000, Math.max(1, quantity)) } : i,
           ),
         }));
       },
