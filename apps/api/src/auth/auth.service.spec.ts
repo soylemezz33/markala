@@ -11,7 +11,7 @@ import { AuthService, createDummyHash } from "./auth.service";
 
 const cfg = { get: (_k: string) => undefined } as any;
 const jwt = { sign: () => "signed.jwt.token" } as any;
-const mail = { sendVerificationEmail: vi.fn(), sendPasswordResetEmail: vi.fn(), sendWelcomeEmail: vi.fn() } as any;
+const mail = { sendVerificationEmail: vi.fn(), sendPasswordResetEmail: vi.fn(), sendWelcomeEmail: vi.fn().mockResolvedValue(true) } as any;
 
 function makePrisma(over: Partial<Record<string, any>> = {}) {
   return {
