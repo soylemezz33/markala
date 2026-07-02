@@ -82,8 +82,8 @@ export default function CheckoutPage() {
   // Kullanıcının hesabında kayıtlı adresleri — giriş yapmışsa çekilir, seçilebilir + varsayılan otomatik dolar.
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/750 fallback korunur. */
-  const [shippingConfig, setShippingConfig] = useState({ fee: 79, freeThreshold: 750 });
+  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/1500 fallback korunur. */
+  const [shippingConfig, setShippingConfig] = useState({ fee: 79, freeThreshold: 1500 });
   useEffect(() => {
     apiClient.settings.shipping().then(setShippingConfig).catch(() => {});
   }, []);

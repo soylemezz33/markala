@@ -527,7 +527,7 @@ export class MarkalaApiClient {
         { group, values },
         { auth: true },
       ),
-    /** Kargo bedeli ve ücretsiz kargo eşiği — public, auth gerekmez. Fallback: 79/750. */
+    /** Kargo bedeli ve ücretsiz kargo eşiği — public, auth gerekmez. Fallback: 79/1500. */
     shipping: () =>
       this.request<{ fee: number; freeThreshold: number }>("GET", "/settings/shipping"),
     /** Header menüsü JSON'u — public; admin /menu yönetir, yoksa null (storefront DEFAULT_NAV'a düşer). */

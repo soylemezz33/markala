@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Sparkle, Truck, ShieldCheck, PaintBrush } from "@phosphor-icons/react";
 
 const items = [
-  { icon: Truck, text: "750 ₺ üzeri kargo ücretsiz" },
+  { icon: Truck, text: "1.500 ₺ üzeri kargo ücretsiz" },
   { icon: PaintBrush, text: "Tasarım desteği ücretsiz" },
   { icon: Sparkle, text: "Üretim biter bitmez hızlı kargoya teslim" },
   { icon: ShieldCheck, text: "Hatalı baskıda %100 değişim garantisi" },

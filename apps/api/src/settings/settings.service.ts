@@ -39,7 +39,7 @@ export class SettingsService {
       const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : NaN;
       return Number.isFinite(n) && n >= 0 ? n : d;
     };
-    return { fee: num(map["shipping.fee"], 79), freeThreshold: num(map["shipping.freeThreshold"], 750) };
+    return { fee: num(map["shipping.fee"], 79), freeThreshold: num(map["shipping.freeThreshold"], 1500) };
   }
 
   /**

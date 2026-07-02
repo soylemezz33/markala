@@ -24,8 +24,8 @@ export default function CartPage() {
   const setStoreCoupon = useCartStore((s) => s.setCoupon);
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
-  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/750 fallback korunur. */
-  const [shipping, setShipping] = useState({ fee: 79, freeThreshold: 750 });
+  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/1500 fallback korunur. */
+  const [shipping, setShipping] = useState({ fee: 79, freeThreshold: 1500 });
   useEffect(() => {
     apiClient.settings.shipping().then(setShipping).catch(() => {});
   }, []);

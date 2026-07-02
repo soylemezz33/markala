@@ -90,11 +90,11 @@ const API_BASE =
 async function getShippingThreshold(): Promise<number> {
   try {
     const res = await fetch(`${API_BASE}/api/settings/shipping`, { next: { revalidate: 300 } });
-    if (!res.ok) return 750;
+    if (!res.ok) return 1500;
     const data = (await res.json()) as { freeThreshold?: number };
-    return typeof data.freeThreshold === "number" ? data.freeThreshold : 750;
+    return typeof data.freeThreshold === "number" ? data.freeThreshold : 1500;
   } catch {
-    return 750;
+    return 1500;
   }
 }
 
