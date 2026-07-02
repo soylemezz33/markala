@@ -444,15 +444,14 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             )}
           >
             {/* Logo */}
-            <Link href="/" className="flex-none group">
-              <span className="text-2xl md:text-[28px] font-semibold tracking-tight text-ink-900">
-                markala
-                <span className="inline-flex items-baseline">
-                  <span className="ml-0.5 px-1.5 py-0.5 rounded-md bg-brand-500 text-ink-900 text-xs font-bold tracking-tight">
-                    .com.tr
-                  </span>
-                </span>
-              </span>
+            <Link href="/" className="flex-none group" aria-label="Markala — ana sayfa">
+              <img
+                src="/markala-logo.svg"
+                alt="markala.com.tr"
+                width={119}
+                height={40}
+                className="h-9 md:h-10 w-auto"
+              />
             </Link>
 
             {/* Search — büyük command-bar */}

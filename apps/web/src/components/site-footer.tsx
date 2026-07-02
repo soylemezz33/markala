@@ -15,11 +15,14 @@ export function SiteFooter() {
       <Container className="py-14 md:py-20 grid md:grid-cols-12 gap-10 md:gap-12">
         {/* Logo + tagline + sosyal */}
         <div className="md:col-span-3">
-          <Link href="/" className="inline-block">
-            <span className="text-2xl font-serif font-semibold tracking-tight text-ink-900">
-              Markala<span className="text-brand-500">.</span>
-              <span className="text-sm text-ink-500 font-sans font-normal ml-1">com.tr</span>
-            </span>
+          <Link href="/" className="inline-block" aria-label="Markala — ana sayfa">
+            <img
+              src="/markala-logo.svg"
+              alt="markala.com.tr"
+              width={131}
+              height={44}
+              className="h-11 w-auto"
+            />
           </Link>
           <p className="mt-4 text-sm text-ink-700 leading-relaxed">
             markala.com.tr'yi sosyal medyada takip edin.
