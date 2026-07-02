@@ -118,6 +118,18 @@ const nextConfig = {
         destination: "/iletisim",
         permanent: true,
       },
+      // favicon.ico → app/icon.png (bazı bot/tarayıcılar /favicon.ico ister; 404 yerine ikon)
+      {
+        source: "/favicon.ico",
+        destination: "/icon.png",
+        permanent: false,
+      },
+      // Mükerrer KVKK sayfası → DB-yönetimli kanonik yasal sayfa
+      {
+        source: "/kvkk-aydinlatma",
+        destination: "/yasal/kvkk",
+        permanent: true,
+      },
     ];
   },
 };

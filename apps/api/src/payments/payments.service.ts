@@ -513,6 +513,11 @@ export class PaymentsService implements OnModuleInit {
     if (conversationId?.startsWith("caripay:")) {
       return this.handlePaydownCallback(conversationId.slice("caripay:".length), result, webOrigin);
     }
+    // conversationId BOŞ dönebiliyor (iyzico) → basketId "CARI-<paymentId>" ile cari paydown'ı çöz.
+    // Sipariş yolundaki basketId fallback'inin cari karşılığı; boş-conversationId'de kredi kaybını önler.
+    if (!conversationId && result.basketId?.startsWith("CARI-")) {
+      return this.handlePaydownCallback(result.basketId.slice("CARI-".length), result, webOrigin);
+    }
 
     // Sipariş ödemesi: normalde conversationId = order.id. ANCAK iyzico checkoutForm.retrieve
     // conversationId'yi BOŞ döndürebiliyor → bu durumda basketId (= order.orderNumber) ile çöz.

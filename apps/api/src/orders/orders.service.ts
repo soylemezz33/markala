@@ -311,6 +311,19 @@ export class OrdersService {
           (product as { pricingMode?: string }).pricingMode === "area"
             ? computeAreaPrice(mappedOpts as never, mappedPrices, selections, pricing).dahil
             : computeConfiguredPrice(mappedOpts, mappedPrices, selections);
+        // Area: sunucu-tarafı maxM2 + emniyet tavanı — doğrudan API ile absürt ölçü (en/boy)
+        // siparişini engelle (client'taki areaMaxExceeded kontrolünün sunucu karşılığı).
+        if ((product as { pricingMode?: string }).pricingMode === "area") {
+          const alanPiece = ((Number(selections.en) || 0) * (Number(selections.boy) || 0)) / 10000;
+          const matOpt = mappedOpts.find((o) => o.groupKey === "malzeme" && o.optionKey === selections.malzeme);
+          const maxM2 = (matOpt?.rules as { maxM2?: number } | null | undefined)?.maxM2;
+          if (typeof maxM2 === "number" && maxM2 > 0 && alanPiece > maxM2) {
+            throw new BadRequestException(`Bu malzeme tek parçada en fazla ${maxM2} m² basılabilir: ${product.slug}`);
+          }
+          if (alanPiece > 100) {
+            throw new BadRequestException(`Geçersiz ölçü (tek parça ${alanPiece.toFixed(1)} m²): ${product.slug}`);
+          }
+        }
         // Fiyatı belirlenmemiş ürün (configuredUnit=0 → "Teklif Al") sipariş edilemez:
         // storefront sepete eklemeyi zaten engeller; bu sunucu-tarafı savunma (doğrudan API
         // çağrısıyla 0-toplamlı sipariş oluşturulmasını önler).

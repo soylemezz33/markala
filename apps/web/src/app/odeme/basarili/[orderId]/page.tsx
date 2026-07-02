@@ -10,6 +10,7 @@ import { useOrdersStore } from "@/lib/orders-store";
 import { useCartStore } from "@/lib/cart-store";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { trackPurchase } from "@/lib/analytics";
+import { apiClient, withRefresh } from "@/lib/api";
 import type { Order } from "@markala/types";
 
 // useSearchParams Suspense sınırı içinde okunmalı (next build prerender hatası önlenir) — repo deseni.
@@ -29,6 +30,8 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
   const isCari = searchParams.get("method") === "cari";
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  // Ödeme SUNUCU'dan doğrulanana kadar null — localStorage'a güvenmeyiz (sahte "ödendi" + GA4 şişmesi önlenir).
+  const [paymentConfirmed, setPaymentConfirmed] = useState<boolean | null>(null);
 
   useEffect(() => {
     const o = getById(params.orderId) ?? null;
@@ -36,8 +39,25 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
     setLoading(false);
     // Ödeme başarılı → sepeti temizle (başarısızlıkta /odeme/hata'ya gidilir, sepet korunur).
     clearCart();
-    // GA4/Meta purchase — gerçek tahsilat onayı bu sayfada (sadece mount'ta bir kez).
-    if (o) trackPurchase(o.orderNumber, o.total, o.items.length);
+    if (!o) return;
+    let cancelled = false;
+    // Sunucudan sipariş durumunu DOĞRULA: sadece gerçekten ödenmiş (paymentStatus="basarili") ya da
+    // cari siparişte purchase ateşle + "Ödemen alındı" göster. Böylece iptal edilmiş/sahte siparişe
+    // doğrudan gidildiğinde GA4/Ads dönüşüm şişmesi ve yanlış "ödendi" ekranı engellenir.
+    withRefresh(() => apiClient.orders.detail(params.orderId))
+      .then((srv) => {
+        if (cancelled) return;
+        const ok = !!srv && (srv.paymentStatus === "basarili" || (isCari && srv.paymentMethod === "cari"));
+        setPaymentConfirmed(ok);
+        if (ok) trackPurchase(o.orderNumber, o.total, o.items.length);
+      })
+      .catch(() => {
+        // Doğrulama başarısız (auth/ağ) → şişmeyi önlemek için purchase ATEŞLEME.
+        if (!cancelled) setPaymentConfirmed(false);
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.orderId]);
 
@@ -60,7 +80,11 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
           <CheckCircle size={36} weight="fill" />
         </div>
         <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">
-          {isCari ? "Siparişin alındı, teşekkürler! 🎉" : "Ödemen alındı, teşekkürler! 🎉"}
+          {isCari
+            ? "Siparişin alındı, teşekkürler! 🎉"
+            : paymentConfirmed === false
+              ? "Siparişin alındı — ödeme doğrulanıyor"
+              : "Ödemen alındı, teşekkürler! 🎉"}
         </h1>
         <p className="mt-3 text-lg text-ink-700">
           {isCari ? (
