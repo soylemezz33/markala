@@ -795,6 +795,14 @@ export class OrdersService {
       await this.issueInvoiceIfNeeded(id);
     }
 
+    // Müşteri bildirimi (fire-and-forget; hata sipariş durumu güncellemesini bozmaz).
+    if (status === "kargoya-verildi")
+      void this.mail
+        .sendOrderShippedEmail(id, { number: extras?.trackingNumber, carrier: extras?.trackingCarrier })
+        .catch(() => undefined);
+    if (status === "teslim-edildi")
+      void this.mail.sendOrderDeliveredEmail(id).catch(() => undefined);
+
     return updated;
   }
 

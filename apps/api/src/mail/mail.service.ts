@@ -269,6 +269,111 @@ export class MailService {
     }
   }
 
+  /** Sipariş kargoya verildiğinde müşteriye bildirim (updateStatus "kargoya-verildi" tetikler). */
+  async sendOrderShippedEmail(orderId: string, tracking?: { number?: string; carrier?: string }): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!order || !order.email) { this.logger.warn(`mail.orderShipped: sipariş/e-posta yok order=${orderId}`); return false; }
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = order.user?.fullName?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const orderUrl = `${webUrl}/hesabim/siparislerim`;
+    const carrier = tracking?.carrier?.trim();
+    const trackNo = tracking?.number?.trim();
+    const trackLine = [carrier ? `🚚 <strong>${esc(carrier)}</strong>` : "", trackNo ? `Takip: <strong>${esc(trackNo)}</strong>` : ""].filter(Boolean).join(" · ");
+    const subject = `Siparişin kargoda! 📦 ${order.orderNumber}`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin kargoya verildi.\n${carrier ? `Kargo: ${carrier}\n` : ""}${trackNo ? `Takip no: ${trackNo}\n` : ""}Tahmini teslim: 1-3 iş günü.\n\nSiparişlerim: ${orderUrl}\n\nMarkala`;
+    const html = renderEmail({
+      title: "Siparişin Kargoda 📦",
+      intro: `${greeting} siparişin kargoya verildi, yola çıktı!`,
+      preheader: `${order.orderNumber} kargoya verildi — tahmini teslim 1-3 iş günü`,
+      bodyHtml: `<p style="margin:0 0 8px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
+        ${trackLine ? `<p style="margin:0 0 12px">${trackLine}</p>` : ""}
+        <p style="margin:0 0 14px;color:#78716c;font-size:13px">Tahmini teslim: <strong>1-3 iş günü</strong>.</p>
+        ${emailButton("Siparişi takip et", orderUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bir sorun olursa bu e-postayı yanıtlayabilir ya da WhatsApp'tan yazabilirsin.</p>`,
+    });
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-shipped", orderNumber: order.orderNumber });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.orderShipped failed to=${order.email}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-shipped", orderNumber: order.orderNumber });
+      return false;
+    }
+  }
+
+  /** Sipariş teslim edildiğinde teşekkür + değerlendirme daveti (updateStatus "teslim-edildi" tetikler). */
+  async sendOrderDeliveredEmail(orderId: string): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!order || !order.email) { this.logger.warn(`mail.orderDelivered: sipariş/e-posta yok order=${orderId}`); return false; }
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = order.user?.fullName?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const reviewUrl = `${webUrl}/hesabim/siparislerim`;
+    const subject = `Siparişin teslim edildi ✅ Nasıl buldun?`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin teslim edildi. Umarız beğenirsin!\nBaskı kalitesinden memnunsan kısa bir değerlendirme bırakır mısın: ${reviewUrl}\nHatalı baskı vb. bir sorun varsa hemen yaz — ücretsiz değişim.\n\nMarkala`;
+    const html = renderEmail({
+      title: "Siparişin Teslim Edildi ✅",
+      intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin teslim edildi — umarız beğenirsin!`,
+      preheader: `${order.orderNumber} teslim edildi — değerlendirmen bizim için değerli`,
+      bodyHtml: `<p style="margin:0 0 14px">Baskı kalitesinden memnun kaldıysan, kısa bir değerlendirme bırakır mısın? Görüşün hem bize hem yeni müşterilere yol gösterir.</p>
+        ${emailButton("Siparişimi değerlendir", reviewUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Hatalı baskı ya da bir sorun varsa hemen bize yaz — <strong>ücretsiz değişim</strong> garantisi.</p>`,
+    });
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-delivered", orderNumber: order.orderNumber });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.orderDelivered failed to=${order.email}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-delivered", orderNumber: order.orderNumber });
+      return false;
+    }
+  }
+
+  /** Yeni kayıt sonrası hoş geldin + ilk sipariş kuponu (register tetikler). */
+  async sendWelcomeEmail(to: string, name?: string | null): Promise<boolean> {
+    if (!to) return false;
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const gname = name?.trim();
+    const greeting = gname ? `Merhaba ${esc(gname)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const shopUrl = `${webUrl}/urunler`;
+    const subject = `Markala'ya hoş geldin! 🎉 İlk siparişine %10`;
+    const text = `${gname ? `Merhaba ${gname},` : "Merhaba,"}\n\nMarkala'ya hoş geldin! Kartvizitten brandaya 30+ matbaa & reklam ürünü seni bekliyor.\nİlk siparişine özel: HOSGELDIN kodu ile %10 indirim.\n\nAlışverişe başla: ${shopUrl}\n\nÜcretsiz tasarım desteği · 1-2 iş günü üretim · 81 il kargo.\nMarkala`;
+    const html = renderEmail({
+      title: "Markala'ya Hoş Geldin! 🎉",
+      intro: `${greeting} aramıza hoş geldin! Kartvizitten brandaya 30+ matbaa &amp; reklam ürünü seni bekliyor.`,
+      preheader: `Hoş geldin! İlk siparişine HOSGELDIN koduyla %10 indirim`,
+      bodyHtml: `<p style="margin:0 0 10px">İlk siparişine özel hediyemiz:</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 8px"><tr><td style="border:2px dashed #F5B800;border-radius:8px;padding:14px 24px;text-align:center">
+          <span style="font-size:12px;color:#78716c">Kupon kodu</span><br>
+          <span style="font-family:'Courier New',monospace;font-size:22px;font-weight:700;color:#1A1410;letter-spacing:2px">HOSGELDIN</span><br>
+          <span style="font-size:13px;color:#16a34a;font-weight:700">%10 indirim</span>
+        </td></tr></table>
+        ${emailButton("Alışverişe başla", shopUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">✓ Ücretsiz tasarım desteği &nbsp;·&nbsp; ✓ 1-2 iş günü üretim &nbsp;·&nbsp; ✓ 81 il kargo</p>`,
+    });
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template: "welcome" });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.welcome failed to=${to}: ${(err as Error).message}`);
+      await this.logNotification(to, "failed", { error: (err as Error).message, template: "welcome" });
+      return false;
+    }
+  }
+
   private async logNotification(recipient: string, status: "sent" | "failed", metadata: Record<string, unknown>) {
     await this.prisma.notificationLog
       .create({

@@ -173,6 +173,9 @@ export class AuthService {
         },
       });
 
+      // Hoş geldin e-postası (fire-and-forget; başarısızlık kaydı bozmaz).
+      void this.mail.sendWelcomeEmail(user.email, user.fullName).catch(() => undefined);
+
       return this.issueTokenPair(user, context);
     } catch (err) {
       // Beklenen durum: olduğu gibi yukarı fırlat (controller doğru HTTP status'u döner).
