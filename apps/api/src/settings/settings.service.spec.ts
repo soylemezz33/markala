@@ -47,11 +47,11 @@ describe("getShipping", () => {
     expect(await svc.getShipping()).toEqual({ fee: 99, freeThreshold: 1000 });
   });
 
-  it("eksikse 79/750 fallback", async () => {
+  it("eksikse 79/1500 fallback", async () => {
     const prisma = mockPrisma();
     prisma.siteSetting.findMany.mockResolvedValue([] as any);
     const svc = new SettingsService(prisma as never);
-    expect(await svc.getShipping()).toEqual({ fee: 79, freeThreshold: 750 });
+    expect(await svc.getShipping()).toEqual({ fee: 79, freeThreshold: 1500 });
   });
 
   it("getPricing eksik anahtarlarda default döner", async () => {

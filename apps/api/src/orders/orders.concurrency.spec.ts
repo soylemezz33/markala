@@ -98,7 +98,7 @@ describe("OrdersService.create — cari kredi limiti ATOMİK kontrol (transactio
     // Mevcut borç 0, yeni sipariş 290 → 290 ≤ 1000 limit → kabul.
     const tx = makeCariTx({ debitSum: 0, creditSum: 0 });
     const prisma = makeCariPrisma(tx);
-    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await svc.create(CARI_INPUT);
 
@@ -118,7 +118,7 @@ describe("OrdersService.create — cari kredi limiti ATOMİK kontrol (transactio
     // Mevcut borç 800, yeni sipariş 290 → 1090 > 1000 limit → red.
     const tx = makeCariTx({ debitSum: 800, creditSum: 0 });
     const prisma = makeCariPrisma(tx);
-    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await expect(svc.create(CARI_INPUT)).rejects.toBeInstanceOf(BadRequestException);
 
@@ -144,7 +144,7 @@ describe("OrdersService.create — cari kredi limiti ATOMİK kontrol (transactio
       ];
     });
     const prisma = makeCariPrisma(tx);
-    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await svc.create(CARI_INPUT);
 
@@ -156,7 +156,7 @@ describe("OrdersService.create — cari kredi limiti ATOMİK kontrol (transactio
     const tx = makeCariTx({ debitSum: 999999, creditSum: 0 });
     const prisma = makeCariPrisma(tx);
     prisma.user.findUnique.mockResolvedValue({ ...CORPORATE_USER, corporateCreditLimit: null });
-    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await svc.create(CARI_INPUT);
 
@@ -192,7 +192,7 @@ describe("OrdersService.create — kupon maxUses yarışı (atomik updateMany gu
     const prisma = makeCariPrisma(tx);
     prisma.coupon.findUnique.mockResolvedValue(COUPON);
     prisma.user.findUnique.mockResolvedValue(null); // normal müşteri (cari yok)
-    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true) } as never);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never);
 
     await expect(
       svc.create({
