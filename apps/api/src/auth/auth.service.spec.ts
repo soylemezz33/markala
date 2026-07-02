@@ -29,7 +29,12 @@ const input = { email: "var@markala.test", password: "DiagTest123", fullName: "T
 const ctx = { userAgent: "vitest", ipAddress: "1.2.3.4" };
 
 describe("AuthService.register", () => {
-  beforeEach(() => vi.restoreAllMocks());
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    // restoreAllMocks vi.fn() implementasyonunu temizler → sendWelcomeEmail'i yeniden Promise'e bağla
+    // (register `void ...sendWelcomeEmail().catch()` çağırıyor; undefined dönerse .catch patlar).
+    mail.sendWelcomeEmail.mockResolvedValue(true);
+  });
 
   it("mevcut e-posta → 409 ConflictException (500 DEĞİL)", async () => {
     const prisma = makePrisma();
