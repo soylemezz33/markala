@@ -19,6 +19,7 @@ import {
   Paperclip,
 } from "@phosphor-icons/react";
 import { PhoneInput } from "@/components/forms/phone-input";
+import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 
 /**
  * TC Kimlik No doğrulama — Türkiye Cumhuriyeti algoritması:
@@ -93,6 +94,7 @@ export default function KvkkBasvuruPage() {
   const [consent, setConsent] = useState(false);
   // Honeypot: insanlar tarafından görünmez, botlar doldurur → spam tespiti
   const [honeypot, setHoneypot] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   function update<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -133,7 +135,7 @@ export default function KvkkBasvuruPage() {
       const res = await fetch("/api/kvkk-basvuru", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, hasIdDocument: Boolean(fileName), _hp: honeypot }),
+        body: JSON.stringify({ ...form, hasIdDocument: Boolean(fileName), _hp: honeypot, turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -474,11 +476,12 @@ export default function KvkkBasvuruPage() {
                   </span>
                 </label>
 
+                <TurnstileWidget action="kvkk" onToken={setTurnstileToken} />
                 <Button
                   type="submit"
                   size="lg"
                   fullWidth
-                  disabled={submitting || !consent}
+                  disabled={submitting || !consent || (turnstileEnabled && !turnstileToken)}
                 >
                   {submitting ? "Gönderiliyor..." : "Başvuruyu Gönder"}{" "}
                   <ArrowRight size={16} weight="bold" />

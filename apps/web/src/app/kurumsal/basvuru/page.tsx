@@ -13,6 +13,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { PhoneInput } from "@/components/forms/phone-input";
+import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 
 export default function KurumsalBasvuruPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -34,6 +35,7 @@ export default function KurumsalBasvuruPage() {
   });
 
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [taxFile, setTaxFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
 
@@ -73,6 +75,7 @@ export default function KurumsalBasvuruPage() {
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
       if (taxFile) fd.append("taxCertificate", taxFile);
       if (signatureFile) fd.append("signatureCircular", signatureFile);
+      if (turnstileToken) fd.append("turnstileToken", turnstileToken);
       const res = await fetch("/api/kurumsal-basvuru", {
         method: "POST",
         body: fd,
@@ -348,9 +351,10 @@ export default function KurumsalBasvuruPage() {
               muhasebe süreçleri için işlenmesine onay veriyorum.
             </span>
           </label>
+          <TurnstileWidget action="corporate" onToken={setTurnstileToken} />
           <button
             type="submit"
-            disabled={submitting || !kvkkAccepted}
+            disabled={submitting || !kvkkAccepted || (turnstileEnabled && !turnstileToken)}
             className="w-full sm:w-auto px-8 py-3 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-lg text-sm font-semibold disabled:opacity-60 inline-flex items-center justify-center gap-2"
           >
             {submitting ? (

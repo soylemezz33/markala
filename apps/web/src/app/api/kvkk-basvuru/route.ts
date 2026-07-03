@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 // nodemailer Node.js API'leri gerektirir — edge runtime'da çalışmaz.
 export const runtime = "nodejs";
@@ -32,6 +33,7 @@ interface KvkkPayload {
   details?: string;
   hasIdDocument?: boolean;
   _hp?: string; // honeypot — dolu gelirse bot
+  turnstileToken?: string;
 }
 
 /**
@@ -112,6 +114,18 @@ export async function POST(req: NextRequest) {
   if (!details || details.trim().length < 30) {
     return NextResponse.json(
       { error: "Talep detayı en az 30 karakter olmalı." },
+      { status: 400 },
+    );
+  }
+
+  // Bot koruması: honeypot'a EK Turnstile doğrulama (prod fail-closed).
+  const ip =
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    undefined;
+  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
+    return NextResponse.json(
+      { error: "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin." },
       { status: 400 },
     );
   }

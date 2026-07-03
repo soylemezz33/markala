@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderEmail, emailRow, emailTable } from "@/lib/email-template";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 // nodemailer + multipart Node.js API'lerine ihtiyaç duyar — edge runtime'da çalışmaz.
 export const runtime = "nodejs";
@@ -17,6 +18,7 @@ interface CorporatePayload {
   phone?: string;
   address?: string;
   notes?: string;
+  turnstileToken?: string;
 }
 
 const DOC_MAX_BYTES = 15 * 1024 * 1024;
@@ -105,6 +107,7 @@ export async function POST(req: NextRequest) {
       phone: str("phone"),
       address: str("address"),
       notes: str("notes"),
+      turnstileToken: str("turnstileToken"),
     };
     const t = fd.get("taxCertificate");
     if (t instanceof File && t.size > 0) taxFile = t;
@@ -146,6 +149,18 @@ export async function POST(req: NextRequest) {
   }
   if (!phone || phone.length < 10) {
     return NextResponse.json({ error: "Geçerli telefon zorunlu." }, { status: 400 });
+  }
+
+  // Bot koruması: Turnstile doğrula (prod fail-closed) → spam persist+mail'den ÖNCE reddedilir.
+  const ip =
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    undefined;
+  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
+    return NextResponse.json(
+      { error: "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin." },
+      { status: 400 },
+    );
   }
 
   const docError = validateDoc(taxFile) ?? validateDoc(sigFile);
