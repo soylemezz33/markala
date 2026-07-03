@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, cloneElement, isValidElement, ReactElement } from "react";
+import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 import Link from "next/link";
 import { Container, Button } from "@markala/ui";
 import {
@@ -64,6 +65,7 @@ export default function ContactPage() {
     message: "",
   });
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   function update<K extends keyof typeof form>(key: K, val: string) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -81,7 +83,7 @@ export default function ContactPage() {
       const res = await fetch("/api/iletisim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, turnstileToken }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -247,7 +249,12 @@ export default function ContactPage() {
                     kişisel verilerimin yalnızca bu talepte değerlendirilmek üzere işlenmesine onay veriyorum.
                   </span>
                 </label>
-                <Button type="submit" size="lg" disabled={submitting || !kvkkAccepted}>
+                <TurnstileWidget action="contact" onToken={setTurnstileToken} />
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={submitting || !kvkkAccepted || (turnstileEnabled && !turnstileToken)}
+                >
                   {submitting ? "Gönderiliyor..." : "Gönder"} <ArrowRight size={16} weight="bold" />
                 </Button>
               </form>

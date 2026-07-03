@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderEmail, emailRow, emailTable } from "@/lib/email-template";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 // nodemailer Node.js API'lerine ihtiyaç duyar — edge runtime'da çalışmaz.
 export const runtime = "nodejs";
@@ -12,6 +13,7 @@ interface ContactPayload {
   subject?: string;
   message?: string;
   consent?: boolean;
+  turnstileToken?: string;
 }
 
 function escapeHtml(value: string): string {
@@ -76,6 +78,18 @@ export async function POST(req: NextRequest) {
   if (!message || message.length < 10) {
     return NextResponse.json(
       { error: "Mesaj en az 10 karakter olmalı." },
+      { status: 400 },
+    );
+  }
+
+  // Bot koruması: Turnstile token doğrula (prod'da fail-closed) → spam persist+mail'den ÖNCE reddedilir.
+  const ip =
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    undefined;
+  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
+    return NextResponse.json(
+      { error: "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin." },
       { status: 400 },
     );
   }
