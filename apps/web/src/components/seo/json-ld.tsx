@@ -501,8 +501,10 @@ export function VideoObjectJsonLd({
  *   return { average: agg._avg.rating ?? 0, count: agg._count._all };
  */
 export async function fetchSiteRating(): Promise<{ average: number; count: number }> {
-  // TODO(prisma): mock — gerçek review tablosuna bağla
-  return { average: 4.8, count: 2450 };
+  // TODO(prisma): mock — gerçek review tablosuna bağla.
+  // Sahte 4.8/2450 KALDIRILDI (Google "yapay AggregateRating" ihlali riski);
+  // gerçek query bağlanana kadar sıfır dön → çağıran taraf render etmesin.
+  return { average: 0, count: 0 };
 }
 
 /**

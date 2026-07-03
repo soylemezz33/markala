@@ -90,6 +90,7 @@ docker-compose.override.yml
 
 # Yerel artefaktlar / yedekler / agent çalışma dizinleri — commit etme
 .claude/worktrees/
+.claude/*.lock
 .playwright-mcp/
 _server_backup_*/
 .claire/

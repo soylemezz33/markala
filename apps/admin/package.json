@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@markala/api-client": "workspace:*",
-    "@markala/mock-data": "workspace:*",
     "@markala/types": "workspace:*",
     "@markala/ui": "workspace:*",
     "@phosphor-icons/react": "^2.1.7",
