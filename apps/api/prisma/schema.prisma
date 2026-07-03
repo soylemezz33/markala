@@ -596,42 +596,6 @@ model BlogPost {
   @@map("blog_posts")
 }
 
-// === A/B Testing ===
-
-model AbTest {
-  id          String    @id @default(cuid())
-  testKey     String    @unique @map("test_key")
-  name        String
-  description String?   @db.Text
-  variants    Json // [{ id: "A", weight: 50 }, { id: "B", weight: 50 }]
-  isActive    Boolean   @default(true) @map("is_active")
-  startedAt   DateTime  @default(now()) @map("started_at")
-  endedAt     DateTime? @map("ended_at")
-
-  events AbTestEvent[]
-
-  @@map("ab_tests")
-}
-
-model AbTestEvent {
-  id        String  @id @default(cuid())
-  testId    String  @map("test_id")
-  variant   String
-  eventType String  @map("event_type") // exposure | conversion
-  eventName String? @map("event_name")
-  userId    String? @map("user_id")
-  uid       String // anonymous cookie ID
-  metadata  Json?
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  test AbTest @relation(fields: [testId], references: [id], onDelete: Cascade)
-
-  @@index([testId, eventType, createdAt])
-  @@index([uid])
-  @@map("ab_test_events")
-}
-
 // === Bildirimler ===
 
 enum NotificationChannel {
