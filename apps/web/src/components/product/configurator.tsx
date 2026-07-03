@@ -204,6 +204,18 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
   const canBuy = total > 0 && !areaMaxExceeded;
 
+  // Area başlangıç fiyatı: ölçü girilmeden gösterilecek "X₺'den başlayan".
+  // = minM2 × en-ucuz malzemenin m²-fiyatı (KDV dahil, priceHintsMap.malzeme'den).
+  // Müşteri "Teklif Al" yerine erişilebilir bir giriş fiyatı görür; ölçü girince gerçek fiyata döner.
+  const startingPrice = useMemo(() => {
+    if (!isArea) return 0;
+    const hints = Object.values(
+      (priceHintsMap as { malzeme?: Record<string, number> }).malzeme ?? {},
+    ).filter((v) => typeof v === "number" && v > 0);
+    if (hints.length === 0) return 0;
+    return Math.round(pricing.minM2 * Math.min(...hints) * 100) / 100;
+  }, [isArea, priceHintsMap, pricing.minM2]);
+
   // CTA "Teklif Al"a düştüğünde sebebi açıkla (buton sessizce değişmesin).
   const ctaReason = useMemo(() => {
     if (!isArea || canBuy) return null;
@@ -313,7 +325,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
         {/* Büyük per-adet fiyat — ürünün yanında (KDV dahil). Fiyatsız üründe gizli;
             alttaki PriceCard zaten "Teklif Al"ı gösterir. Diğer içerik değişmedi. */}
-        {canBuy && (
+        {canBuy ? (
           <div className="border-t border-paper-200 pt-5">
             <div className="flex items-baseline gap-2 flex-wrap">
               <Price amount={show(total)} size="xl" className="text-brand-600 tabular-nums" />
@@ -329,7 +341,18 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
               </p>
             )}
           </div>
-        )}
+        ) : isArea && startingPrice > 0 ? (
+          // Ölçü girilmeden başlangıç fiyatı — "Teklif Al" hissini kırar, erişilebilir giriş fiyatı gösterir.
+          <div className="border-t border-paper-200 pt-5">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <Price amount={show(startingPrice)} size="xl" className="text-brand-600 tabular-nums" />
+              <span className="text-base text-ink-500">'den başlayan</span>
+            </div>
+            <p className="mt-1 text-sm text-ink-500">
+              {kdvDahil ? "KDV dahil" : "KDV hariç"} · en/boy ölçüsünü girin, fiyatınız anında hesaplansın.
+            </p>
+          </div>
+        ) : null}
 
         <EstimatedDelivery productionTime={product.productionTime} />
 
