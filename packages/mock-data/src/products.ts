@@ -1312,20 +1312,3 @@ export function getProductBySlug(slug: string): Product | undefined {
 export function getProductsByCategory(categorySlug: string): Product[] {
   return products.filter((p) => p.categorySlug === categorySlug);
 }
-
-export function getBestsellers(): Product[] {
-  return products.filter((p) => p.bestseller === true);
-}
-
-export function getRelatedProducts(slug: string, limit = 4): Product[] {
-  const p = getProductBySlug(slug);
-  if (!p) return [];
-  const explicit = (p.relatedSlugs ?? [])
-    .map((s) => getProductBySlug(s))
-    .filter((x): x is Product => Boolean(x));
-  if (explicit.length >= limit) return explicit.slice(0, limit);
-  const extra = products
-    .filter((x) => x.categorySlug === p.categorySlug && x.slug !== p.slug && !explicit.find((e) => e.slug === x.slug))
-    .slice(0, limit - explicit.length);
-  return [...explicit, ...extra];
-}
