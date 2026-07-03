@@ -42,8 +42,15 @@ export class CorporateLedgerAdminController {
   }
 
   @Post(":userId/payment")
-  recordPayment(@Param("userId") userId: string, @Body() dto: RecordPaymentDto) {
-    return this.service.recordPayment(userId, dto.amount, dto.description);
+  recordPayment(
+    @Param("userId") userId: string,
+    @Body() dto: RecordPaymentDto,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.service.recordPayment(userId, dto.amount, dto.description, {
+      actorId: req.user?.sub ?? null,
+      ipAddress: req.ip ?? null,
+    });
   }
 }
 

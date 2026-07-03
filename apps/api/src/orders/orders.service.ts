@@ -770,6 +770,7 @@ export class OrdersService {
     id: string,
     status: string,
     extras?: { trackingNumber?: string; trackingCarrier?: string },
+    actor?: { actorId?: string | null; ipAddress?: string | null },
   ) {
     // State-machine kontrolü: izinsiz geçişleri engelle.
     const current = await this.prisma.order.findUnique({ where: { id }, select: { status: true } });
@@ -815,6 +816,21 @@ export class OrdersService {
         .catch(() => undefined);
     if (status === "teslim-edildi")
       void this.mail.sendOrderDeliveredEmail(id).catch(() => undefined);
+
+    // Denetim izi: hangi admin, hangi IP, önce→sonra durum değişikliği. Best-effort —
+    // audit yazımı hatası sipariş güncellemesini bozmaz.
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actor?.actorId ?? null,
+          entityType: "Order",
+          entityId: id,
+          action: "status_change",
+          diff: { from: currentSlug, to: status, tracking: extras?.trackingNumber ?? null },
+          ipAddress: actor?.ipAddress ?? null,
+        },
+      })
+      .catch((e) => console.error("[audit] updateStatus denetim kaydı yazılamadı:", e?.message));
 
     return updated;
   }

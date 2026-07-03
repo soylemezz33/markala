@@ -5,6 +5,23 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
+// Report-Only CSP — mevcut kullanılan kaynaklar (Next inline, GA4, Sentry, Cloudflare, iyzico).
+// unsafe-inline/eval: Next.js runtime + GA4 için gerekli; enforce fazında nonce'a geçilebilir.
+// NOT: securityHeaders'tan ÖNCE tanımlı olmalı (const hoist edilmez, TDZ).
+const cspReportOnly = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+  "img-src 'self' data: blob: https://api.markala.com.tr https://picsum.photos https://*.picsum.photos https://images.unsplash.com https://images.pexels.com https://www.google-analytics.com https://www.googletagmanager.com",
+  "font-src 'self' data:",
+  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com",
+  "connect-src 'self' https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io",
+  "frame-src 'self' https://challenges.cloudflare.com https://www.iyzipay.com https://sandbox-api.iyzipay.com https://api.iyzipay.com",
+  "report-uri /api/csp-report",
+].join("; ");
+
 /** @type {import('next').NextConfig} */
 const securityHeaders = [
   // XSS protection (older browsers)
@@ -28,6 +45,11 @@ const securityHeaders = [
   },
   // Cross-origin policies
   { key: "X-DNS-Prefetch-Control", value: "on" },
+  // İçerik Güvenlik Politikası — ÖNCE Report-Only (non-blocking): gerçek kaynakları
+  // /api/csp-report'a raporlar, hiçbir şeyi ENGELLEMEZ. Birkaç gün gözlemleyip ihlaller
+  // temizlenince "-Report-Only" kaldırılıp enforce'a geçilir (faz 2). Widget rotası kendi
+  // frame politikasını override eder; buraya frame-ancestors koymuyoruz (X-Frame-Options yeterli).
+  { key: "Content-Security-Policy-Report-Only", value: cspReportOnly },
 ];
 
 const nextConfig = {

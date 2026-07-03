@@ -83,6 +83,10 @@ function makePrisma(overrides: Record<string, unknown> = {}) {
     campaignPackage: {
       findMany: vi.fn().mockResolvedValue([]),
     },
+    // updateStatus best-effort denetim izi yazar → undefined.create senkron patlamasın diye mock.
+    auditLog: {
+      create: vi.fn().mockResolvedValue({}),
+    },
     $transaction: vi.fn().mockImplementation(
       (fn: (t: typeof tx) => Promise<unknown>) => fn(tx),
     ),

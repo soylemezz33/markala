@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Container } from "@markala/ui";
 import { CaretRight, FileText, Notebook, Cookie, Shield, ListBullets, ArrowUUpLeft, Package } from "@phosphor-icons/react/dist/ssr";
 import { getLegalSlugs, getLegalPage, getLegalPages } from "@/lib/legal";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { formatDate } from "@/lib/format";
 import type { Metadata } from "next";
 
@@ -118,7 +119,7 @@ export default async function LegalPage({ params }: Props) {
           <article className="lg:col-span-9 max-w-3xl">
             <div
               className="legal-content"
-              dangerouslySetInnerHTML={{ __html: page.body }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.body) }}
             />
           </article>
         </div>

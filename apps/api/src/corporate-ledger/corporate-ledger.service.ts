@@ -40,18 +40,39 @@ export class CorporateLedgerService {
   }
 
   /** Admin: tahsilat (ödeme) girişi → credit hareketi; bakiyeyi azaltır. */
-  async recordPayment(userId: string, amount: number, description?: string) {
+  async recordPayment(
+    userId: string,
+    amount: number,
+    description?: string,
+    actor?: { actorId?: string | null; ipAddress?: string | null },
+  ) {
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new BadRequestException("Tahsilat tutarı 0'dan büyük olmalı.");
     }
-    await this.prisma.corporateLedgerEntry.create({
+    const desc = description?.trim() || "Tahsilat";
+    const entry = await this.prisma.corporateLedgerEntry.create({
       data: {
         userId,
         kind: "credit",
         amount: new Prisma.Decimal(amount),
-        description: description?.trim() || "Tahsilat",
+        description: desc,
       },
     });
+    // Denetim izi: hangi admin, hangi IP, ne zaman tahsilat girdi. Best-effort —
+    // ledger kaydı zaten para hakikatidir; audit yazımı hatası tahsilatı bozmamalı.
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actor?.actorId ?? null,
+          userId,
+          entityType: "CorporateLedgerEntry",
+          entityId: entry.id,
+          action: "create",
+          diff: { kind: "credit", amount, description: desc },
+          ipAddress: actor?.ipAddress ?? null,
+        },
+      })
+      .catch((e) => console.error("[audit] recordPayment denetim kaydı yazılamadı:", e?.message));
     return this.getStatement(userId);
   }
 }

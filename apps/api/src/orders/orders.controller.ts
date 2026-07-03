@@ -68,10 +68,16 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
   @ApiBearerAuth()
-  updateStatus(@Param("id") id: string, @Body() dto: UpdateOrderStatusDto) {
-    return this.service.updateStatus(id, dto.status, {
-      trackingNumber: dto.trackingNumber,
-      trackingCarrier: dto.trackingCarrier,
-    });
+  updateStatus(
+    @Param("id") id: string,
+    @Body() dto: UpdateOrderStatusDto,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.service.updateStatus(
+      id,
+      dto.status,
+      { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
+      { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null },
+    );
   }
 }

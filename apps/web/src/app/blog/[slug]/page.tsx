@@ -72,8 +72,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 /** Çok basit markdown→HTML — tam markdown lib yerine inline. Üretim için mdx önerilir. */
+/** Ham HTML'i etkisizleştir (yalnız <>& kaçışlanır; markdown sözdizimi #,*,[,`,|,- korunur). */
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Link şeması allowlist — javascript:/data: gibi XSS vektörlerini zararsız "#"e düşürür. */
+function safeUrl(raw: string): string {
+  const u = raw.trim();
+  if (/^(https?:|mailto:|tel:)/i.test(u) || u.startsWith("/") || u.startsWith("#")) return u;
+  return "#";
+}
+
 function renderMarkdown(md: string): string {
-  let html = md;
+  // Markdown'a çevirmeden ÖNCE ham HTML'i kaçışla → stored-XSS (<script>, <img onerror>) etkisiz.
+  // Regexler yalnızca güvenli tag EKLER; kaçışlanmış <>& sayesinde girdiden tag sızmaz.
+  let html = escapeHtml(md);
 
   // ## başlıklar
   html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
@@ -90,7 +104,8 @@ function renderMarkdown(md: string): string {
   // [text](url)
   html = html.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" class="text-brand-700 hover:underline">$1</a>',
+    (_m, text: string, url: string) =>
+      `<a href="${safeUrl(url)}" class="text-brand-700 hover:underline">${text}</a>`,
   );
 
   // `code`
