@@ -40,6 +40,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma Client
+        # web/admin/api type-check ve build, @prisma/client üretilmiş tiplerine bağlı.
+        # Unit Tests job'ında bu adım vardı ama burada YOKTU: lockfile değişip pnpm cache'i
+        # bozulunca client generate edilmiyor (pnpm v10 dependency postinstall'ları default
+        # kapalı) → "@prisma/client has no exported member" ile type-check/build çöküyordu.
+        run: pnpm --filter @markala/api exec prisma generate
+
       - name: Format check (Prettier)
         run: pnpm format:check
         # Mevcut biçim sapması build'i bloklamaz; her PR'da annotation olarak
