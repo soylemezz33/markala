@@ -125,12 +125,42 @@ export default function CartPage() {
                     <Row label={<span className="text-base font-semibold text-ink-900">Toplam</span>} value={<Price amount={total} size="lg" className="text-ink-900" />} />
                   </div>
                 </dl>
-                {sub > 0 && sub < shipping.freeThreshold && (
-                  <div className="mt-4 p-3 bg-brand-50 border border-brand-200 rounded-md flex items-center gap-2 text-xs text-ink-700">
-                    <Truck size={14} className="text-brand-700 flex-none" />
-                    <span><Price amount={shipping.freeThreshold - sub} size="sm" /> daha ekleyin → kargo ücretsiz</span>
-                  </div>
-                )}
+                {sub > 0 &&
+                  (sub < shipping.freeThreshold ? (
+                    // Bedava kargo ilerleme çubuğu — eşiğe ne kadar kaldığını görselleştirir (AOV artırıcı CRO).
+                    <div className="mt-4">
+                      <div className="flex items-center gap-1.5 text-xs text-ink-700 mb-1.5">
+                        <Truck size={14} className="text-brand-700 flex-none" />
+                        <span>
+                          Ücretsiz kargoya{" "}
+                          <Price
+                            amount={shipping.freeThreshold - sub}
+                            size="sm"
+                            className="font-semibold text-brand-700 align-baseline"
+                          />{" "}
+                          kaldı
+                        </span>
+                      </div>
+                      <div
+                        className="h-2 rounded-full bg-paper-200 overflow-hidden"
+                        role="progressbar"
+                        aria-label="Ücretsiz kargo ilerlemesi"
+                        aria-valuenow={Math.round((sub / shipping.freeThreshold) * 100)}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                      >
+                        <div
+                          className="h-full rounded-full bg-brand-500 transition-[width] duration-500 ease-out"
+                          style={{ width: `${Math.min(100, Math.round((sub / shipping.freeThreshold) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // Eşik aşıldı → kutlama; müşteri kazanımı hissetsin.
+                    <div className="mt-4 flex items-center gap-2 p-2.5 bg-success/10 border border-success/30 rounded-md text-xs font-medium text-success">
+                      <Truck size={14} className="flex-none" /> 🎉 Kargon ücretsiz — teslimat bizden!
+                    </div>
+                  ))}
                 <Link
                   href="/odeme"
                   className="block mt-5"
