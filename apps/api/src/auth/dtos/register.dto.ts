@@ -43,4 +43,10 @@ export class RegisterDto {
     message: "Telefon E.164 formatında olmalıdır (örn. +905551234567)",
   })
   phone?: string;
+
+  // Cloudflare Turnstile token (bot koruması) — controller'da verify edilir.
+  @IsString()
+  @IsOptional()
+  @MaxLength(4096)
+  turnstileToken?: string;
 }

@@ -7,6 +7,7 @@ import { Container, Button } from "@markala/ui";
 import { Sparkle, Gift, Lightning, Receipt } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { PhoneInput } from "@/components/forms/phone-input";
+import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -33,6 +34,7 @@ export default function RegisterPage() {
   const [accepted, setAccepted] = useState(false);
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Kayıt sonrası dönülecek site-içi hedef (HOSGELDIN ile gelip checkout'a dönen yeni müşteri).
@@ -65,7 +67,7 @@ export default function RegisterPage() {
         return;
       }
     }
-    const res = await register({ email, password, fullName, phone: normalizedPhone, marketingConsent: marketingOptIn });
+    const res = await register({ email, password, fullName, phone: normalizedPhone, marketingConsent: marketingOptIn, turnstileToken: turnstileToken ?? undefined });
     if (res.ok) {
       const n = new URLSearchParams(window.location.search).get("next");
       router.replace(n && n.startsWith("/") && !n.startsWith("//") ? n : "/hesabim");
@@ -122,7 +124,9 @@ export default function RegisterPage() {
 
             {error && <div role="alert" className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>}
 
-            <Button type="submit" size="lg" fullWidth disabled={isLoading}>
+            {/* action="register" → api TurnstileService.verify beklediği action ile eşleşmeli. */}
+            <TurnstileWidget action="register" onToken={setTurnstileToken} />
+            <Button type="submit" size="lg" fullWidth disabled={isLoading || (turnstileEnabled && !turnstileToken)}>
               {isLoading ? "Hesap oluşturuluyor..." : "Hesabı Oluştur"}
             </Button>
           </form>

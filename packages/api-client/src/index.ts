@@ -178,6 +178,7 @@ export class MarkalaApiClient {
       fullName: string;
       phone?: string;
       marketingConsent?: boolean;
+      turnstileToken?: string;
     }) => this.request<{ accessToken: string; user: User }>("POST", "/auth/register", data),
     login: (data: { email: string; password: string }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/login", data),

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -12,6 +13,7 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 import { ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
+import { TurnstileService } from "../captcha/turnstile.service";
 import { JwtAuthGuard } from "./jwt.guard";
 import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from "./dtos";
 
@@ -29,7 +31,11 @@ import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPassw
 export class AuthController {
   private readonly cookieName = "mk_refresh";
 
-  constructor(private auth: AuthService, private config: ConfigService) {}
+  constructor(
+    private auth: AuthService,
+    private config: ConfigService,
+    private turnstile: TurnstileService,
+  ) {}
 
   // Brute force: register 3 deneme / saat / IP — bot kayıt seliyle DB'yi şişirmeyi engeller.
   // Rate limit main.ts'teki rateLimit() middleware'inde uygulanır.
@@ -39,9 +45,17 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
+    const ip = this.clientIp(req);
+    // Bot koruması: Turnstile doğrula (prod fail-closed) — main.ts rate-limit'ine EK katman.
+    // NOT: api container'da TURNSTILE_SECRET_KEY set olmalı, yoksa prod'da tüm kayıtlar bloklanır.
+    if (!(await this.turnstile.verify(dto.turnstileToken ?? "", "register", ip))) {
+      throw new BadRequestException(
+        "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.",
+      );
+    }
     const result = await this.auth.register(dto, {
       userAgent: req.headers["user-agent"],
-      ipAddress: this.clientIp(req),
+      ipAddress: ip,
     });
     this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresAt);
     return {

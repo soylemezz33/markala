@@ -6,10 +6,12 @@ import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./jwt.strategy";
 import { MailModule } from "../mail/mail.module";
+import { CaptchaModule } from "../captcha/captcha.module";
 
 @Module({
   imports: [
     MailModule,
+    CaptchaModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       inject: [ConfigService],

@@ -12,6 +12,7 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "ok" | "err">("idle");
   const [msg, setMsg] = useState("");
+  const [hp, setHp] = useState(""); // honeypot — bot doldurursa sunucu sessizce reddeder
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +29,7 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
       const r = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: value, source }),
+        body: JSON.stringify({ email: value, source, _hp: hp }),
       });
       const d = (await r.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -60,6 +61,17 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
   return (
     <div className="mt-6 max-w-md mx-auto">
       <form onSubmit={submit} className="flex flex-col sm:flex-row gap-2">
+        {/* Honeypot — görsel gizli, klavye/okuyucu erişimi kapalı. Gerçek kullanıcı görmez/doldurmaz. */}
+        <input
+          type="text"
+          name="company"
+          value={hp}
+          onChange={(e) => setHp(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+        />
         <label htmlFor="newsletter-email" className="sr-only">
           E-posta adresi
         </label>

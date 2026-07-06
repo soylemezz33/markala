@@ -111,6 +111,8 @@ interface AuthState {
     phone?: string;
     /** KVKK pazarlama açık rızası (opt-in). */
     marketingConsent?: boolean;
+    /** Cloudflare Turnstile token (bot koruması). */
+    turnstileToken?: string;
   }) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<User>) => Promise<{ ok: boolean; error?: string }>;
@@ -149,10 +151,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async ({ email, password, fullName, phone, marketingConsent }) => {
+      register: async ({ email, password, fullName, phone, marketingConsent, turnstileToken }) => {
         set({ isLoading: true });
         try {
-          const { accessToken } = await client.auth.register({ email, password, fullName, phone, marketingConsent });
+          const { accessToken } = await client.auth.register({ email, password, fullName, phone, marketingConsent, turnstileToken });
           set({ accessToken });
           const user = await client.auth.me();
           set({ user, isLoading: false });

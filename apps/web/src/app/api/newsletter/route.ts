@@ -37,7 +37,7 @@ async function persistSubscriber(email: string, source: string): Promise<void> {
  * Hem JSON hem form-urlencoded kabul eder; form ise /blog?subscribed=1'e redirect eder.
  */
 export async function POST(req: NextRequest) {
-  let body: { email?: string; source?: string };
+  let body: { email?: string; source?: string; _hp?: string };
 
   const contentType = req.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
@@ -53,6 +53,12 @@ export async function POST(req: NextRequest) {
       email: String(form.get("email") ?? ""),
       source: String(form.get("source") ?? ""),
     };
+  }
+
+  // Honeypot — bot doldurursa sessiz red (başarı göster, persist/mail YOK). Footer formu için
+  // görünür captcha yerine sıfır-sürtünmeli koruma; niyet yüksek-değerli değil.
+  if (body._hp) {
+    return NextResponse.json({ ok: true, message: "Abone olundun, teşekkürler!" });
   }
 
   const { email, source } = body;
