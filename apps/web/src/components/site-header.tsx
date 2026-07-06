@@ -380,14 +380,18 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             >
               <Container className="relative flex items-center justify-between py-2 text-xs whitespace-nowrap">
                 {/* Orta — Kampanyalar (premium koyu pill + nabız nokta). lg+ ortada,
-                    sol/sağ gruplarla çakışmaması için küçük ekranda gizli. */}
-                <Link
-                  href="/kampanyalar"
-                  className="hidden lg:inline-flex absolute left-1/2 -translate-x-1/2 items-center gap-2 rounded-full bg-surface-2 border border-surface-4 text-paper-50 font-semibold px-4 py-1.5 hover:border-brand-400/60 transition-all"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
-                  <Tag size={13} weight="fill" className="text-brand-400" /> Kampanyalar
-                </Link>
+                    sol/sağ gruplarla çakışmaması için küçük ekranda gizli.
+                    GEÇİCİ GİZLENDİ (Hasan talebi 2026-07-06): daha sonra açmak için
+                    aşağıdaki `false` değerini `true` yap. */}
+                {false && (
+                  <Link
+                    href="/kampanyalar"
+                    className="hidden lg:inline-flex absolute left-1/2 -translate-x-1/2 items-center gap-2 rounded-full bg-surface-2 border border-surface-4 text-paper-50 font-semibold px-4 py-1.5 hover:border-brand-400/60 transition-all"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse" />
+                    <Tag size={13} weight="fill" className="text-brand-400" /> Kampanyalar
+                  </Link>
+                )}
                 <div className="flex items-center gap-4 md:gap-5">
                   <a
                     href="tel:+903244333351"
