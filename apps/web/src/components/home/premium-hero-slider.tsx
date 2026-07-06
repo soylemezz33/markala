@@ -34,11 +34,16 @@ interface Slide {
   secondary: { label: string; href: string };
   card: { kicker: string; big: React.ReactNode; sub: string; note: string };
   chips: [Chip, Chip];
+  /** Sağ panel — tasarımcı ürün mockup görseli (yalnız lg+; mobilde gizli → indirilmez). */
+  image: string;
+  imageAlt: string;
 }
 
 const SLIDES: Slide[] = [
   {
     eyebrow: "Online Matbaa",
+    image: "/hero/hero-online-matbaa.jpg",
+    imageAlt: "Markala — 30+ matbaa ve reklam ürünü tek panelde; rollup banner ve kartvizit görseli",
     title: (
       <>
         Kartvizitten brandaya, tüm baskı işin{" "}
@@ -66,6 +71,8 @@ const SLIDES: Slide[] = [
   },
   {
     eyebrow: "Tasarım Dahil",
+    image: "/hero/hero-tasarim-destegi.jpg",
+    imageAlt: "Markala — sipariş ile ücretsiz tasarım desteği; baskılı kupa, spiralli defter ve kalem görseli",
     title: (
       <>
         Tasarımcın yoksa <span className="text-brand-400">biz hallederiz</span>
@@ -88,6 +95,8 @@ const SLIDES: Slide[] = [
   },
   {
     eyebrow: "Kampanya Paketleri",
+    image: "/hero/hero-kampanya-paketleri.jpg",
+    imageAlt: "Markala — hazır kampanya paketleriyle %25'e varan tasarruf; rollup banner ve kartvizit görseli",
     title: (
       <>
         Hazır paketlerle <span className="text-brand-400">daha az öde</span>, tek
@@ -147,7 +156,6 @@ export function PremiumHeroSlider() {
   }, [next, prev]);
 
   const slide = SLIDES[index]!;
-  const [ChipA, ChipB] = [slide.chips[0].icon, slide.chips[1].icon];
 
   return (
     <section
@@ -208,29 +216,18 @@ export function PremiumHeroSlider() {
             </div>
           </div>
 
-          {/* Sağ — avantaj kartı (CSS, görsel gerektirmez) */}
+          {/* Sağ — tasarımcı ürün paneli (görsel, yalnız lg+; mobilde gizli → indirilmez).
+              Sol metin responsive kod olarak kalır → SEO + mobil bozulmaz. */}
           <div className="relative hidden lg:block">
-            <div className="relative mx-auto max-w-sm">
-              <div className="rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-ink-900 p-7 shadow-2xl">
-                <div className="text-xs font-bold uppercase tracking-wider opacity-70">
-                  {slide.card.kicker}
-                </div>
-                <div className="mt-1 text-5xl font-serif font-semibold leading-none">
-                  {slide.card.big}
-                </div>
-                <div className="mt-1 text-lg font-semibold">{slide.card.sub}</div>
-                <div className="mt-4 pt-4 border-t border-ink-900/15 text-sm font-medium">
-                  {slide.card.note}
-                </div>
-              </div>
-              {/* Floating mini çipler */}
-              <div className="absolute -top-4 -left-6 rotate-[-6deg] rounded-xl bg-surface-2 border border-surface-4 px-3 py-2 shadow-card-dark text-xs text-on-dark-200 inline-flex items-center gap-1.5">
-                <ChipA size={14} className="text-brand-400" /> {slide.chips[0].label}
-              </div>
-              <div className="absolute -bottom-5 -right-4 rotate-[5deg] rounded-xl bg-surface-2 border border-surface-4 px-3 py-2 shadow-card-dark text-xs text-on-dark-200 inline-flex items-center gap-1.5">
-                <ChipB size={14} className="text-brand-400" /> {slide.chips[1].label}
-              </div>
-            </div>
+            <img
+              src={slide.image}
+              alt={slide.imageAlt}
+              width={1180}
+              height={742}
+              loading="lazy"
+              decoding="async"
+              className="w-full rounded-2xl shadow-2xl ring-1 ring-paper-50/10"
+            />
           </div>
         </div>
       </Container>
