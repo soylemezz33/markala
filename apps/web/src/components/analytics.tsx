@@ -20,7 +20,9 @@ import Script from "next/script";
  */
 export function Analytics() {
   const ga4 = process.env.NEXT_PUBLIC_GA4_ID;
-  const metaPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  // Pixel ID herkese açık (client JS'te görünür) → env yoksa gömülü değere düş.
+  // Env ile ezilebilir kalır; Hasan dilerse GH variable ile yönetir/kapatır.
+  const metaPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1112404194692078";
   const clarity = process.env.NEXT_PUBLIC_CLARITY_ID;
   const hotjar = process.env.NEXT_PUBLIC_HOTJAR_ID;
   const gtm = process.env.NEXT_PUBLIC_GTM_ID;
