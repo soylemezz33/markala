@@ -2,49 +2,54 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Container, cn } from "@markala/ui";
+import { cn } from "@markala/ui";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
+import type { HeroBannerData } from "@/lib/catalog";
 
 /**
- * Anasayfa hero — DOĞRUDAN GÖRSEL slider.
- * Her slayt tasarımcının hazır banner görseli (tam kompozisyon), tıklanabilir.
- * SEO için görünmez h1 tutulur (slider saf görsel olduğundan sayfada metin başlığı kalsın).
+ * Anasayfa hero — DB (hero_slides) kaynaklı saf GÖRSEL slider.
+ * Slaytlar admin panelinden yönetilir (görsel/link/sıra/aktiflik + mobil görsel).
+ * Görsel slider alanını TAM kaplar (edge-to-edge). SEO için görünmez h1.
  */
 const AUTOPLAY_MS = 6000;
 
-interface Slide {
-  image: string;
-  alt: string;
-  href: string;
-}
-
-const SLIDES: Slide[] = [
+/** API boş/erişilemezse gösterilecek yedek (public/hero statik). */
+const FALLBACK: HeroBannerData[] = [
   {
-    image: "/hero/hero-online-matbaa.jpg",
-    alt: "Markala — Kartvizitten brandaya tüm baskı işin tek panelde. 30+ matbaa & reklam ürünü online, ücretsiz tasarım desteği, 81 il kargo.",
-    href: "/urunler",
+    id: "fb-online",
+    imageUrl: "/hero/hero-online-matbaa.jpg",
+    ctaHref: "/urunler",
+    title: "Kartvizitten brandaya tüm baskı işin tek panelde",
   },
   {
-    image: "/hero/hero-tasarim-destegi.jpg",
-    alt: "Markala — Tasarımcın yoksa biz hallederiz. Siparişinle birlikte ücretsiz profesyonel tasarım desteği.",
-    href: "/iletisim",
+    id: "fb-tasarim",
+    imageUrl: "/hero/hero-tasarim-destegi.jpg",
+    ctaHref: "/iletisim",
+    title: "Tasarımcın yoksa biz hallederiz — ücretsiz tasarım desteği",
   },
   {
-    image: "/hero/hero-kampanya-paketleri.jpg",
-    alt: "Markala — Hazır kampanya paketleriyle %25'e varan tasarruf, tek tıkla sepete tek teslimde al.",
-    href: "/kampanyalar",
+    id: "fb-kampanya",
+    imageUrl: "/hero/hero-kampanya-paketleri.jpg",
+    ctaHref: "/kampanyalar",
+    title: "Hazır paketlerle daha az öde, tek teslimde al",
   },
 ];
 
-export function PremiumHeroSlider() {
+export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
+  const items = slides && slides.length > 0 ? slides : FALLBACK;
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const count = SLIDES.length;
+  const count = items.length;
   const ref = useRef<HTMLElement>(null);
 
   const goTo = useCallback((n: number) => setIndex(((n % count) + count) % count), [count]);
   const next = useCallback(() => setIndex((i) => (i + 1) % count), [count]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + count) % count), [count]);
+
+  // İndeks aralık dışına düşerse (slayt sayısı değişirse) sıfırla.
+  useEffect(() => {
+    if (index >= count) setIndex(0);
+  }, [index, count]);
 
   // Autoplay — hover/focus'ta durur.
   useEffect(() => {
@@ -65,7 +70,7 @@ export function PremiumHeroSlider() {
     return () => el.removeEventListener("keydown", onKey);
   }, [next, prev]);
 
-  const slide = SLIDES[index]!;
+  const slide = items[Math.min(index, count - 1)]!;
 
   return (
     <section
@@ -84,24 +89,27 @@ export function PremiumHeroSlider() {
         Markala — Online Matbaa: Kartvizit, broşür, afiş, branda, tabela ve tüm baskı ürünleri
       </h1>
 
-      <Container className="relative py-6 md:py-8">
-        {/* key={index} → slayt değişince fade-up animasyonu yeniden tetiklenir */}
-        <Link
-          key={index}
-          href={slide.href}
-          aria-label={slide.alt}
-          className="block group rounded-2xl animate-fade-up focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300/40"
-        >
+      {/* Görsel slider alanı TAM kaplar (edge-to-edge). key={index} → fade animasyonu. */}
+      <Link
+        key={slide.id + index}
+        href={slide.ctaHref || "/urunler"}
+        aria-label={slide.title}
+        className="block group animate-fade-up focus-visible:outline-none"
+      >
+        <picture>
+          {slide.mobileImageUrl ? (
+            <source media="(max-width: 767px)" srcSet={slide.mobileImageUrl} />
+          ) : null}
           <img
-            src={slide.image}
-            alt={slide.alt}
+            src={slide.imageUrl}
+            alt={slide.title}
             width={2120}
             height={742}
             decoding="async"
-            className="w-full rounded-2xl shadow-2xl ring-1 ring-paper-50/10 transition-transform duration-500 group-hover:scale-[1.005]"
+            className="block w-full h-auto"
           />
-        </Link>
-      </Container>
+        </picture>
+      </Link>
 
       {/* Kontroller — ok + nokta */}
       {count > 1 && (
@@ -110,7 +118,7 @@ export function PremiumHeroSlider() {
             type="button"
             onClick={prev}
             aria-label="Önceki slayt"
-            className="hidden md:grid place-items-center absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-paper-50/10 hover:bg-paper-50/20 border border-paper-50/15 text-paper-50 backdrop-blur transition-all hover:scale-105 z-20"
+            className="hidden md:grid place-items-center absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-ink-900/40 hover:bg-ink-900/60 border border-paper-50/20 text-paper-50 backdrop-blur transition-all hover:scale-105 z-20"
           >
             <CaretLeft size={20} weight="bold" />
           </button>
@@ -118,21 +126,21 @@ export function PremiumHeroSlider() {
             type="button"
             onClick={next}
             aria-label="Sonraki slayt"
-            className="hidden md:grid place-items-center absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-paper-50/10 hover:bg-paper-50/20 border border-paper-50/15 text-paper-50 backdrop-blur transition-all hover:scale-105 z-20"
+            className="hidden md:grid place-items-center absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-ink-900/40 hover:bg-ink-900/60 border border-paper-50/20 text-paper-50 backdrop-blur transition-all hover:scale-105 z-20"
           >
             <CaretRight size={20} weight="bold" />
           </button>
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
-            {SLIDES.map((s, i) => (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+            {items.map((s, i) => (
               <button
-                key={i}
+                key={s.id}
                 type="button"
                 onClick={() => goTo(i)}
                 aria-label={`Slayt ${i + 1}`}
                 aria-current={i === index}
                 className={cn(
                   "relative h-2 rounded-full transition-all duration-300 before:absolute before:-inset-3 before:content-['']",
-                  i === index ? "w-8 bg-paper-50" : "w-2 bg-paper-50/50 hover:bg-paper-50/80",
+                  i === index ? "w-8 bg-paper-50" : "w-2 bg-paper-50/60 hover:bg-paper-50/90",
                 )}
               />
             ))}

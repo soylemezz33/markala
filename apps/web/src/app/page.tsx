@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getProducts } from "@/lib/catalog";
+import { getProducts, getHeroBanners } from "@/lib/catalog";
 import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { ProductRail } from "@/components/home/product-rail";
@@ -25,6 +25,8 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const products = await getProducts();
+  // Anasayfa hero slaytları — admin panelinden yönetilen DB (hero_slides) kaynağı.
+  const heroBanners = await getHeroBanners();
   // Çok satılanlar (bestseller flag)
   const bestsellers = products.filter((p) => p.bestseller).slice(0, 12);
 
@@ -37,8 +39,8 @@ export default async function HomePage() {
   return (
     <>
       <HowToProductionJsonLd />
-      {/* Anasayfa hero — kodlu premium slider (dark, 3 slayt; kampanyalar hero diliyle). */}
-      <PremiumHeroSlider />
+      {/* Anasayfa hero — DB (hero_slides) kaynaklı saf görsel slider; admin panelinden yönetilir. */}
+      <PremiumHeroSlider slides={heroBanners} />
       <PromoBanner location="hero" />
       <TrustBadges />
 
