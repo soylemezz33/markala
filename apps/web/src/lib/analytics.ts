@@ -20,7 +20,7 @@ declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     dataLayer?: unknown[];
-    fbq?: (action: string, event: string, data?: FbEventData) => void;
+    fbq?: (action: string, event: string, data?: FbEventData, options?: { eventID?: string }) => void;
     _fbq?: unknown;
   }
 }
@@ -54,8 +54,14 @@ export function track(event: string, params: GtagParams = {}): void {
   }
 }
 
-/** Meta Pixel event. Marketing consent yoksa yutulur. */
-export function fbtrack(event: string, data: FbEventData = {}): void {
+/**
+ * Meta Pixel event. Marketing consent yoksa yutulur.
+ *
+ * eventId verilirse fbq'ye `{ eventID }` olarak geçilir → sunucu Conversions API
+ * aynı event_id ile aynı olayı gönderdiğinde Meta iki kaydı TEKİLLEŞTİRİR (dedup).
+ * Purchase'ta eventId = sipariş numarası kullanılır.
+ */
+export function fbtrack(event: string, data: FbEventData = {}, eventId?: string): void {
   if (typeof window === "undefined") return;
   if (!consentFor("marketing")) {
     if (process.env.NODE_ENV !== "production") {
@@ -64,7 +70,8 @@ export function fbtrack(event: string, data: FbEventData = {}): void {
     return;
   }
   if (typeof window.fbq === "function") {
-    window.fbq("track", event, data);
+    if (eventId) window.fbq("track", event, data, { eventID: eventId });
+    else window.fbq("track", event, data);
   } else if (process.env.NODE_ENV !== "production") {
     console.debug("[analytics] fbq yok — fb event yutuldu:", event, data);
   }
@@ -145,12 +152,17 @@ export function trackPurchase(orderNumber: string, value: number, itemCount: num
     value,
     num_items: itemCount,
   });
-  fbtrack("Purchase", {
-    currency: "TRY",
-    value,
-    order_id: orderNumber,
-    num_items: itemCount,
-  });
+  // eventId = orderNumber → sunucu Conversions API'nin aynı Purchase'ı ile Meta'da dedup.
+  fbtrack(
+    "Purchase",
+    {
+      currency: "TRY",
+      value,
+      order_id: orderNumber,
+      num_items: itemCount,
+    },
+    orderNumber,
+  );
 }
 
 // ─── UTM yardımcısı ─────────────────────────────────────────────────────────

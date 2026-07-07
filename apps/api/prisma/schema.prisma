@@ -418,6 +418,12 @@ model Order {
   // ödemeyi retrieve edip siparişi kurtarır ("para çekildi ama işaretlenmedi" güvenlik ağı).
   iyzicoCheckoutToken String? @map("iyzico_checkout_token")
 
+  // Meta Conversions API (sunucu-taraflı Purchase) için checkout'ta yakalanan sinyaller.
+  // KVKK: marketingConsent=true DEĞİLSE hiçbir veri Meta'ya gönderilmez (payments → metaCapi.sendPurchase).
+  marketingConsent Boolean @default(false) @map("marketing_consent")
+  fbp              String? @map("fbp") // _fbp çerezi (Meta tarayıcı kimliği — eşleşme sinyali)
+  fbc              String? @map("fbc") // _fbc çerezi (Meta tıklama kimliği — reklamdan gelenler)
+
   // Paraşüt e-fatura
   parasutInvoiceId String? @map("parasut_invoice_id")
 

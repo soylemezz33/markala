@@ -11,6 +11,7 @@ import Iyzipay from "iyzipay";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { IyzicoService } from "../integrations/iyzico/iyzico.service";
+import { MetaCapiService } from "../integrations/meta/meta-capi.service";
 import { verifyPaymentNonce, paymentNonce } from "./payment-nonce";
 import { MailService } from "../mail/mail.service";
 
@@ -32,6 +33,7 @@ export class PaymentsService implements OnModuleInit {
     private iyzico: IyzicoService,
     private config: ConfigService,
     private mail: MailService,
+    private metaCapi: MetaCapiService,
   ) {}
 
   onModuleInit() {
@@ -573,6 +575,9 @@ export class PaymentsService implements OnModuleInit {
       // callback'lerde çift mail gitmez. Fire-and-forget: redirect'i geciktirmez, akışı bloke etmez.
       if (upd.count > 0) {
         void this.mail.sendOrderConfirmationEmail(orderId).catch(() => undefined);
+        // Meta Conversions API: sunucu-taraflı Purchase (KVKK onay-gate'li, event_id=orderNumber
+        // ile tarayıcı Pixel'ine dedup). Fire-and-forget: redirect'i geciktirmez, akışı bloke etmez.
+        void this.metaCapi.sendPurchase(orderId).catch(() => undefined);
       }
       this.logger.log(
         `iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} price=${result.price} paid=${result.paidPrice}`,

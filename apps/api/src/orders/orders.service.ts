@@ -207,6 +207,10 @@ export class OrdersService {
     notes?: string;
     idempotencyKey?: string;
     paymentMethod?: string;
+    // Meta CAPI (checkout çerezlerinden) — KVKK onay-gate'li Purchase için saklanır.
+    marketingConsent?: boolean;
+    fbp?: string;
+    fbc?: string;
   }) {
     if (!input.items || input.items.length === 0) {
       throw new BadRequestException("Sipariş en az bir kalem içermelidir.");
@@ -537,6 +541,10 @@ export class OrdersService {
           vat: new Prisma.Decimal(vat),
           total: new Prisma.Decimal(total),
           paymentMethod: onAccount ? "cari" : input.paymentMethod ?? null,
+          // Meta CAPI: onay + eşleşme sinyalleri (yoksa false/null → CAPI sessizce atlar).
+          marketingConsent: input.marketingConsent ?? false,
+          fbp: input.fbp ?? null,
+          fbc: input.fbc ?? null,
           shippingAddressId: resolvedAddresses.shippingAddressId,
           billingAddressId: resolvedAddresses.billingAddressId,
           shippingAddressSnapshot: resolvedAddresses.shippingAddressSnapshot

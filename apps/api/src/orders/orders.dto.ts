@@ -242,6 +242,24 @@ export class CreateOrderDto {
   @IsOptional()
   @IsIn(["iyzico", "cari", "havale"])
   paymentMethod?: string;
+
+  // ─── Meta Conversions API sinyalleri (checkout çerezlerinden; KVKK onay-gate'li) ───
+  /** Pazarlama çerez onayı. false ise sunucu Purchase'ı Meta'ya GÖNDERMEZ. */
+  @IsBoolean()
+  @IsOptional()
+  marketingConsent?: boolean;
+
+  /** _fbp çerezi (Meta tarayıcı kimliği — eşleşme kalitesini artırır). */
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  fbp?: string;
+
+  /** _fbc çerezi (Meta tıklama kimliği — reklamdan gelen ziyaretçi). */
+  @IsString()
+  @IsOptional()
+  @MaxLength(400)
+  fbc?: string;
 }
 
 /** Yönetici sipariş durumu güncellemesi — sadece izinli geçişler. */

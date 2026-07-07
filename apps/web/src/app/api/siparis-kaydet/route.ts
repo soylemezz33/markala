@@ -117,9 +117,28 @@ export async function POST(req: NextRequest) {
     return s ? s.slice(0, n) : undefined;
   };
 
+  // Meta Conversions API sinyalleri — TARAYICI ÇEREZLERİNDEN (same-origin istekte gelir).
+  // KVKK: pazarlama onayı yoksa marketingConsent=false → backend Purchase'ı Meta'ya göndermez.
+  // _fbp/_fbc pixel'in first-party çerezleri (eşleşme kalitesini artırır). Sunucu-içi okuma;
+  // tarayıcı çağıranını değiştirmeye gerek yok.
+  let marketingConsent = false;
+  const consentRaw = req.cookies.get("markala_cookie_consent")?.value;
+  if (consentRaw) {
+    try {
+      marketingConsent = Boolean(JSON.parse(decodeURIComponent(consentRaw)).marketing);
+    } catch {
+      // bozuk çerez → onay yok say
+    }
+  }
+  const fbp = clamp(req.cookies.get("_fbp")?.value, 200);
+  const fbc = clamp(req.cookies.get("_fbc")?.value, 400);
+
   const orderPayload = {
     email: body.email,
     phone: clamp(body.phone, 32),
+    marketingConsent,
+    fbp,
+    fbc,
     items,
     shippingAddress: {
       fullName: clamp(body.customerName, 120) || clamp(body.email, 120) || "Misafir",
