@@ -2,129 +2,39 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Container, Button, cn } from "@markala/ui";
-import {
-  Sparkle,
-  CheckCircle,
-  ArrowRight,
-  CaretLeft,
-  CaretRight,
-  Package,
-  Storefront,
-  PaintBrush,
-  IdentificationCard,
-  Flag,
-} from "@phosphor-icons/react";
+import { Container, cn } from "@markala/ui";
+import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 
 /**
- * Anasayfa premium hero slider — koyu marketing yüzeyi (surface/ink-on-dark paleti).
- * Görsel banner yerine KODLA çizilir: her ekranda net, responsive, metni anında düzenlenebilir.
- * Slaytlar şimdilik sabit (kod); ileride admin'den yönetilebilir hale getirilebilir.
+ * Anasayfa hero — DOĞRUDAN GÖRSEL slider.
+ * Her slayt tasarımcının hazır banner görseli (tam kompozisyon), tıklanabilir.
+ * SEO için görünmez h1 tutulur (slider saf görsel olduğundan sayfada metin başlığı kalsın).
  */
-interface Chip {
-  icon: typeof Package;
-  label: string;
-}
+const AUTOPLAY_MS = 6000;
+
 interface Slide {
-  eyebrow: string;
-  title: React.ReactNode;
-  desc: string;
-  checks: string[];
-  primary: { label: string; href: string };
-  secondary: { label: string; href: string };
-  card: { kicker: string; big: React.ReactNode; sub: string; note: string };
-  chips: [Chip, Chip];
-  /** Sağ panel — tasarımcı ürün mockup görseli (yalnız lg+; mobilde gizli → indirilmez). */
   image: string;
-  imageAlt: string;
+  alt: string;
+  href: string;
 }
 
 const SLIDES: Slide[] = [
   {
-    eyebrow: "Online Matbaa",
     image: "/hero/hero-online-matbaa.jpg",
-    imageAlt: "Markala — 30+ matbaa ve reklam ürünü tek panelde; rollup banner ve kartvizit görseli",
-    title: (
-      <>
-        Kartvizitten brandaya, tüm baskı işin{" "}
-        <span className="text-brand-400">tek panelde</span>
-      </>
-    ),
-    desc: "30+ matbaa & reklam ürünü online. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 il kargo.",
-    checks: ["Ücretsiz tasarım", "1-2 iş günü", "81 il kargo"],
-    primary: { label: "Ürünleri Keşfet", href: "/urunler" },
-    secondary: { label: "Nasıl Çalışır?", href: "/hizmetler" },
-    card: {
-      kicker: "Tek panelden",
-      big: (
-        <>
-          30+<span className="text-2xl align-top"> ürün</span>
-        </>
-      ),
-      sub: "matbaa & reklam",
-      note: "Kartvizit, broşür, afiş, branda, tabela ve dahası — hepsi tek hesapta.",
-    },
-    chips: [
-      { icon: IdentificationCard, label: "Kartvizit" },
-      { icon: Flag, label: "Branda" },
-    ],
+    alt: "Markala — Kartvizitten brandaya tüm baskı işin tek panelde. 30+ matbaa & reklam ürünü online, ücretsiz tasarım desteği, 81 il kargo.",
+    href: "/urunler",
   },
   {
-    eyebrow: "Tasarım Dahil",
     image: "/hero/hero-tasarim-destegi.jpg",
-    imageAlt: "Markala — sipariş ile ücretsiz tasarım desteği; baskılı kupa, spiralli defter ve kalem görseli",
-    title: (
-      <>
-        Tasarımcın yoksa <span className="text-brand-400">biz hallederiz</span>
-      </>
-    ),
-    desc: "Siparişinle birlikte ücretsiz profesyonel tasarım desteği. Sen ne istediğini anlat, gerisini ekibimiz tasarlasın.",
-    checks: ["Ücretsiz revizyon", "Profesyonel ekip", "Hızlı teslim"],
-    primary: { label: "Tasarım Desteği Al", href: "/iletisim" },
-    secondary: { label: "Örnekleri Gör", href: "/referanslar" },
-    card: {
-      kicker: "Sipariş ile",
-      big: "Ücretsiz",
-      sub: "tasarım desteği",
-      note: "Logo, kartvizit, broşür — hangi ürünü alırsan al, tasarımı bizden.",
-    },
-    chips: [
-      { icon: PaintBrush, label: "Logo" },
-      { icon: IdentificationCard, label: "Kartvizit" },
-    ],
+    alt: "Markala — Tasarımcın yoksa biz hallederiz. Siparişinle birlikte ücretsiz profesyonel tasarım desteği.",
+    href: "/iletisim",
   },
   {
-    eyebrow: "Kampanya Paketleri",
     image: "/hero/hero-kampanya-paketleri.jpg",
-    imageAlt: "Markala — hazır kampanya paketleriyle %25'e varan tasarruf; rollup banner ve kartvizit görseli",
-    title: (
-      <>
-        Hazır paketlerle <span className="text-brand-400">daha az öde</span>, tek
-        teslimde al
-      </>
-    ),
-    desc: "Açılış, esnaf, kurumsal ve etkinlik için önceden kurgulanmış paketler. Tek tıkla sepete, tek seferde teslim.",
-    checks: ["Tek tıkla sepet", "Tasarım dahil", "Tek teslim"],
-    primary: { label: "Paketleri Gör", href: "/kampanyalar" },
-    secondary: { label: "Özel Teklif Al", href: "/iletisim" },
-    card: {
-      kicker: "Paket avantajı",
-      big: (
-        <>
-          %25<span className="text-2xl align-top">&apos;e varan</span>
-        </>
-      ),
-      sub: "tasarruf",
-      note: "Tek tek almak yerine paketle al, hem indirim kazan hem tek teslimde topla.",
-    },
-    chips: [
-      { icon: Package, label: "Açılış Paketi" },
-      { icon: Storefront, label: "Esnaf Paketi" },
-    ],
+    alt: "Markala — Hazır kampanya paketleriyle %25'e varan tasarruf, tek tıkla sepete tek teslimde al.",
+    href: "/kampanyalar",
   },
 ];
-
-const AUTOPLAY_MS = 6000;
 
 export function PremiumHeroSlider() {
   const [index, setIndex] = useState(0);
@@ -167,69 +77,30 @@ export function PremiumHeroSlider() {
       onBlur={() => setPaused(false)}
       aria-roledescription="carousel"
       aria-label="Markala öne çıkanlar"
-      className="relative overflow-hidden bg-ink-900 text-paper-50 outline-none focus-visible:ring-4 focus-visible:ring-brand-300/40"
+      className="relative overflow-hidden bg-ink-900 outline-none focus-visible:ring-4 focus-visible:ring-brand-300/40"
     >
-      {/* Radial glow'lar — kampanyalar hero'suyla aynı dil */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 -right-24 w-[460px] h-[460px] rounded-full opacity-30 blur-3xl"
-        style={{ background: "radial-gradient(circle, #F5B800, transparent 70%)" }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-40 -left-24 w-[400px] h-[400px] rounded-full opacity-[0.12] blur-3xl"
-        style={{ background: "radial-gradient(circle, #00D9FF, transparent 70%)" }}
-      />
+      {/* SEO — görünmez ana başlık (slider saf görsel olduğundan) */}
+      <h1 className="sr-only">
+        Markala — Online Matbaa: Kartvizit, broşür, afiş, branda, tabela ve tüm baskı ürünleri
+      </h1>
 
-      <Container className="relative">
+      <Container className="relative py-6 md:py-8">
         {/* key={index} → slayt değişince fade-up animasyonu yeniden tetiklenir */}
-        <div
+        <Link
           key={index}
-          className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center py-12 md:py-16 lg:min-h-[440px] animate-fade-up"
+          href={slide.href}
+          aria-label={slide.alt}
+          className="block group rounded-2xl animate-fade-up focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300/40"
         >
-          {/* Sol — metin (her ekranda, responsive; h1 → SEO) */}
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 text-brand-400 text-xs font-semibold uppercase tracking-wider">
-              <Sparkle size={12} weight="fill" /> {slide.eyebrow}
-            </span>
-            <h1 className="mt-5 text-display-lg font-serif leading-[1.05]">{slide.title}</h1>
-            <p className="mt-4 text-paper-100/70 text-lg leading-relaxed max-w-xl">{slide.desc}</p>
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-paper-100/80">
-              {slide.checks.map((c) => (
-                <span key={c} className="inline-flex items-center gap-1.5">
-                  <CheckCircle size={16} weight="fill" className="text-brand-400" /> {c}
-                </span>
-              ))}
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={slide.primary.href}>
-                <Button size="lg">
-                  {slide.primary.label} <ArrowRight size={16} weight="bold" />
-                </Button>
-              </Link>
-              <Link
-                href={slide.secondary.href}
-                className="inline-flex items-center gap-2 px-5 h-12 rounded-lg border border-paper-100/20 text-paper-50 hover:bg-paper-50/10 transition-colors font-medium"
-              >
-                {slide.secondary.label}
-              </Link>
-            </div>
-          </div>
-
-          {/* Sağ — ürün mockup görseli (yalnız lg+; kod SABİT kutu → her slaytta aynı
-              boyut/hiza = tutarlı. Mobilde display:none → yüklenmez). */}
-          <div className="relative hidden lg:flex justify-center">
-            <img
-              src={slide.image}
-              alt={slide.imageAlt}
-              width={580}
-              height={742}
-              loading="lazy"
-              decoding="async"
-              className="w-full max-w-[360px] rounded-2xl shadow-2xl ring-1 ring-paper-50/10"
-            />
-          </div>
-        </div>
+          <img
+            src={slide.image}
+            alt={slide.alt}
+            width={2120}
+            height={742}
+            decoding="async"
+            className="w-full rounded-2xl shadow-2xl ring-1 ring-paper-50/10 transition-transform duration-500 group-hover:scale-[1.005]"
+          />
+        </Link>
       </Container>
 
       {/* Kontroller — ok + nokta */}
@@ -257,7 +128,7 @@ export function PremiumHeroSlider() {
                 key={i}
                 type="button"
                 onClick={() => goTo(i)}
-                aria-label={`Slayt ${i + 1}: ${s.eyebrow}`}
+                aria-label={`Slayt ${i + 1}`}
                 aria-current={i === index}
                 className={cn(
                   "relative h-2 rounded-full transition-all duration-300 before:absolute before:-inset-3 before:content-['']",
