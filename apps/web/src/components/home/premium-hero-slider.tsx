@@ -183,27 +183,12 @@ export function PremiumHeroSlider() {
 
       <Container className="relative">
         {/* key={index} → slayt değişince fade-up animasyonu yeniden tetiklenir */}
-        <div key={index} className="py-8 md:py-10 lg:py-12 animate-fade-up">
-          {/* Masaüstü (lg+) — tam tasarımcı banner; tek bütün kompozisyon, tıklanabilir.
-              Banner metni görselde; tümü slide.primary linkine gider. */}
-          <Link
-            href={slide.primary.href}
-            aria-label={slide.imageAlt}
-            className="hidden lg:block group rounded-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-300/40"
-          >
-            <img
-              src={slide.image}
-              alt={slide.imageAlt}
-              width={2120}
-              height={742}
-              loading="lazy"
-              decoding="async"
-              className="w-full rounded-2xl shadow-2xl ring-1 ring-paper-50/10 transition-transform duration-500 group-hover:scale-[1.008]"
-            />
-          </Link>
-
-          {/* Mobil (< lg) — responsive kod-metin (h1 → SEO; banner görseli mobilde yüklenmez). */}
-          <div className="lg:hidden">
+        <div
+          key={index}
+          className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center py-12 md:py-16 lg:min-h-[440px] animate-fade-up"
+        >
+          {/* Sol — metin (her ekranda, responsive; h1 → SEO) */}
+          <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 text-brand-400 text-xs font-semibold uppercase tracking-wider">
               <Sparkle size={12} weight="fill" /> {slide.eyebrow}
             </span>
@@ -229,6 +214,20 @@ export function PremiumHeroSlider() {
                 {slide.secondary.label}
               </Link>
             </div>
+          </div>
+
+          {/* Sağ — ürün mockup görseli (yalnız lg+; kod SABİT kutu → her slaytta aynı
+              boyut/hiza = tutarlı. Mobilde display:none → yüklenmez). */}
+          <div className="relative hidden lg:flex justify-center">
+            <img
+              src={slide.image}
+              alt={slide.imageAlt}
+              width={580}
+              height={742}
+              loading="lazy"
+              decoding="async"
+              className="w-full max-w-[360px] rounded-2xl shadow-2xl ring-1 ring-paper-50/10"
+            />
           </div>
         </div>
       </Container>
