@@ -17,9 +17,30 @@ export const metadata: Metadata = {
   },
 };
 
-/** Server: ürünleri CANLI API'den çek (admin yönetir), interaktif filtreleme client'ta. */
-export default async function AllProductsPage() {
+/** Server: ürünleri CANLI API'den çek (admin yönetir), interaktif filtreleme client'ta.
+ *
+ * `?kategoriler=a,b,c&grup=Etiket` — header mega menüsündeki "Tüm X ürünlerini gör"
+ * linkleri buraya gelir: nav grubu birden çok düz kategoriye yayıldığından (İSG=10
+ * kategori) tek kategori filtresi yetmez; grup ön-filtre olarak açılır. Bilinmeyen
+ * slug'lar elenir; hiç geçerli slug kalmazsa normal (filtresiz) katalog gösterilir.
+ */
+export default async function AllProductsPage({
+  searchParams,
+}: {
+  searchParams?: { kategoriler?: string; grup?: string };
+}) {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+
+  const known = new Set(categories.map((c) => c.slug));
+  const slugs = (searchParams?.kategoriler ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => known.has(s));
+  const initialGroup =
+    slugs.length > 0
+      ? { label: searchParams?.grup?.trim() || "Seçili Kategoriler", slugs }
+      : null;
+
   return (
     <>
       <ProductItemListJsonLd
@@ -27,7 +48,7 @@ export default async function AllProductsPage() {
         name="Markala — Tüm Matbaa & Reklam Ürünleri"
         url="/urunler"
       />
-      <AllProductsClient products={products} categories={categories} />
+      <AllProductsClient products={products} categories={categories} initialGroup={initialGroup} />
     </>
   );
 }

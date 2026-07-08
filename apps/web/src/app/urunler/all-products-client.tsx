@@ -35,6 +35,7 @@ export function AllProductsClient({
   products,
   categories,
   initialCategory = null,
+  initialGroup = null,
   hideHero = false,
   hideCategoryFilter = false,
 }: {
@@ -42,6 +43,8 @@ export function AllProductsClient({
   categories: Category[];
   /** Kategori sayfasında ön-seçili kategori slug'ı. */
   initialCategory?: string | null;
+  /** Nav grubu ön-filtresi (?kategoriler=): birden çok kategoriye yayılan mega menü grubu. */
+  initialGroup?: { label: string; slugs: string[] } | null;
   /** Kategori sayfası kendi SEO hero'sunu gösterdiğinden buradaki hero gizlenir. */
   hideHero?: boolean;
   /** Kategori sayfasında ürünler zaten kategoriye-kapsamlı geldiğinden kategori filtresi gizlenir. */
@@ -52,6 +55,13 @@ export function AllProductsClient({
   const PRICE_MAX = allPrices.length > 0 ? Math.ceil(Math.max(...allPrices) / 100) * 100 : 1000;
 
   const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
+  // Grup ön-filtresi: aktifken katalog gruba daralır, sidebar yalnız grup kategorilerini
+  // listeler; tek kategori seçimi grup İÇİNDE daha da daraltır. Chip/temizle ile kalkar.
+  const [groupFilter, setGroupFilter] = useState(initialGroup);
+  const groupSet = useMemo(
+    () => (groupFilter ? new Set(groupFilter.slugs) : null),
+    [groupFilter],
+  );
   const [activeBadges, setActiveBadges] = useState<Set<BadgeKind>>(new Set());
   const [priceMax, setPriceMax] = useState(PRICE_MAX);
   const [sort, setSort] = useState<SortKey>("popular");
@@ -64,6 +74,8 @@ export function AllProductsClient({
 
     if (activeCategory) {
       list = list.filter((p) => p.categorySlug === activeCategory);
+    } else if (groupSet) {
+      list = list.filter((p) => groupSet.has(p.categorySlug));
     }
 
     if (activeBadges.size > 0) {
@@ -98,7 +110,7 @@ export function AllProductsClient({
     }
 
     return list;
-  }, [products, activeCategory, activeBadges, priceMax, sort, search]);
+  }, [products, activeCategory, groupSet, activeBadges, priceMax, sort, search]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -110,9 +122,18 @@ export function AllProductsClient({
   const activeCat = categories.find((c) => c.slug === activeCategory);
   const hasFilters =
     activeCategory !== null ||
+    groupFilter !== null ||
     activeBadges.size > 0 ||
     priceMax < PRICE_MAX ||
     search.trim() !== "";
+
+  // Sidebar kategori listesi: grup aktifken yalnız grubun kategorileri.
+  const sidebarCategories = groupSet
+    ? categories.filter((c) => groupSet.has(c.slug))
+    : categories;
+  const sidebarAllCount = groupSet
+    ? products.filter((p) => groupSet.has(p.categorySlug)).length
+    : products.length;
 
   function toggleBadge(b: BadgeKind) {
     setActiveBadges((prev) => {
@@ -126,6 +147,7 @@ export function AllProductsClient({
 
   function clearAll() {
     setActiveCategory(null);
+    setGroupFilter(null);
     setActiveBadges(new Set());
     setPriceMax(PRICE_MAX);
     setSearch("");
@@ -141,12 +163,14 @@ export function AllProductsClient({
               Katalog
             </p>
             <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
-              {activeCat ? activeCat.name : "Tüm Ürünler"}
+              {activeCat ? activeCat.name : groupFilter ? groupFilter.label : "Tüm Ürünler"}
             </h1>
             <p className="mt-3 text-lg text-ink-700 max-w-2xl">
               {activeCat
                 ? activeCat.longDescription
-                : "Matbaa baskıdan büyük format reklam ürünlerine — tüm katalog tek ekranda. Tasarım desteği her siparişte ücretsiz."}
+                : groupFilter
+                  ? `${groupFilter.label} grubundaki tüm ürünler tek ekranda. Tasarım desteği her siparişte ücretsiz.`
+                  : "Matbaa baskıdan büyük format reklam ürünlerine — tüm katalog tek ekranda. Tasarım desteği her siparişte ücretsiz."}
             </p>
           </Container>
         </div>
@@ -224,6 +248,15 @@ export function AllProductsClient({
         {/* Active filter chips */}
         {hasFilters && (
           <div className="flex flex-wrap items-center gap-2 mb-6">
+            {groupFilter && !activeCat && (
+              <Chip
+                label={groupFilter.label}
+                onRemove={() => {
+                  setGroupFilter(null);
+                  setPage(1);
+                }}
+              />
+            )}
             {activeCat && (
               <Chip
                 label={activeCat.name}
@@ -266,7 +299,7 @@ export function AllProductsClient({
                     <CategoryButton
                       active={!activeCategory}
                       label="Hepsi"
-                      count={products.length}
+                      count={sidebarAllCount}
                       onClick={() => {
                         setActiveCategory(null);
                         setPage(1);
@@ -274,7 +307,7 @@ export function AllProductsClient({
                       }}
                     />
                   </li>
-                  {categories.map((cat) => {
+                  {sidebarCategories.map((cat) => {
                     const count = products.filter(
                       (p) => p.categorySlug === cat.slug,
                     ).length;

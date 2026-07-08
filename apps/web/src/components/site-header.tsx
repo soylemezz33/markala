@@ -64,11 +64,17 @@ export type NavCategory = {
   highlight?: "fire" | "new";
 };
 
+/** Nav grubunun "Tümünü gör" hedefi — /urunler çoklu-kategori ön-filtresi.
+ * Nav grupları birden çok düz DB kategorisine yayılır (İSG=10 kategori); düz
+ * `/urunler` "Hepsi"ye düşer, bu yüzden grup kategorileri query ile taşınır. */
+const groupHref = (label: string, slugs: string[]) =>
+  `/urunler?kategoriler=${slugs.join(",")}&grup=${encodeURIComponent(label)}`;
+
 // Varsayılan/yedek menü — admin /menu kaydı (header_nav) yoksa/boş/bozuksa bu kullanılır.
 const DEFAULT_NAV: NavCategory[] = [
   {
     label: "Kartvizit & Kırtasiye",
-    href: "/urunler",
+    href: groupHref("Kartvizit & Kırtasiye", ["kartvizit", "antetli-kagit", "zarf", "cepli-dosya", "makbuz"]),
     groups: [
       {
         title: "Kartvizit",
@@ -99,7 +105,7 @@ const DEFAULT_NAV: NavCategory[] = [
   },
   {
     label: "Broşür & El İlanı",
-    href: "/urunler",
+    href: groupHref("Broşür & El İlanı", ["brosur", "kapi-aski-brosur", "el-ilani", "afis", "etiket"]),
     groups: [
       {
         title: "Broşür",
@@ -126,7 +132,7 @@ const DEFAULT_NAV: NavCategory[] = [
   },
   {
     label: "Bayrak & Branda",
-    href: "/urunler",
+    href: groupHref("Bayrak & Branda", ["yelken-bayrak", "kirlangic-bayrak", "masa-bayragi", "makam-bayragi", "vinil-branda-afis", "rollup"]),
     groups: [
       {
         title: "Bayrak",
@@ -153,7 +159,7 @@ const DEFAULT_NAV: NavCategory[] = [
   },
   {
     label: "Promosyon & Hediye",
-    href: "/urunler",
+    href: groupHref("Promosyon & Hediye", ["kupa", "magnet", "plaket", "madalya", "bloknot"]),
     groups: [
       {
         title: "Promosyon",
@@ -181,7 +187,7 @@ const DEFAULT_NAV: NavCategory[] = [
   },
   {
     label: "Reklam Tabela",
-    href: "/urunler",
+    href: groupHref("Reklam Tabela", ["lightbox", "dekota-baski", "guvenlik-uyari-levhalari", "fosforlu-folyo", "plastik-reklam-dubasi", "folyo", "arac-magneti", "arac-sticker"]),
     groups: [
       {
         title: "Tabela & Levha",
@@ -209,7 +215,7 @@ const DEFAULT_NAV: NavCategory[] = [
   },
   {
     label: "Restoran & Otel",
-    href: "/urunler",
+    href: groupHref("Restoran & Otel", ["amerikan-servis", "oto-paspas", "canta-kese", "kase"]),
     groups: [
       {
         title: "Hizmet Sektörü",
@@ -229,7 +235,18 @@ const DEFAULT_NAV: NavCategory[] = [
   },
   {
     label: "İSG Uyarı Levhaları",
-    href: "/urunler",
+    href: groupHref("İSG Uyarı Levhaları", [
+      "is-guvenligi-uyari-ikaz",
+      "is-guvenligi-yasaklayici",
+      "is-guvenligi-emredici-kkd",
+      "is-guvenligi-acil-ilk-yardim",
+      "is-guvenligi-yangin",
+      "is-guvenligi-elektrik-voltaj",
+      "is-guvenligi-ges",
+      "is-guvenligi-trafik-saha",
+      "is-guvenligi-kalite-kontrol",
+      "is-guvenligi-bilgilendirme-talimat",
+    ]),
     groups: [
       {
         title: "İş Güvenliği Levhaları",
