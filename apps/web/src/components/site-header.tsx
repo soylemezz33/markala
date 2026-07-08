@@ -368,7 +368,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
   return (
     <>
       <header className="sticky top-0 z-40">
-        {/* Top utility bar — scroll'da gizlenir */}
+        {/* Top utility bar — scroll'da gizlenir. Zemin: hero slider'ın koyu mor tonları (slide görselinden örneklendi) */}
         <AnimatePresence initial={false}>
           {!scrolled && (
             <motion.div
@@ -376,7 +376,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
-              className="bg-ink-900 text-paper-100 overflow-hidden"
+              className="bg-gradient-to-r from-[#180254] via-[#1C035E] to-[#260570] text-paper-100 overflow-hidden"
             >
               <Container className="relative flex items-center justify-between py-2 text-xs whitespace-nowrap">
                 {/* Orta — Kampanyalar (premium koyu pill + nabız nokta). lg+ ortada,
