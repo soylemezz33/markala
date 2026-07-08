@@ -19,6 +19,7 @@ export interface IyzicoInitResult {
   token?: string;
   checkoutFormContent?: string;
   paymentPageUrl?: string;
+  errorCode?: string;
   errorMessage?: string;
 }
 
@@ -77,8 +78,9 @@ export class IyzicoService {
         }
         if (result?.status !== "success") {
           // errorMessage müşteriye gösterilebilir genel bir mesaj; kart/PII içermez.
+          // errorCode de taşınır → çağıran limit hatasını (5008) net mesaja çevirebilir.
           this.logger.warn(`iyzico init başarısız: ${result?.errorCode} ${result?.errorMessage}`);
-          resolve({ status: "failure", errorMessage: result?.errorMessage });
+          resolve({ status: "failure", errorCode: result?.errorCode, errorMessage: result?.errorMessage });
           return;
         }
         resolve({

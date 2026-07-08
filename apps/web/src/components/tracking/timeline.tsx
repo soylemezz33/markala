@@ -161,10 +161,15 @@ function ProgressBar({ events }: { events: TrackingEvent[] }) {
 }
 
 function formatDateTime(iso: string): string {
+  // Gerçek zaman damgası olmayan adımlar (ör. "üretimde") boş timestamp geçer → uydurma tarih
+  // göstermemek için geçersiz/boş tarihte boş string dön.
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
   return new Intl.DateTimeFormat("tr-TR", {
     day: "2-digit",
     month: "long",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(new Date(iso));
+  }).format(d);
 }

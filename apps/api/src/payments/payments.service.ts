@@ -210,7 +210,16 @@ export class PaymentsService implements OnModuleInit {
 
     const res = await this.iyzico.initializeCheckoutForm(request);
     if (res.status !== "success") {
-      this.logger.warn(`iyzico init başarısız order=${orderId}: ${res.errorMessage}`);
+      this.logger.warn(`iyzico init başarısız order=${orderId}: kod=${res.errorCode ?? "-"} mesaj=${res.errorMessage ?? "-"}`);
+      // İşlem limiti (iyzico 5008 vb.): "tekrar deneyin" YANILTICI — deneme asla başarmaz. Net,
+      // eyleme dönük mesaj + havale/cari alternatifi ver (yüksek tutarlı B2B siparişleri için).
+      const limitError =
+        res.errorCode === "5008" || /limit|aşıl|tutar/i.test(res.errorMessage ?? "");
+      if (limitError) {
+        throw new BadRequestException(
+          "Bu tutarda online kart ödemesi alınamadı (banka/iyzico işlem limiti). Havale/EFT ya da kurumsal cari hesap için bize ulaşın: 0324 433 33 51 (WhatsApp: 0531 900 41 02).",
+        );
+      }
       throw new ServiceUnavailableException("Ödeme başlatılamadı, lütfen tekrar deneyin.");
     }
     // Token'ı sakla — callback kaçarsa reconciliation bununla ödemeyi kurtarır.

@@ -163,6 +163,28 @@ export function trackPurchase(orderNumber: string, value: number, itemCount: num
     },
     orderNumber,
   );
+  trackAdsConversion(orderNumber, value);
+}
+
+/**
+ * Google Ads "Satın alma" dönüşümü. ID biliniyor (AW-18286908100); Ads panelinde purchase
+ * dönüşümü oluşturulup LABEL GH variable'a (NEXT_PUBLIC_ADS_PURCHASE_LABEL) girilince otomatik
+ * ateşlenir — label yoksa no-op (kod hazır, açılışı Hasan yapar). Marketing consent'e bağlı.
+ */
+export function trackAdsConversion(orderNumber: string, value: number): void {
+  if (typeof window === "undefined") return;
+  const label = process.env.NEXT_PUBLIC_ADS_PURCHASE_LABEL;
+  if (!label) return; // label girilmeden dönüşüm ateşlenmez
+  if (!consentFor("marketing")) return; // KVKK: reklam onayı yoksa gönderme
+  const adsId = process.env.NEXT_PUBLIC_ADS_CONVERSION_ID || "AW-18286908100";
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", {
+      send_to: `${adsId}/${label}`,
+      value,
+      currency: "TRY",
+      transaction_id: orderNumber,
+    });
+  }
 }
 
 // ─── UTM yardımcısı ─────────────────────────────────────────────────────────

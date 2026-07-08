@@ -9,9 +9,9 @@ import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { unitCountFromSummary } from "@/lib/cart-store";
-import { generateMockTrackingEvents } from "@/lib/tracking-mock";
+import { buildTrackingEvents } from "@/lib/tracking-events";
 import { TrackingTimeline } from "@/components/tracking/timeline";
-import type { Address, Order, OrderStatus, TrackingEvent } from "@markala/types";
+import type { Address, Order, OrderStatus } from "@markala/types";
 
 // API Prisma enum'u underscore döndürebilir (teslim_edildi); UI/aşama eşlemeleri hyphen kullanıyor.
 const normStatus = (s: string): OrderStatus => s.replace(/_/g, "-") as OrderStatus;
@@ -21,16 +21,6 @@ const normStatus = (s: string): OrderStatus => s.replace(/_/g, "-") as OrderStat
  * Status ÖNCE normalize edilir; aksi halde "teslim_edildi" aşama eşlemesine (hyphen)
  * düşmez, ilk aşamaya (Sipariş Alındı ~%6) geriler.
  */
-function buildTrackingEvents(order: Order): TrackingEvent[] {
-  const status = normStatus(order.status as unknown as string);
-  const events = generateMockTrackingEvents({ ...order, status });
-  // Teslim edildiyse tüm aşamalar tamamlanmış sayılır → ilerleme %100, son aşama "tamamlandı".
-  if (status === ("teslim-edildi" as OrderStatus)) {
-    return events.map((e) => ({ ...e, state: "done" as const }));
-  }
-  return events;
-}
-
 export default function OrderDetailPage({ params }: { params: { orderId: string } }) {
   const user = useAuthStore((s) => s.user);
   const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
@@ -186,9 +176,9 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           <Truck size={18} /> Kargo Takibi
         </h3>
         <TrackingTimeline
-          events={buildTrackingEvents(order)}
-          trackingNumber={order.trackingNumber ?? `DHL${order.id.slice(-12).toUpperCase()}`}
-          carrier={order.trackingCarrier ?? "DHL"}
+          events={buildTrackingEvents({ status: normStatus(order.status as unknown as string), createdAt: order.createdAt })}
+          trackingNumber={order.trackingNumber ?? undefined}
+          carrier={order.trackingCarrier ?? "Kargo"}
         />
       </section>
 

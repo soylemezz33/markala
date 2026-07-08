@@ -4,7 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { CreateOrderDto, ListOrdersQueryDto, UpdateOrderStatusDto } from "./orders.dto";
+import { CreateOrderDto, ListOrdersQueryDto, UpdateOrderStatusDto, TrackOrderDto } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
 import type { Request } from "express";
 
@@ -37,6 +37,14 @@ export class OrdersController {
   // NOT: Misafir sipariş (POST /orders/guest) KALDIRILDI — sipariş vermek için giriş zorunlu.
   // Gerekçe: ilk-sipariş kuponunun (HOSGELDIN) misafir istismarı + her siparişin hesaba bağlanması.
   // Tek çağıran web checkout proxy'siydi; o da artık yalnız authed /orders'a gider.
+
+  // Public kargo takip — auth YOK (giriş yapmayan/farklı cihazdaki müşteri de sorgular).
+  // Sipariş no + e-posta eşleşmesi; rate-limit main.ts'te (/orders/track). ":id" GET'inden
+  // AYRI path olduğu için çakışmaz.
+  @Post("track")
+  trackPublic(@Body() dto: TrackOrderDto) {
+    return this.service.trackPublic(dto.orderNumber, dto.email);
+  }
 
   @Get("mine")
   @UseGuards(JwtAuthGuard)

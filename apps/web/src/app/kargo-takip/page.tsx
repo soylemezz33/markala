@@ -4,35 +4,58 @@ import { useState } from "react";
 import Link from "next/link";
 import { Container, Button } from "@markala/ui";
 import { Truck, MagnifyingGlass, Package, Receipt, EnvelopeSimple } from "@phosphor-icons/react";
-import { useOrdersStore } from "@/lib/orders-store";
-import { generateMockTrackingEvents } from "@/lib/tracking-mock";
 import { TrackingTimeline } from "@/components/tracking/timeline";
 import { formatDate, orderStatusLabel } from "@/lib/format";
-import type { Order } from "@markala/types";
+import { buildTrackingEvents } from "@/lib/tracking-events";
 
 const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
+/** Sunucudan dönen public takip yanıtı (yalnız takip için gereken alanlar). */
+interface TrackResult {
+  orderNumber: string;
+  status: string;
+  createdAt: string;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  trackingNumber: string | null;
+  trackingCarrier: string | null;
+  itemCount: number;
+}
+
 export default function TrackingPage() {
-  const orders = useOrdersStore((s) => s.orders);
   const [orderNumber, setOrderNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [result, setResult] = useState<Order | null>(null);
+  const [result, setResult] = useState<TrackResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const found = orders.find(
-      (o) =>
-        o.orderNumber.toLowerCase() === orderNumber.trim().toLowerCase() &&
-        (o.email ?? "").toLowerCase() === email.trim().toLowerCase(),
-    );
-    if (!found) {
-      setError("Bu bilgilerle eşleşen sipariş bulunamadı. Sipariş numaranızı ve e-posta adresinizi kontrol edin.");
+    setLoading(true);
+    try {
+      const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
+      const res = await fetch(`${apiBase}/api/orders/track`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderNumber: orderNumber.trim(), email: email.trim() }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data && data.orderNumber) {
+        setResult(data as TrackResult);
+      } else {
+        setResult(null);
+        setError(
+          (data && data.message) ||
+            "Bu bilgilerle eşleşen sipariş bulunamadı. Sipariş numaranızı ve e-posta adresinizi kontrol edin.",
+        );
+      }
+    } catch {
       setResult(null);
-      return;
+      setError("Sorgu şu an yapılamadı, lütfen birazdan tekrar deneyin.");
+    } finally {
+      setLoading(false);
     }
-    setResult(found);
   }
 
   return (
@@ -61,8 +84,8 @@ export default function TrackingPage() {
 
           {error && <div role="alert" className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>}
 
-          <Button type="submit" size="lg" fullWidth>
-            <MagnifyingGlass size={18} weight="bold" /> Siparişi Sorgula
+          <Button type="submit" size="lg" fullWidth disabled={loading || !orderNumber.trim() || !email.trim()}>
+            <MagnifyingGlass size={18} weight="bold" /> {loading ? "Sorgulanıyor…" : "Siparişi Sorgula"}
           </Button>
 
           <p className="text-xs text-ink-500 text-center">
@@ -76,15 +99,17 @@ export default function TrackingPage() {
               <div>
                 <div className="text-xs text-ink-500 uppercase tracking-wider font-semibold">Sipariş</div>
                 <div className="font-mono font-semibold text-ink-900 mt-0.5 text-lg">{result.orderNumber}</div>
-                <div className="text-sm text-ink-500 mt-1">{formatDate(result.createdAt)} · {result.items.length} ürün</div>
+                <div className="text-sm text-ink-500 mt-1">{formatDate(result.createdAt)} · {result.itemCount} ürün</div>
               </div>
               <span className="px-3 py-1.5 rounded-full text-sm font-semibold bg-brand-100 text-brand-900">{orderStatusLabel(result.status)}</span>
             </div>
 
+            {/* Gerçek durum + zaman damgaları. Takip no yalnız kargoya verildiyse (ekiple girildiyse)
+                gösterilir — uydurma DHL numarası ÜRETİLMEZ. */}
             <TrackingTimeline
-              events={generateMockTrackingEvents(result)}
-              trackingNumber={result.trackingNumber ?? `DHL${result.id.slice(-12).toUpperCase()}`}
-              carrier={result.trackingCarrier ?? "DHL"}
+              events={buildTrackingEvents(result)}
+              trackingNumber={result.trackingNumber ?? undefined}
+              carrier={result.trackingCarrier ?? "Kargo"}
             />
           </div>
         )}

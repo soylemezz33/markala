@@ -62,6 +62,28 @@ export function Analytics() {
               gtag('config', '${ga4}', { anonymize_ip: true });
             `}
           </Script>
+          {/* Consent Mode KALICILIK: default her sayfa yüklemesinde 'denied' başlar; daha önce
+              onay VERMİŞ ziyaretçi için bu sayfada da 'granted' yeniden uygulanmalı. Aksi halde
+              (özellikle iyzico 3DS dönüşü = TAM sayfa yüklemesi) GA4 purchase consent-denied/çerezsiz
+              gidiyordu → reklam atıflaması (gclid) + Ads dönüşümü kör kalıyordu. */}
+          <Script id="gtag-consent-restore" strategy="afterInteractive">
+            {`
+              try {
+                var m = document.cookie.match(/(?:^|; )markala_cookie_consent=([^;]+)/);
+                if (m) {
+                  var c = JSON.parse(decodeURIComponent(m[1]));
+                  gtag('consent', 'update', {
+                    analytics_storage: c.analytics ? 'granted' : 'denied',
+                    functionality_storage: c.preferences ? 'granted' : 'denied',
+                    ad_storage: c.marketing ? 'granted' : 'denied',
+                    ad_user_data: c.marketing ? 'granted' : 'denied',
+                    ad_personalization: c.marketing ? 'granted' : 'denied',
+                    personalization_storage: c.marketing ? 'granted' : 'denied',
+                  });
+                }
+              } catch (e) {}
+            `}
+          </Script>
         </>
       )}
 

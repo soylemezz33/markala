@@ -290,6 +290,17 @@ export class UpdateOrderStatusDto {
   trackingCarrier?: string;
 }
 
+/** Public kargo takip sorgusu — sipariş no + e-posta eşleşmesi (auth YOK, rate-limitli). */
+export class TrackOrderDto {
+  @IsString()
+  @MaxLength(40)
+  orderNumber!: string;
+
+  @IsEmail()
+  @MaxLength(160)
+  email!: string;
+}
+
 /** Yönetici sipariş listesi sorgu parametreleri — doğrulanmış sayfalama + opsiyonel durum filtresi. */
 export class ListOrdersQueryDto extends PaginationQueryDto {
   @IsOptional()

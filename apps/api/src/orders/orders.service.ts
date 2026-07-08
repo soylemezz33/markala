@@ -183,6 +183,45 @@ export class OrdersService {
   constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService) {}
 
   /**
+   * Public kargo takibi — sipariş no + e-posta eşleşmesiyle GERÇEK durum + zaman damgaları döner
+   * (auth yok, rate-limitli). PII sızmasın diye yalnız takip için gereken minimum alanlar; eşleşme
+   * yoksa hangi alanın yanlış olduğunu SIZDIRMADAN tek "bulunamadı". localStorage'a bağlı eski
+   * akış + uydurma timeline KALDIRILDI → farklı cihazdan da çalışır, gerçek durumu gösterir.
+   */
+  async trackPublic(orderNumber: string, email: string) {
+    const order = await this.prisma.order.findFirst({
+      where: {
+        orderNumber: orderNumber.trim(),
+        email: { equals: email.trim(), mode: "insensitive" },
+        deletedAt: null,
+      },
+      select: {
+        orderNumber: true,
+        status: true,
+        createdAt: true,
+        shippedAt: true,
+        deliveredAt: true,
+        trackingNumber: true,
+        trackingCarrier: true,
+        _count: { select: { items: true } },
+      },
+    });
+    if (!order) {
+      throw new NotFoundException("Bu bilgilerle eşleşen sipariş bulunamadı. Sipariş numaranızı ve e-posta adresinizi kontrol edin.");
+    }
+    return {
+      orderNumber: order.orderNumber,
+      status: String(order.status).replace(/_/g, "-"),
+      createdAt: order.createdAt,
+      shippedAt: order.shippedAt,
+      deliveredAt: order.deliveredAt,
+      trackingNumber: order.trackingNumber,
+      trackingCarrier: order.trackingCarrier,
+      itemCount: order._count.items,
+    };
+  }
+
+  /**
    * SECURITY: never trust client-side pricing.
    * Client sadece "ne sipariş ediliyor" bilgisini (productId, configuration, quantity) gönderir.
    * unitPrice / lineTotal / subtotal / vat / total alanları DTO'da yer almıyor; gönderilse bile
