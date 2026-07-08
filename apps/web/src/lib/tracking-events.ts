@@ -21,6 +21,7 @@ function statusRank(slug: string): number {
 }
 
 export function buildTrackingEvents(src: TrackingSource): TrackingEvent[] {
+  const cancelled = src.status === "iptal-edildi";
   const rank = statusRank(src.status);
   const steps: Array<{ status: TrackingEvent["status"]; label: string; timestamp: string }> = [
     { status: "siparis-alindi", label: "Siparişin alındı", timestamp: src.createdAt },
@@ -30,6 +31,18 @@ export function buildTrackingEvents(src: TrackingSource): TrackingEvent[] {
   ];
   return steps.map((s, i) => ({
     ...s,
-    state: i < rank ? "done" : i === rank ? (rank === 3 ? "done" : "active") : "pending",
+    // İptal: yalnız "alındı" tamam, gerisi beklemede — aktif "üretimde" yanılsaması olmasın
+    // (durum rozeti zaten "İptal Edildi" gösterir).
+    state: cancelled
+      ? i === 0
+        ? "done"
+        : "pending"
+      : i < rank
+        ? "done"
+        : i === rank
+          ? rank === 3
+            ? "done"
+            : "active"
+          : "pending",
   }));
 }
