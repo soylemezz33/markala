@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { X, Trash, ShoppingBagOpen, ArrowRight, Plus, Minus } from "@phosphor-icons/react";
 import { Button, Price } from "@markala/ui";
-import { useCartStore } from "@/lib/cart-store";
+import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { track } from "@/lib/analytics";
 import { useEffect, useRef } from "react";
 
@@ -153,9 +153,13 @@ export function CartDrawer() {
                           <p className="mt-1 text-xs text-brand-700">✦ Tasarım desteği isteniyor</p>
                         )}
                         <div className="mt-2 flex items-center justify-between">
+                          {/* Gösterim: parça adedi (set × tiraj); ± bir tiraj setinde adım atar */}
                           <QtyControl
-                            value={item.quantity}
-                            onChange={(n) => updateQuantity(item.id, n)}
+                            value={item.quantity * itemUnitCount(item)}
+                            step={itemUnitCount(item)}
+                            onChange={(n) =>
+                              updateQuantity(item.id, Math.round(n / itemUnitCount(item)))
+                            }
                           />
                           <Price
                             amount={item.configuration.totalPrice * item.quantity}
@@ -212,12 +216,20 @@ export function CartDrawer() {
   );
 }
 
-function QtyControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+function QtyControl({
+  value,
+  step = 1,
+  onChange,
+}: {
+  value: number;
+  step?: number;
+  onChange: (n: number) => void;
+}) {
   return (
     <div className="inline-flex items-center border border-paper-200 rounded">
       <button
-        onClick={() => onChange(value - 1)}
-        disabled={value <= 1}
+        onClick={() => onChange(value - step)}
+        disabled={value <= step}
         className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 rounded-l tap-target"
         aria-label="Azalt"
       >
@@ -230,7 +242,7 @@ function QtyControl({ value, onChange }: { value: number; onChange: (n: number) 
         aria-label={`Adet: ${value}`}
       >{value}</span>
       <button
-        onClick={() => onChange(value + 1)}
+        onClick={() => onChange(value + step)}
         className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 active:scale-[0.97] active:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 rounded-r tap-target"
         aria-label="Arttır"
       >

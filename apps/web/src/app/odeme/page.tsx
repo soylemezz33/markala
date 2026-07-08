@@ -21,7 +21,7 @@ import {
 } from "@phosphor-icons/react";
 import { IlIlceSelect } from "@/components/forms/il-ilce-select";
 import { PhoneInput } from "@/components/forms/phone-input";
-import { useCartStore } from "@/lib/cart-store";
+import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { apiClient, withRefresh } from "@/lib/api";
@@ -937,7 +937,8 @@ export default function CheckoutPage() {
                           {item.configuration.summary}
                         </p>
                         <div className="mt-1 flex items-center justify-between text-xs">
-                          <span className="text-ink-500">x{item.quantity}</span>
+                          {/* Gösterim: parça adedi (set × tiraj) */}
+                          <span className="text-ink-500">x{item.quantity * itemUnitCount(item)}</span>
                           <Price
                             amount={item.configuration.totalPrice * item.quantity}
                             size="sm"

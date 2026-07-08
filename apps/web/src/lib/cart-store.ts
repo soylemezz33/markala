@@ -26,6 +26,18 @@ interface CartState {
   subtotal: () => number;
 }
 
+/**
+ * Satırın konfigüre tiraj adedi (selections.adet, ör. "25 Adet" kademesi).
+ * Additive ürünlerde kademe fiyatı totalPrice'ın İÇİNDEDİR ve `quantity` set sayısıdır
+ * (sunucu da lineTotal = kademeFiyatı × quantity hesaplar) — bu yüzden adet SEPETE
+ * quantity olarak taşınamaz; yalnız GÖSTERİM `quantity × itemUnitCount` yapılır.
+ * Area ürünlerde selections.adet="1" (adet zaten quantity'de), pakette adet yok → 1.
+ */
+export function itemUnitCount(item: Pick<CartItem, "configuration">): number {
+  const n = Number(item.configuration.selections?.adet);
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({

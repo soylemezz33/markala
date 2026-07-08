@@ -9,7 +9,7 @@ import {
   Clock, Tag, Truck, Storefront,
 } from "@phosphor-icons/react";
 import type { Category } from "@markala/types";
-import { useCartStore } from "@/lib/cart-store";
+import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { track } from "@/lib/analytics";
 import { apiClient } from "@/lib/api";
 import { PromoBanner } from "@/components/promo-banner";
@@ -94,7 +94,12 @@ export default function CartPage() {
                     <p className="mt-1 text-xs text-brand-700">✦ Tasarım desteği isteniyor</p>
                   )}
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                    <QtyControl value={item.quantity} onChange={(n) => updateQuantity(item.id, n)} />
+                    {/* Gösterim: parça adedi (set × tiraj); ± bir tiraj setinde adım atar */}
+                    <QtyControl
+                      value={item.quantity * itemUnitCount(item)}
+                      step={itemUnitCount(item)}
+                      onChange={(n) => updateQuantity(item.id, Math.round(n / itemUnitCount(item)))}
+                    />
                     <div className="flex items-center gap-4">
                       <Price amount={item.configuration.totalPrice * item.quantity} size="lg" className="text-ink-900" />
                       <button onClick={() => removeItem(item.id)} className="p-2 text-ink-500 hover:text-error rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Sil">
@@ -254,12 +259,12 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
   return <li className="flex flex-col items-center gap-1 p-3 bg-paper-50 border border-paper-200 rounded text-xs text-ink-500"><span className="text-ink-700">{icon}</span><span className="text-center leading-tight">{label}</span></li>;
 }
 
-function QtyControl({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+function QtyControl({ value, step = 1, onChange }: { value: number; step?: number; onChange: (n: number) => void }) {
   return (
     <div className="inline-flex items-center border border-paper-200 rounded">
-      <button onClick={() => onChange(value - 1)} disabled={value <= 1} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Azalt"><Minus size={14} /></button>
+      <button onClick={() => onChange(value - step)} disabled={value <= step} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Azalt"><Minus size={14} /></button>
       <span aria-live="polite" aria-atomic="true" className="w-10 text-center text-sm tabular-nums font-medium">{value}</span>
-      <button onClick={() => onChange(value + 1)} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Arttır"><Plus size={14} /></button>
+      <button onClick={() => onChange(value + step)} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Arttır"><Plus size={14} /></button>
     </div>
   );
 }
