@@ -24,21 +24,25 @@ export const metadata: Metadata = {
  * kategori) tek kategori filtresi yetmez; grup ön-filtre olarak açılır. Bilinmeyen
  * slug'lar elenir; hiç geçerli slug kalmazsa normal (filtresiz) katalog gösterilir.
  */
+/** Tekrarlı query anahtarı (?x=a&x=b) Next'te string[] gelir — ilkini al (crash guard). */
+const first = (v: string | string[] | undefined): string =>
+  Array.isArray(v) ? (v[0] ?? "") : (v ?? "");
+
 export default async function AllProductsPage({
   searchParams,
 }: {
-  searchParams?: { kategoriler?: string; grup?: string };
+  searchParams?: { kategoriler?: string | string[]; grup?: string | string[] };
 }) {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
 
   const known = new Set(categories.map((c) => c.slug));
-  const slugs = (searchParams?.kategoriler ?? "")
+  const slugs = first(searchParams?.kategoriler)
     .split(",")
     .map((s) => s.trim())
     .filter((s) => known.has(s));
   const initialGroup =
     slugs.length > 0
-      ? { label: searchParams?.grup?.trim() || "Seçili Kategoriler", slugs }
+      ? { label: first(searchParams?.grup).trim() || "Seçili Kategoriler", slugs }
       : null;
 
   return (
