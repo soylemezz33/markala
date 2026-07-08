@@ -44,7 +44,9 @@ export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName,
           visible ? "lg:block" : "lg:hidden", // masaüstü: yalnızca gerekince
         )}
       >
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        {/* lg:pr-28: 1280-1536px arası WhatsApp FAB (fixed right-6 z-40) CTA'yı örtmesin;
+            2xl'de container zaten FAB'dan içeride → normal padding'e dön */}
+        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:pl-8 lg:pr-28 2xl:pr-8">
           {productName && (
             <div className="hidden min-w-0 flex-1 lg:block">
               <div className="truncate text-sm font-semibold text-ink-900">{productName}</div>
