@@ -76,34 +76,35 @@ export function TurnstileWidget({
       });
     }
 
-    // Script'i bir kez yükle; window.turnstile hazır olunca render et (onload garantisi zayıf → kısa poll).
-    if (window.turnstile) {
-      renderWidget();
-    } else {
-      if (!document.getElementById(SCRIPT_ID)) {
-        const s = document.createElement("script");
-        s.id = SCRIPT_ID;
-        s.src = SCRIPT_SRC;
-        s.async = true;
-        s.defer = true;
-        s.onerror = () => { if (!cancelled) setStatus("error"); };
-        document.head.appendChild(s);
-      }
-      let waited = 0;
-      const poll = setInterval(() => {
-        if (cancelled || window.turnstile) {
-          clearInterval(poll);
-          if (!cancelled) renderWidget();
-        } else if ((waited += 200) > 12000) {
-          clearInterval(poll);
-          // 12sn'de script hâlâ gelmedi → hata durumu göster (sessiz kilit yerine).
-          if (!cancelled) setStatus("error");
-        }
-      }, 200);
+    // Script'i (gerekirse) yükle ve TEK poll ile HEM window.turnstile HEM ref.current (div mount)
+    // hazır olunca render et. Birleşik poll şart: "Yeniden dene"de status error→loading geçişi div'i
+    // yeniden mount ederken senkron render ref.current=null'a düşerdi; poll sonraki tick'te yakalar.
+    if (!window.turnstile && !document.getElementById(SCRIPT_ID)) {
+      const s = document.createElement("script");
+      s.id = SCRIPT_ID;
+      s.src = SCRIPT_SRC;
+      s.async = true;
+      s.defer = true;
+      s.onerror = () => { if (!cancelled) setStatus("error"); };
+      document.head.appendChild(s);
     }
+    let waited = 0;
+    const poll = setInterval(() => {
+      if (cancelled) {
+        clearInterval(poll);
+      } else if (window.turnstile && ref.current) {
+        clearInterval(poll);
+        renderWidget();
+      } else if ((waited += 200) > 12000) {
+        clearInterval(poll);
+        // 12sn'de turnstile hâlâ hazır değil → hata durumu göster (sessiz kilit yerine).
+        setStatus("error");
+      }
+    }, 200);
 
     return () => {
       cancelled = true;
+      clearInterval(poll);
       if (widgetId.current && window.turnstile) {
         try {
           window.turnstile.remove(widgetId.current);

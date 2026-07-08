@@ -36,6 +36,9 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
   useEffect(() => {
     const local = getById(params.orderId) ?? null;
     setOrder(local);
+    // Store'da sipariş varsa HEMEN göster (blank ekran yok); server doğrulaması arkada sürer.
+    // Store MISS ise "bulunamadı" demeden önce sunucuyu bekle (.finally loading'i kapatır).
+    if (local) setLoading(false);
     // Ödeme başarılı → sepeti temizle (başarısızlıkta /odeme/hata'ya gidilir, sepet korunur).
     clearCart();
     let cancelled = false;
