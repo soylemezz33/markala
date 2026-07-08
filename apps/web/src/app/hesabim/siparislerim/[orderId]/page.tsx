@@ -8,6 +8,7 @@ import { ArrowLeft, Truck, Receipt, MapPin, Buildings } from "@phosphor-icons/re
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
+import { unitCountFromSummary } from "@/lib/cart-store";
 import { generateMockTrackingEvents } from "@/lib/tracking-mock";
 import { TrackingTimeline } from "@/components/tracking/timeline";
 import type { Address, Order, OrderStatus, TrackingEvent } from "@markala/types";
@@ -159,7 +160,7 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
                   {item.productName}
                 </Link>
                 <p className="text-xs text-ink-500">{item.configurationSummary}</p>
-                <p className="text-xs text-ink-500 mt-1">x{item.quantity}</p>
+                <p className="text-xs text-ink-500 mt-1">x{item.quantity * unitCountFromSummary(item.configurationSummary)}</p>
               </div>
               <Price amount={item.lineTotal} className="text-ink-900 flex-none self-start" />
             </li>

@@ -27,8 +27,11 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const boyN = Number(boy) || 0;
   const adetN = Math.max(1, Number(adet) || 1);
   const alan = (enN * boyN) / 10000;
-  const toplamAlan = Math.max(minM2, alan * adetN);
-  const minApplied = alan > 0 && toplamAlan > alan * adetN + 1e-9;
+  // Fiyat PARÇA BAŞINA min uygular (her parça max(minM2, alan), sonra × adet) — configurator.ts
+  // + server ile aynı. Gösterim de aynı formülü kullanmalı; eski toplam-alan formülü çok adet +
+  // küçük parçada gösterilen alan ≠ ödenen alan yapıyordu.
+  const toplamAlan = Math.max(minM2, alan) * adetN;
+  const minApplied = alan > 0 && alan < minM2;
 
   // Seçili malzemenin maxM2 sınırı (tek parça) — aşılırsa uyarı.
   const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number } | null }>).find(
@@ -115,7 +118,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
           </strong>
           {minApplied && (
             <span className="ml-2 rounded bg-paper-200 px-1.5 py-0.5 text-[11px] font-medium text-ink-700">
-              min 1 m² uygulandı
+              parça başına min 1 m²
             </span>
           )}
         </p>
@@ -123,7 +126,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
 
       {minApplied && (
         <p className="text-[11px] text-ink-500">
-          Üretim minimumu 1 m² olduğundan, daha küçük işler 1 m² üzerinden fiyatlanır.
+          Üretim minimumu parça başına 1 m² olduğundan, daha küçük işler parça başına 1 m² üzerinden fiyatlanır.
         </p>
       )}
 

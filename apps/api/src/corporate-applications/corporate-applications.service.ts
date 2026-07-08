@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as argon2 from "argon2";
 import * as crypto from "crypto";
@@ -9,6 +9,8 @@ import type { CreateCorporateApplicationDto } from "./corporate-applications.dto
 
 @Injectable()
 export class CorporateApplicationsService {
+  private readonly logger = new Logger(CorporateApplicationsService.name);
+
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -94,15 +96,22 @@ export class CorporateApplicationsService {
       data: { status, reviewNote, reviewedById: reviewerId, reviewedAt: new Date() },
     });
 
+    let inviteEmailSent: boolean | null = null;
     if (status === "approved") {
-      await this.approveAccount(app);
+      inviteEmailSent = await this.approveAccount(app);
+      if (inviteEmailSent === false) {
+        this.logger.warn(
+          `Kurumsal onay ${app.id} (${app.email}): davet/şifre-belirleme maili GÖNDERİLEMEDİ — müşteri giriş yapamaz, daveti yeniden gönderin.`,
+        );
+      }
     } else if (app.userId) {
       await this.prisma.user
         .update({ where: { id: app.userId }, data: { corporateStatus: "rejected" } })
         .catch(() => undefined);
     }
 
-    return updated;
+    // inviteEmailSent: true=gitti, false=gidemedi (admin uyarılmalı), null=davet gerekmedi (mevcut hesap).
+    return { ...updated, inviteEmailSent };
   }
 
   /**
@@ -110,7 +119,7 @@ export class CorporateApplicationsService {
    * kurumsal yap; yoksa yeni hesap oluştur ve şifre-belirleme (davet) e-postası gönder —
    * böylece müşteri panele giriş yapabilir. Misafir başvurularda da çalışır (userId null).
    */
-  private async approveAccount(app: CorporateApplication): Promise<void> {
+  private async approveAccount(app: CorporateApplication): Promise<boolean | null> {
     const corp = {
       accountType: "corporate" as const,
       corporateStatus: "approved" as const,
@@ -150,13 +159,17 @@ export class CorporateApplicationsService {
       });
     }
 
+    // isNew değilse davet gerekmez (null). Yeni hesapta davet mailinin gidip gitmediğini döndür →
+    // review() admin yanıtına 'inviteEmailSent' koyar; mail giderse müşteri şifre belirleyip
+    // giriş yapabilir, gitmezse admin görüp 'yeniden gönder' yapabilir (aksi halde sessizce erişemez).
     if (isNew) {
-      await this.sendInvite(user.id, user.email, app.companyName);
+      return this.sendInvite(user.id, user.email, app.companyName);
     }
+    return null;
   }
 
-  /** Davet/şifre-belirleme e-postası (şifre-sıfırlama altyapısı; 7 gün geçerli). */
-  private async sendInvite(userId: string, email: string, companyName: string): Promise<void> {
+  /** Davet/şifre-belirleme e-postası (şifre-sıfırlama altyapısı; 7 gün geçerli). Mail sonucu döner. */
+  private async sendInvite(userId: string, email: string, companyName: string): Promise<boolean> {
     const rawToken = crypto.randomBytes(48).toString("base64url");
     const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -170,6 +183,6 @@ export class CorporateApplicationsService {
       "",
     );
     const inviteUrl = `${webUrl}/sifre-sifirla?token=${rawToken}`;
-    await this.mail.sendCorporateInviteEmail(email, inviteUrl, companyName);
+    return this.mail.sendCorporateInviteEmail(email, inviteUrl, companyName);
   }
 }

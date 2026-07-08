@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
 import { renderEmail, emailRow, emailTable } from "@/lib/email-template";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 // nodemailer Node.js API'lerine ihtiyaç duyar — edge runtime'da çalışmaz.
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ interface QuotePayload {
   budget?: string;
   quantity?: string;
   message?: string;
+  turnstileToken?: string;
 }
 
 function escapeHtml(value: string): string {
@@ -69,16 +71,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
 
-  const name = (body.name ?? "").trim();
-  const email = (body.email ?? "").trim();
-  const phone = (body.phone ?? "").trim();
-  const companyName = (body.companyName ?? "").trim();
-  const sector = (body.sector ?? "").trim();
-  const budget = (body.budget ?? "").trim();
-  const quantity = (body.quantity ?? "").trim();
-  const message = (body.message ?? "").trim();
+  // Bot koruması — iletişim formuyla aynı; prod'da fail-closed (token yoksa reddet).
+  const ip = req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || undefined;
+  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
+    return NextResponse.json({ error: "Güvenlik doğrulaması başarısız. Lütfen tekrar deneyin." }, { status: 403 });
+  }
+
+  const name = (body.name ?? "").trim().slice(0, 120);
+  const email = (body.email ?? "").trim().slice(0, 160);
+  const phone = (body.phone ?? "").trim().slice(0, 32);
+  const companyName = (body.companyName ?? "").trim().slice(0, 160);
+  const sector = (body.sector ?? "").trim().slice(0, 120);
+  const budget = (body.budget ?? "").trim().slice(0, 80);
+  const quantity = (body.quantity ?? "").trim().slice(0, 80);
+  const message = (body.message ?? "").trim().slice(0, 2000);
+  // API DTO her ürün için @MaxLength(80) uyguluyor → geçerli girdi sessizce 400'e düşmesin diye
+  // burada 80 karaktere kırp ("Diğer: …" etiketi dahil), en çok 30 kalem.
   const products = Array.isArray(body.products)
-    ? body.products.map((p) => String(p).trim()).filter((p) => p.length > 0).slice(0, 30)
+    ? body.products.map((p) => String(p).trim().slice(0, 80)).filter((p) => p.length > 0).slice(0, 30)
     : [];
 
   if (name.length < 2) {

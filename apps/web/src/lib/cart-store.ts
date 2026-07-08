@@ -38,6 +38,19 @@ export function itemUnitCount(item: Pick<CartItem, "configuration">): number {
   return Number.isInteger(n) && n >= 1 ? n : 1;
 }
 
+/**
+ * Sipariş kalemleri (OrderItem) yalnız `configurationSummary` taşır (selections yok) — tiraj
+ * adedini özetteki "N Adet" etiketinden çıkar. Böylece başarı sayfası + sipariş geçmişi de
+ * sepet/checkout ile AYNI parça adedini (quantity × tiraj) gösterir. Area/tirajsız üründe 1.
+ */
+export function unitCountFromSummary(summary: string | undefined): number {
+  if (!summary) return 1;
+  const m = summary.match(/(\d[\d.]*)\s*adet/i);
+  if (!m || !m[1]) return 1;
+  const n = Number(m[1].replace(/\./g, ""));
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -86,7 +99,9 @@ export const useCartStore = create<CartState>()(
       close: () => set({ isOpen: false }),
       toggle: () => set((state) => ({ isOpen: !state.isOpen })),
 
-      itemCount: () => get().items.reduce((acc, i) => acc + i.quantity, 0),
+      // Rozet/başlık "N ürün" = satır (kalem) sayısı. Σquantity (set) satırdaki parça
+      // göstergesiyle (quantity×tiraj) çelişiyordu; kalem sayısı ikilikten bağımsız.
+      itemCount: () => get().items.length,
       subtotal: () =>
         get().items.reduce((acc, i) => acc + i.configuration.totalPrice * i.quantity, 0),
     }),

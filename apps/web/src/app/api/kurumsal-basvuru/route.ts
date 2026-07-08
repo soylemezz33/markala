@@ -239,14 +239,17 @@ export async function POST(req: NextRequest) {
       replyTo: email,
     });
   } catch (err) {
-    console.error(`[kurumsal-basvuru] mail gönderilemedi (${refId}):`, (err as Error).message);
-    return NextResponse.json(
-      {
-        error:
-          "Şu an başvurunuzu iletemedik, lütfen telefonla ulaşın veya daha sonra tekrar deneyin.",
-      },
-      { status: 502 },
-    );
+    // Başvuru bu noktada DB'ye YAZILMIŞ durumda (persistApplication yukarıda). Mail gitmese de
+    // kullanıcıya hata dönmek → tekrar-tekrar başvuru + belge yükleme (duplicate). iletisim/teklif-al
+    // deseni: ok:true + degraded mesajı; admin başvuruyu panelde görür.
+    console.error(`[kurumsal-basvuru] mail gönderilemedi (${refId}) — başvuru DB'de KAYITLI:`, (err as Error).message);
+    return NextResponse.json({
+      ok: true,
+      refId,
+      degraded: true,
+      message:
+        "Başvurun alındı. En hızlı dönüş için WhatsApp hattımızdan da yazabilirsin: 0531 900 41 02",
+    });
   }
 
   return NextResponse.json({

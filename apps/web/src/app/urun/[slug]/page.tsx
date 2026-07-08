@@ -49,8 +49,9 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
-  // Ürün yok/silinmiş → noindex (not-found sayfası 200 dönse de Google indekslemesin; soft-404 zararını kes).
-  if (!product) return { robots: { index: false, follow: false } };
+  // Ürün yok/silinmiş → gerçek HTTP 404. generateMetadata gövde stream'inden ÖNCE çözülür;
+  // notFound() burada çağrılınca statü 200 (soft-404) değil gerçek 404 döner (fetch zaten cache'li).
+  if (!product) notFound();
   const category = await getCategoryBySlug(product.categorySlug);
   const seoTitle = product.seo?.title ?? `${product.name} — ${category?.name ?? ""} Baskı`;
   const seoDesc =
@@ -99,7 +100,9 @@ async function getShippingThreshold(): Promise<number> {
 }
 
 async function getPricingSettings(): Promise<{ kur: number; marj: number; kdv: number; minM2: number }> {
-  const fallback = { kur: 46, marj: 1.5, kdv: 0.2, minM2: 1 };
+  // Canlı işletme değeriyle eşit (GET /api/settings/pricing → marj 1.2). Settings fetch düşerse
+  // eskiden 1.5 ile %25 şişik başlangıç fiyatı gösteriliyordu.
+  const fallback = { kur: 46, marj: 1.2, kdv: 0.2, minM2: 1 };
   try {
     const res = await fetch(`${API_BASE}/api/settings/pricing`, { next: { revalidate: 300 } });
     if (!res.ok) return fallback;

@@ -7,7 +7,7 @@ import { Suspense, useEffect, useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
 import { CheckCircle, Truck, EnvelopeSimple, House, Receipt, Buildings } from "@phosphor-icons/react";
 import { useOrdersStore } from "@/lib/orders-store";
-import { useCartStore } from "@/lib/cart-store";
+import { useCartStore, unitCountFromSummary } from "@/lib/cart-store";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { trackPurchase } from "@/lib/analytics";
 import { apiClient, withRefresh } from "@/lib/api";
@@ -34,26 +34,33 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
   const [paymentConfirmed, setPaymentConfirmed] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const o = getById(params.orderId) ?? null;
-    setOrder(o);
-    setLoading(false);
+    const local = getById(params.orderId) ?? null;
+    setOrder(local);
     // Ödeme başarılı → sepeti temizle (başarısızlıkta /odeme/hata'ya gidilir, sepet korunur).
     clearCart();
-    if (!o) return;
     let cancelled = false;
     // Sunucudan sipariş durumunu DOĞRULA: sadece gerçekten ödenmiş (paymentStatus="basarili") ya da
     // cari siparişte purchase ateşle + "Ödemen alındı" göster. Böylece iptal edilmiş/sahte siparişe
     // doğrudan gidildiğinde GA4/Ads dönüşüm şişmesi ve yanlış "ödendi" ekranı engellenir.
+    // Store MISS (farklı tarayıcı/gizli sekme/localStorage temizliği) → sunucu verisiyle render
+    // et; yalnız store'a bakıp "Sipariş bulunamadı" gösterip ödenmiş müşteriyi paniğe SOKMA.
     withRefresh(() => apiClient.orders.detail(params.orderId))
       .then((srv) => {
         if (cancelled) return;
+        if (srv && !local) setOrder(srv as unknown as Order); // store boşsa sunucudan doldur
         const ok = !!srv && (srv.paymentStatus === "basarili" || (isCari && srv.paymentMethod === "cari"));
         setPaymentConfirmed(ok);
-        if (ok) trackPurchase(o.orderNumber, o.total, o.items.length);
+        if (ok) {
+          const src = local ?? (srv as unknown as Order);
+          trackPurchase(src.orderNumber, src.total, src.items.length);
+        }
       })
       .catch(() => {
         // Doğrulama başarısız (auth/ağ) → şişmeyi önlemek için purchase ATEŞLEME.
         if (!cancelled) setPaymentConfirmed(false);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -140,7 +147,8 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
                 <p className="font-medium text-ink-900 text-sm">{item.productName}</p>
                 <p className="text-xs text-ink-500 line-clamp-2">{item.configurationSummary}</p>
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-ink-500">x{item.quantity}</span>
+                  {/* Parça adedi (set × tiraj) — sepet/checkout ile tutarlı */}
+                  <span className="text-ink-500">x{item.quantity * unitCountFromSummary(item.configurationSummary)}</span>
                   <Price amount={item.lineTotal} className="text-ink-900" />
                 </div>
               </div>

@@ -8,6 +8,7 @@ import { Package, ArrowRight, ArrowsClockwise } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
+import { unitCountFromSummary } from "@/lib/cart-store";
 import type { Order, OrderStatus } from "@markala/types";
 
 const statusToneClass: Record<string, string> = {
@@ -107,7 +108,7 @@ export default function OrdersPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-ink-900 text-sm">{item.productName}</p>
                     <p className="text-xs text-ink-500 line-clamp-1">{item.configurationSummary}</p>
-                    <p className="text-xs text-ink-500 mt-0.5">x{item.quantity}</p>
+                    <p className="text-xs text-ink-500 mt-0.5">x{item.quantity * unitCountFromSummary(item.configurationSummary)}</p>
                   </div>
                   <Price amount={item.lineTotal} className="text-ink-900 flex-none font-semibold" />
                 </li>

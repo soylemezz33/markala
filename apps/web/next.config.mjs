@@ -70,7 +70,10 @@ const nextConfig = {
   poweredByHeader: false,
   transpilePackages: ["@markala/ui", "@markala/types", "@markala/mock-data", "@markala/api-client"],
   images: {
-    formats: ["image/avif", "image/webp"],
+    // Yalnız WebP: Cloudflare edge cache'i Vary: Accept'i yok saydığından AVIF+JPEG varyantları
+    // karışıp AVIF desteklemeyen tarayıcıya (eski iOS Safari, bazı in-app webview) bozuk görsel
+    // servis edilebiliyordu. WebP desteği fiilen evrensel → tek format karışmayı bitirir.
+    formats: ["image/webp"],
     // Mockup endpoint SVG döndürdüğü için aktif — kendi origin'imiz olduğu için güvenli
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",

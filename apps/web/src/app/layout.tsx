@@ -111,6 +111,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="tr" className={fontSans.variable}>
       <head>
+        {/* LCP hızlandırma: hero görseli api.markala.com.tr'den (cross-origin) gelir; reklam
+            tıklamasında soğuk cache'te tarayıcı bağlantıyı erken kursun (DNS+TCP+TLS önden). */}
+        <link rel="preconnect" href="https://api.markala.com.tr" />
+        <link rel="dns-prefetch" href="https://api.markala.com.tr" />
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
       </head>

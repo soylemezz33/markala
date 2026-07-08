@@ -166,6 +166,13 @@ export function CartDrawer() {
                             className="text-ink-900"
                           />
                         </div>
+                        {/* Kademeli üründe çok set: "2 set × 25 = 50 adet" netleştirmesi */}
+                        {itemUnitCount(item) > 1 && item.quantity > 1 && (
+                          <p className="mt-1.5 text-[11px] text-ink-500">
+                            {item.quantity} set × {itemUnitCount(item)} ={" "}
+                            <span className="font-medium text-ink-700">{item.quantity * itemUnitCount(item)} adet</span>
+                          </p>
+                        )}
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}

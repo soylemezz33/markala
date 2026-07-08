@@ -106,6 +106,9 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
             width={2120}
             height={742}
             decoding="async"
+            // İlk slayt = LCP: erken keşif + öncelik ver (sonraki slaytlar normal).
+            fetchPriority={index === 0 ? "high" : "auto"}
+            loading={index === 0 ? "eager" : "lazy"}
             className="block w-full h-auto"
           />
         </picture>

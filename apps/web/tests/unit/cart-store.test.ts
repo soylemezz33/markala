@@ -133,10 +133,11 @@ describe("useCartStore", () => {
     expect(useCartStore.getState().itemCount()).toBe(0);
   });
 
-  it("itemCount: quantity'lerin toplamını verir", () => {
+  it("itemCount: satır (kalem) sayısını verir — quantity toplamı DEĞİL", () => {
+    // Rozet/başlık "N ürün" = kalem sayısı (set/parça ikiliğinden bağımsız); Σquantity değil.
     useCartStore.getState().addItem({ ...makeItem(), quantity: 2 });
     useCartStore.getState().addItem({ ...makeItem(), quantity: 3 });
-    expect(useCartStore.getState().itemCount()).toBe(5);
+    expect(useCartStore.getState().itemCount()).toBe(2);
   });
 
   // === subtotal ===

@@ -115,8 +115,18 @@ export function Analytics() {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
+            // KVKK: pazarlama onayı olmadan Meta'ya veri gitmesin. revoke ile başla →
+            // PageView kuyruğa alınır, yalnız onay çerezi 'marketing:true' ise grant edilir.
+            // (cookie-consent.tsx writeConsent onay değişince fbq consent grant/revoke çağırır.)
+            fbq('consent', 'revoke');
             fbq('init', '${metaPixel}');
             fbq('track', 'PageView');
+            try {
+              var m = document.cookie.match(/(?:^|; )markala_cookie_consent=([^;]+)/);
+              if (m && JSON.parse(decodeURIComponent(m[1])).marketing === true) {
+                fbq('consent', 'grant');
+              }
+            } catch (e) {}
           `}
         </Script>
       )}

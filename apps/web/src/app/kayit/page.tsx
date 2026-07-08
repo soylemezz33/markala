@@ -87,7 +87,7 @@ export default function RegisterPage() {
 
           <form onSubmit={onSubmit} className="space-y-4">
             <Field label="Ad Soyad">
-              <input type="text" required value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} placeholder="Hasan Söylemez" />
+              <input type="text" required minLength={2} value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} placeholder="Hasan Söylemez" />
             </Field>
             <Field label="E-posta">
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} autoComplete="email" placeholder="ornek@firma.com" />

@@ -153,9 +153,15 @@ export class MarkalaApiClient {
       try {
         errBody = await res.json();
       } catch {}
+      // NestJS ValidationPipe birden çok hatayı message: string[] olarak döndürür → ayraçla
+      // birleştir ki forma tek satır ham dizi ("hata1,hata2") değil okunur metin bassın.
+      const rawMsg = errBody.message;
+      const message = Array.isArray(rawMsg)
+        ? rawMsg.join(" · ")
+        : (rawMsg ?? res.statusText);
       const error: ApiError = {
         status: res.status,
-        message: errBody.message ?? res.statusText,
+        message,
         code: errBody.code,
         details: errBody,
       };

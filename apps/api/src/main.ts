@@ -58,14 +58,17 @@ async function bootstrap() {
   );
 
   // Auth endpoint'leri için per-IP fixed-window rate limit — standart 429 + Retry-After.
-  app.use(rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/register", method: "POST" }));
+  // NOT: Türk mobil operatörleri CGNAT ile çok aboneyi tek çıkış IP'sinde topluyor; reklam
+  // trafiğinde meşru kayıt/şifre-sıfırlama 429 yememeli. Turnstile zaten asıl bot bariyeri
+  // (fail-closed) → bu limitler yalnız kaba flood'a karşı, gevşek tutulur (3→15, 5→12).
+  app.use(rateLimit({ windowMs: 60 * 60_000, max: 15, path: "/auth/register", method: "POST" }));
   app.use(rateLimit({ windowMs: 60_000, max: 5, path: "/auth/login", method: "POST" }));
   app.use(
-    rateLimit({ windowMs: 60 * 60_000, max: 3, path: "/auth/resend-verification", method: "POST" }),
+    rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/auth/resend-verification", method: "POST" }),
   );
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/verify-email", method: "POST" }));
   app.use(
-    rateLimit({ windowMs: 60 * 60_000, max: 5, path: "/auth/forgot-password", method: "POST" }),
+    rateLimit({ windowMs: 60 * 60_000, max: 12, path: "/auth/forgot-password", method: "POST" }),
   );
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/reset-password", method: "POST" }));
   app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/auth/refresh", method: "POST" }));
@@ -81,6 +84,8 @@ async function bootstrap() {
   );
   // İletişim formu — public; per-IP spam koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/contact", method: "POST" }));
+  // Teklif talebi — public + en yüksek değerli lead formu; per-IP spam koruması (10/saat).
+  app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/quote-requests", method: "POST" }));
   // Bülten aboneliği — public; per-IP spam koruması (15/saat).
   app.use(
     rateLimit({ windowMs: 60 * 60_000, max: 15, path: "/newsletter-subscribers", method: "POST" }),

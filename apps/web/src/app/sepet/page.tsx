@@ -24,6 +24,10 @@ export default function CartPage() {
   const setStoreCoupon = useCartStore((s) => s.setCoupon);
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponChecking, setCouponChecking] = useState(false);
+  // Backend-doğrulanmış kupon (gerçek indirim + ücretsiz kargo). Sepette de checkout ile AYNI
+  // /api/coupons/validate kullanılır → tüm DB kuponları çalışır (yalnız HOSGELDIN değil).
+  const [couponInfo, setCouponInfo] = useState<{ code: string; discount: number; freeShipping: boolean } | null>(null);
   /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/1500 fallback korunur. */
   const [shipping, setShipping] = useState({ fee: 79, freeThreshold: 1500 });
   useEffect(() => {
@@ -31,30 +35,70 @@ export default function CartPage() {
   }, []);
 
   const sub = subtotal();
+
+  const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
+
+  /** Kuponu backend'de doğrula → couponInfo'yu (gerçek indirim) kur. Backend ulaşılamazsa
+   *  bilinen kupon için zarif tahmini fallback (kesin indirim siparişte hesaplanır). */
+  async function validateCoupon(code: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${apiBase}/api/coupons/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal: sub }),
+      });
+      const data = await res.json().catch(() => null);
+      if (data && data.valid) {
+        setCouponInfo({ code: data.code, discount: Number(data.discount) || 0, freeShipping: Boolean(data.freeShipping) });
+        return true;
+      }
+      if (data && data.reason) { setCouponError(data.reason); return false; }
+      if (KNOWN_COUPONS[code]) { setCouponInfo(null); return true; } // fallback: store'a yaz, tutar siparişte kesinleşir
+      setCouponError("Kupon şu an kontrol edilemedi, lütfen tekrar deneyin.");
+      return false;
+    } catch {
+      if (KNOWN_COUPONS[code]) { setCouponInfo(null); return true; }
+      setCouponError("Kupon şu an kontrol edilemedi, lütfen tekrar deneyin.");
+      return false;
+    }
+  }
+
+  // Mount'ta store'da kupon varsa (yenileme/geri gelme) backend'den yeniden doğrula → gösterilen
+  // indirim gerçek tutarı yansıtsın (aksi halde yalnız HOSGELDIN tahmini görünürdü).
+  useEffect(() => {
+    if (storedCoupon && sub > 0 && !couponInfo) void validateCoupon(storedCoupon);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedCoupon, sub]);
+
   // Uygulanan kupon cart-store'da tutulur → /odeme'ye taşınır (eskiden yalnız bu sayfanın
   // local state'indeydi, ödemeye geçince sessizce düşüyordu = bait-and-switch).
-  const appliedCode = storedCoupon && KNOWN_COUPONS[storedCoupon] ? storedCoupon : null;
-  const discount = appliedCode ? sub * (KNOWN_COUPONS[appliedCode] ?? 0) : 0;
-  const shippingFee = sub >= shipping.freeThreshold ? 0 : sub > 0 ? shipping.fee : 0;
+  const backendCoupon = couponInfo && couponInfo.code === storedCoupon ? couponInfo : null;
+  const appliedCode = storedCoupon && (backendCoupon || KNOWN_COUPONS[storedCoupon]) ? storedCoupon : null;
+  const discount = backendCoupon
+    ? backendCoupon.discount
+    : appliedCode
+      ? sub * (KNOWN_COUPONS[appliedCode] ?? 0)
+      : 0;
+  const freeShipCoupon = Boolean(backendCoupon?.freeShipping);
+  const shippingFee = freeShipCoupon || sub >= shipping.freeThreshold ? 0 : sub > 0 ? shipping.fee : 0;
   const subAfterDiscount = Math.max(0, sub - discount);
   // Fiyatlar KDV DAHİL → gösterilen KDV, tutarın İÇİNDEKİ paydır (gross − gross/1.2), üstüne EKLENMEZ.
   const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE);
   const total = subAfterDiscount + shippingFee;
 
-  function handleApplyCoupon() {
+  async function handleApplyCoupon() {
     const code = coupon.trim().toUpperCase();
     setCouponError(null);
-    if (!code) return;
-    if (KNOWN_COUPONS[code] && sub > 0) {
-      setStoreCoupon(code);
-      setCoupon("");
-    } else {
-      setCouponError("Geçersiz veya süresi dolmuş kupon kodu.");
-    }
+    if (!code || sub <= 0) return;
+    setCouponChecking(true);
+    const ok = await validateCoupon(code);
+    if (ok) { setStoreCoupon(code); setCoupon(""); }
+    setCouponChecking(false);
   }
 
   function handleRemoveCoupon() {
     setStoreCoupon(null);
+    setCouponInfo(null);
     setCouponError(null);
   }
 
@@ -107,6 +151,14 @@ export default function CartPage() {
                       </button>
                     </div>
                   </div>
+                  {/* Kademeli üründe çok set alındıysa netleştir: "2 set × 25 = 50 adet"
+                      (stepper parça gösterir; her set kendi tiraj fiyatından katlanır). */}
+                  {itemUnitCount(item) > 1 && item.quantity > 1 && (
+                    <p className="mt-1.5 text-xs text-ink-500">
+                      {item.quantity} set × {itemUnitCount(item)} adet ={" "}
+                      <span className="font-medium text-ink-700">{item.quantity * itemUnitCount(item)} adet</span>
+                    </p>
+                  )}
                 </div>
               </article>
             ))}
@@ -182,7 +234,7 @@ export default function CartPage() {
                   </summary>
                   <div className="mt-3 flex gap-2">
                     <input type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(null); }} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
-                    <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!coupon.trim()}>Uygula</Button>
+                    <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!coupon.trim() || couponChecking}>{couponChecking ? "Kontrol…" : "Uygula"}</Button>
                   </div>
                   {couponError && <p role="alert" className="mt-2 text-xs text-error">{couponError}</p>}
                   {appliedCode && (
@@ -262,9 +314,9 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
 function QtyControl({ value, step = 1, onChange }: { value: number; step?: number; onChange: (n: number) => void }) {
   return (
     <div className="inline-flex items-center border border-paper-200 rounded">
-      <button onClick={() => onChange(value - step)} disabled={value <= step} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Azalt"><Minus size={14} /></button>
+      <button onClick={() => onChange(value - step)} disabled={value <= step} className="tap-target w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Azalt"><Minus size={14} /></button>
       <span aria-live="polite" aria-atomic="true" className="w-10 text-center text-sm tabular-nums font-medium">{value}</span>
-      <button onClick={() => onChange(value + step)} className="w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Arttır"><Plus size={14} /></button>
+      <button onClick={() => onChange(value + step)} className="tap-target w-11 h-11 grid place-items-center text-ink-700 hover:bg-paper-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1" aria-label="Arttır"><Plus size={14} /></button>
     </div>
   );
 }

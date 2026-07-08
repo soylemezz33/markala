@@ -481,7 +481,12 @@ export class PaymentsService implements OnModuleInit {
         });
         if (claimed.count === 0) continue; // callback zaten işlemişti → no-op
         recovered++;
-        this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı)`);
+        // Callback kaçtığında handleCallback'teki bildirimler de kaçıyordu: müşteri onay maili
+        // ALMIYOR ("param gitti mi?") ve Meta Purchase dönüşümü kaybediliyordu. Kurtarmada da
+        // (yalnız count>0 = ilk işaretleme) fire-and-forget olarak tetikle.
+        void this.mail.sendOrderConfirmationEmail(o.id).catch(() => undefined);
+        void this.metaCapi.sendPurchase(o.id).catch(() => undefined);
+        this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı) → mail+CAPI tetiklendi`);
       } catch (e) {
         /* tek sipariş hatası tüm taramayı bozmasın — ama logla */
         this.logger.error(`reconcile HATA order=${o.id} orderNumber=${o.orderNumber}: ${(e as Error).message ?? e}`);

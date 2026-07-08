@@ -20,7 +20,7 @@ import {
   Wallet,
 } from "@phosphor-icons/react";
 import { IlIlceSelect } from "@/components/forms/il-ilce-select";
-import { PhoneInput } from "@/components/forms/phone-input";
+import { PhoneInput, toNationalPhone } from "@/components/forms/phone-input";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
@@ -87,6 +87,26 @@ export default function CheckoutPage() {
   useEffect(() => {
     apiClient.settings.shipping().then(setShippingConfig).catch(() => {});
   }, []);
+
+  // Sayfa yenilenince couponInfo (local) kaybolur ama couponCode store'da kalır → DB kuponu
+  // (HOSGELDIN dışı) sessizce düşerdi. Mount'ta store'daki kuponu backend'de bir kez yeniden
+  // doğrula → gerçek indirim geri gelsin ve siparişe gönderilsin.
+  useEffect(() => {
+    const s = subtotal();
+    if (!couponCode || s <= 0 || couponInfo) return;
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
+    fetch(`${apiBase}/api/coupons/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: couponCode, subtotal: s }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.valid) setCouponInfo({ code: d.code, discount: Number(d.discount) || 0, freeShipping: Boolean(d.freeShipping) });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couponCode]);
 
   // Kupon ANINDA backend'de doğrulanır → gerçek geçerlilik (tarih/min-tutar/ilk-sipariş/limit)
   // + gerçek indirim tutarı. Tüm DB kuponları çalışır (yalnız HOSGELDIN değil); geçersizde
@@ -263,7 +283,9 @@ export default function CheckoutPage() {
   }, [user]);
 
   function canProceed(): boolean {
-    if (step === "iletisim") return email.includes("@") && phone.length >= 10;
+    // Telefon '+90XXXXXXXXXX' saklanır; ulusal kısım TAM 10 hane olmalı ('+90'+7 hane =
+    // 10 karakter olduğundan phone.length>=10 eksik numarayı geçiriyordu).
+    if (step === "iletisim") return email.includes("@") && toNationalPhone(phone).length === 10;
     if (step === "fatura") {
       if (accountType === "individual") return fullName.length >= 3; // TC opsiyonel (iyzico yer tutucuyla çalışır)
       return companyName.length >= 2 && taxNumber.length >= 9 && taxOffice.length >= 2;

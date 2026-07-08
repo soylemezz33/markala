@@ -64,7 +64,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
   }
 
-  const { name, email, phone, subject, message } = body;
+  // API DTO limitleri (name 120 / subject 160 / message 5000 / phone 32) — geçerli ama uzun girdi
+  // API'de 400'e düşüp DB kaydı sessizce kaybolmasın diye burada kırp (#27).
+  const name = (body.name ?? "").slice(0, 120);
+  const email = body.email ?? "";
+  const phone = (body.phone ?? "").slice(0, 32);
+  const subject = (body.subject ?? "").slice(0, 160);
+  const message = (body.message ?? "").slice(0, 5000);
 
   if (!name || name.length < 2) {
     return NextResponse.json({ error: "Ad soyad zorunlu." }, { status: 400 });

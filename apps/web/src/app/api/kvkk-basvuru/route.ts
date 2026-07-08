@@ -138,6 +138,32 @@ export async function POST(req: NextRequest) {
   // PII loglanmaz — sadece ticketId + talep tipi + vade
   console.log(`[kvkk-basvuru] new application: ${ticketId} type=${requestType} dueDate=${dueDate}`);
 
+  // DB'ye KALICI yaz (ContactMessage, source='kvkk') — SMTP'den BAĞIMSIZ. Yasal 30 günlük yanıt
+  // süresi olan KVKK talebi yalnız e-postada yaşamasın; admin panelinde sistemsel izi kalsın.
+  {
+    const typeLabelForDb = REQUEST_TYPE_LABELS[requestType] ?? requestType;
+    const apiBase = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
+    try {
+      const res = await fetch(`${apiBase}/api/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticketId,
+          name: (fullName ?? "").trim().slice(0, 120),
+          email: (email ?? "").trim().slice(0, 160),
+          phone: (body.phone ?? "").trim().slice(0, 32) || undefined,
+          subject: `[KVKK] ${typeLabelForDb} (vade ${dueDate})`.slice(0, 160),
+          message: (details ?? "").trim().slice(0, 5000),
+          source: "kvkk",
+        }),
+        cache: "no-store",
+      });
+      if (!res.ok) console.error(`[kvkk-basvuru] DB kaydı başarısız (${ticketId}): HTTP ${res.status}`);
+    } catch (err) {
+      console.error(`[kvkk-basvuru] DB kaydı hatası (${ticketId}):`, (err as Error).message);
+    }
+  }
+
   // SMTP yapılandırılmamışsa (dev/localhost) mock davranışı koru — geliştirmeyi bloke etme.
   if (!isMailConfigured()) {
     console.log(`[kvkk-basvuru] SMTP devre dışı (mock): ${ticketId}`);
@@ -189,14 +215,17 @@ export async function POST(req: NextRequest) {
       replyTo: email,
     });
   } catch (err) {
-    console.error(`[kvkk-basvuru] mail gönderilemedi ${ticketId}:`, (err as Error).message);
-    return NextResponse.json(
-      {
-        error:
-          "Başvurunuz şu an iletilemedi. Lütfen birkaç dakika sonra tekrar deneyin veya doğrudan kvkk@markala.com.tr adresine yazın.",
-      },
-      { status: 502 },
-    );
+    // Başvuru DB'ye YAZILDI (yukarıda) → mail gitmese de kayıp değil. Kullanıcıya hata yerine
+    // "alındı" dön; kvkk@ alternatifini de sun. (Aksi halde tekrar başvuru + yasal takip riski.)
+    console.error(`[kvkk-basvuru] mail gönderilemedi ${ticketId} — başvuru DB'de KAYITLI:`, (err as Error).message);
+    return NextResponse.json({
+      ok: true,
+      ticketId,
+      dueDate,
+      degraded: true,
+      message:
+        "Başvurun alındı ve kayıt altına alındı (KVKK m.13 — 30 gün içinde yanıt). Dilersen doğrudan kvkk@markala.com.tr adresine de yazabilirsin.",
+    });
   }
 
   return NextResponse.json({

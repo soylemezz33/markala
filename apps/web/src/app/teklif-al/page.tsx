@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
 import { PhoneInput } from "@/components/forms/phone-input";
+import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -85,6 +86,7 @@ export default function TeklifAlPage() {
   const [otherChecked, setOtherChecked] = useState(false);
   const [otherText, setOtherText] = useState("");
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Anasayfa "Sektörünüze Özel" kartlarından gelen ?sektor= → sektörü ön-seç (geçerliyse).
   useEffect(() => {
@@ -146,6 +148,7 @@ export default function TeklifAlPage() {
           quantity: form.frequency,
           message: form.message,
           products,
+          turnstileToken,
         }),
       });
       const data = await res.json();
@@ -313,7 +316,7 @@ export default function TeklifAlPage() {
                     value={otherText}
                     onChange={(e) => setOtherText(e.target.value)}
                     placeholder="Hangi ürün(ler)? Örn. menü kartı, masa giydirme..."
-                    maxLength={120}
+                    maxLength={73}
                   />
                 )}
               </fieldset>
@@ -408,7 +411,10 @@ export default function TeklifAlPage() {
                 </span>
               </label>
 
-              <Button type="submit" size="lg" disabled={submitting || !kvkkAccepted} fullWidth>
+              {/* Bot koruması (iletişim formu deseni) — sunucu fail-closed doğrular. */}
+              <TurnstileWidget action="quote" onToken={setTurnstileToken} />
+
+              <Button type="submit" size="lg" disabled={submitting || !kvkkAccepted || (turnstileEnabled && !turnstileToken)} fullWidth>
                 {submitting ? "Gönderiliyor..." : "Teklif Talebini Gönder"}{" "}
                 <ArrowRight size={16} weight="bold" />
               </Button>

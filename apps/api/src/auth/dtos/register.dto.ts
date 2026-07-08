@@ -20,21 +20,21 @@ export class RegisterDto {
   @Transform(({ value }: { value: unknown }) =>
     typeof value === "string" ? value.toLowerCase().trim() : value,
   )
-  @IsEmail()
-  @MaxLength(254)
+  @IsEmail({}, { message: "Geçerli bir e-posta adresi girin." })
+  @MaxLength(254, { message: "E-posta çok uzun." })
   email!: string;
 
   @IsString()
-  @MinLength(8)
-  @MaxLength(128)
+  @MinLength(8, { message: "Şifre en az 8 karakter olmalı." })
+  @MaxLength(128, { message: "Şifre çok uzun." })
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
-    message: "Şifre: büyük, küçük harf ve rakam içermelidir",
+    message: "Şifre büyük harf, küçük harf ve rakam içermelidir.",
   })
   password!: string;
 
   @IsString()
-  @MinLength(2)
-  @MaxLength(120)
+  @MinLength(2, { message: "Ad soyad en az 2 karakter olmalı." })
+  @MaxLength(120, { message: "Ad soyad çok uzun." })
   fullName!: string;
 
   @IsString()

@@ -203,11 +203,6 @@ export function optionPriceHints(
   const priceDimKey = priceDimGroup?.key ?? null;
   const dimSel = priceDimKey ? selections[priceDimKey] : undefined;
 
-  // adet dimension (quantity çarpanı — fiyat-boyutu DEĞİL)
-  const adetGroup = groups.find(
-    (g) => g.role === "dimension" && g.key === "adet" && g.key !== priceDimKey,
-  );
-
   const result: Record<string, Record<string, number | null>> = {};
 
   for (const g of groups) {
@@ -237,9 +232,10 @@ export function optionPriceHints(
           hints[optKey] = p !== undefined ? p - minPrice : null;
         }
       }
-    } else if (adetGroup && g.key === adetGroup.key) {
-      // adet dimension: her option için tam toplam hesapla.
-      // hypothetical'a rules yeniden uygulanır (farklı adet seçimi kendi rule'larını tetikleyebilir).
+    } else if (g.key === "adet") {
+      // adet grubu — quantity çarpanı DA olsa fiyat-boyutu (kartvizit/broşür) DA olsa her tiraj
+      // için TAM toplam ipucu göster (eskiden adet=fiyat-boyutu olunca hiç ipucu çıkmıyordu → İSG
+      // ile tutarsızdı). hypothetical'a rules yeniden uygulanır (farklı adet kendi kuralını tetikler).
       const optsWithRules = opts as unknown as { groupKey: string; optionKey: string; rules?: OptionRulesLite | null }[];
       for (const optKey of optKeysInGroup) {
         const raw = { ...selections, adet: optKey };
@@ -274,15 +270,11 @@ export function groupHintMode(
     if (!groups.has(o.groupKey)) groups.set(o.groupKey, { role: o.groupRole });
   }
 
-  const dims = [...groups.entries()]
-    .filter(([, g]) => g.role === "dimension")
-    .map(([k]) => k);
-  const priceDimKey = dims.find((k) => k !== "adet") ?? dims[0] ?? null;
-
   const g = groups.get(groupKey);
   if (!g) return "none";
   if (g.role === "priced") return "delta";
-  if (groupKey === "adet" && groupKey !== priceDimKey) return "total";
+  // adet grubu — çarpan da olsa (İSG) fiyat-boyutu da olsa (kartvizit/broşür) toplam fiyat ipucu.
+  if (groupKey === "adet") return "total";
   return "none";
 }
 

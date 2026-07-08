@@ -60,6 +60,11 @@ function writeConsent(state: ConsentState): void {
       personalization_storage: state.marketing ? "granted" : "denied",
     });
   }
+  // Meta Pixel — KVKK: pazarlama onayına göre grant/revoke (analytics.tsx revoke ile başlatır).
+  const fbq = (window as Window & { fbq?: (...args: unknown[]) => void }).fbq;
+  if (typeof fbq === "function") {
+    fbq("consent", state.marketing ? "grant" : "revoke");
+  }
 }
 
 /**

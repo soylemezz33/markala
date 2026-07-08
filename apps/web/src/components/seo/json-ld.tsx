@@ -151,7 +151,10 @@ export function ProductJsonLd({
       },
       shippingDetails: {
         "@type": "OfferShippingDetails",
-        shippingRate: { "@type": "MonetaryAmount", value: 0, currency: "TRY" },
+        // Taban kargo ücreti (KDV dahil sepet 1500₺ altı). 1500₺ üzeri ücretsiz bir
+        // promosyon; yapılandırılmış veride taban ücreti bildirmek dürüst ve güvenlidir —
+        // koşulsuz "0" Merchant Center'da "ücretsiz kargo" vaadi sayılıp ürün reddine yol açar.
+        shippingRate: { "@type": "MonetaryAmount", value: 79, currency: "TRY" },
         shippingDestination: { "@type": "DefinedRegion", addressCountry: "TR" },
         deliveryTime: {
           "@type": "ShippingDeliveryTime",
@@ -302,11 +305,8 @@ export function HowToProductionJsonLd() {
     description:
       "Markala'da matbaa siparişi nasıl verilir? Konfigüratörden teslimata kadar 5 adımda süreç.",
     totalTime: "PT5D", // ISO 8601 — 5 gün ortalama
-    estimatedCost: {
-      "@type": "MonetaryAmount",
-      currency: "TRY",
-      value: "200",
-    },
+    // estimatedCost kaldırıldı: ürünler 34,90₺'den başlıyor; sabit "200 TRY" yanıltıcıydı
+    // (kaldırılan "200 TL'den" görünür iddiasının makine-okur kalıntısı). Alan opsiyonel.
     supply: [
       { "@type": "HowToSupply", name: "Tasarım dosyası (PDF/X) veya brief" },
       { "@type": "HowToSupply", name: "Teslimat adresi" },

@@ -19,6 +19,10 @@ const VAT_RATE = 0.2;
 const VAT_DIVISOR = 1 + VAT_RATE;
 /** Konfigürasyonda gelen serbest "miktar" alanları kötüye kullanılmasın diye üst sınır. */
 const MAX_QUANTITY_PER_ITEM = 100_000;
+// İş-mantığı üst tavanı. DB numeric alanları (subtotal 12,4 / line_total 10,2) 10^8'de taşıyor →
+// eskiden büyük adet + birim fiyat 'numeric field overflow' 500'e düşüyordu (müşteri genel hata).
+// Bu tavan altında tutar; aşan sipariş için 400 + eyleme dönük mesaj (bize ulaşın) döner.
+const MAX_ORDER_TOTAL = 5_000_000;
 
 type ConfigurationInput = unknown;
 
@@ -388,6 +392,15 @@ export class OrdersService {
     // (Teorik kenar durum: tüm item'lar geçse de toplam yuvarlama/edge nedeniyle 0 çıkabilir.)
     if (!Number.isFinite(subtotal) || subtotal <= 0) {
       throw new BadRequestException("Sipariş tutarı sıfır olamaz; fiyatsız ürünler sipariş edilemiyor.");
+    }
+
+    // Üst tavan: DB numeric taşmasını (500 'numeric field overflow') net bir 400'e çevir. Kalem
+    // bazında da kontrol et (line_total numeric(10,2) tek başına da taşabilir).
+    const overLine = recalculatedItems.find((it) => it.lineTotal > MAX_ORDER_TOTAL);
+    if (overLine || subtotal > MAX_ORDER_TOTAL) {
+      throw new BadRequestException(
+        `Bu tutarda sipariş online alınamıyor. Lütfen bizimle iletişime geçin (0324 433 33 51) — kurumsal teklif hazırlayalım.`,
+      );
     }
 
     // === Kupon validation (server-side) ===

@@ -588,6 +588,9 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Menü"
                 className="lg:hidden fixed top-0 right-0 bottom-0 w-[85vw] max-w-sm bg-paper-50 shadow-2xl z-50 overflow-y-auto"
               >
                 <div className="sticky top-0 bg-ink-900 text-paper-50 px-5 py-4 flex items-center justify-between z-10 border-b border-white/10">
@@ -924,6 +927,7 @@ function MobileNavGroup({ nav, onClose }: { nav: NavCategory; onClose: () => voi
     <div className="rounded overflow-hidden">
       <button
         onClick={() => setOpen((s) => !s)}
+        aria-expanded={open}
         className="w-full flex items-center justify-between py-2.5 px-3 rounded text-sm font-medium text-ink-900 hover:bg-paper-100 transition-colors"
       >
         <span>{nav.label}</span>

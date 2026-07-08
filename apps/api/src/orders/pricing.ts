@@ -178,7 +178,8 @@ export function pickConfigurationSummary(config: unknown, fallback: string): str
 // ---------------------------------------------------------------------------
 
 export interface PricingSettings { kur: number; marj: number; kdv: number; minM2: number }
-export const DEFAULT_PRICING: PricingSettings = { kur: 46, marj: 1.5, kdv: 0.2, minM2: 1 };
+// Fallback yalnız settings fetch düşerse kullanılır; canlı işletme değeriyle eşit tutulur (marj 1.2).
+export const DEFAULT_PRICING: PricingSettings = { kur: 46, marj: 1.2, kdv: 0.2, minM2: 1 };
 export interface AreaOptionRules {
   effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
   birim?: "dolar" | "tl";
