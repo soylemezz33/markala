@@ -303,6 +303,8 @@ export interface User {
   corporateStatus?: "none" | "pending" | "approved" | "rejected";
   /** Müşteriye özel oransal indirim (%). API'den string Decimal gelebilir. */
   corporateDiscount?: string | number | null;
+  /** E-posta doğrulandı mı (yumuşak doğrulama — sipariş engellenmez, yalnız uyarı gösterilir). */
+  emailVerified?: boolean;
 }
 
 export interface Address {

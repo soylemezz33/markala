@@ -122,6 +122,54 @@ export class AuthService {
     return { ok: true };
   }
 
+  /**
+   * E-posta doğrulama bağlantısı üretir + gönderir (şifre-sıfırlama token deseniyle aynı: raw
+   * base64url token, sha256 hash saklanır, 24 saat geçerli, eski tüketilmemişler iptal). Mail
+   * hata fırlatmaz. YUMUŞAK doğrulama: hiçbir yerde sipariş/giriş bu duruma göre engellenmez.
+   */
+  async sendEmailVerification(userId: string, email: string): Promise<void> {
+    const rawToken = crypto.randomBytes(48).toString("base64url");
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat (şablon metniyle uyumlu)
+    await this.prisma.emailVerificationToken.updateMany({
+      where: { userId, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    await this.prisma.emailVerificationToken.create({ data: { userId, tokenHash, expiresAt } });
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const verifyUrl = `${webUrl}/eposta-dogrula?token=${rawToken}`;
+    await this.mail.sendVerificationEmail(email, verifyUrl); // hata fırlatmaz
+  }
+
+  /** Token ile e-postayı doğrula → user.emailVerifiedAt yazılır, token tüketilir. Idempotent. */
+  async verifyEmail(rawToken: string) {
+    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const stored = await this.prisma.emailVerificationToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+    if (!stored || stored.consumedAt || stored.expiresAt < new Date()) {
+      throw new BadRequestException(
+        "Doğrulama bağlantısı geçersiz veya süresi dolmuş. Hesabınızdan yeni bağlantı isteyebilirsiniz.",
+      );
+    }
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: stored.userId }, data: { emailVerifiedAt: new Date() } }),
+      this.prisma.emailVerificationToken.update({ where: { id: stored.id }, data: { consumedAt: new Date() } }),
+    ]);
+    this.logger.log(`email.verify.ok userId=${stored.userId}`);
+    return { ok: true };
+  }
+
+  /** Giriş yapmış kullanıcı için doğrulama mailini yeniden gönder. Zaten doğruluysa no-op ok. */
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt) throw new BadRequestException("Kullanıcı bulunamadı.");
+    if (user.emailVerifiedAt) return { ok: true, alreadyVerified: true };
+    await this.sendEmailVerification(user.id, user.email);
+    return { ok: true };
+  }
+
   /** Bilinmeyen e-postada verify edilecek geçerli dummy hash — ilk çağrıda üretip cache'ler. Bkz. createDummyHash(). */
   private getDummyHash(): Promise<string> {
     if (!this.dummyHashPromise) {
@@ -173,8 +221,9 @@ export class AuthService {
         },
       });
 
-      // Hoş geldin e-postası (fire-and-forget; başarısızlık kaydı bozmaz).
-      void this.mail.sendWelcomeEmail(user.email, user.fullName).catch(() => undefined);
+      // Doğrulama e-postası = hoş geldin + "e-postanı doğrula" (tek e-posta; şablon zaten karşılıyor).
+      // YUMUŞAK doğrulama: sipariş/giriş engellenmez; müşteri istediğinde doğrular. Fire-and-forget.
+      void this.sendEmailVerification(user.id, user.email).catch(() => undefined);
 
       return this.issueTokenPair(user, context);
     } catch (err) {
@@ -325,10 +374,13 @@ export class AuthService {
         // Mass-assignment riski yok — bu READ; yazma DTO'ları bu alanları içermez.
         corporateStatus: true,
         corporateDiscount: true,
+        emailVerifiedAt: true,
       },
     });
     if (!user) throw new UnauthorizedException("Oturum geçersiz.");
-    return user;
+    // emailVerifiedAt (tarih) → emailVerified (boolean); frontend "doğrula" uyarısını buna göre gösterir.
+    const { emailVerifiedAt, ...rest } = user;
+    return { ...rest, emailVerified: !!emailVerifiedAt };
   }
 
   private async issueTokenPair(

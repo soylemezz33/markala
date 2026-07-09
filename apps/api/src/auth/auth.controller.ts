@@ -15,7 +15,7 @@ import { ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
 import { TurnstileService } from "../captcha/turnstile.service";
 import { JwtAuthGuard } from "./jwt.guard";
-import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto } from "./dtos";
+import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyEmailDto } from "./dtos";
 
 /**
  * SECURITY HARDENING (auth.controller):
@@ -118,6 +118,22 @@ export class AuthController {
   @Post("reset-password")
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto.token, dto.newPassword);
+  }
+
+  // E-posta doğrulama (public). Token'lı bağlantıdan gelir; geçersiz/süresi dolmuş → 400.
+  // Rate limit: verify-email 10/dk/IP (main.ts).
+  @Post("verify-email")
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.auth.verifyEmail(dto.token);
+  }
+
+  // Doğrulama mailini yeniden gönder (giriş yapmış kullanıcı). Zaten doğruluysa no-op.
+  // Rate limit: resend-verification 10/saat/IP (main.ts).
+  @Post("resend-verification")
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  async resendVerification(@Req() req: Request & { user: { sub: string } }) {
+    return this.auth.resendVerification(req.user.sub);
   }
 
   @Get("me")

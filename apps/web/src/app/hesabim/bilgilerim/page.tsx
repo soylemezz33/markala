@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@markala/ui";
-import { CheckCircle, User as UserIcon, Receipt } from "@phosphor-icons/react";
+import { CheckCircle, User as UserIcon, Receipt, EnvelopeSimple } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
+import { apiClient, withRefresh } from "@/lib/api";
 import { PhoneInput } from "@/components/forms/phone-input";
 
 const inputClass =
@@ -22,8 +23,19 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resend, setResend] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
   if (!user) return null;
+
+  async function handleResendVerification() {
+    setResend("sending");
+    try {
+      await withRefresh(() => apiClient.auth.resendVerification());
+      setResend("sent");
+    } catch {
+      setResend("error");
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -51,6 +63,28 @@ export default function ProfilePage() {
         <h2 className="text-xl md:text-2xl font-semibold text-ink-900">Profil Bilgilerim</h2>
         <p className="mt-1 text-sm text-ink-500">Hesap bilgilerinizi güncelleyin.</p>
       </header>
+
+      {/* E-posta doğrulama uyarısı — YUMUŞAK: sipariş engellenmez, yalnız hatırlatma. */}
+      {user.emailVerified === false && (
+        <div className="flex flex-wrap items-center gap-3 p-4 bg-brand-100/60 border border-brand-300/50 rounded-xl">
+          <EnvelopeSimple size={22} weight="fill" className="text-brand-700 flex-none" />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-ink-900">E-postanı doğrula</div>
+            <div className="text-xs text-ink-700 mt-0.5">
+              {resend === "sent"
+                ? "Doğrulama maili gönderildi — gelen kutunu kontrol et."
+                : resend === "error"
+                  ? "Mail gönderilemedi, birazdan tekrar dene."
+                  : "Kayıt sırasında gönderdiğimiz maildeki bağlantıya tıklayarak e-postanı doğrula."}
+            </div>
+          </div>
+          {resend !== "sent" && (
+            <Button variant="outline" size="sm" onClick={handleResendVerification} disabled={resend === "sending"}>
+              {resend === "sending" ? "Gönderiliyor…" : "Doğrulama maili gönder"}
+            </Button>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="p-6 md:p-8 bg-paper-50 border border-paper-200 rounded-xl space-y-5">
         {/* Avatar */}

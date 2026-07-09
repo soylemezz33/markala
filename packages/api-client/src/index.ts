@@ -201,6 +201,9 @@ export class MarkalaApiClient {
     /** Token ile yeni şifre belirle — geçersiz/süresi dolmuş token 400 döner. */
     resetPassword: (data: { token: string; newPassword: string }) =>
       this.request<{ ok: boolean }>("POST", "/auth/reset-password", data),
+    /** E-posta doğrulama mailini yeniden gönder (giriş yapmış kullanıcı; yumuşak doğrulama). */
+    resendVerification: () =>
+      this.request<{ ok: boolean; alreadyVerified?: boolean }>("POST", "/auth/resend-verification", undefined, { auth: true }),
   };
 
   // === Analytics / Ziyaretçi Analizi & CRM ===
