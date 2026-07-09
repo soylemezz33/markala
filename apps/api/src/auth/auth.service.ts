@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -127,7 +128,7 @@ export class AuthService {
    * base64url token, sha256 hash saklanır, 24 saat geçerli, eski tüketilmemişler iptal). Mail
    * hata fırlatmaz. YUMUŞAK doğrulama: hiçbir yerde sipariş/giriş bu duruma göre engellenmez.
    */
-  async sendEmailVerification(userId: string, email: string): Promise<void> {
+  async sendEmailVerification(userId: string, email: string): Promise<boolean> {
     const rawToken = crypto.randomBytes(48).toString("base64url");
     const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat (şablon metniyle uyumlu)
@@ -138,7 +139,7 @@ export class AuthService {
     await this.prisma.emailVerificationToken.create({ data: { userId, tokenHash, expiresAt } });
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const verifyUrl = `${webUrl}/eposta-dogrula?token=${rawToken}`;
-    await this.mail.sendVerificationEmail(email, verifyUrl); // hata fırlatmaz
+    return this.mail.sendVerificationEmail(email, verifyUrl); // hata fırlatmaz; boolean döner
   }
 
   /** Token ile e-postayı doğrula → user.emailVerifiedAt yazılır, token tüketilir. Idempotent. */
@@ -167,6 +168,19 @@ export class AuthService {
     if (!user || user.deletedAt) throw new BadRequestException("Kullanıcı bulunamadı.");
     if (user.emailVerifiedAt) return { ok: true, alreadyVerified: true };
     await this.sendEmailVerification(user.id, user.email);
+    return { ok: true };
+  }
+
+  /**
+   * PUBLIC doğrulama maili yeniden gönder (e-posta ile) — katı doğrulamada giriş YAPAMAYAN
+   * kullanıcı için (login 403 ekranından). Enumeration KORUMASI: kullanıcı var/yok/doğrulu
+   * fark etmeksizin DAİMA { ok:true }. Rate-limit main.ts (5/saat/IP).
+   */
+  async resendVerificationPublic(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (user && !user.deletedAt && !user.emailVerifiedAt) {
+      await this.sendEmailVerification(user.id, user.email).catch(() => undefined);
+    }
     return { ok: true };
   }
 
@@ -221,11 +235,11 @@ export class AuthService {
         },
       });
 
-      // Doğrulama e-postası = hoş geldin + "e-postanı doğrula" (tek e-posta; şablon zaten karşılıyor).
-      // YUMUŞAK doğrulama: sipariş/giriş engellenmez; müşteri istediğinde doğrular. Fire-and-forget.
-      void this.sendEmailVerification(user.id, user.email).catch(() => undefined);
-
-      return this.issueTokenPair(user, context);
+      // KATI doğrulama: kayıt OTO-GİRİŞ YAPMAZ. Doğrulama maili gönderilir; kullanıcı e-postasını
+      // doğrulayıp giriş yapar (aksi halde login 403 döner). Mail beklenir (fire-and-forget değil):
+      // gönderilemezse kullanıcı hiç doğrulayamaz → controller "mail gitmedi" uyarısı gösterebilsin.
+      const sent = await this.sendEmailVerification(user.id, user.email).catch(() => false as const);
+      return { needsVerification: true as const, email: user.email, emailSent: sent !== false };
     } catch (err) {
       // Beklenen durum: olduğu gibi yukarı fırlat (controller doğru HTTP status'u döner).
       if (err instanceof ConflictException) throw err;
@@ -266,6 +280,17 @@ export class AuthService {
         `login.bad_password userId=${user.id} ip=${context.ipAddress ?? "?"}`,
       );
       throw new UnauthorizedException("Geçersiz e-posta veya şifre.");
+    }
+
+    // KATI e-posta doğrulama: doğrulanmamış MÜŞTERİ giriş yapamaz (403). Admin/kurumsal iç
+    // hesaplar (role != customer) muaf — kontrollü oluşturulur, self-register etmez. Mevcut
+    // kullanıcılar deploy öncesi backfill ile "doğrulanmış" işaretlendi → kilitlenmez. Frontend
+    // 403'ü yakalayıp "yeniden doğrulama maili gönder" akışını gösterir.
+    if (!user.emailVerifiedAt && user.role === "customer") {
+      this.logger.warn(`login.unverified userId=${user.id} ip=${context.ipAddress ?? "?"}`);
+      throw new ForbiddenException(
+        "Giriş yapabilmen için e-posta adresini doğrulaman gerekiyor. Kayıt sırasında gönderdiğimiz bağlantıya tıkla ya da yeni bir doğrulama maili iste.",
+      );
     }
 
     await this.prisma.user.update({

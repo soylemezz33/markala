@@ -21,6 +21,7 @@ function makePrisma(over: Partial<Record<string, any>> = {}) {
       update: vi.fn(),
     },
     refreshToken: { create: vi.fn().mockResolvedValue({}) },
+    emailVerificationToken: { updateMany: vi.fn().mockResolvedValue({}), create: vi.fn().mockResolvedValue({}) },
     ...over,
   } as any;
 }
@@ -31,9 +32,9 @@ const ctx = { userAgent: "vitest", ipAddress: "1.2.3.4" };
 describe("AuthService.register", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    // restoreAllMocks vi.fn() implementasyonunu temizler → sendWelcomeEmail'i yeniden Promise'e bağla
-    // (register `void ...sendWelcomeEmail().catch()` çağırıyor; undefined dönerse .catch patlar).
-    mail.sendWelcomeEmail.mockResolvedValue(true);
+    // Katı doğrulama: register artık sendEmailVerification (→ mail.sendVerificationEmail) çağırır;
+    // boolean döndürsün ki register `emailSent`i hesaplayabilsin.
+    mail.sendVerificationEmail.mockResolvedValue(true);
   });
 
   it("mevcut e-posta → 409 ConflictException (500 DEĞİL)", async () => {
@@ -61,14 +62,15 @@ describe("AuthService.register", () => {
     await expect(svc.register(input, ctx)).rejects.toBeInstanceOf(InternalServerErrorException);
   });
 
-  it("yeni e-posta → access + refresh token üretir", async () => {
+  it("yeni e-posta → OTO-GİRİŞ YOK, doğrulama gerekli (katı doğrulama)", async () => {
     const prisma = makePrisma();
     const svc = new AuthService(prisma, jwt, cfg, mail);
 
     const res = await svc.register({ ...input, email: "yeni@markala.test" }, ctx);
-    expect(res.accessToken).toBe("signed.jwt.token");
-    expect(res.refreshToken).toBeTruthy();
-    expect(prisma.refreshToken.create).toHaveBeenCalledOnce();
+    expect(res.needsVerification).toBe(true);
+    expect(res.email).toBe("yeni@markala.test");
+    // Oto-giriş yapılmaz → refresh token ÜRETİLMEZ.
+    expect(prisma.refreshToken.create).not.toHaveBeenCalled();
   });
 });
 

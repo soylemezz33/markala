@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container, Button } from "@markala/ui";
-import { Sparkle, ShieldCheck, PaintBrush, Truck } from "@phosphor-icons/react";
+import { Sparkle, ShieldCheck, PaintBrush, Truck, EnvelopeSimple } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
+import { apiClient } from "@/lib/api";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -18,6 +19,20 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Katı doğrulama: doğrulanmamış müşteri girişte 403 alır → yeniden-gönder akışı gösterilir.
+  const [needsVerify, setNeedsVerify] = useState(false);
+  const [resend, setResend] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function handleResend() {
+    if (!email.includes("@")) return;
+    setResend("sending");
+    try {
+      await apiClient.auth.resendVerificationPublic(email.trim().toLowerCase());
+      setResend("sent");
+    } catch {
+      setResend("error");
+    }
+  }
 
   // Giriş sonrası dönülecek hedef. Yalnız site-içi mutlak yol kabul edilir ("//host" veya
   // "http(s)://" gibi açık yönlendirme/oltalama yolları reddedilir). Yoksa /hesabim.
@@ -38,9 +53,14 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setNeedsVerify(false);
+    setResend("idle");
     const res = await login(email, password);
     if (res.ok) router.replace(safeNext());
-    else setError(res.error ?? "Giriş başarısız.");
+    else {
+      setError(res.error ?? "Giriş başarısız.");
+      if (res.needsVerification) setNeedsVerify(true);
+    }
   }
 
   return (
@@ -82,6 +102,25 @@ export default function LoginPage() {
 
             {error && (
               <div role="alert" className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>
+            )}
+            {needsVerify && (
+              <div className="p-3 bg-brand-100/60 border border-brand-300/50 rounded-md text-sm">
+                <div className="flex items-center gap-2 text-ink-900 font-medium">
+                  <EnvelopeSimple size={16} weight="fill" className="text-brand-700" /> E-postanı doğrula
+                </div>
+                <p className="mt-1 text-xs text-ink-700">
+                  {resend === "sent"
+                    ? "Doğrulama maili tekrar gönderildi — gelen kutunu ve spam klasörünü kontrol et."
+                    : resend === "error"
+                      ? "Mail gönderilemedi, birazdan tekrar dene."
+                      : "Girişten önce e-posta adresini doğrulamalısın. Bağlantı gelmedi mi?"}
+                </p>
+                {resend !== "sent" && (
+                  <button type="button" onClick={handleResend} disabled={resend === "sending"} className="mt-1.5 text-xs font-semibold text-brand-700 hover:text-brand-900 underline underline-offset-2 disabled:opacity-50">
+                    {resend === "sending" ? "Gönderiliyor…" : "Doğrulama mailini yeniden gönder"}
+                  </button>
+                )}
+              </div>
             )}
 
             <Button type="submit" size="lg" fullWidth disabled={isLoading}>

@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container, Button } from "@markala/ui";
-import { Sparkle, Gift, Lightning, Receipt } from "@phosphor-icons/react";
+import { Sparkle, Gift, Lightning, Receipt, EnvelopeSimple, CheckCircle } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { PhoneInput } from "@/components/forms/phone-input";
 import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
@@ -23,9 +22,10 @@ function toE164TR(raw: string): string | undefined {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
   const register = useAuthStore((s) => s.register);
   const isLoading = useAuthStore((s) => s.isLoading);
+  // Katı doğrulama: kayıt sonrası oto-giriş YOK → "e-postanı doğrula" ekranı gösterilir.
+  const [registered, setRegistered] = useState<{ email: string; emailSent: boolean } | null>(null);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -69,9 +69,37 @@ export default function RegisterPage() {
     }
     const res = await register({ email, password, fullName, phone: normalizedPhone, marketingConsent: marketingOptIn, turnstileToken: turnstileToken ?? undefined });
     if (res.ok) {
-      const n = new URLSearchParams(window.location.search).get("next");
-      router.replace(n && n.startsWith("/") && !n.startsWith("//") ? n : "/hesabim");
+      // Oto-giriş yok — e-postayı doğrula ekranını göster.
+      setRegistered({ email, emailSent: res.emailSent ?? true });
     } else setError(res.error ?? "Kayıt başarısız.");
+  }
+
+  // Kayıt tamam → "e-postanı doğrula" ekranı (oto-giriş yok, katı doğrulama).
+  if (registered) {
+    return (
+      <Container className="py-16 md:py-24 max-w-md text-center">
+        <div className="w-16 h-16 mx-auto rounded-full bg-success/10 grid place-items-center text-success">
+          <CheckCircle size={36} weight="fill" />
+        </div>
+        <h1 className="mt-5 text-2xl md:text-3xl font-semibold text-ink-900">Hesabın oluşturuldu 🎉</h1>
+        <p className="mt-3 text-ink-700">
+          <strong>{registered.email}</strong> adresine bir doğrulama bağlantısı gönderdik. Giriş
+          yapabilmen için maildeki bağlantıya tıklayıp e-postanı doğrula.
+        </p>
+        {!registered.emailSent && (
+          <p className="mt-3 text-sm text-error">
+            Mail şu an gönderilemedi olabilir. Birkaç dakika içinde gelmezse giriş ekranından yeniden
+            iste ya da bizimle iletişime geç.
+          </p>
+        )}
+        <div className="mt-4 p-3 bg-paper-100 rounded-lg text-sm text-ink-500 flex items-center justify-center gap-2">
+          <EnvelopeSimple size={18} className="text-brand-700" /> Gelen kutunu (ve spam klasörünü) kontrol et.
+        </div>
+        <div className="mt-6">
+          <Link href={girisHref}><Button size="lg">Giriş ekranına git</Button></Link>
+        </div>
+      </Container>
+    );
   }
 
   return (

@@ -40,11 +40,7 @@ export class AuthController {
   // Brute force: register 3 deneme / saat / IP — bot kayıt seliyle DB'yi şişirmeyi engeller.
   // Rate limit main.ts'teki rateLimit() middleware'inde uygulanır.
   @Post("register")
-  async register(
-    @Body() dto: RegisterDto,
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async register(@Body() dto: RegisterDto, @Req() req: Request) {
     const ip = this.clientIp(req);
     // Bot koruması: Turnstile doğrula (prod fail-closed) — main.ts rate-limit'ine EK katman.
     // NOT: api container'da TURNSTILE_SECRET_KEY set olmalı, yoksa prod'da tüm kayıtlar bloklanır.
@@ -53,15 +49,12 @@ export class AuthController {
         "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.",
       );
     }
-    const result = await this.auth.register(dto, {
+    // Katı e-posta doğrulama: register OTO-GİRİŞ YAPMAZ (cookie/token verilmez) — kullanıcı
+    // e-postasını doğrulayıp giriş yapar. Dönen { needsVerification, email, emailSent }.
+    return this.auth.register(dto, {
       userAgent: req.headers["user-agent"],
       ipAddress: ip,
     });
-    this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresAt);
-    return {
-      accessToken: result.accessToken,
-      user: result.user,
-    };
   }
 
   // Brute force: login 5/dk/IP. Hatalı parola enumeration limitlenir.
@@ -134,6 +127,13 @@ export class AuthController {
   @ApiBearerAuth()
   async resendVerification(@Req() req: Request & { user: { sub: string } }) {
     return this.auth.resendVerification(req.user.sub);
+  }
+
+  // PUBLIC doğrulama maili yeniden gönder (e-posta ile) — giriş YAPAMAYAN doğrulanmamış kullanıcı
+  // için (login 403 ekranı). Daima { ok:true } (enumeration koruması). Rate limit 5/saat/IP.
+  @Post("resend-verification-public")
+  async resendVerificationPublic(@Body() dto: ForgotPasswordDto) {
+    return this.auth.resendVerificationPublic(dto.email);
   }
 
   @Get("me")

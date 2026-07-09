@@ -66,6 +66,10 @@ async function bootstrap() {
   app.use(
     rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/auth/resend-verification", method: "POST" }),
   );
+  // Public doğrulama-maili yeniden gönderme (e-posta ile, girişsiz) — spam/enumeration koruması 5/saat.
+  app.use(
+    rateLimit({ windowMs: 60 * 60_000, max: 5, path: "/auth/resend-verification-public", method: "POST" }),
+  );
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/verify-email", method: "POST" }));
   app.use(
     rateLimit({ windowMs: 60 * 60_000, max: 12, path: "/auth/forgot-password", method: "POST" }),
