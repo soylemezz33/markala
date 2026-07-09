@@ -109,7 +109,11 @@ export class AuthService {
 
     const passwordHash = await argon2.hash(newPassword);
     await this.prisma.$transaction([
-      this.prisma.user.update({ where: { id: stored.userId }, data: { passwordHash } }),
+      // E-postaya gönderilen bağlantıya tıklayıp şifre belirlemek = e-posta sahipliğinin KANITI →
+      // emailVerifiedAt işaretle. Bu HEM kurumsal davet akışını (admin-onaylı B2B hesabı davet
+      // linkiyle şifre kurar → doğrulanmış → giriş yapar; aksi halde katı doğrulamada 403 yerdi)
+      // HEM de doğrulanmamış müşteriye kurtarma yolu (şifremi-unuttum → doğrulanmış) sağlar.
+      this.prisma.user.update({ where: { id: stored.userId }, data: { passwordHash, emailVerifiedAt: new Date() } }),
       this.prisma.passwordResetToken.update({
         where: { id: stored.id },
         data: { consumedAt: new Date() },
@@ -126,7 +130,8 @@ export class AuthService {
   /**
    * E-posta doğrulama bağlantısı üretir + gönderir (şifre-sıfırlama token deseniyle aynı: raw
    * base64url token, sha256 hash saklanır, 24 saat geçerli, eski tüketilmemişler iptal). Mail
-   * hata fırlatmaz. YUMUŞAK doğrulama: hiçbir yerde sipariş/giriş bu duruma göre engellenmez.
+   * hata fırlatmaz; gönderim sonucunu (boolean) döner. KATI doğrulama: doğrulanmamış müşteri
+   * giriş yapamaz (login 403); register oto-giriş yapmaz.
    */
   async sendEmailVerification(userId: string, email: string): Promise<boolean> {
     const rawToken = crypto.randomBytes(48).toString("base64url");
