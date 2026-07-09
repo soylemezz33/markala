@@ -88,7 +88,23 @@ export function computeConfiguredPrice(
     const n = Number(sels[adet.key]);
     if (Number.isFinite(n) && n > 0) qty = n;
   }
-  return Math.max(0, unit * qty);
+  // Hacim indirimi: yalnız lineer adet-çarpanlı ürünlerde (İSG). round2 = server ile parite.
+  const gross = unit * qty * (1 - volumeDiscountRate(qty));
+  return Math.round(Math.max(0, gross) * 100) / 100;
+}
+
+/**
+ * Hacim/adet indirimi kademesi — ⚠️ api pricing.ts'teki volumeDiscountRate ile BİREBİR AYNI
+ * olmalı (client/server fiyat paritesi). Yalnız "adet" ayrı çarpan-boyutu olan lineer ürünlerde
+ * (İSG levhaları) uygulanır; matris (kartvizit) ve area ürünler etkilenmez.
+ */
+export function volumeDiscountRate(qty: number): number {
+  if (qty >= 250) return 0.35;
+  if (qty >= 100) return 0.28;
+  if (qty >= 50) return 0.22;
+  if (qty >= 25) return 0.15;
+  if (qty >= 10) return 0.08;
+  return 0;
 }
 
 /**

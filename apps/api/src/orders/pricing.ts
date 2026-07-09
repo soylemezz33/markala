@@ -108,6 +108,21 @@ export function normalizeSelections(
   return effectiveSelections(opts, rawSelections, resolved);
 }
 
+/**
+ * Hacim/adet indirimi kademesi — YALNIZ "adet" ayrı bir çarpan-boyutu olan (lineer fiyatlı)
+ * ürünlerde uygulanır (İSG levhaları: birim × adet). Matris ürünler (kartvizit/broşür, adet
+ * fiyat-boyutu → qty=1) ve area ürünler (computeAreaPrice) bu yoldan GEÇMEZ = etkilenmez.
+ * ⚠️ web configurator.ts'teki volumeDiscountRate ile BİREBİR AYNI olmalı (client/server parite).
+ */
+export function volumeDiscountRate(qty: number): number {
+  if (qty >= 250) return 0.35;
+  if (qty >= 100) return 0.28;
+  if (qty >= 50) return 0.22;
+  if (qty >= 25) return 0.15;
+  if (qty >= 10) return 0.08;
+  return 0;
+}
+
 export function computeConfiguredPrice(options: PricingOption[], prices: PricingPriceRow[], selections: Record<string, string>): number {
   const sels = selections && typeof selections === "object" ? selections : {};
   const opts = Array.isArray(options) ? options : [];
@@ -147,7 +162,9 @@ export function computeConfiguredPrice(options: PricingOption[], prices: Pricing
     const n = Number(sels[adet.key]);
     if (Number.isFinite(n) && n > 0) qty = n;
   }
-  return Math.max(0, unit * qty);
+  // Hacim indirimi: yalnız lineer adet-çarpanlı ürünlerde (İSG). round2 = web ile parite.
+  const gross = unit * qty * (1 - volumeDiscountRate(qty));
+  return Math.round(Math.max(0, gross) * 100) / 100;
 }
 
 /** Sipariş kaleminin `configuration` JSON'undan konfigüratör seçimlerini güvenle çıkarır. */

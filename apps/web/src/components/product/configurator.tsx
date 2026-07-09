@@ -247,6 +247,17 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     [product.options],
   );
 
+  // Hacim indirimi YALNIZ "adet" ayrı çarpan-boyutu olan lineer ürünlerde (İSG) uygulanır: adet
+  // dimension VAR ve BAŞKA bir dimension (ör. ebat) da var. Matris (kartvizit, tek dimension=adet
+  // → adet fiyat-boyutu) ve area ürünler bu koşulu sağlamaz → rozet gösterilmez (fiyata da etkisiz).
+  const hasVolumeAdet = useMemo(() => {
+    const dims = new Set<string>();
+    for (const o of (product.options ?? []) as RawOption[]) {
+      if (o.groupRole === "dimension") dims.add(o.groupKey);
+    }
+    return dims.has("adet") && [...dims].some((k) => k !== "adet");
+  }, [product.options]);
+
   // Sabit alt bar (fiyat + Sepete Ekle) görünürlüğü: gerçek (kolon-içi) CTA ekranda
   // görünürken bar gizlenir → footer örtülmez, çift buton olmaz; aksi halde bar görünür.
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -376,6 +387,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
               hintMode={isArea && group.groupKey === "malzeme" ? "total" : groupHintMode(product, group.groupKey)}
               layout={isArea && group.groupKey === "malzeme" ? "cards" : "auto"}
               unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
+              volumeBadge={hasVolumeAdet && group.groupKey === "adet"}
             />
           ))}
           <DesignUpload />

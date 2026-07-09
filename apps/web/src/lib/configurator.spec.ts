@@ -270,10 +270,10 @@ describe("optionPriceHints", () => {
       ] as any,
     };
     const hints = optionPriceHints(product, { ebat: "a4", baski: "normal", adet: "10" });
-    // adet "10" → qty=10, unit=20 → total=200
-    expect(hints["adet"]!["10"]).toBe(200);
-    // adet "50" → qty=50, unit=20 → total=1000
-    expect(hints["adet"]!["50"]).toBe(1000);
+    // adet "10" → qty=10, unit=20 → 200 × %8 hacim indirimi = 184
+    expect(hints["adet"]!["10"]).toBe(184);
+    // adet "50" → qty=50, unit=20 → 1000 × %22 hacim indirimi = 780
+    expect(hints["adet"]!["50"]).toBe(780);
   });
 
   it("priced grup fiyat satırı yoksa hint=null", () => {

@@ -79,6 +79,29 @@ describe("computeConfiguredPrice", () => {
     const options = [opt("paket","priced","cyp"), opt("adet","dimension","1000")];
     expect(computeConfiguredPrice(options, [], { paket:"cyp", adet:"1000" })).toBe(0);
   });
+
+  // Hacim/adet indirimi — YALNIZ lineer adet-çarpanlı (İSG) ürünlerde. birim=34.90.
+  describe("hacim indirimi (İSG lineer)", () => {
+    const isg = [opt("ebat","dimension","25x35"), opt("baski","priced","uv"), opt("adet","dimension","1")];
+    const prices = [{ groupKey:"baski", optionKey:"uv", dimKey:"25x35", price:34.9 }];
+    const at = (adet: string) => computeConfiguredPrice(isg, prices, { ebat:"25x35", baski:"uv", adet });
+    it("qty<10 indirimsiz: 1→34.90, 5→174.50", () => {
+      expect(at("1")).toBe(34.9);
+      expect(at("5")).toBe(174.5);
+    });
+    it("10 adet %8: 34.90×10×0.92 = 321.08", () => expect(at("10")).toBe(321.08));
+    it("25 adet %15: 34.90×25×0.85 = 741.63", () => expect(at("25")).toBe(741.63));
+    it("50 adet %22: 34.90×50×0.78 = 1361.10", () => expect(at("50")).toBe(1361.1));
+    it("100 adet %28: 34.90×100×0.72 = 2512.80", () => expect(at("100")).toBe(2512.8));
+    it("250 adet %35: 34.90×250×0.65 = 5671.25", () => expect(at("250")).toBe(5671.25));
+  });
+
+  it("matris (kartvizit) hacim indiriminden ETKİLENMEZ (adet=fiyat-boyutu, qty=1)", () => {
+    // adet fiyat-boyutu → qty=1; 1000 adetlik hücre 290 kalır (indirim uygulanmaz).
+    const options = [opt("paket","priced","cyp"), opt("adet","dimension","1000")];
+    const prices = [{ groupKey:"paket", optionKey:"cyp", dimKey:"1000", price:290 }];
+    expect(computeConfiguredPrice(options, prices, { paket:"cyp", adet:"1000" })).toBe(290);
+  });
 });
 
 describe("extractSelections / pickConfigurationSummary", () => {

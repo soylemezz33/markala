@@ -3,6 +3,7 @@
 import { cn } from "@markala/ui";
 import { Lock, CaretDown, MagnifyingGlass } from "@phosphor-icons/react";
 import { formatPrice } from "@/lib/format";
+import { volumeDiscountRate } from "@/lib/configurator";
 import { memo, useRef, useState, useEffect, useCallback } from "react";
 
 interface OptionItem {
@@ -26,6 +27,14 @@ interface Props {
   layout?: "auto" | "cards";
   /** Fiyat ipucu sonekine eklenir (ör. "/m²"). */
   unitSuffix?: string;
+  /** Adet grubu hacim indirimine tabi mi (İSG lineer) → tirajlarda "-%N" rozeti gösterilir. */
+  volumeBadge?: boolean;
+}
+
+/** optionKey (adet sayısı) için hacim indirimi rozet metni; indirim yoksa null. */
+function volumeBadgeText(optionKey: string): string | null {
+  const r = volumeDiscountRate(Number(optionKey));
+  return r > 0 ? `-%${Math.round(r * 100)}` : null;
 }
 
 const MANY = 8;
@@ -253,7 +262,7 @@ function SearchableDropdown({
   );
 }
 
-function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix }: Props) {
+function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix, volumeBadge }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
 
   if (disabled && !locked) {
@@ -423,6 +432,16 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                     )}
                   >
                     {hintLabel}
+                  </span>
+                )}
+                {volumeBadge && volumeBadgeText(opt.optionKey) && (
+                  <span
+                    className={cn(
+                      "mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none",
+                      isSelected ? "bg-paper-50/20 text-paper-50" : "bg-success/12 text-success",
+                    )}
+                  >
+                    {volumeBadgeText(opt.optionKey)} indirim
                   </span>
                 )}
               </button>
