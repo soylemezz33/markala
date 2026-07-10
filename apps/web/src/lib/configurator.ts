@@ -416,6 +416,8 @@ export interface AreaOptionRules {
   effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
   birim?: "dolar" | "tl";
   maxM2?: number;
+  /** En (genişlik) tavanı cm — örn. araç magneti 60. UI'da giriş bu değere clamp edilir. */
+  maxEn?: number;
 }
 type AreaOption = PricingOption & { rules?: AreaOptionRules | null };
 

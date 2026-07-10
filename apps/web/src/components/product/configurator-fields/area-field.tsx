@@ -34,11 +34,24 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const minApplied = alan > 0 && alan < minM2;
 
   // Seçili malzemenin maxM2 sınırı (tek parça) — aşılırsa uyarı.
-  const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number } | null }>).find(
+  const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number; maxEn?: number } | null }>).find(
     (o) => o.groupKey === "malzeme" && o.optionKey === sel.malzeme,
   );
   const maxM2 = matOpt?.rules?.maxM2;
   const maxExceeded = typeof maxM2 === "number" && maxM2 > 0 && alan > maxM2;
+
+  // En (genişlik) tavanı — örn. araç magneti eni en fazla 60 cm, boy serbest. Preset'ler
+  // filtrelenir, En girişi tavana clamp edilir.
+  const maxEnRaw = matOpt?.rules?.maxEn;
+  const maxEn = typeof maxEnRaw === "number" && maxEnRaw > 0 ? maxEnRaw : undefined;
+  const presets = maxEn ? PRESETS.filter(([e]) => e <= maxEn) : PRESETS;
+  const setEn = (raw: string) => {
+    if (maxEn) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n > maxEn) return set("en", String(maxEn));
+    }
+    set("en", raw);
+  };
 
   const inputCls =
     "w-full rounded-lg border border-paper-300 px-3 py-2.5 text-ink-900 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-300/40";
@@ -48,7 +61,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
       <span className="block text-sm font-medium text-ink-900">Ölçü (cm)</span>
 
       <div className="flex flex-wrap gap-2">
-        {PRESETS.map(([e, b]) => {
+        {presets.map(([e, b]) => {
           const on = en === String(e) && boy === String(b);
           return (
             <button
@@ -72,13 +85,16 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
 
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
-          <span className="mb-1 block text-xs text-ink-500">En (cm)</span>
+          <span className="mb-1 block text-xs text-ink-500">
+            En (cm){maxEn ? ` · en fazla ${maxEn}` : ""}
+          </span>
           <input
             type="number"
             min={1}
+            max={maxEn}
             inputMode="numeric"
             value={en}
-            onChange={(e) => set("en", e.target.value)}
+            onChange={(e) => setEn(e.target.value)}
             className={inputCls}
             placeholder="Özel ölçü"
           />
@@ -133,6 +149,12 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
       {maxExceeded && (
         <p role="alert" className="text-xs font-medium text-red-600">
           Bu malzeme tek parçada en fazla {maxM2} m² basılabilir. Daha küçük ölçü girin ya da işi bölün.
+        </p>
+      )}
+
+      {maxEn && (
+        <p className="text-[11px] text-ink-500">
+          En (genişlik) en fazla {maxEn} cm’dir; boy (uzunluk) istediğiniz kadar olabilir.
         </p>
       )}
     </div>

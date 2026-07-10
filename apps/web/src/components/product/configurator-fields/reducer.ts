@@ -24,8 +24,18 @@ export type ConfiguratorAction =
   | { type: "RESET"; product: Product };
 
 export function initState(product: Product): ConfiguratorState {
+  const selections = initSelections(product);
+  // Area (m²) ürünler ölçü boş açılınca fiyat çıkmaz → sayfa "Teklif Al" gösterir.
+  // Varsayılan ölçüyü (60×150) ön-dolu getir ki ürün doğrudan fiyatlı + "Sepete Ekle"
+  // açılsın (müşteri yine dilediği ölçüyü girebilir). maxEn kuralı olan üründe (araç
+  // magneti gibi) area-field varsayılanı zaten tavana çeker.
+  if ((product as { pricingMode?: string }).pricingMode === "area") {
+    if (!selections.en) selections.en = "60";
+    if (!selections.boy) selections.boy = "150";
+    if (!selections.adet) selections.adet = "1";
+  }
   return {
-    selections: initSelections(product),
+    selections,
     quantity: 1,
     uploadedFile: null,
     uploadedFileName: undefined,
