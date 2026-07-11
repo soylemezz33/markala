@@ -67,6 +67,8 @@ interface IncomingPayload {
   taxOffice?: string;
   taxNumber?: string;
   couponCode?: string;
+  /** Sadakat: harcanacak puan — backend bakiye + kurallara göre yeniden doğrular. */
+  redeemPoints?: number;
   /** Ödeme yolu — backend doğrular (cari = yalnız onaylı kurumsal). */
   paymentMethod?: string; // iyzico | cari | havale
   notes?: string;
@@ -170,6 +172,11 @@ export async function POST(req: NextRequest) {
       : {}),
     // Kupon kodu → backend gerçek indirimi sunucuda hesaplar/doğrular (geçersizse 400 döner).
     couponCode: clamp(body.couponCode, 40)?.toUpperCase(),
+    // Sadakat puanı → backend bakiye + kurallara göre yeniden doğrular (client'a güvenilmez).
+    redeemPoints:
+      typeof body.redeemPoints === "number" && body.redeemPoints > 0
+        ? Math.floor(body.redeemPoints)
+        : undefined,
     // Ödeme yolu → backend doğrular: "cari" yalnız onaylı kurumsal müşteri + kredi limiti dahilinde.
     // Bilinmeyen değer GÖNDERME (backend null/iyzico'ya düşürür); cari kötüye kullanımı sunucuda durur.
     paymentMethod: body.paymentMethod && ALLOWED_PAYMENT_METHODS.has(body.paymentMethod)

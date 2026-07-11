@@ -82,11 +82,34 @@ export default function CheckoutPage() {
   // Kullanıcının hesabında kayıtlı adresleri — giriş yapmışsa çekilir, seçilebilir + varsayılan otomatik dolar.
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  // Sadakat puanı — yalnız program AÇIKSA (LOYALTY_ENABLED) ve giriş yapılmışsa sunulur.
+  // enabled=false → hiçbir puan UI'ı görünmez, redeemPoints gönderilmez (checkout değişmez).
+  const [loyalty, setLoyalty] = useState<{ enabled: boolean; balance: number; redeemPerTl: number } | null>(null);
+  const [redeemPoints, setRedeemPoints] = useState(0);
   /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/1500 fallback korunur. */
   const [shippingConfig, setShippingConfig] = useState({ fee: 79, freeThreshold: 1500 });
   useEffect(() => {
     apiClient.settings.shipping().then(setShippingConfig).catch(() => {});
   }, []);
+
+  // Sadakat puan durumu — giriş yapmış kullanıcı için (program kapalıysa enabled=false döner).
+  useEffect(() => {
+    if (isBootstrapping || !user) {
+      setLoyalty(null);
+      return;
+    }
+    let cancelled = false;
+    withRefresh(() => apiClient.loyalty.me())
+      .then((d) => {
+        if (!cancelled) setLoyalty({ enabled: d.enabled, balance: d.balance, redeemPerTl: d.redeemPerTl });
+      })
+      .catch(() => {
+        if (!cancelled) setLoyalty(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, isBootstrapping]);
 
   // Sayfa yenilenince couponInfo (local) kaybolur ama couponCode store'da kalır → DB kuponu
   // (HOSGELDIN dışı) sessizce düşerdi. Mount'ta store'daki kuponu backend'de bir kez yeniden
@@ -205,7 +228,25 @@ export default function CheckoutPage() {
       ? Number(user.corporateDiscount ?? 0) || 0
       : 0;
   const corpDiscount = corpPct > 0 ? Math.round(sub * corpPct) / 100 : 0;
-  const subAfterDiscount = Math.max(0, sub - discount - corpDiscount);
+
+  // === Sadakat puanı harcama (önizleme; gerçek indirim siparişte sunucuda yeniden doğrulanır) ===
+  // Sunucu kuralıyla aynı sınır: bakiye (tam TL), ara toplamın %50'si ve kupon/kurumsal sonrası
+  // kalan tutar. enabled=false ise tüm değerler 0 → puan UI'ı gizli, checkout değişmez.
+  const loyaltyOn = Boolean(loyalty?.enabled && user);
+  const redeemPerTl = loyalty?.redeemPerTl ?? 100;
+  const roomBeforeRedeem = Math.max(0, sub - discount - corpDiscount);
+  const maxRedeemTl = loyaltyOn
+    ? Math.min(
+        Math.floor(sub * 0.5),
+        Math.floor(roomBeforeRedeem),
+        Math.floor((loyalty?.balance ?? 0) / redeemPerTl),
+      )
+    : 0;
+  const maxRedeemPoints = Math.max(0, maxRedeemTl * redeemPerTl);
+  const redeemApplied = Math.max(0, Math.min(redeemPoints, maxRedeemPoints));
+  const redeemTl = redeemApplied / redeemPerTl;
+
+  const subAfterDiscount = Math.max(0, sub - discount - corpDiscount - redeemTl);
   // Kargo eşiği İNDİRİM ÖNCESİ ara toplama göre — sepet ekranı VE backend ile birebir aynı
   // (aksi halde kuponlu siparişte sepet "ücretsiz" derken ödeme 79₺ ekleyebiliyordu).
   // free_shipping kuponu (backend doğruladıysa) kargoyu sıfırlar.
@@ -390,6 +431,7 @@ export default function CheckoutPage() {
           taxOffice,
           taxNumber,
           couponCode: appliedCoupon ?? undefined,
+          redeemPoints: redeemApplied > 0 ? redeemApplied : undefined,
           paymentMethod: opts.paymentMethod,
           items: cartItems.map((i) => ({
             productSlug: i.productSlug,
@@ -985,6 +1027,12 @@ export default function CheckoutPage() {
                       value={<Price amount={-corpDiscount} className="text-success" />}
                     />
                   )}
+                  {redeemApplied > 0 && (
+                    <Row
+                      label={`Puan indirimi (${redeemApplied.toLocaleString("tr-TR")} puan)`}
+                      value={<Price amount={-redeemTl} className="text-success" />}
+                    />
+                  )}
                   <Row
                     label="Kargo"
                     value={
@@ -1057,6 +1105,55 @@ export default function CheckoutPage() {
                     </>
                   )}
                 </div>
+
+                {/* Sadakat puanı kullan — yalnız program açık + kullanılabilir puan varsa */}
+                {loyaltyOn && maxRedeemPoints > 0 && (
+                  <div className="mt-4 pt-4 border-t border-paper-200">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-ink-700">Puanlarımı kullan</label>
+                      <span className="text-[11px] text-ink-500">
+                        {(loyalty?.balance ?? 0).toLocaleString("tr-TR")} puan · en fazla{" "}
+                        {maxRedeemPoints.toLocaleString("tr-TR")}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="number"
+                        min={0}
+                        max={maxRedeemPoints}
+                        step={redeemPerTl}
+                        value={redeemApplied || ""}
+                        onChange={(e) =>
+                          setRedeemPoints(Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                        }
+                        placeholder="0"
+                        className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
+                      />
+                      <Button
+                        variant="outline"
+                        size="md"
+                        onClick={() => setRedeemPoints(maxRedeemPoints)}
+                        disabled={redeemApplied >= maxRedeemPoints}
+                      >
+                        Tümü
+                      </Button>
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between">
+                      <p className="text-[11px] text-ink-500">
+                        {redeemPerTl} puan = 1 TL · en fazla sepetin %50'si
+                      </p>
+                      {redeemApplied > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setRedeemPoints(0)}
+                          className="text-xs text-ink-500 hover:text-error underline"
+                        >
+                          kaldır
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <ul className="grid grid-cols-3 gap-2 text-xs text-ink-500">
