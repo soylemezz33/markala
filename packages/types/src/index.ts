@@ -40,6 +40,8 @@ export interface Category {
   faqs?: FaqItem[];
   /** Kategoriye özel meta */
   seo?: SeoMeta;
+  /** Son güncelleme (ISO 8601) — sitemap lastModified için. API'den gelir, yoksa undefined. */
+  updatedAt?: string;
 }
 
 export interface ProductOption {
@@ -195,6 +197,8 @@ export interface Product {
   brand?: string;
   /** GTIN/MPN gibi tanımlar (mock olarak slug üzerinden üretilir) */
   sku?: string;
+  /** Son güncelleme (ISO 8601) — sitemap lastModified için. API'den gelir, yoksa undefined. */
+  updatedAt?: string;
 }
 
 export interface Testimonial {

@@ -13,14 +13,13 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     lang: "tr-TR",
     categories: ["business", "shopping", "productivity"],
-    // TODO(SEO): PWA ikonu olarak SVG (image/svg+xml) kullanılıyor; iOS Safari ve eski Android
-    //   Chrome SVG manifest ikonunu yok sayar → ana ekranda genel tarayıcı ikonu görünür.
-    //   public/icon-192.png ve public/icon-512.png oluşturulunca burası şu şekilde güncellenecek:
-    //     { src: "/icon-192.png", sizes: "192x192", type: "image/png" }
-    //     { src: "/icon-512.png", sizes: "512x512", type: "image/png" }
+    // Raster PNG ikonlar — iOS Safari ve eski Android Chrome SVG manifest ikonunu yok sayar,
+    // bu yüzden ana ekran/PWA kurulumunda gerçek marka ikonu görünsün diye PNG kullanılır.
     icons: [
-      { src: "/api/mockup?theme=brand&w=192&h=192", sizes: "192x192", type: "image/svg+xml" },
-      { src: "/api/mockup?theme=brand&w=512&h=512", sizes: "512x512", type: "image/svg+xml" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

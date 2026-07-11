@@ -25,6 +25,16 @@ function num(v: unknown, fallback = 0): number {
 }
 
 /**
+ * API'den gelen updatedAt'i (ISO string veya Date) güvenli ISO string'e çevirir.
+ * Geçersiz/eksikse undefined döner — sitemap sahte lastModified yazmaz.
+ */
+function isoDate(v: unknown): string | undefined {
+  if (typeof v !== "string" && !(v instanceof Date)) return undefined;
+  const d = new Date(v as string);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+/**
  * API ürününü (Prisma şekli + content JSON) storefront Product şekline eşler.
  *
  * Veri kaynağı stratejisi:
@@ -66,6 +76,7 @@ function mapProduct(p: ApiProduct): Product {
     seo: content.seo as Product["seo"] | undefined,
     brand: content.brand as string | undefined,
     sku: content.sku as string | undefined,
+    updatedAt: isoDate(p.updatedAt),
   };
 }
 
@@ -223,6 +234,7 @@ function mapCategory(c: Record<string, unknown>): Category {
     features: content.features as string[] | undefined,
     faqs: content.faqs as Category["faqs"],
     seo: content.seo as Category["seo"],
+    updatedAt: isoDate(c.updatedAt),
   };
 }
 
