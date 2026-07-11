@@ -15,19 +15,24 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const SITE = "https://markala.com.tr";
 
+/** Bir değer sosyal crawler'ın kabul edeceği raster URL mi (http/https veya /path, mockup SVG değil). */
+function isRasterUrl(url: string): boolean {
+  return Boolean(
+    url &&
+      !url.includes("/api/mockup") &&
+      (url.startsWith("http") || url.startsWith("/")),
+  );
+}
+
 /**
- * Blog yazısı og:image — gerçek raster URL varsa onu döner; /api/mockup SVG ise
- * /og-default.png'e düşer (sosyal crawler'lar SVG'yi reddeder).
- * coverTheme genellikle /api/mockup?theme=card&... şeklinde SVG endpoint'tir.
+ * Blog yazısı og:image önceliği:
+ * 1) Yazıya özel raster `ogImage` (admin'den) — varsa onu kullan.
+ * 2) Kapak görseli raster ise onu kullan.
+ * 3) Aksi halde /og-default.png (sosyal crawler'lar /api/mockup SVG'sini reddeder).
  */
-function blogOgImage(coverTheme: string): string {
-  if (
-    coverTheme &&
-    !coverTheme.includes("/api/mockup") &&
-    (coverTheme.startsWith("http") || coverTheme.startsWith("/"))
-  ) {
-    return coverTheme;
-  }
+function blogOgImage(coverTheme: string, ogImage?: string): string {
+  if (ogImage && isRasterUrl(ogImage)) return ogImage;
+  if (isRasterUrl(coverTheme)) return coverTheme;
   return "/og-default.png";
 }
 
@@ -56,17 +61,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       authors: [post.authorName],
       tags: post.tags,
       url: `/blog/${post.slug}`,
-      // og:image: gerçek raster görsel (http/https veya /uploads/...) varsa onu kullan;
-      // /api/mockup SVG ise /og-default.png'e düş — sosyal crawler'lar SVG'yi reddeder.
-      // TODO(SEO): raster og:image varsayılanı gerekir (mockup SVG sosyal crawler'larda render olmaz)
-      //   — blog yazısına özel kapak görseli eklenince buraya bağla; /og-default.png geçici.
-      images: [{ url: blogOgImage(post.coverTheme), width: 1200, height: 630, alt: post.title }],
+      // og:image: yazıya özel raster ogImage (admin) → raster kapak → /og-default.png sırasıyla.
+      // Sosyal crawler'lar /api/mockup SVG'sini reddettiği için asla SVG dönmez.
+      images: [
+        { url: blogOgImage(post.coverTheme, post.ogImage), width: 1200, height: 630, alt: post.title },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
-      images: [blogOgImage(post.coverTheme)],
+      images: [blogOgImage(post.coverTheme, post.ogImage)],
     },
   };
 }

@@ -34,6 +34,8 @@ export interface BlogPost {
   readingMinutes: number;
   seoTitle?: string;
   seoDescription?: string;
+  /** Yazıya özel raster OG görseli (admin'den). Sosyal paylaşımda kullanılır; yoksa /og-default.png. */
+  ogImage?: string;
 }
 
 // Mock içerik kaldırıldı — API'den gelir; hata/boş → [] / undefined.
@@ -71,6 +73,7 @@ function mapPost(p: Record<string, unknown>): BlogPost {
     readingMinutes: estimateReadingMinutes(content),
     seoTitle: (p.seoTitle as string | null) ?? undefined,
     seoDescription: (p.seoDescription as string | null) ?? undefined,
+    ogImage: (p.ogImage as string | null) ?? undefined,
   };
 }
 
