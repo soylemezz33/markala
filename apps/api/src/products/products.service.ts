@@ -53,6 +53,8 @@ export class ProductsService {
           parameters: true,
           pricingMode: true,
           updatedAt: true,
+          ratingAverage: true,
+          ratingCount: true,
           category: { select: { slug: true, name: true } },
         },
       }) as { id: string; [key: string]: unknown }[];

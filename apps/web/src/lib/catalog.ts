@@ -63,11 +63,15 @@ function mapProduct(p: ApiProduct): Product {
     displayPrice: typeof p.displayPrice === "number" ? p.displayPrice : null,
     pricingMode: (p as { pricingMode?: string }).pricingMode ?? "additive",
     bestseller: Boolean(p.bestseller),
-    // SAHTE PUAN YOK: content.rating DB'de SEEDED (42 üründe dolu, gerçek yorumla BAĞLANTISIZ) →
-    // gösterilince "★4.6 (47 yorum)" derken yorum bölümü "henüz yorum yok" diyordu (çelişki) +
-    // sahte JSON-LD aggregateRating (Google cezası). Gerçek yorum aggregate'i (getProductRatingStats)
-    // wire edilene kadar HİÇ rating gösterme.
-    rating: undefined,
+    // GERÇEK PUAN: Product.ratingAverage/ratingCount, API tarafında YALNIZ onaylanmış
+    // yorumlardan hesaplanır (reviews.service.recomputeProductRating). Onaylı yorum yoksa
+    // ratingCount=0 → rating undefined → kart/başlık yıldızı ve JSON-LD aggregateRating
+    // GÖSTERİLMEZ. Böylece sahte puan / Google yapılandırılmış-veri cezası riski olmaz;
+    // yorum bölümüyle de tutarlı (yorum varsa yıldız var, yoksa yok).
+    rating:
+      typeof p.ratingCount === "number" && p.ratingCount > 0 && p.ratingAverage != null
+        ? { average: num(p.ratingAverage), count: p.ratingCount }
+        : undefined,
     features: content.features as string[] | undefined,
     useCases: content.useCases as string[] | undefined,
     specifications: content.specifications as Product["specifications"] | undefined,

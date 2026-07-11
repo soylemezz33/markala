@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -14,12 +15,41 @@ export class ReviewsService {
     });
   }
 
-  setApproval(id: string, isApproved: boolean) {
-    return this.prisma.review.update({ where: { id }, data: { isApproved } });
+  async setApproval(id: string, isApproved: boolean) {
+    const review = await this.prisma.review.update({ where: { id }, data: { isApproved } });
+    // Onay durumu değişince ürünün denormalize rating'ini (ortalama + adet) yeniden hesapla.
+    await this.recomputeProductRating(review.productId);
+    return review;
   }
 
-  remove(id: string) {
-    return this.prisma.review.delete({ where: { id } });
+  async remove(id: string) {
+    const review = await this.prisma.review.delete({ where: { id } });
+    // Silinen yorum onaylıysa ortalama/adet değişir → yeniden hesapla.
+    await this.recomputeProductRating(review.productId);
+    return review;
+  }
+
+  /**
+   * Bir ürünün ratingAverage/ratingCount alanlarını YALNIZCA onaylanmış yorumlardan
+   * yeniden hesaplar ve Product'a yazar (denormalize). Onaylı yorum yoksa count=0,
+   * average=null → storefront hiç yıldız göstermez (sahte puan olmaz). Onay/silme
+   * akışında çağrılır; storefront okuma yaptığında ek sorgu gerekmez.
+   */
+  private async recomputeProductRating(productId: string): Promise<void> {
+    const agg = await this.prisma.review.aggregate({
+      where: { productId, isApproved: true },
+      _avg: { rating: true },
+      _count: { _all: true },
+    });
+    const count = agg._count._all;
+    const avg = agg._avg.rating;
+    await this.prisma.product.update({
+      where: { id: productId },
+      data: {
+        ratingCount: count,
+        ratingAverage: count > 0 && avg != null ? new Prisma.Decimal(avg.toFixed(2)) : null,
+      },
+    });
   }
 
   // === Public (storefront) ===
@@ -102,9 +132,7 @@ export class ReviewsService {
       select: { id: true },
     });
     if (!purchased) {
-      throw new ForbiddenException(
-        "Yalnızca satın aldığınız ürünlere yorum yapabilirsiniz.",
-      );
+      throw new ForbiddenException("Yalnızca satın aldığınız ürünlere yorum yapabilirsiniz.");
     }
 
     // Review modelinde başlık alanı yok → varsa başlığı yorumun başına ekle.
