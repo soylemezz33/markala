@@ -23,6 +23,7 @@ const STATIC_ROUTES = [
   { path: "/numune-talebi", priority: 0.75, freq: "monthly" as const },
   { path: "/yardim", priority: 0.7, freq: "weekly" as const },
   { path: "/referanslar", priority: 0.6, freq: "monthly" as const },
+  { path: "/portfolio", priority: 0.7, freq: "monthly" as const },
   { path: "/hakkimizda", priority: 0.7, freq: "monthly" as const },
   { path: "/iletisim", priority: 0.7, freq: "monthly" as const },
   { path: "/kargo-takip", priority: 0.5, freq: "monthly" as const },

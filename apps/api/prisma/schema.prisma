@@ -880,6 +880,26 @@ model Brand {
   @@map("brands")
 }
 
+/// Tamamlanmış iş / portfolyo öğesi — storefront "Portfolyo" galerisinde gösterilir.
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?  @db.Text
+  imageUrl    String   @map("image_url")
+  category    String? // iş türü / ürün kategorisi etiketi (ör. "Kartvizit", "Branda")
+  client      String? // müşteri adı (opsiyonel; yalnız izin varsa)
+  productSlug String?  @map("product_slug") // ilgili ürün sayfasına link (opsiyonel)
+  tags        String[] @default([])
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@map("portfolio_items")
+}
+
 // === Fiyat şeması (Task A1) ===
 
 model ProductOption {
