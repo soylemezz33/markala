@@ -19,6 +19,7 @@ export default function robots(): MetadataRoute.Robots {
           "/favorilerim",
           "/hesabim",
           "/sifre-sifirla",
+          "/eposta-dogrula",
           "/kvkk-basvuru",
           "/widget/",
           "/*?utm_*",

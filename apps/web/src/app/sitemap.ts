@@ -4,6 +4,7 @@ import { getBlogPosts, getBlogCategories } from "@/lib/blog";
 import { getLegalSlugs } from "@/lib/legal";
 import { cities, getAllDistrictParams } from "@/lib/cities";
 import { services } from "@/lib/services";
+import { helpArticleSlugs } from "@/lib/help-articles";
 
 const SITE = "https://markala.com.tr";
 
@@ -18,6 +19,7 @@ const STATIC_ROUTES = [
   { path: "/sozluk", priority: 0.8, freq: "monthly" as const },
   { path: "/fiyat-listesi", priority: 0.95, freq: "weekly" as const },
   { path: "/kurumsal", priority: 0.85, freq: "monthly" as const },
+  { path: "/teklif-al", priority: 0.8, freq: "monthly" as const },
   { path: "/yardim", priority: 0.7, freq: "weekly" as const },
   { path: "/referanslar", priority: 0.6, freq: "monthly" as const },
   { path: "/hakkimizda", priority: 0.7, freq: "monthly" as const },
@@ -81,6 +83,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }));
 
+  // Yardım merkezi makaleleri — tam metadata + ArticleJsonLd + Breadcrumb'a sahip,
+  // indekse hazır. /yardim hub'ı yanında tekil makaleler de sitemap'e girer.
+  const helpArticleEntries: MetadataRoute.Sitemap = helpArticleSlugs.map((slug) => ({
+    url: `${SITE}/yardim/${slug}`,
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
   // Şehir landing'leri — Mersin priority en yüksek
   const cityEntries: MetadataRoute.Sitemap = cities.map((c) => ({
     url: `${SITE}/matbaa/${c.slug}`,
@@ -116,6 +127,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...productEntries,
     ...blogEntries,
     ...blogCategoryEntries,
+    ...helpArticleEntries,
     ...legalEntries,
   ];
 }
