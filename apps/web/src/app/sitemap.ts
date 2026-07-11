@@ -20,6 +20,7 @@ const STATIC_ROUTES = [
   { path: "/fiyat-listesi", priority: 0.95, freq: "weekly" as const },
   { path: "/kurumsal", priority: 0.85, freq: "monthly" as const },
   { path: "/teklif-al", priority: 0.8, freq: "monthly" as const },
+  { path: "/numune-talebi", priority: 0.75, freq: "monthly" as const },
   { path: "/yardim", priority: 0.7, freq: "weekly" as const },
   { path: "/referanslar", priority: 0.6, freq: "monthly" as const },
   { path: "/hakkimizda", priority: 0.7, freq: "monthly" as const },

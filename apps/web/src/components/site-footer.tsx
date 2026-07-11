@@ -56,6 +56,7 @@ export function SiteFooter() {
 
         <FooterColumn title="Araçlar & Rehberler">
           <FooterLink href="/hizmetler/tasarim-destegi">Ücretsiz Tasarım Desteği</FooterLink>
+          <FooterLink href="/numune-talebi">Ücretsiz Numune Kutusu</FooterLink>
           <FooterLink href="/hizmetler/toplu-baski">Toplu Baskı</FooterLink>
           <FooterLink href="/fiyat-listesi">Fiyat Listesi</FooterLink>
           <FooterLink href="/sozluk">Matbaa Sözlüğü</FooterLink>
