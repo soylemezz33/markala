@@ -65,6 +65,10 @@ model User {
   // Duyuru tercihleri: { [typeId]: { email: bool, sms: bool } } — müşteri "Bildirim Tercihleri" ekranı.
   notificationPrefs Json? @map("notification_prefs")
 
+  // Sadakat programı — denormalize puan bakiyesi (tek doğruluk kaynağı LoyaltyLedger).
+  // Kazanım/harcama ledger yazımıyla birlikte atomik güncellenir.
+  loyaltyPoints Int @default(0) @map("loyalty_points")
+
   emailVerifiedAt DateTime? @map("email_verified_at")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
@@ -898,6 +902,31 @@ model PortfolioItem {
 
   @@index([isActive, sortOrder])
   @@map("portfolio_items")
+}
+
+// Sadakat programı defteri — puan kazanım (earn) / harcama (spend) / manuel düzeltme (adjust).
+enum LoyaltyEntryKind {
+  earn
+  spend
+  adjust
+}
+
+/// Puan hareketleri. userId/orderId plain string (FK YOK — AnalyticsEvent deseni): kullanıcı/sipariş
+/// silinse de mali iz korunur. @@unique([orderId, kind]) → aynı sipariş için kazanım/harcama YALNIZ
+/// bir kez yazılır (callback+reconcile çift-tetiklese de idempotent, çift kazanım imkânsız).
+model LoyaltyLedger {
+  id           String           @id @default(cuid())
+  userId       String           @map("user_id")
+  orderId      String?          @map("order_id")
+  kind         LoyaltyEntryKind
+  points       Int // pozitif tamsayı; kind yönü belirler (earn=+, spend=-)
+  balanceAfter Int              @map("balance_after") // yazımdan sonraki kullanıcı bakiyesi (denetim)
+  description  String
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  @@unique([orderId, kind])
+  @@index([userId, createdAt])
+  @@map("loyalty_ledger")
 }
 
 // === Fiyat şeması (Task A1) ===

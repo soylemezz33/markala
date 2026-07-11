@@ -5,6 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
 import { SettingsService } from "../settings/settings.service";
 import { MailService } from "../mail/mail.service";
+import { LoyaltyService } from "../loyalty/loyalty.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 
 function generateOrderNumber(): string {
@@ -180,7 +181,7 @@ function withAddressView<
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService) {}
+  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService, private loyalty: LoyaltyService) {}
 
   /**
    * Public kargo takibi — sipariş no + e-posta eşleşmesiyle GERÇEK durum + zaman damgaları döner
@@ -247,6 +248,8 @@ export class OrdersService {
     shippingAddress?: InlineAddress;
     billingAddress?: InlineAddress;
     couponCode?: string;
+    // Sadakat: kullanıcının bu siparişte harcamak istediği puan (LOYALTY_ENABLED açıksa).
+    redeemPoints?: number;
     notes?: string;
     idempotencyKey?: string;
     paymentMethod?: string;
@@ -515,7 +518,25 @@ export class OrdersService {
       }
     }
 
-    // İndirim subtotal'ı aşamaz: kupon + kurumsal yığılaması subtotal'ı geçerse kısıt uygula.
+    // === Sadakat puanı harcama (LOYALTY_ENABLED açıksa) ===
+    // Puan indirimi mevcut `discount` değişkenine eklenir → KDV/toplam/iyzico sepeti otomatik
+    // doğru (payments.service order.discount'ı okur, ek değişiklik gerekmez). Client'a GÜVENİLMEZ:
+    // bakiye ve kurallar (bakiye, %50 tavan, subtotal boşluğu) sunucuda YENİDEN doğrulanır.
+    let redeemPointsSpent = 0;
+    if (this.loyalty.isEnabled() && input.userId && input.redeemPoints && input.redeemPoints > 0) {
+      const balance = await this.loyalty.getBalance(input.userId);
+      const maxByRule = this.loyalty.maxRedeemablePoints(balance, subtotal);
+      // Kupon+kurumsal indirim sonrası kalan subtotal boşluğuna göre de sınırla (toplam indirim
+      // subtotal'ı aşmasın; puanlar boşa harcanmasın).
+      const roomTl = Math.max(0, subtotal - discount);
+      const roomPoints = Math.floor(roomTl) * LoyaltyService.REDEEM_POINTS_PER_TL;
+      redeemPointsSpent = Math.max(0, Math.min(Math.floor(input.redeemPoints), maxByRule, roomPoints));
+      if (redeemPointsSpent > 0) {
+        discount = round2(discount + this.loyalty.redeemTlValue(redeemPointsSpent));
+      }
+    }
+
+    // İndirim subtotal'ı aşamaz: kupon + kurumsal + puan yığılaması subtotal'ı geçerse kısıt uygula.
     // Muhasebe kaydı ve Paraşüt e-faturası için indirim <= subtotal garantisi (negatif satır engeli).
     discount = round2(Math.min(discount, subtotal));
 
@@ -638,6 +659,12 @@ export class OrdersService {
             dueDate: cariDueDate,
           },
         });
+      }
+
+      // Sadakat puanı harcama — AYNI transaction'da: bakiyeyi atomik düş + spend ledger yaz.
+      // Bakiye yetersizse hata → tüm sipariş rollback (indirimi ödenmemiş puanla veremeyiz).
+      if (redeemPointsSpent > 0 && input.userId) {
+        await this.loyalty.spendForOrderTx(tx, input.userId, created.id, redeemPointsSpent);
       }
 
       // Misafir siparişinde FK relation null gelir; snapshot'ı adres olarak yüzeye çıkar.

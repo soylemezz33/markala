@@ -294,6 +294,27 @@ export class MarkalaApiClient {
     ) => this.request<Order>("PATCH", `/orders/${id}/status`, body, { auth: true }),
   };
 
+  // === Sadakat (puan) ===
+  loyalty = {
+    /** Müşteri puan durumu: bakiye + geçmiş. Program kapalıysa enabled=false, balance=0. */
+    me: () =>
+      this.request<{
+        enabled: boolean;
+        balance: number;
+        earnPerTl: number;
+        redeemPerTl: number;
+        history: Array<{
+          id: string;
+          orderId: string | null;
+          kind: "earn" | "spend" | "adjust";
+          points: number;
+          balanceAfter: number;
+          description: string;
+          createdAt: string;
+        }>;
+      }>("GET", "/loyalty/me", undefined, { auth: true }),
+  };
+
   // === Payments ===
   payments = {
     /** "Ödeme Yap" tekrar — giriş yapmış müşteri kendi beklemede siparişi için ödemeyi yeniden başlatır. */

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Container, cn } from "@markala/ui";
-import { House, Package, MapPin, ArrowsClockwise, User as UserIcon, SignOut, Receipt, Bell, Lock, ShieldCheck, Clock, CreditCard, Buildings } from "@phosphor-icons/react";
+import { House, Package, MapPin, ArrowsClockwise, User as UserIcon, SignOut, Receipt, Bell, Lock, ShieldCheck, Clock, CreditCard, Buildings, Coins } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 
 type NavLink = { href: string; label: string; icon: typeof House; danger?: boolean };
@@ -15,6 +15,7 @@ const baseLinks: NavLink[] = [
   { href: "/hesabim/tekrar-siparis", label: "Hızlı Tekrar Sipariş", icon: ArrowsClockwise },
   { href: "/hesabim/onceden-gezdiklerim", label: "Önceden Gezdiklerim", icon: Clock },
   { href: "/hesabim/faturalarim", label: "Faturalarım", icon: Receipt },
+  { href: "/hesabim/puanlarim", label: "Puanlarım", icon: Coins },
   // Cari Hesabım — yalnız kurumsal üyeye eklenir (aşağıda accountType'a göre).
   { href: "/hesabim/adreslerim", label: "Adreslerim", icon: MapPin },
   { href: "/hesabim/kartlarim", label: "Kayıtlı Kartlarım", icon: CreditCard },

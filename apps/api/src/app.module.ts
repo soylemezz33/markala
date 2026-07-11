@@ -28,6 +28,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { BrandsModule } from "./brands/brands.module";
 import { PortfolioModule } from "./portfolio/portfolio.module";
+import { LoyaltyModule } from "./loyalty/loyalty.module";
 import { ContactModule } from "./contact/contact.module";
 import { QuoteRequestsModule } from "./quote-requests/quote-requests.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
@@ -63,6 +64,7 @@ import { NewsletterModule } from "./newsletter/newsletter.module";
     AnalyticsModule,
     BrandsModule,
     PortfolioModule,
+    LoyaltyModule,
     ContactModule,
     QuoteRequestsModule,
     NewsletterModule,

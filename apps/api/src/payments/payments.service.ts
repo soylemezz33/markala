@@ -14,6 +14,7 @@ import { IyzicoService } from "../integrations/iyzico/iyzico.service";
 import { MetaCapiService } from "../integrations/meta/meta-capi.service";
 import { verifyPaymentNonce, paymentNonce } from "./payment-nonce";
 import { MailService } from "../mail/mail.service";
+import { LoyaltyService } from "../loyalty/loyalty.service";
 
 interface AddressView {
   fullName?: string;
@@ -34,6 +35,7 @@ export class PaymentsService implements OnModuleInit {
     private config: ConfigService,
     private mail: MailService,
     private metaCapi: MetaCapiService,
+    private loyalty: LoyaltyService,
   ) {}
 
   onModuleInit() {
@@ -495,6 +497,8 @@ export class PaymentsService implements OnModuleInit {
         // (yalnız count>0 = ilk işaretleme) fire-and-forget olarak tetikle.
         void this.mail.sendOrderConfirmationEmail(o.id).catch(() => undefined);
         void this.metaCapi.sendPurchase(o.id).catch(() => undefined);
+        // Sadakat kazanımı (idempotent + best-effort) — callback kaçmış siparişte de kazanım kaybolmasın.
+        void this.loyalty.earnForOrder(o.id).catch(() => undefined);
         this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı) → mail+CAPI tetiklendi`);
       } catch (e) {
         /* tek sipariş hatası tüm taramayı bozmasın — ama logla */
@@ -592,6 +596,8 @@ export class PaymentsService implements OnModuleInit {
         // Meta Conversions API: sunucu-taraflı Purchase (KVKK onay-gate'li, event_id=orderNumber
         // ile tarayıcı Pixel'ine dedup). Fire-and-forget: redirect'i geciktirmez, akışı bloke etmez.
         void this.metaCapi.sendPurchase(orderId).catch(() => undefined);
+        // Sadakat kazanımı (LOYALTY_ENABLED açıksa; idempotent + best-effort). Akışı bloke etmez.
+        void this.loyalty.earnForOrder(orderId).catch(() => undefined);
       }
       this.logger.log(
         `iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} price=${result.price} paid=${result.paidPrice}`,

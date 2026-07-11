@@ -232,6 +232,12 @@ export class CreateOrderDto {
   @MaxLength(64)
   couponCode?: string;
 
+  /** Sadakat: bu siparişte harcanacak puan (sunucu bakiye + kurallara göre yeniden doğrular). */
+  @IsInt()
+  @IsOptional()
+  @Min(0)
+  redeemPoints?: number;
+
   @IsString()
   @IsOptional()
   @MaxLength(2000)
