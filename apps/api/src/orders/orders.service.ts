@@ -896,6 +896,11 @@ export class OrdersService {
       await this.issueInvoiceIfNeeded(id);
     }
 
+    // Sipariş İPTAL edilince (terminal, ödenmeyecek) harcanan sadakat puanını müşteriye iade et
+    // (ödenmiş-sonra-iptalde kazanımı geri al). Fire-and-forget + flag-gated → iptal akışını bozmaz.
+    if (status === "iptal-edildi")
+      void this.loyalty.refundForOrder(id).catch(() => undefined);
+
     // Müşteri bildirimi (fire-and-forget; hata sipariş durumu güncellemesini bozmaz).
     if (status === "kargoya-verildi")
       void this.mail

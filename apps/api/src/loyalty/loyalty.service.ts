@@ -159,4 +159,55 @@ export class LoyaltyService {
       },
     });
   }
+
+  /**
+   * Sipariş İPTAL edilince (terminal, ödenmeyecek) puan etkilerini geri al: harcanan puanı
+   * müşteriye iade et, kazanılmış puanı (ödenmiş-sonra-iptal) geri çek. Tek `adjust` defter
+   * kaydı (net değişim), IDEMPOTENT: (orderId, adjust) unique → ikinci iptal denemesi P2002 ile
+   * atlanır. Best-effort + flag-gated → iptal akışını ASLA bozmaz. orders.updateStatus'tan çağrılır.
+   */
+  async refundForOrder(orderId: string): Promise<void> {
+    if (!this.isEnabled()) return;
+    try {
+      const entries = await this.prisma.loyaltyLedger.findMany({
+        where: { orderId, kind: { in: ["spend", "earn"] } },
+        select: { userId: true, kind: true, points: true },
+      });
+      if (entries.length === 0) return; // ne harcama ne kazanım → iade edilecek bir şey yok
+      const userId = entries[0].userId;
+      const spent = entries.filter((e) => e.kind === "spend").reduce((s, e) => s + e.points, 0);
+      const earned = entries.filter((e) => e.kind === "earn").reduce((s, e) => s + e.points, 0);
+      const net = spent - earned; // harcananı iade et (+), kazanılanı geri al (-)
+      if (net === 0) return;
+      await this.prisma.$transaction(async (tx) => {
+        // Idempotency: (orderId, adjust) unique → ikinci iade P2002 → tüm tx rollback (bakiye korunur).
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          select: { loyaltyPoints: true },
+        });
+        const current = user?.loyaltyPoints ?? 0;
+        const newBalance = Math.max(0, current + net); // negatif bakiyeyi önle
+        const applied = newBalance - current; // clamp sonrası gerçek değişim
+        await tx.user.update({ where: { id: userId }, data: { loyaltyPoints: newBalance } });
+        await tx.loyaltyLedger.create({
+          data: {
+            userId,
+            orderId,
+            kind: "adjust",
+            points: applied,
+            balanceAfter: newBalance,
+            description:
+              net >= 0
+                ? `Sipariş iptali — puan iadesi (+${applied})`
+                : `Sipariş iptali — kazanım geri alındı (${applied})`,
+          },
+        });
+      });
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code !== "P2002") {
+        this.logger.error(`refundForOrder başarısız (order=${orderId}): ${(err as Error).message}`);
+      }
+    }
+  }
 }
