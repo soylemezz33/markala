@@ -74,7 +74,7 @@ Marketing surface'lar (anasayfa, kategoriler, tasarım desteği, hakkımızda) *
 - **Auth:** mock — herhangi e-posta ile giriş, şifre kontrol edilmiyor
 - **Ödeme:** iyzico SDK bağlanmadı, mock 3D Secure sonucu döner
 - **Mailler:** SendGrid bağlanmadı, console log'a düşer
-- **Tasarım yüklemeleri:** R2 bağlanmadı, dosya adı session'da kalır
+- **Tasarım yüklemeleri:** `R2_*` env yoksa dev'de yerel diske (`UPLOAD_DIR`) yazılır; env girilince `StorageService.putR2()` gerçek Cloudflare R2'ye (@aws-sdk/client-s3) yükler
 - **Kupon:** sadece `HOSGELDIN` (%10), kullanım sayacı yok
 - **Görseller:** dinamik SVG mockup (`/api/mockup/[category]`) — gerçek atölye fotoğrafları geldikçe değişecek
 
