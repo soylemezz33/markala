@@ -15,7 +15,7 @@ import { ConfigService } from "@nestjs/config";
 import { AuthService } from "./auth.service";
 import { TurnstileService } from "../captcha/turnstile.service";
 import { JwtAuthGuard } from "./jwt.guard";
-import { ChangePasswordDto, ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyEmailDto } from "./dtos";
+import { ChangePasswordDto, ForgotPasswordDto, GoogleLoginDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyEmailDto } from "./dtos";
 
 /**
  * SECURITY HARDENING (auth.controller):
@@ -66,6 +66,26 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.auth.login(dto.email, dto.password, {
+      userAgent: req.headers["user-agent"],
+      ipAddress: this.clientIp(req),
+    });
+    this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresAt);
+    return {
+      accessToken: result.accessToken,
+      user: result.user,
+    };
+  }
+
+  // "Google ile devam et" — GIS ID token doğrulanır (aud + email_verified), kullanıcı
+  // bulunur/oluşturulur, normal oturum çifti verilir. Flag: GOOGLE_CLIENT_ID env yoksa 400.
+  // Login ile aynı rate-limit sınıfında (main.ts /auth/* middleware).
+  @Post("google")
+  async google(
+    @Body() dto: GoogleLoginDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.auth.googleLogin(dto.credential, {
       userAgent: req.headers["user-agent"],
       ipAddress: this.clientIp(req),
     });

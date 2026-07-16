@@ -8,6 +8,7 @@ import { Sparkle, ShieldCheck, PaintBrush, Truck, EnvelopeSimple, Eye, EyeSlash,
 import { useAuthStore } from "@/lib/auth-store";
 import { useCartStore } from "@/lib/cart-store";
 import { apiClient } from "@/lib/api";
+import { GoogleSignIn } from "@/components/auth/google-signin";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -175,6 +176,11 @@ export default function LoginPage() {
               </Link>
             </div>
           </form>
+
+          {/* Google ile devam et — client-id yoksa hiç görünmez (flag-gated). */}
+          <div className="mt-5">
+            <GoogleSignIn next={nextParam} />
+          </div>
 
           <div className="mt-6 pt-6 border-t border-paper-200 text-center">
             <p className="text-sm text-ink-700">

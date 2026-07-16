@@ -262,6 +262,95 @@ export class AuthService {
     }
   }
 
+  /**
+   * "Google ile devam et" (GIS ID token) — flag-gated: GOOGLE_CLIENT_ID env yoksa kapalı.
+   *
+   * Doğrulama: Google'ın resmî tokeninfo endpoint'i (imza/exp kontrolünü Google yapar;
+   * ek bağımlılık yok). Güvenlik kontratı:
+   *  - aud === GOOGLE_CLIENT_ID (başka uygulamanın token'ı reddedilir)
+   *  - iss accounts.google.com (tokeninfo zaten Google-imzalı token dışında 4xx döner)
+   *  - email_verified zorunlu → e-posta sahipliği Google'ca kanıtlı olduğundan KATI
+   *    e-posta doğrulama kilidi bu akışta otomatik açılır (kurumsal-davet fix'iyle aynı ilke).
+   * Yeni kullanıcı: rastgele şifreyle oluşturulur (şifreli girişe geçmek isterse
+   * "şifremi unuttum" akışı zaten emailVerifiedAt'i koruyarak şifre belirletir).
+   */
+  async googleLogin(
+    credential: string,
+    context: { userAgent?: string; ipAddress?: string },
+  ) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      throw new BadRequestException("Google ile giriş şu anda kullanılamıyor.");
+    }
+
+    interface TokenInfo {
+      aud?: string;
+      email?: string;
+      email_verified?: string;
+      name?: string;
+      exp?: string;
+    }
+    let info: TokenInfo;
+    try {
+      const res = await fetch(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+        { signal: AbortSignal.timeout(8000) },
+      );
+      if (!res.ok) {
+        this.logger.warn(`google.tokeninfo_reject status=${res.status} ip=${context.ipAddress ?? "?"}`);
+        throw new UnauthorizedException("Google doğrulaması başarısız. Lütfen tekrar deneyin.");
+      }
+      info = (await res.json()) as TokenInfo;
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
+      this.logger.error(`google.tokeninfo_error ip=${context.ipAddress ?? "?"}`, err as Error);
+      throw new UnauthorizedException("Google doğrulamasına ulaşılamadı. Lütfen tekrar deneyin.");
+    }
+
+    if (info.aud !== clientId) {
+      this.logger.warn(`google.aud_mismatch aud=${info.aud ?? "?"} ip=${context.ipAddress ?? "?"}`);
+      throw new UnauthorizedException("Google doğrulaması başarısız.");
+    }
+    const email = info.email?.trim().toLowerCase();
+    if (!email || info.email_verified !== "true") {
+      this.logger.warn(`google.email_unverified email=${email ?? "?"} ip=${context.ipAddress ?? "?"}`);
+      throw new UnauthorizedException("Google hesabınızın e-postası doğrulanmamış.");
+    }
+
+    let user = await this.prisma.user.findUnique({ where: { email } });
+    if (user?.deletedAt) {
+      throw new ForbiddenException("Bu hesap kapatılmış. Destek ile iletişime geçin.");
+    }
+    if (!user) {
+      // İlk Google girişi = kayıt. Rastgele şifre (yalnız hash saklanır); e-posta Google'ca doğrulu.
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const passwordHash = await argon2.hash(randomPassword);
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+          fullName: (info.name ?? email.split("@")[0] ?? "Müşteri").slice(0, 120),
+          emailVerifiedAt: new Date(),
+        },
+      });
+      this.logger.log(`google.register userId=${user.id}`);
+    } else if (!user.emailVerifiedAt) {
+      // Mevcut ama doğrulanmamış hesap: Google e-posta sahipliğini kanıtladı → kilidi aç.
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifiedAt: new Date() },
+      });
+      user = { ...user, emailVerifiedAt: new Date() };
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    return this.issueTokenPair(user, context);
+  }
+
   async login(
     email: string,
     password: string,

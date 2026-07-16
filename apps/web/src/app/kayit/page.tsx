@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Container, Button } from "@markala/ui";
 import { Sparkle, Gift, Lightning, Receipt, EnvelopeSimple, CheckCircle, Eye, EyeSlash } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
+import { GoogleSignIn } from "@/components/auth/google-signin";
 import { PhoneInput } from "@/components/forms/phone-input";
 import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 
@@ -179,6 +180,12 @@ export default function RegisterPage() {
               {isLoading ? "Hesap oluşturuluyor..." : "Hesabı Oluştur"}
             </Button>
           </form>
+
+          {/* Google ile devam et — tek tık kayıt+giriş; e-posta doğrulama adımı da atlanır
+              (Google e-postayı zaten doğruladı). client-id yoksa görünmez. */}
+          <div className="mt-5">
+            <GoogleSignIn next={nextParam} />
+          </div>
 
           <div className="mt-8 pt-8 border-t border-paper-200 text-center">
             <p className="text-sm text-ink-700">

@@ -189,6 +189,9 @@ export class MarkalaApiClient {
     }) => this.request<{ needsVerification: true; email: string; emailSent: boolean }>("POST", "/auth/register", data),
     login: (data: { email: string; password: string }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/login", data),
+    /** "Google ile devam et" — GIS ID token'ı; backend doğrular, bulur/oluşturur, oturum döner. */
+    google: (credential: string) =>
+      this.request<{ accessToken: string; user: User }>("POST", "/auth/google", { credential }),
     /** Refresh cookie (mk_refresh, httpOnly) ile yeni access token + user. Body yok; credentials:include. */
     refresh: () => this.request<{ accessToken: string; user: User }>("POST", "/auth/refresh"),
     logout: () => this.request<{ ok: boolean }>("POST", "/auth/logout"),

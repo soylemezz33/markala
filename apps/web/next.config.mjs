@@ -16,9 +16,9 @@ const cspReportOnly = [
   "img-src 'self' data: blob: https://api.markala.com.tr https://picsum.photos https://*.picsum.photos https://images.unsplash.com https://images.pexels.com https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.tr https://www.googleadservices.com",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net",
-  "connect-src 'self' https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://stats.g.doubleclick.net",
-  "frame-src 'self' https://challenges.cloudflare.com https://www.iyzipay.com https://sandbox-api.iyzipay.com https://api.iyzipay.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net",
+  "connect-src 'self' https://accounts.google.com https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://stats.g.doubleclick.net",
+  "frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com https://www.iyzipay.com https://sandbox-api.iyzipay.com https://api.iyzipay.com",
   "report-uri /api/csp-report",
 ].join("; ");
 

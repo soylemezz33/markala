@@ -105,6 +105,8 @@ interface AuthState {
 
   /** needsVerification: doğrulanmamış müşteri (403) — giriş sayfası "yeniden gönder" akışını gösterir. */
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string; needsVerification?: boolean }>;
+  /** "Google ile devam et" — GIS ID token'ı ile giriş/kayıt (e-posta Google'ca doğrulu). */
+  loginWithGoogle: (credential: string) => Promise<{ ok: boolean; error?: string }>;
   register: (input: {
     email: string;
     password: string;
@@ -154,6 +156,21 @@ export const useAuthStore = create<AuthState>()(
             return { ok: false, needsVerification: true, error: err.message ?? "E-posta adresini doğrulaman gerekiyor." };
           }
           return { ok: false, error: err?.message ?? "Giriş başarısız. Lütfen tekrar deneyin." };
+        }
+      },
+
+      loginWithGoogle: async (credential) => {
+        set({ isLoading: true });
+        try {
+          const { accessToken } = await client.auth.google(credential);
+          set({ accessToken });
+          const user = await client.auth.me();
+          if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
+          set({ user, isLoading: false });
+          return { ok: true };
+        } catch (e) {
+          set({ isLoading: false, accessToken: null });
+          return { ok: false, error: (e as ApiError)?.message ?? "Google ile giriş başarısız. Lütfen tekrar deneyin." };
         }
       },
 
