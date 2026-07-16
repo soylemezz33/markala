@@ -393,7 +393,21 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
           <DesignUpload />
         </div>
 
-        <PriceCard total={show(total)} kdvLabel={kdvDahil ? "KDV dahil" : "KDV hariç"} />
+        <PriceCard
+          total={show(total)}
+          kdvLabel={kdvDahil ? "KDV dahil" : "KDV hariç"}
+          // Fiyat şoku önleme: büyük rakamın NEYİN karşılığı olduğunu fiyatın yanında söyle
+          // (ör. "1.000 adet için" / "60×150 cm için · 2 adet").
+          context={
+            isArea
+              ? Number(effSel.en) > 0 && Number(effSel.boy) > 0
+                ? `${effSel.en}×${effSel.boy} cm için${areaAdet > 1 ? ` · ${areaAdet} adet` : ""}`
+                : undefined
+              : effSel.adet && Number(effSel.adet) > 0
+                ? `${Number(effSel.adet).toLocaleString("tr-TR")} adet için`
+                : undefined
+          }
+        />
 
         {ctaReason && (
           <p className="text-xs text-ink-500 -mt-2">{ctaReason}</p>

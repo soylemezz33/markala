@@ -77,6 +77,18 @@ export function SiteFooter() {
         </FooterColumn>
       </Container>
 
+      {/* Ticari künye — kurumsal alıcının "kimden alıyorum, firma nerede?" sorusuna görünür cevap. */}
+      <div className="border-t border-paper-200">
+        <Container className="py-4 text-xs text-ink-500 leading-relaxed">
+          <span className="font-medium text-ink-700">324 Ajans Bilgi Teknolojileri Reklam Pazarlama</span>
+          {" · "}Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin
+          {" · "}
+          <Link href="tel:+903244333351" className="hover:text-ink-900">0324 433 33 51</Link>
+          {" · "}
+          <Link href="mailto:merhaba@markala.com.tr" className="hover:text-ink-900">merhaba@markala.com.tr</Link>
+        </Container>
+      </div>
+
       {/* Alt bant — telif + yasal linkler */}
       <div className="border-t border-paper-200">
         <Container className="py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-ink-500">
@@ -155,7 +167,9 @@ export function SiteFooter() {
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
             <span>Ödeme:</span>
-            <PaymentBrand label="Kredi / Banka Kartı" />
+            <PaymentBrand label="Visa" />
+            <PaymentBrand label="Mastercard" />
+            <PaymentBrand label="Troy" />
             <PaymentBrand label="3D Secure" />
             <PaymentBrand label="iyzico" />
           </div>

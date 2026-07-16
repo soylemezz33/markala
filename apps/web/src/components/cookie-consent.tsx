@@ -176,24 +176,26 @@ export function CookieConsent() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-4 inset-x-4 md:inset-x-auto md:left-6 md:right-6 lg:left-auto lg:right-6 lg:max-w-lg z-[60] outline-none"
+          className="fixed bottom-0 inset-x-0 md:bottom-4 md:inset-x-auto md:left-6 md:max-w-md z-[60] outline-none"
           role="dialog"
           aria-modal="true"
           aria-labelledby="cookie-consent-title"
         >
-          <div className="bg-paper-50 rounded-2xl shadow-2xl border border-paper-200 overflow-hidden">
-            <div className="p-5 md:p-6">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-brand-100 text-brand-700 grid place-items-center shrink-0">
+          {/* Kompakt banner: mobilde ekranın ~%40'ını kaplayıp PDP/sepet CTA'larını örtüyordu;
+              masaüstünde sağ-alt konum sepet "Ödemeye Geç" butonuyla çakışıyordu → sol-alta alındı,
+              mobilde tam-genişlik ince şerit. KVKK işlevi (kategori bazlı onay) aynen korunur. */}
+          <div className="bg-paper-50 rounded-t-xl md:rounded-2xl shadow-2xl border border-paper-200 overflow-hidden">
+            <div className="p-3.5 md:p-5">
+              <div className="flex items-start gap-2.5">
+                <div className="hidden md:grid w-9 h-9 rounded-lg bg-brand-100 text-brand-700 place-items-center shrink-0">
                   <Cookie size={18} weight="fill" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 id="cookie-consent-title" className="font-semibold text-ink-900 text-base">
-                    Çerez tercihlerin
+                  <h2 id="cookie-consent-title" className="font-semibold text-ink-900 text-sm md:text-base">
+                    Çerez tercihleri
                   </h2>
-                  <p className="mt-1 text-sm text-ink-700 leading-relaxed">
-                    Site deneyimini iyileştirmek, ölçümleme yapmak ve sana uygun içerik göstermek
-                    için çerez kullanıyoruz.{" "}
+                  <p className="mt-0.5 text-xs md:text-sm text-ink-700 leading-snug">
+                    Deneyimi iyileştirmek ve ölçüm için çerez kullanıyoruz.{" "}
                     <Link
                       href="/yasal/cerez"
                       className="text-brand-700 hover:underline font-medium"
@@ -233,34 +235,36 @@ export function CookieConsent() {
                 </div>
               )}
 
-              <div className="mt-5 flex flex-wrap items-center gap-2">
+              {/* "Sadece zorunlu" artık gerçek buton — soluk metin dark-pattern algısı yaratıyordu.
+                  Kabul ve red eşit görsel ağırlıkta; "Tercihler" ikincil metin aksiyonu. */}
+              <div className="mt-3 md:mt-4 flex flex-wrap items-center gap-2">
                 <button
                   onClick={acceptAll}
-                  className="flex-1 min-w-[140px] px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-md text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors"
+                  className="flex-1 min-w-[130px] px-3.5 py-2 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-md text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <ShieldCheck size={14} weight="bold" /> Tümünü kabul et
+                </button>
+                <button
+                  onClick={rejectOptional}
+                  className="flex-1 min-w-[120px] px-3.5 py-2 border border-paper-300 hover:border-ink-400 text-ink-900 rounded-md text-sm font-semibold transition-colors"
+                >
+                  Sadece zorunlu
                 </button>
                 {showDetails ? (
                   <button
                     onClick={saveCustom}
-                    className="flex-1 min-w-[120px] px-4 py-2.5 bg-ink-900 text-paper-50 rounded-md text-sm font-semibold hover:bg-ink-700 transition-colors"
+                    className="w-full md:w-auto px-3.5 py-2 bg-ink-900 text-paper-50 rounded-md text-sm font-semibold hover:bg-ink-700 transition-colors"
                   >
                     Tercihleri kaydet
                   </button>
                 ) : (
                   <button
                     onClick={() => setShowDetails(true)}
-                    className="px-4 py-2.5 border border-paper-200 hover:border-ink-300 text-ink-900 rounded-md text-sm font-medium transition-colors"
+                    className="px-2.5 py-2 text-sm text-ink-500 hover:text-ink-900 underline-offset-2 hover:underline transition-colors"
                   >
                     Tercihler
                   </button>
                 )}
-                <button
-                  onClick={rejectOptional}
-                  className="px-3 py-2 text-sm text-ink-500 hover:text-ink-900 transition-colors"
-                >
-                  Sadece zorunlu
-                </button>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getProducts, getHeroBanners } from "@/lib/catalog";
 import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
+import { HeroCtaBand } from "@/components/home/hero-cta-band";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { ProductRail } from "@/components/home/product-rail";
 import { CategoryGrid } from "@/components/home/category-grid";
@@ -41,6 +42,8 @@ export default async function HomePage() {
       <HowToProductionJsonLd />
       {/* Anasayfa hero — DB (hero_slides) kaynaklı saf görsel slider; admin panelinden yönetilir. */}
       <PremiumHeroSlider slides={heroBanners} />
+      {/* Hero altı CTA + gerçek fiyat çıpası — saf görsel slider'ın eylem boşluğunu kapatır. */}
+      <HeroCtaBand products={products} />
       <PromoBanner location="hero" />
       <TrustBadges />
 

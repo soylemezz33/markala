@@ -6,16 +6,24 @@ import { getInstallmentAmount } from "@/lib/configurator";
 interface Props {
   total: number;
   kdvLabel?: string;
+  /** Fiyatın NEYİN karşılığı olduğu — "1.000 adet için" / "60×150 cm seçili ölçü için".
+      Bağlamsız büyük rakam ("17.730₺") fiyat şoku yaratıyordu. */
+  context?: string;
 }
 
-export function PriceCard({ total, kdvLabel = "KDV dahil" }: Props) {
+export function PriceCard({ total, kdvLabel = "KDV dahil", context }: Props) {
   const isQuote = total <= 0;
   const installment = isQuote ? 0 : getInstallmentAmount(total, 3);
 
   return (
     <div className="bg-ink-900 text-paper-50 rounded-lg p-5 md:p-6 overflow-hidden">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="text-sm text-paper-100/70">Toplam</span>
+        <span className="text-sm text-paper-100/70">
+          Toplam
+          {!isQuote && context ? (
+            <span className="block text-xs text-paper-100/50 mt-0.5">{context}</span>
+          ) : null}
+        </span>
         {isQuote ? (
           <span className="text-4xl font-medium tabular-nums tracking-tight text-brand-300 text-right min-w-0">
             Teklif Al

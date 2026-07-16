@@ -484,8 +484,10 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
               <span className="text-ink-500 text-sm flex-1 text-left">
                 Ne bastırmak istiyorsunuz?
               </span>
+              {/* Türk KOBİ kitlesi ağırlıkla Windows — Mac ⌘ sembolü "bozuk karakter" gibi
+                  algılanıyordu; kısayol her iki platformda da çalışır, gösterim Ctrl K. */}
               <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium text-ink-500 bg-paper-50 border border-paper-200">
-                ⌘K
+                Ctrl K
               </kbd>
             </button>
 

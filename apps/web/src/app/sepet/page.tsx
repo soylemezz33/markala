@@ -289,7 +289,8 @@ function EmptyCart() {
         <Link href="/urunler"><Button size="lg" className="mt-6">Ürünleri Keşfet <ArrowRight size={18} weight="bold" /></Button></Link>
       </div>
       <section className="mt-16">
-        <h2 className="text-center text-sm font-semibold uppercase tracking-wider text-ink-500 mb-6">Popüler Kategoriler</h2>
+        {/* Doğrudan büyük harfle yazıldı — CSS uppercase Türkçe İ'yi bazı ortamlarda I yapıyordu. */}
+        <h2 className="text-center text-sm font-semibold tracking-wider text-ink-500 mb-6">POPÜLER KATEGORİLER</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 max-w-4xl mx-auto">
           {popular.map((c) => (
             <Link key={c.slug} href={`/kategori/${c.slug}`} className="flex flex-col items-center gap-2 p-4 bg-paper-50 border border-paper-200 rounded-lg hover:border-ink-300 hover:shadow-md transition-all">
