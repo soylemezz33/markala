@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Container, Button } from "@markala/ui";
-import { Sparkle, Gift, Lightning, Receipt, EnvelopeSimple, CheckCircle } from "@phosphor-icons/react";
+import { Sparkle, Gift, Lightning, Receipt, EnvelopeSimple, CheckCircle, Eye, EyeSlash } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { PhoneInput } from "@/components/forms/phone-input";
 import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
@@ -31,6 +31,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [kvkkAccepted, setKvkkAccepted] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
@@ -107,10 +108,20 @@ export default function RegisterPage() {
       {/* Sol: Form */}
       <div className="lg:col-span-6 xl:col-span-5 flex items-center">
         <Container className="py-16 md:py-24 max-w-md mx-auto w-full">
-          <div className="mb-8">
+          <div className="mb-6">
             <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Yeni hesap</p>
             <h1 className="mt-2 text-3xl md:text-4xl font-semibold text-ink-900">Markala'ya katıl</h1>
             <p className="mt-3 text-ink-700">İlk siparişinde %10 indirim seni bekliyor.</p>
+          </div>
+
+          {/* Giriş / Üye Ol — giriş sayfasıyla simetrik eşit-ağırlıklı sekmeler. */}
+          <div className="mb-6 grid grid-cols-2 gap-1 rounded-lg bg-paper-100 p-1 text-sm font-semibold">
+            <Link href={girisHref} className="rounded-md px-4 py-2.5 text-center text-ink-600 hover:text-ink-900 transition-colors">
+              Giriş Yap
+            </Link>
+            <span aria-current="page" className="rounded-md bg-paper-50 border border-paper-200 px-4 py-2.5 text-center text-ink-900 shadow-sm">
+              Üye Ol
+            </span>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
@@ -123,7 +134,17 @@ export default function RegisterPage() {
             <PhoneInput value={phone} onChange={setPhone} label="Telefon (opsiyonel)" inputClassName={inputClass} placeholder="5XX XXX XX XX" />
 
             <Field label="Şifre">
-              <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} minLength={8} autoComplete="new-password" placeholder="En az 8 karakter — büyük, küçük harf ve rakam" />
+              <div className="relative">
+                <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputClass} pr-11`} minLength={8} autoComplete="new-password" placeholder="En az 8 karakter — büyük, küçük harf ve rakam" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-500 hover:text-ink-900 transition-colors"
+                >
+                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </Field>
 
             <label className="flex items-start gap-2 text-sm text-ink-700 mt-3">

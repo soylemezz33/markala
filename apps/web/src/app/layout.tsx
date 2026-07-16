@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s · Markala",
   },
   description:
-    "Kartvizitten branda afişe, broşürden kupaya 30+ matbaa & reklam ürünü kategorisi. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 il DHL kargo. 324 Ajans güvencesiyle markala.com.tr.",
+    "Kartvizitten branda afişe, broşürden kupaya 800+ matbaa & reklam ürünü. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 il DHL kargo. 324 Ajans güvencesiyle markala.com.tr.",
   applicationName: "Markala",
   authors: [{ name: "324 Ajans · Markala", url: "https://324ajans.com" }],
   creator: "324 Ajans",
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     url: "https://markala.com.tr",
     title: "Markala — Matbaa ve Reklam Ürünleri",
     description:
-      "30+ matbaa ürünü kategorisi, ücretsiz tasarım, 1-2 iş günü üretim, Türkiye geneli DHL kargo. 324 Ajans güvencesiyle.",
+      "800+ matbaa ürünü, ücretsiz tasarım, 1-2 iş günü üretim, Türkiye geneli DHL kargo. 324 Ajans güvencesiyle.",
     images: [
       {
         // RASTER PNG (1200x630) — sosyal crawler'lar SVG'yi reddediyordu; statik PNG ile
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Markala — Matbaa ve Reklam Ürünleri",
     description:
-      "30+ matbaa ürünü, ücretsiz tasarım, hızlı kargo. 324 Ajans güvencesiyle.",
+      "800+ matbaa ürünü, ücretsiz tasarım, hızlı kargo. 324 Ajans güvencesiyle.",
     images: ["/og-default.png"],
   },
   robots: {

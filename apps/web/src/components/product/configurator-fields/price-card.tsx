@@ -38,7 +38,16 @@ export function PriceCard({ total, kdvLabel = "KDV dahil", context }: Props) {
       </div>
       {!isQuote && (
         <div className="mt-2 flex items-center justify-between text-xs text-paper-100/60">
-          <span>{kdvLabel}</span>
+          {/* B2B alıcı için net (KDV hariç) matrah da görünür — rakip çift gösterimle öndeydi. */}
+          <span>
+            {kdvLabel}
+            {kdvLabel === "KDV dahil" && (
+              <>
+                {" · net "}
+                <Price amount={total / 1.2} size="sm" className="text-paper-100/80" />
+              </>
+            )}
+          </span>
           {total > 100 && (
             <span>
               3 taksitle <Price amount={installment} size="sm" className="text-paper-100" />

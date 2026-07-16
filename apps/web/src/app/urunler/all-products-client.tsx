@@ -394,7 +394,8 @@ export function AllProductsClient({
               </div>
             ) : (
               <>
-                <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+                {/* Mobilde 2 kolon: 860 ürünlük katalogda tek kolon aşırı kaydırma yaratıyordu. */}
+                <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 md:gap-5">
                   {paginated.map((p) => (
                     <ProductCard key={p.slug} product={p} />
                   ))}

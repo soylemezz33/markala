@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Container, Button } from "@markala/ui";
-import { Sparkle, ShieldCheck, PaintBrush, Truck, EnvelopeSimple } from "@phosphor-icons/react";
+import { Container, Button, Price } from "@markala/ui";
+import { Sparkle, ShieldCheck, PaintBrush, Truck, EnvelopeSimple, Eye, EyeSlash, ShoppingBag } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
+import { useCartStore } from "@/lib/cart-store";
 import { apiClient } from "@/lib/api";
 
 const inputClass =
@@ -18,7 +19,11 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Ödeme duvarında "sepetiniz korunuyor" lafla değil gözle kanıtlanır — mini sepet özeti.
+  const cartItems = useCartStore((s) => s.items);
+  const cartTotal = useCartStore((s) => s.subtotal());
   // Katı doğrulama: doğrulanmamış müşteri girişte 403 alır → yeniden-gönder akışı gösterilir.
   const [needsVerify, setNeedsVerify] = useState(false);
   const [resend, setResend] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -73,13 +78,40 @@ export default function LoginPage() {
             <h1 className="mt-1.5 text-3xl md:text-4xl font-semibold text-ink-900">Giriş yapın</h1>
             {nextParam === "/odeme" ? (
               <p className="mt-2 text-ink-700">
-                Siparişinizi tamamlamak için giriş yapın veya 30 saniyede ücretsiz hesap oluşturun — <strong className="text-ink-900">sepetiniz korunuyor.</strong>
+                Siparişinizi tamamlamak için giriş yapın veya 30 saniyede ücretsiz hesap oluşturun.
               </p>
             ) : (
               <p className="mt-2 text-ink-700">
                 Sipariş takibi, kayıtlı tasarımlar ve cari hesap için.
               </p>
             )}
+          </div>
+
+          {/* Ödeme duvarı: sepetin korunduğunu lafla değil gözle kanıtla (mini özet).
+              nextParam mount'ta set edildiği için bu blok yalnız client'ta render olur — hydration güvenli. */}
+          {nextParam === "/odeme" && cartItems.length > 0 && (
+            <div className="mb-5 flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 px-4 py-3">
+              <ShoppingBag size={20} weight="bold" className="text-success flex-none" />
+              <div className="min-w-0 flex-1 text-sm">
+                <div className="font-semibold text-ink-900">
+                  Sepetiniz sizi bekliyor — {cartItems.length} ürün · <Price amount={cartTotal} size="sm" className="text-ink-900" />
+                </div>
+                <div className="text-xs text-ink-600 truncate">
+                  {cartItems.slice(0, 2).map((i) => i.name).join(" · ")}
+                  {cartItems.length > 2 ? ` +${cartItems.length - 2} daha` : ""}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Giriş / Üye Ol — eşit görsel ağırlıklı sekmeler (yeni müşterinin yolu saklı kalmasın). */}
+          <div className="mb-6 grid grid-cols-2 gap-1 rounded-lg bg-paper-100 p-1 text-sm font-semibold">
+            <span aria-current="page" className="rounded-md bg-paper-50 border border-paper-200 px-4 py-2.5 text-center text-ink-900 shadow-sm">
+              Giriş Yap
+            </span>
+            <Link href={kayitHref} className="rounded-md px-4 py-2.5 text-center text-ink-600 hover:text-ink-900 transition-colors">
+              Üye Ol
+            </Link>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
@@ -92,12 +124,22 @@ export default function LoginPage() {
               />
             </Field>
             <Field label="Şifre">
-              <input
-                type="password" required value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={inputClass} autoComplete="current-password"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"} required value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`${inputClass} pr-11`} autoComplete="current-password"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-500 hover:text-ink-900 transition-colors"
+                >
+                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </Field>
 
             {error && (

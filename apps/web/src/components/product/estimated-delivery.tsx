@@ -29,7 +29,8 @@ export function EstimatedDelivery({ productionTime }: { productionTime: string }
       {est.sameDayIntake && (
         <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-600">
           <Clock size={12} />
-          Bugün <strong>14:00</strong>&apos;a kadar sipariş verirsen üretime bugün girer.
+          {/* nowrap: mobilde "14:00" ile "'a" ayrı satıra düşüp yazım hatası gibi okunuyordu */}
+          Bugün <strong className="whitespace-nowrap">14:00&apos;a</strong> kadar sipariş verirseniz üretime bugün girer.
         </div>
       )}
     </div>

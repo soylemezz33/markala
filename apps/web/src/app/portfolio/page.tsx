@@ -29,8 +29,10 @@ export default async function PortfolioPage() {
         <p className="text-sm text-brand-700 font-medium uppercase tracking-wider">Portfolyo</p>
         <h1 className="mt-2 text-display-lg font-serif text-ink-900">Tamamlanmış işlerimiz</h1>
         <p className="mt-4 text-lg text-ink-700 leading-relaxed">
-          Kartvizitten brandaya, tabeladan promosyon ürünlerine — Markala ile hayata geçen baskı
-          işlerinden bir seçki. Kalitemizi ekranda değil, gerçek işlerde görün.
+          {/* Boş durumda "gerçek işlerde görün" vaadi çelişki yaratıyordu — metni içeriğe uydur. */}
+          {items.length > 0
+            ? "Kartvizitten brandaya, tabeladan promosyon ürünlerine — Markala ile hayata geçen baskı işlerinden bir seçki. Kalitemizi ekranda değil, gerçek işlerde görün."
+            : "Kartvizitten brandaya, tabeladan promosyon ürünlerine — tamamladığımız işleri müşteri izinleriyle burada yayınlıyoruz."}
         </p>
       </header>
 

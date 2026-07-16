@@ -43,6 +43,15 @@ const channels = [
     accent: "bg-[#E8F0FF] text-[#1565C0]",
     cta: "Mail gönder",
   },
+  {
+    icon: MapPin,
+    label: "Adres & Ziyaret",
+    value: "Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A",
+    sub: "Yenişehir / Mersin · randevu ile ziyaret",
+    href: "https://maps.google.com/?q=Menteş+Mah.+100.+Yıl+Cumhuriyet+Cad.+No:59/A+Yenişehir+Mersin",
+    accent: "bg-brand-100 text-brand-700",
+    cta: "Haritada aç",
+  },
 ];
 
 const offices = [
@@ -119,7 +128,7 @@ export default function ContactPage() {
 
       <Container className="py-12 md:py-16">
         {/* Hızlı kanal kartları */}
-        <section className="grid md:grid-cols-3 gap-4 mb-16">
+        <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
           {channels.map((c) => (
             <a
               key={c.label}
