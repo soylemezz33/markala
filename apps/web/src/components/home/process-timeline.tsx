@@ -125,7 +125,7 @@ export function ProcessTimeline() {
         </ol>
 
         {/* Toplam süre özeti — zemin: hero slider'ın koyu mor tonları (topbar ile aynı, bkz. site-header) */}
-        <div className="mt-12 md:mt-16 p-5 md:p-6 bg-gradient-to-r from-[#180254] via-[#1C035E] to-[#260570] text-paper-50 rounded-xl flex flex-wrap items-center justify-between gap-4">
+        <div className="mt-12 md:mt-16 p-5 md:p-6 bg-gradient-to-r from-[#241C54] via-[#322768] to-[#4B3AA0] text-paper-50 rounded-xl flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="text-xs text-paper-100/60 uppercase tracking-wider">
               Toplam süre (ortalama)

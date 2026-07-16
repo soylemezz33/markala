@@ -22,7 +22,7 @@ export function SeoClient({ initial }: Props) {
   const [defaultDescription, setDefaultDescription] = useState(
     String(
       initial["seo.defaultDescription"] ??
-        "Kartvizitten branda afişe, broşürden kupaya 30+ matbaa & reklam ürünü kategorisi. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 il DHL kargo. 324 Ajans güvencesiyle markala.com.tr.",
+        "Kartvizitten branda afişe, broşürden kupaya 30+ matbaa & reklam ürünü kategorisi. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 ile DHL kargo. 324 Ajans güvencesiyle markala.com.tr.",
     ),
   );
   const [keywords, setKeywords] = useState(

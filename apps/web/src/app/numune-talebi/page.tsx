@@ -24,7 +24,7 @@ const perks = [
   },
   {
     icon: Truck,
-    title: "81 il ücretsiz kargo",
+    title: "81 ile ücretsiz kargo",
     sub: "Numune kutusu 2-3 iş günü içinde adresinize gelir.",
   },
 ];

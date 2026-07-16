@@ -349,7 +349,7 @@ export class MailService {
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const shopUrl = `${webUrl}/urunler`;
     const subject = `Markala'ya hoş geldin! 🎉 İlk siparişine %10`;
-    const text = `${gname ? `Merhaba ${gname},` : "Merhaba,"}\n\nMarkala'ya hoş geldin! Kartvizitten brandaya 30+ matbaa & reklam ürünü seni bekliyor.\nİlk siparişine özel: HOSGELDIN kodu ile %10 indirim.\n\nAlışverişe başla: ${shopUrl}\n\nÜcretsiz tasarım desteği · 1-2 iş günü üretim · 81 il kargo.\nMarkala`;
+    const text = `${gname ? `Merhaba ${gname},` : "Merhaba,"}\n\nMarkala'ya hoş geldin! Kartvizitten brandaya 30+ matbaa & reklam ürünü seni bekliyor.\nİlk siparişine özel: HOSGELDIN kodu ile %10 indirim.\n\nAlışverişe başla: ${shopUrl}\n\nÜcretsiz tasarım desteği · 1-2 iş günü üretim · 81 ile kargo.\nMarkala`;
     const html = renderEmail({
       title: "Markala'ya Hoş Geldin! 🎉",
       intro: `${greeting} aramıza hoş geldin! Kartvizitten brandaya 30+ matbaa &amp; reklam ürünü seni bekliyor.`,
@@ -361,7 +361,7 @@ export class MailService {
           <span style="font-size:13px;color:#16a34a;font-weight:700">%10 indirim</span>
         </td></tr></table>
         ${emailButton("Alışverişe başla", shopUrl)}
-        <p style="margin:14px 0 0;color:#78716c;font-size:13px">✓ Ücretsiz tasarım desteği &nbsp;·&nbsp; ✓ 1-2 iş günü üretim &nbsp;·&nbsp; ✓ 81 il kargo</p>`,
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">✓ Ücretsiz tasarım desteği &nbsp;·&nbsp; ✓ 1-2 iş günü üretim &nbsp;·&nbsp; ✓ 81 ile kargo</p>`,
     });
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });

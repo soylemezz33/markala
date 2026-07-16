@@ -429,7 +429,7 @@ export default function TeklifAlPage() {
                     {[
                       { t: "Talebini gönder", d: "Ürün ve işletme bilgini paylaş." },
                       { t: "Teklifini hazırlayalım", d: "24 saat içinde özel fiyat + tasarım önerisi." },
-                      { t: "Onayla, üretelim", d: "Onayında 1-2 iş günü üretim, 81 il kargo." },
+                      { t: "Onayla, üretelim", d: "Onayında 1-2 iş günü üretim, 81 ile kargo." },
                     ].map((s, i) => (
                       <li key={s.t} className="flex gap-3">
                         <span className="flex-none w-7 h-7 rounded-full bg-brand-500 text-ink-900 grid place-items-center text-sm font-bold">

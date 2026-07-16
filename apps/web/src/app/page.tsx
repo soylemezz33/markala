@@ -20,7 +20,7 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: { absolute: "Markala — Online Matbaa: Kartvizit, Broşür, Afiş & Branda Baskı" },
   description:
-    "Kartvizit, broşür, afiş, branda ve 800+ matbaa & reklam ürünü online. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 il kargo. 324 Ajans güvencesiyle markala.com.tr.",
+    "Kartvizit, broşür, afiş, branda ve 800+ matbaa & reklam ürünü online. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle markala.com.tr.",
   alternates: { canonical: "/" },
 };
 

@@ -1158,7 +1158,7 @@ export default function CheckoutPage() {
 
               <ul className="grid grid-cols-3 gap-2 text-xs text-ink-500">
                 <Trust icon={<Clock size={18} />} label="1-2 iş günü üretim" />
-                <Trust icon={<Truck size={18} />} label="81 il kargo" />
+                <Trust icon={<Truck size={18} />} label="81 ile kargo" />
                 <Trust icon={<ShieldCheck size={18} />} label="KVKK uyumlu" />
               </ul>
             </div>
