@@ -4,7 +4,7 @@
 # Run:   docker run -p 3000:3000 markala-web
 
 # ── 1. Base — pnpm + node 20
-FROM node:20-alpine AS base
+FROM node:26-alpine AS base
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 WORKDIR /app
 
@@ -55,7 +55,7 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN pnpm --filter @markala/web build
 
 # ── 4. Runtime — minimal image (Next.js standalone)
-FROM node:20-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
