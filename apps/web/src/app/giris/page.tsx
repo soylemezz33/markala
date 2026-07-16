@@ -97,7 +97,7 @@ export default function LoginPage() {
                   Sepetiniz sizi bekliyor — {cartItems.length} ürün · <Price amount={cartTotal} size="sm" className="text-ink-900" />
                 </div>
                 <div className="text-xs text-ink-600 truncate">
-                  {cartItems.slice(0, 2).map((i) => i.name).join(" · ")}
+                  {cartItems.slice(0, 2).map((i) => i.productName).join(" · ")}
                   {cartItems.length > 2 ? ` +${cartItems.length - 2} daha` : ""}
                 </div>
               </div>
