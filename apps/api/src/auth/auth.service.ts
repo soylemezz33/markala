@@ -11,6 +11,7 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
 import * as crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 
@@ -48,6 +49,8 @@ export class AuthService {
   private dummyHashPromise?: Promise<string>;
   /** Kullanılmış Google ID token jti'leri → exp(epoch ms). Replay'i exp'e kadar engeller (tek instance). */
   private readonly googleJtiSeen = new Map<string, number>();
+  /** Google ID token yerel doğrulayıcı (JWKS anahtarlarını çeker+cache'ler; süreç ömrü boyu tek örnek). */
+  private readonly googleOAuthClient = new OAuth2Client();
 
   constructor(
     private prisma: PrismaService,
@@ -267,11 +270,12 @@ export class AuthService {
   /**
    * "Google ile devam et" (GIS ID token) — flag-gated: GOOGLE_CLIENT_ID env yoksa kapalı.
    *
-   * Doğrulama: Google'ın resmî tokeninfo endpoint'i (imza/exp kontrolünü Google yapar;
-   * ek bağımlılık yok). Güvenlik kontratı (savunma-derinliği):
-   *  - aud === GOOGLE_CLIENT_ID (başka uygulamanın token'ı reddedilir)
-   *  - iss ∈ {accounts.google.com, https://accounts.google.com} (tokeninfo davranışına tek nokta güven değil)
-   *  - email_verified === "true" zorunlu → e-posta sahipliği Google'ca kanıtlı
+   * Doğrulama: Google'ın resmî `google-auth-library`'si ile YEREL JWKS imza doğrulaması
+   * (verifyIdToken imza + exp + aud + iss'i kontrol eder; anahtarlar süreçte cache'lenir).
+   * Dış tokeninfo çağrısı ve credential-in-URL yüzeyi yok. Ek güvenlik kontratı:
+   *  - aud === GOOGLE_CLIENT_ID (verifyIdToken audience ile zorlar; başka uygulama token'ı reddedilir)
+   *  - iss ∈ {accounts.google.com, https://accounts.google.com} (kütüphane doğrular; biz de teyit ederiz)
+   *  - email_verified === true zorunlu → e-posta sahipliği Google'ca kanıtlı
    *  - jti tek-kullanımlık (in-memory, exp'e kadar) → ~1 saatlik replay penceresi kapatılır
    *  - SADECE role="customer": ayrıcalıklı hesaplar (admin/kurumsal) bu tüketici yolundan
    *    giremez ve emailVerifiedAt auto-unlock yalnız müşteri için işler (privilege guard).
@@ -287,62 +291,48 @@ export class AuthService {
       throw new BadRequestException("Google ile giriş şu anda kullanılamıyor.");
     }
 
-    interface TokenInfo {
-      aud?: string;
-      iss?: string;
-      email?: string;
-      email_verified?: string;
-      name?: string;
-      exp?: string;
-      jti?: string;
-    }
-    let info: TokenInfo;
+    // İmza/exp/aud/iss doğrulaması yerel (JWKS) — Google'ın açık anahtarları kütüphanece
+    // çekilip cache'lenir. Geçersiz imza/süre/aud → hata fırlatır (fail-closed).
+    let payload: import("google-auth-library").TokenPayload | undefined;
     try {
-      const res = await fetch(
-        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
-        { signal: AbortSignal.timeout(8000) },
-      );
-      if (!res.ok) {
-        this.logger.warn(`google.tokeninfo_reject status=${res.status} ip=${context.ipAddress ?? "?"}`);
-        throw new UnauthorizedException("Google doğrulaması başarısız. Lütfen tekrar deneyin.");
-      }
-      info = (await res.json()) as TokenInfo;
+      const ticket = await this.googleOAuthClient.verifyIdToken({
+        idToken: credential,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
     } catch (err) {
-      if (err instanceof UnauthorizedException) throw err;
-      this.logger.error(`google.tokeninfo_error ip=${context.ipAddress ?? "?"}`, err as Error);
-      throw new UnauthorizedException("Google doğrulamasına ulaşılamadı. Lütfen tekrar deneyin.");
+      this.logger.warn(`google.verify_reject ip=${context.ipAddress ?? "?"} msg=${(err as Error)?.message ?? "?"}`);
+      throw new UnauthorizedException("Google doğrulaması başarısız. Lütfen tekrar deneyin.");
+    }
+    if (!payload) {
+      throw new UnauthorizedException("Google doğrulaması başarısız.");
     }
 
-    if (info.aud !== clientId) {
-      this.logger.warn(`google.aud_mismatch aud=${info.aud ?? "?"} ip=${context.ipAddress ?? "?"}`);
+    // iss teyidi (savunma-derinliği; verifyIdToken zaten kontrol eder).
+    if (payload.iss !== "accounts.google.com" && payload.iss !== "https://accounts.google.com") {
+      this.logger.warn(`google.iss_mismatch iss=${payload.iss ?? "?"} ip=${context.ipAddress ?? "?"}`);
       throw new UnauthorizedException("Google doğrulaması başarısız.");
     }
-    // iss doğrulaması (savunma-derinliği; tek başına bypass'ı imza+aud zaten engelliyor).
-    if (info.iss !== "accounts.google.com" && info.iss !== "https://accounts.google.com") {
-      this.logger.warn(`google.iss_mismatch iss=${info.iss ?? "?"} ip=${context.ipAddress ?? "?"}`);
-      throw new UnauthorizedException("Google doğrulaması başarısız.");
-    }
-    const email = info.email?.trim().toLowerCase();
-    if (!email || info.email_verified !== "true") {
+    const email = payload.email?.trim().toLowerCase();
+    if (!email || payload.email_verified !== true) {
       this.logger.warn(`google.email_unverified email=${email ?? "?"} ip=${context.ipAddress ?? "?"}`);
       throw new UnauthorizedException("Google hesabınızın e-postası doğrulanmamış.");
     }
 
     // Replay koruması: aynı ID token'ı (jti) exp'e kadar tek kez kabul et. Tek API instance
     // olduğu için in-memory yeterli; restart cache'i temizler ama token zaten ~1 saatte ölür.
-    const exp = Number(info.exp) * 1000;
-    if (info.jti && Number.isFinite(exp)) {
+    const exp = typeof payload.exp === "number" ? payload.exp * 1000 : NaN;
+    if (payload.jti && Number.isFinite(exp)) {
       this.pruneGoogleJti();
-      if (this.googleJtiSeen.has(info.jti)) {
-        this.logger.warn(`google.token_replayed jti=${info.jti} ip=${context.ipAddress ?? "?"}`);
+      if (this.googleJtiSeen.has(payload.jti)) {
+        this.logger.warn(`google.token_replayed jti=${payload.jti} ip=${context.ipAddress ?? "?"}`);
         throw new UnauthorizedException("Bu Google oturumu zaten kullanıldı. Lütfen tekrar deneyin.");
       }
-      this.googleJtiSeen.set(info.jti, exp);
+      this.googleJtiSeen.set(payload.jti, exp);
     }
-
     // Google display name saldırgan-kontrollü keyfi dize → kontrol/işaret karakterlerini temizle,
     // register ile aynı min-uzunluk garantisini uygula (boşsa e-posta yerel-parçasına düş).
-    const safeName = this.sanitizeDisplayName(info.name, email);
+    const safeName = this.sanitizeDisplayName(payload.name, email);
 
     let user = await this.prisma.user.findUnique({ where: { email } });
     if (user?.deletedAt) {
