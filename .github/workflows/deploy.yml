@@ -91,6 +91,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 13m
           script: |
             set -e
             cd /opt/markala
@@ -99,17 +100,52 @@ jobs:
             # postgres'e DOKUNMAZ — yalnız app servislerini (web/admin/api) günceller.
             echo "→ Pre-deploy DB yedeği (best-effort)..."
             mkdir -p backups
-            docker exec markala-postgres pg_dump -U "${POSTGRES_USER:-markala}" "${POSTGRES_DB:-markala}" > "backups/db-predeploy-$(date +%Y%m%d-%H%M%S).sql" 2>/dev/null || echo "  (yedek atlandı — manuel yedek al)"
+            docker exec markala-postgres sh -c 'pg_dump -U "${POSTGRES_USER:-markala}" "${POSTGRES_DB:-markala}"' > "backups/db-predeploy-$(date +%Y%m%d-%H%M%S).sql" 2>/dev/null || echo "  (yedek atlandı — manuel yedek al)"
             echo "→ App imajlarını çek (web/admin/api)..."
             docker compose -f docker-compose.production.yml --env-file .env.production pull web admin api
+            echo "→ Önceki recreate kalıntılarını temizle (<hash>_markala-*)..."
+            docker rm -f $(docker ps -aq --filter name=_markala- 2>/dev/null) 2>/dev/null || true
             echo "→ Sadece app servislerini güncelle (postgres/nginx KORUNUR)..."
             docker compose -f docker-compose.production.yml --env-file .env.production up -d --no-build --no-deps web admin api
-            echo "→ Sağlık kontrolü..."
-            sleep 10
-            curl -fsS http://localhost:3000/api/health || (echo "❌ Health check failed!" && exit 1)
-            echo "→ Eski imajları temizle..."
-            docker image prune -f
+            echo "→ Nginx reload (recreate sonrası bayat upstream IP fix)..."
+            sleep 5
+            docker exec markala-nginx nginx -s reload || { echo "⚠ nginx reload başarısız — bayat upstream riski (dış doğrulama yakalar)"; docker exec markala-nginx nginx -t 2>&1 || true; }
+            # Sağlık kontrolü: host'ta 3000 portu publish DEĞİL ve host'ta curl YOK —
+            # bu yüzden compose'un kendi healthcheck'lerine bakılır (tek doğru vantaj noktası).
+            echo "→ Sağlık kontrolü (compose healthcheck, maks ~2 dk)..."
+            ok=0
+            for i in $(seq 1 12); do
+              n=$(docker inspect -f '{{.State.Health.Status}}' markala-web markala-admin markala-api 2>/dev/null | grep -c '^healthy$' || true)
+              echo "  deneme $i/12: healthy=$n/3"
+              if [ "$n" = "3" ]; then ok=1; break; fi
+              sleep 10
+            done
+            if [ "$ok" != "1" ]; then
+              echo "❌ Health check failed! Container durumları:"
+              docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
+              exit 1
+            fi
+            echo "→ Eski imaj + build cache temizliği (volume/DB DOKUNULMAZ)..."
+            docker image prune -f || true
+            docker builder prune -f >/dev/null 2>&1 || true
+            df -h / | tail -1
             echo "✅ Deploy complete: ${{ github.sha }}"
+
+      # Dış doğrulama runner'dan yapılır (VPS host'unda curl yok). CF challenge'ı
+      # 403 dönebilir — origin çökmesini (502/520/521) yakalamak için eşik <500.
+      - name: Verify production (external)
+        run: |
+          for u in "https://markala.com.tr" "https://api.markala.com.tr/api/health"; do
+            ok=0
+            for i in $(seq 1 6); do
+              code=$(curl -s -o /dev/null -m 25 -w '%{http_code}' -A "Mozilla/5.0 (GH-Actions verify)" "$u") || code=000
+              echo "$u -> HTTP $code (deneme $i)"
+              if [ "$code" -ge 200 ] && [ "$code" -lt 500 ]; then ok=1; break; fi
+              sleep 8
+            done
+            if [ "$ok" != "1" ]; then echo "❌ $u origin hatası veriyor"; exit 1; fi
+          done
+          echo "✅ Dış doğrulama geçti"
 
       - name: Notify on success
         if: success()
