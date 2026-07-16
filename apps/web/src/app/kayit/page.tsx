@@ -6,6 +6,7 @@ import { Container, Button } from "@markala/ui";
 import { Sparkle, Gift, Lightning, Receipt, EnvelopeSimple, CheckCircle, Eye, EyeSlash } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { GoogleSignIn } from "@/components/auth/google-signin";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { PhoneInput } from "@/components/forms/phone-input";
 import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 
@@ -44,8 +45,7 @@ export default function RegisterPage() {
   // hydration uyumsuzluğu yapar → mount'ta state'e al.
   const [nextParam, setNextParam] = useState<string | null>(null);
   useEffect(() => {
-    const n = new URLSearchParams(window.location.search).get("next");
-    setNextParam(n && n.startsWith("/") && !n.startsWith("//") ? n : null);
+    setNextParam(safeNextPath(new URLSearchParams(window.location.search).get("next")));
   }, []);
   const girisHref = nextParam ? `/giris?next=${encodeURIComponent(nextParam)}` : "/giris";
 

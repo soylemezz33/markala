@@ -46,6 +46,8 @@ export class AuthService {
   private readonly refreshTtlMs = 30 * 24 * 60 * 60 * 1000; // 30 gün
   /** Bilinmeyen e-postada verify edilecek geçerli dummy hash — lazy, tek sefer üretilir. */
   private dummyHashPromise?: Promise<string>;
+  /** Kullanılmış Google ID token jti'leri → exp(epoch ms). Replay'i exp'e kadar engeller (tek instance). */
+  private readonly googleJtiSeen = new Map<string, number>();
 
   constructor(
     private prisma: PrismaService,
@@ -266,11 +268,13 @@ export class AuthService {
    * "Google ile devam et" (GIS ID token) — flag-gated: GOOGLE_CLIENT_ID env yoksa kapalı.
    *
    * Doğrulama: Google'ın resmî tokeninfo endpoint'i (imza/exp kontrolünü Google yapar;
-   * ek bağımlılık yok). Güvenlik kontratı:
+   * ek bağımlılık yok). Güvenlik kontratı (savunma-derinliği):
    *  - aud === GOOGLE_CLIENT_ID (başka uygulamanın token'ı reddedilir)
-   *  - iss accounts.google.com (tokeninfo zaten Google-imzalı token dışında 4xx döner)
-   *  - email_verified zorunlu → e-posta sahipliği Google'ca kanıtlı olduğundan KATI
-   *    e-posta doğrulama kilidi bu akışta otomatik açılır (kurumsal-davet fix'iyle aynı ilke).
+   *  - iss ∈ {accounts.google.com, https://accounts.google.com} (tokeninfo davranışına tek nokta güven değil)
+   *  - email_verified === "true" zorunlu → e-posta sahipliği Google'ca kanıtlı
+   *  - jti tek-kullanımlık (in-memory, exp'e kadar) → ~1 saatlik replay penceresi kapatılır
+   *  - SADECE role="customer": ayrıcalıklı hesaplar (admin/kurumsal) bu tüketici yolundan
+   *    giremez ve emailVerifiedAt auto-unlock yalnız müşteri için işler (privilege guard).
    * Yeni kullanıcı: rastgele şifreyle oluşturulur (şifreli girişe geçmek isterse
    * "şifremi unuttum" akışı zaten emailVerifiedAt'i koruyarak şifre belirletir).
    */
@@ -285,10 +289,12 @@ export class AuthService {
 
     interface TokenInfo {
       aud?: string;
+      iss?: string;
       email?: string;
       email_verified?: string;
       name?: string;
       exp?: string;
+      jti?: string;
     }
     let info: TokenInfo;
     try {
@@ -311,15 +317,42 @@ export class AuthService {
       this.logger.warn(`google.aud_mismatch aud=${info.aud ?? "?"} ip=${context.ipAddress ?? "?"}`);
       throw new UnauthorizedException("Google doğrulaması başarısız.");
     }
+    // iss doğrulaması (savunma-derinliği; tek başına bypass'ı imza+aud zaten engelliyor).
+    if (info.iss !== "accounts.google.com" && info.iss !== "https://accounts.google.com") {
+      this.logger.warn(`google.iss_mismatch iss=${info.iss ?? "?"} ip=${context.ipAddress ?? "?"}`);
+      throw new UnauthorizedException("Google doğrulaması başarısız.");
+    }
     const email = info.email?.trim().toLowerCase();
     if (!email || info.email_verified !== "true") {
       this.logger.warn(`google.email_unverified email=${email ?? "?"} ip=${context.ipAddress ?? "?"}`);
       throw new UnauthorizedException("Google hesabınızın e-postası doğrulanmamış.");
     }
 
+    // Replay koruması: aynı ID token'ı (jti) exp'e kadar tek kez kabul et. Tek API instance
+    // olduğu için in-memory yeterli; restart cache'i temizler ama token zaten ~1 saatte ölür.
+    const exp = Number(info.exp) * 1000;
+    if (info.jti && Number.isFinite(exp)) {
+      this.pruneGoogleJti();
+      if (this.googleJtiSeen.has(info.jti)) {
+        this.logger.warn(`google.token_replayed jti=${info.jti} ip=${context.ipAddress ?? "?"}`);
+        throw new UnauthorizedException("Bu Google oturumu zaten kullanıldı. Lütfen tekrar deneyin.");
+      }
+      this.googleJtiSeen.set(info.jti, exp);
+    }
+
+    // Google display name saldırgan-kontrollü keyfi dize → kontrol/işaret karakterlerini temizle,
+    // register ile aynı min-uzunluk garantisini uygula (boşsa e-posta yerel-parçasına düş).
+    const safeName = this.sanitizeDisplayName(info.name, email);
+
     let user = await this.prisma.user.findUnique({ where: { email } });
     if (user?.deletedAt) {
       throw new ForbiddenException("Bu hesap kapatılmış. Destek ile iletişime geçin.");
+    }
+    // Privilege guard: admin/kurumsal gibi ayrıcalıklı hesaplar tüketici sosyal-giriş
+    // yolundan (parola/2FA atlanarak) AÇILAMAZ. Parola akışı da customer dışını farklı ele alır.
+    if (user && user.role !== "customer") {
+      this.logger.warn(`google.privileged_blocked userId=${user.id} role=${user.role} ip=${context.ipAddress ?? "?"}`);
+      throw new ForbiddenException("Bu hesap Google ile girişe kapalı. Lütfen e-posta ve şifrenizle girin.");
     }
     if (!user) {
       // İlk Google girişi = kayıt. Rastgele şifre (yalnız hash saklanır); e-posta Google'ca doğrulu.
@@ -329,13 +362,14 @@ export class AuthService {
         data: {
           email,
           passwordHash,
-          fullName: (info.name ?? email.split("@")[0] ?? "Müşteri").slice(0, 120),
+          fullName: safeName,
           emailVerifiedAt: new Date(),
         },
       });
       this.logger.log(`google.register userId=${user.id}`);
     } else if (!user.emailVerifiedAt) {
-      // Mevcut ama doğrulanmamış hesap: Google e-posta sahipliğini kanıtladı → kilidi aç.
+      // Mevcut doğrulanmamış MÜŞTERİ (guard yukarıda customer'a indirdi): Google e-posta
+      // sahipliğini kanıtladı → kilidi aç.
       await this.prisma.user.update({
         where: { id: user.id },
         data: { emailVerifiedAt: new Date() },
@@ -349,6 +383,26 @@ export class AuthService {
     });
 
     return this.issueTokenPair(user, context);
+  }
+
+  /** Kullanılmış Google jti'lerinin süresi dolmuş kayıtlarını temizle (unbounded büyümeyi engeller). */
+  private pruneGoogleJti() {
+    const now = Date.now();
+    for (const [jti, exp] of this.googleJtiSeen) {
+      if (exp <= now) this.googleJtiSeen.delete(jti);
+    }
+  }
+
+  /** Google display name → kontrol/HTML karakterlerini at, kırp, boşsa e-posta yerel-parçasına düş. */
+  private sanitizeDisplayName(raw: string | undefined, email: string): string {
+    const cleaned = (raw ?? "")
+      // eslint-disable-next-line no-control-regex
+      .replace(/[ -<>]/g, "")
+      .trim()
+      .slice(0, 120);
+    if (cleaned.length >= 2) return cleaned;
+    const local = email.split("@")[0]?.slice(0, 120);
+    return local && local.length >= 2 ? local : "Müşteri";
   }
 
   async login(

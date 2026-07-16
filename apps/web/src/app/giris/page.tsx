@@ -9,6 +9,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useCartStore } from "@/lib/cart-store";
 import { apiClient } from "@/lib/api";
 import { GoogleSignIn } from "@/components/auth/google-signin";
+import { safeNextPath } from "@/lib/safe-redirect";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -40,18 +41,16 @@ export default function LoginPage() {
     }
   }
 
-  // Giriş sonrası dönülecek hedef. Yalnız site-içi mutlak yol kabul edilir ("//host" veya
-  // "http(s)://" gibi açık yönlendirme/oltalama yolları reddedilir). Yoksa /hesabim.
+  // Giriş sonrası dönülecek hedef. safeNextPath açık yönlendirmeyi (ters-bölü/protokol-relatif
+  // dahil) origin doğrulamasıyla eler. Yoksa /hesabim.
   function safeNext(): string {
     if (typeof window === "undefined") return "/hesabim";
-    const n = new URLSearchParams(window.location.search).get("next");
-    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/hesabim";
+    return safeNextPath(new URLSearchParams(window.location.search).get("next")) ?? "/hesabim";
   }
   // "next"i mount'ta state'e al (render sırasında window okumak hydration uyumsuzluğu yapar).
   const [nextParam, setNextParam] = useState<string | null>(null);
   useEffect(() => {
-    const n = new URLSearchParams(window.location.search).get("next");
-    setNextParam(n && n.startsWith("/") && !n.startsWith("//") ? n : null);
+    setNextParam(safeNextPath(new URLSearchParams(window.location.search).get("next")));
   }, []);
   // Kayıt linki de "next"i taşısın — HOSGELDIN ile gelen yeni müşteri kayıt olup checkout'a dönsün.
   const kayitHref = nextParam ? `/kayit?next=${encodeURIComponent(nextParam)}` : "/kayit";

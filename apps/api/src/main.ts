@@ -63,6 +63,9 @@ async function bootstrap() {
   // (fail-closed) → bu limitler yalnız kaba flood'a karşı, gevşek tutulur (3→15, 5→12).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 15, path: "/auth/register", method: "POST" }));
   app.use(rateLimit({ windowMs: 60_000, max: 5, path: "/auth/login", method: "POST" }));
+  // "Google ile devam et" — login eşi limit. Tokeninfo (Google) amplification'ı ve
+  // otomatik-hesap-oluşturma seli bu sınırla kesilir.
+  app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/google", method: "POST" }));
   app.use(
     rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/auth/resend-verification", method: "POST" }),
   );

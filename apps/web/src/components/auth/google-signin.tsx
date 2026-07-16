@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
+import { safeNextPath } from "@/lib/safe-redirect";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -54,7 +55,7 @@ export function GoogleSignIn({ next }: { next?: string | null }) {
           const res = await loginWithGoogle(credential);
           setBusy(false);
           if (res.ok) {
-            router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/hesabim");
+            router.replace(safeNextPath(next) ?? "/hesabim");
           } else {
             setError(res.error ?? "Google ile giriş başarısız.");
           }

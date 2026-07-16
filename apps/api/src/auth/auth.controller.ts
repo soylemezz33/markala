@@ -76,9 +76,9 @@ export class AuthController {
     };
   }
 
-  // "Google ile devam et" — GIS ID token doğrulanır (aud + email_verified), kullanıcı
+  // "Google ile devam et" — GIS ID token doğrulanır (aud + iss + email_verified), kullanıcı
   // bulunur/oluşturulur, normal oturum çifti verilir. Flag: GOOGLE_CLIENT_ID env yoksa 400.
-  // Login ile aynı rate-limit sınıfında (main.ts /auth/* middleware).
+  // Rate limit: main.ts'te /auth/google için 10/dk/IP kaydı var (login eşi).
   @Post("google")
   async google(
     @Body() dto: GoogleLoginDto,
