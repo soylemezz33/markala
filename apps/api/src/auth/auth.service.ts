@@ -322,13 +322,15 @@ export class AuthService {
     // Replay koruması: aynı ID token'ı (jti) exp'e kadar tek kez kabul et. Tek API instance
     // olduğu için in-memory yeterli; restart cache'i temizler ama token zaten ~1 saatte ölür.
     const exp = typeof payload.exp === "number" ? payload.exp * 1000 : NaN;
-    if (payload.jti && Number.isFinite(exp)) {
+    // google-auth-library'nin TokenPayload tipi jti bildirmez ama Google ID token'ları taşır.
+    const jti = (payload as { jti?: string }).jti;
+    if (jti && Number.isFinite(exp)) {
       this.pruneGoogleJti();
-      if (this.googleJtiSeen.has(payload.jti)) {
-        this.logger.warn(`google.token_replayed jti=${payload.jti} ip=${context.ipAddress ?? "?"}`);
+      if (this.googleJtiSeen.has(jti)) {
+        this.logger.warn(`google.token_replayed jti=${jti} ip=${context.ipAddress ?? "?"}`);
         throw new UnauthorizedException("Bu Google oturumu zaten kullanıldı. Lütfen tekrar deneyin.");
       }
-      this.googleJtiSeen.set(payload.jti, exp);
+      this.googleJtiSeen.set(jti, exp);
     }
     // Google display name saldırgan-kontrollü keyfi dize → kontrol/işaret karakterlerini temizle,
     // register ile aynı min-uzunluk garantisini uygula (boşsa e-posta yerel-parçasına düş).
