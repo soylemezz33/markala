@@ -39,9 +39,9 @@ export function CategoryCard({ category }: CategoryCardProps) {
               <span>'den</span>
             </>
           ) : (
-            <span className="text-sm font-medium tabular-nums tracking-tight text-ink-900">
-              Teklif Al
-            </span>
+            // Fiyatsız kategoride "Teklif Al" yazmak anasayfa dolusu kartta
+            // "fiyat gizliyorlar" algısı yaratıyordu — nötr keşif metni.
+            <span className="text-sm font-medium text-ink-700">Ürünleri incele</span>
           )}
         </div>
       </div>
