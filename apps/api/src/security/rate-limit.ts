@@ -29,14 +29,20 @@ export function rateLimit(opts: { windowMs: number; max: number; path: string; m
   const counter = new FixedWindowCounter(opts);
   setInterval(() => counter.sweep(Date.now()), opts.windowMs).unref?.();
 
+  const target = opts.path.toLowerCase();
   return (req: Request, res: Response, next: NextFunction) => {
     if (opts.method && req.method !== opts.method) return next();
+    // GÜVENLİK: Express varsayılan routing case-insensitive + non-strict (trailing slash) olduğundan
+    // "/api/auth/LOGIN" ve "/api/auth/login/" de controller'a ULAŞIR. Eşleşmeyi aynı biçime indirmezsek
+    // saldırgan sondaki slash/harf büyütmeyle rate-limit'i tümden atlar (brute-force koruması çöker).
+    // Bu yüzden karşılaştırmadan önce path'i normalize et: sondaki slash'ları kırp + küçük harfe indir.
+    const normPath = req.path.replace(/\/+$/, "").toLowerCase();
     // prefix=true → opts.path bir SEGMENT öneki (örn "/admin" → "/api/admin/users/:id" yakalanır;
     //   global "/api" öneki nedeniyle includes("/admin/") + tam tail-eşitlik kullanılır).
-    // prefix yok → leaf route (örn "/auth/login") için endsWith (mevcut davranış).
+    // prefix yok → leaf route (örn "/auth/login") için endsWith.
     const matched = opts.prefix
-      ? req.path.includes(`${opts.path}/`) || req.path.endsWith(opts.path)
-      : req.path.endsWith(opts.path);
+      ? normPath.includes(`${target}/`) || normPath.endsWith(target)
+      : normPath.endsWith(target);
     if (!matched) return next();
     const ip = req.ip ?? "unknown"; // trust proxy=1 → req.ip = gerçek client (CF-Connecting-IP / Nginx real_ip)
     const { allowed, retryAfterSec } = counter.hit(`${opts.path}:${ip}`, Date.now());

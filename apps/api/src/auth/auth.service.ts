@@ -276,7 +276,7 @@ export class AuthService {
    *  - aud === GOOGLE_CLIENT_ID (verifyIdToken audience ile zorlar; başka uygulama token'ı reddedilir)
    *  - iss ∈ {accounts.google.com, https://accounts.google.com} (kütüphane doğrular; biz de teyit ederiz)
    *  - email_verified === true zorunlu → e-posta sahipliği Google'ca kanıtlı
-   *  - jti tek-kullanımlık (in-memory, exp'e kadar) → ~1 saatlik replay penceresi kapatılır
+   *  - token tek-kullanımlık (jti ?? credential-sha256, in-memory exp'e kadar) → ~1 saatlik replay kapatılır
    *  - SADECE role="customer": ayrıcalıklı hesaplar (admin/kurumsal) bu tüketici yolundan
    *    giremez ve emailVerifiedAt auto-unlock yalnız müşteri için işler (privilege guard).
    * Yeni kullanıcı: rastgele şifreyle oluşturulur (şifreli girişe geçmek isterse
@@ -319,18 +319,21 @@ export class AuthService {
       throw new UnauthorizedException("Google hesabınızın e-postası doğrulanmamış.");
     }
 
-    // Replay koruması: aynı ID token'ı (jti) exp'e kadar tek kez kabul et. Tek API instance
-    // olduğu için in-memory yeterli; restart cache'i temizler ama token zaten ~1 saatte ölür.
+    // Replay koruması: aynı ID token'ı exp'e kadar tek kez kabul et. Tek API instance olduğu için
+    // in-memory yeterli; restart cache'i temizler ama token zaten ~1 saatte ölür.
+    // ÖNEMLİ: Google OIDC ID token'ları jti claim'i TAŞIMAZ (jti ID token'da zorunlu değil) → jti'ye
+    // bağlı koruma pratikte NO-OP olurdu. Bu yüzden replay anahtarı = jti ?? token'ın sha256'sı;
+    // credential hash her farklı token'ı garanti tek-kullanımlık yapar (sub:iat'tan daha kesin).
     const exp = typeof payload.exp === "number" ? payload.exp * 1000 : NaN;
-    // google-auth-library'nin TokenPayload tipi jti bildirmez ama Google ID token'ları taşır.
     const jti = (payload as { jti?: string }).jti;
-    if (jti && Number.isFinite(exp)) {
+    const replayKey = jti ?? crypto.createHash("sha256").update(credential).digest("hex");
+    if (Number.isFinite(exp)) {
       this.pruneGoogleJti();
-      if (this.googleJtiSeen.has(jti)) {
-        this.logger.warn(`google.token_replayed jti=${jti} ip=${context.ipAddress ?? "?"}`);
+      if (this.googleJtiSeen.has(replayKey)) {
+        this.logger.warn(`google.token_replayed key=${replayKey.slice(0, 12)} ip=${context.ipAddress ?? "?"}`);
         throw new UnauthorizedException("Bu Google oturumu zaten kullanıldı. Lütfen tekrar deneyin.");
       }
-      this.googleJtiSeen.set(jti, exp);
+      this.googleJtiSeen.set(replayKey, exp);
     }
     // Google display name saldırgan-kontrollü keyfi dize → kontrol/işaret karakterlerini temizle,
     // register ile aynı min-uzunluk garantisini uygula (boşsa e-posta yerel-parçasına düş).
