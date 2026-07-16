@@ -15,8 +15,9 @@ const sizes = {
   xl: "text-4xl",
 };
 
+// Marka kuralı: tam sayı fiyatlarda ",00" atılır (480 ₺), gerçek kuruş korunur (34,90 ₺).
 const formatter = new Intl.NumberFormat("tr-TR", {
-  minimumFractionDigits: 2,
+  minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
 

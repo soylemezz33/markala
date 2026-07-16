@@ -147,10 +147,14 @@ export default async function ProductPage({ params }: Props) {
   ]);
   const relatedProducts = related.filter((p) => p.slug !== product.slug).slice(0, 4);
 
+  // Tek ürünlü kategorilerde kategori adı ile ürün adı birebir aynı olabiliyor → kırılımda
+  // "Kartvizit › Kartvizit" tekrarı oluşur. Aynıysa kategori kırılımını gizle.
+  const showCategoryCrumb =
+    category && category.name.trim().toLocaleLowerCase("tr") !== product.name.trim().toLocaleLowerCase("tr");
   const breadcrumbs = [
     { name: "Anasayfa", href: "/" },
     { name: "Ürünler", href: "/urunler" },
-    ...(category ? [{ name: category.name, href: `/kategori/${category.slug}` }] : []),
+    ...(showCategoryCrumb ? [{ name: category!.name, href: `/kategori/${category!.slug}` }] : []),
     { name: product.name, href: `/urun/${product.slug}` },
   ];
 

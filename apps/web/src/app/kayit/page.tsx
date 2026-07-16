@@ -136,7 +136,7 @@ export default function RegisterPage() {
 
             <Field label="Şifre">
               <div className="relative">
-                <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputClass} pr-11`} minLength={8} autoComplete="new-password" placeholder="En az 8 karakter — büyük, küçük harf ve rakam" />
+                <input type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputClass} pr-11`} minLength={8} autoComplete="new-password" placeholder="Şifreniz" />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
@@ -146,6 +146,8 @@ export default function RegisterPage() {
                   {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {/* Kural placeholder'a sığmıyordu (kesiliyordu) → kalıcı yardımcı metin. */}
+              <p className="mt-1.5 text-xs text-ink-500">En az 8 karakter; büyük harf, küçük harf ve rakam içermeli.</p>
             </Field>
 
             <label className="flex items-start gap-2 text-sm text-ink-700 mt-3">

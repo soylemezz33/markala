@@ -382,7 +382,7 @@ export default async function CityLandingPage({ params }: Props) {
               >
                 kurumsal hesap aç
               </Link>{" "}
-              — firmanıza özel avantajlı fiyat, açık fatura, dedicated temsilci.
+              — firmanıza özel avantajlı fiyat, açık fatura, size özel temsilci.
             </p>
           </section>
         )}

@@ -81,7 +81,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-medium leading-snug line-clamp-2 flex-1 text-ink-900">
+          <h3 className="font-medium leading-snug line-clamp-2 min-h-[2.5rem] flex-1 text-ink-900">
             {product.name}
           </h3>
           {product.rating && (
@@ -96,13 +96,13 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="mt-1 text-xs text-ink-500">{product.sizeLabel}</p>
         )}
 
-        <div className="mt-3 pt-3 border-t border-paper-200 flex items-baseline justify-between gap-2">
+        <div className="mt-auto pt-3 border-t border-paper-200 flex items-baseline justify-between gap-2">
           <div className="flex flex-col">
             {startingPrice > 0 ? (
               <>
                 <Price amount={startingPrice} size="md" className="text-ink-900" />
                 <span className="text-[11px] mt-0.5 text-ink-500">
-                  'den başlayan · KDV dahil
+                  başlangıç fiyatı · KDV dahil
                 </span>
               </>
             ) : (

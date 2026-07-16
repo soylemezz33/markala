@@ -141,7 +141,7 @@ export default function ContactPage() {
                 <c.icon size={22} weight="regular" />
               </div>
               <div className="text-xs uppercase tracking-wider text-ink-500 font-semibold">{c.label}</div>
-              <div className="mt-1 text-xl font-semibold text-ink-900 break-all">{c.value}</div>
+              <div className="mt-1 text-base sm:text-lg font-semibold text-ink-900 break-words leading-snug">{c.value}</div>
               <p className="mt-2 text-sm text-ink-500 leading-relaxed flex-1">{c.sub}</p>
               <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 group-hover:gap-2.5 transition-all">
                 {c.cta} <ArrowRight size={14} weight="bold" />

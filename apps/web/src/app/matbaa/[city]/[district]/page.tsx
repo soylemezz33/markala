@@ -267,7 +267,7 @@ export default async function DistrictLandingPage({ params }: Props) {
           </h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
             Kurumsal hesap aç, firmana özel avantajlı fiyat + açık fatura +
-            dedicated temsilci kazan.
+            size özel temsilci kazan.
           </p>
           <Link
             href="/kurumsal/basvuru"
