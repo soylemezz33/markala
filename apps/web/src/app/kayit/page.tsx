@@ -199,7 +199,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Sağ: Marka tanıtım */}
-      <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 bg-ink-900 text-paper-50 relative overflow-hidden">
+      <div className="hidden lg:flex lg:col-span-6 xl:col-span-7 bg-gradient-to-br from-[#241C54] via-[#322768] to-[#4B3AA0] text-paper-50 relative overflow-hidden">
         <div aria-hidden className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full opacity-25 blur-3xl" style={{ background: "radial-gradient(circle, #F5B800, transparent 70%)" }} />
         <div className="relative max-w-lg mx-auto px-12 py-24 flex flex-col justify-center">
           <span className="inline-flex w-fit items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 text-brand-400 text-xs font-semibold uppercase tracking-wider">

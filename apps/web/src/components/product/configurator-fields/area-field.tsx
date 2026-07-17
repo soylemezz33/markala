@@ -73,7 +73,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
               }}
               className={`rounded-full border px-3 py-1.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1 ${
                 on
-                  ? "border-ink-900 bg-ink-900 text-paper-50"
+                  ? "border-[#4B3AA0] bg-[#4B3AA0] text-paper-50"
                   : "border-paper-300 text-ink-700 hover:border-ink-300"
               }`}
             >

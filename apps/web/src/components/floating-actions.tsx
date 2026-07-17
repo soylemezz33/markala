@@ -41,8 +41,10 @@ export function FloatingActions() {
 
   if (!mounted) return null;
 
+  // Mobilde bottom-24: PDP'nin sabit "Sepete Ekle" barını (bottom-0, ~72px) net geçsin,
+  // birincil CTA'yla çakışmasın. Masaüstünde bottom-6.
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 flex flex-col items-end gap-3">
+    <div className="fixed bottom-24 right-4 md:bottom-6 md:right-6 z-40 flex flex-col items-end gap-3">
       {/* Açılır mini panel */}
       <AnimatePresence>
         {open && (

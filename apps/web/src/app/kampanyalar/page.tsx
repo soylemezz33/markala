@@ -140,11 +140,12 @@ export default function KampanyalarPage() {
         </Container>
       </section>
 
-      {/* Değer şeridi */}
+      {/* Değer şeridi — divide-x: ayraçlar yalnız hücreler ARASINDA, kenarlarda hizasız gri
+          blok bırakmaz (önceki gap-px bg-paper-200 tekniği container kenarında taşıyordu). */}
       <section className="border-b border-paper-200 bg-paper-50">
-        <Container className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-paper-200 overflow-hidden rounded-none">
+        <Container className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-paper-200">
           {valueProps.map((v) => (
-            <div key={v.title} className="bg-paper-50 px-4 py-5 flex items-start gap-3">
+            <div key={v.title} className="px-4 py-5 flex items-start gap-3">
               <div className="flex-none w-10 h-10 rounded-lg bg-brand-100 text-brand-700 grid place-items-center">
                 <v.icon size={20} weight="fill" />
               </div>
@@ -168,7 +169,7 @@ export default function KampanyalarPage() {
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-all",
                   filter === f.id
-                    ? "bg-ink-900 text-paper-50"
+                    ? "bg-[#4B3AA0] text-paper-50"
                     : "bg-paper-100 text-ink-700 hover:bg-paper-200",
                 )}
               >

@@ -213,7 +213,8 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       (priceHintsMap as { malzeme?: Record<string, number> }).malzeme ?? {},
     ).filter((v) => typeof v === "number" && v > 0);
     if (hints.length === 0) return 0;
-    return Math.round(pricing.minM2 * Math.min(...hints) * 100) / 100;
+    // Temiz üst tam sayı (kartla aynı: getDisplayPrice area'da Math.ceil) — "115,92'den" yerine "116'dan".
+    return Math.ceil(pricing.minM2 * Math.min(...hints));
   }, [isArea, priceHintsMap, pricing.minM2]);
 
   // CTA "Teklif Al"a düştüğünde sebebi açıkla (buton sessizce değişmesin).

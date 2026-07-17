@@ -403,7 +403,12 @@ export function effectiveSelections(
  * null/undefined → 0 ("Teklif Al" durumu).
  */
 export function getDisplayPrice(product: Product): number {
-  return product.displayPrice ?? 0;
+  const p = product.displayPrice ?? 0;
+  // Area (m² hesabı) başlangıç fiyatı ham kuruşlu çıkabilir (ör. 115,92) → müşteriye temiz üst
+  // tam sayıya yuvarla (ASLA gerçek fiyatın ALTINDA gösterme). Additive fiyatlar (34,90 gibi
+  // kasıtlı kuruşlu değerler) OLDUĞU GİBİ korunur.
+  if (product.pricingMode === "area" && p > 0) return Math.ceil(p);
+  return p;
 }
 
 // ---------------------------------------------------------------------------

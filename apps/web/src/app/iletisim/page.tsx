@@ -111,9 +111,9 @@ export default function ContactPage() {
 
   return (
     <>
-      {/* Page header */}
+      {/* Page header — ölü alanı azaltmak için kompakt üst boşluk */}
       <div className="bg-paper-100 border-b border-paper-200">
-        <Container className="py-12 md:py-16">
+        <Container className="py-8 md:py-10">
           <div className="max-w-2xl">
             <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">İletişim</p>
             <h1 className="mt-2 text-4xl md:text-5xl font-semibold text-ink-900 leading-tight">

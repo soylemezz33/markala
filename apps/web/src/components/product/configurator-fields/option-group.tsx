@@ -151,7 +151,7 @@ function SearchableDropdown({
         className={cn(
           "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
           open
-            ? "border-ink-900 bg-paper-50 shadow-sm"
+            ? "border-[#4B3AA0] bg-paper-50 shadow-sm"
             : "border-paper-200 bg-paper-50 hover:border-ink-300",
           disabled && "opacity-50 cursor-not-allowed pointer-events-none",
         )}
@@ -232,7 +232,7 @@ function SearchableDropdown({
                     className={cn(
                       "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                       isSelected
-                        ? "bg-ink-900 text-paper-50"
+                        ? "bg-[#4B3AA0] text-paper-50"
                         : "hover:bg-paper-100 text-ink-900",
                     )}
                   >
