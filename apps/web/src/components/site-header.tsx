@@ -482,7 +482,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             >
               <MagnifyingGlass size={18} className="text-ink-500 group-hover:text-ink-700" />
               <span className="text-ink-500 text-sm flex-1 text-left">
-                Ne bastırmak istiyorsunuz?
+                Ne bastıracaksın?
               </span>
               {/* Türk KOBİ kitlesi ağırlıkla Windows — Mac ⌘ sembolü "bozuk karakter" gibi
                   algılanıyordu; kısayol her iki platformda da çalışır, gösterim Ctrl K. */}
@@ -1368,7 +1368,7 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ne bastırmak istiyorsunuz? (kartvizit, branda, kupa...)"
+              placeholder="Ne bastıracaksın? (kartvizit, branda, kupa...)"
               className="flex-1 bg-transparent outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:rounded text-base text-ink-900 placeholder:text-ink-500"
               aria-label="Site içi arama"
               aria-describedby="search-esc-hint"

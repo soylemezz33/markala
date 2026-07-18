@@ -8,6 +8,7 @@ import {
   optionPriceHints,
   groupHintMode,
   availablePriceDimKeys,
+  adetTierBadges,
 } from "./configurator";
 import type { Product } from "@markala/types";
 
@@ -462,5 +463,45 @@ describe("computeAreaPrice (web — API paritesi)", () => {
       DEFAULT_PRICING,
     );
     expect(r.dahil).toBe(310.5);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// adetTierBadges — tiraj rozetleri ("Önerilen" / "En avantajlı")
+// ---------------------------------------------------------------------------
+
+describe("adetTierBadges", () => {
+  it("düşen birim fiyat: en yüksek adet 'enAvantajli' alır", () => {
+    // birim: 3.00 / 2.00 / 1.60 / 1.20 — %10 bandında (≤1.32) yalnız 1000 var → sweet yok
+    const badges = adetTierBadges({ "100": 300, "250": 500, "500": 800, "1000": 1200 });
+    expect(badges).toEqual({ "1000": "enAvantajli" });
+  });
+
+  it("plato: eşit min birimde en yüksek adet kazanır, banda giren küçük adet 'onerilen'", () => {
+    // birim: 1.60 / 1.30 / 1.30 — min 1.30, band ≤1.43 → 1000 onerilen, 2000 enAvantajli
+    const badges = adetTierBadges({ "500": 800, "1000": 1300, "2000": 2600 });
+    expect(badges).toEqual({ "1000": "onerilen", "2000": "enAvantajli" });
+  });
+
+  it("anlamlı indirim yoksa (maks/min < 1.15) rozet üretmez", () => {
+    expect(adetTierBadges({ "100": 100, "200": 200, "300": 300 })).toEqual({});
+  });
+
+  it("3'ten az geçerli kademe → boş", () => {
+    expect(adetTierBadges({ "100": 300, "250": 500 })).toEqual({});
+    expect(adetTierBadges(undefined)).toEqual({});
+  });
+
+  it("null/0 fiyatlı ve sayısal olmayan anahtarlar elenir", () => {
+    const badges = adetTierBadges({ "100": 300, "250": null, "abc": 500, "500": 0, "1000": 1200 });
+    expect(badges).toEqual({}); // geriye 2 geçerli kademe kalır → boş
+  });
+
+  it("allowedKeys filtresi: gizli (seyrek matris) kademeler rozet alamaz", () => {
+    const badges = adetTierBadges(
+      { "500": 800, "1000": 1300, "2000": 2600, "4000": 4400 },
+      new Set(["500", "1000", "2000"]),
+    );
+    expect(badges).toEqual({ "1000": "onerilen", "2000": "enAvantajli" });
   });
 });

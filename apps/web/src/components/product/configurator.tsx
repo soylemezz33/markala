@@ -13,6 +13,7 @@ import {
   groupHintMode,
   availablePriceDimKeys,
   computeAreaPrice,
+  adetTierBadges,
   DEFAULT_PRICING,
   type PricingSettings,
   type OptionRulesLite,
@@ -370,27 +371,40 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
         <div className="space-y-6 pt-2">
           {isArea && <AreaField minM2={pricing.minM2} />}
-          {groups.map((group) => (
-            <OptionGroup
-              key={group.groupKey}
-              groupKey={group.groupKey}
-              groupLabel={group.groupLabel}
-              options={
-                dimFilter && group.groupKey === dimFilter.groupKey
-                  ? group.options.filter((o) => dimFilter.keys.has(o.optionKey))
-                  : group.options
-              }
-              selected={effSel[group.groupKey] ?? baseSelections[group.groupKey] ?? ""}
-              locked={group.locked}
-              disabled={resolved.disabledGroups.has(group.groupKey)}
-              onSelect={(optionKey) => handleSelect(group.groupKey, optionKey)}
-              priceHints={displayedPriceHints[group.groupKey]}
-              hintMode={isArea && group.groupKey === "malzeme" ? "total" : groupHintMode(product, group.groupKey)}
-              layout={isArea && group.groupKey === "malzeme" ? "cards" : "auto"}
-              unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
-              volumeBadge={hasVolumeAdet && group.groupKey === "adet"}
-            />
-          ))}
+          {groups.map((group) => {
+            const visibleOptions =
+              dimFilter && group.groupKey === dimFilter.groupKey
+                ? group.options.filter((o) => dimFilter.keys.has(o.optionKey))
+                : group.options;
+            // Tiraj rozetleri ("Önerilen" / "En avantajlı") — yalnız adet grubunda ve
+            // İSG -%N rozetiyle çakışmayacak ürünlerde. Gizli (seyrek matris) kademeler
+            // rozet alamaz; band/eşik mantığı adetTierBadges'ta.
+            const tierBadges =
+              group.groupKey === "adet" && !isArea && !hasVolumeAdet
+                ? adetTierBadges(
+                    displayedPriceHints["adet"],
+                    new Set(visibleOptions.map((o) => o.optionKey)),
+                  )
+                : undefined;
+            return (
+              <OptionGroup
+                key={group.groupKey}
+                groupKey={group.groupKey}
+                groupLabel={group.groupLabel}
+                options={visibleOptions}
+                selected={effSel[group.groupKey] ?? baseSelections[group.groupKey] ?? ""}
+                locked={group.locked}
+                disabled={resolved.disabledGroups.has(group.groupKey)}
+                onSelect={(optionKey) => handleSelect(group.groupKey, optionKey)}
+                priceHints={displayedPriceHints[group.groupKey]}
+                hintMode={isArea && group.groupKey === "malzeme" ? "total" : groupHintMode(product, group.groupKey)}
+                layout={isArea && group.groupKey === "malzeme" ? "cards" : "auto"}
+                unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
+                volumeBadge={hasVolumeAdet && group.groupKey === "adet"}
+                tierBadges={tierBadges}
+              />
+            );
+          })}
           <DesignUpload />
         </div>
 

@@ -3,7 +3,7 @@
 import { cn } from "@markala/ui";
 import { Lock, CaretDown, MagnifyingGlass } from "@phosphor-icons/react";
 import { formatPrice } from "@/lib/format";
-import { volumeDiscountRate } from "@/lib/configurator";
+import { volumeDiscountRate, type TierBadge } from "@/lib/configurator";
 import { memo, useRef, useState, useEffect, useCallback } from "react";
 
 interface OptionItem {
@@ -29,12 +29,38 @@ interface Props {
   unitSuffix?: string;
   /** Adet grubu hacim indirimine tabi mi (İSG lineer) → tirajlarda "-%N" rozeti gösterilir. */
   volumeBadge?: boolean;
+  /** Tiraj rozetleri: optionKey → "onerilen" | "enAvantajli" (adetTierBadges çıktısı). */
+  tierBadges?: Record<string, TierBadge>;
 }
 
 /** optionKey (adet sayısı) için hacim indirimi rozet metni; indirim yoksa null. */
 function volumeBadgeText(optionKey: string): string | null {
   const r = volumeDiscountRate(Number(optionKey));
   return r > 0 ? `-%${Math.round(r * 100)}` : null;
+}
+
+const TIER_BADGE_LABEL: Record<TierBadge, string> = {
+  onerilen: "Önerilen",
+  enAvantajli: "En avantajlı",
+};
+
+/** "Önerilen" sarı hap, "En avantajlı" success — İSG -%N rozetiyle aynı boyut dili. */
+function TierBadgePill({ kind, isSelected, className }: { kind: TierBadge; isSelected: boolean; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none whitespace-nowrap",
+        isSelected
+          ? "bg-paper-50/20 text-paper-50"
+          : kind === "onerilen"
+            ? "bg-brand-500 text-ink-900"
+            : "bg-success/12 text-success",
+        className,
+      )}
+    >
+      {TIER_BADGE_LABEL[kind]}
+    </span>
+  );
 }
 
 const MANY = 8;
@@ -66,6 +92,7 @@ function SearchableDropdown({
   onSelect,
   priceHints,
   hintMode = "none",
+  tierBadges,
 }: {
   groupKey: string;
   groupLabel: string;
@@ -75,6 +102,7 @@ function SearchableDropdown({
   onSelect: (optionKey: string) => void;
   priceHints?: Record<string, number | null>;
   hintMode?: "delta" | "total" | "none";
+  tierBadges?: Record<string, TierBadge>;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -246,6 +274,9 @@ function SearchableDropdown({
                         </span>
                       )}
                     </span>
+                    {tierBadges?.[opt.optionKey] && (
+                      <TierBadgePill kind={tierBadges[opt.optionKey]!} isSelected={isSelected} className="flex-none" />
+                    )}
                     {hint && (
                       <span className={cn("text-sm tabular-nums flex-none", isSelected ? "text-paper-200" : "text-ink-500")}>
                         {hint}
@@ -262,7 +293,7 @@ function SearchableDropdown({
   );
 }
 
-function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix, volumeBadge }: Props) {
+function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix, volumeBadge, tierBadges }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
 
   if (disabled && !locked) {
@@ -374,6 +405,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
         onSelect={onSelect}
         priceHints={priceHints}
         hintMode={hintMode}
+        tierBadges={tierBadges}
       />
     );
   }
@@ -444,6 +476,9 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                     {volumeBadgeText(opt.optionKey)} indirim
                   </span>
                 )}
+                {tierBadges?.[opt.optionKey] && (
+                  <TierBadgePill kind={tierBadges[opt.optionKey]!} isSelected={isSelected} className="mt-1" />
+                )}
               </button>
             );
           }
@@ -480,6 +515,10 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                   </span>
                 )}
               </span>
+              {/* Radyo satırı seçili halde de açık zeminde kalır → rozet normal renklerde */}
+              {tierBadges?.[opt.optionKey] && (
+                <TierBadgePill kind={tierBadges[opt.optionKey]!} isSelected={false} className="flex-none" />
+              )}
               {hintLabel && (
                 <span className="text-sm tabular-nums text-ink-500 flex-none">
                   {hintLabel}

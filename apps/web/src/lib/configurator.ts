@@ -107,6 +107,48 @@ export function volumeDiscountRate(qty: number): number {
   return 0;
 }
 
+export type TierBadge = "onerilen" | "enAvantajli";
+
+/**
+ * Adet (tiraj) satırları için rozet haritası — birim fiyat düşüşünü görünür kılar.
+ * - "enAvantajli": en düşük birim fiyatlı kademe (eşitlikte en yüksek adet).
+ * - "onerilen": en düşük adetle min birim fiyatın %10 bandına giren tatlı nokta
+ *   (müşteri maksimum adede çıkmadan indirimin büyük kısmını alır).
+ * Kademeler arası anlamlı fark yoksa (maks/min birim < 1.15) rozet üretilmez —
+ * yapay "avantaj" iddiası dürüst-kopya kuralını ihlal eder.
+ */
+export function adetTierBadges(
+  hints: Record<string, number | null> | undefined,
+  allowedKeys?: ReadonlySet<string>,
+): Record<string, TierBadge> {
+  if (!hints) return {};
+  const entries = Object.entries(hints)
+    .filter(([k]) => !allowedKeys || allowedKeys.has(k))
+    .map(([key, total]) => ({ key, qty: Number(key), total }))
+    .filter(
+      (e): e is { key: string; qty: number; total: number } =>
+        Number.isFinite(e.qty) && e.qty > 0 &&
+        typeof e.total === "number" && Number.isFinite(e.total) && e.total > 0,
+    )
+    .map((e) => ({ ...e, unit: e.total / e.qty }));
+  if (entries.length < 3) return {};
+
+  const minUnit = Math.min(...entries.map((e) => e.unit));
+  const maxUnit = Math.max(...entries.map((e) => e.unit));
+  if (maxUnit / minUnit < 1.15) return {};
+
+  const best = entries.reduce((a, b) =>
+    b.unit < a.unit || (b.unit === a.unit && b.qty > a.qty) ? b : a,
+  );
+  const sweet = entries
+    .filter((e) => e.key !== best.key && e.qty < best.qty && e.unit <= minUnit * 1.1)
+    .sort((a, b) => a.qty - b.qty)[0];
+
+  const out: Record<string, TierBadge> = { [best.key]: "enAvantajli" };
+  if (sweet) out[sweet.key] = "onerilen";
+  return out;
+}
+
 /**
  * Ürünün options/prices listesinden toplam fiyat hesaplar.
  * Selections: { [groupKey]: optionKey }
