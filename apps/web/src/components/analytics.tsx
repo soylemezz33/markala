@@ -20,6 +20,10 @@ import Script from "next/script";
  */
 export function Analytics() {
   const ga4 = process.env.NEXT_PUBLIC_GA4_ID;
+  // Google Ads dönüşüm hesabı — temel etiket config'i olmadan Ads siteyi "etiketsiz"
+  // sayar (dönüşüm işlemi 'doğrulanmadı' kalır) ve gclid işleme zayıflar.
+  // Consent Mode v2 default-denied olduğundan KVKK tarafı değişmez.
+  const adsId = process.env.NEXT_PUBLIC_ADS_CONVERSION_ID || "AW-18286908100";
   // Pixel ID herkese açık (client JS'te görünür) → env yoksa gömülü değere düş.
   // Env ile ezilebilir kalır; Hasan dilerse GH variable ile yönetir/kapatır.
   const metaPixel = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1112404194692078";
@@ -60,6 +64,7 @@ export function Analytics() {
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', '${ga4}', { anonymize_ip: true });
+              gtag('config', '${adsId}');
             `}
           </Script>
           {/* Consent Mode KALICILIK: default her sayfa yüklemesinde 'denied' başlar; daha önce
