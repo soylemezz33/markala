@@ -27,6 +27,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.7",
+    "@nestjs/schedule": "^4.1.2",
     "@nestjs/swagger": "^8.0.5",
     "@nestjs/throttler": "^6.2.1",
     "@prisma/client": "^5.22.0",
@@ -34,6 +35,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "express": "^4.22.1",
+    "google-auth-library": "^9.15.1",
     "helmet": "^8.2.0",
     "iyzipay": "^2.0.67",
     "nodemailer": "^8.0.11",
@@ -41,8 +43,7 @@
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "zod": "^3.23.8",
-    "google-auth-library": "^9.15.1"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@markala/config": "workspace:*",

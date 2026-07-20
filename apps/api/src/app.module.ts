@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { EncryptionModule } from "./encryption/encryption.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { IntegrationsModule } from "./integrations/integrations.module";
@@ -32,10 +33,13 @@ import { LoyaltyModule } from "./loyalty/loyalty.module";
 import { ContactModule } from "./contact/contact.module";
 import { QuoteRequestsModule } from "./quote-requests/quote-requests.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
+import { LifecycleModule } from "./lifecycle/lifecycle.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Zamanlanmış işler (cron) altyapısı — LifecycleService kurtarma maili bunu kullanır.
+    ScheduleModule.forRoot(),
     EncryptionModule,
     PrismaModule,
     IntegrationsModule,
@@ -68,6 +72,7 @@ import { NewsletterModule } from "./newsletter/newsletter.module";
     ContactModule,
     QuoteRequestsModule,
     NewsletterModule,
+    LifecycleModule,
   ],
 })
 export class AppModule {}

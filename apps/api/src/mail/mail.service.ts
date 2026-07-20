@@ -321,14 +321,18 @@ export class MailService {
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const reviewUrl = `${webUrl}/hesabim/siparislerim`;
+    // Tekrar sipariş: sipariş detayında "Tekrar Sipariş Et" butonu var → aynı konfigürasyonla
+    // sepete ekler. Teslim anı, tekrar alım niyetinin en yüksek olduğu an (retention dokunuşu).
+    const reorderUrl = `${webUrl}/hesabim/siparislerim/${order.id}`;
     const subject = `Siparişin teslim edildi ✅ Nasıl buldun?`;
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin teslim edildi. Umarız beğenirsin!\nBaskı kalitesinden memnunsan kısa bir değerlendirme bırakır mısın: ${reviewUrl}\nHatalı baskı vb. bir sorun varsa hemen yaz — ücretsiz değişim.\n\nMarkala`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin teslim edildi. Umarız beğenirsin!\nBaskı kalitesinden memnunsan kısa bir değerlendirme bırakır mısın: ${reviewUrl}\nAynı ürünlere yeniden ihtiyacın olursa tek tıkla tekrar sipariş verebilirsin: ${reorderUrl}\nHatalı baskı vb. bir sorun varsa hemen yaz — ücretsiz değişim.\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişin Teslim Edildi ✅",
       intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin teslim edildi — umarız beğenirsin!`,
       preheader: `${order.orderNumber} teslim edildi — değerlendirmen bizim için değerli`,
       bodyHtml: `<p style="margin:0 0 14px">Baskı kalitesinden memnun kaldıysan, kısa bir değerlendirme bırakır mısın? Görüşün hem bize hem yeni müşterilere yol gösterir.</p>
         ${emailButton("Siparişimi değerlendir", reviewUrl)}
+        <p style="margin:12px 0 0;font-size:13px;color:#78716c">Aynı ürünlere yeniden mi ihtiyacın var? <a href="${reorderUrl}" style="color:#5C4100;font-weight:700">Tekrar sipariş ver →</a></p>
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Hatalı baskı ya da bir sorun varsa hemen bize yaz — <strong>ücretsiz değişim</strong> garantisi.</p>`,
     });
     try {
@@ -338,6 +342,100 @@ export class MailService {
     } catch (err) {
       this.logger.warn(`mail.orderDelivered failed to=${order.email}: ${(err as Error).message}`);
       await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-delivered", orderNumber: order.orderNumber });
+      return false;
+    }
+  }
+
+  /**
+   * Bekleyen-ödeme kurtarma maili — İŞLEMSEL ileti (başlatılmış sipariş hakkında bilgilendirme;
+   * kupon/pazarlama içeriği YOK). LifecycleService saatlik cron'u tetikler.
+   * stage 1 = ilk hatırlatma (2-24 saat), stage 2 = son hatırlatma (24-72 saat).
+   * Sipariş job'da kalemleriyle zaten yüklü olduğundan tekrar sorgu yerine nesne alınır.
+   * HATA FIRLATMAZ — cron döngüsünü bloke etmez.
+   */
+  async sendPaymentRecoveryEmail(
+    order: {
+      id: string;
+      orderNumber: string;
+      email: string;
+      total: unknown;
+      items: Array<{ productName: string; quantity: number; lineTotal: unknown }>;
+      user?: { fullName: string | null } | null;
+    },
+    stage: 1 | 2,
+  ): Promise<boolean> {
+    if (!order.email) {
+      this.logger.warn(`mail.paymentRecovery: e-posta yok order=${order.id}`);
+      return false;
+    }
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const fmt = (n: unknown) =>
+      new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0);
+    const name = order.user?.fullName?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    // Sipariş detayında "Ödeme Yap" akışı zaten var → müşteriyi doğrudan oraya götür.
+    const payUrl = `${webUrl}/hesabim/siparislerim/${order.id}`;
+    const template = `payment-recovery-${stage}`;
+
+    // 2. mailde YANLIŞ VAAT YOK: iptal otomasyonu olmadığı için "yarın iptal edilir" denmez,
+    // "stok/fiyat değişebilir" gibi baskı cümlesi de kurulmaz — nötr son hatırlatma.
+    const subject =
+      stage === 1
+        ? `Siparişin seni bekliyor — ödemeni tamamla (${order.orderNumber})`
+        : `Son hatırlatma: ${order.orderNumber} siparişinin ödemesi açık`;
+    const introLine =
+      stage === 1
+        ? "siparişini aldık ama ödemesi henüz tamamlanmadı. Ödemeni tamamla, üretime alalım."
+        : "siparişinin ödemesi hâlâ açık görünüyor. Bu, konuyla ilgili son hatırlatmamız.";
+
+    const rowsHtml = (order.items ?? [])
+      .map(
+        (i) =>
+          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${esc(i.productName)}</td>` +
+          `<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td>` +
+          `<td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${fmt(i.lineTotal)} ₺</td></tr>`,
+      )
+      .join("");
+
+    const text =
+      `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n` +
+      `${order.orderNumber} numaralı siparişinin ödemesi henüz tamamlanmadı.\n\n` +
+      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} — ${fmt(i.lineTotal)} ₺`).join("\n") +
+      `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
+      `Ödemeyi tamamla: ${payUrl}\n\n` +
+      `Sorun yaşıyorsan bu e-postayı yanıtlayabilirsin.\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
+
+    const html = renderEmail({
+      title: stage === 1 ? "Siparişin Seni Bekliyor" : "Son Hatırlatma",
+      intro: `${greeting} ${introLine}`,
+      preheader: `${order.orderNumber} — ödeme bekleniyor, toplam ${fmt(order.total)} ₺`,
+      bodyHtml: `<p style="margin:0 0 4px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
+        <p style="margin:0 0 14px;color:#78716c;font-size:13px">Ödemen tamamlanınca siparişini hemen üretime alıyoruz.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
+          <thead><tr>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #1A1410;color:#1A1410">Ürün</th>
+            <th style="padding:8px;text-align:center;border-bottom:2px solid #1A1410;color:#1A1410">Adet</th>
+            <th style="padding:8px;text-align:right;border-bottom:2px solid #1A1410;color:#1A1410">Tutar</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+          <tfoot><tr>
+            <td colspan="2" style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">Toplam (KDV dahil)</td>
+            <td style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">${fmt(order.total)} ₺</td>
+          </tr></tfoot>
+        </table>
+        ${emailButton("Ödemeyi Tamamla", payUrl)}
+        ${emailFallbackLink(payUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bir sorunla karşılaştıysan ya da vazgeçtiysen bu e-postayı yanıtlaman yeterli — yardımcı olalım.</p>`,
+    });
+
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template, orderNumber: order.orderNumber });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.paymentRecovery(${stage}) failed to=${order.email}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template, orderNumber: order.orderNumber });
       return false;
     }
   }

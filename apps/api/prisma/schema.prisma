@@ -437,6 +437,11 @@ model Order {
   // Paraşüt e-fatura
   parasutInvoiceId String? @map("parasut_invoice_id")
 
+  // Bekleyen-ödeme kurtarma maili aşaması (LifecycleService saatlik cron).
+  // 0 = hiç gönderilmedi, 1 = ilk hatırlatma (2-24 saat), 2 = son hatırlatma (24-72 saat).
+  // İdempotens bu kolonla sağlanır: job aynı siparişe aynı aşamayı iki kez göndermez.
+  recoveryMailStage Int @default(0) @map("recovery_mail_stage")
+
   notes String? @db.Text
 
   createdAt DateTime  @default(now()) @map("created_at")
