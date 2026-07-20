@@ -12,7 +12,9 @@ import type { Transporter } from "nodemailer";
  * false döner — bu durumda route'lar gerçek mail yerine console.log yapar (dev).
  */
 
-const DEFAULT_FROM = "Markala <markala@324ajans.com>";
+// DMARC aspf=s (strict): 324ajans.com From'u markala SPF'iyle hizalanmaz — fallback
+// daima markala.com.tr domain'inde kalmalı, yoksa env düştüğünde mailler karantinaya gider.
+const DEFAULT_FROM = "Markala <bilgi@markala.com.tr>";
 const DEFAULT_CONTACT_TO = "merhaba@markala.com.tr";
 
 export interface MailOptions {

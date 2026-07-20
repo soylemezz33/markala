@@ -169,6 +169,11 @@ export class AuthService {
       this.prisma.emailVerificationToken.update({ where: { id: stored.id }, data: { consumedAt: new Date() } }),
     ]);
     this.logger.log(`email.verify.ok userId=${stored.userId}`);
+    // Hoş geldin + HOSGELDIN kuponu — yalnız İLK doğrulamada (include edilen user
+    // transaction ÖNCESİ durumu taşır). Fire-and-forget: mail hatası doğrulamayı bloke etmez.
+    if (!stored.user.emailVerifiedAt) {
+      void this.mail.sendWelcomeEmail(stored.user.email, stored.user.fullName);
+    }
     return { ok: true };
   }
 

@@ -15,7 +15,9 @@ export class MailService {
     const secure = (this.config.get<string>("SMTP_SECURE") ?? "false") === "true";
     const user = this.config.get<string>("SMTP_USER");
     const pass = this.config.get<string>("SMTP_PASS");
-    this.from = this.config.get<string>("MAIL_FROM") ?? "Markala <markala@324ajans.com>";
+    // Fallback DAİMA markala.com.tr olmalı: DMARC aspf=s (strict) — 324ajans.com From'u
+    // markala SPF'iyle hizalanmaz, env düşerse tüm mailler karantinaya gider.
+    this.from = this.config.get<string>("MAIL_FROM") ?? "Markala <bilgi@markala.com.tr>";
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>("SMTP_HOST") ?? "localhost",
       port: Number(this.config.get<string>("SMTP_PORT") ?? 1025),
@@ -375,13 +377,16 @@ export class MailService {
   }
 
   private async logNotification(recipient: string, status: "sent" | "failed", metadata: Record<string, unknown>) {
+    // template metadata'dan türetilir; yalnız doğrulama mailleri template geçmez (varsayılan).
+    // Eskiden her mail "email-verification" olarak loglanıyordu → şablon bazlı rapor kördü.
+    const template = typeof metadata.template === "string" ? metadata.template : "email-verification";
     await this.prisma.notificationLog
       .create({
         data: {
           channel: "email",
-          template: "email-verification",
+          template,
           recipient,
-          subject: "E-posta doğrulama",
+          subject: template,
           body: "",
           status,
           metadata: metadata as any,
