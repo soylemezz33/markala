@@ -11,6 +11,7 @@ import { formatDate, orderStatusLabel } from "@/lib/format";
 import { unitCountFromSummary } from "@/lib/cart-store";
 import { buildTrackingEvents } from "@/lib/tracking-events";
 import { TrackingTimeline } from "@/components/tracking/timeline";
+import { ReorderButton } from "@/components/account/reorder-button";
 import type { Address, Order, OrderStatus } from "@markala/types";
 
 // API Prisma enum'u underscore döndürebilir (teslim_edildi); UI/aşama eşlemeleri hyphen kullanıyor.
@@ -130,6 +131,22 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           </p>
         </section>
       ) : null}
+
+      {/* Teslim edilmiş sipariş = tekrar alım anı: aynı konfigürasyonla, GÜNCEL fiyattan
+          sepete ekler ve /sepet'e götürür (fiyat/atlanan kalem bildirimi orada gösterilir). */}
+      {normStatus(order.status as unknown as string) === "teslim-edildi" && (
+        <section className="p-5 bg-brand-50 border border-brand-200 rounded-xl">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-ink-900">Aynı ürünlere yeniden mi ihtiyacın var?</p>
+              <p className="mt-1 text-sm text-ink-700">
+                Tek tıkla aynı konfigürasyonla sepetine ekle. Fiyatlar güncel fiyattan hesaplanır.
+              </p>
+            </div>
+            <ReorderButton order={order} variant="primary" />
+          </div>
+        </section>
+      )}
 
       <section className="p-6 bg-paper-50 border border-paper-200 rounded-lg">
         <h3 className="font-medium text-ink-900 mb-4 flex items-center gap-2">

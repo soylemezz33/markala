@@ -344,6 +344,12 @@ export interface OrderItem {
   productName: string;
   productImage: string;
   configurationSummary: string;
+  /**
+   * Konfigüratör seçim snapshot'ı (sipariş anındaki CartItemConfiguration).
+   * API listMine/detail bunu zaten döndürüyor; "Tekrar Sipariş Et" akışı seçimleri
+   * buradan okuyup sepete aynı konfigürasyonla ekler. Eski/paket kayıtlarda eksik olabilir.
+   */
+  configuration?: Partial<CartItemConfiguration> | null;
   unitPrice: number;
   quantity: number;
   lineTotal: number;

@@ -9,6 +9,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { unitCountFromSummary } from "@/lib/cart-store";
+import { ReorderButton } from "@/components/account/reorder-button";
 import type { Order, OrderStatus } from "@markala/types";
 
 const statusToneClass: Record<string, string> = {
@@ -115,8 +116,13 @@ export default function OrdersPage() {
               ))}
             </ul>
 
-            <footer className="mt-4 pt-4 border-t border-paper-200 flex items-center justify-between">
-              <span className="text-sm text-ink-500">{o.items.length} ürün</span>
+            <footer className="mt-4 pt-4 border-t border-paper-200 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-ink-500">{o.items.length} ürün</span>
+                {/* Teslim edilmiş sipariş = tekrar alım anı: aynı konfigürasyonla sepete ekle.
+                    Fiyat sepete eklenirken GÜNCEL fiyattan yeniden hesaplanır (reorder.ts). */}
+                {st === "teslim-edildi" && <ReorderButton order={o} />}
+              </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-ink-500">Toplam:</span>
                 <Price amount={o.total} size="lg" className="text-ink-900" />
