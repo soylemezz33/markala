@@ -91,6 +91,9 @@ docker-compose.override.yml
 # Yerel artefaktlar / yedekler / agent çalışma dizinleri — commit etme
 .claude/worktrees/
 .playwright-mcp/
+# Playwright koşum artıkları (baseline'lar DEĞİL — tests/visual/__screenshots__ commit edilir)
+test-results/
+playwright-report/
 _server_backup_*/
 .claire/
 .clone/
