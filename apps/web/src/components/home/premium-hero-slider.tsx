@@ -1,5 +1,6 @@
 "use client";
 
+import Image, { getImageProps } from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@markala/ui";
@@ -96,22 +97,24 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
         aria-label={slide.title}
         className="block group animate-fade-up focus-visible:outline-none"
       >
-        <picture>
-          {slide.mobileImageUrl ? (
-            <source media="(max-width: 767px)" srcSet={slide.mobileImageUrl} />
-          ) : null}
-          <img
+        {/* LCP: ham <img> yerine next/image — srcset/sizes ile cihaz genişliğine uygun
+            (küçük) optimize varyant iner; mobil ayrı görsel varsa art-direction korunur. */}
+        {slide.mobileImageUrl ? (
+          <HeroArtDirectedImage slide={slide} isFirst={index === 0} />
+        ) : (
+          <Image
             src={slide.imageUrl}
             alt={slide.title}
             width={2120}
             height={742}
-            decoding="async"
-            // İlk slayt = LCP: erken keşif + öncelik ver (sonraki slaytlar normal).
-            fetchPriority={index === 0 ? "high" : "auto"}
-            loading={index === 0 ? "eager" : "lazy"}
+            sizes="100vw"
+            // İlk slayt = LCP: priority → preload + fetchpriority="high" + eager.
+            // Sonraki slaytlar lazy (mevcut davranışla birebir).
+            priority={index === 0}
+            loading={index === 0 ? undefined : "lazy"}
             className="block w-full h-auto"
           />
-        </picture>
+        )}
       </Link>
 
       {/* Kontroller — ok + nokta */}
@@ -151,5 +154,40 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
         </>
       )}
     </section>
+  );
+}
+
+/**
+ * Mobil varyantı olan slaytlar için art-direction: <Image> tek başına <picture> desteklemez;
+ * getImageProps ile HER İKİ kaynağın da optimize srcset'i üretilir (resmî Next 14.1+ deseni).
+ * Böylece mobil kırılımda admin'in yüklediği mobil görsel, desktop'ta desktop görsel iner —
+ * eski ham <picture>/<img> davranışıyla birebir, ama artık _next/image optimize varyantlarıyla.
+ *
+ * Notlar:
+ * - width/height oran ipucu desktop görseline aittir (mobil görselin gerçek boyutunu admin
+ *   belirler; `w-full h-auto` ile tarayıcı, seçilen kaynağın gerçek oranını kullanır — eski
+ *   davranışla aynı).
+ * - getImageProps preload <link>'i EKLEMEZ; ilk slaytta priority=true'nun ürettiği
+ *   fetchpriority="high" + eager, tarayıcı preload-scanner'ı ile aynı işi görür
+ *   (önceki ham <img> yaklaşımına eşdeğer, gerileme yok).
+ */
+function HeroArtDirectedImage({ slide, isFirst }: { slide: HeroBannerData; isFirst: boolean }) {
+  const shared = { alt: slide.title, width: 2120, height: 742, sizes: "100vw" };
+  const {
+    props: { srcSet: mobileSrcSet, sizes: mobileSizes },
+  } = getImageProps({ ...shared, src: slide.mobileImageUrl! });
+  const { props: imgProps } = getImageProps({
+    ...shared,
+    src: slide.imageUrl,
+    priority: isFirst,
+    loading: isFirst ? undefined : "lazy",
+  });
+  return (
+    <picture>
+      <source media="(max-width: 767px)" srcSet={mobileSrcSet} sizes={mobileSizes} />
+      {/* getImageProps deseni ham <img> gerektirir (alt/decoding/fetchpriority imgProps'ta) */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img {...imgProps} alt={slide.title} className="block w-full h-auto" />
+    </picture>
   );
 }

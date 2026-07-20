@@ -26,8 +26,9 @@ const DISALLOW = [
   "/*?ref=*",
   "/*?fbclid=*",
   "/*?gclid=*",
-  // Pagination ve filter parametreleri (duplicate content önler)
-  "/*?page=*",
+  // Sort/filter parametreleri (duplicate content önler). ?page= disallow'u KALDIRILDI
+  // (2026-07-20): sayfalama artık gerçek URL (self-canonical, SSR dilim) — derin ürün
+  // linklerinin keşfi için ?page=N'in crawl edilebilir olması gerekir.
   "/*?sort=*",
   "/*?filter=*",
 ];

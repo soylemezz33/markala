@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Container } from "@markala/ui";
 import {
   CaretDown, FunnelSimple, X, MagnifyingGlass,
@@ -67,7 +69,34 @@ export function AllProductsClient({
   const [sort, setSort] = useState<SortKey>("popular");
   const [filterOpen, setFilterOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+
+  // --- SEO sayfalaması (?page=N) ---
+  // page state'i URL'den başlar: her iki kullanıcı rota da (/urunler ve /kategori/[slug])
+  // sunucuda searchParams okuduğu için dynamic render edilir → useSearchParams SSR'da da
+  // gerçek değeri verir, yani ?page=2'nin SSR HTML'i doğru ürün dilimini ve gerçek
+  // <Link href="?page=N"> linklerini içerir (botlar JS'siz keşfeder).
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const rawUrlPage = Number.parseInt(searchParams.get("page") ?? "", 10);
+  const urlPage = Number.isFinite(rawUrlPage) && rawUrlPage > 1 ? rawUrlPage : 1;
+  const [page, setPage] = useState(urlPage);
+
+  // Soft navigasyon (sayfalama linki tıklaması, tarayıcı geri/ileri) URL'i değiştirir —
+  // state'i URL ile senkron tut. Filtre/arama değişimindeki setPage(1) client-only'dir
+  // (URL'e yazılmaz; bot bu etkileşimi görmez, kullanıcı için sayfa 1'e dönüş yeterli).
+  useEffect(() => {
+    setPage(urlPage);
+  }, [urlPage]);
+
+  /** Sayfalama linki üret: mevcut query korunur (?kategoriler=, ?grup= vb.), yalnız page
+   *  değişir. Sayfa 1 = parametresiz kanonik URL (?page=1 hiç üretilmez). */
+  function hrefForPage(n: number): string {
+    const qs = new URLSearchParams(searchParams.toString());
+    if (n <= 1) qs.delete("page");
+    else qs.set("page", String(n));
+    const s = qs.toString();
+    return s ? `${pathname}?${s}` : pathname;
+  }
 
   const filtered = useMemo(() => {
     let list = [...products];
@@ -401,11 +430,12 @@ export function AllProductsClient({
                   ))}
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination — gerçek <Link href="?page=N"> (crawl edilebilir; SSR HTML'de yer alır) */}
                 {totalPages > 1 && (
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
+                    hrefFor={hrefForPage}
                     onChange={(n) => {
                       setPage(n);
                       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -475,13 +505,23 @@ function CategoryButton({
   );
 }
 
+/**
+ * Sayfalama — SEO için gerçek <Link href="?page=N"> (botlar buton onClick'i takip etmez;
+ * link'ler dynamic SSR HTML'inde yer alır → 800+ ürünün derin sayfaları crawl edilebilir).
+ * onClick yalnız UX içindir: client state'i anında günceller + yukarı smooth scroll
+ * (Link scroll={false} — Next'in ani scroll'u yerine mevcut smooth davranış korunur).
+ * Görsel stil değişmedi; <a> inline olduğundan buton hizası inline-flex ile birebir korunur.
+ */
 function Pagination({
   currentPage,
   totalPages,
+  hrefFor,
   onChange,
 }: {
   currentPage: number;
   totalPages: number;
+  /** Gerçek sayfalama URL'i (sayfa 1 = parametresiz). */
+  hrefFor: (page: number) => string;
   onChange: (page: number) => void;
 }) {
   // Hangi sayfa numaralarını göstereceğiz: 1, ..., n-1, n, n+1, ..., last
@@ -500,19 +540,30 @@ function Pagination({
     }
   }
 
+  const arrowClass =
+    "inline-flex items-center justify-center p-2 rounded-md border border-paper-200 bg-paper-50 text-ink-700";
+
   return (
     <nav
       className="mt-10 flex items-center justify-center gap-1.5"
       aria-label="Sayfalandırma"
     >
-      <button
-        onClick={() => onChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        aria-label="Önceki sayfa"
-        className="p-2 rounded-md border border-paper-200 bg-paper-50 text-ink-700 disabled:opacity-30 hover:bg-paper-100"
-      >
-        <CaretLeft size={14} weight="bold" />
-      </button>
+      {currentPage === 1 ? (
+        // Pasif uç: link üretme (kendine işaret eden gereksiz crawl linki olmasın)
+        <span aria-disabled="true" aria-label="Önceki sayfa" className={`${arrowClass} opacity-30`}>
+          <CaretLeft size={14} weight="bold" />
+        </span>
+      ) : (
+        <Link
+          href={hrefFor(currentPage - 1)}
+          scroll={false}
+          onClick={() => onChange(currentPage - 1)}
+          aria-label="Önceki sayfa"
+          className={`${arrowClass} hover:bg-paper-100`}
+        >
+          <CaretLeft size={14} weight="bold" />
+        </Link>
+      )}
 
       {pages.map((p, i) =>
         p === "..." ? (
@@ -520,29 +571,38 @@ function Pagination({
             …
           </span>
         ) : (
-          <button
+          <Link
             key={p}
+            href={hrefFor(p)}
+            scroll={false}
             onClick={() => onChange(p)}
             aria-current={p === currentPage ? "page" : undefined}
-            className={`min-w-[36px] h-9 px-2 rounded-md text-sm font-medium ${
+            className={`inline-flex items-center justify-center min-w-[36px] h-9 px-2 rounded-md text-sm font-medium ${
               p === currentPage
                 ? "bg-ink-900 text-paper-50"
                 : "bg-paper-50 text-ink-700 border border-paper-200 hover:bg-paper-100"
             }`}
           >
             {p}
-          </button>
+          </Link>
         ),
       )}
 
-      <button
-        onClick={() => onChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        aria-label="Sonraki sayfa"
-        className="p-2 rounded-md border border-paper-200 bg-paper-50 text-ink-700 disabled:opacity-30 hover:bg-paper-100"
-      >
-        <CaretRight size={14} weight="bold" />
-      </button>
+      {currentPage === totalPages ? (
+        <span aria-disabled="true" aria-label="Sonraki sayfa" className={`${arrowClass} opacity-30`}>
+          <CaretRight size={14} weight="bold" />
+        </span>
+      ) : (
+        <Link
+          href={hrefFor(currentPage + 1)}
+          scroll={false}
+          onClick={() => onChange(currentPage + 1)}
+          aria-label="Sonraki sayfa"
+          className={`${arrowClass} hover:bg-paper-100`}
+        >
+          <CaretRight size={14} weight="bold" />
+        </Link>
+      )}
     </nav>
   );
 }

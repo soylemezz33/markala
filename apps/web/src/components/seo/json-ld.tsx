@@ -142,11 +142,12 @@ export function ProductJsonLd({
     const priceValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10);
-    productNode.offers = {
-      "@type": "Offer",
+
+    // Offer/AggregateOffer ortak alanları (Merchant-dostu kargo + iade politikası dahil;
+    // AggregateOffer schema.org'da Offer alt tipi olduğundan aynı alanları taşıyabilir).
+    const offerBase = {
       url: productUrl,
       priceCurrency: "TRY",
-      price: displayPrice,
       priceValidUntil,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
@@ -173,6 +174,41 @@ export function ProductJsonLd({
         },
       },
     };
+
+    // Fiyat matrisi (product_prices → product.prices; tiraj/ebat/paket kademeleri) birden çok
+    // fiyat noktası içeriyorsa AggregateOffer basılır: tek "price" kademeli üründe yanıltıcı,
+    // low/high aralığı gerçeği yansıtır (Google ürün snippet'inde fiyat aralığı gösterir).
+    // ⚠️ pricingMode="area" satırları müşteri fiyatı DEĞİL ham maliyettir (dolar bazlı;
+    // kur×marj×KDV motoru sonradan uygular) → area ürünlerinde daima tek Offer (displayPrice).
+    const rowPrices =
+      product.pricingMode === "area"
+        ? []
+        : (product.prices ?? [])
+            .map((r) => Number(r.price))
+            .filter((n) => Number.isFinite(n) && n > 0);
+    const distinctPriceCount = new Set(rowPrices.map((n) => n.toFixed(2))).size;
+
+    if (distinctPriceCount > 1) {
+      productNode.offers = {
+        "@type": "AggregateOffer",
+        // lowPrice = API'nin hesapladığı en düşük GEÇERLİ konfigürasyon (displayPrice).
+        // Ham satır minimumunu KULLANMA: additive motorda tek satır, tek başına satın
+        // alınamayan bir bileşen fiyatı (örn. selefon ek ücreti) olabilir.
+        lowPrice: displayPrice,
+        // highPrice = en yüksek tekil fiyat satırı. Çok gruplu additive üründe gerçek
+        // maksimum kombinasyon bunun üstünde olabilir — kasıtlı olarak abartısız/güvenli taraf.
+        highPrice: Math.max(...rowPrices, Number(displayPrice)),
+        offerCount: distinctPriceCount,
+        ...offerBase,
+      };
+    } else {
+      // Tek fiyat noktası → mevcut tekil Offer davranışı aynen korunur.
+      productNode.offers = {
+        "@type": "Offer",
+        price: displayPrice,
+        ...offerBase,
+      };
+    }
   }
 
   if (product.rating) {

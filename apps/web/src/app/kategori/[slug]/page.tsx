@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Container, Price } from "@markala/ui";
 import { CaretRight, Truck, ShieldCheck, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
@@ -12,10 +12,31 @@ import type { Metadata } from "next";
 
 interface Props {
   params: { slug: string };
+  searchParams?: { page?: string | string[] };
 }
 
-// ISR — admin kategori/ürün değişiklikleri ~30sn içinde storefront'a yansısın;
-// /api/revalidate webhook anlık tazeleme için ek güvence sağlar.
+/** Tekrarlı query anahtarı (?x=a&x=b) Next'te string[] gelir — ilkini al (crash guard). */
+const first = (v: string | string[] | undefined): string =>
+  Array.isArray(v) ? (v[0] ?? "") : (v ?? "");
+
+/** ?page ayrıştır: yalnız 2+ anlamlıdır; boş/geçersiz/1 → 1 (sayfa 1 parametresiz kanonik). */
+const parsePage = (raw: string): number => {
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 1 ? n : 1;
+};
+
+// ISR — admin kategori/ürün değişiklikleri storefront'a yansısın; /api/revalidate webhook
+// anlık tazeleme için ek güvence sağlar.
+//
+// ⚠️ RENDER KARARI (SEO sayfalaması, 2026-07-20): ?page=N için searchParams okunduğundan
+// Next 14 bu route'u artık İSTEK ANINDA render eder (searchParams erişimi route'u komple
+// dynamic yapar — Next'te "yalnız query varken dynamic" diye route-içi ayrım yoktur; bunun
+// bedeli generateStaticParams ön-üretiminin bu route için etkisizleşmesidir). Kabul edilen
+// takas: 800+ üründe kategori başına yalnız ilk 12 ürünün iç link alması, tam sayfalanmış
+// crawl edilebilir HTML'den daha pahalı bir SEO kaybıydı. Maliyet düşük kalır çünkü veri
+// katmanı (lib/catalog fetchJson) kendi `next: { revalidate: 300 }` Data Cache'ini kullanır:
+// API yükü ve TTFB ISR'a yakındır, admin değişiklikleri yine ≤300sn + webhook ile yansır.
+// revalidate export'u fetch cache varsayılanı/niyet belgesi olarak bırakıldı.
 export const revalidate = 300;
 
 export async function generateStaticParams() {
@@ -23,16 +44,20 @@ export async function generateStaticParams() {
   return cats.map((c) => ({ slug: c.slug }));
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const cat = await getCategoryBySlug(params.slug);
   // Kategori yok → gerçek HTTP 404 (soft-404 yerine); notFound() metadata aşamasında statüyü 404 yapar.
   if (!cat) notFound();
+  // SEO sayfalaması: sayfa N'de title'a " — Sayfa N" eki + self-canonical (?page=N dahil).
+  const page = parsePage(first(searchParams?.page));
+  const pageSuffix = page > 1 ? ` — Sayfa ${page}` : "";
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
   const seoTitle =
-    cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
-    `${cat.name} Baskı${cat.startingPrice ? ` — ${cat.startingPrice} TL'den` : ""}`;
+    (cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
+      `${cat.name} Baskı${cat.startingPrice ? ` — ${cat.startingPrice} TL'den` : ""}`) +
+    pageSuffix;
   const seoDesc = cat.seo?.description ?? cat.longDescription;
-  const url = `/kategori/${cat.slug}`;
+  const url = page > 1 ? `/kategori/${cat.slug}?page=${page}` : `/kategori/${cat.slug}`;
   // og:image = gerçek kategori görseli (raster) varsa; mockup-SVG fallback'i ise markalı PNG.
   const ogImage =
     cat.imageUrl && !cat.imageUrl.includes("/api/mockup") ? cat.imageUrl : "/og-default.png";
@@ -62,14 +87,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params, searchParams }: Props) {
+  // ?page=1 veya geçersiz page → parametresiz kanonik URL'e KALICI redirect (duplicate önlenir).
+  // Sayfa N'in SSR dilimi AllProductsClient içinde üretilir: route dynamic render edildiğinden
+  // useSearchParams SSR'da gerçek ?page değerini görür (Next 14 davranışı) → doğru 12'lik ürün
+  // dilimi ve sayfalama <Link>'leri HTML'de yer alır.
+  const rawPage = first(searchParams?.page);
+  if (rawPage !== "" && parsePage(rawPage) === 1) {
+    permanentRedirect(`/kategori/${params.slug}`);
+  }
+
   const [cat, allCategories] = await Promise.all([
     getCategoryBySlug(params.slug),
     getCategories(),
   ]);
   if (!cat) notFound();
   // API kategori kapsamını (hiyerarşi dahil) doğru döndürür — client filtresine güvenme.
-  // strict: API blip'inde throw → ISR stale sayfayı korur, boş kategori 5 dk cache'lenmez.
+  // strict: API blip'inde throw → boş katalog render edilip cache'lenmesin. Not: route artık
+  // dynamic render edildiğinden (bkz. üstteki RENDER KARARI) stale koruması sayfa değil
+  // fetch Data Cache katmanındadır; cache'te son başarılı veri varken blip kullanıcıya yansımaz.
   const products = await getProductsByCategory(cat.slug, { strict: true });
 
   const breadcrumbs = [
@@ -85,11 +121,12 @@ export default async function CategoryPage({ params }: Props) {
 
       <section className="relative bg-paper-100 border-b border-paper-200 overflow-hidden">
         <div className="absolute inset-0 opacity-25">
+          {/* Dekoratif süs görseli (%25 opaklık, gradyanla örtülü) — LCP adayı DEĞİL;
+              priority kaldırıldı ki tarayıcı bant genişliğini gerçek içeriğe ayırsın. */}
           <Image
             src={cat.imageUrl}
             alt={cat.name}
             fill
-            priority
             sizes="100vw"
             className="object-cover"
           />
