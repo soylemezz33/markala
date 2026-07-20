@@ -52,16 +52,14 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/hesabim/", "/sepet", "/odeme/", "/giris", "/kayit"],
         crawlDelay: 2,
       },
-      // Saldırgan AI crawler bloku — verimizin LLM eğitiminde kullanılmasını engelle
-      { userAgent: "GPTBot", disallow: "/" },
+      // AI arama/cevap botları AÇIK (AEO — 2026-07-20): GPTBot, OAI-SearchBot, ChatGPT-User,
+      // ClaudeBot/Claude-SearchBot/Claude-User, PerplexityBot, Google-Extended `*` kuralına düşer
+      // (Allow / + standart disallow'lar). Rakiplerin 5/5'i açık; görünürlük için biz de açığız.
+      // Saf eğitim/scraping koleksiyoncuları kapalı kalır — görünürlük katkıları yok:
       { userAgent: "CCBot", disallow: "/" },
-      { userAgent: "anthropic-ai", disallow: "/" },
-      { userAgent: "ClaudeBot", disallow: "/" },
-      { userAgent: "Claude-Web", disallow: "/" },
-      { userAgent: "Google-Extended", disallow: "/" },
-      { userAgent: "PerplexityBot", disallow: "/" },
-      { userAgent: "FacebookBot", disallow: "/" },
       { userAgent: "Bytespider", disallow: "/" },
+      { userAgent: "meta-externalagent", disallow: "/" },
+      { userAgent: "FacebookBot", disallow: "/" },
       // Agresif SEO crawler'lara hız limiti
       { userAgent: "AhrefsBot", crawlDelay: 10 },
       { userAgent: "SemrushBot", crawlDelay: 10 },
