@@ -31,7 +31,6 @@ const STATIC_ROUTES = [
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
   const [products, categories, blogPosts, blogCategories, legalSlugs] = await Promise.all([
     getProducts(),
     getCategories(),
@@ -40,9 +39,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getLegalSlugs(),
   ]);
 
+  // API blip'inde ürün listesi boş dönerse sitemap ÜRÜNSÜZ üretilip yayınlanır ve yüzlerce
+  // ürün URL'si indeksten düşebilir. Throw → route hata verir, eski (stale) sitemap ayakta kalır.
+  if (products.length === 0) {
+    throw new Error("sitemap: ürün listesi boş döndü — ürünsüz sitemap yayınlanmaz, eski sürüm korunur");
+  }
+
+  // Statik/city/service/help gibi girdilerde lastModified BİLEREK yok: her üretimde
+  // "bugün" yazmak sahte tazelik sinyalidir (tüm site her gün değişmiş görünür, crawl
+  // budget israfı). Gerçek tarih bilinen girdiler (ürün/kategori/blog) kendi tarihini yazar.
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE}${r.path}`,
-    lastModified: now,
     changeFrequency: r.freq,
     priority: r.priority,
   }));
@@ -66,7 +73,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const legalEntries: MetadataRoute.Sitemap = legalSlugs.map((slug) => ({
     url: `${SITE}/yasal/${slug}`,
-    lastModified: now,
     changeFrequency: "yearly",
     priority: 0.4,
   }));
@@ -80,7 +86,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const blogCategoryEntries: MetadataRoute.Sitemap = blogCategories.map((c) => ({
     url: `${SITE}/blog/kategori/${c.slug}`,
-    lastModified: now,
     changeFrequency: "weekly",
     priority: 0.5,
   }));
@@ -89,7 +94,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // indekse hazır. /yardim hub'ı yanında tekil makaleler de sitemap'e girer.
   const helpArticleEntries: MetadataRoute.Sitemap = helpArticleSlugs.map((slug) => ({
     url: `${SITE}/yardim/${slug}`,
-    lastModified: now,
     changeFrequency: "monthly",
     priority: 0.6,
   }));
@@ -97,7 +101,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Şehir landing'leri — Mersin priority en yüksek
   const cityEntries: MetadataRoute.Sitemap = cities.map((c) => ({
     url: `${SITE}/matbaa/${c.slug}`,
-    lastModified: now,
     changeFrequency: "weekly",
     priority: c.slug === "mersin" ? 0.95 : 0.85,
   }));
@@ -106,7 +109,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const districtEntries: MetadataRoute.Sitemap = getAllDistrictParams().map(
     ({ city, district }) => ({
       url: `${SITE}/matbaa/${city}/${district}`,
-      lastModified: now,
       changeFrequency: "monthly",
       priority: 0.75,
     }),
@@ -115,7 +117,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Hizmet sayfaları
   const serviceEntries: MetadataRoute.Sitemap = services.map((s) => ({
     url: `${SITE}/hizmetler/${s.slug}`,
-    lastModified: now,
     changeFrequency: "monthly",
     priority: 0.85,
   }));

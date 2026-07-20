@@ -112,6 +112,12 @@ export function ProductJsonLd({
   // startingPrice/basePrice DB alanları 0 (fiyatlar product_prices'ta) → onları KULLANMA.
   const displayPrice = product.displayPrice ?? 0;
 
+  // Google, Product görselinde SVG desteklemez — /api/mockup SVG fallback'i JSON-LD'ye GİRMEZ.
+  // Gerçek (raster) görsel yoksa image alanı tamamen atlanır; yanlış format vermekten iyidir.
+  const realImages = product.images
+    .filter((img) => !img.includes("/api/mockup"))
+    .map((img) => (img.startsWith("http") ? img : `${SITE}${img}`));
+
   const productNode: Record<string, unknown> = {
     "@type": "Product",
     "@id": `${productUrl}#product`,
@@ -120,9 +126,7 @@ export function ProductJsonLd({
     sku: product.sku ?? product.slug,
     mpn: product.sku ?? product.slug,
     url: productUrl,
-    image: product.images.length > 0
-      ? product.images.map((img) => img.startsWith("http") ? img : `${SITE}${img}`)
-      : [`${SITE}/api/mockup?slug=${product.slug}&w=1200&h=800`],
+    ...(realImages.length > 0 ? { image: realImages } : {}),
     brand: {
       "@type": "Brand",
       name: product.brand ?? "Markala",
@@ -133,11 +137,17 @@ export function ProductJsonLd({
   // Offer SADECE fiyatı olan üründe eklenir. "Teklif Al" (price:0) ürünlerde Offer atlanır —
   // aksi halde Google Merchant/Shopping price:0'ı geçersiz sayıp ürünü reddeder (disapproval).
   if (Number(displayPrice) > 0) {
+    // priceValidUntil dinamik: bugün+30 gün (ISO tarih). Merchant "fiyat geçerliliği" sinyali;
+    // sayfa ISR ile yeniden üretildikçe pencere ileri kayar, sabit tarih gibi bayatlamaz.
+    const priceValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
     productNode.offers = {
       "@type": "Offer",
       url: productUrl,
       priceCurrency: "TRY",
       price: displayPrice,
+      priceValidUntil,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: "Markala", url: SITE },
@@ -527,65 +537,6 @@ export async function fetchProductRating(
   slug: string,
 ): Promise<{ average: number; count: number } | null> {
   return null;
-}
-
-/**
- * Per-product HowTo schema — "X nasıl tasarlanır" rich snippet.
- * Ürün detay sayfasında ProductJsonLd ile beraber render edilir.
- * Google "How-to" rich result açılır (CMYK/dpi/taşma payı/upload akışı).
- */
-export function HowToProductJsonLd({
-  product,
-  slug,
-}: {
-  product: { name: string };
-  slug: string;
-}) {
-  const data = {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "@id": `${SITE}/urun/${slug}#howto`,
-    name: `${product.name} nasıl tasarlanır`,
-    description: `${product.name} için adım adım tasarım hazırlama rehberi.`,
-    step: [
-      {
-        "@type": "HowToStep",
-        position: 1,
-        name: "Tasarım dosyasını hazırla",
-        text: "CMYK renk profilinde, 300 dpi çözünürlükte PDF/X-1a olarak.",
-      },
-      {
-        "@type": "HowToStep",
-        position: 2,
-        name: "Taşma payı bırak",
-        text: "Her kenardan 2-3 mm taşma payı.",
-      },
-      {
-        "@type": "HowToStep",
-        position: 3,
-        name: "Markala'ya yükle",
-        text: `${SITE}/urun/${slug} sayfasında konfigüratörden seç ve dosyanı yükle.`,
-      },
-      {
-        "@type": "HowToStep",
-        position: 4,
-        name: "Onay sonrası üretim",
-        text: "1-2 iş günü içinde basılır.",
-      },
-      {
-        "@type": "HowToStep",
-        position: 5,
-        name: "Kargo ile teslim",
-        text: "DHL ile 1-3 iş günü içinde Türkiye geneli.",
-      },
-    ],
-  };
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
-    />
-  );
 }
 
 /**

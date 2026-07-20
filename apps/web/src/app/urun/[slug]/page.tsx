@@ -31,7 +31,7 @@ import { ShareButton } from "@/components/product/share-button";
 import { TrackRecentlyViewed, RecentlyViewedRail } from "@/components/product/recently-viewed";
 import { TrackViewItem } from "@/components/product/track-view-item";
 import { ProductViewTracker } from "@/components/product-view-tracker";
-import { ProductJsonLd, BreadcrumbJsonLd, HowToProductJsonLd } from "@/components/seo/json-ld";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import type { Metadata } from "next";
 
 interface Props {
@@ -53,7 +53,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // notFound() burada çağrılınca statü 200 (soft-404) değil gerçek 404 döner (fetch zaten cache'li).
   if (!product) notFound();
   const category = await getCategoryBySlug(product.categorySlug);
-  const seoTitle = product.seo?.title ?? `${product.name} — ${category?.name ?? ""} Baskı`;
+  // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim.
+  // Kategori adı yoksa "X —  Baskı" (çift boşluk) yerine sade "X Baskı" fallback'i.
+  const seoTitle =
+    product.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
+    (category?.name ? `${product.name} — ${category.name} Baskı` : `${product.name} Baskı`);
   const seoDesc =
     product.seo?.description ??
     `${product.name} baskı ${product.displayPrice ? `${product.displayPrice} TL'den` : ""}. ${product.shortDescription}`;
@@ -162,7 +166,6 @@ export default async function ProductPage({ params }: Props) {
     <>
       <ProductJsonLd product={product} category={category} />
       <BreadcrumbJsonLd items={breadcrumbs} />
-      <HowToProductJsonLd product={product} slug={product.slug} />
       <TrackViewItem
         slug={product.slug}
         name={product.name}
@@ -310,13 +313,10 @@ export default async function ProductPage({ params }: Props) {
           <ProductTabs specifications={product.specifications ?? []} />
         </div>
 
-        {/* SSS — tam genişlik (SEO FAQPage microdata korunur, daima render) */}
+        {/* SSS — tam genişlik. FAQPage şeması JSON-LD'de (ProductJsonLd graph'ı) —
+            microdata BİLEREK yok, çift işaretleme Google'da tutarsızlık riski yaratır. */}
         {product.faqs && product.faqs.length > 0 && (
-          <section
-            className="mt-14"
-            itemScope
-            itemType="https://schema.org/FAQPage"
-          >
+          <section className="mt-14">
             <header className="flex items-center gap-2 mb-5">
               <Question size={22} weight="fill" className="text-brand-700" />
               <h2 className="text-2xl font-semibold text-ink-900">Sık Sorulan Sorular</h2>
@@ -326,25 +326,17 @@ export default async function ProductPage({ params }: Props) {
                 <details
                   key={i}
                   className="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm"
-                  itemScope
-                  itemProp="mainEntity"
-                  itemType="https://schema.org/Question"
                 >
                   <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
-                    <span itemProp="name">{f.q}</span>
+                    <span>{f.q}</span>
                     <CaretRight
                       size={14}
                       weight="bold"
                       className="transition-transform group-open:rotate-90 text-ink-500"
                     />
                   </summary>
-                  <div
-                    className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30"
-                    itemScope
-                    itemProp="acceptedAnswer"
-                    itemType="https://schema.org/Answer"
-                  >
-                    <span itemProp="text">{f.a}</span>
+                  <div className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30">
+                    <span>{f.a}</span>
                   </div>
                 </details>
               ))}
