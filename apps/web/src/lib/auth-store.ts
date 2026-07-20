@@ -214,6 +214,15 @@ export const useAuthStore = create<AuthState>()(
       },
 
       bootstrap: async () => {
+        // Misafir oturumda refresh HİÇ denenmez: refresh çerezi (mk_refresh) httpOnly ve
+        // api alt alanında olduğundan JS'ten okunamaz; elimizdeki tek oturum belirtisi
+        // persist'ten (localStorage "markala-auth") gelen `user`. user yoksa buradaki çağrı
+        // her sayfa açılışında console'a /api/auth/refresh 401 gürültüsü basıyordu.
+        // Girişli kullanıcı davranışı AYNEN korunur (persist user var → refresh → me()).
+        if (!get().user) {
+          set({ user: null, accessToken: null, isBootstrapping: false });
+          return;
+        }
         try {
           const token = await refreshOnce();
           if (!token) throw new Error("refresh-failed");

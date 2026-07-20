@@ -31,6 +31,8 @@ interface Props {
   volumeBadge?: boolean;
   /** Tiraj rozetleri: optionKey → "onerilen" | "enAvantajli" (adetTierBadges çıktısı). */
   tierBadges?: Record<string, TierBadge>;
+  /** "En çok tercih edilen" rozetini alacak optionKey (paket grubunda displayOrder ilk seçenek). */
+  popularKey?: string;
 }
 
 /** optionKey (adet sayısı) için hacim indirimi rozet metni; indirim yoksa null. */
@@ -63,6 +65,46 @@ function TierBadgePill({ kind, isSelected, className }: { kind: TierBadge; isSel
   );
 }
 
+/** "En çok tercih edilen" — tiraj rozetleriyle (TierBadgePill) aynı görsel dil, sarı hap. */
+function PopularBadgePill({ isSelected, className }: { isSelected: boolean; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none whitespace-nowrap",
+        isSelected ? "bg-paper-50/20 text-paper-50" : "bg-brand-500 text-ink-900",
+        className,
+      )}
+    >
+      En çok tercih edilen
+    </span>
+  );
+}
+
+/**
+ * Matbaa jargonu sözlüğü — seçili seçeneğin adında geçen terimlerin kısa açıklaması.
+ * Tooltip DEĞİL: mobilde de çalışsın diye seçimin altında düz yardımcı metin olarak gösterilir.
+ * "kabartma lak" iki kelime olduğu için listede tek kelimeli terimlerden ÖNCE durmalı şart değil
+ * (eşleşme includes ile bağımsız) — sıra yalnız gösterim sırasını belirler.
+ */
+const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
+  { match: "selefon", name: "Selefon", desc: "çizilmeye karşı koruyucu parlak/mat film" },
+  { match: "bristol", name: "Bristol", desc: "kartvizitlerde standart sert karton" },
+  { match: "kuşe", name: "Kuşe", desc: "broşürlerde standart parlak kağıt" },
+  { match: "sıvama", name: "Sıvama", desc: "kenarlara kadar tam kaplama" },
+  { match: "kabartma lak", name: "Kabartma Lak", desc: "logoda parlak kabartma efekti" },
+  { match: "otokopili", name: "Otokopili", desc: "kendinden karbonlu — alt kopyaya yazıyı geçirir" },
+];
+
+/** Etikette geçen jargon terimlerini "Terim: açıklama · …" satırına çevirir; terim yoksa null. */
+function jargonHelpFor(label: string | null | undefined): string | null {
+  if (!label) return null;
+  const lower = trLower(label);
+  const parts = JARGON_GLOSSARY.filter((j) => lower.includes(j.match)).map(
+    (j) => `${j.name}: ${j.desc}`,
+  );
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 const MANY = 8;
 
 function buildHintLabel(hint: number | null | undefined, hintMode: "delta" | "total" | "none"): string | null {
@@ -93,6 +135,7 @@ function SearchableDropdown({
   priceHints,
   hintMode = "none",
   tierBadges,
+  popularKey,
 }: {
   groupKey: string;
   groupLabel: string;
@@ -103,6 +146,7 @@ function SearchableDropdown({
   priceHints?: Record<string, number | null>;
   hintMode?: "delta" | "total" | "none";
   tierBadges?: Record<string, TierBadge>;
+  popularKey?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -194,6 +238,10 @@ function SearchableDropdown({
             </span>
           )}
         </span>
+        {/* Kapalı tetikte de rozet görünsün — varsayılan paket seçiliyken güven mesajı kaybolmasın */}
+        {popularKey && selectedOpt?.optionKey === popularKey && (
+          <PopularBadgePill isSelected={false} className="flex-none" />
+        )}
         {selectedHint && (
           <span className="text-sm tabular-nums text-ink-500 flex-none">
             {selectedHint}
@@ -277,6 +325,9 @@ function SearchableDropdown({
                     {tierBadges?.[opt.optionKey] && (
                       <TierBadgePill kind={tierBadges[opt.optionKey]!} isSelected={isSelected} className="flex-none" />
                     )}
+                    {popularKey === opt.optionKey && (
+                      <PopularBadgePill isSelected={isSelected} className="flex-none" />
+                    )}
                     {hint && (
                       <span className={cn("text-sm tabular-nums flex-none", isSelected ? "text-paper-200" : "text-ink-500")}>
                         {hint}
@@ -293,8 +344,15 @@ function SearchableDropdown({
   );
 }
 
-function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix, volumeBadge, tierBadges }: Props) {
+function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix, volumeBadge, tierBadges, popularKey }: Props) {
   const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
+
+  // Jargon yardımcı satırı — seçili seçeneğin adında/alt etiketinde geçen matbaa
+  // terimlerinin açıklaması, seçimin ALTINDA düz metin (tooltip değil → mobil uyumlu).
+  const selectedOpt = sorted.find((o) => o.optionKey === selected) ?? sorted[0];
+  const jargonLine = jargonHelpFor(
+    selectedOpt ? `${selectedOpt.optionLabel} ${selectedOpt.optionSublabel ?? ""}` : null,
+  );
 
   if (disabled && !locked) {
     return (
@@ -340,6 +398,9 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
             )}
           </span>
         </div>
+        {jargonLine && (
+          <p className="mt-2 text-xs text-ink-500 leading-relaxed">{jargonLine}</p>
+        )}
       </div>
     );
   }
@@ -389,6 +450,9 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
             );
           })}
         </div>
+        {jargonLine && (
+          <p className="mt-2 text-xs text-ink-500 leading-relaxed">{jargonLine}</p>
+        )}
       </div>
     );
   }
@@ -396,17 +460,23 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
   // Many options → searchable dropdown
   if (options.length > MANY) {
     return (
-      <SearchableDropdown
-        groupKey={groupKey}
-        groupLabel={groupLabel}
-        sorted={sorted}
-        selected={selected}
-        disabled={disabled}
-        onSelect={onSelect}
-        priceHints={priceHints}
-        hintMode={hintMode}
-        tierBadges={tierBadges}
-      />
+      <div>
+        <SearchableDropdown
+          groupKey={groupKey}
+          groupLabel={groupLabel}
+          sorted={sorted}
+          selected={selected}
+          disabled={disabled}
+          onSelect={onSelect}
+          priceHints={priceHints}
+          hintMode={hintMode}
+          tierBadges={tierBadges}
+          popularKey={popularKey}
+        />
+        {jargonLine && (
+          <p className="mt-2 text-xs text-ink-500 leading-relaxed">{jargonLine}</p>
+        )}
+      </div>
     );
   }
 
@@ -479,6 +549,9 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 {tierBadges?.[opt.optionKey] && (
                   <TierBadgePill kind={tierBadges[opt.optionKey]!} isSelected={isSelected} className="mt-1" />
                 )}
+                {popularKey === opt.optionKey && (
+                  <PopularBadgePill isSelected={isSelected} className="mt-1" />
+                )}
               </button>
             );
           }
@@ -519,6 +592,9 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
               {tierBadges?.[opt.optionKey] && (
                 <TierBadgePill kind={tierBadges[opt.optionKey]!} isSelected={false} className="flex-none" />
               )}
+              {popularKey === opt.optionKey && (
+                <PopularBadgePill isSelected={false} className="flex-none" />
+              )}
               {hintLabel && (
                 <span className="text-sm tabular-nums text-ink-500 flex-none">
                   {hintLabel}
@@ -528,6 +604,9 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
           );
         })}
       </div>
+      {jargonLine && (
+        <p className="mt-2 text-xs text-ink-500 leading-relaxed">{jargonLine}</p>
+      )}
     </div>
   );
 }

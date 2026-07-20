@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
 import { Button, Price } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, ChatCircleText } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle, ChatCircleText, ShieldCheck } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import {
   calculateTotal,
@@ -249,6 +249,17 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     [product.options],
   );
 
+  // "En çok tercih edilen" rozeti — paket grubunda varsayılan seçilen (optionSort/displayOrder
+  // ilk) seçenek. Persona bulgusu: 16 seçenekli paket listesinde müşteri neyi seçeceğini
+  // bilemiyordu; rozet güvenli bir başlangıç noktası verir. Fiyata/seçim davranışına etkisi yok.
+  const popularPaketKey = useMemo(() => {
+    const paketOpts = ((product.options ?? []) as unknown as RawOption[])
+      .filter((o) => o.groupKey === "paket")
+      .sort((a, b) => a.optionSort - b.optionSort);
+    // Rozet tek seçenekli "listede" anlamsız — en az 2 seçenek varsa göster.
+    return paketOpts.length >= 2 ? paketOpts[0]!.optionKey : undefined;
+  }, [product.options]);
+
   // Hacim indirimi YALNIZ "adet" ayrı çarpan-boyutu olan lineer ürünlerde (İSG) uygulanır: adet
   // dimension VAR ve BAŞKA bir dimension (ör. ebat) da var. Matris (kartvizit, tek dimension=adet
   // → adet fiyat-boyutu) ve area ürünler bu koşulu sağlamaz → rozet gösterilmez (fiyata da etkisiz).
@@ -369,6 +380,14 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
         <EstimatedDelivery productionTime={product.productionTime} />
 
+        {/* Güven rozeti — persona bulgusu: müşterinin 1 numaralı korkusu "baskı hatalı
+            gelirse ne olur?" idi ve cevabı fold-3'teki güven şeridinde gömülü kalıyordu.
+            Teslim tarihi satırıyla aynı görsel dilde, buybox'ta tek satır. */}
+        <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2.5 text-sm">
+          <ShieldCheck size={16} weight="bold" className="flex-none text-success" />
+          <span className="font-semibold text-ink-900">Hatalı baskıda ücretsiz yeniden basım</span>
+        </div>
+
         <div className="space-y-6 pt-2">
           {isArea && <AreaField minM2={pricing.minM2} />}
           {groups.map((group) => {
@@ -402,6 +421,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                 unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
                 volumeBadge={hasVolumeAdet && group.groupKey === "adet"}
                 tierBadges={tierBadges}
+                popularKey={group.groupKey === "paket" ? popularPaketKey : undefined}
               />
             );
           })}

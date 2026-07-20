@@ -8,7 +8,6 @@ import {
   CreditCard,
   PaintBrush,
   MagnifyingGlass,
-  Info,
   CheckCircle,
   ListChecks,
   Question,
@@ -324,63 +323,72 @@ export default async function ProductPage({ params }: Props) {
         </div>
 
         {/* SSS — tam genişlik. FAQPage şeması JSON-LD'de (ProductJsonLd graph'ı) —
-            microdata BİLEREK yok, çift işaretleme Google'da tutarsızlık riski yaratır. */}
-        {product.faqs && product.faqs.length > 0 && (
-          <section className="mt-14">
-            <header className="flex items-center gap-2 mb-5">
-              <Question size={22} weight="fill" className="text-brand-700" />
-              <h2 className="text-2xl font-semibold text-ink-900">Sık Sorulan Sorular</h2>
-            </header>
-            <div className="space-y-3 max-w-3xl">
-              {product.faqs.map((f, i) => (
-                <details
-                  key={i}
-                  className="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm"
-                >
-                  <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
-                    <span>{f.q}</span>
-                    <CaretRight
-                      size={14}
-                      weight="bold"
-                      className="transition-transform group-open:rotate-90 text-ink-500"
-                    />
-                  </summary>
-                  <div className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30">
-                    <span>{f.a}</span>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </section>
-        )}
+            microdata BİLEREK yok, çift işaretleme Google'da tutarsızlık riski yaratır.
+            Üretim toleransı (fire) notu artık her zaman son SSS maddesi → bölüm daima render
+            edilir (yasal not hiçbir üründe kaybolmaz). */}
+        <section className="mt-14">
+          <header className="flex items-center gap-2 mb-5">
+            <Question size={22} weight="fill" className="text-brand-700" />
+            <h2 className="text-2xl font-semibold text-ink-900">Sık Sorulan Sorular</h2>
+          </header>
+          <div className="space-y-3 max-w-3xl">
+            {(product.faqs ?? []).map((f, i) => (
+              <details
+                key={i}
+                className="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm"
+              >
+                <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
+                  <span>{f.q}</span>
+                  <CaretRight
+                    size={14}
+                    weight="bold"
+                    className="transition-transform group-open:rotate-90 text-ink-500"
+                  />
+                </summary>
+                <div className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30">
+                  <span>{f.a}</span>
+                </div>
+              </details>
+            ))}
+
+            {/* Üretim toleransı (fire) — yasal zorunluluk. Eskiden yorum bölümünün hemen
+                altında amber bant olarak duruyordu; yorum-yok güvence kutusunun ("hatalı
+                baskıda ücretsiz değişim") yanına düşünce güven mesajını baltalıyordu.
+                Yasal metin (PRODUCTION_TOLERANCE_NOTE) aynen korunur, yalnız konumu SSS. */}
+            <details className="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm">
+              <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
+                <span>Üretim toleransı (fire) nedir?</span>
+                <CaretRight
+                  size={14}
+                  weight="bold"
+                  className="transition-transform group-open:rotate-90 text-ink-500"
+                />
+              </summary>
+              <div className="px-4 pb-4 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30">
+                <span>
+                  {PRODUCTION_TOLERANCE_NOTE} Bu sektör standardı tolerans aralığı, sipariş
+                  onayında otomatik olarak kabul edilmiş sayılır. Detaylara{" "}
+                  <Link
+                    href="/yasal/mesafeli-satis"
+                    className="underline font-medium hover:text-brand-700"
+                  >
+                    Mesafeli Satış Sözleşmesi Madde 7.A
+                  </Link>{" "}
+                  ve{" "}
+                  <Link href="/yasal/iade" className="underline font-medium hover:text-brand-700">
+                    İade Politikası
+                  </Link>
+                  &apos;ndan ulaşabilirsin.
+                </span>
+              </div>
+            </details>
+          </div>
+        </section>
 
         {/* Müşteri yorumları — tam genişlik */}
         <div className="mt-14">
           <ProductReviewsSection productSlug={product.slug} />
         </div>
-
-        {/* Üretim toleransı (fire) bandı — yasal zorunluluk */}
-        <section className="mt-8">
-          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
-            <Info size={22} weight="fill" className="text-amber-600 flex-none mt-0.5" />
-            <div className="text-sm text-amber-900 leading-relaxed">
-              <strong>Üretim Toleransı:</strong> {PRODUCTION_TOLERANCE_NOTE} Bu sektör standardı
-              tolerans aralığı, sipariş onayında otomatik olarak kabul edilmiş sayılır. Detay
-              için{" "}
-              <Link
-                href="/yasal/mesafeli-satis"
-                className="underline font-medium hover:text-amber-700"
-              >
-                Mesafeli Satış Sözleşmesi Madde 7.A
-              </Link>{" "}
-              ve{" "}
-              <Link href="/yasal/iade" className="underline font-medium hover:text-amber-700">
-                İade Politikası
-              </Link>
-              'na bakınız.
-            </div>
-          </div>
-        </section>
 
         {/* Related products */}
         {relatedProducts.length > 0 && (
