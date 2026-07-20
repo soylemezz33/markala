@@ -69,7 +69,8 @@ export default async function CategoryPage({ params }: Props) {
   ]);
   if (!cat) notFound();
   // API kategori kapsamını (hiyerarşi dahil) doğru döndürür — client filtresine güvenme.
-  const products = await getProductsByCategory(cat.slug);
+  // strict: API blip'inde throw → ISR stale sayfayı korur, boş kategori 5 dk cache'lenmez.
+  const products = await getProductsByCategory(cat.slug, { strict: true });
 
   const breadcrumbs = [
     { name: "Anasayfa", href: "/" },

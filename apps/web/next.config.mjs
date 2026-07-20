@@ -155,6 +155,13 @@ const nextConfig = {
         destination: "/yasal/kvkk",
         permanent: true,
       },
+      // Eski İSG kategori slug'ı — Google Ads İSG kampanyasının en büyük reklam grubu
+      // hâlâ bu URL'e iniyor; kategori yeniden yapılanmasında slug değişti (2026-07 denetim bulgusu).
+      {
+        source: "/kategori/guvenlik-uyari-levhalari",
+        destination: "/kategori/is-guvenligi-uyari-ikaz",
+        permanent: true,
+      },
     ];
   },
 };

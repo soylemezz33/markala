@@ -288,15 +288,28 @@ export async function getHeaderNav(): Promise<NavCategory[] | null> {
   }
 }
 
-/** Bir kategorinin ürünleri. API hatası → [] (graceful empty; mock fallback kaldırıldı). */
-export async function getProductsByCategory(categorySlug: string): Promise<Product[]> {
+/**
+ * Bir kategorinin ürünleri. API hatası → [] (graceful empty; mock fallback kaldırıldı).
+ * strict: true → fetch hatasında/bozuk yanıtta throw. Kategori sayfası bunu kullanır ki
+ * geçici API blip'inde boş "ürünler hazırlanıyor" durumu 200 olarak render edilip
+ * ISR tarafından 5 dk CACHE'lenmesin — throw ISR'nin son başarılı (stale) sayfasını korur.
+ * (getCategoryBySlug'daki blip-throw mantığının ürün listesi karşılığı.)
+ */
+export async function getProductsByCategory(
+  categorySlug: string,
+  opts?: { strict?: boolean },
+): Promise<Product[]> {
   try {
     const data = await fetchJson(
       `/products?category=${encodeURIComponent(categorySlug)}&take=2000&list=true`,
     );
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data)) {
+      if (opts?.strict) throw new Error("getProductsByCategory: beklenmeyen yanıt (API blip?)");
+      return [];
+    }
     return data.map(mapProduct);
-  } catch {
+  } catch (err) {
+    if (opts?.strict) throw err;
     return [];
   }
 }
