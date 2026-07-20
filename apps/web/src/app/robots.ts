@@ -5,6 +5,10 @@ const SITE = "https://markala.com.tr";
 // Ortak disallow seti. DİKKAT: kendi user-agent grubunu bulan bot `*` grubunu TAMAMEN
 // yok sayar — bu yüzden bot-özel grup açılacaksa bu liste oraya da kopyalanmalı.
 const DISALLOW = [
+  // CF Email Obfuscation footer mailto'larını /cdn-cgi/l/email-protection'a çevirir;
+  // URL 404 döner ve her sayfa "kırık linkli" işaretlenir. Cloudflare'in resmi önerisi
+  // /cdn-cgi/'yi robots'ta engellemek (developers.cloudflare.com/fundamentals/reference/cdn-cgi-endpoint/).
+  "/cdn-cgi/",
   "/api/",
   "/hesabim/",
   "/sepet",

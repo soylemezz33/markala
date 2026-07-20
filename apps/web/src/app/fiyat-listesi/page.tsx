@@ -56,6 +56,11 @@ export const metadata: Metadata = {
   },
 };
 
+// Kategori başına tablo satırı tavanı. 860 ürünün tamamı tek sayfada 2.17 MB HTML
+// üretiyordu — Googlebot 2 MB'tan sonrasını taramaz (Ahrefs "page size exceeds 2 MB").
+// En ucuz N ürün listelenir; kalanlar "+X ürün daha" satırıyla kategori sayfasına gider.
+const MAX_ROWS_PER_CATEGORY = 20;
+
 export default async function PriceListPage() {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
 
@@ -226,7 +231,7 @@ export default async function PriceListPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-paper-100">
-                    {g.items.map((p) => (
+                    {g.items.slice(0, MAX_ROWS_PER_CATEGORY).map((p) => (
                       <tr key={p.slug} className="hover:bg-paper-50">
                         <td className="px-3 py-3">
                           <Link
@@ -264,6 +269,15 @@ export default async function PriceListPage() {
                   </tbody>
                 </table>
               </div>
+              {g.items.length > MAX_ROWS_PER_CATEGORY && (
+                <Link
+                  href={`/kategori/${g.cat.slug}`}
+                  className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-brand-700 bg-paper-50 border border-paper-200 hover:bg-paper-100 hover:text-ink-900"
+                >
+                  +{g.items.length - MAX_ROWS_PER_CATEGORY} ürün daha — tüm {g.cat.name} fiyatları{" "}
+                  <ArrowRight size={11} weight="bold" />
+                </Link>
+              )}
             </section>
           ))}
         </div>
