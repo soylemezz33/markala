@@ -9,3 +9,13 @@ export class CreateSubscriberDto {
   @MaxLength(40)
   source?: string;
 }
+
+/** PUBLIC çıkış (GET /newsletter/unsubscribe) query'si — token HMAC-SHA256 hex (64 karakter). */
+export class UnsubscribeQueryDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MaxLength(128)
+  token!: string;
+}

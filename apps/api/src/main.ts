@@ -99,6 +99,10 @@ async function bootstrap() {
   app.use(
     rateLimit({ windowMs: 60 * 60_000, max: 15, path: "/newsletter-subscribers", method: "POST" }),
   );
+  // Bülten çıkışı (ETK) — public GET (mail linki); per-IP kaba flood koruması (30/saat).
+  app.use(
+    rateLimit({ windowMs: 60 * 60_000, max: 30, path: "/newsletter/unsubscribe", method: "GET" }),
+  );
   // Müşteri ürün yorumu — giriş yapmış kullanıcı; per-IP spam/flood koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/reviews/public", method: "POST" }));
   // Admin mutation endpoint'leri — JWT+RolesGuard korumalı; per-IP ek savunma (ele geçirilmiş JWT senyaroya karşı).
