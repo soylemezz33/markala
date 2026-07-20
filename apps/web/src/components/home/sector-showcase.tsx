@@ -20,7 +20,7 @@ const SECTORS = [
   { label: "Otel & Konaklama", desc: "Kapı kartı, yönlendirme, branda", icon: Bed },
   { label: "Mağaza & Perakende", desc: "Vitrin, etiket, poşet, sticker", icon: Storefront },
   { label: "İnşaat & Sanayi", desc: "İSG levhası, branda, baret baskı", icon: Wrench },
-  { label: "Etkinlik & Organizasyon", desc: "Roll-up, davetiye, yaka kartı", icon: Confetti },
+  { label: "Etkinlik & Organizasyon", desc: "Rollup, davetiye, yaka kartı", icon: Confetti },
   { label: "Kurumsal / Ofis", desc: "Kartvizit, antetli, kaşe, dosya", icon: Briefcase },
 ];
 

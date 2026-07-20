@@ -71,7 +71,7 @@ export default function OrdersPage() {
           <Package size={28} />
         </div>
         <h2 className="mt-5 font-semibold text-ink-900 text-lg">Henüz siparişiniz yok</h2>
-        <p className="mt-2 text-sm text-ink-500">İlk siparişinize başlayın — tasarım desteği ücretsiz.</p>
+        <p className="mt-2 text-sm text-ink-500">İlk siparişine başla — tasarım desteği ücretsiz.</p>
         <Link href="/urunler"><Button className="mt-5">Ürünleri Keşfet <ArrowRight size={16} weight="bold" /></Button></Link>
       </div>
     );

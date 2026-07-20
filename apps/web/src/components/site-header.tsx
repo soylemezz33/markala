@@ -148,7 +148,7 @@ const DEFAULT_NAV: NavCategory[] = [
         items: [
           { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr" },
           { label: "Mesh Branda", href: "/urun/mesh-branda" },
-          { label: "Roll-up 85×200", href: "/urun/rollup-standart" },
+          { label: "Rollup 85×200", href: "/urun/rollup-standart" },
         ],
       },
     ],

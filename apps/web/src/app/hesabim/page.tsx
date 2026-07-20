@@ -99,7 +99,7 @@ export default function AccountOverviewPage() {
               <ShoppingBagOpen size={24} />
             </div>
             <p className="mt-4 text-ink-700 font-medium">Henüz siparişiniz yok</p>
-            <p className="mt-1 text-sm text-ink-500">İlk siparişinize başlayın — tasarım desteği ücretsiz.</p>
+            <p className="mt-1 text-sm text-ink-500">İlk siparişine başla — tasarım desteği ücretsiz.</p>
             <Link href="/urunler"><Button className="mt-5">Alışverişe Başla</Button></Link>
           </div>
         ) : (

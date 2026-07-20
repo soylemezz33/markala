@@ -468,8 +468,8 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
         <p className="text-xs text-ink-500 text-center">
           {canBuy
-            ? "Sepete eklediğinizde üretim başlamaz — onay sonrası matbaa süreci başlar."
-            : "Bu ürün için size özel fiyat veriyoruz. Teklif Al'a tıklayın, 24 saat içinde size dönelim — hiçbir ödeme veya taahhüt yok."}
+            ? "Sepete eklediğinde üretim başlamaz — onay sonrası matbaa süreci başlar."
+            : "Bu ürün için sana özel fiyat veriyoruz. Teklif Al'a tıkla, 24 saat içinde sana dönelim — hiçbir ödeme veya taahhüt yok."}
         </p>
       </div>
     </ConfiguratorContext.Provider>

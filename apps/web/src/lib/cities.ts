@@ -193,7 +193,7 @@ export const cities: CityData[] = [
       "Otel anahtar zarfı ve kart",
       "Liman/lojistik etiketi ve sevk irsaliyesi",
       "Tarım/narenciye etiket ve ambalaj baskısı",
-      "Fuar standı broşürü ve roll-up",
+      "Fuar standı broşürü ve rollup",
     ],
     localReferences: [
       "Akdeniz Otel İşletmeleri",

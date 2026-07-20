@@ -1,34 +1,31 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Truck, CreditCard, ArrowCounterClockwise, Clock, ShieldCheck } from "@phosphor-icons/react";
+import { Truck, PenNib, Clock, SquaresFour } from "@phosphor-icons/react";
 import { Container } from "@markala/ui";
 
+// Kanonik değer önerisi 4'lüsü — docs/marka-kimligi.md §1 (sözlük dışı ad-hoc rozet üretilmez;
+// "Güvenli Teslimat" sözlükten çıkarıldığı için kaldırıldı).
 const badges = [
   {
-    icon: Truck,
-    title: "Hızlı Kargo",
-    desc: "Seçtiğiniz ürün grubuna göre hemen aksiyon alınır.",
-  },
-  {
-    icon: CreditCard,
-    title: "Kredi Kartına Taksit",
-    desc: "Seçeceğiniz kredi kartına özel taksit imkanları.",
-  },
-  {
-    icon: ArrowCounterClockwise,
-    title: "Kalite Garantisi",
-    desc: "Hatalı baskıda ücretsiz değişim.",
+    icon: PenNib,
+    title: "Ücretsiz Tasarım Desteği",
+    desc: "Tasarımın hazır değilse ekibimiz senin için ücretsiz hazırlar.",
   },
   {
     icon: Clock,
-    title: "Zamanında Teslimat",
-    desc: "Hızlı üretim ile zamanında teslimat.",
+    title: "1–2 İş Günü Üretim",
+    desc: "Onay sonrası siparişin 1–2 iş gününde üretilir.",
   },
   {
-    icon: ShieldCheck,
-    title: "Güvenli Teslimat",
-    desc: "Özenle paketlenen ürünlerinizi güvenli bir şekilde teslim alabilirsiniz.",
+    icon: Truck,
+    title: "81 İle Kargo",
+    desc: "Siparişin Türkiye'nin 81 iline güvenle ulaşır.",
+  },
+  {
+    icon: SquaresFour,
+    title: "Tek Panelde 30+ Ürün",
+    desc: "Kartvizitten brandaya tüm baskı ihtiyaçların tek panelde.",
   },
 ];
 
@@ -41,7 +38,7 @@ export function TrustBadges() {
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
           variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08 } } }}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8"
+          className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8"
         >
           {badges.map((b) => (
             <motion.li

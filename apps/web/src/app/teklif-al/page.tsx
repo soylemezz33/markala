@@ -26,7 +26,7 @@ const PRODUCT_OPTIONS = [
   "Afiş & Poster",
   "Branda & Vinil",
   "Bayrak (Yelken/Masa)",
-  "Roll-Up & Stand",
+  "Rollup & Stand",
   "Tabela & Levha",
   "İSG Uyarı Levhaları",
   "Sticker & Etiket",
@@ -363,7 +363,7 @@ export default function TeklifAlPage() {
 
               {/* 4. İletişim */}
               <fieldset className="space-y-4">
-                <Legend n={4} title="Sana nasıl dönelim?" />
+                <Legend n={4} title="Size nasıl dönelim?" />
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Field label="Ad Soyad" required>
                     <input
