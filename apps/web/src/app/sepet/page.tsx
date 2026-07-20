@@ -11,7 +11,10 @@ import {
 import type { Category } from "@markala/types";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { apiClient } from "@/lib/api";
+import { consumeReorderNotice, type ReorderNotice } from "@/lib/reorder";
 import { PromoBanner } from "@/components/promo-banner";
+import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
+import { CartCrossSell } from "@/components/cart/cross-sell";
 import { VAT_RATE } from "@/lib/vat";
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
@@ -24,6 +27,8 @@ export default function CartPage() {
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponChecking, setCouponChecking] = useState(false);
+  // Hata mesajı nereden tetiklendi? (banner = HOSGELDIN tek-tık bandı, input = manuel giriş)
+  const [couponSource, setCouponSource] = useState<"banner" | "input" | null>(null);
   // Backend-doğrulanmış kupon (gerçek indirim + ücretsiz kargo). Sepette de checkout ile AYNI
   // /api/coupons/validate kullanılır → tüm DB kuponları çalışır (yalnız HOSGELDIN değil).
   const [couponInfo, setCouponInfo] = useState<{ code: string; discount: number; freeShipping: boolean } | null>(null);
@@ -31,6 +36,14 @@ export default function CartPage() {
   const [shipping, setShipping] = useState({ fee: 79, freeThreshold: 1500 });
   useEffect(() => {
     apiClient.settings.shipping().then(setShipping).catch(() => {});
+  }, []);
+
+  // "Tekrar Sipariş Et" akışından gelindiyse tek seferlik bilgi bandı: kalemler güncel
+  // fiyattan eklendi + varsa atlanan (satıştan kalkmış) ürünler. Not sessionStorage'da
+  // taşınır (toast altyapısı yok) ve okununca silinir — yenilemede tekrar çıkmaz.
+  const [reorderNotice, setReorderNotice] = useState<ReorderNotice | null>(null);
+  useEffect(() => {
+    setReorderNotice(consumeReorderNotice());
   }, []);
 
   const sub = subtotal();
@@ -85,14 +98,19 @@ export default function CartPage() {
   const vat = subAfterDiscount - subAfterDiscount / (1 + VAT_RATE);
   const total = subAfterDiscount + shippingFee;
 
-  async function handleApplyCoupon() {
-    const code = coupon.trim().toUpperCase();
+  /** Ortak kupon uygulama akışı — hem manuel input hem HOSGELDIN tek-tık bandı buradan geçer. */
+  async function applyCode(code: string, source: "banner" | "input") {
     setCouponError(null);
+    setCouponSource(source);
     if (!code || sub <= 0) return;
     setCouponChecking(true);
     const ok = await validateCoupon(code);
     if (ok) { setStoreCoupon(code); setCoupon(""); }
     setCouponChecking(false);
+  }
+
+  function handleApplyCoupon() {
+    void applyCode(coupon.trim().toUpperCase(), "input");
   }
 
   function handleRemoveCoupon() {
@@ -114,7 +132,23 @@ export default function CartPage() {
         </Container>
       </div>
 
-      <Container className="py-10 md:py-14">
+      {/* pb-28: mobil sabit CTA barı içeriği örtmesin (md+ barsız → normal padding). */}
+      <Container className="py-10 pb-28 md:py-14">
+        {reorderNotice && (
+          <div className="mb-6 p-4 bg-brand-50 border border-brand-200 rounded-xl text-sm text-ink-700">
+            <p className="font-semibold text-ink-900">
+              Önceki siparişindeki ürünler sepetine eklendi.
+            </p>
+            <p className="mt-1">
+              Fiyatlar güncel fiyattan hesaplanır — eski sipariş tutarından farklı olabilir.
+            </p>
+            {reorderNotice.skipped.length > 0 && (
+              <p className="mt-1 text-warning">
+                Şu ürünler artık satışta olmadığı için eklenemedi: {reorderNotice.skipped.join(", ")}
+              </p>
+            )}
+          </div>
+        )}
         <div className="grid lg:grid-cols-12 gap-8">
           <section className="lg:col-span-8 space-y-3">
             {items.map((item) => (
@@ -150,12 +184,27 @@ export default function CartPage() {
                       </button>
                     </div>
                   </div>
-                  {/* Kademeli üründe çok set alındıysa netleştir: "2 set × 25 = 50 adet"
-                      (stepper parça gösterir; her set kendi tiraj fiyatından katlanır). */}
-                  {itemUnitCount(item) > 1 && item.quantity > 1 && (
+                  {/* Tiraj netleştirme — 🔴 tiraj quantity'ye TAŞINAMAZ (mimari kısıt), davranış aynı;
+                      yalnız SUNUM: stepper'daki büyük sayının "paket × set" olduğunu açıkla ve tiraj
+                      değişikliği için ürün sayfasına yönlendir (± yalnız set sayısını değiştirir). */}
+                  {itemUnitCount(item) > 1 && (
                     <p className="mt-1.5 text-xs text-ink-500">
-                      {item.quantity} set × {itemUnitCount(item)} adet ={" "}
-                      <span className="font-medium text-ink-700">{item.quantity * itemUnitCount(item)} adet</span>
+                      {itemUnitCount(item).toLocaleString("tr-TR")} adetlik paket × {item.quantity}
+                      {item.quantity > 1 && (
+                        <>
+                          {" "}={" "}
+                          <span className="font-medium text-ink-700">
+                            {(item.quantity * itemUnitCount(item)).toLocaleString("tr-TR")} adet
+                          </span>
+                        </>
+                      )}
+                      {" · "}
+                      <Link
+                        href={`/urun/${item.productSlug}`}
+                        className="underline text-brand-700 hover:text-brand-900"
+                      >
+                        tirajı değiştir
+                      </Link>
                     </p>
                   )}
                 </div>
@@ -164,6 +213,8 @@ export default function CartPage() {
             <Link href="/urunler" className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-brand-700 hover:text-brand-900">
               ← Alışverişe devam et
             </Link>
+            {/* Cross-sell — en pahalı kalemin kategorisine göre 2 tamamlayıcı ürün. */}
+            <CartCrossSell />
           </section>
 
           <aside className="lg:col-span-4">
@@ -181,42 +232,13 @@ export default function CartPage() {
                     <Row label={<span className="text-base font-semibold text-ink-900">Toplam</span>} value={<Price amount={total} size="lg" className="text-ink-900" />} />
                   </div>
                 </dl>
-                {sub > 0 &&
-                  (sub < shipping.freeThreshold ? (
-                    // Bedava kargo ilerleme çubuğu — eşiğe ne kadar kaldığını görselleştirir (AOV artırıcı CRO).
-                    <div className="mt-4">
-                      <div className="flex items-center gap-1.5 text-xs text-ink-700 mb-1.5">
-                        <Truck size={14} className="text-brand-700 flex-none" />
-                        <span>
-                          Ücretsiz kargoya{" "}
-                          <Price
-                            amount={shipping.freeThreshold - sub}
-                            size="sm"
-                            className="font-semibold text-brand-700 align-baseline"
-                          />{" "}
-                          kaldı
-                        </span>
-                      </div>
-                      <div
-                        className="h-2 rounded-full bg-paper-200 overflow-hidden"
-                        role="progressbar"
-                        aria-label="Ücretsiz kargo ilerlemesi"
-                        aria-valuenow={Math.round((sub / shipping.freeThreshold) * 100)}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                      >
-                        <div
-                          className="h-full rounded-full bg-brand-500 transition-[width] duration-500 ease-out"
-                          style={{ width: `${Math.min(100, Math.round((sub / shipping.freeThreshold) * 100))}%` }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    // Eşik aşıldı → kutlama; müşteri kazanımı hissetsin.
-                    <div className="mt-4 flex items-center gap-2 p-2.5 bg-success/10 border border-success/30 rounded-md text-xs font-medium text-success">
-                      <Truck size={14} className="flex-none" /> 🎉 Kargon ücretsiz — teslimat bizden!
-                    </div>
-                  ))}
+                {/* Bedava kargo çubuğu — ortak bileşen (çekmecede de aynısı); eşik /settings/shipping'ten. */}
+                <FreeShippingBar
+                  subtotal={sub}
+                  threshold={shipping.freeThreshold}
+                  unlocked={freeShipCoupon}
+                  className="mt-4"
+                />
                 {/* begin_checkout BURADAN kaldırıldı: /odeme mount'unda tek kaynaktan atılır
                     (sepet butonu + drawer + odeme mount üçlemesi aynı oturumda 2-3 kez sayıyordu). */}
                 <Link
@@ -227,6 +249,37 @@ export default function CartPage() {
                 </Link>
               </div>
 
+              {/* HOSGELDIN tek-tık bandı — kupon input'undan ayrık; uygulanınca onay durumuna döner,
+                  başka bir kupon uygulandıysa hiç görünmez. */}
+              {!appliedCode && (
+                <div className="p-4 bg-brand-100 border border-brand-500/40 rounded-xl">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm text-ink-900 min-w-0">
+                      <span className="font-semibold">İlk siparişine %10 indirim</span>
+                      <span className="block text-xs text-ink-700 mt-0.5">
+                        Kupon: <code className="font-mono font-semibold">HOSGELDIN</code>
+                      </span>
+                    </p>
+                    <Button
+                      size="sm"
+                      className="flex-none"
+                      onClick={() => void applyCode("HOSGELDIN", "banner")}
+                      disabled={couponChecking || sub <= 0}
+                    >
+                      {couponChecking && couponSource === "banner" ? "Kontrol…" : "Kuponu Uygula"}
+                    </Button>
+                  </div>
+                  {couponError && couponSource === "banner" && (
+                    <p role="alert" className="mt-2 text-xs text-error">{couponError}</p>
+                  )}
+                </div>
+              )}
+              {appliedCode === "HOSGELDIN" && (
+                <div className="p-3 bg-success/10 border border-success/30 rounded-xl text-xs font-medium text-success">
+                  ✓ HOSGELDIN uygulandı — ilk siparişine %10 indirim sepetinde.
+                </div>
+              )}
+
               <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
                 <details className="text-sm">
                   <summary className="cursor-pointer font-medium text-ink-900 flex items-center gap-2">
@@ -236,14 +289,18 @@ export default function CartPage() {
                     <input type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(null); }} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
                     <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!coupon.trim() || couponChecking}>{couponChecking ? "Kontrol…" : "Uygula"}</Button>
                   </div>
-                  {couponError && <p role="alert" className="mt-2 text-xs text-error">{couponError}</p>}
+                  {/* banner kaynaklı hata bandın içinde gösterilir; diğerleri (manuel giriş +
+                      mount'taki yeniden doğrulama) eskisi gibi burada. */}
+                  {couponError && couponSource !== "banner" && (
+                    <p role="alert" className="mt-2 text-xs text-error">{couponError}</p>
+                  )}
                   {appliedCode && (
                     <p className="mt-2 text-xs text-success flex items-center gap-2">
                       ✓ {appliedCode} kuponu uygulandı
                       <button onClick={handleRemoveCoupon} className="text-ink-500 hover:text-error underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1">kaldır</button>
                     </p>
                   )}
-                  <p className="mt-2 text-xs text-ink-500">İpucu: yeni müşteriler için <code className="font-mono bg-paper-100 px-1.5 py-0.5 rounded">HOSGELDIN</code></p>
+                  {/* HOSGELDIN ipucu satırı kaldırıldı — yukarıdaki tek-tık bandı bu işi görüyor. */}
                 </details>
               </div>
 
@@ -256,6 +313,25 @@ export default function CartPage() {
           </aside>
         </div>
       </Container>
+
+      {/* Mobil sabit CTA (md altı) — özet kartındaki butonla AYNI hedef (/odeme), davranış değişmez.
+          z-30: FloatingActions (bottom-24 z-40) PDP'deki gibi barın üstünde konumlanır.
+          pb-[calc(...)]: iOS home-indicator (safe-area) barın altını kesmesin. */}
+      <div className="fixed bottom-0 inset-x-0 z-30 md:hidden border-t border-paper-200 bg-paper-50/95 backdrop-blur shadow-2xl">
+        <div className="flex items-center gap-3 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+              Toplam · KDV dahil
+            </div>
+            <Price amount={total} size="lg" className="text-ink-900" />
+          </div>
+          <Link href="/odeme" className="flex-none">
+            <Button size="md">
+              Siparişe Devam Et <ArrowRight size={16} weight="bold" />
+            </Button>
+          </Link>
+        </div>
+      </div>
     </>
   );
 }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { X, Trash, ShoppingBagOpen, ArrowRight, Plus, Minus } from "@phosphor-icons/react";
 import { Button, Price } from "@markala/ui";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
+import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { useEffect, useRef } from "react";
 
 export function CartDrawer() {
@@ -189,7 +190,10 @@ export function CartDrawer() {
                     <span className="text-sm text-ink-500">Ara toplam</span>
                     <Price amount={subtotal()} size="lg" className="text-ink-900" />
                   </div>
-                  <p className="text-xs text-ink-500">Fiyatlar KDV dahildir. Kargo, sipariş adımında hesaplanır.</p>
+                  <p className="text-xs text-ink-500">Fiyatlar KDV dahildir.</p>
+                  {/* Bedava kargo çubuğu — /sepet ile ortak bileşen; eşiği /settings/shipping'ten
+                      kendisi çeker ("Kargo, sipariş adımında hesaplanır" satırının yerini aldı). */}
+                  <FreeShippingBar subtotal={subtotal()} />
                   <div className="flex flex-col gap-2">
                     {/* begin_checkout BURADAN kaldırıldı: /odeme mount'unda tek kaynaktan atılır
                         (drawer + sepet + odeme mount aynı oturumda olayı 2-3 kez sayıyordu). */}
