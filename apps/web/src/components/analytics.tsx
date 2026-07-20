@@ -33,7 +33,11 @@ export function Analytics() {
 
   return (
     <>
-      {ga4 && (
+      {/* gtag bloğu GA4 VEYA Ads id'sinden biri varsa render edilir — eskiden tamamı ga4'e
+          bağlıydı: GA4 env'i düşerse Ads temel etiketi (AW config) ve consent default'u da
+          kayboluyordu (Ads "etiketsiz site" + consent'siz sinyal riski). Config satırları
+          kendi id'lerinin varlığına bağlı; consent default/restore iki durumda da çalışır. */}
+      {(ga4 || adsId) && (
         <>
           {/* Consent Mode v2 — KVKK/GDPR: tüm sinyaller varsayılan denied */}
           <Script id="gtag-consent-default" strategy="beforeInteractive">
@@ -54,17 +58,18 @@ export function Analytics() {
               gtag('set', 'url_passthrough', true);
             `}
           </Script>
+          {/* Loader hangi id ile yüklenirse yüklensin aynı gtag.js gelir — GA4 yoksa AW ile yükle. */}
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${ga4}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${ga4 || adsId}`}
             strategy="afterInteractive"
           />
-          <Script id="ga4-init" strategy="afterInteractive">
+          <Script id="gtag-init" strategy="afterInteractive">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${ga4}', { anonymize_ip: true });
-              gtag('config', '${adsId}');
+              ${ga4 ? `gtag('config', '${ga4}', { anonymize_ip: true });` : ""}
+              ${adsId ? `gtag('config', '${adsId}');` : ""}
             `}
           </Script>
           {/* Consent Mode KALICILIK: default her sayfa yüklemesinde 'denied' başlar; daha önce

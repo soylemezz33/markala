@@ -62,6 +62,8 @@ export class MetaCapiService {
         marketingConsent: true,
         fbp: true,
         fbc: true,
+        clientUserAgent: true,
+        clientIp: true,
       },
     });
     if (!order) return;
@@ -76,6 +78,11 @@ export class MetaCapiService {
     if (phone) userData.ph = [this.hash(phone)];
     if (order.fbp) userData.fbp = order.fbp;
     if (order.fbc) userData.fbc = order.fbc;
+    // action_source=website için Meta client_user_agent'ı fiilen zorunlu tutar (yokluğu event
+    // kalitesini/match rate'i düşürür). UA+IP checkout isteğinde Order'a snapshot'lanmıştı;
+    // hash'lenmeden ham gönderilir (Meta spec'i böyle ister).
+    if (order.clientUserAgent) userData.client_user_agent = order.clientUserAgent;
+    if (order.clientIp) userData.client_ip_address = order.clientIp;
 
     const payload = {
       data: [

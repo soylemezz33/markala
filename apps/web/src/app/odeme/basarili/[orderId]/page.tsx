@@ -55,7 +55,38 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
         setPaymentConfirmed(ok);
         if (ok) {
           const src = local ?? (srv as unknown as Order);
-          trackPurchase(src.orderNumber, src.total, src.items.length);
+          // Çift sayım koruması: başarı sayfası yenileme/geri dönüşle tekrar açıldığında purchase
+          // YENİDEN atılıyordu — Meta event_id dedup penceresi (48s) dışında bu çift dönüşüm sayılır.
+          // orderId başına tek atış: bayrak varsa hiç ateşleme. localStorage erişilemezse (gizli mod)
+          // guard'sız devam — dönüşümü kaybetmek çift saymaktan daha kötü.
+          const firedKey = `purchase_fired_${params.orderId}`;
+          let alreadyFired = false;
+          try {
+            alreadyFired = window.localStorage.getItem(firedKey) === "1";
+          } catch {
+            /* localStorage yok/kapalı → guard atlanır */
+          }
+          if (!alreadyFired) {
+            trackPurchase(
+              src.orderNumber,
+              src.total,
+              src.items.length,
+              // GA4 items[] + Meta content_ids: sipariş kalemlerinden. Kimlik = slug; kampanya
+              // paketi gibi slug'sız kalemlerde ürün adına düşülür. price = birim fiyat —
+              // sunucu yanıtında Decimal string gelebildiğinden Number() ile normalize edilir.
+              src.items.map((it) => ({
+                id: it.productSlug || it.productName,
+                name: it.productName,
+                price: Number(it.unitPrice) || 0,
+                quantity: it.quantity,
+              })),
+            );
+            try {
+              window.localStorage.setItem(firedKey, "1");
+            } catch {
+              /* yazılamazsa sonraki ziyarette tekrar atılabilir — kabul edilir risk */
+            }
+          }
         }
       })
       .catch(() => {

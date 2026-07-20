@@ -267,6 +267,9 @@ export default function CheckoutPage() {
   // Sepet Zustand persist ile korunur.
   useEffect(() => {
     if (!isBootstrapping && !user && !processing) {
+      // Ölçüm: kaç kullanıcı checkout'ta giriş duvarına takılıyor (funnel drop-off'un en büyük
+      // kör noktasıydı). Yönlendirmeden ÖNCE atılır; consent yoksa track zaten sessizce yutar.
+      track("checkout_login_wall", {});
       router.replace(`/giris?next=${encodeURIComponent("/odeme")}`);
     }
   }, [isBootstrapping, user, processing, router]);
@@ -472,11 +475,12 @@ export default function CheckoutPage() {
     setPayError(null);
     setProcessing(true);
 
-    // GA4 — kullanıcı ödeme adımına geçti (purchase başarı sayfasında ateşlenir)
+    // GA4 — kullanıcı ödeme adımına geçti (purchase başarı sayfasında ateşlenir).
+    // NOT: GA4'te `items` DİZİ bekler — sayı gönderilirse alan çöpe gider; adet num_items'ta.
     track("add_payment_info", {
       currency: "TRY",
       value: total,
-      items: cartItems.length,
+      num_items: cartItems.length,
       payment_type: "credit_card",
     });
 

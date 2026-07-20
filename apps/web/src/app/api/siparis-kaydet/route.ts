@@ -135,12 +135,43 @@ export async function POST(req: NextRequest) {
   const fbp = clamp(req.cookies.get("_fbp")?.value, 200);
   const fbc = clamp(req.cookies.get("_fbc")?.value, 400);
 
+  // Google Ads tıklama kimliği (gclid) — Ads offline dönüşüm/atıf eşleşmesi için siparişe
+  // snapshot'lanır (fbp/fbc ile aynı yol). Öncelik: gtag'in yazdığı _gcl_aw first-party çerezi
+  // (format "GCL.<timestamp>.<GCLID>" → üçüncü parçadan itibaren, GCLID nadiren nokta içerebilir);
+  // çerez yoksa geldiği sayfanın (referer) ?gclid= parametresine düşülür.
+  let gclid: string | undefined;
+  const gclAw = req.cookies.get("_gcl_aw")?.value;
+  if (gclAw) {
+    const parts = gclAw.split(".");
+    if (parts.length >= 3) gclid = clamp(parts.slice(2).join("."), 200);
+  }
+  if (!gclid) {
+    try {
+      const referer = req.headers.get("referer");
+      if (referer) gclid = clamp(new URL(referer).searchParams.get("gclid"), 200);
+    } catch {
+      // bozuk referer → gclid yok say
+    }
+  }
+
+  // Sipariş anı UA/IP snapshot'ı — Meta CAPI action_source=website için client_user_agent
+  // fiilen zorunlu; IP eşleşme kalitesini artırır. Cloudflare/nginx arkasında gerçek client IP
+  // x-forwarded-for'un İLK değerindedir; yoksa x-real-ip'e düşülür.
+  const clientUserAgent = clamp(req.headers.get("user-agent"), 512);
+  const clientIp = clamp(
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip"),
+    64,
+  );
+
   const orderPayload = {
     email: body.email,
     phone: clamp(body.phone, 32),
     marketingConsent,
     fbp,
     fbc,
+    gclid,
+    clientUserAgent,
+    clientIp,
     items,
     shippingAddress: {
       fullName: clamp(body.customerName, 120) || clamp(body.email, 120) || "Misafir",

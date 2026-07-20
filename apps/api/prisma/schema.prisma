@@ -427,6 +427,12 @@ model Order {
   marketingConsent Boolean @default(false) @map("marketing_consent")
   fbp              String? @map("fbp") // _fbp çerezi (Meta tarayıcı kimliği — eşleşme sinyali)
   fbc              String? @map("fbc") // _fbc çerezi (Meta tıklama kimliği — reklamdan gelenler)
+  // Google Ads tıklama kimliği (_gcl_aw çerezi/URL'den) — offline dönüşüm/atıf eşleşmesi için.
+  gclid            String? @map("gclid")
+  // Sipariş anı UA/IP snapshot'ı — Meta CAPI action_source=website için client_user_agent
+  // fiilen zorunlu; client_ip_address eşleşme kalitesini artırır. Sadece bu amaçla saklanır.
+  clientUserAgent  String? @map("client_user_agent")
+  clientIp         String? @map("client_ip")
 
   // Paraşüt e-fatura
   parasutInvoiceId String? @map("parasut_invoice_id")

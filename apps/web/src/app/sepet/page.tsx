@@ -10,7 +10,6 @@ import {
 } from "@phosphor-icons/react";
 import type { Category } from "@markala/types";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
-import { track } from "@/lib/analytics";
 import { apiClient } from "@/lib/api";
 import { PromoBanner } from "@/components/promo-banner";
 import { VAT_RATE } from "@/lib/vat";
@@ -110,7 +109,7 @@ export default function CartPage() {
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-8 md:py-10">
           <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Sepet</p>
-          <h1 className="mt-1 text-3xl md:text-4xl font-semibold text-ink-900">Siparişinizi tamamlayın</h1>
+          <h1 className="mt-1 text-3xl md:text-4xl font-semibold text-ink-900">Siparişini tamamla</h1>
           <p className="mt-2 text-ink-500 text-sm">{items.length} ürün · KDV dahil fiyatlar</p>
         </Container>
       </div>
@@ -218,10 +217,11 @@ export default function CartPage() {
                       <Truck size={14} className="flex-none" /> 🎉 Kargon ücretsiz — teslimat bizden!
                     </div>
                   ))}
+                {/* begin_checkout BURADAN kaldırıldı: /odeme mount'unda tek kaynaktan atılır
+                    (sepet butonu + drawer + odeme mount üçlemesi aynı oturumda 2-3 kez sayıyordu). */}
                 <Link
                   href="/odeme"
                   className="block mt-5"
-                  onClick={() => track("begin_checkout", { currency: "TRY", value: total, items: items.length })}
                 >
                   <Button size="lg" fullWidth>Siparişe Devam Et <ArrowRight size={18} weight="bold" /></Button>
                 </Link>

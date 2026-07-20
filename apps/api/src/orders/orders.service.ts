@@ -3,6 +3,7 @@ import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
+import { MetaCapiService } from "../integrations/meta/meta-capi.service";
 import { SettingsService } from "../settings/settings.service";
 import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
@@ -181,7 +182,7 @@ function withAddressView<
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService, private loyalty: LoyaltyService) {}
+  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService, private loyalty: LoyaltyService, private metaCapi: MetaCapiService) {}
 
   /**
    * Public kargo takibi — sipariş no + e-posta eşleşmesiyle GERÇEK durum + zaman damgaları döner
@@ -257,6 +258,10 @@ export class OrdersService {
     marketingConsent?: boolean;
     fbp?: string;
     fbc?: string;
+    // Google Ads atıf + CAPI eşleşme sinyalleri (checkout isteğinden snapshot).
+    gclid?: string;
+    clientUserAgent?: string;
+    clientIp?: string;
   }) {
     if (!input.items || input.items.length === 0) {
       throw new BadRequestException("Sipariş en az bir kalem içermelidir.");
@@ -618,6 +623,10 @@ export class OrdersService {
           marketingConsent: input.marketingConsent ?? false,
           fbp: input.fbp ?? null,
           fbc: input.fbc ?? null,
+          // Ads atıf (gclid) + sipariş anı UA/IP — CAPI client_user_agent/client_ip_address kaynağı.
+          gclid: input.gclid ?? null,
+          clientUserAgent: input.clientUserAgent ?? null,
+          clientIp: input.clientIp ?? null,
           shippingAddressId: resolvedAddresses.shippingAddressId,
           billingAddressId: resolvedAddresses.billingAddressId,
           shippingAddressSnapshot: resolvedAddresses.shippingAddressSnapshot
@@ -675,6 +684,10 @@ export class OrdersService {
     // siparişler ödeme başarısında (payments.handleCallback) mail alır. Fire-and-forget.
     if (onAccount && input.userId) {
       void this.mail.sendOrderConfirmationEmail((placed as { id: string }).id).catch(() => undefined);
+      // Meta CAPI Purchase: cari sipariş iyzico callback'inden GEÇMEZ → burada tetiklenmezse
+      // kurumsal dönüşümler Meta'da hiç görünmüyordu. event_id=orderNumber olduğundan tarayıcı
+      // Pixel'iyle dedup korunur (handleCallback'teki çağrı deseninin aynısı, fire-and-forget).
+      void this.metaCapi.sendPurchase((placed as { id: string }).id).catch(() => undefined);
     }
     return placed;
   }

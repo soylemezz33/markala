@@ -6,7 +6,6 @@ import Link from "next/link";
 import { X, Trash, ShoppingBagOpen, ArrowRight, Plus, Minus } from "@phosphor-icons/react";
 import { Button, Price } from "@markala/ui";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
-import { track } from "@/lib/analytics";
 import { useEffect, useRef } from "react";
 
 export function CartDrawer() {
@@ -192,17 +191,9 @@ export function CartDrawer() {
                   </div>
                   <p className="text-xs text-ink-500">Fiyatlar KDV dahildir. Kargo, sipariş adımında hesaplanır.</p>
                   <div className="flex flex-col gap-2">
-                    <Link
-                      href="/odeme"
-                      onClick={() => {
-                        track("begin_checkout", {
-                          currency: "TRY",
-                          value: subtotal(),
-                          items: itemCount(),
-                        });
-                        close();
-                      }}
-                    >
+                    {/* begin_checkout BURADAN kaldırıldı: /odeme mount'unda tek kaynaktan atılır
+                        (drawer + sepet + odeme mount aynı oturumda olayı 2-3 kez sayıyordu). */}
+                    <Link href="/odeme" onClick={close}>
                       <Button size="lg" fullWidth>
                         Siparişe Devam Et <ArrowRight size={18} weight="bold" />
                       </Button>

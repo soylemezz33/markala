@@ -266,6 +266,24 @@ export class CreateOrderDto {
   @IsOptional()
   @MaxLength(400)
   fbc?: string;
+
+  /** Google Ads tıklama kimliği (_gcl_aw çerezi/referer'dan) — offline dönüşüm/atıf eşleşmesi. */
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  gclid?: string;
+
+  /** Sipariş anı tarayıcı User-Agent'ı — Meta CAPI action_source=website için fiilen zorunlu. */
+  @IsString()
+  @IsOptional()
+  @MaxLength(512)
+  clientUserAgent?: string;
+
+  /** Sipariş anı client IP'si (x-forwarded-for ilk IP) — CAPI eşleşme kalitesi sinyali. */
+  @IsString()
+  @IsOptional()
+  @MaxLength(64)
+  clientIp?: string;
 }
 
 /** Yönetici sipariş durumu güncellemesi — sadece izinli geçişler. */

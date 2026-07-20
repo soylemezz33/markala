@@ -144,13 +144,41 @@ export function trackBeginCheckout(value: number, itemCount: number): void {
   fbtrack("InitiateCheckout", { currency: "TRY", value, num_items: itemCount });
 }
 
-/** Sipariş tamamlandığında (GA4: purchase, Meta: Purchase). */
-export function trackPurchase(orderNumber: string, value: number, itemCount: number): void {
+/** Purchase kalem satırı — GA4 items[] + Meta content_ids/contents için ortak sade yapı. */
+export interface PurchaseItem {
+  /** Ürün kimliği: slug (yoksa ürün adı — çağıran karar verir). */
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+/**
+ * Sipariş tamamlandığında (GA4: purchase, Meta: Purchase).
+ * `items` verilirse GA4 ürün performans raporları (items[] dizisi zorunlu — sayı çöpe gider)
+ * ve Meta katalog eşleşmesi (content_ids/contents) beslenir; verilmezse eski davranış korunur.
+ */
+export function trackPurchase(
+  orderNumber: string,
+  value: number,
+  itemCount: number,
+  items?: PurchaseItem[],
+): void {
   track("purchase", {
     currency: "TRY",
     transaction_id: orderNumber,
     value,
     num_items: itemCount,
+    ...(items?.length
+      ? {
+          items: items.map((i) => ({
+            item_id: i.id,
+            item_name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+        }
+      : {}),
   });
   // eventId = orderNumber → sunucu Conversions API'nin aynı Purchase'ı ile Meta'da dedup.
   fbtrack(
@@ -160,6 +188,13 @@ export function trackPurchase(orderNumber: string, value: number, itemCount: num
       value,
       order_id: orderNumber,
       num_items: itemCount,
+      ...(items?.length
+        ? {
+            content_type: "product",
+            content_ids: items.map((i) => i.id),
+            contents: items.map((i) => ({ id: i.id, quantity: i.quantity, item_price: i.price })),
+          }
+        : {}),
     },
     orderNumber,
   );
