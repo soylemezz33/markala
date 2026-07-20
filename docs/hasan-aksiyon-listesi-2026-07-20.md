@@ -53,7 +53,21 @@ DMARC `p=quarantine` + DKIM YOK = herhangi bir mail yönlendirmesi SPF'i kırar 
 Kod tarafı YAPILDI: MAIL_FROM fallback'leri `bilgi@markala.com.tr`'ye çekildi
 (324ajans.com hizalama bombası kaldırıldı).
 
-## 5. 🟡 Karar bekleyenler (panel işi değil, strateji)
+## 5. 🟠 Cloudflare — Ahrefs denetimi panel işleri (2026-07-20, 5 dk)
+
+Ahrefs Site Audit 29 bulgunun kök nedenleri tespit edildi; kod tarafı fix'ler commit'lendi
+(robots `/cdn-cgi/` engeli, ürün title kırpma, fiyat-listesi 2 MB fix). Panelden kalanlar:
+
+1. **Email Obfuscation KAPAT**: dash.cloudflare.com → markala.com.tr → Scrape Shield →
+   Email Address Obfuscation → Off. Footer'daki `merhaba@markala.com.tr` linklerini
+   `/cdn-cgi/l/email-protection`e (404) çeviriyordu → Ahrefs 953 sayfayı "kırık linkli" saydı.
+   robots.txt engeli crawl tarafını çözdü; bu ayar sorunu kökten kaldırır (e-posta zaten herkese açık).
+2. **www-redirect API token** (eski bekleyen iş): My Profile → API Tokens → Custom:
+   `Zone.Zone:Read` + `Zone.Dynamic URL Redirects:Edit`, Zone = markala.com.tr.
+   Token'ı verince `scripts/cf-www-redirect.ps1` çalıştırıyorum → `http://www` zinciri
+   (2 sekme: http→https→apex, Ahrefs "redirect chain") tek sekmeye iner, origin yükü kalkar.
+
+## 6. 🟡 Karar bekleyenler (panel işi değil, strateji)
 
 | Karar | Bağlam | Varsayılan önerim |
 |---|---|---|

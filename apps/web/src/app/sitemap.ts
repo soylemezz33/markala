@@ -18,6 +18,11 @@ const STATIC_ROUTES = [
   { path: "/hizmetler", priority: 0.9, freq: "monthly" as const },
   { path: "/sozluk", priority: 0.8, freq: "monthly" as const },
   { path: "/fiyat-listesi", priority: 0.95, freq: "weekly" as const },
+  // Rehber sayfaları — fiyatlar canlı katalogdan SSR (ISR 3600), AI cevap motoru görünürlüğü
+  { path: "/rehber/kartvizit-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
+  { path: "/rehber/brosur-baski-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
+  { path: "/rehber/branda-baski-m2-fiyati-2026", priority: 0.85, freq: "weekly" as const },
+  { path: "/rehber/isg-zorunlu-uyari-levhalari", priority: 0.85, freq: "weekly" as const },
   { path: "/kurumsal", priority: 0.85, freq: "monthly" as const },
   { path: "/teklif-al", priority: 0.8, freq: "monthly" as const },
   { path: "/numune-talebi", priority: 0.75, freq: "monthly" as const },
