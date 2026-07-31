@@ -82,21 +82,15 @@ export default async function PriceListPage() {
     name: "Matbaa Fiyat Listesi 2026",
     description: "Markala'nın tüm matbaa ürünleri için başlangıç fiyatları.",
     numberOfItems: products.length,
-    // price:0 (Teklif Al) ürünleri JSON-LD Offer'a girmesin — yanlış "ücretsiz" sinyali / Google ihlali.
+    // Özet sayfa kalıbı: SADECE ListItem name+url — iç içe Product/Offer BASMA.
+    // Çıplak Offer'lar (description/brand/kargo/iade alansız) GSC "Satıcı girişleri"nde
+    // 50 öğelik uyarı üretiyordu (2026-07). Tam Product verisi PDP'de (ProductJsonLd).
+    // price:0 (Teklif Al) filtresi korunur — liste yalnızca fiyatlı ürünleri saysın.
     itemListElement: products.filter((p) => getDisplayPrice(p) > 0).slice(0, 50).map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      item: {
-        "@type": "Product",
-        name: p.name,
-        url: `${SITE}/urun/${p.slug}`,
-        offers: {
-          "@type": "Offer",
-          price: getDisplayPrice(p),
-          priceCurrency: "TRY",
-          availability: "https://schema.org/InStock",
-        },
-      },
+      name: p.name,
+      url: `${SITE}/urun/${p.slug}`,
     })),
   };
 

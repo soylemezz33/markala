@@ -137,8 +137,10 @@ export function ProductJsonLd({
   // Offer SADECE fiyatı olan üründe eklenir. "Teklif Al" (price:0) ürünlerde Offer atlanır —
   // aksi halde Google Merchant/Shopping price:0'ı geçersiz sayıp ürünü reddeder (disapproval).
   if (Number(displayPrice) > 0) {
-    // priceValidUntil dinamik: bugün+30 gün (ISO tarih). Merchant "fiyat geçerliliği" sinyali;
-    // sayfa ISR ile yeniden üretildikçe pencere ileri kayar, sabit tarih gibi bayatlamaz.
+    // validFrom + priceValidUntil dinamik pencere: render günü → +30 gün (ISO tarih).
+    // Merchant "fiyat geçerliliği" sinyali; sayfa ISR ile yeniden üretildikçe pencere
+    // ileri kayar, sabit tarih gibi bayatlamaz. (GSC 2026-07: "validFrom eksik" uyarısı)
+    const validFrom = new Date().toISOString().slice(0, 10);
     const priceValidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       .toISOString()
       .slice(0, 10);
@@ -148,6 +150,7 @@ export function ProductJsonLd({
     const offerBase = {
       url: productUrl,
       priceCurrency: "TRY",
+      validFrom,
       priceValidUntil,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
