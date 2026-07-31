@@ -12,7 +12,7 @@ import {
   PaintBrush,
   IdentificationCard,
 } from "@phosphor-icons/react";
-import { track } from "@/lib/analytics";
+import { trackLead } from "@/lib/analytics";
 import { PhoneInput } from "@/components/forms/phone-input";
 import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 
@@ -158,7 +158,7 @@ export default function TeklifAlPage() {
       }
       setTicketId(data.ticketId ?? null);
       setSent(true);
-      track("generate_lead", { method: "quote_form", sector: form.sector });
+      trackLead("quote_form", { sector: form.sector });
     } catch {
       setError("Sunucuya ulaşılamadı.");
     } finally {

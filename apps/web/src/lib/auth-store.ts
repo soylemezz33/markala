@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createMarkalaClient, type ApiError } from "@markala/api-client";
 import type { User } from "@markala/types";
+import { trackLogin, trackSignUp } from "@/lib/analytics";
 
 /**
  * GERÇEK auth store — NestJS API'ye bağlı (argon2 + JWT + refresh rotation).
@@ -147,6 +148,7 @@ export const useAuthStore = create<AuthState>()(
           // Admin ise: user'ı set ETMEDEN ÖNCE bypass çerezini yaz (redirect race'i önler).
           if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
           set({ user, isLoading: false });
+          trackLogin("email");
           return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });
@@ -157,11 +159,14 @@ export const useAuthStore = create<AuthState>()(
       loginWithGoogle: async (credential) => {
         set({ isLoading: true });
         try {
-          const { accessToken } = await client.auth.google(credential);
+          const { accessToken, isNewUser } = await client.auth.google(credential);
           set({ accessToken });
           const user = await client.auth.me();
           if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
           set({ user, isLoading: false });
+          // İlk Google girişi = kayıt (backend isNewUser işaretler) → sign_up; değilse login.
+          if (isNewUser) trackSignUp("google");
+          else trackLogin("google");
           return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });
@@ -178,6 +183,7 @@ export const useAuthStore = create<AuthState>()(
           set({ accessToken });
           const user = await client.auth.me();
           set({ user, isLoading: false });
+          trackSignUp("email");
           return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });

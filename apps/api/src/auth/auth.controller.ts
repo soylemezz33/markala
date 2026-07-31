@@ -101,6 +101,7 @@ export class AuthController {
     this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresAt);
     return {
       accessToken: result.accessToken,
+      isNewUser: result.isNewUser,
       user: result.user,
     };
   }

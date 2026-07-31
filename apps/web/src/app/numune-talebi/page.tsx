@@ -6,7 +6,7 @@ import { Container, Button } from "@markala/ui";
 import { Package, CheckCircle, ArrowRight, Truck, Ruler, Sparkle } from "@phosphor-icons/react";
 import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 import { PhoneInput } from "@/components/forms/phone-input";
-import { track } from "@/lib/analytics";
+import { trackLead } from "@/lib/analytics";
 
 const inputClass =
   "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
@@ -91,7 +91,7 @@ export default function NumuneTalebiPage() {
       }
       setTicketId(data.ticketId ?? null);
       setSent(true);
-      track("generate_lead", { method: "sample_box" });
+      trackLead("sample_box");
     } catch {
       setError("Sunucuya ulaşılamadı.");
     } finally {

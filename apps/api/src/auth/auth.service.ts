@@ -317,6 +317,8 @@ export class AuthService {
     if (user?.deletedAt) {
       throw new ForbiddenException("Bu hesap kapatılmış. Destek ile iletişime geçin.");
     }
+    // Analitik: ilk Google girişi = kayıt — frontend sign_up/login ayrımı için işaretlenir.
+    const isNewUser = !user;
     // Privilege guard: admin/kurumsal gibi ayrıcalıklı hesaplar tüketici sosyal-giriş
     // yolundan (parola/2FA atlanarak) AÇILAMAZ. Parola akışı da customer dışını farklı ele alır.
     if (user && user.role !== "customer") {
@@ -351,7 +353,7 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
-    return this.issueTokenPair(user, context);
+    return { ...(await this.issueTokenPair(user, context)), isNewUser };
   }
 
   /** Kullanılmış Google jti'lerinin süresi dolmuş kayıtlarını temizle (unbounded büyümeyi engeller). */

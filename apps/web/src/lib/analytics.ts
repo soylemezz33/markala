@@ -202,24 +202,48 @@ export function trackPurchase(
 }
 
 /**
- * Google Ads "Satın alma" dönüşümü. ID biliniyor (AW-18286908100); Ads panelinde purchase
- * dönüşümü oluşturulup LABEL GH variable'a (NEXT_PUBLIC_ADS_PURCHASE_LABEL) girilince otomatik
- * ateşlenir — label yoksa no-op (kod hazır, açılışı Hasan yapar). Marketing consent'e bağlı.
+ * Google Ads dönüşüm ateşleme çekirdeği. Label, GH variable → build-arg → env zinciriyle gelir;
+ * label boşsa no-op (dönüşüm panelde tanımlanmadan kod ateşlemez). Marketing consent'e bağlı.
  */
-export function trackAdsConversion(orderNumber: string, value: number): void {
+function fireAdsConversion(label: string | undefined, params: GtagParams = {}): void {
   if (typeof window === "undefined") return;
-  const label = process.env.NEXT_PUBLIC_ADS_PURCHASE_LABEL;
   if (!label) return; // label girilmeden dönüşüm ateşlenmez
   if (!consentFor("marketing")) return; // KVKK: reklam onayı yoksa gönderme
   const adsId = process.env.NEXT_PUBLIC_ADS_CONVERSION_ID || "AW-18286908100";
   if (typeof window.gtag === "function") {
-    window.gtag("event", "conversion", {
-      send_to: `${adsId}/${label}`,
-      value,
-      currency: "TRY",
-      transaction_id: orderNumber,
-    });
+    window.gtag("event", "conversion", { send_to: `${adsId}/${label}`, ...params });
   }
+}
+
+/** Google Ads "Satın alma" dönüşümü (NEXT_PUBLIC_ADS_PURCHASE_LABEL). */
+export function trackAdsConversion(orderNumber: string, value: number): void {
+  fireAdsConversion(process.env.NEXT_PUBLIC_ADS_PURCHASE_LABEL, {
+    value,
+    currency: "TRY",
+    transaction_id: orderNumber,
+  });
+}
+
+// ─── Üyelik + lead event'leri (2026-07-31: üye toplama ölçümü) ─────────────
+
+/** Üye kaydı: GA4 sign_up + Ads "Üye Kaydı" ikincil dönüşümü (NEXT_PUBLIC_ADS_SIGNUP_LABEL). */
+export function trackSignUp(method: "email" | "google"): void {
+  track("sign_up", { method });
+  fireAdsConversion(process.env.NEXT_PUBLIC_ADS_SIGNUP_LABEL);
+}
+
+/** Giriş: yalnız GA4 login (Ads dönüşümü değil — mevcut üyenin girişi reklam getirisi sayılmaz). */
+export function trackLogin(method: "email" | "google"): void {
+  track("login", { method });
+}
+
+/**
+ * Lead formu (teklif/iletişim/numune): GA4 generate_lead + Ads "Teklif Talebi" ikincil
+ * dönüşümü (NEXT_PUBLIC_ADS_LEAD_LABEL). İSG gibi B2B kategorilerde gerçek dönüşüm budur.
+ */
+export function trackLead(method: string, params: GtagParams = {}): void {
+  track("generate_lead", { method, ...params });
+  fireAdsConversion(process.env.NEXT_PUBLIC_ADS_LEAD_LABEL);
 }
 
 // ─── UTM yardımcısı ─────────────────────────────────────────────────────────
