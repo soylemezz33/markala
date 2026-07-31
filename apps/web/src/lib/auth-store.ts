@@ -103,10 +103,10 @@ interface AuthState {
   /** İlk açılışta bootstrap (refresh) tamamlanana kadar true. */
   isBootstrapping: boolean;
 
-  /** needsVerification: doğrulanmamış müşteri (403) — giriş sayfası "yeniden gönder" akışını gösterir. */
-  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string; needsVerification?: boolean }>;
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   /** "Google ile devam et" — GIS ID token'ı ile giriş/kayıt (e-posta Google'ca doğrulu). */
   loginWithGoogle: (credential: string) => Promise<{ ok: boolean; error?: string }>;
+  /** Kayıt = OTO-GİRİŞ (e-posta doğrulama kaldırıldı 2026-07-31) — başarıda oturum açılmış olur. */
   register: (input: {
     email: string;
     password: string;
@@ -116,7 +116,7 @@ interface AuthState {
     marketingConsent?: boolean;
     /** Cloudflare Turnstile token (bot koruması). */
     turnstileToken?: string;
-  }) => Promise<{ ok: boolean; error?: string; needsVerification?: boolean; emailSent?: boolean }>;
+  }) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<User>) => Promise<{ ok: boolean; error?: string }>;
   /** App açılışında bir kez çağrılır (AuthBootstrap). */
@@ -150,12 +150,7 @@ export const useAuthStore = create<AuthState>()(
           return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });
-          const err = e as ApiError;
-          // 403 = e-posta doğrulanmamış (katı doğrulama) → sayfa "yeniden gönder" sunar.
-          if (err?.status === 403) {
-            return { ok: false, needsVerification: true, error: err.message ?? "E-posta adresini doğrulaman gerekiyor." };
-          }
-          return { ok: false, error: err?.message ?? "Giriş başarısız. Lütfen tekrar deneyin." };
+          return { ok: false, error: (e as ApiError)?.message ?? "Giriş başarısız. Lütfen tekrar deneyin." };
         }
       },
 
@@ -177,11 +172,13 @@ export const useAuthStore = create<AuthState>()(
       register: async ({ email, password, fullName, phone, marketingConsent, turnstileToken }) => {
         set({ isLoading: true });
         try {
-          // Katı doğrulama: register OTO-GİRİŞ YAPMAZ (token dönmez). Kullanıcı e-postasını doğrulayıp
-          // giriş yapar. accessToken/user set EDİLMEZ; sayfa "e-postanı doğrula" ekranını gösterir.
-          const res = await client.auth.register({ email, password, fullName, phone, marketingConsent, turnstileToken });
-          set({ isLoading: false });
-          return { ok: true, needsVerification: true, emailSent: res.emailSent };
+          // Kayıt = OTO-GİRİŞ (doğrulama kaldırıldı): login ile aynı akış — token'ı al,
+          // tam kullanıcı profilini /auth/me'den çek (register body'sindeki user minimal).
+          const { accessToken } = await client.auth.register({ email, password, fullName, phone, marketingConsent, turnstileToken });
+          set({ accessToken });
+          const user = await client.auth.me();
+          set({ user, isLoading: false });
+          return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });
           return { ok: false, error: (e as ApiError)?.message ?? "Kayıt başarısız. Lütfen tekrar deneyin." };

@@ -178,7 +178,7 @@ export class MarkalaApiClient {
 
   // === Auth ===
   auth = {
-    /** Katı doğrulama: register OTO-GİRİŞ YAPMAZ — { needsVerification, email, emailSent } döner. */
+    /** Kayıt = OTO-GİRİŞ (doğrulama kaldırıldı 2026-07-31): login ile aynı oturum çifti döner. */
     register: (data: {
       email: string;
       password: string;
@@ -186,7 +186,7 @@ export class MarkalaApiClient {
       phone?: string;
       marketingConsent?: boolean;
       turnstileToken?: string;
-    }) => this.request<{ needsVerification: true; email: string; emailSent: boolean }>("POST", "/auth/register", data),
+    }) => this.request<{ accessToken: string; user: User }>("POST", "/auth/register", data),
     login: (data: { email: string; password: string }) =>
       this.request<{ accessToken: string; user: User }>("POST", "/auth/login", data),
     /** "Google ile devam et" — GIS ID token'ı; backend doğrular, bulur/oluşturur, oturum döner. */
@@ -205,12 +205,6 @@ export class MarkalaApiClient {
     /** Token ile yeni şifre belirle — geçersiz/süresi dolmuş token 400 döner. */
     resetPassword: (data: { token: string; newPassword: string }) =>
       this.request<{ ok: boolean }>("POST", "/auth/reset-password", data),
-    /** E-posta doğrulama mailini yeniden gönder (giriş yapmış kullanıcı; yumuşak doğrulama). */
-    resendVerification: () =>
-      this.request<{ ok: boolean; alreadyVerified?: boolean }>("POST", "/auth/resend-verification", undefined, { auth: true }),
-    /** PUBLIC doğrulama maili yeniden gönder (e-posta ile; giriş yapamayan doğrulanmamış kullanıcı). Daima ok. */
-    resendVerificationPublic: (email: string) =>
-      this.request<{ ok: boolean }>("POST", "/auth/resend-verification-public", { email }),
   };
 
   // === Analytics / Ziyaretçi Analizi & CRM ===

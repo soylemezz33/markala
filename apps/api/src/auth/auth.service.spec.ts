@@ -17,7 +17,13 @@ function makePrisma(over: Partial<Record<string, any>> = {}) {
   return {
     user: {
       findUnique: vi.fn().mockResolvedValue(null),
-      create: vi.fn().mockResolvedValue({ id: "u1", email: "yeni@markala.test", role: "customer" }),
+      // Gerçek Prisma gibi: create edilen kaydı (id + role default'u ile) geri döndür —
+      // register'ın hoş geldin mailine user.fullName'i geçirdiğini test edebilmek için.
+      create: vi
+        .fn()
+        .mockImplementation(({ data }: { data: Record<string, unknown> }) =>
+          Promise.resolve({ id: "u1", role: "customer", ...data }),
+        ),
       update: vi.fn(),
     },
     refreshToken: { create: vi.fn().mockResolvedValue({}) },
@@ -32,9 +38,6 @@ const ctx = { userAgent: "vitest", ipAddress: "1.2.3.4" };
 describe("AuthService.register", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    // Katı doğrulama: register artık sendEmailVerification (→ mail.sendVerificationEmail) çağırır;
-    // boolean döndürsün ki register `emailSent`i hesaplayabilsin.
-    mail.sendVerificationEmail.mockResolvedValue(true);
   });
 
   it("mevcut e-posta → 409 ConflictException (500 DEĞİL)", async () => {
@@ -62,15 +65,19 @@ describe("AuthService.register", () => {
     await expect(svc.register(input, ctx)).rejects.toBeInstanceOf(InternalServerErrorException);
   });
 
-  it("yeni e-posta → OTO-GİRİŞ YOK, doğrulama gerekli (katı doğrulama)", async () => {
+  it("yeni e-posta → OTO-GİRİŞ: oturum çifti döner, hoş geldin maili gider (doğrulama kaldırıldı)", async () => {
     const prisma = makePrisma();
     const svc = new AuthService(prisma, jwt, cfg, mail);
 
     const res = await svc.register({ ...input, email: "yeni@markala.test" }, ctx);
-    expect(res.needsVerification).toBe(true);
-    expect(res.email).toBe("yeni@markala.test");
-    // Oto-giriş yapılmaz → refresh token ÜRETİLMEZ.
-    expect(prisma.refreshToken.create).not.toHaveBeenCalled();
+    expect(res.accessToken).toBe("signed.jwt.token");
+    expect(res.user.email).toBe("yeni@markala.test");
+    // Hesap "doğrulanmış" doğar; doğrulama maili YOK, hoş geldin maili kayıtta gider.
+    expect(prisma.user.create.mock.calls[0][0].data.emailVerifiedAt).toBeInstanceOf(Date);
+    expect(mail.sendWelcomeEmail).toHaveBeenCalledWith("yeni@markala.test", input.fullName);
+    expect(mail.sendVerificationEmail).not.toHaveBeenCalled();
+    // Oto-giriş → refresh token üretilir (login ile aynı oturum çifti).
+    expect(prisma.refreshToken.create).toHaveBeenCalled();
   });
 });
 

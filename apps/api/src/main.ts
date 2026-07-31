@@ -66,13 +66,7 @@ async function bootstrap() {
   // "Google ile devam et" — login eşi limit. Tokeninfo (Google) amplification'ı ve
   // otomatik-hesap-oluşturma seli bu sınırla kesilir.
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/google", method: "POST" }));
-  app.use(
-    rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/auth/resend-verification", method: "POST" }),
-  );
-  // Public doğrulama-maili yeniden gönderme (e-posta ile, girişsiz) — spam/enumeration koruması 5/saat.
-  app.use(
-    rateLimit({ windowMs: 60 * 60_000, max: 5, path: "/auth/resend-verification-public", method: "POST" }),
-  );
+  // verify-email geri-uyumluluk endpoint'i (doğrulama kaldırıldı; eski mail bağlantıları için).
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/verify-email", method: "POST" }));
   app.use(
     rateLimit({ windowMs: 60 * 60_000, max: 12, path: "/auth/forgot-password", method: "POST" }),

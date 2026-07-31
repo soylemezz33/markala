@@ -133,26 +133,11 @@ export class AuthService {
   }
 
   /**
-   * E-posta doğrulama bağlantısı üretir + gönderir (şifre-sıfırlama token deseniyle aynı: raw
-   * base64url token, sha256 hash saklanır, 24 saat geçerli, eski tüketilmemişler iptal). Mail
-   * hata fırlatmaz; gönderim sonucunu (boolean) döner. KATI doğrulama: doğrulanmamış müşteri
-   * giriş yapamaz (login 403); register oto-giriş yapmaz.
+   * Token ile e-postayı doğrula → user.emailVerifiedAt yazılır, token tüketilir. Idempotent.
+   * GERİ UYUMLULUK için tutulur (2026-07-31): doğrulama KALDIRILDI — yeni token üretilmiyor,
+   * ama kaldırma öncesi gönderilmiş maillerdeki bağlantılar (24 saat geçerli) çalışmaya devam
+   * etsin. Tüm token'lar tükendiğinde bu endpoint + /eposta-dogrula sayfası silinebilir.
    */
-  async sendEmailVerification(userId: string, email: string): Promise<boolean> {
-    const rawToken = crypto.randomBytes(48).toString("base64url");
-    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat (şablon metniyle uyumlu)
-    await this.prisma.emailVerificationToken.updateMany({
-      where: { userId, consumedAt: null },
-      data: { consumedAt: new Date() },
-    });
-    await this.prisma.emailVerificationToken.create({ data: { userId, tokenHash, expiresAt } });
-    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
-    const verifyUrl = `${webUrl}/eposta-dogrula?token=${rawToken}`;
-    return this.mail.sendVerificationEmail(email, verifyUrl); // hata fırlatmaz; boolean döner
-  }
-
-  /** Token ile e-postayı doğrula → user.emailVerifiedAt yazılır, token tüketilir. Idempotent. */
   async verifyEmail(rawToken: string) {
     const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
     const stored = await this.prisma.emailVerificationToken.findUnique({
@@ -173,28 +158,6 @@ export class AuthService {
     // transaction ÖNCESİ durumu taşır). Fire-and-forget: mail hatası doğrulamayı bloke etmez.
     if (!stored.user.emailVerifiedAt) {
       void this.mail.sendWelcomeEmail(stored.user.email, stored.user.fullName);
-    }
-    return { ok: true };
-  }
-
-  /** Giriş yapmış kullanıcı için doğrulama mailini yeniden gönder. Zaten doğruluysa no-op ok. */
-  async resendVerification(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.deletedAt) throw new BadRequestException("Kullanıcı bulunamadı.");
-    if (user.emailVerifiedAt) return { ok: true, alreadyVerified: true };
-    await this.sendEmailVerification(user.id, user.email);
-    return { ok: true };
-  }
-
-  /**
-   * PUBLIC doğrulama maili yeniden gönder (e-posta ile) — katı doğrulamada giriş YAPAMAYAN
-   * kullanıcı için (login 403 ekranından). Enumeration KORUMASI: kullanıcı var/yok/doğrulu
-   * fark etmeksizin DAİMA { ok:true }. Rate-limit main.ts (5/saat/IP).
-   */
-  async resendVerificationPublic(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (user && !user.deletedAt && !user.emailVerifiedAt) {
-      await this.sendEmailVerification(user.id, user.email).catch(() => undefined);
     }
     return { ok: true };
   }
@@ -241,20 +204,26 @@ export class AuthService {
       }
 
       const passwordHash = await argon2.hash(input.password);
+      // E-posta doğrulama KALDIRILDI (2026-07-31, dönüşüm kararı): hesap kayıt anında
+      // "doğrulanmış" doğar — login/checkout önünde doğrulama kapısı yok. Bot/sahte kayıt
+      // koruması Turnstile (controller) + rate limit (main.ts) ile sürüyor.
       const user = await this.prisma.user.create({
         data: {
           email: input.email,
           passwordHash,
           fullName: input.fullName,
           phone: input.phone,
+          emailVerifiedAt: new Date(),
+          lastLoginAt: new Date(),
         },
       });
 
-      // KATI doğrulama: kayıt OTO-GİRİŞ YAPMAZ. Doğrulama maili gönderilir; kullanıcı e-postasını
-      // doğrulayıp giriş yapar (aksi halde login 403 döner). Mail beklenir (fire-and-forget değil):
-      // gönderilemezse kullanıcı hiç doğrulayamaz → controller "mail gitmedi" uyarısı gösterebilsin.
-      const sent = await this.sendEmailVerification(user.id, user.email).catch(() => false as const);
-      return { needsVerification: true as const, email: user.email, emailSent: sent !== false };
+      // Hoş geldin maili (HOSGELDIN kuponu) artık ilk doğrulamada değil kayıtta gider.
+      // Fire-and-forget: mail hatası kaydı bloke etmez.
+      void this.mail.sendWelcomeEmail(user.email, user.fullName);
+      this.logger.log(`register.ok userId=${user.id}`);
+      // Oto-giriş: login ile aynı oturum çifti döner (controller cookie'yi yazar).
+      return this.issueTokenPair(user, context);
     } catch (err) {
       // Beklenen durum: olduğu gibi yukarı fırlat (controller doğru HTTP status'u döner).
       if (err instanceof ConflictException) throw err;
@@ -430,16 +399,9 @@ export class AuthService {
       throw new UnauthorizedException("Geçersiz e-posta veya şifre.");
     }
 
-    // KATI e-posta doğrulama: doğrulanmamış MÜŞTERİ giriş yapamaz (403). Admin/kurumsal iç
-    // hesaplar (role != customer) muaf — kontrollü oluşturulur, self-register etmez. Mevcut
-    // kullanıcılar deploy öncesi backfill ile "doğrulanmış" işaretlendi → kilitlenmez. Frontend
-    // 403'ü yakalayıp "yeniden doğrulama maili gönder" akışını gösterir.
-    if (!user.emailVerifiedAt && user.role === "customer") {
-      this.logger.warn(`login.unverified userId=${user.id} ip=${context.ipAddress ?? "?"}`);
-      throw new ForbiddenException(
-        "Giriş yapabilmen için e-posta adresini doğrulaman gerekiyor. Kayıt sırasında gönderdiğimiz bağlantıya tıkla ya da yeni bir doğrulama maili iste.",
-      );
-    }
+    // E-posta doğrulama kapısı KALDIRILDI (2026-07-31): doğrulanmamış eski hesaplar da
+    // giriş yapabilir. emailVerifiedAt alanı kayıt/Google/şifre-sıfırlama akışlarında
+    // dolmaya devam eder (veri korunur), ama girişte kontrol edilmez.
 
     await this.prisma.user.update({
       where: { id: user.id },
