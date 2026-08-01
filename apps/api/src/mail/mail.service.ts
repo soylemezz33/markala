@@ -309,6 +309,43 @@ export class MailService {
     }
   }
 
+  /** Sipariş iptal edildiğinde müşteri bilgilendirmesi (updateStatus "iptal-edildi" tetikler).
+   *  Ödemesi başarılı siparişte iade beklentisi doğar → iade sürecine dair net cümle şart. */
+  async sendOrderCancelledEmail(orderId: string): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!order || !order.email) { this.logger.warn(`mail.orderCancelled: sipariş/e-posta yok order=${orderId}`); return false; }
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = order.user?.fullName?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const paid = order.paymentStatus === "basarili";
+    const refundLineText = paid
+      ? "Ödemen 3-7 iş günü içinde kartına iade edilir; gecikirse bu e-postayı yanıtlaman yeterli."
+      : "Bu sipariş için tahsil edilmiş bir ödeme yok.";
+    const subject = `Siparişin iptal edildi — ${order.orderNumber}`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (WhatsApp: 0531 900 41 02).\n\nMarkala`;
+    const html = renderEmail({
+      title: "Siparişin İptal Edildi",
+      intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin iptal edildi.`,
+      preheader: `${order.orderNumber} iptal edildi${paid ? " — ödemen iade edilecek" : ""}`,
+      bodyHtml: `<p style="margin:0 0 14px">${esc(refundLineText)}</p>
+        ${emailButton("Yeniden sipariş ver", `${webUrl}/urunler`)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Yanlışlıkla iptal olduğunu düşünüyorsan bu e-postayı yanıtla ya da WhatsApp'tan yaz — hemen bakalım.</p>`,
+    });
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-cancelled", orderNumber: order.orderNumber });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.orderCancelled failed to=${order.email}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-cancelled", orderNumber: order.orderNumber });
+      return false;
+    }
+  }
+
   /** Sipariş teslim edildiğinde teşekkür + değerlendirme daveti (updateStatus "teslim-edildi" tetikler). */
   async sendOrderDeliveredEmail(orderId: string): Promise<boolean> {
     const order = await this.prisma.order.findUnique({

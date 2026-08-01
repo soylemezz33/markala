@@ -32,6 +32,25 @@ export async function generateMetadata({
   searchParams?: UrunlerSearchParams;
 }): Promise<Metadata> {
   const page = parsePage(first(searchParams?.page));
+  // Kapsam dışı ?page → GERÇEK 404 BURADA verilir: urunler/loading.tsx yüzünden gövde
+  // stream'i 200 ile açılıyor, gövdedeki notFound() yalnız soft-404 (noindex) üretebiliyor.
+  // generateMetadata stream'den ÖNCE çözülür (PDP'deki bilinen desen) → statü 404 olur.
+  // getProducts/getCategories fetch'leri sayfa gövdesiyle dedupe edilir — ek maliyet yok.
+  // Boş katalog (API hatasında []) guard'ı ATLAR: "çekilemedi ≠ yok".
+  if (page > 1) {
+    const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+    if (products.length > 0) {
+      const known = new Set(categories.map((c) => c.slug));
+      const slugs = first(searchParams?.kategoriler)
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => known.has(s));
+      const listLength = slugs.length
+        ? products.filter((p) => slugs.includes(p.categorySlug)).length
+        : products.length;
+      if (page > Math.max(1, Math.ceil(listLength / URUNLER_PAGE_SIZE))) notFound();
+    }
+  }
   const suffix = page > 1 ? ` — Sayfa ${page}` : "";
   const canonical = page > 1 ? `/urunler?page=${page}` : "/urunler";
   return {

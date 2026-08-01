@@ -935,6 +935,9 @@ export class OrdersService {
         .catch(() => undefined);
     if (status === "teslim-edildi")
       void this.mail.sendOrderDeliveredEmail(id).catch(() => undefined);
+    // İptal bildirimi — müşteri iptali maille öğrenir (ödenmişse iade beklentisi yönetilir).
+    if (status === "iptal-edildi")
+      void this.mail.sendOrderCancelledEmail(id).catch(() => undefined);
 
     // Denetim izi: hangi admin, hangi IP, önce→sonra durum değişikliği. Best-effort —
     // audit yazımı hatası sipariş güncellemesini bozmaz.
