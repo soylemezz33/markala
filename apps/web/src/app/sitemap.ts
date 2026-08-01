@@ -23,6 +23,7 @@ const STATIC_ROUTES = [
   { path: "/rehber/brosur-baski-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
   { path: "/rehber/branda-baski-m2-fiyati-2026", priority: 0.85, freq: "weekly" as const },
   { path: "/rehber/isg-zorunlu-uyari-levhalari", priority: 0.85, freq: "weekly" as const },
+  { path: "/rehber/rollup-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
   { path: "/kurumsal", priority: 0.85, freq: "monthly" as const },
   { path: "/teklif-al", priority: 0.8, freq: "monthly" as const },
   { path: "/numune-talebi", priority: 0.75, freq: "monthly" as const },
