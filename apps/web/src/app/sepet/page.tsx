@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
 import {
-  Trash, Plus, Minus, ArrowRight, ShoppingBagOpen, ShieldCheck,
+  Trash, Plus, Minus, ArrowRight, ShoppingBagOpen, ShieldCheck, LockSimple,
   Clock, Tag, Truck, Storefront,
 } from "@phosphor-icons/react";
 import type { Category } from "@markala/types";
@@ -16,6 +16,7 @@ import { PromoBanner } from "@/components/promo-banner";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartCrossSell } from "@/components/cart/cross-sell";
 import { VAT_RATE } from "@/lib/vat";
+import { useAuthStore } from "@/lib/auth-store";
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
 const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.10 };
@@ -54,10 +55,14 @@ export default function CartPage() {
    *  bilinen kupon için zarif tahmini fallback (kesin indirim siparişte hesaplanır). */
   async function validateCoupon(code: string): Promise<boolean> {
     try {
+      // email: girişli kullanıcının e-postası da gönderilir — ilk-sipariş kuponunda (HOSGELDIN)
+      // tekrar müşteri sepette YANLIŞ "✓ uygulandı" görmesin (checkout'taki validate ile tutarlı;
+      // ret sepette görünür, sürpriz checkout'ta patlamaz).
+      const userEmail = useAuthStore.getState().user?.email;
       const res = await fetch(`${apiBase}/api/coupons/validate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, subtotal: sub }),
+        body: JSON.stringify({ code, subtotal: sub, ...(userEmail ? { email: userEmail } : {}) }),
       });
       const data = await res.json().catch(() => null);
       if (data && data.valid) {
@@ -245,8 +250,14 @@ export default function CartPage() {
                   href="/odeme"
                   className="block mt-5"
                 >
-                  <Button size="lg" fullWidth>Siparişe Devam Et <ArrowRight size={18} weight="bold" /></Button>
+                  {/* "Güvenli" vurgusu + rozet satırı: ödeme kaygısı sepette kırılır (CRO 2026-08-01). */}
+                  <Button size="lg" fullWidth>Güvenli Ödemeye Geç <ArrowRight size={18} weight="bold" /></Button>
                 </Link>
+                <p className="mt-2.5 flex items-center justify-center gap-3 text-[11px] text-ink-500">
+                  <span className="inline-flex items-center gap-1"><LockSimple size={12} weight="fill" /> 256-bit SSL</span>
+                  <span className="inline-flex items-center gap-1"><ShieldCheck size={12} weight="fill" /> 3D Secure</span>
+                  <span>iyzico güvencesiyle</span>
+                </p>
               </div>
 
               {/* HOSGELDIN tek-tık bandı — kupon input'undan ayrık; uygulanınca onay durumuna döner,
@@ -327,7 +338,7 @@ export default function CartPage() {
           </div>
           <Link href="/odeme" className="flex-none">
             <Button size="md">
-              Siparişe Devam Et <ArrowRight size={16} weight="bold" />
+              Güvenli Ödemeye Geç <ArrowRight size={16} weight="bold" />
             </Button>
           </Link>
         </div>

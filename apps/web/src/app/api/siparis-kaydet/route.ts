@@ -228,10 +228,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Idempotency-Key aktarımı: timeout/retry'de aynı anahtar → API aynı siparişi döner,
+  // İKİNCİ sipariş oluşmaz (çift sipariş + kupon sayacının iki kez artması engellenir).
+  const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
+
   async function postOrder() {
     return fetch(`${API_BASE}/api/orders`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: authHeader as string },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader as string,
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+      },
       body: JSON.stringify(orderPayload),
     });
   }

@@ -70,6 +70,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const seoDesc =
     product.seo?.description ??
     `${product.name} baskı ${product.displayPrice ? `${product.displayPrice} TL'den` : ""}. ${product.shortDescription}`;
+  // SERP description'ı kelime ortasından kesmesin ("...koruyucu donan" gibi) — son tam
+  // kelimede bırak. OG/Twitter için de aynı kural (limitleri farklı).
+  const clip = (s: string, max: number) =>
+    s.length <= max ? s : s.slice(0, max).replace(/\s+\S*$/, "");
   const url = `/urun/${product.slug}`;
   // og:image = GERÇEK ürün görseli (raster JPEG) varsa onu kullan; gerçek foto yoksa
   // (images[0] bir /api/mockup SVG fallback'i ise) markalı PNG. Sosyal crawler SVG'yi reddeder.
@@ -79,20 +83,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : "/og-default.png";
   return {
     title: seoTitle,
-    description: seoDesc.slice(0, 160),
+    description: clip(seoDesc, 160),
     keywords: product.seo?.keywords,
     alternates: { canonical: url },
     openGraph: {
       type: "website",
       title: seoTitle,
-      description: seoDesc.slice(0, 200),
+      description: clip(seoDesc, 200),
       url,
       images: [{ url: ogImage, width: 1200, height: 630, alt: product.name }],
     },
     twitter: {
       card: "summary_large_image",
       title: seoTitle,
-      description: seoDesc.slice(0, 200),
+      description: clip(seoDesc, 200),
       images: [ogImage],
     },
   };

@@ -11,6 +11,7 @@ import {
 import type { BadgeKind, Product, Category } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
 import { getDisplayPrice } from "@/lib/configurator";
+import { URUNLER_PAGE_SIZE as PAGE_SIZE } from "./page-size";
 
 type SortKey = "popular" | "newest" | "price-asc" | "price-desc";
 
@@ -29,7 +30,6 @@ const badgeOptions: { value: BadgeKind; label: string }[] = [
   { value: "tukenmek-uzere", label: "Tükenmek Üzere" },
 ];
 
-const PAGE_SIZE = 12;
 const PRICE_MIN = 0;
 
 /** Ürünler API'den (server parent) props ile gelir; filtreleme/sıralama client-side. */
@@ -223,7 +223,9 @@ export function AllProductsClient({
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* flex-wrap: 390px'te arama+filtre+sıralama tek satıra sığmaz — select ekran
+              dışına taşacağına alta sarsın (mobil kategori taşma bulgusu, 2026-08-01). */}
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <MagnifyingGlass
                 size={14}
@@ -238,7 +240,7 @@ export function AllProductsClient({
                 }}
                 aria-label="Ürün ara"
                 placeholder="Ürün ara..."
-                className="pl-9 pr-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 w-44 md:w-56"
+                className="pl-9 pr-3 py-2 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 w-36 sm:w-44 md:w-56"
               />
             </div>
 

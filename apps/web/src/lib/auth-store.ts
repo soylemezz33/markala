@@ -179,9 +179,21 @@ export const useAuthStore = create<AuthState>()(
         try {
           // Kayıt = OTO-GİRİŞ (doğrulama kaldırıldı): login ile aynı akış — token'ı al,
           // tam kullanıcı profilini /auth/me'den çek (register body'sindeki user minimal).
-          const { accessToken } = await client.auth.register({ email, password, fullName, phone, marketingConsent, turnstileToken });
+          const { accessToken, user: minimalUser } = await client.auth.register({ email, password, fullName, phone, marketingConsent, turnstileToken });
           set({ accessToken });
-          const user = await client.auth.me();
+          // KRİTİK AYRIM: register 200 döndüyse HESAP OLUŞTU. Sonraki me() çağrısı ağ
+          // hatası alırsa "Kayıt başarısız" DEME — kullanıcı tekrar dener, 409 "zaten
+          // kayıtlı" görür (dönüşüm + sign_up event'i de kaybolur). me() düşerse register
+          // yanıtındaki minimal user ile devam et; bootstrap sonraki açılışta tamamlar.
+          let user: User;
+          try {
+            user = await client.auth.me();
+          } catch {
+            // register yanıtındaki user MİNİMAL ({id,email,role}) — fullName YOK ve header
+            // `user.fullName.charAt(0)` ile crash eder (persist yüzünden her açılışta).
+            // Kayıt formundaki fullName/phone zaten elimizde → fallback'i zenginleştir.
+            user = { ...(minimalUser as User), fullName, phone };
+          }
           set({ user, isLoading: false });
           trackSignUp("email");
           return { ok: true };
@@ -242,8 +254,8 @@ export const useAuthStore = create<AuthState>()(
         if (!get().user) return null; // oturumsuz → tazelenecek bir şey yok
         // Single-flight refresh: checkout'taki paralel çağrılarla yarışıp oturumu DÜŞÜRMESİN.
         const token = await refreshOnce();
-        // Refresh başarısızsa eldeki (muhtemelen bayat) token'la yine de dene; proxy 401'de
-        // misafire düşer, sipariş kaybolmaz (yalnız kurumsal avantaj uygulanmaz).
+        // Refresh başarısızsa eldeki (muhtemelen bayat) token'la yine de dene; proxy bayat
+        // token'da NET 401 döner (misafire düşme YOK) → kullanıcıdan yeniden giriş istenir.
         return token ?? get().accessToken;
       },
     }),

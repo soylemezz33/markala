@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getProducts, getCategories } from "@/lib/catalog";
 import { ProductItemListJsonLd } from "@/components/seo/json-ld";
 import { AllProductsClient } from "./all-products-client";
+import { URUNLER_PAGE_SIZE } from "./page-size";
 
 interface UrunlerSearchParams {
   kategoriler?: string | string[];
@@ -84,6 +85,20 @@ export default async function AllProductsPage({
     .split(",")
     .map((s) => s.trim())
     .filter((s) => known.has(s));
+
+  // Kapsam dışı sayfa (?page=999) → 404. Aksi halde sonsuz "geçerli" URL uzayı oluşur:
+  // her sayı 200 + self-canonical + index döner (soft-404 / indeks şişmesi). Filtreli
+  // görünümde sayfa sayısı filtrelenmiş listeye göre hesaplanır (client ile aynı mantık).
+  // ⚠️ products.length===0 → guard ATLANIR: getProducts() API hatasında [] döner ("çekilemedi
+  // ≠ yok" dersi) — API blip'inde tüm sayfalama URL'lerini hard-404'e düşürme.
+  const page = parsePage(first(searchParams?.page));
+  if (page > 1 && products.length > 0) {
+    const listLength = slugs.length
+      ? products.filter((p) => slugs.includes(p.categorySlug)).length
+      : products.length;
+    const totalPages = Math.max(1, Math.ceil(listLength / URUNLER_PAGE_SIZE));
+    if (page > totalPages) notFound();
+  }
   const initialGroup =
     slugs.length > 0
       ? { label: first(searchParams?.grup).trim() || "Seçili Kategoriler", slugs }

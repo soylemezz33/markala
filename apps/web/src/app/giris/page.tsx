@@ -58,7 +58,11 @@ export default function LoginPage() {
             <h1 className="mt-1.5 text-3xl md:text-4xl font-semibold text-ink-900">Giriş yapın</h1>
             {nextParam === "/odeme" ? (
               <p className="mt-2 text-ink-700">
-                Siparişinizi tamamlamak için giriş yapın veya 30 saniyede ücretsiz hesap oluşturun.
+                Siparişinizi tamamlamak için giriş yapın veya 30 saniyede ücretsiz hesap oluşturun —{" "}
+                <span className="font-semibold text-ink-900">
+                  yeni üyelere ilk siparişte %10 indirim
+                </span>{" "}
+                (<code className="font-mono text-brand-700">HOSGELDIN</code>).
               </p>
             ) : (
               <p className="mt-2 text-ink-700">
@@ -89,8 +93,12 @@ export default function LoginPage() {
             <span aria-current="page" className="rounded-md bg-paper-50 border border-paper-200 px-4 py-2.5 text-center text-ink-900 shadow-sm">
               Giriş Yap
             </span>
-            <Link href={kayitHref} className="rounded-md px-4 py-2.5 text-center text-ink-600 hover:text-ink-900 transition-colors">
+            <Link href={kayitHref} className="relative rounded-md px-4 py-2.5 text-center text-ink-600 hover:text-ink-900 transition-colors">
               Üye Ol
+              {/* Duvara gelen ziyaretçilerin çoğu YENİ — %10 rozeti kayıt yolunu işaret eder (CRO 2026-08-01). */}
+              <span className="absolute -top-2 -right-1 rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-bold text-ink-900">
+                %10
+              </span>
             </Link>
           </div>
 
