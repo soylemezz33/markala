@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     title: "Markala Kargo Takip",
     description: "Sipariş + e-posta ile hızlı kargo sorgulama.",
     url: "/kargo-takip",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Kargo Takip" }],
   },
 };
 

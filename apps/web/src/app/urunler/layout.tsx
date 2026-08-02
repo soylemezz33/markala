@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     title: "Markala — Tüm Matbaa & Reklam Ürünleri",
     description: "30+ kategori, gerçek matbaa fiyatları, ücretsiz tasarım desteği, Türkiye geneli kargo.",
     url: "/urunler",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala — Tüm Ürünler" }],
   },
 };
 

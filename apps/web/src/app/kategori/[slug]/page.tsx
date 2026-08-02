@@ -64,12 +64,6 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   return {
     title: seoTitle,
     description: seoDesc.slice(0, 160),
-    keywords: cat.seo?.keywords ?? [
-      `${cat.name} baskı`,
-      `${cat.name} fiyat`,
-      "online matbaa",
-      "markala",
-    ],
     alternates: { canonical: url },
     openGraph: {
       type: "website",

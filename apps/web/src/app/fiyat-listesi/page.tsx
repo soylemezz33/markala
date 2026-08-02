@@ -23,21 +23,6 @@ export const metadata: Metadata = {
   title: "Matbaa Fiyat Listesi 2026 — Kartvizit, Broşür, Afiş Fiyatları",
   description:
     "Güncel matbaa başlangıç fiyatları, KDV dahil. Türkiye geneli kargo. 30+ ürün için fiyat tablosu — kartvizit, broşür, afiş ve daha fazlası.",
-  keywords: [
-    "matbaa fiyatları 2026",
-    "kartvizit fiyatları",
-    "broşür baskı fiyat",
-    "afiş baskı fiyatı",
-    "matbaa fiyat listesi",
-    "kupa baskı fiyatı",
-    "etiket baskı fiyatı",
-    "magnet baskı fiyatı",
-    "ucuz matbaa fiyatları",
-    "online matbaa fiyatları",
-    "antetli kağıt fiyatı",
-    "zarf baskı fiyatı",
-    "mersin matbaa fiyat",
-  ],
   alternates: { canonical: "/fiyat-listesi" },
   openGraph: {
     type: "website",

@@ -14,12 +14,6 @@ export const metadata: Metadata = {
   title: "Türkiye Geneli Matbaa Hizmeti — 81 İl, Hızlı Üretim",
   description:
     "Mersin merkezli matbaa atölyemizden Türkiye geneli kartvizit, broşür, afiş, branda, kupa baskı hizmeti. Antalya, Adana, Şanlıurfa, Hatay, Osmaniye, Gaziantep'e 1-2 iş günü kargo. Mersin ve çevresine hızlı kargo/kurye.",
-  keywords: [
-    "matbaa", "online matbaa", "matbaa türkiye", "kartvizit baskı",
-    "broşür baskı", "afiş baskı", "mersin matbaa", "antalya matbaa",
-    "adana matbaa", "şanlıurfa matbaa", "hatay matbaa", "osmaniye matbaa",
-    "gaziantep matbaa", "akdeniz matbaa", "güneydoğu matbaa",
-  ],
   alternates: { canonical: "/matbaa" },
   openGraph: {
     type: "website",
@@ -27,6 +21,14 @@ export const metadata: Metadata = {
     description:
       "81 ilde matbaa hizmeti. Mersin merkezli atölye, hızlı üretim, DHL Express ile 1-2 iş günü teslim.",
     url: "/matbaa",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Türkiye Geneli Matbaa — Markala" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Türkiye Geneli Matbaa — Markala",
+    description:
+      "81 ilde matbaa hizmeti. Mersin merkezli atölye, hızlı üretim, DHL Express ile 1-2 iş günü teslim.",
+    images: ["/og-default.png"],
   },
 };
 

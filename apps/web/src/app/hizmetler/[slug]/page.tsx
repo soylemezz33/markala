@@ -32,7 +32,6 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title: s.metaTitle,
     description: s.metaDescription,
-    keywords: s.keywords,
     alternates: { canonical: `/hizmetler/${s.slug}` },
     openGraph: {
       type: "website",

@@ -34,13 +34,6 @@ export const metadata: Metadata = {
   authors: [{ name: "324 Ajans · Markala", url: "https://324ajans.com" }],
   creator: "324 Ajans",
   publisher: "Markala",
-  keywords: [
-    "matbaa", "reklam ürünleri", "kartvizit baskı", "broşür baskı",
-    "afiş baskı", "branda baskı", "kupa baskı", "kaşe baskı", "etiket baskı",
-    "antetli kağıt", "zarf baskı", "magnet baskı", "promosyon ürünleri",
-    "online matbaa", "324 ajans", "markala", "markala.com.tr",
-    "mersin matbaa", "türkiye matbaa", "ucuz kartvizit", "hızlı baskı",
-  ],
   category: "business",
   alternates: {
     canonical: "/",

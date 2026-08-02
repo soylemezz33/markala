@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     title: "Markala Kategoriler — Matbaa & Reklam",
     description: "30+ kategoriye göz atın, dilediğinizi seçin ve 60 saniyede sipariş verin.",
     url: "/kategoriler",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Kategoriler" }],
   },
 };
 

@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     description:
       "Cari hesap, açık fatura ve kademeli indirim için kurumsal başvurunuzu birkaç dakikada tamamlayın.",
     url: "/kurumsal/basvuru",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Kurumsal Hesap Başvurusu" }],
   },
 };
 

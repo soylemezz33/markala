@@ -80,7 +80,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: seoTitle,
     description: seoDesc.slice(0, 160),
-    keywords: product.seo?.keywords,
     alternates: { canonical: url },
     openGraph: {
       type: "website",

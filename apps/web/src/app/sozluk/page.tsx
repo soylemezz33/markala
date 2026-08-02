@@ -11,20 +11,6 @@ export const metadata: Metadata = {
   title: "Matbaa Terimleri Sözlüğü — CMYK, Gramaj, Selefon ve 30+ Terim",
   description:
     "Matbaa ve baskı sektörünün tüm terimleri tek sayfada: CMYK, gramaj, kuşe, bristol, selefon, UV lak, yaldız, taşma payı, fire, hard proof. SEO-optimize sözlük.",
-  keywords: [
-    "matbaa terimleri",
-    "baskı terimleri sözlüğü",
-    "cmyk nedir",
-    "gramaj nedir",
-    "selefon nedir",
-    "uv lak nedir",
-    "pantone nedir",
-    "kuşe kağıt nedir",
-    "bristol karton nedir",
-    "taşma payı nedir",
-    "matbaa fire toleransı",
-    "ofset baskı vs dijital",
-  ],
   alternates: { canonical: "/sozluk" },
   openGraph: {
     type: "website",

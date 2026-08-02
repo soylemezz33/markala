@@ -36,21 +36,20 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title,
     description: district.intro.slice(0, 158),
-    keywords: [
-      `${district.name.toLowerCase()} matbaa`,
-      `${district.name.toLowerCase()} baskı`,
-      `${district.name.toLowerCase()} kartvizit`,
-      `${district.name.toLowerCase()} ${city.name.toLowerCase()} matbaa`,
-      `${district.name.toLowerCase()} broşür baskı`,
-      ...district.neighborhoods.slice(0, 5).map((n) => n.toLowerCase()),
-      "markala", "324 ajans",
-    ],
     alternates: { canonical: `/matbaa/${city.slug}/${district.slug}` },
     openGraph: {
       type: "website",
       title: `${district.name} ${city.name} Matbaa — Markala`,
       description: district.intro.slice(0, 200),
       url: `/matbaa/${city.slug}/${district.slug}`,
+      images: [
+        {
+          url: "/og-default.png",
+          width: 1200,
+          height: 630,
+          alt: `${district.name} ${city.name} Matbaa — Markala`,
+        },
+      ],
     },
   };
 }

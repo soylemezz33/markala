@@ -36,18 +36,6 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title,
     description,
-    keywords: [
-      `${city.name.toLowerCase()} matbaa`,
-      `${city.name.toLowerCase()} baskı`,
-      `${city.name.toLowerCase()} kartvizit`,
-      `${city.name.toLowerCase()} broşür baskı`,
-      `${city.name.toLowerCase()} afiş baskı`,
-      `${city.name.toLowerCase()} matbaa fiyatları`,
-      `${city.name.toLowerCase()} online matbaa`,
-      `${city.name.toLowerCase()} ucuz matbaa`,
-      `${city.name.toLowerCase()} kurumsal kartvizit`,
-      "markala", "324 ajans",
-    ],
     alternates: { canonical: `/matbaa/${city.slug}` },
     openGraph: {
       type: "website",

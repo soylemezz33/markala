@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${page.title} · Markala`,
       description: `${page.title} — yasal sözleşme metni.`,
       url,
+      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: `${page.title} · Markala` }],
     },
     robots: { index: true, follow: true },
   };
