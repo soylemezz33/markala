@@ -97,3 +97,8 @@ playwright-report/
 _server_backup_*/
 .claire/
 .clone/
+
+# Claude audit screenshots / geçici analiz görselleri (sadece repo kökü)
+/*.png
+/*.jpeg
+/*.jpg
