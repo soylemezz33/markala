@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "C:\\Users\\Hasan\\.local\\bin\\code-review-graph.exe",
+      "args": ["serve", "--repo", "C:\\Users\\Hasan\\Projects\\baskisitesi"],
+      "env": {
+        "PYTHONUTF8": "1",
+        "CRG_DATA_DIR": "C:\\Users\\Hasan\\.code-review-graph\\data\\baskisitesi",
+        "CRG_TOOLS": "get_minimal_context_tool,query_graph_tool,get_impact_radius_tool,detect_changes_tool,semantic_search_nodes_tool,get_review_context_tool"
+      }
+    }
+  }
+}
