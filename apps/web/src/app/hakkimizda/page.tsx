@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Container, Button } from "@markala/ui";
 import {
-  CheckCircle, Lightning, ShieldCheck, Truck, PaintBrush, Sparkle, ArrowRight, Buildings, Handshake, Megaphone,
+  CheckCircle, Lightning, ShieldCheck, Truck, PaintBrush, Sparkle, ArrowRight, Buildings, Handshake, Megaphone, MapPin, Clock,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
@@ -30,7 +30,7 @@ const values = [
   { icon: Lightning, title: "Hızlı Üretim", desc: "Çoğu üründe 24-72 saat içinde teslim. Acil işler için özel hat." },
   { icon: PaintBrush, title: "Ücretsiz Tasarım", desc: "Profesyonel grafik ekibimizle çalışın — sınırsız revize." },
   { icon: ShieldCheck, title: "Kalite Garantisi", desc: "Hatalı baskıda ücretsiz değişim — kalitemizin arkasındayız." },
-  { icon: Truck, title: "81 İl Teslimat", desc: "DHL anlaşması — Türkiye'nin her noktasına 1-3 iş günü." },
+  { icon: Truck, title: "81 İle Kargo", desc: "DHL anlaşması — Türkiye'nin her noktasına 1-3 iş günü." },
 ];
 
 const stats = [
@@ -153,6 +153,77 @@ export default function AboutPage() {
                 <p className="mt-2 text-ink-700 text-sm leading-relaxed">{v.desc}</p>
               </article>
             ))}
+          </div>
+        </section>
+
+        {/* Adresimiz / Google Maps */}
+        <section className="mt-20">
+          <header className="mb-8">
+            <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Bizi ziyaret edin</p>
+            <h2 className="mt-2 text-3xl md:text-4xl font-semibold text-ink-900">Adresimiz</h2>
+          </header>
+
+          <div className="grid md:grid-cols-5 gap-6 items-stretch">
+            {/* Adres + çalışma saati kartı */}
+            <div className="md:col-span-2 p-6 bg-paper-100 border border-paper-200 rounded-2xl flex flex-col gap-5">
+              <div className="flex items-start gap-3">
+                <div className="flex-none w-10 h-10 rounded-lg bg-brand-100 text-brand-700 grid place-items-center">
+                  <MapPin size={20} weight="fill" />
+                </div>
+                <div>
+                  <div className="font-semibold text-ink-900">Markala · 324 Ajans</div>
+                  <p className="mt-1 text-sm text-ink-700 leading-relaxed">
+                    Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61
+                    <br />
+                    Yenişehir / Mersin · 33060
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="flex-none w-10 h-10 rounded-lg bg-brand-100 text-brand-700 grid place-items-center">
+                  <Clock size={20} weight="fill" />
+                </div>
+                <div>
+                  <div className="font-semibold text-ink-900">Çalışma saatleri</div>
+                  <p className="mt-1 text-sm text-ink-700 leading-relaxed">
+                    Pzt–Cum: 09:00–18:00
+                    <br />
+                    Cumartesi: 09:00–17:00
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=36.812061,34.641482"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-auto inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:underline"
+              >
+                Yol tarifi al <ArrowRight size={14} weight="bold" />
+              </a>
+            </div>
+
+            {/* Google Maps embed — koordinatlar LocalBusiness JSON-LD ile aynı kaynak (json-ld.tsx geo). */}
+            <div className="md:col-span-3 rounded-2xl overflow-hidden border border-paper-200 min-h-[16rem]">
+              {/*
+                Anahtarsız (keyless) Google Maps embed: API key gerektirmez, lat/lng ile doğrudan çalışır.
+                İstenen `https://www.google.com/maps/embed?pb=...` biçimi, Google'ın "Haritayı Yerleştir"
+                aracından alınan gerçek bir token gerektirir — uydurulamaz (yanlış konum/kırık harita olur).
+                Pixel-perfect kontrol veya özel pin için o `?pb=` token'ı ya da Maps Embed API (key'li) ile
+                değiştirilebilir.
+                TODO: Adres tutarsızlığı — footer "Menteş Mah. 100. Yıl Cumhuriyet Cad." derken JSON-LD/harita
+                      "Çiftlikköy Astoria One" (36.812061, 34.641482) diyor. Hasan doğru adresi netleştirsin.
+              */}
+              <iframe
+                title="Markala ofis konumu — Yenişehir, Mersin"
+                src="https://maps.google.com/maps?q=36.812061,34.641482&z=16&hl=tr&output=embed"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-64 md:h-full min-h-[16rem] border-0"
+                allowFullScreen
+              />
+            </div>
           </div>
         </section>
 

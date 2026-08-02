@@ -11,6 +11,21 @@ export const metadata: Metadata = {
   description:
     "Markala kurumsal hesap: cari hesap, 30 gün açık fatura, ay sonu kapanış, firmanıza özel avantajlı fiyatlandırma, özelleştirilmiş katalog, size özel müşteri temsilcisi.",
   alternates: { canonical: "/kurumsal" },
+  openGraph: {
+    type: "website",
+    title: "Kurumsal Hesap — B2B Cari, Açık Fatura, Avantajlı Fiyat",
+    description:
+      "Cari hesap, 30 gün açık fatura, ay sonu kapanış ve firmanıza özel avantajlı fiyatlandırma. Kurumsal alımlarınız için Markala.",
+    url: "/kurumsal",
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Kurumsal Hesap" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markala Kurumsal Hesap — B2B Cari & Açık Fatura",
+    description:
+      "Cari hesap, 30 gün açık fatura ve firmanıza özel avantajlı fiyatlandırma.",
+    images: ["/og-default.png"],
+  },
 };
 
 const benefits = [
