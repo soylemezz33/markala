@@ -59,6 +59,7 @@ export function SiteFooter() {
           <FooterLink href="/hizmetler/tasarim-destegi">Ücretsiz Tasarım Desteği</FooterLink>
           <FooterLink href="/numune-talebi">Ücretsiz Numune Kutusu</FooterLink>
           <FooterLink href="/hizmetler/toplu-baski">Toplu Baskı</FooterLink>
+          <FooterLink href="/rehber/sablonlar">Ücretsiz Baskı Şablonları</FooterLink>
           <FooterLink href="/fiyat-listesi">Fiyat Listesi</FooterLink>
           <FooterLink href="/sozluk">Matbaa Sözlüğü</FooterLink>
           <FooterLink href="/yardim/dosya-hazirlama">Dosya Hazırlama Rehberi</FooterLink>
@@ -161,7 +162,7 @@ export function SiteFooter() {
               KVKK Uyumlu
             </Link>
             <TrustBadge>1-2 İş Günü Üretim</TrustBadge>
-            <TrustBadge>81 İl Kargo</TrustBadge>
+            <TrustBadge>81 İle Kargo</TrustBadge>
             {/* ETBİS rozeti — ETBİS kaydı tamamlandığında etbis.gtb.gov.tr'den resmi rozet kodu alınacak */}
             {/* <a href="https://etbis.gtb.gov.tr" target="_blank" rel="noopener noreferrer"><TrustBadge>ETBİS Kayıtlı</TrustBadge></a> */}
           </div>
