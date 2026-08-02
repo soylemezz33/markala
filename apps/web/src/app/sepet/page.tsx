@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Category } from "@markala/types";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
+import { useAuthStore } from "@/lib/auth-store";
 import { apiClient } from "@/lib/api";
 import { consumeReorderNotice, type ReorderNotice } from "@/lib/reorder";
 import { PromoBanner } from "@/components/promo-banner";
@@ -24,6 +25,9 @@ export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCartStore();
   const storedCoupon = useCartStore((s) => s.couponCode);
   const setStoreCoupon = useCartStore((s) => s.setCoupon);
+  // HOSGELDIN kuponu üyeye özel — misafirde istismarı engellemek için user durumu gerekli.
+  const user = useAuthStore((s) => s.user);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const [coupon, setCoupon] = useState("");
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponChecking, setCouponChecking] = useState(false);
@@ -78,14 +82,21 @@ export default function CartPage() {
   // Mount'ta store'da kupon varsa (yenileme/geri gelme) backend'den yeniden doğrula → gösterilen
   // indirim gerçek tutarı yansıtsın (aksi halde yalnız HOSGELDIN tahmini görünürdü).
   useEffect(() => {
+    // Misafirde HOSGELDIN'i yeniden doğrulama — üyeye özel (appliedCode zaten dışlar).
+    if (storedCoupon === "HOSGELDIN" && !user) return;
     if (storedCoupon && sub > 0 && !couponInfo) void validateCoupon(storedCoupon);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storedCoupon, sub]);
+  }, [storedCoupon, sub, user]);
 
   // Uygulanan kupon cart-store'da tutulur → /odeme'ye taşınır (eskiden yalnız bu sayfanın
   // local state'indeydi, ödemeye geçince sessizce düşüyordu = bait-and-switch).
-  const backendCoupon = couponInfo && couponInfo.code === storedCoupon ? couponInfo : null;
-  const appliedCode = storedCoupon && (backendCoupon || KNOWN_COUPONS[storedCoupon]) ? storedCoupon : null;
+  // HOSGELDIN yalnız GİRİŞ YAPMIŞ üyeye: misafirde önizlemede bile uygulanmaz (backend reddeder;
+  // bait-and-switch yapmayalım). Diğer kuponlar misafirde de çalışır.
+  const hosgeldinBlocked = storedCoupon === "HOSGELDIN" && !user;
+  const backendCoupon =
+    couponInfo && couponInfo.code === storedCoupon && !hosgeldinBlocked ? couponInfo : null;
+  const appliedCode =
+    storedCoupon && !hosgeldinBlocked && (backendCoupon || KNOWN_COUPONS[storedCoupon]) ? storedCoupon : null;
   const discount = backendCoupon
     ? backendCoupon.discount
     : appliedCode
@@ -103,6 +114,11 @@ export default function CartPage() {
     setCouponError(null);
     setCouponSource(source);
     if (!code || sub <= 0) return;
+    // HOSGELDIN yalnız üyelere — misafirde kupon defalarca kullanılıyordu (14ef581 kök nedeni).
+    if (code === "HOSGELDIN" && !user) {
+      setCouponError("Bu kupon sadece üye girişiyle kullanılabilir.");
+      return;
+    }
     setCouponChecking(true);
     const ok = await validateCoupon(code);
     if (ok) { setStoreCoupon(code); setCoupon(""); }
@@ -249,31 +265,59 @@ export default function CartPage() {
                 </Link>
               </div>
 
-              {/* HOSGELDIN tek-tık bandı — kupon input'undan ayrık; uygulanınca onay durumuna döner,
-                  başka bir kupon uygulandıysa hiç görünmez. */}
-              {!appliedCode && (
-                <div className="p-4 bg-brand-100 border border-brand-500/40 rounded-xl">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm text-ink-900 min-w-0">
-                      <span className="font-semibold">İlk siparişine %10 indirim</span>
-                      <span className="block text-xs text-ink-700 mt-0.5">
-                        Kupon: <code className="font-mono font-semibold">HOSGELDIN</code>
-                      </span>
-                    </p>
-                    <Button
-                      size="sm"
-                      className="flex-none"
-                      onClick={() => void applyCode("HOSGELDIN", "banner")}
-                      disabled={couponChecking || sub <= 0}
-                    >
-                      {couponChecking && couponSource === "banner" ? "Kontrol…" : "Kuponu Uygula"}
-                    </Button>
+              {/* HOSGELDIN bandı — YALNIZ ÜYELERE tek-tık uygula (misafir istismarı: kupon defalarca
+                  kullanılıyordu → 14ef581). Oturumsuz kullanıcıya bunun yerine üyelik teşviki gösterilir.
+                  Bootstrap sürerken hiçbiri gösterilmez (üye/misafir belirsizken flicker olmasın). */}
+              {!appliedCode &&
+                !isBootstrapping &&
+                (user ? (
+                  <div className="p-4 bg-brand-100 border border-brand-500/40 rounded-xl">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-ink-900 min-w-0">
+                        <span className="font-semibold">İlk siparişine %10 indirim</span>
+                        <span className="block text-xs text-ink-700 mt-0.5">
+                          Kupon: <code className="font-mono font-semibold">HOSGELDIN</code>
+                        </span>
+                      </p>
+                      <Button
+                        size="sm"
+                        className="flex-none"
+                        onClick={() => void applyCode("HOSGELDIN", "banner")}
+                        disabled={couponChecking || sub <= 0}
+                      >
+                        {couponChecking && couponSource === "banner" ? "Kontrol…" : "Kuponu Uygula"}
+                      </Button>
+                    </div>
+                    {couponError && couponSource === "banner" && (
+                      <p role="alert" className="mt-2 text-xs text-error">
+                        {couponError}
+                      </p>
+                    )}
                   </div>
-                  {couponError && couponSource === "banner" && (
-                    <p role="alert" className="mt-2 text-xs text-error">{couponError}</p>
-                  )}
-                </div>
-              )}
+                ) : (
+                  <div className="p-4 bg-brand-100 border border-brand-500/40 rounded-xl">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-ink-900 min-w-0">
+                        <span className="font-semibold">Üye ol, ilk siparişine %10 indirim</span>
+                        <span className="block text-xs text-ink-700 mt-0.5">
+                          <code className="font-mono font-semibold">HOSGELDIN</code> kuponu üyelere özel
+                        </span>
+                      </p>
+                      <Link href="/kayit?next=/sepet" className="flex-none">
+                        <Button size="sm">Üye Ol</Button>
+                      </Link>
+                    </div>
+                    <p className="mt-2 text-xs text-ink-700">
+                      Hesabın var mı?{" "}
+                      <Link
+                        href="/giris?next=/sepet"
+                        className="font-medium text-brand-700 hover:underline"
+                      >
+                        Giriş yap
+                      </Link>
+                    </p>
+                  </div>
+                ))}
               {appliedCode === "HOSGELDIN" && (
                 <div className="p-3 bg-success/10 border border-success/30 rounded-xl text-xs font-medium text-success">
                   ✓ HOSGELDIN uygulandı — ilk siparişine %10 indirim sepetinde.

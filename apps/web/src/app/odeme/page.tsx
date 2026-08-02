@@ -48,6 +48,11 @@ export default function CheckoutPage() {
   const addOrder = useOrdersStore((s) => s.add);
 
   const [step, setStep] = useState<Step>("iletisim");
+  // Misafir checkout: oturum yoksa giriş duvarına yönlendirmek yerine (14ef581 geri alındı — en
+  // büyük satış engeliydi: reklam harcamasına karşı 0 satış) kullanıcı "misafir olarak devam et"
+  // ile checkout'a geçer. HOSGELDIN kuponu misafire kapalı kalır (istismar önlemi — bkz.
+  // appliedCoupon hesabı + handleApplyCoupon).
+  const [guestMode, setGuestMode] = useState(false);
 
   // Form state
   const [email, setEmail] = useState(user?.email ?? "");
@@ -117,6 +122,8 @@ export default function CheckoutPage() {
   useEffect(() => {
     const s = subtotal();
     if (!couponCode || s <= 0 || couponInfo) return;
+    // Misafirde HOSGELDIN'i yeniden doğrulama — üyeye özel (appliedCoupon zaten dışlar).
+    if (couponCode === "HOSGELDIN" && !user) return;
     const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
     fetch(`${apiBase}/api/coupons/validate`, {
       method: "POST",
@@ -129,7 +136,7 @@ export default function CheckoutPage() {
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [couponCode]);
+  }, [couponCode, user]);
 
   // Kupon ANINDA backend'de doğrulanır → gerçek geçerlilik (tarih/min-tutar/ilk-sipariş/limit)
   // + gerçek indirim tutarı. Tüm DB kuponları çalışır (yalnız HOSGELDIN değil); geçersizde
@@ -138,6 +145,11 @@ export default function CheckoutPage() {
     const code = couponInput.trim().toUpperCase();
     setCouponError(null);
     if (!code || sub <= 0) return;
+    // HOSGELDIN yalnız üyelere — misafirde kupon defalarca kullanılıyordu (14ef581 kök nedeni).
+    if (code === "HOSGELDIN" && !user) {
+      setCouponError("Bu kupon sadece üye girişiyle kullanılabilir.");
+      return;
+    }
     setCouponChecking(true);
     try {
       const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(
@@ -178,6 +190,13 @@ export default function CheckoutPage() {
     }
   }
 
+  /** Misafir olarak devam et — seçim ekranından çağrılır; checkout formunu açar + ölçüm atar. */
+  function startGuest() {
+    track("checkout_guest_start", {});
+    trackVisitor("checkout_guest_start", { type: "checkout_guest_start" });
+    setGuestMode(true);
+  }
+
   /**
    * Kayıtlı bir adresi forma uygula — teslimat (il/ilçe/adres/posta) + telefon, ve adres
    * faturalama tipi taşıyorsa (kurumsal/bireysel) fatura alanlarını da doldurur. Hem manuel
@@ -208,12 +227,16 @@ export default function CheckoutPage() {
   );
 
   const sub = subtotal();
+  // HOSGELDIN yalnız GİRİŞ YAPMIŞ üyeye: misafirde (user yok) önizlemede bile uygulanmaz —
+  // backend zaten reddeder; "sözde indirim" gösterip bait-and-switch yapmayalım (14ef581 istismarı).
+  const hosgeldinBlocked = couponCode === "HOSGELDIN" && !user;
   // İndirim önceliği: backend-doğrulanmış couponInfo (gerçek tutar) → yoksa KNOWN_COUPONS tahmini
   // (sayfa yenilenince couponInfo local state kaybolur ama couponCode store'da kalır; gerçek
   // indirim her hâlükârda siparişte backend'de yeniden hesaplanıp tahsil edilir).
-  const backendCoupon = couponInfo && couponInfo.code === couponCode ? couponInfo : null;
+  const backendCoupon =
+    couponInfo && couponInfo.code === couponCode && !hosgeldinBlocked ? couponInfo : null;
   const appliedCoupon =
-    couponCode && (backendCoupon || KNOWN_COUPONS[couponCode]) ? couponCode : null;
+    couponCode && !hosgeldinBlocked && (backendCoupon || KNOWN_COUPONS[couponCode]) ? couponCode : null;
   const discount = backendCoupon
     ? backendCoupon.discount
     : appliedCoupon
@@ -261,18 +284,18 @@ export default function CheckoutPage() {
     }
   }, [cartItems.length, processing, router]);
 
-  // Sipariş GİRİŞ ZORUNLU — misafir checkout kapatıldı (14ef581: HOSGELDIN istismarı + her
-  // siparişin hesaba bağlanması). Bootstrap (refresh) bitene kadar bekle (kalıcı user anında
-  // gelir; oturum gerçekten yoksa user null kalır) → /giris'e yönlendir, giriş sonrası dön.
-  // Sepet Zustand persist ile korunur.
+  // Misafir checkout AÇIK (14ef581 giriş duvarı geri alındı — funnel'ın en büyük drop-off'uydu:
+  // Meta reklam harcamasına karşı 0 satış). Oturum yoksa YÖNLENDİRME YOK; kullanıcı seçim
+  // ekranından "misafir olarak devam et" der (→ guestMode) ya da üye girişi yapar. Bootstrap
+  // bitene kadar bekle ki seçim ekranını kalıcı oturumluya boşuna flaşlamayalım. HOSGELDIN
+  // istismarı ayrıca engellenir: kupon misafire kapalı (appliedCoupon + handleApplyCoupon).
   useEffect(() => {
-    if (!isBootstrapping && !user && !processing) {
-      // Ölçüm: kaç kullanıcı checkout'ta giriş duvarına takılıyor (funnel drop-off'un en büyük
-      // kör noktasıydı). Yönlendirmeden ÖNCE atılır; consent yoksa track zaten sessizce yutar.
+    if (!isBootstrapping && !user && !processing && !guestMode) {
+      // Ölçüm: kaç oturumsuz kullanıcı seçim ekranıyla karşılaşıyor (funnel drop-off analizi).
+      // Consent yoksa track zaten sessizce yutar.
       track("checkout_login_wall", {});
-      router.replace(`/giris?next=${encodeURIComponent("/odeme")}`);
     }
-  }, [isBootstrapping, user, processing, router]);
+  }, [isBootstrapping, user, processing, guestMode]);
 
   // Ödeme yolu hesap tipine göre SABİTLENİR: onaylı kurumsal → cari, diğer herkes → kart.
   // (Seçim kutusu yok; kurumsal=sadece cari, bireysel=sadece kart.)
@@ -577,11 +600,27 @@ export default function CheckoutPage() {
   }
 
   if (cartItems.length === 0 && !processing) return null;
-  // Giriş zorunlu: oturum yoksa formu hiç gösterme (yukarıdaki effect /giris'e yönlendirir);
-  // bootstrap sürerken de bekle — yanlışlıkla giriş ekranını flaşlamayalım.
-  if (!user && !processing) return null;
+  // Auth bootstrap sürerken bekle — kalıcı oturum anında gelebilir; seçim ekranını boşuna flaşlama.
+  if (isBootstrapping && !user && !processing) return null;
+  // Misafir checkout: oturum yok + misafir modu seçilmedi → giriş/üyelik/misafir seçim ekranı
+  // (login duvarı yerine). "Misafir olarak devam et" → guestMode true → aşağıdaki form açılır.
+  if (!user && !guestMode && !processing) return <GuestGate total={total} onGuest={startGuest} />;
 
   const consentOk = acceptedTerms && acceptedTolerance && acceptedKvkk;
+
+  // WhatsApp yardım mesajı — misafir modda iletişim bilgilerini önceden doldur (temsilci siparişi
+  // hızlı tamamlasın); üye modda genel yardım metni.
+  const waMessage = !user
+    ? [
+        "Merhaba, misafir olarak sipariş vermek istiyorum.",
+        fullName ? `Ad Soyad: ${fullName}` : null,
+        phone ? `Telefon: ${phone}` : null,
+        email ? `E-posta: ${email}` : null,
+        `Sepet tutarı: ${total.toLocaleString("tr-TR")} ₺`,
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "Merhaba, sipariş/ödeme konusunda yardım almak istiyorum.";
 
   return (
     <>
@@ -625,10 +664,21 @@ export default function CheckoutPage() {
                 />
                 <PhoneInput value={phone} onChange={setPhone} label="Telefon" required />
               </div>
-              {user && (
+              {user ? (
                 <p className="mt-3 text-xs text-ink-500">
                   <strong className="text-ink-900">{user.email}</strong> olarak giriş yaptınız —
                   siparişiniz hesabınıza bağlanacak.
+                </p>
+              ) : (
+                <p className="mt-3 text-xs text-ink-500">
+                  Misafir olarak devam ediyorsun.{" "}
+                  <Link
+                    href={`/giris?next=${encodeURIComponent("/odeme")}`}
+                    className="font-medium text-brand-700 hover:underline"
+                  >
+                    Üye girişi
+                  </Link>{" "}
+                  yaparsan HOSGELDIN indirimi ve sipariş takibi açılır.
                 </p>
               )}
             </Section>
@@ -960,7 +1010,7 @@ export default function CheckoutPage() {
                   <p className="text-center text-xs text-ink-500 pt-1">
                     Sorun mu yaşıyorsun?{" "}
                     <a
-                      href={whatsappUrl("Merhaba, sipariş/ödeme konusunda yardım almak istiyorum.")}
+                      href={whatsappUrl(waMessage)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#1FB358] hover:underline font-medium inline-flex items-center gap-1"
@@ -1102,10 +1152,24 @@ export default function CheckoutPage() {
                         </Button>
                       </div>
                       {couponError && <p className="mt-1.5 text-xs text-error">{couponError}</p>}
-                      <p className="mt-1.5 text-[11px] text-ink-500">
-                        Yeni müşteriler:{" "}
-                        <code className="font-mono bg-paper-100 px-1 rounded">HOSGELDIN</code>
-                      </p>
+                      {user ? (
+                        <p className="mt-1.5 text-[11px] text-ink-500">
+                          Yeni müşteriler:{" "}
+                          <code className="font-mono bg-paper-100 px-1 rounded">HOSGELDIN</code>
+                        </p>
+                      ) : (
+                        <p className="mt-1.5 text-[11px] text-ink-500">
+                          <Link
+                            href={`/giris?next=${encodeURIComponent("/odeme")}`}
+                            className="font-medium text-brand-700 hover:underline"
+                          >
+                            Üye girişi
+                          </Link>{" "}
+                          yapınca{" "}
+                          <code className="font-mono bg-paper-100 px-1 rounded">HOSGELDIN</code> ile
+                          %10 indirim.
+                        </p>
+                      )}
                     </>
                   )}
                 </div>
@@ -1352,6 +1416,81 @@ function Trust({ icon, label }: { icon: React.ReactNode; label: string }) {
       <span className="text-ink-700">{icon}</span>
       <span>{label}</span>
     </li>
+  );
+}
+
+/**
+ * Misafir/üye seçim ekranı — login duvarının yerine (14ef581 geri alındı). Birincil CTA
+ * "Misafir olarak devam et" (marka: sarı hap, funnel sürtünmesini kaldırır); üye girişi
+ * ikincil (outline) — HOSGELDIN + sipariş takibi avantajıyla teşvik edilir.
+ */
+function GuestGate({ total, onGuest }: { total: number; onGuest: () => void }) {
+  const nextParam = encodeURIComponent("/odeme");
+  return (
+    <>
+      <div className="bg-paper-100 border-b border-paper-200">
+        <Container className="py-8 md:py-10">
+          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
+            Sipariş Talebi
+          </p>
+          <h1 className="mt-1 text-3xl md:text-4xl font-semibold text-ink-900">
+            Siparişini tamamla
+          </h1>
+          <p className="mt-2 text-ink-500 text-sm">
+            Nasıl devam etmek istediğini seç · KDV dahil fiyatlar
+          </p>
+        </Container>
+      </div>
+
+      <Container className="py-10 md:py-14">
+        <div className="mx-auto max-w-md">
+          <div className="rounded-lg border border-paper-200 bg-paper-50 p-6 md:p-8">
+            {/* Birincil CTA — sarı hap (marka §6): funnel'ın en büyük engelini kaldırır. */}
+            <Button size="lg" fullWidth onClick={onGuest}>
+              Misafir olarak devam et <ArrowRight size={18} weight="bold" />
+            </Button>
+            <p className="mt-2 text-center text-xs text-ink-500">
+              Hesap açmadan, tek adımda sipariş ver.
+            </p>
+
+            <div className="my-5 flex items-center gap-3 text-xs text-ink-500">
+              <span className="h-px flex-1 bg-paper-200" />
+              veya
+              <span className="h-px flex-1 bg-paper-200" />
+            </div>
+
+            {/* İkincil — üye girişi (outline; mor dolgu YASAK). */}
+            <Link href={`/giris?next=${nextParam}`} className="block">
+              <Button size="lg" variant="outline" fullWidth>
+                <UserIcon size={18} /> Üye Girişi Yap
+              </Button>
+            </Link>
+            <p className="mt-3 text-center text-sm text-ink-700">
+              Hesabın yok mu?{" "}
+              <Link
+                href={`/kayit?next=${nextParam}`}
+                className="font-medium text-brand-700 hover:underline"
+              >
+                Üye Ol
+              </Link>
+            </p>
+            <div className="mt-4 rounded-md border border-brand-200 bg-brand-50 px-3 py-2 text-center text-xs text-ink-700">
+              Üye girişi: <strong>HOSGELDIN</strong> ile ilk siparişine %10 indirim + sipariş takibi
+            </div>
+          </div>
+
+          <p className="mt-6 text-center text-xs text-ink-500">
+            Sepet tutarı:{" "}
+            <strong className="text-ink-900">{total.toLocaleString("tr-TR")} ₺</strong>
+          </p>
+
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-ink-500">
+            <ShieldCheck size={14} weight="fill" className="flex-none text-success" />
+            256-bit SSL · iyzico 3D Secure ile güvenli ödeme
+          </p>
+        </div>
+      </Container>
+    </>
   );
 }
 

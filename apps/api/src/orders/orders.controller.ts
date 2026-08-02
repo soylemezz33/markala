@@ -34,9 +34,21 @@ export class OrdersController {
     return this.withNonce(order as { id: string });
   }
 
-  // NOT: Misafir sipariş (POST /orders/guest) KALDIRILDI — sipariş vermek için giriş zorunlu.
-  // Gerekçe: ilk-sipariş kuponunun (HOSGELDIN) misafir istismarı + her siparişin hesaba bağlanması.
-  // Tek çağıran web checkout proxy'siydi; o da artık yalnız authed /orders'a gider.
+  /**
+   * Misafir sipariş — auth YOK ("misafir olarak devam et" checkout akışı; 14ef581 giriş duvarı
+   * geri alındı, funnel'ın en büyük drop-off'uydu → reklam harcamasına karşı 0 satış). userId
+   * olmadan service.create() zaten çalışır (inline adres snapshot; cari/puan devre dışı).
+   *
+   * HOSGELDIN (firstOrderOnly) istismarı SERVİSTE kapalı: userId yoksa kupon 400 döner
+   * (orders.service create → firstOrderOnly && !userId). Yani API doğrudan çağrılsa, taze
+   * e-postayla bile misafir ilk-sipariş kuponu geçiremez. Web checkout proxy'si token yoksa
+   * buraya yönlendirir; token varsa authed POST /orders'a gider (sipariş hesaba bağlanır).
+   */
+  @Post("guest")
+  async createGuest(@Body() dto: CreateOrderDto, @Headers("idempotency-key") idempotencyKey?: string) {
+    const order = await this.service.create({ ...dto, idempotencyKey });
+    return this.withNonce(order as { id: string });
+  }
 
   // Public kargo takip — auth YOK (giriş yapmayan/farklı cihazdaki müşteri de sorgular).
   // Sipariş no + e-posta eşleşmesi; rate-limit main.ts'te (/orders/track). ":id" GET'inden

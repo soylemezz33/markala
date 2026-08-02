@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Backend'e (NestJS) sunucu-içinden çağrı — gerçek client IP/CORS derdi yok.
-// Sipariş GİRİŞ ZORUNLU: Authorization header (access token) gelmezse 401 döner, misafire düşmez.
+// Misafir checkout AÇIK: Authorization header varsa authed POST /orders (sipariş hesaba bağlanır),
+// yoksa misafir POST /orders/guest (auth yok). Token gönderilir → sipariş kaybolmaz.
 export const runtime = "nodejs";
 
 /**
@@ -13,8 +14,10 @@ export const runtime = "nodejs";
  *     Product.basePrice'tan SUNUCUDA yeniden hesaplar (client fiyatına güvenmez).
  *   - adres: kayıtlı Address yok → satır-içi (inline) snapshot olarak gönderilir.
  *
- * Sipariş GİRİŞ ZORUNLU: Authorization header yoksa veya token geçersizse 401 döner (misafire
- * düşmez). Client 401'de kullanıcıyı /giris'e yönlendirir; sepet korunur.
+ * Misafir checkout: Authorization header YOKSA misafir POST /orders/guest'e gider (auth yok).
+ * Header VARSA authed POST /orders (sipariş userId ile hesaba bağlanır). Authed çağrı token
+ * süresi dolduğu için 401/403 dönerse misafire SESSİZCE DÜŞMEYİZ — yeniden giriş isteriz
+ * (hesaba-bağlama + kupon/cari kaybını önlemek için); client bunu /giris'e yönlendirmede kullanır.
  */
 
 const API_BASE =
@@ -216,22 +219,19 @@ export async function POST(req: NextRequest) {
     notes: noteParts.length ? noteParts.join(" · ") : undefined,
   };
 
-  // Sipariş vermek GİRİŞ ZORUNLU — misafir sipariş (/orders/guest) kaldırıldı.
-  // Gerekçe: ilk-sipariş kuponunun (HOSGELDIN) misafir istismarı + her siparişin hesaba bağlanması.
+  // Token VARSA authed POST /orders (sipariş HESABA bağlanır → siparişlerim + HOSGELDIN + cari/puan).
+  // Token YOKSA misafir POST /orders/guest (auth yok). HOSGELDIN misafirde SERVİSTE reddedilir
+  // (firstOrderOnly && !userId → 400); frontend zaten kuponu misafire hiç göstermez (katmanlı savunma).
   const authHeader = req.headers.get("authorization") ?? undefined;
 
-  // Token yoksa hiç deneme — misafire DÜŞME, "giriş gerekli" döndür (client /giris'e yönlendirir).
-  if (!authHeader) {
-    return NextResponse.json(
-      { ok: false, status: 401, error: "Sipariş vermek için giriş yapmalısınız." },
-      { status: 401 },
-    );
-  }
-
   async function postOrder() {
-    return fetch(`${API_BASE}/api/orders`, {
+    const endpoint = authHeader ? `${API_BASE}/api/orders` : `${API_BASE}/api/orders/guest`;
+    return fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: authHeader as string },
+      headers: {
+        "Content-Type": "application/json",
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
       body: JSON.stringify(orderPayload),
     });
   }
