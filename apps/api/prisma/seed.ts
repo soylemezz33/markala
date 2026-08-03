@@ -363,65 +363,82 @@ Sorularınız için [WhatsApp](https://wa.me/905319004102) ya da [yardım merkez
     },
     {
       slug: "cmyk-rgb-fark-baski-renk-yonetimi",
-      title: "CMYK vs RGB: Baskıda Doğru Renk Yönetimi",
+      title: "CMYK mi RGB mi? Baskı İçin Doğru Renk Modu Seçimi",
       excerpt:
-        "Ekrandaki canlı renkler neden baskıda solgun çıkar? CMYK-RGB farkı, profil dönüşümü, Pantone sistemi ve sık yapılan renk hataları.",
+        "Ekrandaki canlı renkler baskıda neden solar? CMYK ile RGB arasındaki temel fark, ICC profil yönetimi, Pantone kullanımı ve dosya teslim öncesi eksiksiz kontrol listesi.",
       coverImage: "brochure",
-      authorName: "324 Ajans Tasarım Ekibi",
-      authorRole: "Markala İçerik",
+      authorName: "Markala Ekibi",
+      authorRole: "Markala Blog Editörü",
       categorySlug: "tasarim",
-      tags: ["cmyk", "rgb", "renk", "tasarım", "pantone"],
-      readingTime: 6,
-      seoTitle: "CMYK vs RGB Farkı — Baskı Renk Yönetimi Rehberi",
+      tags: ["cmyk", "rgb", "renk", "tasarım", "pantone", "baskı"],
+      readingTime: 5,
+      seoTitle: "CMYK mi RGB mi? Baskı İçin Doğru Renk Modu | Markala",
       seoDescription:
-        "Ekrandaki canlı renkler baskıda neden değişir? CMYK ile RGB arasındaki fark, Pantone, profil dönüşümü ve renk uyumu kontrol listesi.",
-      content: `## Renk Algısı Cihaza Göre Değişir
+        "CMYK ve RGB farkı nedir, baskıda hangi renk modu kullanılmalı? ICC profil yönetimi, Pantone ve dosya hazırlama kontrol listesi.",
+      content: `## CMYK mi RGB mi? Temel Fark
 
-**RGB** (Red-Green-Blue): Işık karışımı. Ekranlar piksel başına 3 ışık kaynağı kullanır.
-**CMYK** (Cyan-Magenta-Yellow-Key/Black): Pigment karışımı. Matbaa makineleri kâğıda 4 mürekkep katmanı bırakır.
+Renk iki farklı yöntemle üretilir: ışık karışımı ve pigment karışımı.
 
-İki sistem farklı **renk uzayı** kapsar. RGB ekranda görebileceğiniz parlak fosforlu yeşili, CMYK pigmenti üretemez. Bu yüzden ekranda görülen %100 renk doygunluğu baskıda %75-80'e düşebilir.
+**RGB (Red-Green-Blue)** ışık karışımıdır. Ekranlar — monitör, telefon, tablet — kırmızı, yeşil ve mavi ışığı farklı yoğunluklarda birleştirerek renk üretir. Üç ışık bir araya gelince beyaz oluşur; hiçbiri yokken siyah. Bu yüzden RGB "eklenebilir" (additive) bir renk sistemidir.
 
-## En Sık Karşılaşılan Hatalar
+**CMYK (Cyan-Magenta-Yellow-Key/Black)** pigment karışımıdır. Matbaa makineleri kağıda dört mürekkep katmanı bırakır: cam göbeği, eflatun, sarı ve siyah. Pigmentler ışığı emer; katmanlar birleşince daha koyu renkler elde edilir. Bu yüzden CMYK "çıkarmalı" (subtractive) bir renk sistemidir.
 
-### 1. RGB'de tasarım, CMYK'ya son anda dönüşüm
-Adobe'da "Convert to CMYK" tek tıkla çalışır ama sonuç **tahmin edilemez**. Tasarıma CMYK profilinde başlayın.
+## Renk Gamı Farkı Neden Önemli?
 
-### 2. Düz Siyah (K:100)
-Düşük gramajlı kâğıtta donuk gri görünür. Çözüm: **Rich Black** — C:60 M:40 Y:40 K:100.
+RGB, CMYK'dan çok daha geniş bir renk yelpazesi kapsar. Ekranda gördüğünüz neon turuncu, fosforlu yeşil veya elektrik mavisi, mürekkep teknolojisiyle tam olarak üretilemeyebilir. Bu yüzden RGB tasarımınızı CMYK'ya dönüştürdüğünüzde bazı renkler matlaşır, bazıları ton değiştirir.
 
-### 3. Pantone'u CMYK olarak kullanmak
-Pantone (PMS) **özel mürekkep** sistemidir. Logo / kurumsal renkleriniz Pantone tanımlıysa baskıyı **5+1 renk** modunda yaptırın (CMYK + Pantone). Tek başına CMYK'ya çevirmek %15-20 sapma yaratır.
+Dikkat gerektiren renkler:
+- **Canlı maviler:** #0080FF tonu baskıda %20-30 soluklaşabilir.
+- **Parlak kırmızılar ve turuncular:** Ekrandaki "neon" etki kaybolur.
+- **Fosforlu yeşiller:** CMYK bu gamı üretemez; en yakın tona düşer.
 
-### 4. Resim çözünürlüğü
-Web için 72 dpi kabul edilebilir, baskıda **300 dpi** zorunlu. 1000×1000 px görsel A4'te bulanık çıkar.
+## Tasarım Aşamasındaki Yaygın Hatalar
 
-## Renk Profili (ICC) Yönetimi
+### Hata 1: RGB'de tasarım yapıp son anda CMYK'ya dönüştürmek
+Tasarım programları RGB'den CMYK'ya otomatik dönüşüm yapar; ancak sonuç her zaman tahmin edilebilir değildir. Canlı tonlar beklentinin altında çıkabilir. **Doğrusu:** belgeyi baştan CMYK modunda açmak.
 
-Türkiye'de matbaaların büyük çoğunluğu **ISO Coated v2 (ECI)** profili kullanır. Bu profili Adobe ürünlerine eklemek:
+### Hata 2: Düz siyah (K:100) kullanmak
+Sadece K:100 mürekkepten oluşan siyah, geniş alanlarda baskıda donuk gri görünür. Daha derin bir siyah için "zengin siyah" (Rich Black) formülü kullanılır: **C:60 M:40 Y:40 K:100**. Not: bu formülü ince metinlere uygulamayın — harfler kayar.
 
-1. eci.org → "Downloads" → "ICC profiles"
+### Hata 3: Pantone renklerini CMYK olarak göndermek
+Pantone (PMS), özel tek bileşenli mürekkepler kullanır. Markanızın logo rengi bir Pantone koduna sahipse ve baskıda tam renk uyumu kritikse, CMYK dönüşümü yeterli olmaz. Bu durumlarda 5+1 renkli (CMYK + Pantone) baskı yaptırın.
+
+### Hata 4: Görsellerin çözünürlüğünü atlamak
+Web için 72 DPI yeterlidir; baskıda **300 DPI** zorunludur. Düşük çözünürlüklü görsel, A4 boyutuna çekildiğinde pikselli görünür. Piksel ölçüsünden DPI hesabı: 3508 × 2480 piksel = A4 @ 300 DPI.
+
+## ICC Renk Profili Yönetimi
+
+Matbaalar, renklerini standart bir profil çerçevesinde kalibre eder. Türkiye'deki ofset matbaalar büyük çoğunlukla **ISO Coated v2 (ECI)** profilini kullanır. Bu profili Adobe uygulamalarına eklemek için:
+
+1. [eci.org](https://www.eci.org) adresinden "ECI Offset" profil paketini indirin.
 2. Windows: \`C:\\Windows\\System32\\spool\\drivers\\color\\\`
-3. Photoshop: Edit > Color Settings > "ISO Coated v2 (ECI)" seç
+3. Photoshop/Illustrator: Edit > Color Settings > Working Spaces > CMYK > "ISO Coated v2 (ECI)" seçin.
 
-## Onay Süreci: Hard Proof vs Soft Proof
+Profil eşleştiğinde yazıcı ve ekran arasındaki renk farkı önemli ölçüde daralır.
 
-- **Soft proof**: Ekranda CMYK simülasyonu (%85 doğruluk)
-- **Hard proof**: Matbaadan gelen test baskı (%99 doğruluk, kritik işlerde **mutlaka** isteyin)
+## Soft Proof ve Hard Proof
 
-Markala'da kurumsal kimlik baskılarında hard proof ücretsiz, dijital baskılarda 25 ₺.
+- **Soft proof:** Ekranda CMYK simülasyonu görmektir. Adobe programlarında View > Proof Colors ile etkinleştirilir. Yaklaşık %85 doğrulukla fikir verir.
+- **Hard proof:** Matbaanın gerçek makinesinde bir test baskısı alınır. Renk kritikliği yüksek işlerde (kurumsal kimlik, ambalaj) **mutlaka** isteyin. Markala'da kurumsal kimlik baskılarında hard proof ücretsiz, dijital baskılarda 25 ₺ ek ücretle sunulur.
 
-## Hazırlık Kontrol Listesi
+## Dosya Teslim Öncesi Kontrol Listesi
 
-- [ ] CMYK renk modu seçili
-- [ ] 300 dpi minimum çözünürlük
-- [ ] Yazılar dış hatlandırılmış (outline)
-- [ ] 2-3 mm taşma payı bırakılmış
-- [ ] Pantone renkler ayrı kanalda
-- [ ] PDF/X-1a olarak export
-- [ ] Renk profili gömülü (Embed Color Profile)
+- [ ] Belge renk modu CMYK olarak ayarlandı mı?
+- [ ] Tüm görseller 300 DPI mi?
+- [ ] Düz siyah gereken yerlerde K:100 yerine Rich Black kullanıldı mı?
+- [ ] Pantone renkleri ayrı kanalda tanımlandı mı?
+- [ ] Yazılar dış hat (outline) haline getirildi mi?
+- [ ] 2-3 mm taşma payı bırakıldı mı?
+- [ ] Renk profili gömülü PDF/X-1a olarak kaydedildi mi?
 
-Sorularınız için [Dosya Hazırlama Rehberi](/yardim/dosya-hazirlama).`,
+## Hangi Programda Çalışmalısınız?
+
+- **Adobe Illustrator / InDesign:** Vektörel işler, kurumsal kimlik, broşür — CMYK desteği eksiksiz.
+- **Adobe Photoshop:** Fotoğraf ağırlıklı işler — CMYK modunda çalışabilir.
+- **Canva (ücretsiz):** Yalnızca RGB çıktı verir; profesyonel baskı için yeterli değildir.
+- **Affinity Publisher/Designer:** CMYK desteği var, bütçe dostu bir alternatif.
+
+Ayrıntılı teknik rehber için [Dosya Hazırlama Kılavuzu](/yardim/dosya-hazirlama) sayfasına göz atabilirsiniz. Sorularınız için [destek hattımıza](/iletisim) ulaşın.`,
     },
     {
       slug: "kurumsal-kimlik-tasarim-paketi-ne-icermelidir",
@@ -563,6 +580,315 @@ Bunu isteyen kurumsal müşteriler "**SLA garantili kurumsal sipariş**" paketi 
 %1-5 fire, ev aldığınız evdeki "imar hattı" gibi: önceden bildiğiniz, sözleşmede yazılı bir sınırlamadır. Bunu bilen müşteri 1.000 yerine **1.050 sipariş geçer**, gerçek ihtiyacının altına düşmez.
 
 Detaylı bilgi: [İade & Değişim Politikası](/yasal/iade) · [Kargo & Teslimat](/yardim/kargo)`,
+    },
+    {
+      slug: "kartvizit-baski-rehberi-fiyatlar-cesitler",
+      title: "Kartvizit Baskı Rehberi 2024: Fiyatlar, Kağıt Seçenekleri ve Sipariş",
+      excerpt:
+        "Kartvizit baskısında doğru boyut, kağıt gramajı ve yüzey işlemi nasıl seçilir? 2024 güncel fiyatları, baskı teknikleri ve sipariş adımları bu rehberde.",
+      coverImage: "card",
+      authorName: "Markala Ekibi",
+      authorRole: "Markala Blog Editörü",
+      categorySlug: "rehber",
+      tags: ["kartvizit", "baskı", "fiyat", "kağıt", "sipariş"],
+      readingTime: 4,
+      seoTitle: "Kartvizit Baskı Rehberi 2024: Fiyat ve Kağıt Seçimi | Markala",
+      seoDescription:
+        "Kartvizit baskısında kağıt gramajı, selefon çeşidi ve fiyat rehberi. 2024 güncel fiyatlarla 250'den 2.500 adede sipariş kılavuzu.",
+      content: `## Kartvizit Boyutları
+
+Türkiye'de en yaygın kartvizit boyutu 85 × 55 mm'dir. Uluslararası standart olarak bilinen bu ölçü, cüzdan ve kartvizitlik kutularına tam olarak sığar.
+
+| Boyut | Ölçü | Kullanım Alanı |
+|---|---|---|
+| Türkiye Standardı | 85 × 55 mm | Her sektör |
+| Avrupa (CR80) | 85 × 54 mm | Uluslararası çalışan markalar |
+| Mini | 70 × 28 mm | Aksesuar, mücevher etiketleri |
+| Kare | 60 × 60 mm | Yaratıcı sektörler, fotoğrafçılar |
+
+Standart boyut dışına çıkmak üretim maliyetini %30-50 artırabilir. Özel bir ihtiyaç olmadığı sürece 85 × 55 mm'de kalmak hem ekonomik hem pratiktir.
+
+## Kağıt Seçenekleri
+
+**Gramaja göre seçim:**
+- **300 gr** — ekonomik, sık dağıtılan kartlar için
+- **350 gr** — kurumsal kullanımın en popüler seçeneği
+- **400 gr** — hukuk bürosu, mimar, üst düzey yönetici gibi prestij gerektiren işler
+- **600 gr** — iki farklı kağıdın yapıştırılmasıyla elde edilen ultra kalın, özel üretim
+
+**Yüzey kaplama seçenekleri:**
+- **Mat selefon:** parmak izi tutmaz, modern ve sade görünüm
+- **Parlak selefon:** renkleri canlılaştırır, fotoğraf ağırlıklı tasarımlarda tercih edilir
+- **Kadife (soft touch) selefon:** dokunsal etki, lüks hissiyat
+- **Lak baskı:** seçili bölgelere parlaklık; logo ve başlıklarda dramatik kontrast
+
+## Baskı Teknikleri
+
+**Dijital baskı:** 1-500 adet arası ekonomik ve hızlıdır. Renk kalibrasyonu mükemmel; küçük metin ve ince çizgiler net çıkar. Hızlı ihtiyaçlar ve kısa süreli kampanyalar için idealdir.
+
+**Ofset baskı:** 500 adetten itibaren birim maliyet düşer. Pantone renklere tam uyum, altın/gümüş özel renkler ve yüksek adet için tercih edilir.
+
+**Folyo (yaldız) baskı:** Logo veya özel alanlara altın, gümüş ya da renkli folyo uygulanır. Görsel etkisi güçlüdür, kurumsal kartvizitlerde sık kullanılır.
+
+**Kabartma (embossing):** Tasarımın belirli bölümlerine üç boyutlu doku verilir. Lüks ve el emeği hissiyatı oluşturur.
+
+## Fiyat Rehberi
+
+| Adet | 350 gr Mat Selefonlu | 400 gr Mat + Lak | Folyo Eklenirse |
+|---|---|---|---|
+| 250 | ~350 – 450 ₺ | ~550 – 700 ₺ | +%30-40 |
+| 500 | ~480 – 650 ₺ | ~750 – 950 ₺ | +%25-35 |
+| 1.000 | ~650 – 900 ₺ | ~1.100 – 1.400 ₺ | +%20-30 |
+| 2.500 | ~1.200 – 1.600 ₺ | ~2.000 – 2.600 ₺ | +%15-25 |
+
+> Tasarım ücreti dahil değildir. Hazır dosya getirirseniz ek ücret alınmaz.
+
+## Sipariş Süreci
+
+Markala'da kartvizit siparişi birkaç adımda tamamlanır:
+
+1. **Ürün sayfasını açın:** [Klasik Kartvizit](/urun/klasik-kartvizit) veya [UV Lak Kartvizit](/urun/uv-lak-kartvizit) sayfasından istediğiniz ürünü seçin.
+2. **Konfigüratörde seçimlerinizi yapın:** Adet, kağıt gramajı, selefon türü ve baskı yüzü (tek/çift) seçeneklerini belirleyin; anlık fiyatı görün.
+3. **Dosyanızı yükleyin:** PDF, AI veya yüksek çözünürlüklü PNG/JPG formatında hazır tasarımınızı sisteme ekleyin.
+4. **Ödemeyi tamamlayın:** Kartla, havale ya da kurumsal fatura seçenekleriyle ödeme yapın.
+5. **Üretim ve teslimat:** Üretim tamamlandığında kargo takip numarası e-posta ile iletilir.
+
+Sorunuz varsa [destek hattımız](/iletisim) üzerinden bize ulaşabilirsiniz.`,
+    },
+    {
+      slug: "brosur-baski-cesitleri-fiyatlari",
+      title: "Broşür Baskı Çeşitleri ve Fiyatları: A4, A5, Üçlü Katlama",
+      excerpt:
+        "A4, A5, üçlü katlama, Z-katlama... Doğru broşür formatını nasıl seçersiniz? Kağıt gramajı, katlama seçenekleri ve 2024 baskı fiyatları.",
+      coverImage: "brochure",
+      authorName: "Markala Ekibi",
+      authorRole: "Markala Blog Editörü",
+      categorySlug: "rehber",
+      tags: ["broşür", "baskı", "katlama", "fiyat", "a4", "a5"],
+      readingTime: 4,
+      seoTitle: "Broşür Baskı Çeşitleri ve Fiyatları 2024 | Markala",
+      seoDescription:
+        "A4, A5 ve üçlü katlama broşür fiyatları, kağıt gramajı seçimi ve tasarım ipuçları. 250 adetten 1.000 adede güncel fiyat tablosu.",
+      content: `## Broşür Çeşitleri
+
+Broşür, ürün veya hizmetlerin kısa ve görsel bir biçimde anlatıldığı en temel pazarlama materyallerinden biridir. Boyut ve katlama şekline göre farklı adlar alır.
+
+**A4 broşür (düz, katlama yok):** 210 × 297 mm boyutunda, ürün kataloğu veya kapsamlı tanıtım için kullanılır. Standart dosyaya sığdığı için ticari görüşmelerde ve fuar paketlerinde tercih edilir.
+
+**A5 broşür:** 148 × 210 mm boyutunda. El broşürü olarak da bilinen A5, etkinlik dağıtımı, mağaza içi promosyon ve kafe-restoran bilgilendirmeleri için idealdir. Hafiftir ve cebe sığar.
+
+**Üçlü katlama (trifold):** A4 kağıt üç eşit parçaya katlanır; kapalı haliyle A5 boyutunu alır. Her panel ayrı bir bölüm gibi tasarlanır. Turizm, sağlık ve gayrimenkul sektörlerinde en çok tercih edilen broşür formatıdır.
+
+**Z-katlama:** Kağıt Z şeklinde katlanır. Her panel bağımsız okunabilir; adım adım süreç anlatımı için uygundur.
+
+**Kapı katlama:** Kağıdın iki yanı ortaya doğru kapanır, ardından ikiye katlanır. Etkileyici bir açılış etkisi yaratır; ürün lansmanlarında tercih edilir.
+
+## Kağıt Gramajı
+
+| Gramaj | Kullanım | His |
+|---|---|---|
+| 90-115 gr | Ekonomik dağıtım | İnce, hafif |
+| 135-150 gr | Genel tanıtım broşürü | Standart, dengeli |
+| 170-200 gr | Ürün kataloğu, prestij broşür | Dolgun, kaliteli |
+| 250-300 gr | Kapak sayfaları, özel davetler | Sert, premium |
+
+İç sayfalar için 135-150 gr mat kuşe, kapak için 250-300 gr kullanımı yaygın bir kombinasyondur.
+
+## Katlama Seçenekleri
+
+**Üçlü katlama:** Sıralı anlatım için mükemmeldir. Okuyucu broşürü çevirirken önce giriş, sonra içerik, en son arka kapağı okur.
+
+**Z-katlama:** Her panel bağımsız anlam taşıdığından ürün karşılaştırması veya SSS formatı için idealdir.
+
+**İkili katlama (bifold):** A4 kağıt ortadan ikiye katlanarak 4 panel oluşturur. En sade ve ekonomik seçenek.
+
+**Dönüşlü katlama (roll fold):** 4 veya daha fazla panelden oluşur; harita ve kampanya takvimi gibi çok bilgi içeren materyallerde kullanılır.
+
+## Fiyatlar
+
+135-150 gr mat kuşe, 4+4 renkli baskı için 2024 yılı ortalama fiyat aralıkları:
+
+| Boyut / Katlama | 250 Adet | 500 Adet | 1.000 Adet |
+|---|---|---|---|
+| A5 düz | ~300 – 400 ₺ | ~400 – 550 ₺ | ~550 – 750 ₺ |
+| A4 düz | ~450 – 600 ₺ | ~600 – 800 ₺ | ~800 – 1.100 ₺ |
+| A4 Üçlü Katlama | ~600 – 800 ₺ | ~800 – 1.050 ₺ | ~1.100 – 1.450 ₺ |
+
+Fiyatlar çift yönlü baskı (4+4) içindir; tek yüz baskı yaklaşık %15-20 daha uygun fiyatlıdır.
+
+## Tasarım ve Baskı İpuçları
+
+**Kenar boşluklarını koruyun:** Katlama çizgisi yakınındaki metinler katlandıktan sonra kısmen kapanabilir. Katlama çizgisinden en az 5 mm uzakta tutun.
+
+**Her panel ayrı mesaj taşısın:** Okuyucu broşürü çevirirken her panel bağımsız anlam ifade etmelidir.
+
+**Görsel ile metin dengesini gözetin:** Metnin yoğun olduğu paneller okuyucuyu yorar. Her panelde en az bir görsel veya grafik unsurun bulunması tavsiye edilir.
+
+**Önce test edin:** Sayfayı kendiniz katlamak, tasarım hatalarını gönderim öncesinde fark ettirir.
+
+Broşür siparişi için [Broşür / El İlanı](/urun/brosur-el-ilani) sayfasını ziyaret edebilirsiniz.`,
+    },
+    {
+      slug: "roll-up-banner-baski-olculer-fiyatlar",
+      title: "Roll-Up Banner Baskı: Ölçüler, Materyaller ve Fiyat Rehberi",
+      excerpt:
+        "Roll-up banner seçerken hangi ölçü, hangi materyal ve hangi mekanizma kalitesi tercih edilmeli? 2024 fiyat tablosu ve uzun ömür ipuçları.",
+      coverImage: "rollup",
+      authorName: "Markala Ekibi",
+      authorRole: "Markala Blog Editörü",
+      categorySlug: "rehber",
+      tags: ["roll-up", "banner", "baskı", "fiyat", "stand", "fuar"],
+      readingTime: 4,
+      seoTitle: "Roll-Up Banner Baskı Ölçüleri ve Fiyatları 2024 | Markala",
+      seoDescription:
+        "Roll-up banner standart ölçüleri, materyal seçimi ve 2024 fiyat rehberi. 80x200 cm'den büyük formata ekonomik ve kurumsal seçenekler.",
+      content: `## Roll-Up Banner Nedir?
+
+Roll-up banner, içine sarılmış grafikten oluşan ve açılıp kapanabilen taşınabilir tanıtım materyalidir. Alt kutusundaki per mekanizması sayesinde grafik dakikalar içinde kurulabilir.
+
+Ticaret fuarları, seminerler, mağaza içi tanıtımlar ve bayi toplantılarında en yaygın kullanılan grafik materyal haline gelmiştir.
+
+## Standart Ölçüler
+
+| Genişlik | Yükseklik | Kullanım |
+|---|---|---|
+| 60 cm | 160 cm | Küçük stantlar, showroom köşeleri |
+| 80 cm | 200 cm | Standart (en yaygın seçenek) |
+| 85 cm | 200 cm | Biraz daha geniş sunum alanı |
+| 100 cm | 200 cm | Geniş stant, ana mesaj panosu |
+| 120 cm | 200 cm | Büyük fuar standı, dekoratif arka plan |
+
+En çok tercih edilen ölçü **80 × 200 cm**'dir. Hem taşınabilirlik hem görünürlük açısından dengeli bir seçimdir. İki roll-up yan yana kullanılacaksa 80 cm genişlik ideal bütünlük sağlar.
+
+## Materyal Seçenekleri
+
+**PP (Polipropilen) Film:** En yaygın kullanılan malzemedir. Hafiftir, kırılmaz; renk yoğunluğu iyidir. Tek seferlik ya da sınırlı kullanım için ekonomik seçenektir.
+
+**Polyester Kumaş (Tex):** Daha premium görünüm sunar. Renk derinliği yüksektir. Uzun dönem kullanımda yüzey çizilmez; kurumsal stant için tercih edilir.
+
+**PET Film:** Yüzeyi pürüzsüz ve parlaktır; renk koyuluğu en yüksek seçenektir. Ağır kullanım koşullarında yıpranmaz.
+
+**Mekanizma kalitesi de önemlidir:** Ekonomik kasalarda tel per mekanizması bulunur; sık kullanımda arızalanabilir. Kurumsal standartlar için alüminyum kasalı, çift per mekanizmalı modeller tercih edilmelidir.
+
+## Tasarım Kuralları
+
+Ortalama bir izleyici banneri üçte birlik üst bölümüne odaklanır.
+
+**Üst bölüm (%30):** Logo, slogan veya ana mesaj. Uzaktan okunabilirlik için font boyutu minimum 80-100 punto.
+
+**Orta bölüm (%50):** Ürün görseli, temel bilgiler, avantajlar listesi.
+
+**Alt bölüm (%20):** İletişim bilgileri — telefon, web adresi, QR kod. Bu alan stant kasası tarafından kısmen örtülebilir; kritik bilgileri buraya taşımaktan kaçının.
+
+**Taşma payı:** Grafiği her kenara 5 mm taşıra tasarlayın.
+
+**Çözünürlük:** 80 × 200 cm boyutunda en az 96 DPI kullanın; 150 DPI ile mükemmel baskı netliği elde edersiniz.
+
+## Fiyat Rehberi
+
+| Model | Ölçü | Fiyat Aralığı |
+|---|---|---|
+| Ekonomik (PP + standart kasa) | 80 × 200 cm | ~600 – 900 ₺ |
+| Orta sınıf (PP + alüminyum kasa) | 80 × 200 cm | ~900 – 1.400 ₺ |
+| Kurumsal (Tex kumaş + çift per) | 80 × 200 cm | ~1.500 – 2.200 ₺ |
+
+Birden fazla adet alındığında birim fiyat düşer; 5 ve üzeri sipariş için toplu fiyat teklifi alınabilir.
+
+## Uzun Ömür İçin Kullanım Önerileri
+
+- Kurulum sırasında grafiği yavaşça çekin; ani kuvvet mekanizmaya zarar verebilir.
+- Grafiği sarmadan önce yüzeyini kuru bir bezle temizleyin.
+- Saklama çantasına yerleştirirken grafiğin tam sarıldığından emin olun.
+- Rutubetli ortamlara ve doğrudan güneş ışığına maruz bırakmayın.
+
+Roll-up banner siparişi için [Roll-Up Banner](/urun/roll-up-banner) sayfasını ziyaret edebilir, ölçü ve materyal seçiminde ücretsiz yardım için [destek ekibimizle](/iletisim) iletişime geçebilirsiniz.`,
+    },
+    {
+      slug: "online-matbaa-nasil-calisir-avantajlar",
+      title: "Online Matbaa Nasıl Çalışır? Geleneksel vs Online Baskı Karşılaştırması",
+      excerpt:
+        "Online matbaa nedir, nasıl çalışır? Geleneksel matbaayla farkları, avantajları ve dezavantajları: kimler tercih etmeli, kimler için geleneksel daha iyi?",
+      coverImage: "brochure",
+      authorName: "Markala Ekibi",
+      authorRole: "Markala Blog Editörü",
+      categorySlug: "haber",
+      tags: ["online matbaa", "baskı", "matbaa", "dijital baskı", "fiyat"],
+      readingTime: 5,
+      seoTitle: "Online Matbaa Nasıl Çalışır? Avantajlar ve Karşılaştırma | Markala",
+      seoDescription:
+        "Online matbaa ile geleneksel matbaanın farkı nedir? Sipariş süreci, fiyat şeffaflığı, hız ve kalite karşılaştırması ile kimler için hangisi daha iyi.",
+      content: `## Geleneksel Matbaa Nasıl Çalışır?
+
+Geleneksel matbaa modeli onlarca yıldır aynı temele dayanır: müşteri fiziksel olarak matbaaya gider, tasarımını getirir, fiyat alır ve teslim tarihini bekler. Süreç genellikle şu adımları içerir:
+
+1. Fiziksel ziyaret ve yüz yüze görüşme
+2. Tasarım dosyasının USB veya e-posta ile iletilmesi
+3. Ön kontrol — dosyanın baskıya uygunluğunun elle incelenmesi
+4. Fiyat teklifi ve baskı onayı
+5. Üretim süreci (birkaç gün ila hafta)
+6. Matbaadan teslim alma veya kargolama
+
+Bu model küçük şehirler ve yerel ilişki ağı olan işletmeler için hâlâ geçerliliğini korurken, ölçeklenemez ve fiyat karşılaştırması yapmak için elverişsizdir.
+
+## Online Matbaa Nasıl Çalışır?
+
+Online matbaa, siparişin internet üzerinden uçtan uca tamamlandığı dijital bir üretim modelidir.
+
+**1. Ürün ve konfigürasyon seçimi:** Web sitesinde adet, kağıt gramajı, selefon türü ve baskı yüzü gibi parametreler seçilir. Fiyat anlık güncellenir.
+
+**2. Dosya yükleme:** Hazır tasarım dosyası (PDF, AI, PSD) sisteme yüklenir. Gelişmiş platformlarda otomatik ön kontrol — CMYK modu, taşma payı, çözünürlük — yazılım tarafından kontrol edilir.
+
+**3. Ödeme:** Kredi kartı, havale ya da kurumsal fatura ile tamamlanır.
+
+**4. Üretim ve kargo:** Sipariş onaylandıktan sonra makine devreye girer. Üretim tamamlandığında kargo takip numarası otomatik olarak e-postayla iletilir.
+
+## Geleneksel vs Online Matbaa Karşılaştırması
+
+| Kriter | Geleneksel Matbaa | Online Matbaa |
+|---|---|---|
+| Sipariş kanalı | Yüz yüze | 7/24 web |
+| Fiyat şeffaflığı | Görüşmeye bağlı | Anlık, konfigüratörde |
+| Hız | Koordinasyon süresi dahil yavaş | Dijital ön kontrol ile hızlı |
+| Küçük adet esnekliği | Sınırlı | Çoğunlukla esnek |
+| Yerel ilişki | Güçlü | Yok |
+| Hard proof imkânı | Kolay | Platform bağımlı |
+
+## Online Matbaanın Avantajları
+
+**Zaman ve yer bağımsızlığı:** Gece 2'de sipariş verilebilir. Müşteri görüşmelerine zaman ayırmak gerekmez.
+
+**Anlık fiyat karşılaştırması:** Farklı adetleri ve gramajları anında fiyatlayabilirsiniz. Geleneksel matbaada bu bilgiyi almak günler sürebilir.
+
+**Standardize kalite:** İyi online matbaalar ISO standartlarında kalibre çalışır. Aynı dosya her seferinde tutarlı renk ve kesim kalitesinde üretilir.
+
+**Fatura ve sipariş geçmişi:** Tüm siparişler kayıt altında tutulur; muhasebeye fatura iletimi otomatiktir.
+
+**Geniş ürün yelpazesi:** Fiziksel matbaanın stoklamadığı özel boyutlu etiketler, vinil baskılar veya nadir katlama seçenekleri online platformlarda bulunabilir.
+
+## Online Matbaanın Dezavantajları
+
+**Fiziksel dosya teslimi yok:** Tasarımınızı kendiniz hazırlayabilmelisiniz. Dosya kalitesini kontrol etmek kullanıcıya düşer.
+
+**Renk onayı sınırlıdır:** Hard proof almak için ek ödeme gerekebilir.
+
+**Yüz yüze danışmanlık yok:** Özel projeler ve alışılmadık baskı teknikleri için telefon veya canlı sohbet desteği gerekir.
+
+**Kargo bağımlılığı:** Aynı gün teslim gereken acil durumlarda dezavantajlı olabilir.
+
+## Kimler Online Matbaa Kullanmalı?
+
+Online matbaa özellikle şu profiller için avantajlıdır:
+
+- **Küçük ve orta ölçekli işletmeler:** Düzenli kartvizit, broşür ve afiş ihtiyacı olan, ama yerel matbaalarla fiyat pazarlığı yapmak istemeyen şirketler.
+- **Ajanslar:** Çok sayıda müşterinin baskı işlerini tek panelden yönetmek isteyenler.
+- **E-ticaret girişimcileri:** Ürün etiketleri ve promosyon materyalleri için ölçeklenebilir baskı çözümü arayanlar.
+- **Hızlı dönüş isteyen kullanıcılar:** Tasarım hazır ve baskı süresinin minimuma inmesi kritikse.
+
+## Markala'da Online Baskı
+
+Markala, online matbaa modelinin tüm avantajlarını Türkiye'ye özel bir hizmet anlayışıyla sunar. Konfigüratör üzerinde anlık fiyat görüntüleme, otomatik dosya kontrolü, kargo takibi ve kurumsal hesap seçenekleriyle geleneksel matbaa deneyimini dijital çağa taşır.
+
+Ürün yelpazesi ve detaylı rehberler için [Ürünlerimize](/urunler) göz atabilir, sorularınız için [destek hattımıza](/iletisim) ulaşabilirsiniz.`,
     },
   ];
 
