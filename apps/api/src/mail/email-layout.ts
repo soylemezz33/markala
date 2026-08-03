@@ -69,6 +69,16 @@ export function emailButton(text: string, href: string): string {
   </td></tr></table>`;
 }
 
+/**
+ * Renkli CTA butonu (mail-güvenli) — WhatsApp gibi ikincil kanallar için.
+ * Varsayılan marka moru (#4B3AA0) + beyaz metin; sarı `emailButton`'dan farklı vurgu.
+ */
+export function emailButtonColored(text: string, href: string, bg = "#4B3AA0", fg = "#ffffff"): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0"><tr><td style="background:${bg};border-radius:8px">
+    <a href="${href}" style="display:inline-block;padding:13px 26px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:${fg};text-decoration:none">${text}</a>
+  </td></tr></table>`;
+}
+
 /** Buton çalışmazsa diye düz bağlantı satırı. */
 export function emailFallbackLink(href: string): string {
   return `<p style="margin:4px 0 0;font-size:12px;color:${MUTED};word-break:break-all">Buton çalışmazsa bu bağlantıyı tarayıcınıza yapıştırın:<br><a href="${href}" style="color:#5C4100">${href}</a></p>`;

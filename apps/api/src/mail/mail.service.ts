@@ -3,7 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
-import { renderEmail, emailButton, emailFallbackLink } from "./email-layout";
+import { renderEmail, emailButton, emailButtonColored, emailFallbackLink } from "./email-layout";
 
 @Injectable()
 export class MailService {
@@ -309,7 +309,11 @@ export class MailService {
     }
   }
 
-  /** Sipariş teslim edildiğinde teşekkür + değerlendirme daveti (updateStatus "teslim-edildi" tetikler). */
+  /**
+   * Sipariş teslim edildiğinde teşekkür + WhatsApp üzerinden değerlendirme daveti
+   * (updateStatus "teslim-edildi" tetikler). Değerlendirme daveti WhatsApp'a taşındı:
+   * müşteri tek tıkla ön-doldurulmuş mesajla yazar (dönüşüm > web form). HATA FIRLATMAZ.
+   */
   async sendOrderDeliveredEmail(orderId: string): Promise<boolean> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -320,21 +324,40 @@ export class MailService {
     const name = order.user?.fullName?.trim();
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
-    const reviewUrl = `${webUrl}/hesabim/siparislerim`;
     // Tekrar sipariş: sipariş detayında "Tekrar Sipariş Et" butonu var → aynı konfigürasyonla
     // sepete ekler. Teslim anı, tekrar alım niyetinin en yüksek olduğu an (retention dokunuşu).
     const reorderUrl = `${webUrl}/hesabim/siparislerim/${order.id}`;
-    const subject = `Siparişin teslim edildi ✅ Nasıl buldun?`;
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin teslim edildi. Umarız beğenirsin!\nBaskı kalitesinden memnunsan kısa bir değerlendirme bırakır mısın: ${reviewUrl}\nAynı ürünlere yeniden ihtiyacın olursa tek tıkla tekrar sipariş verebilirsin: ${reorderUrl}\nHatalı baskı vb. bir sorun varsa hemen yaz — ücretsiz değişim.\n\nMarkala`;
+
+    // Değerlendirme daveti WhatsApp üzerinden. Numara env ile configurable; fallback = markala
+    // mobil hattı (apps/web/src/lib/whatsapp.ts MARKALA_WHATSAPP_NUMBER ile aynı — 0324 sabit
+    // hat WhatsApp'a kayıtlı DEĞİL). Ön-doldurulmuş mesaj müşteri-kaynaklı değer içermediğinden
+    // (yalnız orderNumber) güvenli; encodeURIComponent Türkçe + boşlukları güvenle kodlar.
+    const waNumber = (this.config.get<string>("WHATSAPP_NUMBER") ?? "905319004102").replace(/\D/g, "");
+    const waMessage = `Sipariş ${order.orderNumber} için değerlendirmemi paylaşıyorum: `;
+    const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
+
+    const subject = "Siparişiniz teslim edildi — Değerlendirmenizi paylaşır mısınız?";
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişiniz teslim edildi. Umarız beğenirsiniz!\nBaskı kalitesinden memnunsanız, değerlendirmenizi WhatsApp üzerinden bizimle paylaşır mısınız:\n${waUrl}\nAynı ürünlere yeniden ihtiyacınız olursa tek tıkla tekrar sipariş verebilirsiniz: ${reorderUrl}\nHatalı baskı vb. bir sorun varsa hemen yazın — ücretsiz değişim.\n\nMarkala`;
     const html = renderEmail({
-      title: "Siparişin Teslim Edildi ✅",
-      intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin teslim edildi — umarız beğenirsin!`,
-      preheader: `${order.orderNumber} teslim edildi — değerlendirmen bizim için değerli`,
-      bodyHtml: `<p style="margin:0 0 14px">Baskı kalitesinden memnun kaldıysan, kısa bir değerlendirme bırakır mısın? Görüşün hem bize hem yeni müşterilere yol gösterir.</p>
-        ${emailButton("Siparişimi değerlendir", reviewUrl)}
-        <p style="margin:12px 0 0;font-size:13px;color:#78716c">Aynı ürünlere yeniden mi ihtiyacın var? <a href="${reorderUrl}" style="color:#5C4100;font-weight:700">Tekrar sipariş ver →</a></p>
-        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Hatalı baskı ya da bir sorun varsa hemen bize yaz — <strong>ücretsiz değişim</strong> garantisi.</p>`,
+      title: "Siparişiniz Teslim Edildi ✅",
+      intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişiniz teslim edildi — umarız beğenirsiniz!`,
+      preheader: `${order.orderNumber} teslim edildi — değerlendirmeniz bizim için değerli`,
+      bodyHtml: `<p style="margin:0 0 14px">Baskı kalitesinden memnun kaldıysanız, değerlendirmenizi <strong>WhatsApp</strong> üzerinden bizimle paylaşır mısınız? Görüşünüz hem bize hem yeni müşterilere yol gösterir.</p>
+        ${emailButtonColored("💬 WhatsApp'tan değerlendir", waUrl)}
+        ${emailFallbackLink(waUrl)}
+        <p style="margin:14px 0 0;font-size:13px;color:#78716c">Aynı ürünlere yeniden mi ihtiyacınız var? <a href="${reorderUrl}" style="color:#5C4100;font-weight:700">Tekrar sipariş ver →</a></p>
+        <p style="margin:10px 0 0;color:#78716c;font-size:13px">Hatalı baskı ya da bir sorun varsa hemen bize yazın — <strong>ücretsiz değişim</strong> garantisi.</p>`,
     });
+
+    // Nodemailer yalnız SMTP_HOST varsa gerçek gönderim yapar. Yoksa localhost:1025'e düşüp
+    // 10sn timeout + "failed" log üretmesin: gönderim atlanır, "skipped" kaydı bırakılır —
+    // gerçek gönderim için SMTP_HOST env beklenir (spec c: "yoksa kaydet + log at").
+    if (!this.config.get<string>("SMTP_HOST")) {
+      this.logger.log(`mail.orderDelivered: SMTP_HOST yok → gönderim atlandı, log bırakıldı order=${order.orderNumber} to=${order.email}`);
+      await this.logNotification(order.email, "skipped", { template: "order-delivered", orderNumber: order.orderNumber, reason: "smtp-not-configured" });
+      return false;
+    }
+
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
       await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-delivered", orderNumber: order.orderNumber });
@@ -474,7 +497,7 @@ export class MailService {
     }
   }
 
-  private async logNotification(recipient: string, status: "sent" | "failed", metadata: Record<string, unknown>) {
+  private async logNotification(recipient: string, status: "sent" | "failed" | "skipped", metadata: Record<string, unknown>) {
     // template metadata'dan türetilir; yalnız doğrulama mailleri template geçmez (varsayılan).
     // Eskiden her mail "email-verification" olarak loglanıyordu → şablon bazlı rapor kördü.
     const template = typeof metadata.template === "string" ? metadata.template : "email-verification";
