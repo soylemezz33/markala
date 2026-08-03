@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ChangeEvent } from 'react';
+import { TurnstileWidget, turnstileEnabled } from '@/components/turnstile-widget';
 
 const konular = [
   'Genel Bilgi',
@@ -29,8 +30,11 @@ export default function IletisimPage() {
   });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  // key değişince widget yeniden mount edilir (başarı sonrası sıfırlama için)
+  const [turnstileKey, setTurnstileKey] = useState(0);
 
-  function handle(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+  function handle(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
@@ -42,11 +46,13 @@ export default function IletisimPage() {
       const res = await fetch('/api/iletisim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, turnstileToken }),
       });
       if (res.ok) {
         setStatus('success');
         setForm({ ad: '', email: '', telefon: '', konu: konular[0] ?? '', mesaj: '' });
+        setTurnstileToken(null);
+        setTurnstileKey((k) => k + 1);
       } else {
         const data = await res.json();
         setErrorMsg(data.error ?? 'Bir hata oluştu.');
@@ -230,9 +236,15 @@ export default function IletisimPage() {
                 <p className="text-red-600 text-sm">{errorMsg}</p>
               )}
 
+              <TurnstileWidget
+                key={turnstileKey}
+                action="iletisim"
+                onToken={setTurnstileToken}
+              />
+
               <button
                 type="submit"
-                disabled={status === 'sending'}
+                disabled={status === 'sending' || (turnstileEnabled && !turnstileToken)}
                 className="w-full bg-[#FFB91C] text-[#1a1a2e] font-bold py-3 px-6 rounded-full hover:bg-yellow-400 transition disabled:opacity-60"
               >
                 {status === 'sending' ? 'Gönderiliyor…' : 'Mesaj Gönder'}

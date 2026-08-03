@@ -47,6 +47,7 @@ import { useAuthStore } from "@/lib/auth-store";
 // Üst utility bar — minimal: sadece kritik 2-3 link.
 // Kampanyalar / Tasarım Desteği / Kargo Takip ana navigasyonda zaten var.
 const TOP_LINKS = [
+  { href: "/kurumsal", label: "Kurumsal" },
   { href: "/kargo-takip", label: "Kargo Takip" },
   { href: "/yardim", label: "Yardım" },
   { href: "/iletisim", label: "İletişim" },
