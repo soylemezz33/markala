@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button, Price, cn } from "@markala/ui";
-import { Package, ArrowRight, ArrowsClockwise } from "@phosphor-icons/react";
+import { Package, ArrowRight, ArrowsClockwise, WhatsappLogo } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
+import { whatsappUrl } from "@/lib/whatsapp";
 import { unitCountFromSummary } from "@/lib/cart-store";
 import { ReorderButton } from "@/components/account/reorder-button";
 import type { Order, OrderStatus } from "@markala/types";
@@ -24,6 +25,19 @@ const statusToneClass: Record<string, string> = {
 
 // API Prisma enum'u underscore döndürebilir (tasarim_onayindi); UI hyphen kullanıyor.
 const normStatus = (s: string): OrderStatus => s.replace(/_/g, "-") as OrderStatus;
+
+function orderWhatsappMessage(orderNumber: string, status: OrderStatus): string {
+  const suffix: Record<string, string> = {
+    "siparis-alindi":      "bilgi almak istiyorum.",
+    "tasarim-bekleniyor":  "tasarım göndermek istiyorum.",
+    "tasarim-onayindi":    "üretim sürecini sorabilir miyim?",
+    "uretimde":            "üretim durumunu öğrenmek istiyorum.",
+    "kargoya-verildi":     "kargo takibinde yardım istiyorum.",
+    "teslim-edildi":       "bir sorum var.",
+    "iptal-edildi":        "iptal işlemiyle ilgili bilgi almak istiyorum.",
+  };
+  return `Merhaba, Markala! ${orderNumber} nolu siparişim hakkında ${suffix[status] ?? "bilgi almak istiyorum."}`;
+}
 
 export default function OrdersPage() {
   const user = useAuthStore((s) => s.user);
@@ -119,6 +133,15 @@ export default function OrdersPage() {
             <footer className="mt-4 pt-4 border-t border-paper-200 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="text-sm text-ink-500">{o.items.length} ürün</span>
+                <a
+                  href={whatsappUrl(orderWhatsappMessage(o.orderNumber, st))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-500 text-ink-900 text-xs font-semibold hover:bg-brand-600 transition-colors"
+                >
+                  <WhatsappLogo size={13} weight="fill" />
+                  WhatsApp'tan sor
+                </a>
                 {/* Teslim edilmiş sipariş = tekrar alım anı: aynı konfigürasyonla sepete ekle.
                     Fiyat sepete eklenirken GÜNCEL fiyattan yeniden hesaplanır (reorder.ts). */}
                 {st === "teslim-edildi" && <ReorderButton order={o} />}

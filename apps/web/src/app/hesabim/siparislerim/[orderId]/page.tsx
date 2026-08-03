@@ -4,7 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button, Price } from "@markala/ui";
-import { ArrowLeft, Truck, Receipt, MapPin, Buildings } from "@phosphor-icons/react";
+import { ArrowLeft, Truck, Receipt, MapPin, Buildings, WhatsappLogo } from "@phosphor-icons/react";
+import { whatsappUrl } from "@/lib/whatsapp";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
@@ -214,17 +215,28 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
         </section>
       </div>
 
-      {/* İade / değişim politikası erişimi */}
-      <div className="text-sm text-ink-500 pt-2 border-t border-paper-200">
-        Ürününüzle ilgili sorun mu var?{" "}
-        <Link href="/yasal/iade" className="text-brand-700 hover:underline font-medium">
-          İade ve Değişim Politikası
-        </Link>
-        {" "}sayfasını inceleyin veya{" "}
-        <Link href="/iletisim" className="text-brand-700 hover:underline">
-          bizimle iletişime geçin
-        </Link>
-        .
+      {/* İade / değişim politikası erişimi + WhatsApp hızlı destek */}
+      <div className="pt-2 border-t border-paper-200 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-ink-500">
+          Ürününüzle ilgili sorun mu var?{" "}
+          <Link href="/yasal/iade" className="text-brand-700 hover:underline font-medium">
+            İade ve Değişim Politikası
+          </Link>
+          {" "}sayfasını inceleyin veya{" "}
+          <Link href="/iletisim" className="text-brand-700 hover:underline">
+            bizimle iletişime geçin
+          </Link>
+          .
+        </p>
+        <a
+          href={whatsappUrl(`Merhaba, Markala! ${order.orderNumber} nolu siparişimle ilgili yardım istiyorum.`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-500 text-ink-900 text-xs font-semibold hover:bg-brand-600 transition-colors shrink-0"
+        >
+          <WhatsappLogo size={13} weight="fill" />
+          Sipariş Hakkında Sor
+        </a>
       </div>
     </div>
   );

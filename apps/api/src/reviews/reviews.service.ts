@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -150,5 +150,112 @@ export class ReviewsService {
       },
       include: { product: { select: { slug: true, name: true } } },
     });
+  }
+
+  // === Token tabanlı yorum daveti ===
+
+  /**
+   * Yorum daveti linkini doğrular — token geçerli mi ve hangi sipariş kalemleri var?
+   * Bağlantı kullanılmışsa (token=null) veya sipariş yoksa 404 fırlatır.
+   */
+  async verifyReviewToken(orderId: string, token: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        reviewToken: true,
+        items: {
+          where: { productId: { not: null } },
+          select: { productSlug: true, productName: true },
+        },
+      },
+    });
+    if (!order || !order.reviewToken || order.reviewToken !== token) {
+      throw new NotFoundException("Geçersiz veya daha önce kullanılmış yorum bağlantısı.");
+    }
+    return {
+      orderId: order.id,
+      items: order.items,
+    };
+  }
+
+  /**
+   * Token'lı yorum oluşturma — email linkinden gelen müşteri, giriş gerektirmez.
+   * Token tek kullanımlık: yorum oluşturulunca Order.reviewToken = null yapılır.
+   * Yorum onaysız (isApproved=false) doğar; admin moderasyonu şart.
+   */
+  async createFromToken(args: {
+    orderId: string;
+    token: string;
+    productSlug: string;
+    rating: number;
+    title?: string;
+    body: string;
+  }) {
+    // 1. Sipariş + token doğrula
+    const order = await this.prisma.order.findUnique({
+      where: { id: args.orderId },
+      select: {
+        id: true,
+        reviewToken: true,
+        email: true,
+        items: {
+          where: { productSlug: args.productSlug, productId: { not: null } },
+          select: { id: true, productId: true },
+        },
+      },
+    });
+    if (!order || !order.reviewToken || order.reviewToken !== args.token) {
+      throw new BadRequestException("Geçersiz veya daha önce kullanılmış yorum bağlantısı.");
+    }
+
+    // 2. productSlug bu siparişte var mı?
+    const item = order.items[0];
+    if (!item || !item.productId) {
+      throw new BadRequestException("Seçilen ürün bu siparişe ait değil.");
+    }
+
+    // 3. Aynı sipariş kalemi için yorum zaten var mı? (orderItemId @unique)
+    const existing = await this.prisma.review.findUnique({
+      where: { orderItemId: item.id },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new BadRequestException("Bu ürün için zaten yorum yapılmış.");
+    }
+
+    // 4. Yorumcu adı: bağlı kullanıcıdan veya email'in @ öncesinden türet (anonim görünüm)
+    const userRecord = order.email
+      ? await this.prisma.user.findFirst({
+          where: { email: order.email },
+          select: { fullName: true },
+        })
+      : null;
+    const userName = userRecord?.fullName?.trim() || (order.email ? order.email.split("@")[0] : "Müşteri");
+
+    const comment = args.title?.trim()
+      ? `${args.title.trim()}\n\n${args.body.trim()}`
+      : args.body.trim();
+
+    // 5. Yorum oluştur — onaysız (moderasyon gerekir)
+    const review = await this.prisma.review.create({
+      data: {
+        product: { connect: { id: item.productId } },
+        orderItemId: item.id,
+        userName,
+        rating: args.rating,
+        comment,
+        isApproved: false,
+      },
+      include: { product: { select: { slug: true, name: true } } },
+    });
+
+    // 6. Token'ı geçersiz kıl (tek kullanımlık)
+    await this.prisma.order.update({
+      where: { id: args.orderId },
+      data: { reviewToken: null },
+    });
+
+    return review;
   }
 }

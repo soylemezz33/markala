@@ -12,7 +12,7 @@ import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import type { Request } from "express";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { ReviewsService } from "./reviews.service";
-import { CreatePublicReviewDto } from "./reviews.dto";
+import { CreatePublicReviewDto, CreateTokenReviewDto, VerifyReviewTokenQueryDto } from "./reviews.dto";
 
 /**
  * Storefront'a AÇIK yorum okuma + giriş yapmış müşteri yorum bırakma.
@@ -62,6 +62,33 @@ export class ReviewsPublicController {
   ) {
     return this.service.createPublic({
       userId: req.user.sub,
+      productSlug: dto.productSlug,
+      rating: dto.rating,
+      title: dto.title,
+      body: dto.body,
+    });
+  }
+
+  /**
+   * Yorum daveti token doğrulama — email linkinden gelen müşteri, giriş gerektirmez.
+   * GET /reviews/public/verify-token?orderId=...&token=...
+   * Başarıda sipariş kalemlerini döner, yanlış/kullanılmış tokenda 404.
+   */
+  @Get("verify-token")
+  verifyToken(@Query() query: VerifyReviewTokenQueryDto) {
+    return this.service.verifyReviewToken(query.orderId, query.token);
+  }
+
+  /**
+   * Token'lı yorum oluşturma — email linkinden gelen müşteri, giriş gerektirmez.
+   * POST /reviews/public/from-token
+   * Token tek kullanımlık; yorum onaysız (pending) doğar.
+   */
+  @Post("from-token")
+  createFromToken(@Body() dto: CreateTokenReviewDto) {
+    return this.service.createFromToken({
+      orderId: dto.orderId,
+      token: dto.token,
       productSlug: dto.productSlug,
       rating: dto.rating,
       title: dto.title,

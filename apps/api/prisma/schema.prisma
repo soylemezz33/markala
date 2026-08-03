@@ -442,6 +442,12 @@ model Order {
   // İdempotens bu kolonla sağlanır: job aynı siparişe aynı aşamayı iki kez göndermez.
   recoveryMailStage Int @default(0) @map("recovery_mail_stage")
 
+  // Yorum daveti email token ve gönderim kaydı (LifecycleService saatlik cron, teslimattan 24 saat sonra).
+  // Token UUID; tek kullanımlık: yorum oluşturulunca NULL yapılır → ikinci gönderime imkân yok.
+  // reviewEmailSentAt ile idempotens: NULL olan siparişe cron yeniden mail göndermez.
+  reviewToken       String?   @unique @map("review_token")
+  reviewEmailSentAt DateTime? @map("review_email_sent_at")
+
   notes String? @db.Text
 
   createdAt DateTime  @default(now()) @map("created_at")

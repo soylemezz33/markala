@@ -48,6 +48,10 @@ services:
       PORT: 4000
       DATABASE_URL: postgresql://${POSTGRES_USER:-markala}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-markala}?schema=public
       JWT_SECRET: ${JWT_SECRET}
+      # Sadakat (puan) programı bayrağı — "true" olunca puan kazanımı/harcaması/frontend gösterimi
+      # aktif olur (GERÇEK PARA etkisi: ~%1 geri kazanım). Varsayılan false → dark-launch güvenli.
+      # Go-live: VPS .env'de LOYALTY_ENABLED=true set edip yeniden deploy et.
+      LOYALTY_ENABLED: ${LOYALTY_ENABLED:-false}
       # Integrations
       IYZICO_API_KEY: ${IYZICO_API_KEY}
       IYZICO_SECRET: ${IYZICO_SECRET}

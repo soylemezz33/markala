@@ -7,7 +7,7 @@ import { PrismaService } from "../prisma/prisma.service";
  *
  * Değer birimleri:
  * - Kazanım: harcanan her 1 TL için EARN_POINTS_PER_TL puan.
- * - Harcama: REDEEM_POINTS_PER_TL puan = 1 TL indirim (100 puan = 1 TL → ~%1 geri kazanım).
+ * - Harcama: REDEEM_POINTS_PER_TL puan = 1 TL indirim (10 puan = 1 TL → 100 puan = 10 TL).
  *
  * Güvenlik:
  * - Tüm program LOYALTY_ENABLED bayrağına bağlıdır (varsayılan KAPALI) → açılana kadar
@@ -21,7 +21,7 @@ export class LoyaltyService {
   private readonly logger = new Logger(LoyaltyService.name);
 
   static readonly EARN_POINTS_PER_TL = 1;
-  static readonly REDEEM_POINTS_PER_TL = 100;
+  static readonly REDEEM_POINTS_PER_TL = 10; // 10 puan = 1 TL → 100 puan = 10 TL indirim
   /** Bir siparişte puanla karşılanabilecek azami oran (ara toplamın yüzdesi). */
   static readonly MAX_REDEEM_RATIO = 0.5;
 

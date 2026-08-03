@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { randomUUID } from "crypto";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
@@ -99,5 +100,59 @@ export class LifecycleService {
     if (stage1 || stage2)
       this.logger.log(`payment-recovery: ${stage1} ilk + ${stage2} son hatırlatma gönderildi (${candidates.length} aday)`);
     return { stage1, stage2 };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Yorum daveti (review invitation) — teslimattan 24 saat sonra saatlik cron.
+  // ---------------------------------------------------------------------------
+
+  @Cron(CronExpression.EVERY_HOUR)
+  async handleReviewInvitationCron(): Promise<void> {
+    try {
+      await this.runReviewInvitation();
+    } catch (e) {
+      this.logger.error(`review-invitation cron hatası: ${(e as Error).message}`);
+    }
+  }
+
+  /** Test edilebilirlik için cron sarmalayıcısından ayrı tutulur. */
+  async runReviewInvitation(): Promise<{ sent: number }> {
+    const h = 60 * 60 * 1000;
+    const threshold = new Date(Date.now() - 24 * h); // 24 saati geçmiş teslim tarihi
+
+    // Aday siparişler: teslim edildi + 24 saat geçti + yorum daveti gönderilmemiş + silinmemiş.
+    // deliveredAt: siparişin teslim-edildi statüsüne geçtiği an (orders.service.ts'te set edilir).
+    const candidates = await this.prisma.order.findMany({
+      where: {
+        status: "teslim_edildi",
+        deliveredAt: { lte: threshold },
+        reviewEmailSentAt: null,
+        deletedAt: null,
+      },
+      select: { id: true, email: true },
+      orderBy: { deliveredAt: "asc" },
+      take: 100, // SMTP karantina riski; saatlik cron → artan iş sonraki turda erir
+    });
+
+    let sent = 0;
+    for (const order of candidates) {
+      if (!order.email) continue;
+
+      // Token DB'ye yaz — idempotens için önce işaretle, sonra mail gönder.
+      // reviewEmailSentAt set edildikten sonra cron bu siparişe bir daha dokunmaz.
+      // Mail gönderilemezse davet "atlandı" sayılır (at-most-once kabul edilebilir).
+      const token = randomUUID();
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { reviewToken: token, reviewEmailSentAt: new Date() },
+      });
+
+      const mailSent = await this.mail.sendReviewInvitationEmail(order.id, token);
+      if (mailSent) sent++;
+    }
+
+    if (sent || candidates.length)
+      this.logger.log(`review-invitation: ${sent}/${candidates.length} yorum daveti gönderildi`);
+    return { sent };
   }
 }

@@ -229,6 +229,12 @@ async function main() {
       description: "Markala müşterilerinin başarı hikayeleri ve önce/sonra örnekler.",
       sortOrder: 4,
     },
+    {
+      slug: "haber",
+      name: "Haberler",
+      description: "Matbaa, baskı ve reklam sektöründen güncel haberler ve gelişmeler.",
+      sortOrder: 5,
+    },
   ];
   for (const bc of blogCats) {
     await prisma.blogCategory.upsert({

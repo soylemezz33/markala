@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button, Price } from "@markala/ui";
-import { Package, ArrowsClockwise, MapPin, ArrowRight, ShoppingBagOpen, TrendUp, Sparkle } from "@phosphor-icons/react";
+import { Package, ArrowsClockwise, MapPin, ArrowRight, ShoppingBagOpen, TrendUp, Sparkle, Coins } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
@@ -16,6 +16,7 @@ export default function AccountOverviewPage() {
   const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [addressCount, setAddressCount] = useState<number | null>(null);
+  const [loyalty, setLoyalty] = useState<{ enabled: boolean; balance: number; redeemPerTl: number } | null>(null);
 
   // Gerçek sipariş + adres verisi backend'den (eskiden localStorage'dan okunup hep 0 gösteriyordu).
   useEffect(() => {
@@ -27,6 +28,9 @@ export default function AccountOverviewPage() {
     withRefresh(() => apiClient.users.listAddresses())
       .then((d) => { if (!cancelled) setAddressCount((d ?? []).length); })
       .catch(() => { if (!cancelled) setAddressCount(0); });
+    withRefresh(() => apiClient.loyalty.me())
+      .then((d) => { if (!cancelled) setLoyalty({ enabled: d.enabled, balance: d.balance, redeemPerTl: d.redeemPerTl }); })
+      .catch(() => { /* sessiz hata — puan kartı gösterilmez */ });
     return () => { cancelled = true; };
   }, [user, isBootstrapping]);
 
@@ -61,6 +65,33 @@ export default function AccountOverviewPage() {
           accent="bg-[#E8F0FF] text-[#1565C0]"
         />
       </div>
+
+      {/* Sadakat puanı özet kartı — yalnız program açıksa ve bakiye > 0 veya puan kazanılabilirse göster */}
+      {loyalty?.enabled && (
+        <Link
+          href="/hesabim/puanlarim"
+          className="group flex items-center justify-between gap-4 p-5 bg-ink-900 text-paper-50 rounded-xl hover:opacity-90 transition-opacity"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-brand-500/20 grid place-items-center flex-none">
+              <Coins size={20} className="text-brand-400" />
+            </div>
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-paper-300">Puan Bakiyem</div>
+              <div className="mt-0.5 text-2xl font-semibold">
+                {loyalty.balance.toLocaleString("tr-TR")}{" "}
+                <span className="text-base font-normal text-paper-300">puan</span>
+              </div>
+              {loyalty.balance > 0 && (
+                <div className="text-xs text-paper-400 mt-0.5">
+                  ≈ {Math.floor(loyalty.balance / loyalty.redeemPerTl).toLocaleString("tr-TR")} TL indirim değerinde
+                </div>
+              )}
+            </div>
+          </div>
+          <ArrowRight size={20} className="text-paper-400 group-hover:translate-x-1 transition-transform flex-none" />
+        </Link>
+      )}
 
       {/* Hoş geldin kuponu (yeni üyelere) */}
       {!loading && list.length === 0 && (

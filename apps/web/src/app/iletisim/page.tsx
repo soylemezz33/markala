@@ -24,7 +24,7 @@ export default function IletisimPage() {
     ad: '',
     email: '',
     telefon: '',
-    konu: konular[0],
+    konu: konular[0] ?? '',
     mesaj: '',
   });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -46,7 +46,7 @@ export default function IletisimPage() {
       });
       if (res.ok) {
         setStatus('success');
-        setForm({ ad: '', email: '', telefon: '', konu: konular[0], mesaj: '' });
+        setForm({ ad: '', email: '', telefon: '', konu: konular[0] ?? '', mesaj: '' });
       } else {
         const data = await res.json();
         setErrorMsg(data.error ?? 'Bir hata oluştu.');

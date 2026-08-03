@@ -497,6 +497,84 @@ export class MailService {
     }
   }
 
+  /**
+   * Teslimattan 24 saat sonra müşteriye yorum daveti — LifecycleService saatlik cron'u tetikler.
+   * orderId + tek kullanımlık UUID token alır; bağlantı /yorum sayfasına yönlendirir.
+   * HATA FIRLATMAZ (cron döngüsünü bloke etmez); başarı durumunu boolean döner.
+   */
+  async sendReviewInvitationEmail(orderId: string, token: string): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: { select: { fullName: true } },
+        items: { select: { productName: true }, take: 1 },
+      },
+    });
+    if (!order || !order.email) {
+      this.logger.warn(`mail.reviewInvitation: sipariş/e-posta yok order=${orderId}`);
+      return false;
+    }
+    if (!this.config.get<string>("SMTP_HOST")) {
+      this.logger.log(
+        `mail.reviewInvitation: SMTP_HOST yok → atlandı order=${order.orderNumber} to=${order.email}`,
+      );
+      await this.logNotification(order.email, "skipped", {
+        template: "review-invitation",
+        orderNumber: order.orderNumber,
+        reason: "smtp-not-configured",
+      });
+      return false;
+    }
+    const esc = (s: unknown) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    const name = order.user?.fullName?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const reviewUrl = `${webUrl}/yorum?order=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}`;
+    const subject = "Siparişiniz teslim edildi — deneyiminizi paylaşır mısınız?";
+    const text =
+      `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n` +
+      `${order.orderNumber} numaralı siparişinizi teslim aldığınızı umuyoruz.\n\n` +
+      `Deneyiminizi birkaç saniyede paylaşmak ister misiniz? Yorumlarınız hem bize ` +
+      `hem de ilerleyen müşterilere rehberlik ediyor.\n\n` +
+      `Yorum bırak: ${reviewUrl}\n\n` +
+      `Bağlantı tek kullanımlıktır.\n\nMarkala`;
+    const html = renderEmail({
+      title: "Deneyiminizi Paylaşır mısınız? ⭐",
+      intro: `${greeting} siparişinizi ulaştırdık — ne düşünüyorsunuz?`,
+      preheader: `${esc(order.orderNumber)} teslim edildi — deneyiminizi paylaşır mısınız?`,
+      bodyHtml: `<p style="margin:0 0 14px">
+          ${order.items[0] ? `<strong>${esc(order.items[0].productName)}</strong> ve diğer ürünlerinizi teslim aldınız.` : "Siparişinizi teslim aldınız."}
+          Deneyiminizi paylaşarak hem bize hem de diğer müşterilere yardımcı olabilirsiniz.
+        </p>
+        ${emailButton("⭐ Yorum bırak", reviewUrl)}
+        ${emailFallbackLink(reviewUrl)}
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bu bağlantı tek kullanımlıktır ve yalnızca size özeldir.</p>`,
+    });
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      await this.logNotification(order.email, "sent", {
+        messageId: info.messageId,
+        template: "review-invitation",
+        orderNumber: order.orderNumber,
+      });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.reviewInvitation failed to=${order.email}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", {
+        error: (err as Error).message,
+        template: "review-invitation",
+        orderNumber: order.orderNumber,
+      });
+      return false;
+    }
+  }
+
   private async logNotification(recipient: string, status: "sent" | "failed" | "skipped", metadata: Record<string, unknown>) {
     // template metadata'dan türetilir; yalnız doğrulama mailleri template geçmez (varsayılan).
     // Eskiden her mail "email-verification" olarak loglanıyordu → şablon bazlı rapor kördü.
