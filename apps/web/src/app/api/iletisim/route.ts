@@ -1,178 +1,101 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getContactTo, isMailConfigured, sendMail } from "@/lib/mailer";
-import { renderEmail, emailRow, emailTable } from "@/lib/email-template";
-import { verifyTurnstile } from "@/lib/turnstile";
+import { NextRequest, NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 
-// nodemailer Node.js API'lerine ihtiyaç duyar — edge runtime'da çalışmaz.
-export const runtime = "nodejs";
+// Simple in-memory rate limiter (resets on restart — production: use Redis)
+const requestCounts = new Map<string, { count: number; reset: number }>();
+const RATE_LIMIT = 3; // max per IP per 10 min
+const WINDOW_MS = 10 * 60 * 1000;
 
-interface ContactPayload {
-  name?: string;
-  email?: string;
-  phone?: string;
-  subject?: string;
-  message?: string;
-  consent?: boolean;
-  turnstileToken?: string;
+function getClientIp(req: NextRequest): string {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown'
+  );
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-/** Mesajı NestJS API'ye (DB) kalıcı yazar — SMTP'den BAĞIMSIZ, lead kaybolmaz (kurumsal-basvuru deseni). */
-async function persistContact(payload: {
-  ticketId: string;
-  name: string;
-  email: string;
-  phone?: string;
-  subject: string;
-  message: string;
-}): Promise<void> {
-  const apiBase =
-    process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://api:4000";
-  try {
-    const res = await fetch(`${apiBase}/api/contact`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, source: "iletisim" }),
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      console.error(`[iletisim] DB kaydı başarısız (${payload.ticketId}): HTTP ${res.status}`);
-    }
-  } catch (err) {
-    console.error(`[iletisim] DB kaydı hatası (${payload.ticketId}):`, (err as Error).message);
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = requestCounts.get(ip);
+  if (!record || now > record.reset) {
+    requestCounts.set(ip, { count: 1, reset: now + WINDOW_MS });
+    return false;
   }
+  if (record.count >= RATE_LIMIT) return true;
+  record.count++;
+  return false;
 }
 
-/**
- * İletişim formu endpoint.
- * 1) Mesaj NestJS API'ye yazılır → admin "Gelen Kutusu"na düşer (SMTP'den BAĞIMSIZ).
- * 2) Ayrıca CONTACT_TO adresine e-posta gönderilir (best-effort). Mail gitmese bile mesaj DB'de.
- */
 export async function POST(req: NextRequest) {
-  let body: ContactPayload;
+  const ip = getClientIp(req);
+  if (isRateLimited(ip)) {
+    return NextResponse.json(
+      { error: 'Çok fazla istek gönderdiniz. Lütfen 10 dakika sonra tekrar deneyin.' },
+      { status: 429 }
+    );
+  }
+
+  let body: { ad?: string; email?: string; telefon?: string; konu?: string; mesaj?: string };
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
+    return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
   }
 
-  // API DTO limitleri (name 120 / subject 160 / message 5000 / phone 32) — geçerli ama uzun girdi
-  // API'de 400'e düşüp DB kaydı sessizce kaybolmasın diye burada kırp (#27).
-  const name = (body.name ?? "").slice(0, 120);
-  const email = body.email ?? "";
-  const phone = (body.phone ?? "").slice(0, 32);
-  const subject = (body.subject ?? "").slice(0, 160);
-  const message = (body.message ?? "").slice(0, 5000);
+  const { ad, email, telefon, konu, mesaj } = body;
 
-  if (!name || name.length < 2) {
-    return NextResponse.json({ error: "Ad soyad zorunlu." }, { status: 400 });
+  if (!ad || !email || !mesaj) {
+    return NextResponse.json({ error: 'Ad, e-posta ve mesaj zorunludur.' }, { status: 422 });
   }
-  if (!email || !email.includes("@")) {
-    return NextResponse.json({ error: "Geçerli e-posta zorunlu." }, { status: 400 });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Geçerli bir e-posta adresi giriniz.' }, { status: 422 });
   }
-  if (!subject || subject.length < 2) {
-    return NextResponse.json({ error: "Konu zorunlu." }, { status: 400 });
+  if (mesaj.length < 10) {
+    return NextResponse.json({ error: 'Mesaj en az 10 karakter olmalıdır.' }, { status: 422 });
   }
-  if (!message || message.length < 10) {
+
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
+    console.error('SMTP env vars eksik');
     return NextResponse.json(
-      { error: "Mesaj en az 10 karakter olmalı." },
-      { status: 400 },
+      { error: 'E-posta sistemi yapılandırılmamış. Lütfen WhatsApp üzerinden ulaşın.' },
+      { status: 503 }
     );
   }
 
-  // Bot koruması: Turnstile token doğrula (prod'da fail-closed) → spam persist+mail'den ÖNCE reddedilir.
-  const ip =
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    undefined;
-  if (!(await verifyTurnstile(body.turnstileToken, ip))) {
-    return NextResponse.json(
-      { error: "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin." },
-      { status: 400 },
-    );
-  }
-
-  const ticketId = `TK-${Date.now().toString(36).toUpperCase()}`;
-
-  // DB'ye kalıcı yaz (admin Gelen Kutusu'na düşsün) — SMTP durumundan BAĞIMSIZ, HER ZAMAN.
-  await persistContact({ ticketId, name, email, phone, subject, message });
-
-  // SMTP yapılandırılmamışsa (dev): mock davranışı koru
-  if (!isMailConfigured()) {
-    console.log(`[iletisim] new submission (SMTP devre dışı, mock): ticketId=${ticketId} subject="${subject}"`);
-    return NextResponse.json({
-      ok: true,
-      ticketId,
-      message: "Mesajınız bize ulaştı. 24 saat içinde dönüş yapacağız.",
-    });
-  }
-
-  const text = [
-    `Yeni iletişim formu mesajı (${ticketId})`,
-    "",
-    `Ad Soyad: ${name}`,
-    `E-posta: ${email}`,
-    `Telefon: ${phone || "-"}`,
-    `Konu: ${subject}`,
-    "",
-    "Mesaj:",
-    message,
-  ].join("\n");
-
-  const rows = emailTable(
-    emailRow("Ad Soyad", `<strong>${escapeHtml(name)}</strong>`) +
-      emailRow("E-posta", `<a href="mailto:${escapeHtml(email)}" style="color:#5C4100">${escapeHtml(email)}</a>`) +
-      emailRow("Telefon", escapeHtml(phone || "-")) +
-      emailRow("Konu", escapeHtml(subject)),
-  );
-  const html = renderEmail({
-    title: "Yeni İletişim Formu Mesajı",
-    intro: `Talep No: ${escapeHtml(ticketId)}`,
-    preheader: `${escapeHtml(name)} — ${escapeHtml(subject)}`,
-    bodyHtml: `${rows}
-      <div style="margin-top:18px;padding-top:16px;border-top:1px solid #e7e5e4">
-        <p style="margin:0 0 6px;color:#78716c;font-size:13px">Mesaj</p>
-        <p style="margin:0;white-space:pre-wrap;font-size:14px;line-height:1.6;color:#1A1410">${escapeHtml(message)}</p>
-      </div>`,
-    footnote: "Bu mesaja doğrudan yanıtlayarak müşteriye dönüş yapabilirsiniz (Yanıtla → müşteri e-postası).",
+  const transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: Number(SMTP_PORT),
+    secure: Number(SMTP_PORT) === 465,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
+
+  const html = `
+    <h2>Yeni İletişim Formu Mesajı</h2>
+    <table cellpadding="8" style="border-collapse:collapse;font-family:sans-serif">
+      <tr><td><strong>Ad Soyad:</strong></td><td>${ad}</td></tr>
+      <tr><td><strong>E-posta:</strong></td><td><a href="mailto:${email}">${email}</a></td></tr>
+      ${telefon ? `<tr><td><strong>Telefon:</strong></td><td>${telefon}</td></tr>` : ''}
+      ${konu ? `<tr><td><strong>Konu:</strong></td><td>${konu}</td></tr>` : ''}
+      <tr><td><strong>Mesaj:</strong></td><td style="white-space:pre-wrap">${mesaj.replace(/</g, '&lt;')}</td></tr>
+    </table>
+  `;
 
   try {
-    await sendMail({
-      to: getContactTo(),
-      subject: `Yeni iletişim formu: ${subject}`,
-      text,
-      html,
+    await transporter.sendMail({
+      from: '"Markala İletişim" <' + SMTP_USER + '>',
+      to: SMTP_USER,
       replyTo: email,
+      subject: '[Markala] ' + (konu ?? 'Yeni mesaj') + ' — ' + ad,
+      html,
     });
   } catch (err) {
-    // SMTP geçici sorunu kullanıcıyı BLOKE ETMEMELİ (eski davranış 502 → "ulaşmıyor").
-    // Mesajın tamamı sunucu loglarına yazılır (kaybolmaz, ekip ulaşır) + kullanıcı WhatsApp'a yönlendirilir.
-    console.error(
-      `[iletisim] mail gönderilemedi (${ticketId}) — mesaj LOGLANDI:`,
-      (err as Error).message,
-      JSON.stringify({ ticketId, name, email, phone, subject, message }),
+    console.error('Mail gönderim hatası:', err);
+    return NextResponse.json(
+      { error: 'Mesajınız gönderilemedi. Lütfen daha sonra tekrar deneyin veya WhatsApp üzerinden ulaşın.' },
+      { status: 500 }
     );
-    return NextResponse.json({
-      ok: true,
-      ticketId,
-      degraded: true,
-      message:
-        "Mesajını aldık. En hızlı dönüş için WhatsApp hattımızdan da yazabilirsin: 0531 900 41 02",
-    });
   }
 
-  return NextResponse.json({
-    ok: true,
-    ticketId,
-    message: "Mesajınız bize ulaştı. 24 saat içinde dönüş yapacağız.",
-  });
+  return NextResponse.json({ success: true });
 }
