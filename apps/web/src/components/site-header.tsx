@@ -277,6 +277,10 @@ const DEFAULT_NAV: NavCategory[] = [
       },
     ],
   },
+  {
+    label: "Kurumsal",
+    href: "/kurumsal",
+  },
 ];
 
 export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
