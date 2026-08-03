@@ -224,11 +224,15 @@ export class PaymentsService implements OnModuleInit {
       }
       throw new ServiceUnavailableException("Ödeme başlatılamadı, lütfen tekrar deneyin.");
     }
-    // Token'ı sakla — callback kaçarsa reconciliation bununla ödemeyi kurtarır.
+    // Token'ı sakla — callback kaçarsa reconciliation bununla ödemeyi kurtarır. Yazım hatası
+    // ödemeyi BLOKLAMAZ (kullanıcı iyzico'ya gitsin) ama SESSİZ de kalmasın: token'sız sipariş
+    // callback kaçarsa reconcile edilemez — loglanmalı ki fark edilsin.
     if (res.token) {
       await this.prisma.order
         .update({ where: { id: orderId }, data: { iyzicoCheckoutToken: res.token } })
-        .catch(() => undefined);
+        .catch((err: Error) =>
+          this.logger.error(`iyzicoCheckoutToken yazılamadı orderId=${orderId} — callback kaçarsa reconcile ÇALIŞMAZ: ${err.message}`),
+        );
     }
     return { paymentPageUrl: res.paymentPageUrl, checkoutFormContent: res.checkoutFormContent, token: res.token };
   }

@@ -66,13 +66,7 @@ async function bootstrap() {
   // "Google ile devam et" — login eşi limit. Tokeninfo (Google) amplification'ı ve
   // otomatik-hesap-oluşturma seli bu sınırla kesilir.
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/google", method: "POST" }));
-  app.use(
-    rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/auth/resend-verification", method: "POST" }),
-  );
-  // Public doğrulama-maili yeniden gönderme (e-posta ile, girişsiz) — spam/enumeration koruması 5/saat.
-  app.use(
-    rateLimit({ windowMs: 60 * 60_000, max: 5, path: "/auth/resend-verification-public", method: "POST" }),
-  );
+  // verify-email geri-uyumluluk endpoint'i (doğrulama kaldırıldı; eski mail bağlantıları için).
   app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/auth/verify-email", method: "POST" }));
   app.use(
     rateLimit({ windowMs: 60 * 60_000, max: 12, path: "/auth/forgot-password", method: "POST" }),
@@ -81,6 +75,13 @@ async function bootstrap() {
   app.use(rateLimit({ windowMs: 60_000, max: 30, path: "/auth/refresh", method: "POST" }));
   // Ödeme başlatma — nonce zaten zorunlu; bu per-IP limit ek savunma (kötüye kullanım/spam).
   app.use(rateLimit({ windowMs: 60_000, max: 20, path: "/payments/iyzico/init", method: "POST" }));
+  // NOT (2026-08-01): POST /orders'a per-IP limit KOYMA — siparişler Next proxy'sinin
+  // sunucu-içi fetch'iyle gelir (tek container IP'si), limit SİTE GENELİ tek kovaya dönüşür
+  // ve kampanya trafiğinde meşru checkout'ları 429'lar. Doğru çözüm: proxy'den X-Forwarded-For
+  // aktarımı + limiter'ın XFF okuması (backlog).
+  // Kupon doğrulama (public, tarayıcıdan DOĞRUDAN api.markala.com.tr'ye gelir → gerçek müşteri
+  // IP'si) — kod brute-force + e-posta sipariş-geçmişi probing'i yavaşlatılır (denetim 2026-08-01).
+  app.use(rateLimit({ windowMs: 60_000, max: 15, path: "/coupons/validate", method: "POST" }));
   // Ziyaretçi analizi olay toplama — public + yüksek-frekanslı; per-IP spam/flood koruması.
   app.use(rateLimit({ windowMs: 60_000, max: 120, path: "/analytics/collect", method: "POST" }));
   // Müşteri tasarım dosyası yükleme — public + büyük dosya; per-IP kötüye kullanım koruması.

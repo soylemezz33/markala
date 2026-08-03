@@ -27,6 +27,7 @@ import {
   ArrowRight,
   Heart,
   Tag,
+  Gift,
 } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
 import type { Category, Product } from "@markala/types";
@@ -431,6 +432,13 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                   </a>
                   <span className="hidden lg:flex items-center gap-1.5 text-paper-100/70">
                     <Truck size={12} weight="fill" /> 81 ile teslimat
+                  </span>
+                  {/* İlk-sipariş teşviki üst çubukta HER sayfada görünür — CRO denetimi
+                      2026-08-01: kupon yalnız sayfa diplerindeydi, duvara gelen müşteri
+                      %10'u hiç görmüyordu. */}
+                  <span className="hidden md:flex items-center gap-1.5 text-brand-400 font-semibold">
+                    <Gift size={12} weight="fill" /> İlk siparişe %10:{" "}
+                    <code className="rounded bg-brand-500/15 px-1.5 py-0.5 font-mono text-[11px]">HOSGELDIN</code>
                   </span>
                 </div>
                 <nav className="flex items-center gap-4 md:gap-5">

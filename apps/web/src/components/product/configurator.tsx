@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
 import { Button, Price } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, ChatCircleText, ShieldCheck } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle, ChatCircleText, ShieldCheck, Truck } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import {
   calculateTotal,
@@ -20,6 +20,7 @@ import {
 } from "@/lib/configurator";
 import { exVat } from "@/lib/vat";
 import { useCartStore } from "@/lib/cart-store";
+import { apiClient } from "@/lib/api";
 import {
   ConfiguratorContext,
   configuratorReducer,
@@ -85,6 +86,12 @@ function buildGroups(raw: unknown[]): OptionGroupData[] {
 export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PRICING }: { product: Product; rating?: { average: number; count: number }; pricing?: PricingSettings }) {
   const addItem = useCartStore((s) => s.addItem);
   const [state, dispatch] = useReducer(configuratorReducer, product, initState);
+  // Kargo ücreti buy-box'ta ŞEFFAF gösterilir — sepetteki +79₺ sürprizi terk ettiriyordu
+  // (CRO denetimi 2026-08-01). API düşerse 79/1500 fallback; sepet sayfasıyla aynı kaynak.
+  const [shippingInfo, setShippingInfo] = useState({ fee: 79, freeThreshold: 1500 });
+  useEffect(() => {
+    apiClient.settings.shipping().then(setShippingInfo).catch(() => {});
+  }, []);
   // Fiyatlar tüm sitede DAİMA KDV dahil gösterilir (B2C yasal gereği + sepet/ödeme ile tutarlı).
   // Eski KDV dahil/hariç toggle'ı kaldırıldı; gösterim mantığı sabit dahil olarak korunur.
   const kdvDahil = true;
@@ -443,6 +450,14 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                 : undefined
           }
         />
+
+        {/* Kargo şeffaflığı: tutar + ücretsiz eşiği fiyatın hemen altında (sepet sürprizi yok). */}
+        {canBuy && (
+          <p className="text-xs text-ink-500 -mt-2 flex items-center gap-1.5">
+            <Truck size={14} weight="fill" className="text-ink-400" />
+            Kargo {shippingInfo.fee}₺ — {shippingInfo.freeThreshold.toLocaleString("tr-TR")}₺ üzeri ücretsiz
+          </p>
+        )}
 
         {ctaReason && (
           <p className="text-xs text-ink-500 -mt-2">{ctaReason}</p>

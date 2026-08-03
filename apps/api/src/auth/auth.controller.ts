@@ -40,7 +40,11 @@ export class AuthController {
   // Brute force: register 3 deneme / saat / IP — bot kayıt seliyle DB'yi şişirmeyi engeller.
   // Rate limit main.ts'teki rateLimit() middleware'inde uygulanır.
   @Post("register")
-  async register(@Body() dto: RegisterDto, @Req() req: Request) {
+  async register(
+    @Body() dto: RegisterDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const ip = this.clientIp(req);
     // Bot koruması: Turnstile doğrula (prod fail-closed) — main.ts rate-limit'ine EK katman.
     // NOT: api container'da TURNSTILE_SECRET_KEY set olmalı, yoksa prod'da tüm kayıtlar bloklanır.
@@ -49,12 +53,17 @@ export class AuthController {
         "Güvenlik doğrulaması başarısız. Sayfayı yenileyip tekrar deneyin.",
       );
     }
-    // Katı e-posta doğrulama: register OTO-GİRİŞ YAPMAZ (cookie/token verilmez) — kullanıcı
-    // e-postasını doğrulayıp giriş yapar. Dönen { needsVerification, email, emailSent }.
-    return this.auth.register(dto, {
+    // E-posta doğrulama kaldırıldı (2026-07-31): kayıt = OTO-GİRİŞ. Login ile aynı
+    // oturum çifti döner; refresh token cookie'ye yazılır, body'de yalnız access token kalır.
+    const result = await this.auth.register(dto, {
       userAgent: req.headers["user-agent"],
       ipAddress: ip,
     });
+    this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresAt);
+    return {
+      accessToken: result.accessToken,
+      user: result.user,
+    };
   }
 
   // Brute force: login 5/dk/IP. Hatalı parola enumeration limitlenir.
@@ -92,6 +101,7 @@ export class AuthController {
     this.setRefreshCookie(res, result.refreshToken, result.refreshExpiresAt);
     return {
       accessToken: result.accessToken,
+      isNewUser: result.isNewUser,
       user: result.user,
     };
   }
@@ -133,27 +143,12 @@ export class AuthController {
     return this.auth.resetPassword(dto.token, dto.newPassword);
   }
 
-  // E-posta doğrulama (public). Token'lı bağlantıdan gelir; geçersiz/süresi dolmuş → 400.
+  // E-posta doğrulama (public) — GERİ UYUMLULUK: doğrulama kaldırıldı (2026-07-31), yeni
+  // token üretilmiyor; yalnız eski maillerdeki bağlantılar (24 saat) çalışsın diye duruyor.
   // Rate limit: verify-email 10/dk/IP (main.ts).
   @Post("verify-email")
   async verifyEmail(@Body() dto: VerifyEmailDto) {
     return this.auth.verifyEmail(dto.token);
-  }
-
-  // Doğrulama mailini yeniden gönder (giriş yapmış kullanıcı). Zaten doğruluysa no-op.
-  // Rate limit: resend-verification 10/saat/IP (main.ts).
-  @Post("resend-verification")
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  async resendVerification(@Req() req: Request & { user: { sub: string } }) {
-    return this.auth.resendVerification(req.user.sub);
-  }
-
-  // PUBLIC doğrulama maili yeniden gönder (e-posta ile) — giriş YAPAMAYAN doğrulanmamış kullanıcı
-  // için (login 403 ekranı). Daima { ok:true } (enumeration koruması). Rate limit 5/saat/IP.
-  @Post("resend-verification-public")
-  async resendVerificationPublic(@Body() dto: ForgotPasswordDto) {
-    return this.auth.resendVerificationPublic(dto.email);
   }
 
   @Get("me")

@@ -54,7 +54,9 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
         const ok = !!srv && (srv.paymentStatus === "basarili" || (isCari && srv.paymentMethod === "cari"));
         setPaymentConfirmed(ok);
         if (ok) {
-          const src = local ?? (srv as unknown as Order);
+          // SUNUCU verisi öncelikli: local (store) siparişi client fiyatlarıyla kurulmuştur;
+          // fiyat sapması varsa GA4/Meta purchase value yanlış gider. srv elimizdeyken onu kullan.
+          const src = (srv as unknown as Order) ?? local;
           // Çift sayım koruması: başarı sayfası yenileme/geri dönüşle tekrar açıldığında purchase
           // YENİDEN atılıyordu — Meta event_id dedup penceresi (48s) dışında bu çift dönüşüm sayılır.
           // orderId başına tek atış: bayrak varsa hiç ateşleme. localStorage erişilemezse (gizli mod)
@@ -69,7 +71,9 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
           if (!alreadyFired) {
             trackPurchase(
               src.orderNumber,
-              src.total,
+              // srv yolunda total Prisma Decimal'den STRING serileşir ("1234.5600") —
+              // GA4/Ads value sözleşmesi number ister; unitPrice gibi normalize edilir.
+              Number(src.total) || 0,
               src.items.length,
               // GA4 items[] + Meta content_ids: sipariş kalemlerinden. Kimlik = slug; kampanya
               // paketi gibi slug'sız kalemlerde ürün adına düşülür. price = birim fiyat —

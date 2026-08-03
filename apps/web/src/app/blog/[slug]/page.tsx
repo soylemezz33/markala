@@ -50,7 +50,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return { title: "Yazı bulunamadı" };
 
   return {
-    title: post.seoTitle ?? post.title,
+    // İçerik title'ı DB'den "| Markala" ekiyle gelebilir; layout şablonu zaten marka eki
+    // bastığından burada ayıklanır (yoksa "... | Markala — Markala" çıkıyor — PDP ile aynı koruma).
+    title: (post.seoTitle ?? post.title).replace(/\s*[|·—-]\s*Markala\s*$/i, ""),
     description: post.seoDescription ?? post.excerpt,
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {

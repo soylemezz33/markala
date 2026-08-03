@@ -1,266 +1,353 @@
-'use client';
+"use client";
 
-import { useState, type FormEvent, type ChangeEvent } from 'react';
-import { TurnstileWidget, turnstileEnabled } from '@/components/turnstile-widget';
+import { useState, cloneElement, isValidElement, ReactElement } from "react";
+import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
+import Link from "next/link";
+import { Container, Button } from "@markala/ui";
+import {
+  Phone, EnvelopeSimple, MapPin, WhatsappLogo, Clock, ArrowRight,
+  Buildings, Users, ChatCircle, CheckCircle,
+} from "@phosphor-icons/react";
+import { trackLead } from "@/lib/analytics";
+import { PhoneInput } from "@/components/forms/phone-input";
 
-const konular = [
-  'Genel Bilgi',
-  'Sipariş Takibi',
-  'Kurumsal Fiyatlandırma',
-  'Tasarım Yardımı',
-  'Teknik Sorun',
-  'Diğer',
+const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
+
+const channels = [
+  {
+    icon: WhatsappLogo,
+    label: "WhatsApp",
+    // Görünen numara, href'teki GERÇEK WhatsApp hattıyla (wa.me/905319004102) tutarlı
+    // olmalı — önce sabit hat (0324…) yazılıydı, tık GSM'e açılıp kullanıcıyı şaşırtıyordu.
+    value: "0531 900 41 02",
+    sub: "En hızlı kanal · ortalama 5 dk yanıt",
+    href: "https://wa.me/905319004102",
+    accent: "bg-success/10 text-success",
+    cta: "WhatsApp aç",
+  },
+  {
+    icon: Phone,
+    label: "Telefon",
+    value: "0324 433 33 51",
+    sub: "Hafta içi 09:00 — 18:00",
+    href: "tel:+903244333351",
+    accent: "bg-brand-100 text-brand-700",
+    cta: "Hemen ara",
+  },
+  {
+    icon: EnvelopeSimple,
+    label: "E-posta",
+    value: "merhaba@markala.com.tr",
+    sub: "Detaylı talepler için · 24 saat içinde dönüş",
+    href: "mailto:merhaba@markala.com.tr",
+    accent: "bg-[#E8F0FF] text-[#1565C0]",
+    cta: "Mail gönder",
+  },
+  {
+    icon: MapPin,
+    label: "Adres & Ziyaret",
+    value: "Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A",
+    sub: "Yenişehir / Mersin · randevu ile ziyaret",
+    href: "https://maps.google.com/?q=Menteş+Mah.+100.+Yıl+Cumhuriyet+Cad.+No:59/A+Yenişehir+Mersin",
+    accent: "bg-brand-100 text-brand-700",
+    cta: "Haritada aç",
+  },
 ];
 
-type FormState = {
-  ad: string;
-  email: string;
-  telefon: string;
-  konu: string;
-  mesaj: string;
-};
+const offices = [
+  { icon: Buildings, title: "Atölye / Showroom", value: "Mersin, Türkiye", sub: "Önceden randevu ile ziyaret" },
+  { icon: Clock, title: "Çalışma Saatleri", value: "Pzt-Cum 09:00-18:00 · Cmt 09:00-17:00", sub: "Pazar kapalı" },
+  { icon: Users, title: "Kurumsal Satış", value: "B2B özel teklif", sub: "Aylık fatura · cari hesap" },
+];
 
-export default function IletisimPage() {
-  const [form, setForm] = useState<FormState>({
-    ad: '',
-    email: '',
-    telefon: '',
-    konu: konular[0] ?? '',
-    mesaj: '',
+export default function ContactPage() {
+  const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ticketId, setTicketId] = useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
   });
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [kvkkAccepted, setKvkkAccepted] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  // key değişince widget yeniden mount edilir (başarı sonrası sıfırlama için)
-  const [turnstileKey, setTurnstileKey] = useState(0);
 
-  function handle(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  function update<K extends keyof typeof form>(key: K, val: string) {
+    setForm((f) => ({ ...f, [key]: val }));
   }
 
-  async function submit(e: FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setStatus('sending');
-    setErrorMsg('');
+    if (!kvkkAccepted) {
+      setError("KVKK aydınlatma metnini onaylamadan mesaj gönderemezsiniz.");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
     try {
-      const res = await fetch('/api/iletisim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/iletisim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...form, turnstileToken }),
       });
-      if (res.ok) {
-        setStatus('success');
-        setForm({ ad: '', email: '', telefon: '', konu: konular[0] ?? '', mesaj: '' });
-        setTurnstileToken(null);
-        setTurnstileKey((k) => k + 1);
-      } else {
-        const data = await res.json();
-        setErrorMsg(data.error ?? 'Bir hata oluştu.');
-        setStatus('error');
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Mesaj gönderilemedi.");
+        return;
       }
+      setTicketId(data.ticketId ?? null);
+      setSent(true);
+      trackLead("contact_form", { subject: form.subject });
     } catch {
-      setErrorMsg('Bağlantı hatası. İnternet bağlantınızı kontrol edin.');
-      setStatus('error');
+      setError("Sunucuya ulaşılamadı.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  const WHATSAPP = 'https://wa.me/905300000000?text=Merhaba%2C%20bilgi%20almak%20istiyorum.';
-
   return (
-    <main>
-      {/* Hero */}
-      <section className="bg-[#4B3AA0] text-white py-14 px-4 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">İletişim</h1>
-        <p className="text-purple-200 text-lg">Size yardımcı olmaktan mutluluk duyarız.</p>
-      </section>
-
-      <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Contact info */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">Bize Ulaşın</h2>
-
-          <div className="space-y-5 text-gray-700">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">📱</span>
-              <div>
-                <p className="font-semibold">WhatsApp (En Hızlı)</p>
-                <a
-                  href={WHATSAPP}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#4B3AA0] underline"
-                >
-                  WhatsApp ile mesaj gönder
-                </a>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">📧</span>
-              <div>
-                <p className="font-semibold">E-posta</p>
-                <a href="mailto:info@markala.com.tr" className="text-[#4B3AA0] underline">
-                  info@markala.com.tr
-                </a>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">🕐</span>
-              <div>
-                <p className="font-semibold">Çalışma Saatleri</p>
-                <p>Pazartesi – Cuma: 09:00 – 18:00</p>
-                <p>Cumartesi: 10:00 – 14:00</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl mt-0.5">🚚</span>
-              <div>
-                <p className="font-semibold">Teslimat</p>
-                <p>Türkiye geneli 81 ile kargo</p>
-              </div>
-            </div>
+    <>
+      {/* Page header — ölü alanı azaltmak için kompakt üst boşluk */}
+      <div className="bg-paper-100 border-b border-paper-200">
+        <Container className="py-8 md:py-10">
+          <div className="max-w-2xl">
+            <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">İletişim</p>
+            <h1 className="mt-2 text-4xl md:text-5xl font-semibold text-ink-900 leading-tight">
+              Bize ulaşın
+            </h1>
+            <p className="mt-4 text-lg text-ink-700">
+              Sipariş, tasarım desteği veya kurumsal teklifler — size en uygun kanaldan yazın.
+            </p>
           </div>
-
-          <div className="mt-8">
-            <a
-              href={WHATSAPP}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block bg-[#FFB91C] text-[#1a1a2e] font-bold py-3 px-7 rounded-full hover:bg-yellow-400 transition"
-            >
-              WhatsApp&apos;tan Teklif Al
-            </a>
-          </div>
-        </div>
-
-        {/* Form */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">Mesaj Gönder</h2>
-
-          {status === 'success' ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-              <p className="text-2xl mb-2">✅</p>
-              <p className="font-semibold text-green-800">Mesajınız alındı!</p>
-              <p className="text-green-700 text-sm mt-1">
-                En kısa sürede size dönüş yapacağız. Acil sorular için WhatsApp&apos;ı kullanabilirsiniz.
-              </p>
-              <button
-                onClick={() => setStatus('idle')}
-                className="mt-4 text-sm text-[#4B3AA0] underline"
-              >
-                Yeni mesaj gönder
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={submit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="ad">
-                  Ad Soyad <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="ad"
-                  name="ad"
-                  type="text"
-                  required
-                  value={form.ad}
-                  onChange={handle}
-                  placeholder="Ahmet Yılmaz"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B3AA0]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
-                  E-posta <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={handle}
-                  placeholder="ahmet@sirket.com"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B3AA0]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="telefon">
-                  Telefon (isteğe bağlı)
-                </label>
-                <input
-                  id="telefon"
-                  name="telefon"
-                  type="tel"
-                  value={form.telefon}
-                  onChange={handle}
-                  placeholder="0532 000 00 00"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B3AA0]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="konu">
-                  Konu
-                </label>
-                <select
-                  id="konu"
-                  name="konu"
-                  value={form.konu}
-                  onChange={handle}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B3AA0]"
-                >
-                  {konular.map((k) => (
-                    <option key={k}>{k}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="mesaj">
-                  Mesaj <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="mesaj"
-                  name="mesaj"
-                  required
-                  value={form.mesaj}
-                  onChange={handle}
-                  rows={5}
-                  placeholder="Nasıl yardımcı olabiliriz?"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4B3AA0] resize-none"
-                />
-              </div>
-
-              {status === 'error' && (
-                <p className="text-red-600 text-sm">{errorMsg}</p>
-              )}
-
-              <TurnstileWidget
-                key={turnstileKey}
-                action="iletisim"
-                onToken={setTurnstileToken}
-              />
-
-              <button
-                type="submit"
-                disabled={status === 'sending' || (turnstileEnabled && !turnstileToken)}
-                className="w-full bg-[#FFB91C] text-[#1a1a2e] font-bold py-3 px-6 rounded-full hover:bg-yellow-400 transition disabled:opacity-60"
-              >
-                {status === 'sending' ? 'Gönderiliyor…' : 'Mesaj Gönder'}
-              </button>
-
-              <p className="text-xs text-gray-400 text-center">
-                Acil sipariş için{' '}
-                <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="underline text-[#4B3AA0]">
-                  WhatsApp
-                </a>
-                &apos;ı tercih edin.
-              </p>
-            </form>
-          )}
-        </div>
+        </Container>
       </div>
-    </main>
+
+      <Container className="py-12 md:py-16">
+        {/* Hızlı kanal kartları */}
+        <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+          {channels.map((c) => (
+            <a
+              key={c.label}
+              href={c.href}
+              target={c.href.startsWith("http") ? "_blank" : undefined}
+              rel={c.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              className="group flex flex-col p-6 bg-paper-50 border border-paper-200 rounded-xl hover:border-ink-300 hover:shadow-lg transition-all"
+            >
+              <div className={`w-12 h-12 rounded-lg grid place-items-center mb-4 ${c.accent}`}>
+                <c.icon size={22} weight="regular" />
+              </div>
+              <div className="text-xs uppercase tracking-wider text-ink-500 font-semibold">{c.label}</div>
+              {/* E-posta gibi uzun tek-parça değerler dar kartta kelime ortasından kırılmasın:
+                  boşluklu değerler (adres) kelime sınırında sarar, uzun token küçülüp sığar. */}
+              <div className="mt-1 text-base font-semibold text-ink-900 break-words leading-snug">{c.value}</div>
+              <p className="mt-2 text-sm text-ink-500 leading-relaxed flex-1">{c.sub}</p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 group-hover:gap-2.5 transition-all">
+                {c.cta} <ArrowRight size={14} weight="bold" />
+              </span>
+            </a>
+          ))}
+        </section>
+
+        <div className="grid lg:grid-cols-12 gap-10">
+          {/* Sol: Form */}
+          <section id="teklif" className="lg:col-span-7 scroll-mt-24">
+            <header className="mb-6">
+              <h2 className="text-2xl md:text-3xl font-semibold text-ink-900">Mesaj gönderin</h2>
+              <p className="mt-2 text-ink-700">Formu doldurun — sipariş veya teklif talebi için en geç 24 saatte dönüş yaparız.</p>
+            </header>
+
+            {sent ? (
+              <div className="p-10 bg-success/5 border border-success/20 rounded-xl text-center">
+                <div className="w-14 h-14 mx-auto rounded-full bg-success/10 grid place-items-center text-success">
+                  <CheckCircle size={28} weight="fill" />
+                </div>
+                <h3 className="mt-4 text-xl font-semibold text-ink-900">Mesajınız iletildi</h3>
+                <p className="mt-2 text-ink-700">En geç 24 saat içinde geri dönüş yapacağız.</p>
+                {ticketId && (
+                  <code className="mt-3 inline-block px-3 py-1.5 rounded bg-paper-100 text-xs text-ink-700 font-mono">
+                    Talep No: {ticketId}
+                  </code>
+                )}
+                <div className="mt-6">
+                  <Button variant="outline" onClick={() => {
+                    setSent(false);
+                    setTicketId(null);
+                    setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+                  }}>
+                    Yeni Mesaj
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={onSubmit} className="p-6 md:p-8 bg-paper-50 border border-paper-200 rounded-xl space-y-4" noValidate>
+                {error && (
+                  <div
+                    role="alert"
+                    aria-live="polite"
+                    className="px-4 py-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm"
+                  >
+                    {error}
+                  </div>
+                )}
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <Field id="iletisim-name" label="Ad Soyad" required>
+                    <input
+                      className={inputClass}
+                      required
+                      autoComplete="name"
+                      value={form.name}
+                      onChange={(e) => update("name", e.target.value)}
+                    />
+                  </Field>
+                  <Field id="iletisim-email" label="E-posta" required>
+                    <input
+                      type="email"
+                      className={inputClass}
+                      required
+                      autoComplete="email"
+                      inputMode="email"
+                      value={form.email}
+                      onChange={(e) => update("email", e.target.value)}
+                    />
+                  </Field>
+                </div>
+                <PhoneInput
+                  value={form.phone}
+                  onChange={(v) => update("phone", v)}
+                  label="Telefon"
+                  inputClassName={inputClass}
+                />
+                <Field id="iletisim-subject" label="Konu" required>
+                  <select
+                    required
+                    className={inputClass}
+                    value={form.subject}
+                    onChange={(e) => update("subject", e.target.value)}
+                  >
+                    <option value="">Seçin...</option>
+                    <option>Sipariş öncesi soru</option>
+                    <option>Mevcut siparişim hakkında</option>
+                    <option>Tasarım desteği talebi</option>
+                    <option>Kurumsal / B2B teklif</option>
+                    <option>Şikayet veya iade</option>
+                    <option>Diğer</option>
+                  </select>
+                </Field>
+                <Field id="iletisim-message" label="Mesaj" required>
+                  <textarea
+                    required
+                    rows={5}
+                    className={`${inputClass} resize-none`}
+                    placeholder="Detaylı yazabilirsiniz..."
+                    value={form.message}
+                    onChange={(e) => update("message", e.target.value)}
+                  />
+                </Field>
+                <label className="flex items-start gap-2 text-xs text-ink-700">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={kvkkAccepted}
+                    onChange={(e) => setKvkkAccepted(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <Link href="/yasal/kvkk" className="underline hover:text-ink-900">KVKK aydınlatma metnini</Link> okudum,
+                    kişisel verilerimin yalnızca bu talepte değerlendirilmek üzere işlenmesine onay veriyorum.
+                  </span>
+                </label>
+                <TurnstileWidget action="contact" onToken={setTurnstileToken} />
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={submitting || !kvkkAccepted || (turnstileEnabled && !turnstileToken)}
+                >
+                  {submitting ? "Gönderiliyor..." : "Gönder"} <ArrowRight size={16} weight="bold" />
+                </Button>
+              </form>
+            )}
+          </section>
+
+          {/* Sağ: Ofis bilgileri */}
+          <aside className="lg:col-span-5">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              {offices.map((o) => (
+                <div key={o.title} className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-md bg-paper-100 grid place-items-center text-brand-700 flex-none">
+                      <o.icon size={20} />
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-ink-500 font-semibold">{o.title}</div>
+                      <div className="mt-1 font-semibold text-ink-900">{o.value}</div>
+                      <div className="mt-1 text-sm text-ink-500">{o.sub}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Map placeholder */}
+              <div className="aspect-[4/3] rounded-xl bg-paper-100 border border-paper-200 grid place-items-center text-ink-500 text-sm">
+                <div className="text-center">
+                  <MapPin size={32} className="mx-auto mb-2 text-brand-700" weight="fill" />
+                  <div>Mersin, Türkiye</div>
+                  <div className="text-xs mt-1">Harita yakında eklenecek</div>
+                </div>
+              </div>
+
+              {/* B2B CTA */}
+              <div className="p-5 bg-ink-900 text-paper-50 rounded-xl">
+                <ChatCircle size={24} className="text-brand-400" weight="fill" />
+                <h3 className="mt-3 font-semibold text-lg">Kurumsal Satın Alma</h3>
+                <p className="mt-1 text-sm text-paper-100/70">Aylık fatura, cari hesap ve özel taksit imkânı için satış ekibimize yazın.</p>
+                <a href="https://wa.me/905319004102" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-400 hover:text-brand-300">
+                  B2B WhatsApp hattı <ArrowRight size={14} weight="bold" />
+                </a>
+                <a href="mailto:kurumsal@markala.com.tr" className="mt-2 inline-flex items-center gap-1.5 text-sm text-paper-100/60 hover:text-paper-100">
+                  kurumsal@markala.com.tr
+                </a>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </Container>
+    </>
+  );
+}
+
+function Field({
+  id,
+  label,
+  children,
+  required,
+}: {
+  id: string;
+  label: string;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  // children = tek bir input/select/textarea → id ve aria-required inject et
+  const control = isValidElement(children)
+    ? cloneElement(children as ReactElement<Record<string, unknown>>, {
+        id,
+        "aria-required": required ? "true" : undefined,
+      })
+    : children;
+  return (
+    <div className="block">
+      <label htmlFor={id} className="text-sm font-medium text-ink-900">
+        {label}
+        {required && (
+          <span className="text-error ml-0.5" aria-hidden="true">
+            *
+          </span>
+        )}
+      </label>
+      <div className="mt-1.5">{control}</div>
+    </div>
   );
 }

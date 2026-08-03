@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getProducts, getCategories } from "@/lib/catalog";
 import { ProductItemListJsonLd } from "@/components/seo/json-ld";
 import { AllProductsClient } from "./all-products-client";
+import { URUNLER_PAGE_SIZE } from "./page-size";
 
 interface UrunlerSearchParams {
   kategoriler?: string | string[];
@@ -31,6 +32,25 @@ export async function generateMetadata({
   searchParams?: UrunlerSearchParams;
 }): Promise<Metadata> {
   const page = parsePage(first(searchParams?.page));
+  // Kapsam dışı ?page → GERÇEK 404 BURADA verilir: urunler/loading.tsx yüzünden gövde
+  // stream'i 200 ile açılıyor, gövdedeki notFound() yalnız soft-404 (noindex) üretebiliyor.
+  // generateMetadata stream'den ÖNCE çözülür (PDP'deki bilinen desen) → statü 404 olur.
+  // getProducts/getCategories fetch'leri sayfa gövdesiyle dedupe edilir — ek maliyet yok.
+  // Boş katalog (API hatasında []) guard'ı ATLAR: "çekilemedi ≠ yok".
+  if (page > 1) {
+    const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+    if (products.length > 0) {
+      const known = new Set(categories.map((c) => c.slug));
+      const slugs = first(searchParams?.kategoriler)
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => known.has(s));
+      const listLength = slugs.length
+        ? products.filter((p) => slugs.includes(p.categorySlug)).length
+        : products.length;
+      if (page > Math.max(1, Math.ceil(listLength / URUNLER_PAGE_SIZE))) notFound();
+    }
+  }
   const suffix = page > 1 ? ` — Sayfa ${page}` : "";
   const canonical = page > 1 ? `/urunler?page=${page}` : "/urunler";
   return {
@@ -84,6 +104,20 @@ export default async function AllProductsPage({
     .split(",")
     .map((s) => s.trim())
     .filter((s) => known.has(s));
+
+  // Kapsam dışı sayfa (?page=999) → 404. Aksi halde sonsuz "geçerli" URL uzayı oluşur:
+  // her sayı 200 + self-canonical + index döner (soft-404 / indeks şişmesi). Filtreli
+  // görünümde sayfa sayısı filtrelenmiş listeye göre hesaplanır (client ile aynı mantık).
+  // ⚠️ products.length===0 → guard ATLANIR: getProducts() API hatasında [] döner ("çekilemedi
+  // ≠ yok" dersi) — API blip'inde tüm sayfalama URL'lerini hard-404'e düşürme.
+  const page = parsePage(first(searchParams?.page));
+  if (page > 1 && products.length > 0) {
+    const listLength = slugs.length
+      ? products.filter((p) => slugs.includes(p.categorySlug)).length
+      : products.length;
+    const totalPages = Math.max(1, Math.ceil(listLength / URUNLER_PAGE_SIZE));
+    if (page > totalPages) notFound();
+  }
   const initialGroup =
     slugs.length > 0
       ? { label: first(searchParams?.grup).trim() || "Seçili Kategoriler", slugs }

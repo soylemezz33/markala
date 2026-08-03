@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Container, Button, Price, cn } from "@markala/ui";
 import {
   CreditCard,
@@ -33,6 +33,19 @@ import type { Address, Order } from "@markala/types";
 import { VAT_RATE } from "@/lib/vat";
 /** Gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanıp tahsil edilir. */
 const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.1 };
+
+/** Sipariş POST'u için idempotency TUZU — randomUUID yoksa (çok eski tarayıcı) zaman+rastgele. */
+const newIdempotencyKey = (): string =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `idk-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+/** djb2 — payload parmak izi (kriptografik olması gerekmez; tuzla birlikte çakışma pratikte imkânsız). */
+const djb2 = (s: string): string => {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36) + "-" + s.length.toString(36);
+};
 
 type Step = "iletisim" | "fatura" | "teslimat" | "onay";
 
@@ -420,6 +433,13 @@ export default function CheckoutPage() {
    * `paymentMethod`: "cari" gönderilirse backend onaylı kurumsal + kredi limiti şartını zorlar.
    * Başarısızsa { ok:false, error } döner; çağıran payError gösterir.
    */
+  // Çift sipariş koruması: anahtar = mountTuzu + PAYLOAD parmak izi. Aynı payload'lı retry
+  // (timeout sonrası tekrar "Ödeme Yap") aynı anahtarı üretir → API mevcut siparişi döner,
+  // ikinci sipariş oluşmaz. Payload DEĞİŞİRSE (adres düzeltildi, kupon/yöntem değişti) anahtar
+  // da değişir → bayat siparişin sessizce dönmesi engellenir (review bulgusu 2026-08-01).
+  // Başarılı siparişten sonra tuz yenilenir (bilinçli ikinci sipariş her durumda yeni anahtar).
+  const idemSaltRef = useRef<string>(newIdempotencyKey());
+
   async function saveOrder(opts: { channel: string; paymentMethod?: "iyzico" | "cari" }): Promise<{
     ok?: boolean;
     orderId?: string;
@@ -438,42 +458,47 @@ export default function CheckoutPage() {
     const ctrl = new AbortController();
     const timer = window.setTimeout(() => ctrl.abort(), 20000);
     try {
+      const body = JSON.stringify({
+        email,
+        phone,
+        customerName: accountType === "individual" ? fullName : companyName,
+        city,
+        district,
+        fullAddress,
+        zipCode,
+        channel: opts.channel,
+        accountType,
+        taxOffice,
+        taxNumber,
+        couponCode: appliedCoupon ?? undefined,
+        redeemPoints: redeemApplied > 0 ? redeemApplied : undefined,
+        paymentMethod: opts.paymentMethod,
+        items: cartItems.map((i) => ({
+          productSlug: i.productSlug,
+          configuration: i.configuration,
+          quantity: i.quantity,
+        })),
+      });
       const res = await fetch("/api/siparis-kaydet", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Idempotency-Key": `${idemSaltRef.current}-${djb2(body)}`,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          email,
-          phone,
-          customerName: accountType === "individual" ? fullName : companyName,
-          city,
-          district,
-          fullAddress,
-          zipCode,
-          channel: opts.channel,
-          accountType,
-          taxOffice,
-          taxNumber,
-          couponCode: appliedCoupon ?? undefined,
-          redeemPoints: redeemApplied > 0 ? redeemApplied : undefined,
-          paymentMethod: opts.paymentMethod,
-          items: cartItems.map((i) => ({
-            productSlug: i.productSlug,
-            configuration: i.configuration,
-            quantity: i.quantity,
-          })),
-        }),
+        body,
         signal: ctrl.signal,
       });
-      return (await res.json()) as {
+      const parsed = (await res.json()) as {
         ok?: boolean;
         orderId?: string;
         orderNumber?: string;
         paymentNonce?: string;
         error?: string;
       };
+      // Sipariş yazıldı → sonraki (bilinçli) sipariş için yeni tuz (payload aynı kalsa bile).
+      if (parsed.orderId) idemSaltRef.current = newIdempotencyKey();
+      return parsed;
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
         return {

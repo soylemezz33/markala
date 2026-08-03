@@ -224,6 +224,10 @@ export async function POST(req: NextRequest) {
   // (firstOrderOnly && !userId → 400); frontend zaten kuponu misafire hiç göstermez (katmanlı savunma).
   const authHeader = req.headers.get("authorization") ?? undefined;
 
+  // Idempotency-Key aktarımı: timeout/retry'de aynı anahtar → API aynı siparişi döner,
+  // İKİNCİ sipariş oluşmaz (çift sipariş + kupon sayacının iki kez artması engellenir).
+  const idempotencyKey = req.headers.get("idempotency-key") ?? undefined;
+
   async function postOrder() {
     const endpoint = authHeader ? `${API_BASE}/api/orders` : `${API_BASE}/api/orders/guest`;
     return fetch(endpoint, {
@@ -231,6 +235,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         ...(authHeader ? { Authorization: authHeader } : {}),
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
       },
       body: JSON.stringify(orderPayload),
     });

@@ -37,7 +37,24 @@ export class CouponsService {
       const or: Array<{ userId?: string; email?: string }> = [];
       if (opts.userId) or.push({ userId: opts.userId });
       if (opts.email) or.push({ email: opts.email });
-      const priorCount = or.length ? await this.prisma.order.count({ where: { OR: or } }) : 0;
+      // orders.service.create ile BİREBİR aynı "tamamlanmış sipariş" tanımı (2026-08-01):
+      // ödenmemiş/başarısız/iptal denemeler İLK SİPARİŞ hakkını yakmaz — aksi halde ödeme
+      // hatası sonrası sepette validate reddeder, checkout kabul ederdi (uç ayrışması).
+      const priorCount = or.length
+        ? await this.prisma.order.count({
+            where: {
+              OR: or,
+              AND: [
+                {
+                  OR: [
+                    { paymentStatus: "basarili" },
+                    { paymentMethod: "cari", status: { not: "iptal_edildi" } },
+                  ],
+                },
+              ],
+            },
+          })
+        : 0;
       if (priorCount > 0) return { valid: false as const, reason: "Bu kupon yalnızca ilk siparişinizde geçerli." };
     }
     const value = Number(c.value);

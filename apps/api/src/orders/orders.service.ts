@@ -483,9 +483,23 @@ export class OrdersService {
         if (!input.userId) {
           throw new BadRequestException("Bu kupon yalnızca giriş yapan üyelerin ilk siparişinde geçerlidir.");
         }
-        // userId VEYA e-posta ile önceki sipariş varsa reddet (aynı e-postayla 2. hesap denemesini de yakalar).
+        // userId VEYA e-posta ile önceki TAMAMLANMIŞ sipariş varsa reddet (aynı e-postayla
+        // 2. hesap denemesini de yakalar). "Tamamlanmış" = ödemesi başarılı YA DA cari
+        // (açık hesap) siparişi. Ödenmemiş/başarısız/iptal denemeler SAYILMAZ — aksi halde
+        // ödeme-başlat hatasından sonra retry, az önce oluşan ödenmemiş sipariş yüzünden
+        // "yalnızca ilk siparişinizde geçerlidir" der ve HOSGELDIN'li checkout kalıcı tıkanır.
         const priorCount = await this.prisma.order.count({
-          where: { OR: [{ userId: input.userId }, ...(input.email ? [{ email: input.email }] : [])] },
+          where: {
+            OR: [{ userId: input.userId }, ...(input.email ? [{ email: input.email }] : [])],
+            AND: [
+              {
+                OR: [
+                  { paymentStatus: "basarili" },
+                  { paymentMethod: "cari", status: { not: "iptal_edildi" } },
+                ],
+              },
+            ],
+          },
         });
         if (priorCount > 0) {
           throw new BadRequestException("Bu kupon yalnızca ilk siparişinizde geçerlidir.");
@@ -921,6 +935,9 @@ export class OrdersService {
         .catch(() => undefined);
     if (status === "teslim-edildi")
       void this.mail.sendOrderDeliveredEmail(id).catch(() => undefined);
+    // İptal bildirimi — müşteri iptali maille öğrenir (ödenmişse iade beklentisi yönetilir).
+    if (status === "iptal-edildi")
+      void this.mail.sendOrderCancelledEmail(id).catch(() => undefined);
 
     // Denetim izi: hangi admin, hangi IP, önce→sonra durum değişikliği. Best-effort —
     // audit yazımı hatası sipariş güncellemesini bozmaz.

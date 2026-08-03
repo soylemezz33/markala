@@ -4,10 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
-import { Sparkle, ShieldCheck, PaintBrush, Truck, EnvelopeSimple, Eye, EyeSlash, ShoppingBag } from "@phosphor-icons/react";
+import { Sparkle, ShieldCheck, PaintBrush, Truck, Eye, EyeSlash, ShoppingBag } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useCartStore } from "@/lib/cart-store";
-import { apiClient } from "@/lib/api";
 import { GoogleSignIn } from "@/components/auth/google-signin";
 import { safeNextPath } from "@/lib/safe-redirect";
 
@@ -26,20 +25,6 @@ export default function LoginPage() {
   // Ödeme duvarında "sepetiniz korunuyor" lafla değil gözle kanıtlanır — mini sepet özeti.
   const cartItems = useCartStore((s) => s.items);
   const cartTotal = useCartStore((s) => s.subtotal());
-  // Katı doğrulama: doğrulanmamış müşteri girişte 403 alır → yeniden-gönder akışı gösterilir.
-  const [needsVerify, setNeedsVerify] = useState(false);
-  const [resend, setResend] = useState<"idle" | "sending" | "sent" | "error">("idle");
-
-  async function handleResend() {
-    if (!email.includes("@")) return;
-    setResend("sending");
-    try {
-      await apiClient.auth.resendVerificationPublic(email.trim().toLowerCase());
-      setResend("sent");
-    } catch {
-      setResend("error");
-    }
-  }
 
   // Giriş sonrası dönülecek hedef. safeNextPath açık yönlendirmeyi (ters-bölü/protokol-relatif
   // dahil) origin doğrulamasıyla eler. Yoksa /hesabim.
@@ -58,14 +43,9 @@ export default function LoginPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setNeedsVerify(false);
-    setResend("idle");
     const res = await login(email, password);
     if (res.ok) router.replace(safeNext());
-    else {
-      setError(res.error ?? "Giriş başarısız.");
-      if (res.needsVerification) setNeedsVerify(true);
-    }
+    else setError(res.error ?? "Giriş başarısız.");
   }
 
   return (
@@ -78,7 +58,11 @@ export default function LoginPage() {
             <h1 className="mt-1.5 text-3xl md:text-4xl font-semibold text-ink-900">Giriş yapın</h1>
             {nextParam === "/odeme" ? (
               <p className="mt-2 text-ink-700">
-                Siparişinizi tamamlamak için giriş yapın veya 30 saniyede ücretsiz hesap oluşturun.
+                Siparişinizi tamamlamak için giriş yapın veya 30 saniyede ücretsiz hesap oluşturun —{" "}
+                <span className="font-semibold text-ink-900">
+                  yeni üyelere ilk siparişte %10 indirim
+                </span>{" "}
+                (<code className="font-mono text-brand-700">HOSGELDIN</code>).
               </p>
             ) : (
               <p className="mt-2 text-ink-700">
@@ -109,8 +93,12 @@ export default function LoginPage() {
             <span aria-current="page" className="rounded-md bg-paper-50 border border-paper-200 px-4 py-2.5 text-center text-ink-900 shadow-sm">
               Giriş Yap
             </span>
-            <Link href={kayitHref} className="rounded-md px-4 py-2.5 text-center text-ink-600 hover:text-ink-900 transition-colors">
+            <Link href={kayitHref} className="relative rounded-md px-4 py-2.5 text-center text-ink-600 hover:text-ink-900 transition-colors">
               Üye Ol
+              {/* Duvara gelen ziyaretçilerin çoğu YENİ — %10 rozeti kayıt yolunu işaret eder (CRO 2026-08-01). */}
+              <span className="absolute -top-2 -right-1 rounded-full bg-brand-500 px-1.5 py-0.5 text-[10px] font-bold text-ink-900">
+                %10
+              </span>
             </Link>
           </div>
 
@@ -144,25 +132,6 @@ export default function LoginPage() {
 
             {error && (
               <div role="alert" className="p-3 bg-error/5 border border-error/20 rounded-md text-sm text-error">{error}</div>
-            )}
-            {needsVerify && (
-              <div className="p-3 bg-brand-100/60 border border-brand-300/50 rounded-md text-sm">
-                <div className="flex items-center gap-2 text-ink-900 font-medium">
-                  <EnvelopeSimple size={16} weight="fill" className="text-brand-700" /> E-postanı doğrula
-                </div>
-                <p className="mt-1 text-xs text-ink-700">
-                  {resend === "sent"
-                    ? "Doğrulama maili tekrar gönderildi — gelen kutunu ve spam klasörünü kontrol et."
-                    : resend === "error"
-                      ? "Mail gönderilemedi, birazdan tekrar dene."
-                      : "Girişten önce e-posta adresini doğrulamalısın. Bağlantı gelmedi mi?"}
-                </p>
-                {resend !== "sent" && (
-                  <button type="button" onClick={handleResend} disabled={resend === "sending"} className="mt-1.5 text-xs font-semibold text-brand-700 hover:text-brand-900 underline underline-offset-2 disabled:opacity-50">
-                    {resend === "sending" ? "Gönderiliyor…" : "Doğrulama mailini yeniden gönder"}
-                  </button>
-                )}
-              </div>
             )}
 
             <Button type="submit" size="lg" fullWidth disabled={isLoading}>

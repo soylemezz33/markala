@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createMarkalaClient, type ApiError } from "@markala/api-client";
 import type { User } from "@markala/types";
+import { trackLogin, trackSignUp } from "@/lib/analytics";
 
 /**
  * GERÇEK auth store — NestJS API'ye bağlı (argon2 + JWT + refresh rotation).
@@ -103,10 +104,10 @@ interface AuthState {
   /** İlk açılışta bootstrap (refresh) tamamlanana kadar true. */
   isBootstrapping: boolean;
 
-  /** needsVerification: doğrulanmamış müşteri (403) — giriş sayfası "yeniden gönder" akışını gösterir. */
-  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string; needsVerification?: boolean }>;
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   /** "Google ile devam et" — GIS ID token'ı ile giriş/kayıt (e-posta Google'ca doğrulu). */
   loginWithGoogle: (credential: string) => Promise<{ ok: boolean; error?: string }>;
+  /** Kayıt = OTO-GİRİŞ (e-posta doğrulama kaldırıldı 2026-07-31) — başarıda oturum açılmış olur. */
   register: (input: {
     email: string;
     password: string;
@@ -116,7 +117,7 @@ interface AuthState {
     marketingConsent?: boolean;
     /** Cloudflare Turnstile token (bot koruması). */
     turnstileToken?: string;
-  }) => Promise<{ ok: boolean; error?: string; needsVerification?: boolean; emailSent?: boolean }>;
+  }) => Promise<{ ok: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<User>) => Promise<{ ok: boolean; error?: string }>;
   /** App açılışında bir kez çağrılır (AuthBootstrap). */
@@ -147,26 +148,25 @@ export const useAuthStore = create<AuthState>()(
           // Admin ise: user'ı set ETMEDEN ÖNCE bypass çerezini yaz (redirect race'i önler).
           if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
           set({ user, isLoading: false });
+          trackLogin("email");
           return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });
-          const err = e as ApiError;
-          // 403 = e-posta doğrulanmamış (katı doğrulama) → sayfa "yeniden gönder" sunar.
-          if (err?.status === 403) {
-            return { ok: false, needsVerification: true, error: err.message ?? "E-posta adresini doğrulaman gerekiyor." };
-          }
-          return { ok: false, error: err?.message ?? "Giriş başarısız. Lütfen tekrar deneyin." };
+          return { ok: false, error: (e as ApiError)?.message ?? "Giriş başarısız. Lütfen tekrar deneyin." };
         }
       },
 
       loginWithGoogle: async (credential) => {
         set({ isLoading: true });
         try {
-          const { accessToken } = await client.auth.google(credential);
+          const { accessToken, isNewUser } = await client.auth.google(credential);
           set({ accessToken });
           const user = await client.auth.me();
           if (isAdminRole(user)) await syncMaintenanceBypass(accessToken);
           set({ user, isLoading: false });
+          // İlk Google girişi = kayıt (backend isNewUser işaretler) → sign_up; değilse login.
+          if (isNewUser) trackSignUp("google");
+          else trackLogin("google");
           return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });
@@ -177,11 +177,26 @@ export const useAuthStore = create<AuthState>()(
       register: async ({ email, password, fullName, phone, marketingConsent, turnstileToken }) => {
         set({ isLoading: true });
         try {
-          // Katı doğrulama: register OTO-GİRİŞ YAPMAZ (token dönmez). Kullanıcı e-postasını doğrulayıp
-          // giriş yapar. accessToken/user set EDİLMEZ; sayfa "e-postanı doğrula" ekranını gösterir.
-          const res = await client.auth.register({ email, password, fullName, phone, marketingConsent, turnstileToken });
-          set({ isLoading: false });
-          return { ok: true, needsVerification: true, emailSent: res.emailSent };
+          // Kayıt = OTO-GİRİŞ (doğrulama kaldırıldı): login ile aynı akış — token'ı al,
+          // tam kullanıcı profilini /auth/me'den çek (register body'sindeki user minimal).
+          const { accessToken, user: minimalUser } = await client.auth.register({ email, password, fullName, phone, marketingConsent, turnstileToken });
+          set({ accessToken });
+          // KRİTİK AYRIM: register 200 döndüyse HESAP OLUŞTU. Sonraki me() çağrısı ağ
+          // hatası alırsa "Kayıt başarısız" DEME — kullanıcı tekrar dener, 409 "zaten
+          // kayıtlı" görür (dönüşüm + sign_up event'i de kaybolur). me() düşerse register
+          // yanıtındaki minimal user ile devam et; bootstrap sonraki açılışta tamamlar.
+          let user: User;
+          try {
+            user = await client.auth.me();
+          } catch {
+            // register yanıtındaki user MİNİMAL ({id,email,role}) — fullName YOK ve header
+            // `user.fullName.charAt(0)` ile crash eder (persist yüzünden her açılışta).
+            // Kayıt formundaki fullName/phone zaten elimizde → fallback'i zenginleştir.
+            user = { ...(minimalUser as User), fullName, phone };
+          }
+          set({ user, isLoading: false });
+          trackSignUp("email");
+          return { ok: true };
         } catch (e) {
           set({ isLoading: false, accessToken: null });
           return { ok: false, error: (e as ApiError)?.message ?? "Kayıt başarısız. Lütfen tekrar deneyin." };
@@ -239,8 +254,8 @@ export const useAuthStore = create<AuthState>()(
         if (!get().user) return null; // oturumsuz → tazelenecek bir şey yok
         // Single-flight refresh: checkout'taki paralel çağrılarla yarışıp oturumu DÜŞÜRMESİN.
         const token = await refreshOnce();
-        // Refresh başarısızsa eldeki (muhtemelen bayat) token'la yine de dene; proxy 401'de
-        // misafire düşer, sipariş kaybolmaz (yalnız kurumsal avantaj uygulanmaz).
+        // Refresh başarısızsa eldeki (muhtemelen bayat) token'la yine de dene; proxy bayat
+        // token'da NET 401 döner (misafire düşme YOK) → kullanıcıdan yeniden giriş istenir.
         return token ?? get().accessToken;
       },
     }),

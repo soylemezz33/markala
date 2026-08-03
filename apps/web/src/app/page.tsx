@@ -18,9 +18,10 @@ export const revalidate = 300;
 // Anasayfa — reklam kampanyalarının #1 iniş hedefi: kök varsayılan yerine elle ayarlı
 // başlık + açıklama + açık canonical.
 export const metadata: Metadata = {
-  title: { absolute: "Markala — Online Matbaa: Kartvizit, Broşür, Afiş & Branda Baskı" },
+  // SERP bütçesi: title ≤60 kr, description ≤160 kr (kelime sınırında biter) — 2026-08-01 SEO denetimi.
+  title: { absolute: "Markala — Online Matbaa: Kartvizit, Broşür & Branda Baskı" },
   description:
-    "Kartvizit, broşür, afiş, branda ve 800+ matbaa & reklam ürünü online. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle markala.com.tr.",
+    "Kartvizit, broşür, afiş, branda ve 800+ matbaa ürünü online. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
   alternates: { canonical: "/" },
 };
 
