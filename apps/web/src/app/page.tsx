@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Product } from "@markala/types";
 import { getProducts, getHeroBanners } from "@/lib/catalog";
 import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
 import { HeroCtaBand } from "@/components/home/hero-cta-band";
@@ -25,18 +26,42 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
+/**
+ * RSC payload diyeti (PSI 2026-08-03): raylardaki ProductCard client bileşeni — ona giden
+ * her alan sayfa HTML'ine ikinci kez (hydration verisi olarak) gömülür. Kart yalnız şu
+ * alanları kullanır; description/parameters gibi ağır alanlar 24 üründe onlarca KB
+ * şişiriyordu (mobil LCP 7.1s'in parçası). getDisplayPrice displayPrice ile kısa devre yapar.
+ */
+const slimForCard = (p: Product): Product => ({
+  slug: p.slug,
+  name: p.name,
+  categorySlug: p.categorySlug,
+  shortDescription: "",
+  description: "",
+  basePrice: p.basePrice,
+  startingPrice: p.startingPrice,
+  productionTime: p.productionTime,
+  sizeLabel: p.sizeLabel,
+  images: p.images.slice(0, 1),
+  badges: p.badges,
+  displayPrice: p.displayPrice,
+  pricingMode: p.pricingMode,
+  rating: p.rating,
+  bestseller: p.bestseller,
+});
+
 export default async function HomePage() {
   const products = await getProducts();
   // Anasayfa hero slaytları — admin panelinden yönetilen DB (hero_slides) kaynağı.
   const heroBanners = await getHeroBanners();
   // Çok satılanlar (bestseller flag)
-  const bestsellers = products.filter((p) => p.bestseller).slice(0, 12);
+  const bestsellers = products.filter((p) => p.bestseller).slice(0, 12).map(slimForCard);
 
   // Yeni gelenler — "yeni" badge'li ürünler + diğerleri
   const newArrivals = [
     ...products.filter((p) => p.badges?.includes("yeni")),
     ...products.filter((p) => !p.badges?.includes("yeni") && !p.bestseller),
-  ].slice(0, 12);
+  ].slice(0, 12).map(slimForCard);
 
   return (
     <>

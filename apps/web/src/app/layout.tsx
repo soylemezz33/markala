@@ -108,6 +108,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             tıklamasında soğuk cache'te tarayıcı bağlantıyı erken kursun (DNS+TCP+TLS önden). */}
         <link rel="preconnect" href="https://api.markala.com.tr" />
         <link rel="dns-prefetch" href="https://api.markala.com.tr" />
+        {/* 3. parti script origin'leri (PSI uses-rel-preconnect, ~350ms): gtag erken yüklenir →
+            preconnect; fbevents lazyOnload olduğundan dns-prefetch yeterli (boşuna soket açma). */}
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
         <OrganizationJsonLd />
         <LocalBusinessJsonLd />
       </head>

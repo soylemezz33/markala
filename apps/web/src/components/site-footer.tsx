@@ -194,7 +194,8 @@ function FooterCityLink({ href, children }: { href: string; children: React.Reac
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="md:col-span-2">
-      <h4 className="text-ink-900 font-medium text-sm mb-4 font-sans">{title}</h4>
+      {/* h4→h3: sayfada h3 olmadan h4 başlık sırası atlıyordu (PSI heading-order). Görsel aynı. */}
+      <h3 className="text-ink-900 font-medium text-sm mb-4 font-sans">{title}</h3>
       <ul className="space-y-2.5 text-sm">{children}</ul>
     </div>
   );

@@ -138,17 +138,25 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
           </button>
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
             {items.map((s, i) => (
+              // Dokunma hedefi ≥24px (PSI target-size): buton gerçek 24px kutu, görsel çubuk
+              // içteki span'da. Eski ::before -inset-3 hilesi komşu hedeflerle ÇAKIŞTIĞI için
+              // axe yine düşürüyordu — gerçek kutu + gap çakışmayı bitirir.
               <button
                 key={s.id}
                 type="button"
                 onClick={() => goTo(i)}
                 aria-label={`Slayt ${i + 1}`}
                 aria-current={i === index}
-                className={cn(
-                  "relative h-2 rounded-full transition-all duration-300 before:absolute before:-inset-3 before:content-['']",
-                  i === index ? "w-8 bg-paper-50" : "w-2 bg-paper-50/60 hover:bg-paper-50/90",
-                )}
-              />
+                className="grid h-6 min-w-6 place-items-center"
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "block h-2 rounded-full transition-all duration-300",
+                    i === index ? "w-8 bg-paper-50" : "w-2 bg-paper-50/60 hover:bg-paper-50/90",
+                  )}
+                />
+              </button>
             ))}
           </div>
         </>

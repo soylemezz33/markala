@@ -98,7 +98,7 @@ export function Analytics() {
       )}
 
       {gtm && (
-        <Script id="gtm-init" strategy="afterInteractive">
+        <Script id="gtm-init" strategy="lazyOnload">
           {`
             (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -110,7 +110,7 @@ export function Analytics() {
       )}
 
       {clarity && (
-        <Script id="clarity-init" strategy="afterInteractive">
+        <Script id="clarity-init" strategy="lazyOnload">
           {`
             (function(c,l,a,r,i,t,y){
               c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -122,7 +122,7 @@ export function Analytics() {
       )}
 
       {hotjar && (
-        <Script id="hotjar-init" strategy="afterInteractive">
+        <Script id="hotjar-init" strategy="lazyOnload">
           {`
             (function(h,o,t,j,a,r){
               h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
@@ -137,7 +137,7 @@ export function Analytics() {
       )}
 
       {metaPixel && (
-        <Script id="meta-pixel-init" strategy="afterInteractive">
+        <Script id="meta-pixel-init" strategy="lazyOnload">
           {`
             !function(f,b,e,v,n,t,s)
             {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
