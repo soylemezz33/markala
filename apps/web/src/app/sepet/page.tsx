@@ -17,7 +17,6 @@ import { PromoBanner } from "@/components/promo-banner";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartCrossSell } from "@/components/cart/cross-sell";
 import { VAT_RATE } from "@/lib/vat";
-import { useAuthStore } from "@/lib/auth-store";
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
 const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.10 };
