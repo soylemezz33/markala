@@ -1,9 +1,10 @@
-import type { Product } from "@markala/types";
+﻿import type { Product } from "@markala/types";
 import type { ProductWithParams } from "./legacy-types";
 import { PRODUCTION_TOLERANCE_PARAGRAPH } from "./notes";
 import { matbaaProducts } from "./products-matbaa";
 import { matbaaProducts2 } from "./products-matbaa-2";
 import { matbaaProducts3 } from "./products-matbaa-3";
+import { matbaaProducts4 } from "./products-matbaa-4";
 
 /**
  * Ürün görselleri yerel /public/images/products/[slug]/ altında.
@@ -1302,6 +1303,7 @@ export const products: Product[] = [
   ...matbaaProducts,
   ...matbaaProducts2,
   ...matbaaProducts3,
+  ...matbaaProducts4,
   ...legacyRaw,
 ].map(withFireNote);
 

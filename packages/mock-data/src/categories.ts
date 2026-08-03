@@ -1,4 +1,4 @@
-import type { Category } from "@markala/types";
+﻿import type { Category } from "@markala/types";
 
 /**
  * Kategori görselleri yerel /public/images/categories/ altında bulunur.
@@ -392,6 +392,129 @@ const matbaaCategories: Category[] = [
 ];
 
 categories.push(...matbaaCategories);
+const newCategories4: Category[] = [
+  {
+    slug: "katalog",
+    name: "Katalog BaskÄ±",
+    shortDescription: "ÃœrÃ¼n kataloÄŸu, ÅŸirket broÅŸÃ¼rÃ¼ ve tanÄ±tÄ±m kitapÃ§Ä±ÄŸÄ± baskÄ±sÄ±",
+    longDescription:
+      "Saddle-stitch (tel dikiÅŸ) ve perfect binding (mÃ¼kemmel cilt) seÃ§enekleriyle 20â€“200 sayfa arasÄ±nda Ã¼rÃ¼n kataloÄŸu baskÄ±sÄ±. A4 ve A5 boyut, 115â€“135 gr iÃ§ kaÄŸÄ±t, selefonlu kapak.",
+    imageUrl: catImg("katalog"),
+    accentColor: "#4B3AA0",
+    startingPrice: 3500,
+    productionTime: "5-7 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "takvim",
+    name: "Takvim",
+    shortDescription: "Kurumsal hediye ve tanÄ±tÄ±m iÃ§in Ã¶zel baskÄ±lÄ± takvim",
+    longDescription:
+      "Duvar ve masa takvimi seÃ§enekleriyle kurumsal hediye Ã§Ã¶zÃ¼mleri. Spiral cilt, metal askÄ± aparatÄ±, tam renkli baskÄ±. Her ay iÃ§in Ã¶zel tasarÄ±m.",
+    imageUrl: catImg("takvim"),
+    accentColor: "#4B3AA0",
+    startingPrice: 5500,
+    productionTime: "7-10 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "davetiye",
+    name: "Davetiye",
+    shortDescription: "DÃ¼ÄŸÃ¼n, kurumsal aÃ§Ä±lÄ±ÅŸ ve etkinlik davetiyeleri",
+    longDescription:
+      "350 gr kuÅŸe kaÄŸÄ±t, mat/parlak/soft-touch selefon seÃ§eneÄŸi. DÃ¼ÄŸÃ¼n ve niÅŸan davetiyeleri, ÅŸirket aÃ§Ä±lÄ±ÅŸ/etkinlik davetiyeleri; zarf dahil.",
+    imageUrl: catImg("davetiye"),
+    accentColor: "#FFB91C",
+    startingPrice: 1850,
+    productionTime: "3-5 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "pvc-kart",
+    name: "PVC Kart",
+    shortDescription: "Ãœyelik, sadakat ve kimlik kartÄ± â€” sert plastik PVC",
+    longDescription:
+      "Kredi kartÄ± boyutunda (85.6Ã—54 mm) 760 Âµ sert PVC kart. Ãœyelik, sadakat, otel oda anahtarÄ± ve Ã§alÄ±ÅŸan kimlik kartÄ±; RFID Ã§ip veya manyetik ÅŸerit eklenerek akÄ±llÄ± karta dÃ¶nÃ¼ÅŸtÃ¼rÃ¼lebilir.",
+    imageUrl: catImg("pvc-kart"),
+    accentColor: "#4B3AA0",
+    startingPrice: 1200,
+    productionTime: "3-5 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "kanvas-tablo",
+    name: "Kanvas Tablo",
+    shortDescription: "FotoÄŸraf ve grafiklerin 380 gr kanvasa baskÄ±sÄ±",
+    longDescription:
+      "380 gr pamuk kanvas Ã¼zerine pigment UV baskÄ±, ahÅŸap kasnak gergi dahil. FotoÄŸraf, illÃ¼strasyon ve kurumsal gÃ¶rsel baskÄ±sÄ± iÃ§in ideal. Floater Ã§erÃ§eve seÃ§eneÄŸi.",
+    imageUrl: catImg("kanvas-tablo"),
+    accentColor: "#4B3AA0",
+    startingPrice: 450,
+    productionTime: "2-3 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "stiker-kesimli",
+    name: "Kesimli Stiker",
+    shortDescription: "Ã–zel ÅŸekil kontur kesimli vinyl stiker, su geÃ§irmez",
+    longDescription:
+      "Beyaz veya ÅŸeffaf vinyl Ã¼zerine tam renkli dijital baskÄ±, kontur kesim. 3â€“5 yÄ±l dÄ±ÅŸ mekan UV dayanÄ±mÄ±. ÃœrÃ¼n etiketi, ambalaj ve dekorasyon stikerÄ±.",
+    imageUrl: catImg("stiker-kesimli"),
+    accentColor: "#4B3AA0",
+    startingPrice: 450,
+    productionTime: "2-4 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "lanyard",
+    name: "Lanyard / Kordon",
+    shortDescription: "Logolu polyester boyun ipi, klips veya karabina dahil",
+    longDescription:
+      "10 ve 15 mm geniÅŸlik seÃ§eneÄŸiyle polyester boyun ipi. Sublimasyon tam renk veya serigrafi tek renk baskÄ±. Metal karabina, plastik kanca veya gÃ¼venlik kÄ±rÄ±lma noktalÄ± aksesuarlar.",
+    imageUrl: catImg("lanyard"),
+    accentColor: "#4B3AA0",
+    startingPrice: 1200,
+    productionTime: "5-7 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "kraft-torba",
+    name: "Kraft Torba",
+    shortDescription: "Ã–zel logolu ve sade kraft kaÄŸÄ±t alÄ±ÅŸveriÅŸ torbasÄ±",
+    longDescription:
+      "MaÄŸaza, butik ve etkinlikler iÃ§in kahverengi veya beyaz kraft kaÄŸÄ±t torba. Twisted ip sap, 4 boyut seÃ§eneÄŸi (Sâ€“XL). Ã–zel logo baskÄ±sÄ± veya hazÄ±r stok sade seÃ§enek.",
+    imageUrl: catImg("kraft-torba"),
+    accentColor: "#4B3AA0",
+    startingPrice: 1400,
+    productionTime: "5-7 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "yaka-karti",
+    name: "Yaka KartÄ±",
+    shortDescription: "Ã‡alÄ±ÅŸan kimlik ve etkinlik akreditasyonu iÃ§in yaka kartÄ±",
+    longDescription:
+      "350 gr karton veya 760 Âµ sert PVC yaka kartÄ±. PVC kÄ±lÄ±f, klips veya lanyard dahil. Standart kredi kartÄ± (85Ã—54 mm), 90Ã—60 mm ve A7 boyut seÃ§enekleri.",
+    imageUrl: catImg("yaka-karti"),
+    accentColor: "#4B3AA0",
+    startingPrice: 800,
+    productionTime: "3-5 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+  {
+    slug: "bez-tote",
+    name: "Bez Tote Ã‡anta",
+    shortDescription: "140 ve 180 gr bez/canvas tote Ã§anta, serigrafi veya dijital baskÄ±",
+    longDescription:
+      "Ã‡evre dostu bez tote Ã§anta â€” 140 gr ham bez veya 180 gr premium canvas. Serigrafi (1â€“4 renk) veya sublimasyon tam renk baskÄ±. Promosyon, maÄŸaza ve kurumsal hediye.",
+    imageUrl: catImg("bez-tote"),
+    accentColor: "#4B3AA0",
+    startingPrice: 5500,
+    productionTime: "7-10 iÅŸ gÃ¼nÃ¼",
+    productCount: 2,
+  },
+];
+categories.push(...newCategories4);
 
 export function getCategoryBySlug(slug: string): Category | undefined {
   return categories.find((c) => c.slug === slug);
