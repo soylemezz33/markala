@@ -97,7 +97,8 @@ export function SiteFooter() {
             <span>Her hakkı saklıdır © {new Date().getFullYear()}</span>
             <Link href="/" className="text-brand-700 font-medium hover:underline">Markala.com.tr</Link>
             <span className="hidden md:inline mx-2">·</span>
-            <span className="text-ink-500/80">324 Ajans alt markası</span>
+            {/* /80 opaklık 3.68:1'e düşürüyordu (PSI color-contrast) — tam opak ink-500 ≥4.5:1. */}
+            <span className="text-ink-500">324 Ajans alt markası</span>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link href="/yasal/mesafeli-satis" className="hover:text-ink-900">Mesafeli Satış</Link>
