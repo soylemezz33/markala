@@ -1,0 +1,37 @@
+# Uzaktan teşhis — VPS'e SSH erişimi olmayan durumlar için (lokal IP bloklandığında).
+# SADECE OKUR: konteyner durumu, loglar, disk/bellek. Hiçbir şeyi değiştirmez.
+# Tetik: elle (workflow_dispatch) ya da bu dosyanın kendisine push.
+name: VPS Teşhis (read-only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/diag.yml"]
+
+jobs:
+  diag:
+    name: Konteyner + log teşhisi
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: SSH ile oku
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 4m
+          script: |
+            echo "=== KONTEYNERLER ==="
+            docker ps --format '{{.Names}} | {{.Status}}' | grep markala || true
+            echo "=== DİSK / BELLEK ==="
+            df -h / | tail -1
+            free -m | head -2
+            echo "=== API SON 24s HATALAR ==="
+            docker logs markala-api --since 24h 2>&1 | grep -iE 'error|exception|econn|fatal|prisma' | tail -50 || true
+            echo "=== ADMIN SON 24s LOG (son 60 satır) ==="
+            docker logs markala-admin --since 24h 2>&1 | tail -60 || true
+            echo "=== API'ye konteyner içinden sağlık ==="
+            docker exec markala-admin wget -q -O- --timeout=5 http://api:4000/api/health 2>&1 | head -3 || echo "İÇERİDEN ULAŞILAMADI"
