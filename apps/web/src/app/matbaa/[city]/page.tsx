@@ -7,7 +7,7 @@ import {
   Phone, WhatsappLogo, EnvelopeSimple, CheckCircle, Star,
   Buildings, Receipt, Storefront, Question, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
-import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
+import { cities, getCityBySlug, getNearbyCities, REGION_LABELS } from "@/lib/cities";
 import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -161,7 +161,7 @@ export default async function CityLandingPage({ params }: Props) {
           <div className="flex items-center gap-2 mb-4">
             <MapPin size={20} weight="fill" className="text-brand-700" />
             <span className="text-sm font-semibold text-brand-700 uppercase tracking-wider">
-              {city.region === "akdeniz" ? "Akdeniz Bölgesi" : "Güneydoğu Anadolu"} · {city.name}
+              {REGION_LABELS[city.region]} · {city.name}
             </span>
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-semibold text-ink-900 leading-tight">

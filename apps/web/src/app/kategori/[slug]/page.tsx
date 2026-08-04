@@ -4,6 +4,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Container, Price } from "@markala/ui";
 import { CaretRight, Truck, ShieldCheck, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
+import { getCategorySeoFallback } from "@/lib/category-seo";
+import { getGuidesForCategory } from "@/lib/guides";
 import { AllProductsClient } from "@/app/urunler/all-products-client";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -51,12 +53,15 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   // SEO sayfalaması: sayfa N'de title'a " — Sayfa N" eki + self-canonical (?page=N dahil).
   const page = parsePage(first(searchParams?.page));
   const pageSuffix = page > 1 ? ` — Sayfa ${page}` : "";
-  // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
+  // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim.
+  // Öncelik: DB seo (admin girerse kazanır) → curated kelime-hedefli fallback → jenerik.
+  const curated = getCategorySeoFallback(cat.slug);
   const seoTitle =
     (cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
+      curated?.title ??
       `${cat.name} Baskı${cat.startingPrice ? ` — ${cat.startingPrice} TL'den` : ""}`) +
     pageSuffix;
-  const seoDesc = cat.seo?.description ?? cat.longDescription;
+  const seoDesc = cat.seo?.description ?? curated?.description ?? cat.longDescription;
   const url = page > 1 ? `/kategori/${cat.slug}?page=${page}` : `/kategori/${cat.slug}`;
   // og:image = gerçek kategori görseli (raster) varsa; mockup-SVG fallback'i ise markalı PNG.
   const ogImage =
@@ -203,6 +208,28 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           hideHero
           hideCategoryFilter
         />
+      )}
+
+      {/* İlgili fiyat rehberleri — iç link (kategori → rehber) */}
+      {getGuidesForCategory(cat.slug).length > 0 && (
+        <section className="border-t border-paper-200 py-8">
+          <Container>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <span className="text-sm font-semibold text-ink-900 uppercase tracking-wider">
+                İlgili rehberler
+              </span>
+              {getGuidesForCategory(cat.slug).map((g) => (
+                <Link
+                  key={g.slug}
+                  href={`/rehber/${g.slug}`}
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:text-ink-900"
+                >
+                  {g.title} <CaretRight size={11} weight="bold" />
+                </Link>
+              ))}
+            </div>
+          </Container>
+        </section>
       )}
 
       {/* İlgili kategoriler */}

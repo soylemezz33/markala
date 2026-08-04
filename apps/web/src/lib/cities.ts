@@ -10,7 +10,7 @@
 export interface CityData {
   slug: string;
   name: string;
-  region: "akdeniz" | "guneydogu";
+  region: "akdeniz" | "guneydogu" | "marmara" | "ege" | "icanadolu";
   /** Kargo ulaşım süresi (iş günü) */
   deliveryDays: { min: number; max: number };
   /** Aynı gün motor kurye var mı (artık hiçbir şehirde sunulmuyor) */
@@ -34,6 +34,15 @@ export interface CityData {
   /** Hizmet alanı yarıçap (km) */
   serviceRadius?: number;
 }
+
+/** Bölge etiketi — city sayfası hero'sunda gösterilir. */
+export const REGION_LABELS: Record<CityData["region"], string> = {
+  akdeniz: "Akdeniz Bölgesi",
+  guneydogu: "Güneydoğu Anadolu",
+  marmara: "Marmara Bölgesi",
+  ege: "Ege Bölgesi",
+  icanadolu: "İç Anadolu Bölgesi",
+};
 
 export interface District {
   slug: string;
@@ -457,6 +466,190 @@ export const cities: CityData[] = [
     ],
     geo: { lat: 37.066135, lng: 37.378361 },
   },
+
+  // === UZAK BÜYÜKŞEHİRLER ===
+  // Yerel referans iddiası YOK (localReferences boş — bölüm gizlenir); teslimat DHL ile
+  // 1-2 iş günü. İçerik şehrin gerçek sektör profiline göre yazılmıştır.
+  {
+    slug: "istanbul",
+    name: "İstanbul",
+    region: "marmara",
+    deliveryDays: { min: 1, max: 2 },
+    sameDayCourier: false,
+    population: "15.700.000",
+    intro:
+      "İstanbul'daki ajanslar, e-ticaret markaları ve etkinlik firmaları için online matbaa çözümü: siparişini web'den yapılandır, Mersin atölyemizde üretilsin, DHL Express ile 1-2 iş günü içinde İstanbul'un her ilçesine teslim edilsin. Şehir içi matbaa trafiğine girmeden, KDV dahil net fiyatla.",
+    popularProducts: [
+      "Kartvizit (selefonlu/UV/yaldız)",
+      "E-ticaret ambalaj etiketi ve sticker",
+      "Katalog ve broşür baskısı",
+      "Fuar-etkinlik rollup ve branda",
+      "Şantiye İSG uyarı levhaları",
+    ],
+    localReferences: [],
+    commonNeeds: [
+      "E-ticaret paketleri için marka etiketi ve sticker",
+      "Plaza ofisleri için kurumsal kimlik seti (kartvizit + antetli + zarf)",
+      "Kongre, lansman ve fuar baskıları (rollup, yaka kartı, broşür)",
+      "İnşaat projeleri için İSG levha setleri",
+    ],
+    faqs: [
+      {
+        q: "İstanbul'a teslimat kaç günde?",
+        a: "DHL Express ile İstanbul'un tüm ilçelerine (Avrupa ve Anadolu yakası) 1-2 iş günü içinde teslim ediyoruz. Sabah onaylanan sipariş genellikle ertesi gün kargodadır.",
+      },
+      {
+        q: "İstanbul'da matbaa varken neden online sipariş vereyim?",
+        a: "Fiyat ve netlik: üretim Mersin'de kendi atölyemizde yapıldığı için aracı maliyeti yok; fiyatlar KDV dahil sitede yazar, sepette değişmez. Trafikte numune kovalamak yerine kargoyla kapına gelir; tasarım desteği de ücretsizdir.",
+      },
+      {
+        q: "Acil işlerde süre kısalır mı?",
+        a: "Üretim çoğu üründe 1-2 iş günüdür; acil durumda WhatsApp'tan yazın, üretim sırasını öne alma ve uçak kargo seçeneklerini birlikte değerlendirelim.",
+      },
+    ],
+    geo: { lat: 41.008238, lng: 28.978359 },
+  },
+
+  {
+    slug: "ankara",
+    name: "Ankara",
+    region: "icanadolu",
+    deliveryDays: { min: 1, max: 2 },
+    sameDayCourier: false,
+    population: "5.800.000",
+    intro:
+      "Ankara'daki kurumlar, üniversiteler ve OSTİM-İvedik sanayi bölgeleri için online matbaa: antetli kağıttan İSG levhalarına siparişini web'den yapılandır, DHL Express ile 1-2 iş günü içinde teslim al. KDV dahil net fiyat, e-arşiv fatura ve kurumsal cari hesap imkânıyla.",
+    popularProducts: [
+      "Antetli kağıt + zarf kurumsal set",
+      "Makbuz, fatura ve form baskısı",
+      "Kartvizit (selefonlu/UV)",
+      "Seminer-kongre rollup ve broşür",
+      "OSTİM/İvedik atölyeleri için İSG levhaları",
+    ],
+    localReferences: [],
+    commonNeeds: [
+      "Kurum ve dernekler için evrak-form baskısı",
+      "Sanayi sitelerinde iş güvenliği levha setleri",
+      "Üniversite etkinlikleri için afiş ve rollup",
+      "Muhasebe ofisleri için makbuz ve kaşe",
+    ],
+    faqs: [
+      {
+        q: "Ankara'ya teslimat kaç günde?",
+        a: "DHL Express ile Ankara merkez, OSTİM, İvedik ve tüm ilçelere 1-2 iş günü içinde teslim ediyoruz.",
+      },
+      {
+        q: "Kurumsal fatura ve cari hesap açıyor musunuz?",
+        a: "Evet. Kurumsal hesap başvurusuyla açık fatura, ay sonu kapanış ve firmanıza özel fiyatlandırma sunuyoruz; e-arşiv/e-fatura otomatik kesilir.",
+      },
+    ],
+    geo: { lat: 39.933365, lng: 32.859742 },
+  },
+
+  {
+    slug: "izmir",
+    name: "İzmir",
+    region: "ege",
+    deliveryDays: { min: 1, max: 2 },
+    sameDayCourier: false,
+    population: "4.500.000",
+    intro:
+      "İzmir'in fuar, liman ve turizm ekosistemi için online matbaa: Fuar İzmir etkinlikleri, Kemeraltı esnafı ve Alsancak ofisleri siparişini web'den verir, DHL Express ile 1-2 iş günü içinde teslim alır. KDV dahil net fiyat ve ücretsiz tasarım desteğiyle.",
+    popularProducts: [
+      "Fuar rollup, branda ve broşür seti",
+      "İhracat ambalaj etiketi",
+      "Restoran-kafe menü baskıları",
+      "Kartvizit ve kurumsal kimlik seti",
+      "Liman-lojistik evrak ve etiket baskısı",
+    ],
+    localReferences: [],
+    commonNeeds: [
+      "Fuar sezonu stand baskıları (rollup + broşür + yaka kartı)",
+      "Ege ihracatçıları için çoklu dil ambalaj etiketi",
+      "Sahil bandı işletmeleri için menü ve tanıtım baskısı",
+    ],
+    faqs: [
+      {
+        q: "İzmir'e teslimat kaç günde?",
+        a: "DHL Express ile İzmir merkez ve tüm ilçelere 1-2 iş günü içinde teslim ediyoruz. Fuar öncesi yoğun dönemlerde siparişi birkaç gün önceden vermenizi öneririz.",
+      },
+      {
+        q: "Fuar standım için toplu paket yapıyor musunuz?",
+        a: "Evet — rollup, masa broşürü, yaka kartı ve stand brandasını tek siparişte toplayabilir, toplu sipariş için teklif alabilirsiniz.",
+      },
+    ],
+    geo: { lat: 38.423734, lng: 27.142826 },
+  },
+
+  {
+    slug: "bursa",
+    name: "Bursa",
+    region: "marmara",
+    deliveryDays: { min: 1, max: 2 },
+    sameDayCourier: false,
+    population: "3.200.000",
+    intro:
+      "Bursa'nın otomotiv, tekstil ve mobilya (İnegöl) sanayisi için online matbaa: fabrika İSG levhalarından ürün etiketine siparişini web'den yapılandır, DHL Express ile 1-2 iş günü içinde teslim al. KDV dahil net fiyat ve kurumsal cari hesap imkânıyla.",
+    popularProducts: [
+      "Fabrika İSG uyarı ve talimat levhaları",
+      "Tekstil etiket ve barkod baskısı",
+      "Mobilya katalog ve broşür",
+      "Kartvizit ve kurumsal kimlik seti",
+      "Vinil branda ve dekota tabela",
+    ],
+    localReferences: [],
+    commonNeeds: [
+      "OSB fabrikaları için İSG levha setleri",
+      "Tekstil ve konfeksiyon etiketi",
+      "İnegöl mobilyacıları için katalog baskısı",
+    ],
+    faqs: [
+      {
+        q: "Bursa'ya teslimat kaç günde?",
+        a: "DHL Express ile Bursa merkez, OSB'ler ve İnegöl dahil tüm ilçelere 1-2 iş günü içinde teslim ediyoruz.",
+      },
+      {
+        q: "Fabrikamız için İSG levha seti hazırlar mısınız?",
+        a: "Evet. 800'den fazla İSG levhası içeren katalogdan işyeri tipinize göre set önerisi hazırlıyoruz; toplu alımda adet indirimi uygulanır.",
+      },
+    ],
+    geo: { lat: 40.195, lng: 29.06 },
+  },
+
+  {
+    slug: "konya",
+    name: "Konya",
+    region: "icanadolu",
+    deliveryDays: { min: 1, max: 2 },
+    sameDayCourier: false,
+    population: "2.300.000",
+    intro:
+      "Konya'nın tarım makineleri, döküm ve gıda sanayisi için online matbaa: makine etiketinden İSG levhasına siparişini web'den yapılandır, DHL Express ile 1-2 iş günü içinde teslim al. KDV dahil net fiyat ve toplu alım indirimleriyle.",
+    popularProducts: [
+      "Makine ve ekipman etiketi",
+      "Sanayi İSG uyarı levhaları",
+      "Gıda ambalaj etiketi",
+      "Kartvizit ve broşür baskısı",
+      "Vinil branda ve dekota tabela",
+    ],
+    localReferences: [],
+    commonNeeds: [
+      "Tarım makinesi üreticileri için dayanıklı etiket",
+      "OSB fabrikaları için İSG levha setleri",
+      "Gıda üreticileri için ambalaj etiketi",
+    ],
+    faqs: [
+      {
+        q: "Konya'ya teslimat kaç günde?",
+        a: "DHL Express ile Konya merkez ve OSB'lere 1-2 iş günü içinde teslim ediyoruz.",
+      },
+      {
+        q: "Makine etiketleri yağa ve sıcağa dayanır mı?",
+        a: "Evet — endüstriyel kullanım için selefonlu ve folyo malzeme seçenekleri sunuyoruz; kullanım koşulunuzu belirtirseniz doğru malzemeyi öneririz.",
+      },
+    ],
+    geo: { lat: 37.8716, lng: 32.4846 },
+  },
 ];
 
 // === Helpers ===
@@ -483,7 +676,9 @@ export function getAllDistrictParams(): { city: string; district: string }[] {
 export function getNearbyCities(slug: string, count = 3): CityData[] {
   const current = getCityBySlug(slug);
   if (!current) return [];
-  return cities
-    .filter((c) => c.slug !== slug && c.region === current.region)
-    .slice(0, count);
+  const sameRegion = cities.filter((c) => c.slug !== slug && c.region === current.region);
+  // Tek/az şehirli bölgelerde (ör. Ege) boş kalan slotları diğer illerle doldur —
+  // iç link ağı kopmasın.
+  const others = cities.filter((c) => c.slug !== slug && c.region !== current.region);
+  return [...sameRegion, ...others].slice(0, count);
 }

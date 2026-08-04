@@ -5,7 +5,7 @@ import {
   MapPin, Truck, ArrowRight, Lightning, ShieldCheck, Phone,
   Buildings, Storefront,
 } from "@phosphor-icons/react/dist/ssr";
-import { cities } from "@/lib/cities";
+import { cities, REGION_LABELS } from "@/lib/cities";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const SITE = "https://markala.com.tr";
@@ -32,9 +32,36 @@ export const metadata: Metadata = {
   },
 };
 
+// Bölge sırası ve açıklamaları — cities.ts'e yeni bölge eklendiğinde buraya bir satır eklenir.
+const REGION_SECTIONS: { region: (typeof cities)[number]["region"]; desc: string }[] = [
+  {
+    region: "akdeniz",
+    desc: "Mersin merkezli atölyeye en yakın iller — DHL Express ile 1 iş günü içinde teslim.",
+  },
+  {
+    region: "guneydogu",
+    desc: "Şanlıurfa, Gaziantep ve çevresine 1-2 iş günü içinde DHL ile teslim.",
+  },
+  {
+    region: "marmara",
+    desc: "İstanbul ve Bursa'ya DHL Express ile 1-2 iş günü içinde teslim.",
+  },
+  {
+    region: "ege",
+    desc: "İzmir ve çevresine DHL Express ile 1-2 iş günü içinde teslim.",
+  },
+  {
+    region: "icanadolu",
+    desc: "Ankara ve Konya'ya DHL Express ile 1-2 iş günü içinde teslim.",
+  },
+];
+
 export default function MatbaaHubPage() {
-  const akdeniz = cities.filter((c) => c.region === "akdeniz");
-  const guneydogu = cities.filter((c) => c.region === "guneydogu");
+  const sections = REGION_SECTIONS.map((s) => ({
+    ...s,
+    label: REGION_LABELS[s.region],
+    cities: cities.filter((c) => c.region === s.region),
+  })).filter((s) => s.cities.length > 0);
 
   return (
     <>
@@ -109,36 +136,20 @@ export default function MatbaaHubPage() {
       </div>
 
       <Container className="py-12 md:py-16">
-        {/* Akdeniz */}
-        <section>
-          <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            Akdeniz Bölgesi
-          </h2>
-          <p className="text-ink-700 mb-6 max-w-2xl">
-            Mersin merkezli atölyeye en yakın iller — DHL Express ile 1 iş günü
-            içinde teslim.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {akdeniz.map((city) => (
-              <CityCard key={city.slug} city={city} />
-            ))}
-          </div>
-        </section>
-
-        {/* Güneydoğu */}
-        <section className="mt-16">
-          <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            Güneydoğu Anadolu
-          </h2>
-          <p className="text-ink-700 mb-6 max-w-2xl">
-            Şanlıurfa, Gaziantep ve çevresine 1-2 iş günü içinde DHL ile teslim.
-          </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {guneydogu.map((city) => (
-              <CityCard key={city.slug} city={city} />
-            ))}
-          </div>
-        </section>
+        {/* Bölgeler — cities.ts'ten dinamik */}
+        {sections.map((s, i) => (
+          <section key={s.region} className={i > 0 ? "mt-16" : undefined}>
+            <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
+              {s.label}
+            </h2>
+            <p className="text-ink-700 mb-6 max-w-2xl">{s.desc}</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {s.cities.map((city) => (
+                <CityCard key={city.slug} city={city} />
+              ))}
+            </div>
+          </section>
+        ))}
 
         {/* Diğer iller bilgi */}
         <section className="mt-16 p-8 md:p-10 bg-ink-900 text-paper-50 rounded-2xl">
@@ -150,13 +161,12 @@ export default function MatbaaHubPage() {
                 className="text-brand-400 mb-3"
               />
               <h2 className="text-2xl md:text-3xl font-semibold">
-                Diğer 74 il için hizmet
+                Diğer tüm iller için hizmet
               </h2>
               <p className="mt-3 text-paper-100/70 leading-relaxed">
-                İstanbul, Ankara, İzmir, Bursa, Konya başta olmak üzere
-                Türkiye'nin tüm illerine DHL Express, Aras Kargo ve MNG ile 2-4
-                iş günü içinde teslim ediyoruz. Online sipariş — kargo takip —
-                kapıda imza.
+                Yukarıda listelenmeyen illere de DHL Express, Aras Kargo ve MNG
+                ile 2-4 iş günü içinde teslim ediyoruz. Online sipariş — kargo
+                takip — kapıda imza.
               </p>
             </div>
             <div className="md:text-right">
@@ -206,7 +216,7 @@ function CityCard({
             {city.name} Matbaa
           </h3>
           <p className="text-xs text-ink-500 mt-0.5">
-            {city.population} nüfus · {city.region === "akdeniz" ? "Akdeniz" : "Güneydoğu"}
+            {city.population} nüfus · {REGION_LABELS[city.region]}
           </p>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-900 text-[11px] font-bold uppercase">

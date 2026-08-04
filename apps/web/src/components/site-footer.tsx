@@ -8,6 +8,7 @@ import {
   WhatsappLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { openCookieSettings } from "@/components/cookie-consent";
+import { cities } from "@/lib/cities";
 
 export function SiteFooter() {
   return (
@@ -60,6 +61,7 @@ export function SiteFooter() {
           <FooterLink href="/numune-talebi">Ücretsiz Numune Kutusu</FooterLink>
           <FooterLink href="/hizmetler/toplu-baski">Toplu Baskı</FooterLink>
           <FooterLink href="/rehber/sablonlar">Ücretsiz Baskı Şablonları</FooterLink>
+          <FooterLink href="/rehber">Fiyat Rehberleri</FooterLink>
           <FooterLink href="/fiyat-listesi">Fiyat Listesi</FooterLink>
           <FooterLink href="/sozluk">Matbaa Sözlüğü</FooterLink>
           <FooterLink href="/yardim/dosya-hazirlama">Dosya Hazırlama Rehberi</FooterLink>
@@ -123,14 +125,12 @@ export function SiteFooter() {
           <div className="text-xs uppercase tracking-wider text-ink-500 font-semibold mb-4">
             Hizmet Bölgeleri
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-2 text-sm">
-            <FooterCityLink href="/matbaa/mersin">Mersin Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/antalya">Antalya Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/adana">Adana Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/sanliurfa">Şanlıurfa Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/hatay">Hatay Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/osmaniye">Osmaniye Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/gaziantep">Gaziantep Matbaa</FooterCityLink>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-2 text-sm">
+            {cities.map((c) => (
+              <FooterCityLink key={c.slug} href={`/matbaa/${c.slug}`}>
+                {c.name} Matbaa
+              </FooterCityLink>
+            ))}
           </div>
           <div className="mt-3 text-xs text-ink-500">
             Mersin ilçeleri:{" "}
