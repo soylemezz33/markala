@@ -1,0 +1,35 @@
+# TEK SEFERLİK HOTFIX (2026-08-04): cba3bc7 şemaya review_token + review_email_sent_at
+# ekledi ama migration prod'a uygulanmadı → tüm order.findMany() P2022 (admin "Veriler
+# yüklenemedi" + payment-recovery/review cronları ölü). Bu workflow İKİ kolonu idempotent
+# ekler (IF NOT EXISTS — tekrar çalıştırmak zararsız), başka HİÇBİR ŞEYE dokunmaz.
+name: "HOTFIX: orders review kolonları"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/hotfix-review-columns.yml"]
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Kolonları uygula + doğrula
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 4m
+          script: |
+            set -e
+            echo "=== ÖNCE: kolon var mı? ==="
+            docker exec markala-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT column_name FROM information_schema.columns WHERE table_name='"'"'orders'"'"' AND column_name LIKE '"'"'review%'"'"';"'
+            echo "=== UYGULA (idempotent) ==="
+            docker exec markala-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER TABLE orders ADD COLUMN IF NOT EXISTS review_token text;"'
+            docker exec markala-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE UNIQUE INDEX IF NOT EXISTS orders_review_token_key ON orders(review_token);"'
+            docker exec markala-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER TABLE orders ADD COLUMN IF NOT EXISTS review_email_sent_at timestamp(3);"'
+            echo "=== SONRA: doğrulama ==="
+            docker exec markala-postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -t -c "SELECT column_name FROM information_schema.columns WHERE table_name='"'"'orders'"'"' AND column_name LIKE '"'"'review%'"'"';"'
