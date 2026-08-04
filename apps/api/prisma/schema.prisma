@@ -1,6 +1,11 @@
 // Markala — Prisma şeması
 // Database: PostgreSQL
 // Migrations: pnpm --filter @markala/api prisma:migrate
+//
+// 🔴 KURAL (2026-08-04 olayı): Bu dosyada model/kolon değiştiren HER commit, migrations/
+// altına migration da eklemek ZORUNDA — api container'ı açılışta `prisma migrate deploy`
+// çalıştırır; migration'sız şema değişikliği prod'da P2022 üretir (admin+cronlar çöker).
+// CI'daki "Şema ↔ Migration bekçisi" job'ı bunu otomatik yakalar.
 
 generator client {
   provider = "prisma-client-js"

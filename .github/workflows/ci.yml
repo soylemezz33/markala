@@ -17,6 +17,39 @@ permissions:
   contents: read
 
 jobs:
+  # 2026-08-04 olayının bekçisi: schema.prisma migration'sız değişirse deploy'da yeni
+  # Prisma client prod DB'de olmayan kolonu SELECT eder → tüm sorgular P2022 (admin
+  # "Veriler yüklenemedi" + cronlar sessiz ölür). Şema değişikliği = migration ŞART.
+  schema-migration-guard:
+    name: Şema ↔ Migration bekçisi
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout (diff için geçmişle)
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Şema değiştiyse migration da değişmeli
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="origin/${{ github.base_ref }}...HEAD"
+            git fetch origin ${{ github.base_ref }} --depth=1
+          elif [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ] && git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+          else
+            RANGE="HEAD~1..HEAD"
+          fi
+          echo "Diff aralığı: $RANGE"
+          SCHEMA_CHANGED=$(git diff --name-only $RANGE -- apps/api/prisma/schema.prisma | wc -l)
+          MIGRATION_CHANGED=$(git diff --name-only $RANGE -- apps/api/prisma/migrations | wc -l)
+          echo "schema.prisma değişen: $SCHEMA_CHANGED | migrations değişen: $MIGRATION_CHANGED"
+          if [ "$SCHEMA_CHANGED" -gt 0 ] && [ "$MIGRATION_CHANGED" -eq 0 ]; then
+            echo "::error::schema.prisma değişti ama apps/api/prisma/migrations/ altında migration yok!"
+            echo "::error::Migration üret (prisma migrate dev --name <ad>) ya da elle idempotent SQL ekle — aksi halde prod'da P2022 patlar (bkz. 2026-08-04 olayı)."
+            exit 1
+          fi
+          echo "OK — şema/migration tutarlı."
+
   validate:
     name: Type-check, Build & Format
     runs-on: ubuntu-latest
