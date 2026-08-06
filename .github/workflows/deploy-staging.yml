@@ -56,8 +56,12 @@ jobs:
           push: true
           # Staging'in kendi API origin'i build-time gömülür. Analytics/doğrulama
           # ID'leri BİLEREK boş — staging trafiği GA4/Clarity/GTM'e karışmasın.
+          # API_INTERNAL_URL: build-time prerender fetch'leri PROD API'den okur (salt GET) —
+          # staging API imaj build sırasında henüz yok (tavuk-yumurta). Runtime'da compose
+          # bunu http://staging-api:4000 ile ezer.
           build-args: |
             NEXT_PUBLIC_API_URL=https://test-api.markala.com.tr
+            API_INTERNAL_URL=https://api.markala.com.tr
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.app }}:staging
           # Prod build'leriyle aynı cache scope'ları — staging build'leri hızlanır,
           # prod cache'i bozulmaz (cache-to yok, sadece okur).
