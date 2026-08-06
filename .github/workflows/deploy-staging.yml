@@ -101,9 +101,22 @@ jobs:
           script: |
             set -e
             cd /opt/markala
+            # İlk çalıştırmada .env.staging'i otomatik üret (idempotent — varsa DOKUNMAZ).
+            # Secrets yalnız VPS'te kalır; staging'e özel, prod .env.production'dan bağımsız.
             if [ ! -f .env.staging ]; then
-              echo "::error::/opt/markala/.env.staging yok! docs/STAGING.md'deki ilk kurulumu yap."
-              exit 1
+              echo "→ .env.staging yok — otomatik oluşturuluyor..."
+              umask 077
+              cat > .env.staging <<EOF
+            STAGING_POSTGRES_DB=markala_staging
+            STAGING_POSTGRES_USER=markala
+            STAGING_POSTGRES_PASSWORD=$(openssl rand -hex 24)
+            STAGING_JWT_SECRET=$(openssl rand -hex 32)
+            STAGING_REVALIDATE_SECRET=$(openssl rand -hex 16)
+            GITHUB_REPOSITORY=${{ github.repository }}
+            EOF
+              # Heredoc satır başlarındaki YAML girintisini temizle
+              sed -i 's/^[[:space:]]*//' .env.staging
+              echo "  ✓ /opt/markala/.env.staging oluşturuldu"
             fi
             echo "→ Staging imajlarını çek..."
             docker compose -f docker-compose.staging.yml --env-file .env.staging pull
