@@ -5,7 +5,6 @@ import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
 import { HeroCtaBand } from "@/components/home/hero-cta-band";
 import { TrustBadges } from "@/components/home/trust-badges";
 import { ProductRail } from "@/components/home/product-rail";
-import { CategoryGrid } from "@/components/home/category-grid";
 import { SectorShowcase } from "@/components/home/sector-showcase";
 import { TrustedBy } from "@/components/home/trusted-by";
 import { CustomerReviews } from "@/components/home/customer-reviews";
@@ -95,8 +94,9 @@ export default async function HomePage() {
         viewAllLabel="Tüm ürünler"
       />
 
-      <CategoryGrid />
-
+      {/* CategoryGrid ("Tüm matbaa ve reklam ürünleri") 2026-08-06 kararıyla geçici
+          kaldırıldı — bileşen duruyor (components/home/category-grid.tsx), gerektiğinde
+          import edip buraya geri ekle. */}
       <SectorShowcase />
 
       <CustomerReviews />

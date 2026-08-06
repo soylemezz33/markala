@@ -33,8 +33,9 @@ export function ProductRail({
   function scroll(dir: 1 | -1) {
     const el = scrollerRef.current;
     if (!el) return;
-    const cardWidth = el.querySelector<HTMLElement>("[data-rail-item]")?.offsetWidth ?? 280;
-    el.scrollBy({ left: dir * (cardWidth + 16) * 2, behavior: "smooth" });
+    // Tam "sayfa" kaydır: görünür alan kadar — kartlar tam sayı sığdığından
+    // hiçbir kart yarıda kalmaz (bkz. aşağıdaki calc tabanlı kart genişlikleri).
+    el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
   }
 
   if (products.length === 0) return null;
@@ -83,16 +84,19 @@ export function ProductRail({
           </div>
         </div>
 
+        {/* Responsive rail: kart genişliği calc ile görünür alana TAM SAYIDA bölünür
+            (2 / 3 / 4 / 5 kart) — son kart asla yarıda kalmaz. calc paydaki toplam gap'i
+            düşer: gap-4 = 1rem (mobil), gap-5 = 1.25rem (md+). */}
         <div
           ref={scrollerRef}
-          className="flex gap-4 md:gap-5 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-4 px-4 md:mx-0 md:px-0 pb-2"
+          className="flex gap-4 md:gap-5 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-4 px-4 scroll-px-4 md:mx-0 md:px-0 md:scroll-px-0 pb-2"
           style={{ scrollbarWidth: "none" }}
         >
           {products.map((p) => (
             <div
               key={p.slug}
               data-rail-item
-              className="snap-start shrink-0 w-[260px] sm:w-[280px] md:w-[300px]"
+              className="snap-start shrink-0 w-[calc((100%-1rem)/2)] md:w-[calc((100%-2.5rem)/3)] lg:w-[calc((100%-3.75rem)/4)] 2xl:w-[calc((100%-5rem)/5)]"
             >
               <ProductCard product={p} />
             </div>

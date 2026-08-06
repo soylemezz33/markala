@@ -32,7 +32,8 @@ export function CategoryCard({ category }: CategoryCardProps) {
       </div>
       <div className="p-4">
         <h3 className="font-medium text-ink-900">{category.name}</h3>
-        <div className="mt-1 flex items-baseline gap-1.5 text-sm text-ink-500">
+        {/* Fiyat SAĞDA — ürün kartlarıyla tutarlı (2026-08-06). */}
+        <div className="mt-1 flex items-baseline justify-end gap-1.5 text-sm text-ink-500">
           {category.startingPrice > 0 ? (
             <>
               <Price amount={category.startingPrice} size="sm" className="text-ink-900" />

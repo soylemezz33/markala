@@ -334,10 +334,12 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
   return (
     <ConfiguratorContext.Provider value={{ state, dispatch, product }}>
-      <div className="space-y-6">
+      {/* space-y-6 → space-y-4 + h1 küçültme (2026-08): 24" altı ekranda fiyat+CTA
+          fold içinde kalsın — dikey alan diyeti. */}
+      <div className="space-y-4">
         <div>
-          <h1 className="text-display-md font-serif text-ink-900">{product.name}</h1>
-          <div className="mt-2 flex items-center gap-2 text-sm text-ink-500">
+          <h1 className="text-2xl md:text-3xl font-serif text-ink-900 leading-tight">{product.name}</h1>
+          <div className="mt-1.5 flex items-center gap-2 text-sm text-ink-500">
             {(() => { const rating = ratingProp ?? product.rating; return rating && rating.count > 0 ? (
               <>
                 <span className="text-brand-500">★</span>
@@ -352,12 +354,12 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
           </div>
         </div>
 
-        <p className="text-ink-700 leading-relaxed">{product.shortDescription}</p>
+        <p className="text-sm text-ink-700 leading-relaxed line-clamp-3">{product.shortDescription}</p>
 
         {/* Büyük per-adet fiyat — ürünün yanında (KDV dahil). Fiyatsız üründe gizli;
             alttaki PriceCard zaten "Teklif Al"ı gösterir. Diğer içerik değişmedi. */}
         {canBuy ? (
-          <div className="border-t border-paper-200 pt-5">
+          <div className="border-t border-paper-200 pt-4">
             <div className="flex items-baseline gap-2 flex-wrap">
               <Price amount={show(total)} size="xl" className="text-brand-600 tabular-nums" />
               {areaAdet > 1 && (
@@ -374,7 +376,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
           </div>
         ) : isArea && startingPrice > 0 ? (
           // Ölçü girilmeden başlangıç fiyatı — "Teklif Al" hissini kırar, erişilebilir giriş fiyatı gösterir.
-          <div className="border-t border-paper-200 pt-5">
+          <div className="border-t border-paper-200 pt-4">
             <div className="flex items-baseline gap-1.5 flex-wrap">
               <Price amount={show(startingPrice)} size="xl" className="text-brand-600 tabular-nums" />
               <span className="text-base text-ink-500">'den başlayan</span>
@@ -395,7 +397,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
           <span className="font-semibold text-ink-900">Hatalı baskıda ücretsiz yeniden basım</span>
         </div>
 
-        <div className="space-y-6 pt-2">
+        <div className="space-y-5 pt-1">
           {isArea && <AreaField minM2={pricing.minM2} />}
           {groups.map((group) => {
             const visibleOptions =

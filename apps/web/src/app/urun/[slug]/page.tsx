@@ -187,9 +187,9 @@ export default async function ProductPage({ params }: Props) {
       />
       <ProductViewTracker slug={product.slug} />
 
-      {/* Breadcrumb header */}
+      {/* Breadcrumb header — ince bant: fold'da galeri+konfigüratöre alan bırak */}
       <div className="bg-paper-100 border-b border-paper-200">
-        <Container className="py-4">
+        <Container className="py-2.5">
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-ink-500">
             <Link href="/" className="hover:text-ink-900 transition-colors">
               Anasayfa
@@ -215,13 +215,15 @@ export default async function ProductPage({ params }: Props) {
         </Container>
       </div>
 
-      <Container className="py-8 md:py-12">
+      <Container className="py-4 md:py-6">
         {/* Hero: 3 hücreli grid. Masaüstü → galeri (sol üst) + bilgi (sol alt) + konfigüratör
             (sağ, 2 satır). Mobil (tek kolon, DOM sırası) → galeri → KONFİGÜRATÖR → bilgi:
-            müşteri fiyatı/seçenekleri hemen galeri altında görür, pazarlama metni aşağıda. */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_auto] gap-y-8 gap-x-8 lg:gap-x-12 items-start">
+            müşteri fiyatı/seçenekleri hemen galeri altında görür, pazarlama metni aşağıda.
+            2026-08: 7/5 → 6/6 kolon + üst padding diyeti — 24" altı (1080p laptop)
+            ekranlarda görsel ekranı yutmasın, fiyat+CTA scroll'suz görünsün. */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_auto] gap-y-8 gap-x-8 lg:gap-x-10 items-start">
           {/* 1) Galeri + hızlı aksiyon — mobilde 1. */}
-          <div className="lg:col-span-7 lg:col-start-1 lg:row-start-1 space-y-4">
+          <div className="lg:col-span-6 lg:col-start-1 lg:row-start-1 space-y-3">
             <Gallery
               images={product.images}
               alt={product.name}
@@ -234,7 +236,7 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           {/* 2) Konfigüratör — sağ kolon, iki satır boyunca; MOBİLDE galerinin hemen altında (2.) */}
-          <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2">
+          <div className="lg:col-span-6 lg:col-start-7 lg:row-start-1 lg:row-span-2">
             <div className="lg:sticky lg:top-24">
               <Configurator
                 product={product}
@@ -245,7 +247,7 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           {/* 3) Açıklama + özellikler/kullanım — masaüstünde galerinin altında, mobilde konfigüratörden sonra (3.) */}
-          <div className="lg:col-span-7 lg:col-start-1 lg:row-start-2 space-y-8">
+          <div className="lg:col-span-6 lg:col-start-1 lg:row-start-2 space-y-8">
             {product.description && (
               <p className="text-ink-700 leading-relaxed text-[15px]">
                 {product.description}

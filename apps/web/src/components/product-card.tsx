@@ -96,8 +96,12 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="mt-1 text-xs text-ink-500">{product.sizeLabel}</p>
         )}
 
+        {/* Fiyat SAĞDA — e-ticaret okuma alışkanlığı (göz fiyatı sağda arar, 2026-08-06). */}
         <div className="mt-auto pt-3 border-t border-paper-200 flex items-baseline justify-between gap-2">
-          <div className="flex flex-col">
+          <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-brand-700">
+            Yapılandır →
+          </span>
+          <div className="flex flex-col items-end text-right">
             {startingPrice > 0 ? (
               <>
                 <Price amount={startingPrice} size="md" className="text-ink-900" />
@@ -111,9 +115,6 @@ export function ProductCard({ product }: ProductCardProps) {
               </span>
             )}
           </div>
-          <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-brand-700">
-            Yapılandır →
-          </span>
         </div>
       </div>
     </Link>

@@ -20,9 +20,10 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
 
   return (
     <div>
-      {/* Mobilde kare (dikey alan bol), masaüstünde 4:3 → görsel ekranı kaplamasın,
-          açıklama/özellikler yukarı çıksın. Premium his korunur (makul tavan). */}
-      <div className="relative aspect-square lg:aspect-[4/3] bg-paper-100 rounded-lg overflow-hidden">
+      {/* Mobilde kare (dikey alan bol); masaüstünde yükseklik viewport'a bağlı
+          (min(58vh, 540px)) → 24" altı ekranlarda görsel ekranı yutmaz, fiyat+CTA
+          scroll'suz görünür. Premium his korunur (makul tavan). */}
+      <div className="relative aspect-square lg:aspect-auto lg:h-[min(58vh,540px)] bg-paper-100 rounded-lg overflow-hidden">
         {hasImages && !activeIsBroken ? (
           <Image
             src={safeImages[active] ?? ""}
@@ -51,7 +52,7 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
         )}
       </div>
       {hasImages && safeImages.length > 1 && (
-        <div className="mt-3 grid grid-cols-5 gap-2">
+        <div className="mt-2.5 grid grid-cols-6 lg:grid-cols-7 gap-2">
           {safeImages.map((src, i) => (
             <button
               key={src + i}
