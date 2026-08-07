@@ -50,6 +50,8 @@ services:
       PORT: 4000
       DATABASE_URL: postgresql://${STAGING_POSTGRES_USER:-markala}:${STAGING_POSTGRES_PASSWORD}@staging-postgres:5432/${STAGING_POSTGRES_DB:-markala_staging}?schema=public
       JWT_SECRET: ${STAGING_JWT_SECRET}
+      # EncryptionService (2FA/şifreli alanlar) açılışta ≥32 karakter ister — yoksa API çöker.
+      ENCRYPTION_KEY: ${STAGING_ENCRYPTION_KEY}
       WEB_ORIGIN: https://test.markala.com.tr
       LOYALTY_ENABLED: ${LOYALTY_ENABLED:-false}
       # Entegrasyonlar staging'de BİLEREK boş/sandbox — gerçek ödeme/SMS/fatura tetiklenmez.

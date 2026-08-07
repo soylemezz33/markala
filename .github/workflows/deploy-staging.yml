@@ -122,6 +122,11 @@ jobs:
               sed -i 's/^[[:space:]]*//' .env.staging
               echo "  ✓ /opt/markala/.env.staging oluşturuldu"
             fi
+            # Sonradan eklenen zorunlu anahtarlar — mevcut .env.staging'e idempotent ekle.
+            if ! grep -q '^STAGING_ENCRYPTION_KEY=' .env.staging; then
+              echo "STAGING_ENCRYPTION_KEY=$(openssl rand -hex 24)" >> .env.staging
+              echo "  ✓ STAGING_ENCRYPTION_KEY eklendi"
+            fi
             echo "→ Staging imajlarını çek..."
             docker compose -f docker-compose.staging.yml --env-file .env.staging pull
             echo "→ Staging servislerini güncelle (prod'a DOKUNULMAZ)..."

@@ -30,6 +30,8 @@ jobs:
             echo "=== STAGING-API SON 40 SATIR ==="
             docker logs markala-staging-api --tail 40 2>&1 || true
             echo "::notice title=api-log::$(docker logs markala-staging-api --tail 6 2>&1 | tr '\n' ' ¦ ' | cut -c1-900 || echo LOG_YOK)"
+            echo "::notice title=api-err1::$(docker logs markala-staging-api --tail 80 2>&1 | grep -iE 'error|missing|required|invalid|undefined|cannot' | head -3 | tr '\n' ' ¦ ' | cut -c1-900 || echo ERR_YOK)"
+            echo "::notice title=api-err2::$(docker logs markala-staging-api --tail 80 2>&1 | grep -iE 'error|missing|required|invalid|undefined|cannot' | sed -n '4,6p' | tr '\n' ' ¦ ' | cut -c1-900 || echo -)"
             echo "=== NGINX -> STAGING-API içeriden ==="
             docker exec markala-nginx sh -c "wget -q -O- --timeout=5 http://staging-api:4000/api/health 2>&1 | head -2" || echo "İÇERİDEN ULAŞILAMADI"
             echo "::notice title=inner-health::$(docker exec markala-nginx sh -c 'wget -q -O- --timeout=5 http://staging-api:4000/api/health 2>&1 | head -1' || echo ULASILAMADI)"
