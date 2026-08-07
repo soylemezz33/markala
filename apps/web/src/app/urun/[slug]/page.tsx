@@ -215,7 +215,7 @@ export default async function ProductPage({ params }: Props) {
         </Container>
       </div>
 
-      <Container className="py-4 md:py-6">
+      <Container className="py-3 md:py-4">
         {/* Hero: 3 hücreli grid. Masaüstü → galeri (sol üst) + bilgi (sol alt) + konfigüratör
             (sağ, 2 satır). Mobil (tek kolon, DOM sırası) → galeri → KONFİGÜRATÖR → bilgi:
             müşteri fiyatı/seçenekleri hemen galeri altında görür, pazarlama metni aşağıda.

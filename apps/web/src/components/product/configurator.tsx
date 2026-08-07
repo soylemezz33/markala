@@ -354,7 +354,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
           </div>
         </div>
 
-        <p className="text-sm text-ink-700 leading-relaxed line-clamp-3">{product.shortDescription}</p>
+        <p className="text-sm text-ink-700 leading-relaxed line-clamp-2">{product.shortDescription}</p>
 
         {/* Büyük per-adet fiyat — ürünün yanında (KDV dahil). Fiyatsız üründe gizli;
             alttaki PriceCard zaten "Teklif Al"ı gösterir. Diğer içerik değişmedi. */}

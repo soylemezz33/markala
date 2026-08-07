@@ -58,6 +58,7 @@ jobs:
             done
             echo "::notice title=result::staging-api=$(docker inspect -f '{{.State.Health.Status}}' markala-staging-api 2>/dev/null || echo yok)"
             if [ "$ok" != "1" ]; then echo "❌ staging-api sağlıksız"; docker logs markala-staging-api --tail 30 2>&1 || true; exit 1; fi
-            echo "→ Storefront cache tazeleme (staging-web restart — ISR anında prod kopyasını görsün)..."
-            docker compose -f docker-compose.staging.yml --env-file .env.staging restart staging-web
+            echo "→ Storefront ISR cache SIFIRLAMA (restart yetmez — container FS'i korur;"
+            echo "   force-recreate taze container = build'deki dolu prerender'a döner)..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --force-recreate --no-deps staging-web
             echo "✅ Prod kopyası staging'de"

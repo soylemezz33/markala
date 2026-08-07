@@ -21,9 +21,10 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
   return (
     <div>
       {/* Mobilde kare (dikey alan bol); masaüstünde yükseklik viewport'a bağlı
-          (min(58vh, 540px)) → 24" altı ekranlarda görsel ekranı yutmaz, fiyat+CTA
-          scroll'suz görünür. Premium his korunur (makul tavan). */}
-      <div className="relative aspect-square lg:aspect-auto lg:h-[min(58vh,540px)] bg-paper-100 rounded-lg overflow-hidden">
+          (min(48vh, 460px)) → 24" altı / düşük yükseklikli ekranlarda görsel ekranı
+          yutmaz, fiyat+CTA+seçenekler scroll'suz görünür (2026-08-07 kullanıcı geri
+          bildirimi ile 58vh/540'tan düşürüldü). */}
+      <div className="relative aspect-square lg:aspect-auto lg:h-[min(48vh,460px)] bg-paper-100 rounded-lg overflow-hidden">
         {hasImages && !activeIsBroken ? (
           <Image
             src={safeImages[active] ?? ""}
