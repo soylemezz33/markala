@@ -126,9 +126,9 @@ jobs:
             docker compose -f docker-compose.staging.yml --env-file .env.staging pull
             echo "→ Staging servislerini güncelle (prod'a DOKUNULMAZ)..."
             docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --no-build
-            echo "→ DB migration (staging DB)..."
-            docker compose -f docker-compose.staging.yml --env-file .env.staging run --rm staging-api \
-              sh -c "cd apps/api && npx prisma migrate deploy" || echo "⚠ migrate deploy başarısız — logları kontrol et"
+            # NOT: ayrıca 'prisma migrate deploy' KOŞULMAZ — api imajının CMD'si açılışta
+            # zaten migrate eder; ikinci bir eşzamanlı migrate boş DB'de yarış yaratıp
+            # P3009 (failed migration kaydı) bırakıyordu (2026-08-07 olayı).
             echo "→ Prod nginx reload (staging vhost'ları yüklensin)..."
             docker exec markala-nginx nginx -t && docker exec markala-nginx nginx -s reload
             echo "→ Sağlık kontrolü (container içinden, maks ~1 dk)..."
