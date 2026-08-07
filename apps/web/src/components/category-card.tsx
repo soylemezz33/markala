@@ -15,7 +15,7 @@ export function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Link
       href={`/kategori/${category.slug}`}
-      className="group relative flex flex-col rounded-lg overflow-hidden bg-paper-50 border border-paper-200 transition-all duration-200 ease-out hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2"
+      className="group relative flex flex-col h-full rounded-lg overflow-hidden bg-paper-50 border border-paper-200 transition-all duration-200 ease-out hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-paper-100">
         <Image
@@ -30,10 +30,10 @@ export function CategoryCard({ category }: CategoryCardProps) {
           <ArrowUpRight size={16} weight="bold" />
         </span>
       </div>
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         <h3 className="font-medium text-ink-900">{category.name}</h3>
-        {/* Fiyat SAĞDA — ürün kartlarıyla tutarlı (2026-08-06). */}
-        <div className="mt-1 flex items-baseline justify-end gap-1.5 text-sm text-ink-500">
+        {/* Fiyat SAĞDA — ürün kartlarıyla tutarlı (2026-08-06); mt-auto ile alta sabit. */}
+        <div className="mt-auto pt-1 flex items-baseline justify-end gap-1.5 text-sm text-ink-500">
           {category.startingPrice > 0 ? (
             <>
               <Price amount={category.startingPrice} size="sm" className="text-ink-900" />
