@@ -247,9 +247,14 @@ export default function CartPage() {
                     <Row label={`Kupon (${appliedCode})`} value={<Price amount={-discount} className="text-success" />} />
                   )}
                   <Row label="Kargo" value={shippingFee === 0 ? <span className="text-success font-medium">Ücretsiz</span> : <Price amount={shippingFee} className="text-ink-900" />} />
-                  <Row label={`KDV (%${VAT_RATE * 100} dahil)`} value={<Price amount={vat} className="text-ink-500" />} muted />
                   <div className="border-t border-paper-200 pt-3 mt-3">
                     <Row label={<span className="text-base font-semibold text-ink-900">Toplam</span>} value={<Price amount={total} size="lg" className="text-ink-900" />} />
+                    {/* KDV toplanabilir satır DEĞİL bilgi notu: satır hâli "bir daha mı ekleniyor?"
+                        yanılgısı yaratıyordu (2026-08-12 geri bildirim). Standart pratik: toplam
+                        altında "KDV dahil" + tutar. */}
+                    <p className="mt-1 text-xs text-ink-500 text-right">
+                      Fiyatlara %{VAT_RATE * 100} KDV dahildir (KDV tutarı: <Price amount={vat} size="sm" className="text-ink-500" />)
+                    </p>
                   </div>
                 </dl>
                 {/* Bedava kargo çubuğu — ortak bileşen (çekmecede de aynısı); eşik /settings/shipping'ten. */}

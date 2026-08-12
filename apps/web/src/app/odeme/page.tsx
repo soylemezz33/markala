@@ -1122,14 +1122,15 @@ export default function CheckoutPage() {
                       )
                     }
                   />
-                  <Row
-                    label="KDV (%20 dahil)"
-                    value={<Price amount={vat} className="text-ink-500" />}
-                    muted
-                  />
-                  <div className="pt-3 border-t border-paper-200 flex items-baseline justify-between">
-                    <span className="font-medium text-ink-900">Toplam</span>
-                    <Price amount={total} size="lg" className="text-ink-900" />
+                  <div className="pt-3 border-t border-paper-200">
+                    <div className="flex items-baseline justify-between">
+                      <span className="font-medium text-ink-900">Toplam</span>
+                      <Price amount={total} size="lg" className="text-ink-900" />
+                    </div>
+                    {/* KDV toplanabilir satır DEĞİL bilgi notu — sepetle aynı desen (2026-08-12). */}
+                    <p className="mt-1 text-xs text-ink-500 text-right">
+                      Fiyatlara %20 KDV dahildir (KDV tutarı: <Price amount={vat} size="sm" className="text-ink-500" />)
+                    </p>
                   </div>
                 </div>
 

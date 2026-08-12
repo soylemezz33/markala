@@ -200,10 +200,15 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
             <span>Kargo</span>
             {order.shippingFee === 0 ? <span className="text-success">Ücretsiz</span> : <Price amount={order.shippingFee} />}
           </div>
-          <div className="flex justify-between text-ink-500"><span>KDV</span><Price amount={order.vat} /></div>
-          <div className="flex justify-between pt-2 border-t border-paper-200">
-            <span className="font-medium text-ink-900">Toplam</span>
-            <Price amount={order.total} size="lg" className="text-ink-900" />
+          <div className="pt-2 border-t border-paper-200">
+            <div className="flex justify-between">
+              <span className="font-medium text-ink-900">Toplam</span>
+              <Price amount={order.total} size="lg" className="text-ink-900" />
+            </div>
+            {/* KDV toplanabilir satır DEĞİL bilgi notu — sepet/ödeme ile aynı desen (2026-08-12). */}
+            <p className="mt-1 text-xs text-ink-500 text-right">
+              Fiyatlara %20 KDV dahildir (KDV tutarı: <Price amount={order.vat} size="sm" className="text-ink-500" />)
+            </p>
           </div>
         </div>
       </section>

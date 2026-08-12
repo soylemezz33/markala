@@ -180,11 +180,15 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           {order.discount > 0 && (
             <Row label="İndirim" value={<span className="inline-flex items-center text-success">-&nbsp;<Price amount={order.discount} /></span>} />
           )}
-          {/* KDV fiyatlara DAHİL — additive değil; Toplam = Ara toplam + Kargo. Etiket bunu netleştirir. */}
-          <Row label="KDV (%20 dahil)" value={<Price amount={order.vat} className="text-ink-500" />} />
-          <div className="pt-3 border-t border-paper-200 flex items-baseline justify-between">
-            <span className="font-medium text-ink-900">Toplam</span>
-            <Price amount={order.total} size="lg" className="text-ink-900" />
+          <div className="pt-3 border-t border-paper-200">
+            <div className="flex items-baseline justify-between">
+              <span className="font-medium text-ink-900">Toplam</span>
+              <Price amount={order.total} size="lg" className="text-ink-900" />
+            </div>
+            {/* KDV toplanabilir satır DEĞİL bilgi notu — sepet/ödeme ile aynı desen (2026-08-12). */}
+            <p className="mt-1 text-xs text-ink-500 text-right">
+              Fiyatlara %20 KDV dahildir (KDV tutarı: <Price amount={order.vat} size="sm" className="text-ink-500" />)
+            </p>
           </div>
         </div>
       </section>
