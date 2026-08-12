@@ -28,7 +28,6 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 4m
           script: |
-            set -e
             cd /opt/markala
             out=$(docker exec -i markala-staging-postgres psql -U markala -d markala_staging -v ON_ERROR_STOP=1 2>&1 <<'LEGALSQL'
             -- Yasal sayfa içerikleri — 2026-08-08 (kısa, markaya uyarlanmış şablonlar).
@@ -151,9 +150,8 @@ jobs:
             -- Kontrol çıktısı
             SELECT slug, version, length(content) AS icerik_uzunlugu FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');
             LEGALSQL
-            ) || { echo "::error title=psql::$(echo "$out" | tail -4 | tr '\n' ' ')"; exit 1; }
-            echo "$out" | tail -5
+            ); rc=$?
+            echo "::notice title=psql-out::$(echo "$out" | tail -6 | tr '\n' ' ')"
+            [ "$rc" -eq 0 ] || exit 1
             echo "::notice title=legal::$(docker exec markala-staging-postgres psql -U markala -d markala_staging -t -A -c "SELECT slug||'='||length(content) FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');" | tr '\n' ' ')"
-            echo "-> Storefront cache tazele..."
-            docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --force-recreate --no-deps staging-web
-            echo "OK: Yasal icerik staging_de"
+            echo "OK - yasal icerik staging'de (storefront 60sn icinde tazelenir)"
