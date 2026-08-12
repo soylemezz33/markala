@@ -493,7 +493,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
             <p className="text-[11px] leading-relaxed text-ink-500">
               {canBuy
-                ? "Sepete eklediğinde üretim başlamaz — onay sonrası matbaa süreci başlar."
+                ? "Sipariş sonrası ekibimiz sizinle iletişime geçer; baskı, tasarımınızı onaylamanızın ardından başlar."
                 : "Teklif Al'a tıkla, 24 saat içinde sana dönelim — hiçbir ödeme veya taahhüt yok."}
             </p>
           </div>
