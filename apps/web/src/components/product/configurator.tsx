@@ -31,7 +31,6 @@ import {
   AreaField,
   MobileCta,
 } from "./configurator-fields";
-import { EstimatedDelivery } from "./estimated-delivery";
 
 // Tip — API'den gelen product.options her satırı bu şekildedir
 interface RawOption {
@@ -474,7 +473,9 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
               )}
             </div>
 
-            <EstimatedDelivery productionTime={product.productionTime} />
+            {/* "En geç X kargoda" teslim tahmini KALDIRILDI (2026-08-08 karar): tarihli
+                kargo sözü, üretim süresiyle karışıp yanlış beklenti yaratıyordu. Üretim
+                süresi başlık altında zaten yazıyor; kargo süresi bilinçli olarak verilmiyor. */}
 
             {/* Güven rozeti — müşterinin 1 numaralı korkusu: "baskı hatalı gelirse?" */}
             <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs">
