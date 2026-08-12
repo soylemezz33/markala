@@ -1,5 +1,7 @@
 # Yasal sayfa içeriklerini STAGING DB'ye uygular (scripts/legal-content-2026-08.sql).
 # PROD'A DOKUNMAZ. Prod uygulaması canlıya alma sırasında ayrıca yapılır.
+# Dosya VPS'e scp ile DEĞİL, sunucudaki git klonundan (origin/staging) okunur —
+# scp-action bu depoda tek dosya kopyalamada başarısız oldu (2026-08-08).
 # Tetik: SQL dosyası ya da bu workflow değişince (staging branch) veya elle.
 name: Staging Yasal İçerik Yükle
 
@@ -17,18 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: SQL'i staging postgres'e uygula
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          source: "scripts/legal-content-2026-08.sql"
-          target: "/opt/markala/tmp-legal-seed/"
-      - name: Çalıştır ve doğrula
+      - name: Git'ten oku ve staging postgres'e uygula
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -39,10 +30,10 @@ jobs:
           script: |
             set -e
             cd /opt/markala
-            docker exec -i markala-staging-postgres psql -U markala -d markala_staging -v ON_ERROR_STOP=1 \
-              < tmp-legal-seed/scripts/legal-content-2026-08.sql
-            rm -rf tmp-legal-seed
+            git fetch origin staging --depth=1
+            git show origin/staging:scripts/legal-content-2026-08.sql \
+              | docker exec -i markala-staging-postgres psql -U markala -d markala_staging -v ON_ERROR_STOP=1
             echo "::notice title=legal::$(docker exec markala-staging-postgres psql -U markala -d markala_staging -t -A -c "SELECT slug||'='||length(content) FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');" | tr '\n' ' ')"
-            echo "→ Storefront cache tazele (ISR 60sn zaten, restart anında görsün)..."
+            echo "→ Storefront cache tazele..."
             docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --force-recreate --no-deps staging-web
             echo "✅ Yasal içerik staging'de"
