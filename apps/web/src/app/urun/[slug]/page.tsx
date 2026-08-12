@@ -136,18 +136,46 @@ async function getPricingSettings(): Promise<{ kur: number; marj: number; kdv: n
 }
 
 function makeTrustBadges(freeThreshold: number, productionTime?: string) {
+  // 2026-08-08 yenileme: her rozetin kendi renk kimliği (gradient ikon + zemin tonu) —
+  // SectorShowcase ile aynı görsel dil; soluk tek-renk şerit "cansız" bulunmuştu.
   return [
     {
       icon: Truck,
-      label: "Toplam teslimat süresi",
+      label: "Hızlı üretim",
       sub: productionTime
-        ? `Üretim: ${productionTime} + kargo 1-3 iş günü · ${freeThreshold}₺ üzeri ücretsiz`
-        : `1-3 iş günü kargo · ${freeThreshold}₺ üzeri ücretsiz`,
+        ? `Üretim: ${productionTime} · ${freeThreshold}₺ üzeri kargo ücretsiz`
+        : `${freeThreshold}₺ üzeri kargo ücretsiz`,
+      grad: "from-sky-500 to-blue-600",
+      tint: "bg-sky-50 border-sky-200",
     },
-    { icon: PaintBrush, label: "Ücretsiz tasarım desteği", sub: "her siparişte" },
-    { icon: ShieldCheck, label: "Kalite garantisi", sub: "hatalı baskıda ücretsiz değişim" },
-    { icon: CreditCard, label: "3 taksit imkânı", sub: "tüm kartlara" },
-    { icon: MagnifyingGlass, label: "Ücretsiz Hızlı Tasarım Kontrolü", sub: "baskı öncesi uzman ekibimiz kontrol eder" },
+    {
+      icon: PaintBrush,
+      label: "Ücretsiz tasarım desteği",
+      sub: "her siparişte",
+      grad: "from-fuchsia-500 to-purple-600",
+      tint: "bg-fuchsia-50 border-fuchsia-200",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Kalite garantisi",
+      sub: "hatalı baskıda ücretsiz değişim",
+      grad: "from-emerald-500 to-green-600",
+      tint: "bg-emerald-50 border-emerald-200",
+    },
+    {
+      icon: CreditCard,
+      label: "3 taksit imkânı",
+      sub: "tüm kartlara",
+      grad: "from-amber-400 to-orange-500",
+      tint: "bg-amber-50 border-amber-200",
+    },
+    {
+      icon: MagnifyingGlass,
+      label: "Hızlı Tasarım Kontrolü",
+      sub: "baskı öncesi uzman kontrolü — ücretsiz",
+      grad: "from-rose-500 to-pink-600",
+      tint: "bg-rose-50 border-rose-200",
+    },
   ];
 }
 
@@ -304,19 +332,21 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Güven rozetleri — tam genişlik şerit (hero'nun altında) */}
+        {/* Güven rozetleri — tam genişlik şerit; rozet başına renk kimliği (2026-08-08). */}
         <ul className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 border-t border-paper-200 pt-8">
           {makeTrustBadges(shippingThreshold, product.productionTime).map((t) => (
             <li
               key={t.label}
-              className="flex items-start gap-3 p-4 bg-paper-100 border border-paper-200 rounded-lg"
+              className={`flex items-start gap-3 p-4 rounded-xl border transition-shadow hover:shadow-md ${t.tint}`}
             >
-              <div className="flex-none w-9 h-9 rounded-md bg-brand-100 grid place-items-center text-brand-700">
-                <t.icon size={18} />
+              <div
+                className={`flex-none w-10 h-10 rounded-lg bg-gradient-to-br ${t.grad} grid place-items-center text-white shadow-sm`}
+              >
+                <t.icon size={19} weight="fill" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-medium text-ink-900">{t.label}</div>
-                <div className="text-xs text-ink-500 mt-0.5">{t.sub}</div>
+                <div className="text-sm font-semibold text-ink-900 leading-snug">{t.label}</div>
+                <div className="text-xs text-ink-500 mt-0.5 leading-relaxed">{t.sub}</div>
               </div>
             </li>
           ))}

@@ -9,23 +9,40 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { openCookieSettings } from "@/components/cookie-consent";
 
+/**
+ * Site footer — 2026-08-08 yenileme: koyu (marka charcoal) zemin + amber/cyan
+ * gradient aksan şeridi; ödeme yöntemleri metin yerine marka-renkli logolarla.
+ * "Hizmet Bölgeleri" (7 il local-SEO link bloğu) KALDIRILDI (kullanıcı kararı —
+ * footer'ı uzatıyordu; /matbaa/* sayfaları yaşamaya ve sitemap'te kalmaya devam eder).
+ */
 export function SiteFooter() {
   return (
-    <footer className="bg-paper-100 border-t border-paper-200 mt-16">
-      <Container className="py-14 md:py-20 grid md:grid-cols-12 gap-10 md:gap-12">
+    <footer className="bg-[#191722] text-paper-100 mt-16">
+      {/* Marka aksan şeridi — amber → cyan gradient */}
+      <div
+        aria-hidden
+        className="h-1 bg-gradient-to-r from-brand-500 via-[#FF7A59] to-[#00D9FF]"
+      />
+
+      <Container className="py-14 md:py-16 grid md:grid-cols-12 gap-10 md:gap-12">
         {/* Logo + tagline + sosyal */}
         <div className="md:col-span-3">
-          <Link href="/" className="inline-block" aria-label="Markala — ana sayfa">
+          {/* Logonun koyu ögeleri koyu zeminde kaybolur → açık zeminli çip içinde */}
+          <Link
+            href="/"
+            className="inline-block bg-paper-50 rounded-xl px-3.5 py-2.5 shadow-sm"
+            aria-label="Markala — ana sayfa"
+          >
             <img
               src="/markala-logo.svg"
               alt="markala.com.tr"
-              width={131}
-              height={44}
-              className="h-11 w-auto"
+              width={113}
+              height={38}
+              className="h-9 w-auto"
             />
           </Link>
-          <p className="mt-4 text-sm text-ink-700 leading-relaxed">
-            markala.com.tr'yi sosyal medyada takip edin.
+          <p className="mt-4 text-sm text-paper-100/70 leading-relaxed">
+            Kartvizitten brandaya tüm baskı işleriniz — 324 Ajans güvencesiyle.
           </p>
           <div className="mt-5 flex items-center gap-2">
             <SocialLink href="https://instagram.com/markala.com.tr" label="Instagram"><InstagramLogo size={18} /></SocialLink>
@@ -78,102 +95,67 @@ export function SiteFooter() {
         </FooterColumn>
       </Container>
 
-      {/* Ticari künye — kurumsal alıcının "kimden alıyorum, firma nerede?" sorusuna görünür cevap. */}
-      <div className="border-t border-paper-200">
-        <Container className="py-4 text-xs text-ink-500 leading-relaxed">
-          <span className="font-medium text-ink-700">324 Ajans Bilgi Teknolojileri Reklam Pazarlama</span>
-          {" · "}Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin
-          {" · "}
-          <Link href="tel:+903244333351" className="hover:text-ink-900">0324 433 33 51</Link>
-          {" · "}
-          <Link href="mailto:merhaba@markala.com.tr" className="hover:text-ink-900">merhaba@markala.com.tr</Link>
-        </Container>
-      </div>
-
-      {/* Alt bant — telif + yasal linkler */}
-      <div className="border-t border-paper-200">
-        <Container className="py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-ink-500">
-          <div className="flex flex-wrap items-center gap-2">
-            <span>Her hakkı saklıdır © {new Date().getFullYear()}</span>
-            <Link href="/" className="text-brand-700 font-medium hover:underline">Markala.com.tr</Link>
-            <span className="hidden md:inline mx-2">·</span>
-            {/* /80 opaklık 3.68:1'e düşürüyordu (PSI color-contrast) — tam opak ink-500 ≥4.5:1. */}
-            <span className="text-ink-500">324 Ajans alt markası</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <Link href="/yasal/mesafeli-satis" className="hover:text-ink-900">Mesafeli Satış</Link>
-            <Link href="/yasal/on-bilgilendirme" className="hover:text-ink-900">Ön Bilgilendirme</Link>
-            <Link href="/yasal/cerez" className="hover:text-ink-900">Çerez Politikası</Link>
-            <button
-              type="button"
-              onClick={openCookieSettings}
-              className="text-ink-500 hover:text-ink-900 underline underline-offset-2 cursor-pointer"
-            >
-              Çerez Tercihlerim
-            </button>
-            <Link href="/yasal/iade" className="hover:text-ink-900">İade & İptal</Link>
-            <Link href="/yasal/kargo" className="hover:text-ink-900">Kargolama</Link>
-            <Link href="/kvkk-basvuru" className="hover:text-ink-900">KVKK Başvuru</Link>
-          </div>
-        </Container>
-      </div>
-
-      {/* Hizmet bölgeleri — Local SEO internal linking */}
-      <div className="border-t border-paper-200 bg-paper-50">
-        <Container className="py-8">
-          <div className="text-xs uppercase tracking-wider text-ink-500 font-semibold mb-4">
-            Hizmet Bölgeleri
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-x-4 gap-y-2 text-sm">
-            <FooterCityLink href="/matbaa/mersin">Mersin Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/antalya">Antalya Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/adana">Adana Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/sanliurfa">Şanlıurfa Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/hatay">Hatay Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/osmaniye">Osmaniye Matbaa</FooterCityLink>
-            <FooterCityLink href="/matbaa/gaziantep">Gaziantep Matbaa</FooterCityLink>
-          </div>
-          <div className="mt-3 text-xs text-ink-500">
-            Mersin ilçeleri:{" "}
-            <Link href="/matbaa/mersin/tarsus" className="hover:text-ink-900 underline">Tarsus</Link>
-            {" · "}
-            <Link href="/matbaa/mersin/yenisehir" className="hover:text-ink-900 underline">Yenişehir</Link>
-            {" · "}
-            <Link href="/matbaa/mersin/akdeniz" className="hover:text-ink-900 underline">Akdeniz</Link>
-            {" · "}
-            <Link href="/matbaa/mersin/toroslar" className="hover:text-ink-900 underline">Toroslar</Link>
-            {" · "}
-            <Link href="/matbaa/mersin/mezitli" className="hover:text-ink-900 underline">Mezitli</Link>
-            {" · "}
-            <Link href="/matbaa/mersin/erdemli" className="hover:text-ink-900 underline">Erdemli</Link>
-            {" · "}
-            <Link href="/matbaa/mersin/silifke" className="hover:text-ink-900 underline">Silifke</Link>
-            {" · "}
-            <Link href="/matbaa/mersin/anamur" className="hover:text-ink-900 underline">Anamur</Link>
-          </div>
-        </Container>
-      </div>
-
-      {/* Güven rozetleri */}
-      <div className="border-t border-paper-200 bg-paper-50">
-        <Container className="py-4 flex flex-wrap items-center justify-center md:justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3 text-xs text-ink-500">
+      {/* Güven + ödeme — koyu zeminde beyaz logo çipleri */}
+      <div className="border-t border-white/10">
+        <Container className="py-5 flex flex-wrap items-center justify-center md:justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <TrustBadge>SSL Sertifikalı</TrustBadge>
-            <Link href="/kvkk-basvuru" className="px-2.5 py-1 rounded border border-paper-200 bg-paper-50 text-ink-700 font-medium hover:border-brand-300 hover:text-brand-700 transition-colors">
+            <Link
+              href="/kvkk-basvuru"
+              className="px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-paper-100/80 font-medium hover:border-brand-400 hover:text-brand-300 transition-colors"
+            >
               KVKK Uyumlu
             </Link>
             <TrustBadge>1-2 İş Günü Üretim</TrustBadge>
             <TrustBadge>81 İle Kargo</TrustBadge>
-            {/* ETBİS rozeti — ETBİS kaydı tamamlandığında etbis.gtb.gov.tr'den resmi rozet kodu alınacak */}
-            {/* <a href="https://etbis.gtb.gov.tr" target="_blank" rel="noopener noreferrer"><TrustBadge>ETBİS Kayıtlı</TrustBadge></a> */}
+            {/* ETBİS rozeti — ETBİS kaydı tamamlanınca resmi rozet kodu eklenecek */}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
-            <span>Ödeme:</span>
-            <PaymentBrand label="Visa" />
-            <PaymentBrand label="Mastercard" />
-            <PaymentBrand label="Troy" />
-            <PaymentBrand label="3D Secure" />
-            <PaymentBrand label="iyzico" />
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-paper-100/60 mr-1">Güvenli ödeme:</span>
+            <VisaLogo />
+            <MastercardLogo />
+            <TroyLogo />
+            <IyzicoLogo />
+            <SecureBadge />
+          </div>
+        </Container>
+      </div>
+
+      {/* Ticari künye — kurumsal alıcının "kimden alıyorum?" sorusuna görünür cevap. */}
+      <div className="border-t border-white/10">
+        <Container className="py-4 text-xs text-paper-100/50 leading-relaxed">
+          <span className="font-medium text-paper-100/80">324 Ajans Bilgi Teknolojileri Reklam Pazarlama</span>
+          {" · "}Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin
+          {" · "}
+          <Link href="tel:+903244333351" className="hover:text-paper-50">0324 433 33 51</Link>
+          {" · "}
+          <Link href="mailto:merhaba@markala.com.tr" className="hover:text-paper-50">merhaba@markala.com.tr</Link>
+        </Container>
+      </div>
+
+      {/* Alt bant — telif + yasal linkler */}
+      <div className="border-t border-white/10">
+        <Container className="py-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-paper-100/60">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>Her hakkı saklıdır © {new Date().getFullYear()}</span>
+            <Link href="/" className="text-brand-400 font-medium hover:underline">Markala.com.tr</Link>
+            <span className="hidden md:inline mx-2">·</span>
+            <span>324 Ajans alt markası</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/yasal/mesafeli-satis" className="hover:text-paper-50">Mesafeli Satış</Link>
+            <Link href="/yasal/on-bilgilendirme" className="hover:text-paper-50">Ön Bilgilendirme</Link>
+            <Link href="/yasal/cerez" className="hover:text-paper-50">Çerez Politikası</Link>
+            <button
+              type="button"
+              onClick={openCookieSettings}
+              className="text-paper-100/60 hover:text-paper-50 underline underline-offset-2 cursor-pointer"
+            >
+              Çerez Tercihlerim
+            </button>
+            <Link href="/yasal/iade" className="hover:text-paper-50">İade & İptal</Link>
+            <Link href="/yasal/kargo" className="hover:text-paper-50">Kargolama</Link>
+            <Link href="/kvkk-basvuru" className="hover:text-paper-50">KVKK Başvuru</Link>
           </div>
         </Container>
       </div>
@@ -181,29 +163,18 @@ export function SiteFooter() {
   );
 }
 
-function FooterCityLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="text-ink-700 hover:text-ink-900 hover:underline transition-colors"
-    >
-      {children}
-    </Link>
-  );
-}
-
 function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="md:col-span-2">
       {/* h4→h3: sayfada h3 olmadan h4 başlık sırası atlıyordu (PSI heading-order). Görsel aynı. */}
-      <h3 className="text-ink-900 font-medium text-sm mb-4 font-sans">{title}</h3>
+      <h3 className="text-paper-50 font-semibold text-sm mb-4 font-sans">{title}</h3>
       <ul className="space-y-2.5 text-sm">{children}</ul>
     </div>
   );
 }
 
 function FooterLink({ href, external, children }: { href: string; external?: boolean; children: React.ReactNode }) {
-  const cls = "text-ink-700 hover:text-ink-900 hover:underline transition-colors";
+  const cls = "text-paper-100/70 hover:text-brand-300 transition-colors";
   return (
     <li>
       {external ? (
@@ -222,7 +193,7 @@ function SocialLink({ href, label, children }: { href: string; label: string; ch
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="w-9 h-9 rounded-full flex items-center justify-center bg-paper-50 border border-paper-200 text-ink-700 hover:bg-brand-500 hover:border-brand-500 hover:text-ink-900 transition-colors"
+      className="w-9 h-9 rounded-full flex items-center justify-center bg-white/8 border border-white/15 text-paper-100 hover:bg-brand-500 hover:border-brand-500 hover:text-ink-900 transition-colors"
     >
       {children}
     </a>
@@ -231,12 +202,88 @@ function SocialLink({ href, label, children }: { href: string; label: string; ch
 
 function TrustBadge({ children }: { children: React.ReactNode }) {
   return (
-    <span className="px-2.5 py-1 rounded border border-paper-200 bg-paper-50 text-ink-700 font-medium">{children}</span>
+    <span className="px-2.5 py-1 rounded-full border border-white/15 bg-white/5 text-paper-100/80 font-medium">
+      {children}
+    </span>
   );
 }
 
-function PaymentBrand({ label }: { label: string }) {
+/* === Ödeme marka logoları ===
+ * Harici görsel yok (CSP/self-contained) — marka renkli, beyaz çipli hafif SVG/tipografik
+ * işaretler. Koyu zeminde beyaz çip, markaların kendi tanınır renklerini taşır. */
+
+function PayChip({ children, label }: { children: React.ReactNode; label: string }) {
   return (
-    <span className="px-2 py-0.5 rounded border border-paper-200 bg-paper-50 text-ink-700 font-mono text-[11px] font-bold tracking-tight">{label}</span>
+    <span
+      role="img"
+      aria-label={label}
+      className="inline-flex items-center justify-center h-7 min-w-[52px] px-2.5 rounded-md bg-white shadow-sm"
+    >
+      {children}
+    </span>
+  );
+}
+
+function VisaLogo() {
+  return (
+    <PayChip label="Visa">
+      <span className="font-sans italic font-extrabold text-[13px] tracking-tight text-[#1A1F71] leading-none select-none">
+        VISA
+      </span>
+    </PayChip>
+  );
+}
+
+function MastercardLogo() {
+  return (
+    <PayChip label="Mastercard">
+      <svg width="34" height="20" viewBox="0 0 34 20" aria-hidden="true">
+        <circle cx="13" cy="10" r="8.5" fill="#EB001B" />
+        <circle cx="21" cy="10" r="8.5" fill="#F79E1B" />
+        <path
+          d="M17 3.4a8.5 8.5 0 0 1 0 13.2 8.5 8.5 0 0 1 0-13.2Z"
+          fill="#FF5F00"
+        />
+      </svg>
+    </PayChip>
+  );
+}
+
+function TroyLogo() {
+  return (
+    <PayChip label="Troy">
+      <span className="font-sans font-extrabold text-[13px] tracking-tight text-[#00B5E2] leading-none select-none lowercase">
+        troy
+      </span>
+    </PayChip>
+  );
+}
+
+function IyzicoLogo() {
+  return (
+    <PayChip label="iyzico ile öde">
+      <span className="font-sans font-extrabold text-[13px] tracking-tight text-[#1E64FF] leading-none select-none lowercase">
+        iyzico
+      </span>
+    </PayChip>
+  );
+}
+
+function SecureBadge() {
+  return (
+    <span
+      role="img"
+      aria-label="3D Secure"
+      className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md bg-white/10 border border-white/15"
+    >
+      <svg width="11" height="13" viewBox="0 0 11 13" aria-hidden="true">
+        <path
+          d="M5.5 0 11 2v4.1c0 3.2-2.3 5.8-5.5 6.9C2.3 11.9 0 9.3 0 6.1V2L5.5 0Z"
+          fill="#22C55E"
+        />
+        <path d="m4.8 8.1-1.7-1.7.8-.8.9.9 2.3-2.3.8.8-3.1 3.1Z" fill="#fff" />
+      </svg>
+      <span className="text-[10px] font-bold text-paper-100/90 leading-none">3D Secure</span>
+    </span>
   );
 }
