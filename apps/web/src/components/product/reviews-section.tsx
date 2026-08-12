@@ -21,26 +21,13 @@ export async function ProductReviewsSection({ productSlug }: Props) {
   ]);
 
   if (stats.count === 0) {
-    // Yorum yokken boşluğu "ilk yorumu sen yaz" ricası değil GÜVENCE doldurur:
-    // sosyal kanıt yoksa müşterinin risk algısını kalite taahhüdü karşılamalı.
+    // Yorum yokken yalnız başlık + yorum formu. Eski yeşil "Hatalı baskıda ücretsiz
+    // değişim" güvence kutusu KALDIRILDI (2026-08-08 kullanıcı kararı — aynı güvence
+    // zaten fiyat özet kartında ve güven rozetleri şeridinde var, burada alakasızdı).
     return (
       <section>
         <h2 className="text-2xl font-semibold text-ink-900 mb-4">Müşteri Yorumları</h2>
-        <div className="max-w-xl rounded-xl border border-success/30 bg-success/5 p-5 flex items-start gap-3">
-          <div className="flex-none w-10 h-10 rounded-full bg-success/10 text-success grid place-items-center">
-            <ShieldCheck size={22} weight="fill" />
-          </div>
-          <div className="min-w-0">
-            <p className="font-semibold text-ink-900 text-sm">
-              Hatalı baskıda ücretsiz değişim
-            </p>
-            <p className="mt-1 text-sm text-ink-700 leading-relaxed">
-              Her sipariş 324 Ajans güvencesiyle üretilir — baskında bir hata çıkarsa
-              ücretsiz yeniden basarız. Sipariş sonrası ilk yorumu sen yazabilirsin.
-            </p>
-          </div>
-        </div>
-        <div className="mt-6 max-w-xl">
+        <div className="max-w-xl">
           <ReviewForm productSlug={productSlug} />
         </div>
       </section>
