@@ -207,12 +207,16 @@ function SearchableDropdown({
 
   return (
     <div ref={containerRef} className="relative">
-      <label
-        id={`group-${groupKey}-label`}
-        className="block text-sm font-medium text-ink-900 mb-3"
-      >
-        {groupLabel}
-      </label>
+      {/* Etiket satırı: sağda "N seçenek" — kullanıcıya burada SEÇİM yapılabileceğini
+          önden söyler (2026-08-07 UX bulgusu: kapalı dropdown statik kutu sanılıyordu). */}
+      <div className="flex items-baseline justify-between mb-2">
+        <label id={`group-${groupKey}-label`} className="block text-sm font-medium text-ink-900">
+          {groupLabel}
+        </label>
+        <span className="text-xs font-semibold text-brand-800 bg-brand-100 rounded-full px-2 py-0.5">
+          {sorted.length} seçenek
+        </span>
+      </div>
       <button
         type="button"
         aria-haspopup="listbox"
@@ -221,10 +225,12 @@ function SearchableDropdown({
         disabled={disabled}
         onClick={() => !disabled && setOpen((v) => !v)}
         className={cn(
-          "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
+          // Tıklanabilirlik hissi: beyaz zemin + belirgin kenarlık + gölge + hover'da
+          // marka rengine dönen kenarlık ve yuvarlak zeminli ok — select gibi görünür.
+          "group w-full flex items-center gap-3 px-4 py-3 rounded-md border-2 text-left cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
           open
-            ? "border-[#4B3AA0] bg-paper-50 shadow-sm"
-            : "border-paper-200 bg-paper-50 hover:border-ink-300",
+            ? "border-[#4B3AA0] bg-white shadow-md"
+            : "border-ink-300 bg-white shadow-sm hover:border-[#4B3AA0] hover:shadow-md",
           disabled && "opacity-50 cursor-not-allowed pointer-events-none",
         )}
       >
@@ -247,15 +253,24 @@ function SearchableDropdown({
             {selectedHint}
           </span>
         )}
-        <CaretDown
-          size={16}
-          weight="bold"
+        <span
           className={cn(
-            "flex-none text-ink-400 transition-transform duration-200",
-            open && "rotate-180",
+            "flex-none grid place-items-center w-7 h-7 rounded-full transition-colors",
+            open ? "bg-[#4B3AA0] text-paper-50" : "bg-paper-100 text-ink-700 group-hover:bg-[#4B3AA0] group-hover:text-paper-50",
           )}
-        />
+        >
+          <CaretDown
+            size={14}
+            weight="bold"
+            className={cn("transition-transform duration-200", open && "rotate-180")}
+          />
+        </span>
       </button>
+      {!open && (
+        <p className="mt-1.5 text-xs text-ink-500">
+          Değiştirmek için tıklayın — {sorted.length} farklı seçenek arasından seçim yapabilirsiniz.
+        </p>
+      )}
 
       {open && (
         <div
@@ -480,10 +495,15 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
     );
   }
 
-  // Kompakt mod: kısa etiketli, alt-etiketsiz gruplar (ör. Adet) → çok-sütunlu pill ızgara.
-  // Konfigüratörü kısaltır → fiyat + "Sepete Ekle" ürün görseliyle aynı ekrana çıkar.
+  // Kompakt mod: kısa etiketli gruplar (Ebat, Adet…) → çok-sütunlu çip ızgara.
+  // 2026-08-07: alt-etiketli seçenekler de kompakt olabilir (ör. Ebat "A7 / 10×21 cm") ve
+  // eşik 3→2'ye indi — tam-satır radyo listeleri sayfayı gereksiz uzatıyordu (kullanıcı
+  // geri bildirimi). Alt etiket çipin içinde küçük ikinci satır olarak gösterilir.
   const compact =
-    sorted.length >= 3 && sorted.every((o) => !o.optionSublabel && o.optionLabel.length <= 20);
+    sorted.length >= 2 &&
+    sorted.every(
+      (o) => o.optionLabel.length <= 20 && (!o.optionSublabel || o.optionSublabel.length <= 18),
+    );
 
   function hintFor(optionKey: string): string | null {
     const hint = priceHints?.[optionKey];
@@ -519,13 +539,23 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 aria-checked={isSelected}
                 onClick={() => onSelect(opt.optionKey)}
                 className={cn(
-                  "flex flex-col items-center justify-center px-2 py-2.5 rounded-md border text-center transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
+                  "flex flex-col items-center justify-center px-2 py-2 rounded-md border text-center transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                   isSelected
                     ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
                     : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
                 )}
               >
                 <span className="font-medium text-sm leading-tight">{opt.optionLabel}</span>
+                {opt.optionSublabel && (
+                  <span
+                    className={cn(
+                      "text-[10px] leading-tight mt-0.5",
+                      isSelected ? "text-paper-300" : "text-ink-500",
+                    )}
+                  >
+                    {opt.optionSublabel}
+                  </span>
+                )}
                 {hintLabel && (
                   <span
                     className={cn(

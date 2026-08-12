@@ -222,8 +222,9 @@ export default async function ProductPage({ params }: Props) {
             2026-08: 7/5 → 6/6 kolon + üst padding diyeti — 24" altı (1080p laptop)
             ekranlarda görsel ekranı yutmasın, fiyat+CTA scroll'suz görünsün. */}
         <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_auto] gap-y-8 gap-x-8 lg:gap-x-10 items-start">
-          {/* 1) Galeri + hızlı aksiyon — mobilde 1. */}
-          <div className="lg:col-span-6 lg:col-start-1 lg:row-start-1 space-y-3">
+          {/* 1) Galeri + hızlı aksiyon — mobilde 1. 2026-08-07: 6→5 kolon; konfigüratör
+              seçenekler + sağda ayrı fiyat özet kartı (rakip deseni) için 7 kolona çıktı. */}
+          <div className="lg:col-span-5 lg:col-start-1 lg:row-start-1 space-y-3">
             <Gallery
               images={product.images}
               alt={product.name}
@@ -235,19 +236,18 @@ export default async function ProductPage({ params }: Props) {
             </div>
           </div>
 
-          {/* 2) Konfigüratör — sağ kolon, iki satır boyunca; MOBİLDE galerinin hemen altında (2.) */}
-          <div className="lg:col-span-6 lg:col-start-7 lg:row-start-1 lg:row-span-2">
-            <div className="lg:sticky lg:top-24">
-              <Configurator
-                product={product}
-                rating={ratingStats.count > 0 ? { average: ratingStats.average, count: ratingStats.count } : undefined}
-                pricing={pricingSettings}
-              />
-            </div>
+          {/* 2) Konfigüratör (seçenekler + sticky fiyat özeti sağda) — MOBİLDE galerinin hemen altında (2.).
+              Sticky artık konfigüratörün İÇİNDEKİ özet kartında; dış sarmalayıcı sabit akar. */}
+          <div className="lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:row-span-2">
+            <Configurator
+              product={product}
+              rating={ratingStats.count > 0 ? { average: ratingStats.average, count: ratingStats.count } : undefined}
+              pricing={pricingSettings}
+            />
           </div>
 
           {/* 3) Açıklama + özellikler/kullanım — masaüstünde galerinin altında, mobilde konfigüratörden sonra (3.) */}
-          <div className="lg:col-span-6 lg:col-start-1 lg:row-start-2 space-y-8">
+          <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 space-y-8">
             {product.description && (
               <p className="text-ink-700 leading-relaxed text-[15px]">
                 {product.description}
