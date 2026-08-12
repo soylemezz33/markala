@@ -1,0 +1,48 @@
+# Yasal sayfa içeriklerini STAGING DB'ye uygular (scripts/legal-content-2026-08.sql).
+# PROD'A DOKUNMAZ. Prod uygulaması canlıya alma sırasında ayrıca yapılır.
+# Tetik: SQL dosyası ya da bu workflow değişince (staging branch) veya elle.
+name: Staging Yasal İçerik Yükle
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [staging]
+    paths:
+      - "scripts/legal-content-2026-08.sql"
+      - ".github/workflows/staging-legal-seed.yml"
+
+jobs:
+  seed:
+    name: legal_pages içerik güncelle (staging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: SQL'i staging postgres'e uygula
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: "scripts/legal-content-2026-08.sql"
+          target: "/opt/markala/tmp-legal-seed/"
+      - name: Çalıştır ve doğrula
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 4m
+          script: |
+            set -e
+            cd /opt/markala
+            docker exec -i markala-staging-postgres psql -U markala -d markala_staging -v ON_ERROR_STOP=1 \
+              < tmp-legal-seed/scripts/legal-content-2026-08.sql
+            rm -rf tmp-legal-seed
+            echo "::notice title=legal::$(docker exec markala-staging-postgres psql -U markala -d markala_staging -t -A -c "SELECT slug||'='||length(content) FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');" | tr '\n' ' ')"
+            echo "→ Storefront cache tazele (ISR 60sn zaten, restart anında görsün)..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --force-recreate --no-deps staging-web
+            echo "✅ Yasal içerik staging'de"
