@@ -1,8 +1,7 @@
 # Yasal sayfa içeriklerini STAGING DB'ye uygular. PROD'A DOKUNMAZ.
-# SQL, scp/git bağımlılığı olmadan workflow içine gömülü heredoc ile psql'e verilir
-# (scp-action ve VPS git fetch 2026-08-08'de başarısız oldu). Kaynak/senkron:
-# scripts/legal-content-2026-08.sql — SQL değişirse bu dosya yeniden üretilmeli
-# (scripts dosyası tek doğruluk kaynağıdır).
+# SQL, scp/git bağımlılığı olmadan workflow içine gömülü heredoc ile psql'e verilir.
+# Tek doğruluk kaynağı: scripts/legal-content-2026-08.sql — SQL değişirse bu dosya
+# yeniden üretilmelidir.
 # Tetik: SQL dosyası ya da bu workflow değişince (staging branch) veya elle.
 name: Staging Yasal İçerik Yükle
 
@@ -152,11 +151,9 @@ jobs:
             -- Kontrol çıktısı
             SELECT slug, version, length(content) AS icerik_uzunlugu FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');
             LEGALSQL
-            ) || { echo "::error title=psql::$(echo "$out" | tail -4 | tr '
-' ' ')"; exit 1; }
+            ) || { echo "::error title=psql::$(echo "$out" | tail -4 | tr '\n' ' ')"; exit 1; }
             echo "$out" | tail -5
-            echo "::notice title=legal::$(docker exec markala-staging-postgres psql -U markala -d markala_staging -t -A -c "SELECT slug||'='||length(content) FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');" | tr '
-' ' ')"
+            echo "::notice title=legal::$(docker exec markala-staging-postgres psql -U markala -d markala_staging -t -A -c "SELECT slug||'='||length(content) FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');" | tr '\n' ' ')"
             echo "-> Storefront cache tazele..."
             docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --force-recreate --no-deps staging-web
-            echo "OK: Yasal icerik staging'de"
+            echo "OK: Yasal icerik staging_de"
