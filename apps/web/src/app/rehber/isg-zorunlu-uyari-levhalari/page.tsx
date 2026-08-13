@@ -30,9 +30,9 @@ const ISG_PREFIX = "is-guvenligi-";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "İSG Uyarı Levhaları Rehberi — İşyerinde Hangi Levhalar Zorunlu?",
+    title: "İSG Uyarı Levhaları — Renk Anlamları ve Zorunlu İşaretler",
     description:
-      "Şantiye, fabrika, depo ve ofis için zorunlu İSG uyarı levhası kontrol listeleri: yasaklayıcı, uyarı, emredici ve acil çıkış işaretlerinin anlamları, ebat/malzeme seçenekleri ve toplu alım indirimleri.",
+      "Zorunluluk (emredici) işaretleri mavi, uyarı sarı, yasak kırmızı, acil çıkış yeşildir. İşyeri tipine göre zorunlu İSG levhası kontrol listeleri ve güncel fiyatlar.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
