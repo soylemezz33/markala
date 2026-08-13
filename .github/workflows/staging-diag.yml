@@ -1,5 +1,5 @@
 # Staging teşhis (read-only) — staging-api 502 vb. durumlar için.
-# Çıktının kritik satırları ::notice:: annotation olarak yazılır (anonim API'den okunabilir).
+# (tetik: 2026-08-13 odeme teshisi) Çıktının kritik satırları ::notice:: annotation olarak yazılır (anonim API'den okunabilir).
 # Tetik: bu dosyanın kendisine push (staging branch'inde) ya da elle.
 name: Staging Teşhis (read-only)
 
