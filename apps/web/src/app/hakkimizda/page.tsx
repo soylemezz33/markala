@@ -5,6 +5,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { ADDRESS, MAPS_LINK, MAPS_EMBED } from "@/lib/company";
 
 export const metadata: Metadata = {
   title: "Hakkımızda — Markala & 324 Ajans",
@@ -180,9 +181,9 @@ export default function AboutPage() {
                 <div>
                   <div className="font-semibold text-ink-900">Markala · 324 Ajans</div>
                   <p className="mt-1 text-sm text-ink-700 leading-relaxed">
-                    Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61
+                    {ADDRESS.street}
                     <br />
-                    Yenişehir / Mersin · 33060
+                    {ADDRESS.locality} / {ADDRESS.region}
                   </p>
                 </div>
               </div>
@@ -202,7 +203,7 @@ export default function AboutPage() {
               </div>
 
               <a
-                href="https://www.google.com/maps/search/?api=1&query=36.812061,34.641482"
+                href={MAPS_LINK}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-auto inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:underline"
@@ -219,12 +220,13 @@ export default function AboutPage() {
                 aracından alınan gerçek bir token gerektirir — uydurulamaz (yanlış konum/kırık harita olur).
                 Pixel-perfect kontrol veya özel pin için o `?pb=` token'ı ya da Maps Embed API (key'li) ile
                 değiştirilebilir.
-                TODO: Adres tutarsızlığı — footer "Menteş Mah. 100. Yıl Cumhuriyet Cad." derken JSON-LD/harita
-                      "Çiftlikköy Astoria One" (36.812061, 34.641482) diyor. Hasan doğru adresi netleştirsin.
+                ÇÖZÜLDÜ (2026-08-17): Adres tutarsızlığı Hasan tarafından netleştirildi —
+                doğru adres Menteş Mah. Artık tek kaynak lib/company.ts; harita da sabit
+                koordinat yerine adres sorgusuyla çalışıyor (eski lat/lng eski adresindi).
               */}
               <iframe
                 title="Markala ofis konumu — Yenişehir, Mersin"
-                src="https://maps.google.com/maps?q=36.812061,34.641482&z=16&hl=tr&output=embed"
+                src={MAPS_EMBED}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="w-full h-64 md:h-full min-h-[16rem] border-0"

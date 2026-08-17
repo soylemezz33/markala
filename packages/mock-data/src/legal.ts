@@ -25,7 +25,11 @@ const BRAND = "markala.com.tr";
 // Kaynak: c:\Users\Hasan\Projects\galagoai\docs\legal\KVKK-AYDINLATMA-METNI-2026-05-13.md
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ADDRESS = "Çiftlikköy Mah. 32182 Sk. Astoria One No: 13 İç Kapı No: 61, Yenişehir / Mersin";
+// Doğru adres Hasan tarafından teyit edildi (2026-08-17): Menteş Mah.
+// Eski Çiftlikköy/Astoria One adresi yanlıştı ve sitede üç farklı adres dolaşıyordu —
+// Merchant Center "Misrepresentation" askısının bir numaralı kalemi buydu.
+// Web tarafında tek kaynak: apps/web/src/lib/company.ts (bu paket ondan import edemez).
+const ADDRESS = "Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A, Yenişehir / Mersin";
 const TAX_OFFICE = "İstiklal Vergi Dairesi";
 const TAX_NUMBER = "0012655788";
 const MERSIS = "0001265578800001";

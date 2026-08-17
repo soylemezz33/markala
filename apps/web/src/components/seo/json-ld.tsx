@@ -1,5 +1,6 @@
 import type { Product, Category, FaqItem } from "@markala/types";
 import { cities } from "@/lib/cities";
+import { POSTAL_ADDRESS_SCHEMA } from "@/lib/company";
 
 const SITE = "https://markala.com.tr";
 
@@ -29,14 +30,7 @@ export function OrganizationJsonLd() {
           "https://www.linkedin.com/company/324ajans",
           "https://324ajans.com",
         ],
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: "Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61",
-          addressCountry: "TR",
-          addressRegion: "Mersin",
-          addressLocality: "Yenişehir",
-          postalCode: "33060",
-        },
+        address: POSTAL_ADDRESS_SCHEMA,
         contactPoint: [
           {
             "@type": "ContactPoint",
@@ -296,19 +290,11 @@ export function LocalBusinessJsonLd() {
     telephone: "+90-324-433-3351",
     email: "merhaba@markala.com.tr",
     priceRange: "₺₺",
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61",
-      addressLocality: "Yenişehir",
-      addressRegion: "Mersin",
-      postalCode: "33060",
-      addressCountry: "TR",
-    },
-    geo: {
-      "@type": "GeoCoordinates",
-      latitude: 36.812061,
-      longitude: 34.641482,
-    },
+    address: POSTAL_ADDRESS_SCHEMA,
+    // geo KALDIRILDI: eski koordinat (36.812061, 34.641482) Çiftlikköy/Astoria One
+    // adresini gösteriyordu. Doğru adres Menteş Mah. olduğu için o koordinat artık
+    // yanlış; uydurmak yerine alan çıkarıldı. Hasan gerçek koordinatı verdiğinde
+    // company.ts üzerinden geri eklenecek.
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",

@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { trackLead } from "@/lib/analytics";
 import { PhoneInput } from "@/components/forms/phone-input";
+import { ADDRESS, MAPS_LINK } from "@/lib/company";
 
 const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
@@ -46,9 +47,9 @@ const channels = [
   {
     icon: MapPin,
     label: "Adres & Ziyaret",
-    value: "Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A",
-    sub: "Yenişehir / Mersin · randevu ile ziyaret",
-    href: "https://maps.google.com/?q=Menteş+Mah.+100.+Yıl+Cumhuriyet+Cad.+No:59/A+Yenişehir+Mersin",
+    value: ADDRESS.street,
+    sub: `${ADDRESS.locality} / ${ADDRESS.region} · randevu ile ziyaret`,
+    href: MAPS_LINK,
     accent: "bg-brand-100 text-brand-700",
     cta: "Haritada aç",
   },
