@@ -28,9 +28,38 @@ const DIR = path.dirname(fileURLToPath(import.meta.url));
 const DRY = process.argv.includes("--dry");
 const ONLY = (process.argv.find((a) => a.startsWith("--only=")) || "").split("=")[1];
 
-const data = JSON.parse(fs.readFileSync(path.join(DIR, "icerik.json"), "utf8"));
-const ORTAK_SPECS = data._ortakSpecs;
-let urunler = data.urunler;
+const BULK = process.argv.includes("--toplu");
+
+/**
+ * İki kaynak var:
+ *   icerik.json        — 10 öncelikli ürün için ELLE yazılmış içerik (daha nitelikli)
+ *   icerik-toplu.json  — 827 ürün için uret.mjs ile üretilmiş içerik
+ * --toplu modunda elle yazılanlar HARİÇ tutulur; onların üzerine yazılmaz.
+ */
+const elle = JSON.parse(fs.readFileSync(path.join(DIR, "icerik.json"), "utf8"));
+const ORTAK_SPECS = elle._ortakSpecs;
+let urunler;
+
+if (BULK) {
+  const toplu = JSON.parse(fs.readFileSync(path.join(DIR, "icerik-toplu.json"), "utf8"));
+  const elleSluglar = new Set(elle.urunler.map((u) => u.slug));
+  urunler = toplu
+    .filter((u) => !elleSluglar.has(u.slug))
+    .map((u) => ({
+      slug: u.slug,
+      sinif: u.cat.replace("is-guvenligi-", ""),
+      specifications: u.specifications,
+      features: u.features,
+      useCases: u.useCases,
+      faqs: u.faqs,
+    }));
+  console.log(
+    `Toplu mod: ${toplu.length} üretilmiş ürün, ${elleSluglar.size} elle yazılmış hariç → ${urunler.length} uygulanacak\n`,
+  );
+} else {
+  urunler = elle.urunler;
+}
+
 if (ONLY) urunler = urunler.filter((u) => u.slug === ONLY);
 if (urunler.length === 0) {
   console.error(ONLY ? `Ürün bulunamadı: ${ONLY}` : "icerik.json boş.");
@@ -89,7 +118,8 @@ async function main() {
     // Mevcut içerik KORUNUR; yalnız eksik/yeni alanlar yazılır.
     const yeniContent = {
       ...mevcut,
-      specifications: ORTAK_SPECS,
+      // Toplu modda specs ürünün kendi kaydından gelir; elle modda ortak sabit kullanılır.
+      specifications: u.specifications ?? ORTAK_SPECS,
       features: u.features,
       useCases: u.useCases,
       faqs: u.faqs,
