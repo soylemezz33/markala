@@ -1,4 +1,5 @@
 import type { Product, Category, FaqItem } from "@markala/types";
+import { cities } from "@/lib/cities";
 
 const SITE = "https://markala.com.tr";
 
@@ -123,8 +124,11 @@ export function ProductJsonLd({
     "@id": `${productUrl}#product`,
     name: product.name,
     description: product.shortDescription,
-    sku: product.sku ?? product.slug,
-    mpn: product.sku ?? product.slug,
+    // sku/mpn YALNIZ gerçek stok kodu varsa yazılır. Eskiden ikisi de slug'a düşüyordu:
+    // slug bir stok kodu değil, mpn ise "üretici parça numarası" — üretmediğimiz bir kimliği
+    // uydurmak Merchant Center'da ürün kimlik verisinin yanlış beyanı sayılır (hesap hâlihazırda
+    // "Misrepresentation" askısında). Alanı hiç yazmamak, yanlış doldurmaktan güvenlidir.
+    ...(product.sku ? { sku: product.sku, mpn: product.sku } : {}),
     url: productUrl,
     ...(realImages.length > 0 ? { image: realImages } : {}),
     brand: {
@@ -154,7 +158,9 @@ export function ProductJsonLd({
       priceValidUntil,
       availability: "https://schema.org/InStock",
       itemCondition: "https://schema.org/NewCondition",
-      seller: { "@type": "Organization", name: "Markala", url: SITE },
+      // Zayıf stub yerine site genelindeki dolu Organization düğümüne referans:
+      // adres, iletişim, sameAs, parentOrganization hepsi satıcıya bağlanır (kimlik sinyali).
+      seller: { "@id": `${SITE}/#organization` },
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
         applicableCountry: "TR",
@@ -317,13 +323,13 @@ export function LocalBusinessJsonLd() {
         closes: "17:00",
       },
     ],
+    // areaServed TEK KAYNAKTAN (lib/cities) türetilir. Elle yazılan eski liste gerçek site
+    // yapısıyla çelişiyordu: İstanbul/Ankara/İzmir sayılıyordu ama /matbaa/ sayfaları YOK;
+    // buna karşılık sayfası OLAN Antalya, Gaziantep, Hatay, Şanlıurfa, Osmaniye listede yoktu.
+    // Şehir eklendiğinde/çıkarıldığında burası kendiliğinden doğru kalır.
     areaServed: [
       { "@type": "Country", name: "Türkiye" },
-      { "@type": "City", name: "Mersin" },
-      { "@type": "City", name: "Adana" },
-      { "@type": "City", name: "İstanbul" },
-      { "@type": "City", name: "Ankara" },
-      { "@type": "City", name: "İzmir" },
+      ...cities.map((c) => ({ "@type": "City", name: c.name })),
     ],
     paymentAccepted: ["Kredi Kartı", "Banka Kartı", "Havale/EFT"],
     currenciesAccepted: "TRY",
@@ -341,68 +347,6 @@ export function LocalBusinessJsonLd() {
   );
 }
 
-/**
- * HowTo schema — anasayfadaki üretim süreci timeline'ı için.
- * Google rich snippet "step-by-step guide" olarak görünür.
- */
-export function HowToProductionJsonLd() {
-  const data = {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    "@id": `${SITE}/#howto-production`,
-    name: "Markala Matbaa Sipariş Süreci — 5 Adım",
-    description:
-      "Markala'da matbaa siparişi nasıl verilir? Konfigüratörden teslimata kadar 5 adımda süreç.",
-    totalTime: "PT5D", // ISO 8601 — 5 gün ortalama
-    // estimatedCost kaldırıldı: ürünler 34,90₺'den başlıyor; sabit "200 TRY" yanıltıcıydı
-    // (kaldırılan "200 TL'den" görünür iddiasının makine-okur kalıntısı). Alan opsiyonel.
-    supply: [
-      { "@type": "HowToSupply", name: "Tasarım dosyası (PDF/X) veya brief" },
-      { "@type": "HowToSupply", name: "Teslimat adresi" },
-      { "@type": "HowToSupply", name: "Ödeme yöntemi" },
-    ],
-    step: [
-      {
-        "@type": "HowToStep",
-        position: 1,
-        name: "Sipariş Ver",
-        text: "Konfigüratörden paket, ebat ve adet seç. Anında fiyat gör.",
-        url: `${SITE}/urunler`,
-      },
-      {
-        "@type": "HowToStep",
-        position: 2,
-        name: "Tasarım",
-        text: "Hazır dosyanı yükle veya ücretsiz tasarım desteği iste.",
-        url: `${SITE}/hizmetler/tasarim-destegi`,
-      },
-      {
-        "@type": "HowToStep",
-        position: 3,
-        name: "Üretim",
-        text: "Onaylı tasarım kalite kontrolünden geçer, üretime alınır.",
-      },
-      {
-        "@type": "HowToStep",
-        position: 4,
-        name: "Paketleme",
-        text: "Hasarsız ulaşması için özel ambalaj. Fotoğraflı tutanak.",
-      },
-      {
-        "@type": "HowToStep",
-        position: 5,
-        name: "Kargo",
-        text: "DHL veya Aras Kargo ile 81 ile teslim. Takip linki SMS/e-posta.",
-      },
-    ],
-  };
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
-    />
-  );
-}
 
 /**
  * ItemList schema — /urunler ve /matbaa hub sayfaları için.

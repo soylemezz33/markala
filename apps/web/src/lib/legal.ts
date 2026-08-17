@@ -59,14 +59,26 @@ export async function getLegalPage(slug: string): Promise<LegalPage | undefined>
   }
 }
 
-/** generateStaticParams / sitemap için slug listesi. API hatası → mock fallback. */
+/**
+ * generateStaticParams / sitemap için slug listesi — API ∪ mock BİRLEŞİMİ.
+ *
+ * getLegalPage() API'de bulunmayan slug'ı sessizce mock'tan servis eder (yukarıdaki catch).
+ * Yani API'de olmayan ama mock'ta olan sayfalar canlıda 200 döner ve footer'dan linklidir.
+ * Yalnız API listesini dönmek bu sayfaları sitemap'ten ve prerender'dan dışarıda bırakıyordu:
+ * 2026-08 denetiminde iade, kargo, on-bilgilendirme, kullanim-kosullari, cerez sitemap'te
+ * YOKTU — iade ve kargo politikasının keşfedilebilirliği Merchant Center incelemesinde
+ * doğrudan değerlendirilen bir kriter. Birleşim, "servis edilen her yasal sayfa sitemap'te"
+ * garantisini verir; admin bir sayfayı API'ye eklediğinde Set tekilleştirmesi çift kayıt önler.
+ */
 export async function getLegalSlugs(): Promise<string[]> {
+  const mockSlugs = getMockLegalSlugs();
   try {
     const data = await fetchJson("/legal/public");
-    if (!Array.isArray(data) || data.length === 0) return getMockLegalSlugs();
-    return (data as Record<string, unknown>[]).map((p) => String(p.slug));
+    if (!Array.isArray(data) || data.length === 0) return mockSlugs;
+    const apiSlugs = (data as Record<string, unknown>[]).map((p) => String(p.slug));
+    return [...new Set([...apiSlugs, ...mockSlugs])];
   } catch {
-    return getMockLegalSlugs();
+    return mockSlugs;
   }
 }
 

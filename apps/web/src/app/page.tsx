@@ -11,7 +11,6 @@ import { TrustedBy } from "@/components/home/trusted-by";
 import { CustomerReviews } from "@/components/home/customer-reviews";
 import { ProcessTimeline } from "@/components/home/process-timeline";
 import { PromoBanner } from "@/components/promo-banner";
-import { HowToProductionJsonLd } from "@/components/seo/json-ld";
 
 // ISR — katalog fetch'iyle (lib/catalog.ts revalidate:30) aynı pencere; bayat anasayfa cache'ini önler.
 export const revalidate = 300;
@@ -65,7 +64,9 @@ export default async function HomePage() {
 
   return (
     <>
-      <HowToProductionJsonLd />
+      {/* HowTo JSON-LD kaldırıldı (2026-08): Google HowTo zengin sonucunu Eylül 2023'te
+          tüm sonuçlardan çekti — işaretleme artık hiçbir görsel çıktı üretmiyordu.
+          Görünen "Üretim Süreci" bölümü (ProcessTimeline) aynen duruyor. */}
       {/* Anasayfa hero — DB (hero_slides) kaynaklı saf görsel slider; admin panelinden yönetilir. */}
       <PremiumHeroSlider slides={heroBanners} />
       {/* Hero altı CTA + gerçek fiyat çıpası — saf görsel slider'ın eylem boşluğunu kapatır. */}
