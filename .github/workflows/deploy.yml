@@ -179,6 +179,30 @@ jobs:
           done
           echo "✅ Dış doğrulama geçti"
 
+      # 2026-08-17 olayı: deploy AYLARDIR yeşil raporlanıyordu ama canlı site hiç
+      # güncellenmiyordu — çünkü 15 Ağustos 20:16'da prod DNS yeni sunucuya (ESXi/Turhost)
+      # taşındı, deploy ise ESKİ VPS'e gitmeye devam etti. Konteyner sağlığı ve StartedAt
+      # kontrolü DOĞRU sunucuda çalıştığı için hiçbir uyarı üretmedi.
+      # Bu adım, deploy ettiğimiz makinenin GERÇEKTEN canlı trafiği alan makine olduğunu
+      # kanıtlar: konteyner az önce yeniden başlatıldığına göre canlı /api/health'in
+      # bildirdiği uptime KÜÇÜK olmalı. Büyükse yanlış sunucuya deploy ediyoruz.
+      - name: Canlı gerçekten güncellendi mi (uptime kanıtı)
+        run: |
+          UP=$(curl -s -m 25 -A "Mozilla/5.0 (GH-Actions verify)" "https://markala.com.tr/api/health" \
+               | grep -o '"uptime":[0-9.]*' | cut -d: -f2 | cut -d. -f1)
+          echo "canlı /api/health uptime = ${UP:-bilinmiyor} sn"
+          if [ -z "$UP" ]; then
+            echo "⚠ uptime okunamadı — doğrulama atlandı (health yanıtı beklenenden farklı)"
+            exit 0
+          fi
+          if [ "$UP" -gt 900 ]; then
+            echo "❌ DEPLOY CANLIYA YANSIMADI: canlı konteyner ${UP} sn ayakta (yeni başlatılmamış)."
+            echo "   Deploy edilen sunucu, canlı trafiği alan sunucu DEĞİL."
+            echo "   Kontrol: Cloudflare'da markala.com.tr A kaydının IP'si ile SSH_HOST secret'ı aynı mı?"
+            exit 1
+          fi
+          echo "✅ Canlı konteyner yeni başlatılmış (${UP} sn) — deploy gerçekten yansıdı"
+
       - name: Notify on success
         if: success()
         run: echo "✅ Markala deployed successfully — https://markala.com.tr"
