@@ -133,12 +133,28 @@ export function SiteFooter() {
       {/* Ticari künye — kurumsal alıcının "kimden alıyorum?" sorusuna görünür cevap. */}
       <div className="border-t border-white/10">
         <Container className="py-4 text-xs text-paper-100/50 leading-relaxed">
-          <span className="font-medium text-paper-100/80">324 Ajans Bilgi Teknolojileri Reklam Pazarlama</span>
+          {/* Unvan, ETBİS kaydındaki resmî hâliyle yazılır — eskiden "ve Ticaret Limited
+              Şirketi" kısmı eksikti. Kimlik bilgisinin site genelinde tutarlı olması
+              Merchant Center'ın "Misrepresentation" değerlendirmesinde doğrudan bakılan
+              kriterlerden biri (2026-08 denetimi). */}
+          <span className="font-medium text-paper-100/80">
+            324 Ajans Bilgi Teknolojileri Reklam Pazarlama ve Ticaret Limited Şirketi
+          </span>
           {" · "}Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin
           {" · "}
           <Link href="tel:+903244333351" className="hover:text-paper-50">0324 433 33 51</Link>
           {" · "}
           <Link href="mailto:merhaba@markala.com.tr" className="hover:text-paper-50">merhaba@markala.com.tr</Link>
+          {" · "}KEP: 324ajans@hs03.kep.tr
+          {" · "}
+          <a
+            href="https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=6c81d5f8-88a6-4899-8443-bc9f102db393"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-paper-50 underline decoration-dotted underline-offset-2"
+          >
+            ETBİS kayıtlıdır (doğrula)
+          </a>
         </Container>
       </div>
 
