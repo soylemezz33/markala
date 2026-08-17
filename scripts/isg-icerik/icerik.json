@@ -1,0 +1,323 @@
+{
+  "_aciklama": "İSG levha ürünleri için content alanı (specifications/features/useCases/faqs). API'ye scripts/isg-icerik/uygula.mjs ile uygulanır. Teknik özellikler ürünün GERÇEK option verisinden (ebat/malzeme/baskı) türetildi — uydurma değer yok. Kullanım alanı ve SSS her levhanın kendi tehlike bağlamına göre yazıldı.",
+  "_ortakSpecs": [
+    { "label": "Ebat seçenekleri", "value": "25×35, 35×50, 50×70, 70×100 cm" },
+    { "label": "Malzeme seçenekleri", "value": "Yapışkanlı etiket (sticker), 0,50 mm PVC levha, 3 mm dekota/foreks, 0,50 mm galvaniz sac" },
+    { "label": "Baskı tipi", "value": "UV baskı, reflektif folyo veya fosforlu lümen folyo" },
+    { "label": "Adet", "value": "1 adetten 100 adede kadar; toplu alımda kademeli indirim" },
+    { "label": "Kullanım yeri", "value": "İç ve dış mekân (dış mekân için PVC, dekota veya galvaniz sac önerilir)" },
+    { "label": "Montaj", "value": "Sticker kendinden yapışkanlı; levha tiplerinde köşe delikli montaj talep edilebilir" }
+  ],
+  "urunler": [
+    {
+      "slug": "dikkat-kaygan-zemin",
+      "sinif": "Uyarı / İkaz",
+      "features": [
+        "Sarı zemin + siyah kenarlı üçgen: yönetmelikteki uyarı işareti renk ve biçim kodu",
+        "Islak alanlarda okunabilirliği koruyan UV baskı",
+        "Islak zeminde kullanım için su geçirmez PVC ve dekota seçeneği",
+        "Loş alanlar için fosforlu lümen folyo seçeneği",
+        "Temizlik saatlerinde taşınabilir kullanım için sticker seçeneği"
+      ],
+      "useCases": [
+        "Temizlik ve paspaslama sonrası ıslak koridor ve merdiven alanları",
+        "Yağmurda ıslanan bina girişleri ve otopark rampaları",
+        "Yıkama hattı, soğuk hava deposu ve mutfak zeminleri",
+        "Yağ/kimyasal sızıntısı riski olan üretim alanları"
+      ],
+      "faqs": [
+        {
+          "question": "Kaygan zemin levhası nereye asılmalı?",
+          "answer": "Levha, tehlikeye girmeden ÖNCE görülecek noktaya konur: ıslak alanın başladığı yere değil, o alana yaklaşan kişinin ilk göreceği mesafeye. Koridorlarda geçişin her iki yönünden de görünmesi gerekir. Temizlik gibi geçici durumlarda taşınabilir uyarı kullanılır, kalıcı risk varsa sabit levha asılır."
+        },
+        {
+          "question": "Hangi malzemeyi seçmeliyim?",
+          "answer": "Kapalı ve kuru alanda yapışkanlı etiket yeterlidir. Sürekli ıslanan zeminlerde ve dış mekânda 0,50 mm PVC levha veya 3 mm dekota tercih edin; yıkama yapılan endüstriyel alanlarda galvaniz sac en dayanıklısıdır."
+        },
+        {
+          "question": "Levha neden sarı üçgen?",
+          "answer": "Sarı zemin ve siyah kenarlı üçgen, yönetmelikte uyarı (ikaz) işaretlerine ayrılmış renk-biçim kodudur; bir tehlike kaynağına dikkat çeker. Farklı renkte bastırılan bir uyarı levhası, denetimde amacına uygun sayılmayabilir."
+        }
+      ]
+    },
+    {
+      "slug": "dikkat-380v-olum-tehlikesi-levhasi",
+      "sinif": "Uyarı / İkaz — Elektrik",
+      "features": [
+        "380V yüksek gerilim uyarısı için sarı zemin + siyah üçgen kodu",
+        "Pano yüzeyine doğrudan yapıştırma için sticker seçeneği",
+        "Dış saha panoları için galvaniz sac ve PVC seçeneği",
+        "Elektrik kesintisinde okunabilirlik için fosforlu lümen folyo seçeneği",
+        "Uzaktan okunabilirlik için 70×100 cm'e kadar ebat"
+      ],
+      "useCases": [
+        "Elektrik panoları, dağıtım kabinleri ve trafo çevresi",
+        "Jeneratör ve kompanzasyon odaları",
+        "Şantiyede geçici elektrik dağıtım noktaları",
+        "Enerji nakil hattı yakını ve saha direkleri"
+      ],
+      "faqs": [
+        {
+          "question": "Elektrik uyarı levhası hangi mesafeden okunmalı?",
+          "answer": "Levha, tehlikeli bölgeye girilmeden önce okunabilmelidir. Pano üzerinde 25×35 cm genellikle yeterlidir; trafo çevresi, saha direği gibi uzaktan uyarı gereken yerlerde 50×70 cm ve üzeri ebat seçilmelidir."
+        },
+        {
+          "question": "Panoya yapıştırılabilir mi?",
+          "answer": "Evet. Yapışkanlı etiket (sticker) seçeneği pano yüzeyine doğrudan uygulanır. Dış mekân panolarında ve nemli ortamlarda PVC levha veya galvaniz sac daha uzun ömürlüdür."
+        },
+        {
+          "question": "Elektrik kesintisinde görünür mü?",
+          "answer": "Standart UV baskı ışık gerektirir. Karanlıkta okunabilirlik gerekiyorsa fosforlu lümen folyo seçeneğini tercih edin; gündüz ışığını depolayıp karanlıkta bir süre parlar."
+        }
+      ]
+    },
+    {
+      "slug": "yanici-madde-levhasi",
+      "sinif": "Uyarı / İkaz",
+      "features": [
+        "Yanıcı madde uyarısı için sarı zemin + siyah üçgen kodu",
+        "Kimyasal temasına dayanıklı UV baskı",
+        "Depo rafı ve kapı yüzeyi için sticker seçeneği",
+        "Dış saha tankları için galvaniz sac seçeneği",
+        "Acil durumda görünürlük için fosforlu folyo seçeneği"
+      ],
+      "useCases": [
+        "Yanıcı sıvı ve kimyasal depoları",
+        "Boya, tiner ve solvent saklama alanları",
+        "Yakıt tankı ve dolum noktaları",
+        "Gaz tüpü depolama kabinleri"
+      ],
+      "faqs": [
+        {
+          "question": "Yanıcı madde levhası nereye asılır?",
+          "answer": "Depolama alanının girişine ve maddenin bulunduğu dolap/raf/tank yüzeyine asılır. Alana giren kişinin içeri girmeden önce görmesi esastır; kapı üzeri ve giriş koridoru en uygun noktalardır."
+        },
+        {
+          "question": "Sigara içilmez levhasıyla birlikte mi kullanılmalı?",
+          "answer": "Genellikle evet. Yanıcı madde uyarısı tehlikeyi bildirir (sarı üçgen), sigara/açık alev yasağı ise davranışı yasaklar (kırmızı daire + çapraz bant). İkisi farklı işaret sınıfıdır ve birbirinin yerini tutmaz."
+        },
+        {
+          "question": "Dış mekânda ne kadar dayanır?",
+          "answer": "UV baskı dış mekâna uygundur. Sürekli güneş ve yağmura maruz kalan noktalarda 0,50 mm PVC, 3 mm dekota veya galvaniz sac seçilmesi ömrü belirgin şekilde uzatır."
+        }
+      ]
+    },
+    {
+      "slug": "dikkat-sicak-yuzey",
+      "sinif": "Uyarı / İkaz",
+      "features": [
+        "Sıcak yüzey uyarısı için sarı zemin + siyah üçgen kodu",
+        "Isıya maruz yüzeylerde renk solmasına dirençli UV baskı",
+        "Boru ve kazan yüzeyi için sticker seçeneği",
+        "Yüksek sıcaklık bölgeleri için galvaniz sac seçeneği",
+        "25×35 cm'den 70×100 cm'e ebat aralığı"
+      ],
+      "useCases": [
+        "Kazan dairesi, buhar hattı ve sıcak su boruları",
+        "Fırın, pres ve kaynak istasyonu çevresi",
+        "Egzoz ve baca hatları",
+        "Mutfak ekipmanları ve endüstriyel ocak alanları"
+      ],
+      "faqs": [
+        {
+          "question": "Levha sıcak yüzeye doğrudan yapıştırılabilir mi?",
+          "answer": "Yapışkanlı etiket, sürekli yüksek sıcaklığa maruz yüzeylerde zamanla kalkabilir. Sıcak boru ve kazan yüzeylerinde levha tipini (PVC, dekota veya galvaniz sac) seçip yakın bir duvara ya da askı noktasına monte etmek daha güvenlidir."
+        },
+        {
+          "question": "Hangi ebat uygun?",
+          "answer": "Ekipmana yakın mesafeden okunacaksa 25×35 cm yeterlidir. Kazan dairesi girişi gibi alan geneline uyarı veriliyorsa 50×70 cm ve üzeri tercih edilmelidir."
+        },
+        {
+          "question": "Bu levha yeterli mi, başka işaret gerekir mi?",
+          "answer": "Sıcak yüzey uyarısı tehlikeyi bildirir. Alanda eldiven/koruyucu ekipman zorunluysa ayrıca mavi daireli emredici işaret (ör. 'Koruyucu eldiven kullan') asılmalıdır — uyarı işareti zorunluluk bildirmez."
+        }
+      ]
+    },
+    {
+      "slug": "dikkat-alcak-tavan-levhasi",
+      "sinif": "Uyarı / İkaz",
+      "features": [
+        "Alçak tavan/çarpma riski için sarı zemin + siyah üçgen kodu",
+        "Göz hizasında okunabilirlik için yüksek kontrastlı UV baskı",
+        "Loş bodrum ve depo geçişleri için fosforlu lümen folyo seçeneği",
+        "Kiriş yüzeyine doğrudan uygulama için sticker seçeneği",
+        "Dar geçişlerde 25×35 cm, geniş girişlerde 70×100 cm"
+      ],
+      "useCases": [
+        "Bodrum kat geçişleri ve alçak kirişler",
+        "Depo içi raf altı geçişleri",
+        "Otopark giriş rampaları ve tavan boruları",
+        "Teknik servis koridorları ve tesisat hatları"
+      ],
+      "faqs": [
+        {
+          "question": "Levha kirişin üstüne mi, önüne mi asılır?",
+          "answer": "Uyarı, çarpma noktasına varmadan önce görülmelidir. Bu nedenle levha doğrudan kirişin ön yüzüne (yaklaşan kişinin göz hizasına) uygulanır; mümkünse geçişten birkaç metre önce ikinci bir uyarı eklenir."
+        },
+        {
+          "question": "Karanlık geçişte ne kullanmalıyım?",
+          "answer": "Aydınlatması zayıf bodrum ve teknik koridorlarda fosforlu lümen folyo seçeneği tercih edilmelidir; elektrik kesintisinde de bir süre okunabilir kalır."
+        },
+        {
+          "question": "Levha dışında ne önerilir?",
+          "answer": "Levha uyarı verir ama fiziksel koruma sağlamaz. Sık çarpma yaşanan kirişlerde sarı-siyah şeritli darbe koruma bandı veya sünger profil ile birlikte kullanılması yaygın uygulamadır."
+        }
+      ]
+    },
+    {
+      "slug": "yanici-parlayici-madde",
+      "sinif": "Uyarı / İkaz",
+      "features": [
+        "Yanıcı ve parlayıcı madde uyarısı için sarı zemin + siyah üçgen kodu",
+        "Kimyasal buharına dayanıklı UV baskı",
+        "Depo kapısı ve dolap yüzeyi için sticker seçeneği",
+        "Dış saha ve tank sahası için galvaniz sac seçeneği",
+        "Toplu alımda kademeli indirim"
+      ],
+      "useCases": [
+        "Parlayıcı solvent ve yakıt depoları",
+        "Boyahane ve tiner karışım alanları",
+        "LPG/doğalgaz tüp kabinleri",
+        "Laboratuvar kimyasal dolapları"
+      ],
+      "faqs": [
+        {
+          "question": "'Yanıcı' ile 'parlayıcı' farkı nedir?",
+          "answer": "Yanıcı maddeler tutuşabilen maddelerdir; parlayıcı maddeler ise oda sıcaklığında bile kolayca alev alabilen buhar veren maddelerdir (benzin, tiner, aseton gibi). Parlayıcı madde bulunan alanlarda ateş/kıvılcım yasağı işaretleri de birlikte kullanılır."
+        },
+        {
+          "question": "Kaç adet levha gerekir?",
+          "answer": "Depolama alanının her girişine ve maddenin bulunduğu her dolap/tank yüzeyine bir adet önerilir. Ürün 1 adetten 100 adede kadar sipariş edilebilir; adet arttıkça birim fiyat düşer."
+        },
+        {
+          "question": "Sadece bu levha yeterli mi?",
+          "answer": "Hayır. Uyarı işareti tehlikeyi bildirir; yasak davranış için kırmızı daireli 'Sigara içilmez / Açık alevle yaklaşma' işareti, yangın ekipmanı için kırmızı kare işaretler ayrıca gereklidir."
+        }
+      ]
+    },
+    {
+      "slug": "elektrik-pano-kapaklarini-kapali-tut-levhasi",
+      "sinif": "Uyarı / İkaz — Elektrik",
+      "features": [
+        "Pano güvenliği uyarısı; elektrik tehlikesi renk-biçim koduyla uyumlu",
+        "Pano sac yüzeyine doğrudan uygulama için sticker seçeneği",
+        "Nemli ortamlar için PVC ve galvaniz sac seçeneği",
+        "Pano üstü kullanım için kompakt 25×35 cm ebat",
+        "Elektrik kesintisinde okunabilirlik için fosforlu folyo seçeneği"
+      ],
+      "useCases": [
+        "Elektrik panoları ve dağıtım kabinleri",
+        "Kompanzasyon ve jeneratör odaları",
+        "Şantiye geçici pano noktaları",
+        "Makine üzeri kumanda kabinleri"
+      ],
+      "faqs": [
+        {
+          "question": "Bu levha neden gerekli?",
+          "answer": "Açık bırakılan pano kapağı, yetkisiz temas ve toz/nem girişi riskini artırır. Levha, panoyu kullanan kişiye işlem sonrası kapağı kapatma sorumluluğunu hatırlatır ve denetimlerde aranan işaretlemelerden biridir."
+        },
+        {
+          "question": "Hangi ebat uygundur?",
+          "answer": "Pano kapağı üzerinde 25×35 cm çoğu durumda yeterlidir. Büyük dağıtım panolarında ve uzaktan görünürlük gereken pano odalarında 35×50 cm tercih edilebilir."
+        },
+        {
+          "question": "Panonun içine mi dışına mı yapıştırılır?",
+          "answer": "Kapağın dış yüzeyine, göz hizasına uygulanır — hatırlatmanın kapak kapatılmadan önce görülmesi gerekir. Pano içine yapıştırılan etiket amacına ulaşmaz."
+        }
+      ]
+    },
+    {
+      "slug": "emniyet-kemerini-kullaniniz",
+      "sinif": "Emredici (KKD)",
+      "features": [
+        "Mavi daire + beyaz piktogram: yönetmelikteki emredici işaret renk ve biçim kodu",
+        "Yüksekte çalışma alanları için dış mekâna dayanıklı UV baskı",
+        "Şantiye direği ve iskele için PVC, dekota ve galvaniz sac seçeneği",
+        "Ekipman dolabı yüzeyi için sticker seçeneği",
+        "Uzaktan okunabilirlik için 70×100 cm'e kadar ebat"
+      ],
+      "useCases": [
+        "Yüksekte çalışma platformları ve iskeleler",
+        "Çatı, cephe ve asansör boşluğu çalışmaları",
+        "Forklift ve iş makinesi kullanım alanları",
+        "Emniyet kemeri/paraşüt tipi kemer dolapları"
+      ],
+      "faqs": [
+        {
+          "question": "Emredici işaret neden mavi?",
+          "answer": "Mavi daire içinde beyaz piktogram, yönetmelikte belirli bir davranışın zorunlu kılındığını gösteren emredici işaret kodudur — özellikle kişisel koruyucu donanım (KKD) kullanımı için kullanılır. Sarı üçgen (uyarı) veya kırmızı daire (yasak) bu işlevi karşılamaz."
+        },
+        {
+          "question": "Levha nereye asılmalı?",
+          "answer": "Zorunluluğun başladığı noktada, alana girilmeden önce görülecek şekilde asılır: iskele girişi, çatı çıkış kapısı, platform merdiveni başı gibi. Ekipmanın saklandığı dolabın üzerine de aynı işaretin konması yaygın uygulamadır."
+        },
+        {
+          "question": "Dış mekânda hangi malzeme uygundur?",
+          "answer": "Şantiye ve çatı gibi açık alanlarda 0,50 mm PVC levha, 3 mm dekota veya 0,50 mm galvaniz sac önerilir. Yapışkanlı etiket kapalı ve korunaklı yüzeyler için uygundur."
+        }
+      ]
+    },
+    {
+      "slug": "baretsiz-girilmez",
+      "sinif": "Yasaklayıcı",
+      "features": [
+        "Beyaz zemin + kırmızı daire ve çapraz bant: yasaklayıcı işaret renk ve biçim kodu",
+        "Şantiye girişleri için dış mekâna dayanıklı UV baskı",
+        "Saha koşulları için PVC, dekota ve galvaniz sac seçeneği",
+        "Kapı ve bariyer yüzeyi için sticker seçeneği",
+        "Giriş noktasında uzaktan okunabilirlik için büyük ebat seçenekleri"
+      ],
+      "useCases": [
+        "Şantiye ve inşaat sahası girişleri",
+        "Yıkım ve kazı alanları",
+        "Vinç ve yük taşıma bölgeleri",
+        "Bakım-onarım yapılan üretim sahaları"
+      ],
+      "faqs": [
+        {
+          "question": "'Baretsiz girilmez' yasak mı, zorunluluk mu?",
+          "answer": "Bu levha, baretsiz girişi YASAKLAYAN bir işarettir; bu nedenle kırmızı daire ve çapraz bantla gösterilir. 'Baret tak' şeklindeki zorunluluk ifadesi ise mavi daireli emredici işaretle verilir. Sahalarda çoğu zaman ikisi birlikte kullanılır."
+        },
+        {
+          "question": "Levhayı nereye asmalıyım?",
+          "answer": "Sahaya giriş noktasına, turnikeye veya bariyere; yani kişinin baretsiz şekilde içeri adım atmadan ÖNCE göreceği yere asılır. Birden fazla girişi olan sahalarda her giriş ayrı ayrı işaretlenmelidir."
+        },
+        {
+          "question": "Hangi malzeme şantiyeye uygun?",
+          "answer": "Toz, darbe ve hava koşulları nedeniyle şantiyede 3 mm dekota/foreks veya 0,50 mm galvaniz sac önerilir. Yapışkanlı etiket kısa süreli ve korunaklı kullanımlar için uygundur."
+        }
+      ]
+    },
+    {
+      "slug": "tunele-baretsiz-girilmez",
+      "sinif": "Yasaklayıcı",
+      "features": [
+        "Beyaz zemin + kırmızı daire ve çapraz bant: yasaklayıcı işaret kodu",
+        "Tünel ağzı ve düşük aydınlatmalı geçişler için fosforlu lümen folyo seçeneği",
+        "Nemli tünel ortamı için PVC ve galvaniz sac seçeneği",
+        "Dış mekâna dayanıklı UV baskı",
+        "Giriş ağzında uzaktan okunabilirlik için 70×100 cm'e kadar ebat"
+      ],
+      "useCases": [
+        "Tünel ve galeri girişleri",
+        "Yeraltı geçiş ve altyapı hatları",
+        "Maden ve kazı sahası girişleri",
+        "Kolektör ve teknik tünel bakım noktaları"
+      ],
+      "faqs": [
+        {
+          "question": "Tünel girişinde hangi ebat kullanılmalı?",
+          "answer": "Tünel ağzı genellikle uzaktan ve araç içinden görülmesi gereken bir noktadır; bu nedenle 50×70 cm veya 70×100 cm önerilir. Yaya geçişlerinde 35×50 cm yeterli olabilir."
+        },
+        {
+          "question": "Karanlık tünelde okunur mu?",
+          "answer": "Standart UV baskı aydınlatma gerektirir. Tünel içi ve elektrik kesintisi ihtimali olan noktalarda fosforlu lümen folyo seçeneği tercih edilmelidir; reflektif folyo ise araç farı ışığında parlar, araç trafiği olan tünellerde uygundur."
+        },
+        {
+          "question": "Nemli ortamda hangi malzeme dayanır?",
+          "answer": "Tünellerde yoğuşma ve nem süreklidir; 0,50 mm PVC levha veya 0,50 mm galvaniz sac uzun ömürlüdür. Yapışkanlı etiket nemli yüzeyde zamanla kalkabilir."
+        }
+      ]
+    }
+  ]
+}

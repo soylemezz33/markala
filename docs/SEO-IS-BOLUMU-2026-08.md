@@ -31,8 +31,8 @@ Denetim sonrası görev dağılımı. Kaynak: `markala.com.tr-audit/ACTION-PLAN.
 |---|---|---|---|
 | H1 | **Ads faturası** | 10 dk | Ödeme yetkisi. 8 gündür kampanyalar kapalı |
 | H2 | **Resmî ad + adres kararı** ⚠️ | 5 dk | Site 2 farklı kimlik gösteriyor (aşağıda) — C12 ve tüm backlink işi buna kilitli |
-| H3 | **ETBİS numarası** | — | `/yasal/kullanim-kosullari`'nda `[BAŞVURU BEKLEMEDE...]` placeholder'ı canlı |
-| H4 | **İSG ürün açıklamalarını doldur** | operasyonel | 21/22 sayfada "yakında eklenecek" placeholder'ı; sıralamayı asıl bu taşır |
+| ~~H3~~ ✅ | ~~ETBİS kaydı~~ — **tamamlandı 17.08.2026**, siteye işlendi (Claude) | bitti | Kayıt: 324 Ajans Bilgi Teknolojileri Ltd. Şti. |
+| H4 🔄 | İSG ürün açıklamaları — **içerik Claude tarafından yazıldı**, uygulanması admin girişi istiyor | 5 dk | `scripts/isg-icerik/uygula.mjs` — aşağıya bak |
 | H5 | **Google Business Profile** | 15 dk | H2 sonrası, doğru adresle |
 | H6 | **Bing Webmaster** kaydı | 5 dk | ChatGPT/Copilot Bing indeksine dayanıyor |
 | H7 | **Merchant Center itirazı** | H2+H3 sonrası | Düzeltmeler yapılmadan itiraz etme |
@@ -62,6 +62,25 @@ Site şu an iki farklı kimlik gösteriyor:
 | Footer + `/iletisim` + `/yasal/mesafeli-satis` | **324 Ajans** | Menteş Mah. 100. Yıl Cumhuriyet Cad. |
 
 Merchant Center "Misrepresentation" askısının bir numaralı şüphelisi bu. **Hangisi resmî?** Söyle, tüm site tek kimliğe eşitlensin.
+
+---
+
+### 🔄 H4 — İSG içeriği hazır, uygulanmayı bekliyor
+
+Sıralamada olan **10 İSG ürünü** için teknik özellik + kullanım alanı + SSS içeriği yazıldı (`scripts/isg-icerik/icerik.json`). Teknik özellikler ürünün **gerçek** option verisinden türetildi (ebat/malzeme/baskı) — uydurma değer yok; kullanım ve SSS her levhanın kendi tehlike bağlamına ve işaret sınıfına göre farklı.
+
+**Yol boyunca çıkan engel çözüldü:** Ürün `content` alanının API'de **yazma yolu hiç yokmuş** — sütun ve okuma tarafı vardı, `UpdateProductDto`'da alan olmadığı için `whitelist:true` olan validation pipe gönderilen içeriği sessizce siliyordu. İSG kataloğunun boş kalmasının teknik sebebi buydu. Alan eklendi (kategorilerdeki desenin aynısı), böylece admin panelden de düzenlenebilir hale geldi.
+
+Uygulamak için (admin bilgilerini sen ver, repoya yazma):
+
+```bash
+# önce ne olacağını gör:
+ADMIN_EMAIL=... ADMIN_PASSWORD=... node scripts/isg-icerik/uygula.mjs --dry
+# sonra uygula:
+ADMIN_EMAIL=... ADMIN_PASSWORD=... node scripts/isg-icerik/uygula.mjs
+```
+
+Mevcut `content` korunur, yalnız eksik alanlar yazılır. Kalan ~800 İSG ürünü için aynı kalıp işaret sınıfı bazında çoğaltılabilir — istersen devam ederim.
 
 ---
 
