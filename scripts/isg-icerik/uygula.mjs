@@ -118,7 +118,26 @@ async function main() {
       hata++;
       continue;
     }
-    console.log(`✓ ${u.slug} güncellendi`);
+
+    // YAZMA DOĞRULAMASI — kritik: API'nin ValidationPipe'ı whitelist:true ile çalışıyor.
+    // `content` alanı UpdateProductDto'ya eklenmeden ÖNCEKİ sürüm çalışıyorsa PATCH 200
+    // döner ama gönderdiğimiz content SESSİZCE atılır. Geri okuyup gerçekten yazıldığını
+    // doğrulamazsak "✓ güncellendi" yazıp hiçbir şey yapmamış oluruz.
+    const kontrol = await urunGetir(u.slug).catch(() => null);
+    const yazildi = Boolean(
+      kontrol && kontrol.content && typeof kontrol.content === "object" && kontrol.content.specifications,
+    );
+    if (!yazildi) {
+      console.error(
+        `✗ ${u.slug}: PATCH 200 döndü ama içerik YAZILMADI.\n` +
+          `   Sebep: canlı API'de 'content' alanı henüz desteklenmiyor olabilir.\n` +
+          `   Ürün content API desteği bu commit'le geldi — deploy uygulanmadıysa eski sürüm çalışıyordur.\n` +
+          `   Çözüm: deploy'un gerçekten uygulandığını doğrula (konteyner yeniden başlamalı), sonra tekrar dene.`,
+      );
+      hata++;
+      continue;
+    }
+    console.log(`✓ ${u.slug} güncellendi ve doğrulandı`);
     ok++;
   }
 
