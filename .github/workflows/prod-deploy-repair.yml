@@ -1,12 +1,15 @@
 # PROD DEPLOY ONARIM + TEŞHİS — 2026-08-17 "yeşil raporlanan ama uygulanmayan deploy" olayı.
 #
-# v2 (kesin teşhis): v1'de imaj adı `docker compose config` çıktısından ayıklanmaya çalışıldı
-# ama grep -A2 penceresi 'image:' satırına yetişmedi → imaj referansı BOŞ kaldı ve
-# "yeni kod imajda yok" sonucu GEÇERSİZDİ. Artık imaj referansı TAG'den kurulur ve
-# POZİTİF KONTROL kullanılır (eski kodda da bulunan bir dize) — böylece grep yönteminin
-# kendisi mi bozuk, imaj mı eski ayırt edilir.
+# v3 — v2'de kanıtlandı: yeni kod İMAJDA VAR, markala-web o imajdan çalışıyor ve sağlıklı;
+# yine de canlı HTML eski footer'ı taşıyor (Cloudflare cache DEĞİL: cf-cache-status DYNAMIC).
+# Kalan tek açıklama: nginx `web` adını BAYAT bir konteynere çözüyor (Docker DNS'te aynı
+# alias'ı taşıyan artık konteyner). Bu yüzden v3:
+#   - konteynerin KENDİSİ ne servis ediyor (node fetch ile — wget bu imajda yok, v2'de HTML=0)
+#   - nginx `web`'i hangi IP/konteynere çözüyor
+#   - ağdaki tüm konteynerler + alias'ları
+# ve ardından bayat konteynerleri temizleyip nginx'i yeniden yükler.
 #
-# GÜVENLİK: postgres ve nginx'e DOKUNULMAZ; yalnız web/admin/api recreate edilir.
+# GÜVENLİK: postgres'e DOKUNULMAZ. nginx yalnız reload/restart edilir (config değişmez).
 # Tetik: elle (workflow_dispatch) ya da bu dosyanın kendisine push (main).
 name: Prod Deploy Onarım (teşhis + force-recreate)
 
@@ -18,7 +21,7 @@ on:
 
 jobs:
   repair:
-    name: Teşhis + app konteynerlerini yenile
+    name: Bayat konteyner teşhisi + nginx upstream onarımı
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -32,70 +35,62 @@ jobs:
           command_timeout: 18m
           script: |
             cd /opt/markala
-            IMG="ghcr.io/soylemezz33/markala/web:latest"
 
-            echo "=============== 1) İMAJI ÇEK ==============="
-            docker pull "$IMG" 2>&1 | tail -4
-            CREATED=$(docker inspect -f '{{.Created}}' "$IMG" 2>/dev/null || echo yok)
-            DIG=$(docker inspect -f '{{index .RepoDigests 0}}' "$IMG" 2>/dev/null | cut -c1-60 || echo yok)
-            echo "imaj Created=$CREATED"
-            echo "::notice title=A-imaj-tarihi::latest Created=$CREATED"
-            echo "::notice title=B-imaj-digest::$DIG"
+            echo "=============== 1) TÜM KONTEYNERLER ==============="
+            docker ps -a --format '{{.Names}} | {{.Status}} | {{.Image}}' || true
+            ALL=$(docker ps -a --format '{{.Names}}' | tr '\n' ',' )
+            echo "::notice title=A-konteynerler::$ALL"
 
-            echo "=============== 2) İMAJ İÇERİĞİ (kontrollü) ==============="
-            # POZİTİF KONTROL: footer'da eski kodda da bulunan dize. Bulunmazsa grep yöntemi bozuk.
-            CTRL=$(docker run --rm --entrypoint sh "$IMG" -c "grep -rl 'markala-logo.svg' /app/apps/web/.next 2>/dev/null | head -1" 2>/dev/null || echo "")
-            NEW1=$(docker run --rm --entrypoint sh "$IMG" -c "grep -rl 'etbis.ticaret.gov.tr' /app 2>/dev/null | head -1" 2>/dev/null || echo "")
-            NEW2=$(docker run --rm --entrypoint sh "$IMG" -c "grep -rl 'Ticaret Limited' /app 2>/dev/null | head -1" 2>/dev/null || echo "")
-            echo "pozitif kontrol (markala-logo.svg): ${CTRL:-BULUNAMADI}"
-            echo "yeni kod (etbis linki): ${NEW1:-BULUNAMADI}"
-            echo "yeni kod (Ticaret Limited): ${NEW2:-BULUNAMADI}"
-            if [ -z "$CTRL" ]; then
-              echo "::error title=C-grep-yontemi::POZITIF KONTROL BULUNAMADI - grep/imaj yolu hatali, sonuclar gecersiz"
-            elif [ -n "$NEW1" ] || [ -n "$NEW2" ]; then
-              echo "::notice title=C-imaj-icerigi::YENI KOD IMAJDA VAR (kontrol OK)"
+            echo "=============== 2) KONTEYNERİN KENDİSİ NE SERVİS EDİYOR (node fetch) ==============="
+            SELF=$(docker exec markala-web node -e "fetch('http://127.0.0.1:3000/').then(r=>r.text()).then(t=>console.log('LEN='+t.length+' ETBIS='+(t.includes('etbis.ticaret.gov.tr')?1:0)+' LOGO='+(t.includes('markala-logo.svg')?1:0))).catch(e=>console.log('ERR '+e.message))" 2>&1 | tail -1)
+            echo "markala-web kendisi: $SELF"
+            echo "::notice title=B-konteyner-kendisi::$SELF"
+
+            echo "=============== 3) NGINX 'web' ADINI NEYE ÇÖZÜYOR ==============="
+            WEBIP=$(docker exec markala-nginx sh -c "getent hosts web | awk '{print \$1}' | head -1" 2>/dev/null || echo "")
+            REALIP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' markala-web 2>/dev/null | awk '{print $1}')
+            echo "nginx 'web' -> $WEBIP   |   markala-web gercek IP -> $REALIP"
+            if [ "$WEBIP" = "$REALIP" ]; then
+              echo "::notice title=C-dns::DOGRU - nginx web=$WEBIP markala-web=$REALIP"
             else
-              echo "::error title=C-imaj-icerigi::IMAJ ESKI - pozitif kontrol var ama yeni kod YOK (build/tag sorunu)"
+              echo "::error title=C-dns::BAYAT UPSTREAM - nginx web=$WEBIP ama markala-web=$REALIP"
             fi
 
-            echo "=============== 3) KONTEYNER NE SERVIS EDIYOR ==============="
-            RUNIMG=$(docker inspect -f '{{.Image}}' markala-web 2>/dev/null | cut -c1-19 || echo yok)
-            LATESTID=$(docker inspect -f '{{.Id}}' "$IMG" 2>/dev/null | cut -c1-19 || echo yok)
-            echo "konteynerin imaj id: $RUNIMG"
-            echo "latest imaj id     : $LATESTID"
-            if [ "$RUNIMG" = "$LATESTID" ]; then
-              echo "::notice title=D-konteyner-imaj::AYNI - konteyner latest imajdan calisiyor"
-            else
-              echo "::error title=D-konteyner-imaj::FARKLI - konteyner eski imajda (run=$RUNIMG latest=$LATESTID)"
-            fi
-
-            echo "=============== 4) APP KONTEYNERLERİNİ ZORLA YENİLE ==============="
-            docker rm -f $(docker ps -aq --filter name=_markala- 2>/dev/null) 2>/dev/null || true
-            docker compose -f docker-compose.production.yml --env-file .env.production up -d --no-build --no-deps --force-recreate web admin api 2>&1 | tail -8
-            sleep 10
-            docker exec markala-nginx nginx -s reload 2>&1 || echo "nginx reload uyarisi"
-
-            echo "=============== 5) SAĞLIK ==============="
-            ok=0
-            for i in $(seq 1 15); do
-              n=$(docker inspect -f '{{.State.Health.Status}}' markala-web markala-admin markala-api 2>/dev/null | grep -c '^healthy$' || true)
-              echo "  deneme $i/15: healthy=$n/3"
-              if [ "$n" = "3" ]; then ok=1; break; fi
-              sleep 10
+            echo "=============== 4) AĞDAKİ TÜM IP -> KONTEYNER EŞLEMESİ ==============="
+            MAP=""
+            for c in $(docker ps -q); do
+              nm=$(docker inspect -f '{{.Name}}' "$c" | sed 's|^/||')
+              ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' "$c" | awk '{print $1}')
+              [ -n "$ip" ] && MAP="$MAP $nm=$ip"
             done
+            echo "$MAP"
+            echo "::notice title=D-ip-map::$MAP"
 
-            echo "=============== 6) ORIGIN DOĞRULAMA (konteyner içinden) ==============="
-            HTML=$(docker exec markala-web sh -c "wget -q -O- --timeout=20 http://localhost:3000/ 2>/dev/null | head -c 400000" 2>/dev/null || echo "")
-            LEN=$(printf %s "$HTML" | wc -c)
-            HASETBIS=$(printf %s "$HTML" | grep -c 'etbis.ticaret.gov.tr' || true)
-            HASLOGO=$(printf %s "$HTML" | grep -c 'markala-logo.svg' || true)
-            echo "HTML uzunluk=$LEN  etbis=$HASETBIS  logo(kontrol)=$HASLOGO"
-            echo "::notice title=E-origin::HTML=$LEN etbis=$HASETBIS logo=$HASLOGO"
-            NEWSTART=$(docker inspect -f '{{.State.StartedAt}}' markala-web 2>/dev/null || echo yok)
-            echo "::notice title=F-sonuc::healthy=$ok web StartedAt=$NEWSTART"
+            echo "=============== 5) NGINX ÜZERİNDEN ==============="
+            VIA=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | wc -c" 2>/dev/null || echo 0)
+            VIAE=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
+            VIAL=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c markala-logo.svg" 2>/dev/null || echo 0)
+            echo "nginx->web: LEN=$VIA ETBIS=$VIAE LOGO=$VIAL"
+            echo "::notice title=E-nginx-uzerinden::LEN=$VIA ETBIS=$VIAE LOGO=$VIAL"
 
-            if [ "$ok" != "1" ]; then
-              docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
-              exit 1
-            fi
+            echo "=============== 6) ONARIM: bayat konteynerleri sil + nginx restart ==============="
+            # compose projesi dışındaki/artık konteynerleri temizle (markala-web/admin/api/nginx/postgres HARİÇ)
+            for c in $(docker ps -aq); do
+              nm=$(docker inspect -f '{{.Name}}' "$c" | sed 's|^/||')
+              case "$nm" in
+                markala-web|markala-admin|markala-api|markala-nginx|markala-postgres|markala-backup|markala-node-exporter|markala-nginx-exporter|markala-postgres-exporter|markala-prometheus|markala-staging-web|markala-staging-api|markala-staging-postgres) ;;
+                *markala*) echo "  bayat siliniyor: $nm"; docker rm -f "$c" >/dev/null 2>&1 || true ;;
+              esac
+            done
+            # nginx'i RESTART et (reload DNS önbelleğini her zaman temizlemez)
+            docker restart markala-nginx >/dev/null 2>&1 || echo "nginx restart hatasi"
+            sleep 12
+
+            echo "=============== 7) ONARIM SONRASI DOĞRULAMA ==============="
+            AFTER_IP=$(docker exec markala-nginx sh -c "getent hosts web | awk '{print \$1}' | head -1" 2>/dev/null || echo "")
+            AFTER_E=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
+            AFTER_L=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c markala-logo.svg" 2>/dev/null || echo 0)
+            echo "sonrasi: web->$AFTER_IP  ETBIS=$AFTER_E LOGO=$AFTER_L"
+            echo "::notice title=F-sonrasi::web=$AFTER_IP ETBIS=$AFTER_E LOGO=$AFTER_L"
+            docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
             echo "TAMAM"
