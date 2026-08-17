@@ -1,8 +1,10 @@
 # PROD DEPLOY ONARIM + TEŞHİS — 2026-08-17 "yeşil raporlanan ama uygulanmayan deploy" olayı.
 #
-# Neden ayrı workflow: normal deploy yeşil dönerken canlıda ESKİ kod çalışıyordu. Kök nedeni
-# görmek için imajın İÇERİĞİ (yeni kod imajda var mı?) ve .env.production TAG değeri
-# doğrulanır — sonra app konteynerleri zorla yeniden oluşturulur.
+# v2 (kesin teşhis): v1'de imaj adı `docker compose config` çıktısından ayıklanmaya çalışıldı
+# ama grep -A2 penceresi 'image:' satırına yetişmedi → imaj referansı BOŞ kaldı ve
+# "yeni kod imajda yok" sonucu GEÇERSİZDİ. Artık imaj referansı TAG'den kurulur ve
+# POZİTİF KONTROL kullanılır (eski kodda da bulunan bir dize) — böylece grep yönteminin
+# kendisi mi bozuk, imaj mı eski ayırt edilir.
 #
 # GÜVENLİK: postgres ve nginx'e DOKUNULMAZ; yalnız web/admin/api recreate edilir.
 # Tetik: elle (workflow_dispatch) ya da bu dosyanın kendisine push (main).
@@ -30,45 +32,50 @@ jobs:
           command_timeout: 18m
           script: |
             cd /opt/markala
+            IMG="ghcr.io/soylemezz33/markala/web:latest"
 
-            echo "=============== 1) TAG DEĞERİ ==============="
-            TAGLINE=$(grep -E '^TAG=' .env.production || echo 'TAG tanimsiz->latest')
-            echo "$TAGLINE"
-            echo "::notice title=1-TAG::$TAGLINE"
+            echo "=============== 1) İMAJI ÇEK ==============="
+            docker pull "$IMG" 2>&1 | tail -4
+            CREATED=$(docker inspect -f '{{.Created}}' "$IMG" 2>/dev/null || echo yok)
+            DIG=$(docker inspect -f '{{index .RepoDigests 0}}' "$IMG" 2>/dev/null | cut -c1-60 || echo yok)
+            echo "imaj Created=$CREATED"
+            echo "::notice title=A-imaj-tarihi::latest Created=$CREATED"
+            echo "::notice title=B-imaj-digest::$DIG"
 
-            echo "=============== 2) MEVCUT KONTEYNERLER ==============="
-            docker ps --format '{{.Names}} | {{.Status}} | {{.Image}}' | grep markala || true
-            WEBSTART=$(docker inspect -f '{{.State.StartedAt}}' markala-web 2>/dev/null || echo yok)
-            WEBIMG=$(docker inspect -f '{{.Image}}' markala-web 2>/dev/null | cut -c1-19 || echo yok)
-            echo "::notice title=2-oncesi::web StartedAt=$WEBSTART imageId=$WEBIMG"
-
-            echo "=============== 3) COMPOSE HANGİ İMAJI İSTİYOR ==============="
-            WANT=$(docker compose -f docker-compose.production.yml --env-file .env.production config 2>/dev/null | grep -A2 '^  web:' | grep 'image:' | awk '{print $2}')
-            echo "istenen imaj: $WANT"
-            echo "::notice title=3-istenen-imaj::$WANT"
-
-            echo "=============== 4) İMAJLARI ÇEK ==============="
-            docker compose -f docker-compose.production.yml --env-file .env.production pull web admin api 2>&1 | tail -12
-
-            echo "=============== 5) YENİ KOD İMAJIN İÇİNDE Mİ? (etbis linki) ==============="
-            # Kritik teşhis: imaj yeni kodu içermiyorsa sorun build/tag tarafında,
-            # içeriyorsa sorun konteyner yenilenmemesinde ya da cache'te.
-            HIT=$(docker run --rm --entrypoint sh "$WANT" -c "grep -rl 'etbis.ticaret.gov.tr' /app 2>/dev/null | head -2" 2>/dev/null || echo "")
-            if [ -n "$HIT" ]; then
-              echo "İMAJDA VAR: $HIT"
-              echo "::notice title=5-imaj-icerigi::YENI KOD IMAJDA VAR"
+            echo "=============== 2) İMAJ İÇERİĞİ (kontrollü) ==============="
+            # POZİTİF KONTROL: footer'da eski kodda da bulunan dize. Bulunmazsa grep yöntemi bozuk.
+            CTRL=$(docker run --rm --entrypoint sh "$IMG" -c "grep -rl 'markala-logo.svg' /app/apps/web/.next 2>/dev/null | head -1" 2>/dev/null || echo "")
+            NEW1=$(docker run --rm --entrypoint sh "$IMG" -c "grep -rl 'etbis.ticaret.gov.tr' /app 2>/dev/null | head -1" 2>/dev/null || echo "")
+            NEW2=$(docker run --rm --entrypoint sh "$IMG" -c "grep -rl 'Ticaret Limited' /app 2>/dev/null | head -1" 2>/dev/null || echo "")
+            echo "pozitif kontrol (markala-logo.svg): ${CTRL:-BULUNAMADI}"
+            echo "yeni kod (etbis linki): ${NEW1:-BULUNAMADI}"
+            echo "yeni kod (Ticaret Limited): ${NEW2:-BULUNAMADI}"
+            if [ -z "$CTRL" ]; then
+              echo "::error title=C-grep-yontemi::POZITIF KONTROL BULUNAMADI - grep/imaj yolu hatali, sonuclar gecersiz"
+            elif [ -n "$NEW1" ] || [ -n "$NEW2" ]; then
+              echo "::notice title=C-imaj-icerigi::YENI KOD IMAJDA VAR (kontrol OK)"
             else
-              echo "İMAJDA YOK — build/tag sorunu!"
-              echo "::error title=5-imaj-icerigi::YENI KOD IMAJDA YOK - build veya TAG yanlis"
+              echo "::error title=C-imaj-icerigi::IMAJ ESKI - pozitif kontrol var ama yeni kod YOK (build/tag sorunu)"
             fi
 
-            echo "=============== 6) APP KONTEYNERLERİNİ ZORLA YENİLE ==============="
+            echo "=============== 3) KONTEYNER NE SERVIS EDIYOR ==============="
+            RUNIMG=$(docker inspect -f '{{.Image}}' markala-web 2>/dev/null | cut -c1-19 || echo yok)
+            LATESTID=$(docker inspect -f '{{.Id}}' "$IMG" 2>/dev/null | cut -c1-19 || echo yok)
+            echo "konteynerin imaj id: $RUNIMG"
+            echo "latest imaj id     : $LATESTID"
+            if [ "$RUNIMG" = "$LATESTID" ]; then
+              echo "::notice title=D-konteyner-imaj::AYNI - konteyner latest imajdan calisiyor"
+            else
+              echo "::error title=D-konteyner-imaj::FARKLI - konteyner eski imajda (run=$RUNIMG latest=$LATESTID)"
+            fi
+
+            echo "=============== 4) APP KONTEYNERLERİNİ ZORLA YENİLE ==============="
             docker rm -f $(docker ps -aq --filter name=_markala- 2>/dev/null) 2>/dev/null || true
-            docker compose -f docker-compose.production.yml --env-file .env.production up -d --no-build --no-deps --force-recreate web admin api 2>&1 | tail -12
-            sleep 8
+            docker compose -f docker-compose.production.yml --env-file .env.production up -d --no-build --no-deps --force-recreate web admin api 2>&1 | tail -8
+            sleep 10
             docker exec markala-nginx nginx -s reload 2>&1 || echo "nginx reload uyarisi"
 
-            echo "=============== 7) SAĞLIK ==============="
+            echo "=============== 5) SAĞLIK ==============="
             ok=0
             for i in $(seq 1 15); do
               n=$(docker inspect -f '{{.State.Health.Status}}' markala-web markala-admin markala-api 2>/dev/null | grep -c '^healthy$' || true)
@@ -76,22 +83,19 @@ jobs:
               if [ "$n" = "3" ]; then ok=1; break; fi
               sleep 10
             done
-            NEWSTART=$(docker inspect -f '{{.State.StartedAt}}' markala-web 2>/dev/null || echo yok)
-            echo "::notice title=7-sonrasi::healthy=$ok/1 web StartedAt=$NEWSTART"
 
-            echo "=============== 8) CANLI İÇERİK DOĞRULAMASI (konteyner içinden) ==============="
-            # nginx konteynerinden web:3000'e istek — CDN/Cloudflare cache'i devre dışı,
-            # gerçekten YENİ kodun servis edildiğini kanıtlar.
-            SERVED=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c 'etbis.ticaret.gov.tr'" 2>/dev/null || echo 0)
-            echo "anasayfada etbis linki sayisi (origin): $SERVED"
-            if [ "$SERVED" -gt 0 ] 2>/dev/null; then
-              echo "::notice title=8-origin-dogrulama::BASARILI - yeni kod servis ediliyor (etbis x$SERVED)"
-            else
-              echo "::error title=8-origin-dogrulama::BASARISIZ - origin hala eski HTML donuyor (etbis yok)"
-            fi
+            echo "=============== 6) ORIGIN DOĞRULAMA (konteyner içinden) ==============="
+            HTML=$(docker exec markala-web sh -c "wget -q -O- --timeout=20 http://localhost:3000/ 2>/dev/null | head -c 400000" 2>/dev/null || echo "")
+            LEN=$(printf %s "$HTML" | wc -c)
+            HASETBIS=$(printf %s "$HTML" | grep -c 'etbis.ticaret.gov.tr' || true)
+            HASLOGO=$(printf %s "$HTML" | grep -c 'markala-logo.svg' || true)
+            echo "HTML uzunluk=$LEN  etbis=$HASETBIS  logo(kontrol)=$HASLOGO"
+            echo "::notice title=E-origin::HTML=$LEN etbis=$HASETBIS logo=$HASLOGO"
+            NEWSTART=$(docker inspect -f '{{.State.StartedAt}}' markala-web 2>/dev/null || echo yok)
+            echo "::notice title=F-sonuc::healthy=$ok web StartedAt=$NEWSTART"
 
             if [ "$ok" != "1" ]; then
-              echo "Konteyner durumlari:"; docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
+              docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
               exit 1
             fi
-            echo "TAMAM - onarim adimlari kosuldu"
+            echo "TAMAM"
