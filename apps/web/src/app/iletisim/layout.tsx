@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
 
 export const metadata: Metadata = {
   title: 'İletişim | Markala',
@@ -6,5 +7,17 @@ export const metadata: Metadata = {
 };
 
 export default function IletisimLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      {/* Breadcrumb JSON-LD burada (layout), page.tsx'te değil: page "use client".
+          Sunucu bileşeninde tutmak işaretlemeyi client bundle'ından uzak tutar. */}
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'Anasayfa', href: '/' },
+          { name: 'İletişim', href: '/iletisim' },
+        ]}
+      />
+      {children}
+    </>
+  );
 }

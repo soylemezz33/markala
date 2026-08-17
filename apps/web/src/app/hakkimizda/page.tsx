@@ -4,6 +4,7 @@ import {
   CheckCircle, Lightning, ShieldCheck, Truck, PaintBrush, Sparkle, ArrowRight, Buildings, Handshake, Megaphone, MapPin, Clock,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Hakkımızda — Markala & 324 Ajans",
@@ -43,6 +44,12 @@ const stats = [
 export default function AboutPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Anasayfa", href: "/" },
+          { name: "Hakkımızda", href: "/hakkimizda" },
+        ]}
+      />
       {/* Hero */}
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-16 md:py-24 max-w-4xl">

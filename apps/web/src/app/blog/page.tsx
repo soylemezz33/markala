@@ -5,6 +5,7 @@ import { Container } from "@markala/ui";
 import { ArrowRight, Clock, Tag as TagIcon } from "@phosphor-icons/react/dist/ssr";
 import { getBlogCategories, getBlogPosts, blogCoverSrc } from "@/lib/blog";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Markala Blog — Matbaa, Tasarım & Marka Rehberleri",
@@ -41,6 +42,19 @@ export default async function BlogPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Anasayfa", href: "/" },
+          { name: "Blog", href: "/blog" },
+        ]}
+      />
+      {blogPosts.length > 0 && (
+        <ItemListJsonLd
+          name="Markala Blog yazıları"
+          url="/blog"
+          items={blogPosts.map((p) => ({ name: p.title, href: `/blog/${p.slug}` }))}
+        />
+      )}
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-12 md:py-16 max-w-3xl text-center">
           <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Markala Blog</p>

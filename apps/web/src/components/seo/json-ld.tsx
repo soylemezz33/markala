@@ -352,6 +352,40 @@ export function LocalBusinessJsonLd() {
  * ItemList schema — /urunler ve /matbaa hub sayfaları için.
  * Google rich snippet "list of products" olarak görünür.
  */
+/**
+ * Genel amaçlı ItemList — ürün dışı listeler için (blog dizini, rehber listesi vb.).
+ * ProductItemListJsonLd yolu `/urun/` olarak sabitlediğinden onu kullanamayan sayfalar buraya.
+ */
+export function ItemListJsonLd({
+  items,
+  name,
+  url,
+}: {
+  items: Array<{ name: string; href: string }>;
+  name: string;
+  url: string;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${SITE}${url}#list`,
+    name,
+    numberOfItems: items.length,
+    itemListElement: items.slice(0, 50).map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: it.href.startsWith("http") ? it.href : `${SITE}${it.href}`,
+      name: it.name,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
+    />
+  );
+}
+
 export function ProductItemListJsonLd({
   products,
   name,

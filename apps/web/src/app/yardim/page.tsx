@@ -4,7 +4,7 @@ import {
   Question, FileText, Truck, CreditCard, Package, ArrowsClockwise, ArrowRight,
   PaintBrush, Receipt, Question as QMark, ShieldCheck, ChatCircle,
 } from "@phosphor-icons/react/dist/ssr";
-import { FAQPageJsonLd } from "@/components/seo/json-ld";
+import { FAQPageJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -78,6 +78,12 @@ export default function YardimPage() {
   return (
     <>
       <FAQPageJsonLd questions={faqSchemaItems} url="/yardim" />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Anasayfa", href: "/" },
+          { name: "Yardım Merkezi", href: "/yardim" },
+        ]}
+      />
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-12 md:py-16 max-w-3xl text-center">
           <div className="w-16 h-16 mx-auto rounded-full bg-brand-100 grid place-items-center text-brand-700 mb-4">
