@@ -1,0 +1,40 @@
+# Staging teşhis (read-only) — staging-api 502 vb. durumlar için.
+# (tetik: 2026-08-13 odeme teshisi) Çıktının kritik satırları ::notice:: annotation olarak yazılır (anonim API'den okunabilir).
+# Tetik: bu dosyanın kendisine push (staging branch'inde) ya da elle.
+name: Staging Teşhis (read-only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [staging]
+    paths: [".github/workflows/staging-diag.yml"]
+
+jobs:
+  diag:
+    name: Staging container + log teşhisi
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: SSH ile oku
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 4m
+          script: |
+            echo "=== STAGING KONTEYNERLER ==="
+            docker ps -a --format '{{.Names}} | {{.Status}}' | grep staging || echo "STAGING KONTEYNER YOK"
+            echo "::notice title=containers::$(docker ps -a --format '{{.Names}}={{.Status}}' | grep staging | tr '\n' ' ' || echo YOK)"
+            echo "=== STAGING-API SON 40 SATIR ==="
+            docker logs markala-staging-api --tail 40 2>&1 || true
+            echo "::notice title=api-log::$(docker logs markala-staging-api --tail 6 2>&1 | tr '\n' ' ¦ ' | cut -c1-900 || echo LOG_YOK)"
+            echo "::notice title=api-err1::$(docker logs markala-staging-api --tail 80 2>&1 | grep -iE 'error|missing|required|invalid|undefined|cannot' | head -3 | tr '\n' ' ¦ ' | cut -c1-900 || echo ERR_YOK)"
+            echo "::notice title=api-err2::$(docker logs markala-staging-api --tail 80 2>&1 | grep -iE 'error|missing|required|invalid|undefined|cannot' | sed -n '4,6p' | tr '\n' ' ¦ ' | cut -c1-900 || echo -)"
+            echo "=== NGINX -> STAGING-API içeriden ==="
+            docker exec markala-nginx sh -c "wget -q -O- --timeout=5 http://staging-api:4000/api/health 2>&1 | head -2" || echo "İÇERİDEN ULAŞILAMADI"
+            echo "::notice title=inner-health::$(docker exec markala-nginx sh -c 'wget -q -O- --timeout=5 http://staging-api:4000/api/health 2>&1 | head -1' || echo ULASILAMADI)"
+            echo "=== STAGING-POSTGRES ==="
+            docker exec markala-staging-postgres pg_isready -U markala 2>&1 || true
+            echo "::notice title=pg::$(docker exec markala-staging-postgres pg_isready -U markala 2>&1 | head -1 || echo PG_YOK)"

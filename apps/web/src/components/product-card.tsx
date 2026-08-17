@@ -33,7 +33,9 @@ export function ProductCard({ product }: ProductCardProps) {
     <Link
       href={`/urun/${product.slug}`}
       className={cn(
-        "group flex flex-col rounded-lg overflow-hidden bg-paper-50 border border-paper-200",
+        // h-full: rail/grid'de komşu kartlarla AYNI yükseklik — içerik kısa da olsa kart
+        // satırı doldurur, fiyat satırı (mt-auto) tüm kartlarda aynı hizada durur.
+        "group flex flex-col h-full rounded-lg overflow-hidden bg-paper-50 border border-paper-200",
         "transition-all duration-200 ease-out",
         "hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2",
@@ -92,12 +94,18 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
+        {/* Tek satıra kilitli — uzun meta ("210 gr A.Bristol · ... · 6 Ebat") kartı
+            uzatıp komşularla orantıyı bozmasın; tam bilgi ürün detayında. */}
         {product.sizeLabel && (
-          <p className="mt-1 text-xs text-ink-500">{product.sizeLabel}</p>
+          <p className="mt-1 text-xs text-ink-500 line-clamp-1">{product.sizeLabel}</p>
         )}
 
+        {/* Fiyat SAĞDA — e-ticaret okuma alışkanlığı (göz fiyatı sağda arar, 2026-08-06). */}
         <div className="mt-auto pt-3 border-t border-paper-200 flex items-baseline justify-between gap-2">
-          <div className="flex flex-col">
+          <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-brand-700">
+            Yapılandır →
+          </span>
+          <div className="flex flex-col items-end text-right">
             {startingPrice > 0 ? (
               <>
                 <Price amount={startingPrice} size="md" className="text-ink-900" />
@@ -111,9 +119,6 @@ export function ProductCard({ product }: ProductCardProps) {
               </span>
             )}
           </div>
-          <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-brand-700">
-            Yapılandır →
-          </span>
         </div>
       </div>
     </Link>

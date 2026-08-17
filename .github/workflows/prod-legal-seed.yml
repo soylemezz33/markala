@@ -1,0 +1,158 @@
+# Yasal sayfa içeriklerini PROD DB'ye uygular (markala-postgres / markala).
+# Yalnız legal_pages.content günceller — başka hiçbir tabloya dokunmaz.
+# SQL, scp/git bağımlılığı olmadan workflow içine gömülü heredoc ile psql'e verilir.
+# Tek doğruluk kaynağı: scripts/legal-content-2026-08.sql — SQL değişirse bu dosya
+# yeniden üretilmelidir.
+# Tetik: SQL dosyası ya da bu workflow değişince (staging branch) veya elle.
+name: Prod Yasal İçerik Yükle
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/legal-content-2026-08.sql"
+      - ".github/workflows/prod-legal-seed.yml"
+
+jobs:
+  seed:
+    name: legal_pages içerik güncelle (PROD)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Gömülü SQL'i staging postgres'e uygula
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 4m
+          script: |
+            cd /opt/markala
+            out=$(docker exec -i markala-postgres psql -U markala -d markala -v ON_ERROR_STOP=1 2>&1 <<'LEGALSQL'
+            -- Yasal sayfa içerikleri — 2026-08-08 (kısa, markaya uyarlanmış şablonlar).
+            -- ⚠ Hukuki not: Bu metinler standart e-ticaret şablonlarından uyarlandı; yayına almadan
+            -- önce hukuk müşaviri kontrolü önerilir. Kaynak dosya: scripts/legal-content-2026-08.sql
+            -- Uygulama: psql -f (staging: staging-legal-seed workflow; prod: canlıya alma sırasında).
+            -- Satırlar zaten mevcut (placeholder) olduğundan UPDATE kullanılır.
+
+            UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
+            <p><strong>Markala</strong> (markala.com.tr), 324 Ajans Bilgi Teknolojileri Reklam Pazarlama'nın alt markasıdır. Gizliliğiniz bizim için önemlidir; bu ilke, sitemizi kullanırken hangi verilerinizi neden topladığımızı ve nasıl koruduğumuzu açıklar.</p>
+
+            <h2>1. Topladığımız Veriler</h2>
+            <ul>
+            <li><strong>Hesap ve iletişim bilgileri:</strong> ad soyad, e-posta, telefon, teslimat/fatura adresi.</li>
+            <li><strong>Sipariş bilgileri:</strong> satın alınan ürünler, seçilen konfigürasyon, sipariş geçmişi.</li>
+            <li><strong>Tasarım dosyaları:</strong> baskı için yüklediğiniz görsel ve belgeler.</li>
+            <li><strong>Teknik veriler:</strong> IP adresi, tarayıcı bilgisi, site içi gezinme (çerezler aracılığıyla).</li>
+            </ul>
+
+            <h2>2. Verilerinizi Ne İçin Kullanırız?</h2>
+            <ul>
+            <li>Siparişinizi almak, üretmek ve teslim etmek,</li>
+            <li>Tasarım onayı ve sipariş durumu hakkında sizinle iletişim kurmak,</li>
+            <li>Yasal yükümlülüklerimizi (fatura, muhasebe) yerine getirmek,</li>
+            <li>Açık rızanız varsa kampanya ve bülten göndermek,</li>
+            <li>Site deneyimini ölçmek ve iyileştirmek.</li>
+            </ul>
+
+            <h2>3. Çerezler</h2>
+            <p>Sitemiz zorunlu, analitik ve pazarlama çerezleri kullanır. Zorunlu çerezler dışındakiler yalnızca onayınızla çalışır; tercihlerinizi dilediğiniz an sayfa altındaki <strong>"Çerez Tercihlerim"</strong> bağlantısından değiştirebilirsiniz. Ayrıntı: <a href="/yasal/cerez">Çerez Politikası</a>.</p>
+
+            <h2>4. Verileriniz Kimlerle Paylaşılır?</h2>
+            <p>Verileriniz satılmaz. Yalnızca hizmetin gerektirdiği ölçüde şu taraflarla paylaşılır: ödeme kuruluşu (iyzico — kart bilgileriniz bizde saklanmaz), kargo firmaları (teslimat için ad-adres-telefon), muhasebe/ön muhasebe yazılımı (yasal fatura yükümlülüğü) ve barındırma altyapımız. Analitik araçları yalnızca çerez onayınız varsa çalışır.</p>
+
+            <h2>5. Güvenlik ve Saklama</h2>
+            <p>Tüm bağlantılar SSL ile şifrelenir; verilere erişim yetki bazlıdır. Verileriniz, ilgili yasal saklama süreleri (ör. fatura kayıtlarında 10 yıl) boyunca ve üyeliğiniz devam ettiği sürece saklanır, süre sonunda silinir veya anonimleştirilir.</p>
+
+            <h2>6. Haklarınız</h2>
+            <p>KVKK kapsamındaki haklarınız (verilerinize erişme, düzeltme, silme vb.) ve kullanım yolu için <a href="/yasal/kvkk">KVKK Aydınlatma Metni</a>'ni inceleyebilir, <a href="/kvkk-basvuru">KVKK Başvuru Formu</a>'nu kullanabilirsiniz.</p>
+
+            <h2>7. İletişim</h2>
+            <p>324 Ajans Bilgi Teknolojileri Reklam Pazarlama · Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin · <a href="tel:+903244333351">0324 433 33 51</a> · <a href="mailto:merhaba@markala.com.tr">merhaba@markala.com.tr</a></p>
+            $mk$ WHERE slug = 'gizlilik';
+
+            UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
+            <p>Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") m.10 uyarınca, markala.com.tr kullanıcılarını kişisel verilerinin işlenmesi hakkında bilgilendirmek için hazırlanmıştır.</p>
+
+            <h2>1. Veri Sorumlusu</h2>
+            <p><strong>324 Ajans Bilgi Teknolojileri Reklam Pazarlama</strong> — Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin ("Markala").</p>
+
+            <h2>2. İşlenen Kişisel Veriler</h2>
+            <ul>
+            <li><strong>Kimlik:</strong> ad, soyad (kurumsal üyelikte unvan, vergi no).</li>
+            <li><strong>İletişim:</strong> e-posta, telefon, teslimat ve fatura adresi.</li>
+            <li><strong>Müşteri işlem:</strong> sipariş, iade, fatura ve ödeme kayıtları (kart bilgileri ödeme kuruluşunda kalır, tarafımızca saklanmaz).</li>
+            <li><strong>İşlem güvenliği:</strong> IP adresi, oturum ve log kayıtları.</li>
+            <li><strong>Görsel/işitsel:</strong> baskı için yüklediğiniz tasarım dosyaları.</li>
+            </ul>
+
+            <h2>3. İşleme Amaçları</h2>
+            <p>Sipariş sözleşmesinin kurulması ve ifası (üretim, teslimat, tasarım onayı iletişimi), fatura düzenleme ve yasal yükümlülükler, üyelik yönetimi, talep/şikâyet karşılama, sitenin güvenliği; açık rızanız varsa ticari elektronik ileti gönderimi.</p>
+
+            <h2>4. Hukuki Sebepler</h2>
+            <p>KVKK m.5/2-c (sözleşmenin kurulması/ifası), m.5/2-ç (hukuki yükümlülük), m.5/2-e (bir hakkın tesisi/korunması), m.5/2-f (meşru menfaat) ve gerekli hâllerde m.5/1 (açık rıza).</p>
+
+            <h2>5. Aktarım</h2>
+            <p>Veriler; ödeme sürecinde ödeme kuruluşuna (iyzico), teslimat için kargo firmalarına, fatura için mali müşavir/ön muhasebe yazılımına, altyapı hizmeti aldığımız barındırma sağlayıcılarına ve yasal talep hâlinde yetkili kurumlara aktarılır. Çerez onayına bağlı analitik araçlar kullanıldığında veriler yurt dışındaki hizmet sağlayıcılara açık rızanızla aktarılabilir.</p>
+
+            <h2>6. Toplama Yöntemi ve Saklama</h2>
+            <p>Veriler; site formları, üyelik/sipariş işlemleri, e-posta/telefon/WhatsApp iletişimi ve çerezler aracılığıyla elektronik ortamda toplanır. İlgili mevzuattaki süreler (ör. e-ticaret kayıtları 3 yıl, fatura kayıtları 10 yıl) boyunca saklanır, sonrasında silinir veya anonimleştirilir.</p>
+
+            <h2>7. KVKK m.11 Kapsamındaki Haklarınız</h2>
+            <ul>
+            <li>Verinizin işlenip işlenmediğini öğrenme ve bilgi talep etme,</li>
+            <li>İşleme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme,</li>
+            <li>Aktarıldığı üçüncü kişileri bilme,</li>
+            <li>Eksik/yanlış işlenmişse düzeltilmesini, şartları oluşmuşsa silinmesini/yok edilmesini isteme,</li>
+            <li>Otomatik sistemlerce analiz sonucu aleyhe bir sonuca itiraz etme,</li>
+            <li>Kanuna aykırı işleme nedeniyle zararın giderilmesini talep etme.</li>
+            </ul>
+
+            <h2>8. Başvuru</h2>
+            <p>Haklarınızı kullanmak için <a href="/kvkk-basvuru">KVKK Başvuru Formu</a>'nu doldurabilir veya yazılı başvurunuzu yukarıdaki adrese iletebilirsiniz. Başvurular en geç 30 gün içinde ücretsiz sonuçlandırılır.</p>
+            $mk$ WHERE slug = 'kvkk';
+
+            UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
+            <h2>Madde 1 — Taraflar</h2>
+            <p><strong>SATICI:</strong> 324 Ajans Bilgi Teknolojileri Reklam Pazarlama (Markala / markala.com.tr) — Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin · Tel: 0324 433 33 51 · E-posta: merhaba@markala.com.tr</p>
+            <p><strong>ALICI:</strong> Sipariş formunda ad-soyad/unvan, adres ve iletişim bilgileri yer alan gerçek veya tüzel kişi.</p>
+
+            <h2>Madde 2 — Konu</h2>
+            <p>İşbu sözleşme, ALICI'nın markala.com.tr üzerinden elektronik ortamda sipariş verdiği, nitelikleri ve satış fiyatı sipariş özetinde belirtilen ürünlerin satışı ve teslimi ile ilgili olarak 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümleri gereğince tarafların hak ve yükümlülüklerini düzenler.</p>
+
+            <h2>Madde 3 — Ürün ve Fiyat</h2>
+            <p>Ürünün türü, miktarı, ebadı, seçilen baskı/konfigürasyon özellikleri ve tüm vergiler dâhil satış fiyatı, sipariş sayfasında ve ALICI'ya iletilen sipariş onayında belirtildiği gibidir. İlan edilen fiyatlar güncelleme yapılana kadar geçerlidir.</p>
+
+            <h2>Madde 4 — Ödeme</h2>
+            <p>Ödeme, iyzico güvenli ödeme altyapısı üzerinden kredi/banka kartı ile (3D Secure doğrulamalı) yapılır. Kart bilgileri SATICI tarafından saklanmaz. Taksit imkânları ödeme sayfasında gösterilir.</p>
+
+            <h2>Madde 5 — Tasarım Onayı ve Üretim</h2>
+            <p>Baskı ürünleri kişiye özel üretilir. Üretim, ALICI'nın tasarımı (kendi yüklediği dosya veya SATICI'nın hazırladığı tasarım) <strong>onaylamasından sonra</strong> başlar. Onaylanan tasarımdaki yazım hatası vb. içerik sorumluluğu ALICI'ya aittir. Ürün sayfasında belirtilen üretim süreleri, tasarım onayını izleyen iş günleri için geçerlidir.</p>
+
+            <h2>Madde 6 — Teslimat</h2>
+            <p>Ürünler, üretimin tamamlanmasının ardından anlaşmalı kargo firmalarıyla ALICI'nın bildirdiği adrese gönderilir. Yasal azami teslim süresi 30 gündür. Kargo ücreti ve ücretsiz kargo eşiği sipariş özetinde gösterilir. Teslimde hasarlı paket için kargo görevlisine tutanak tutturulmalıdır.</p>
+
+            <h2>Madde 7 — Üretim Koşulları</h2>
+            <p><strong>7.A Üretim toleransı (fire):</strong> Matbaa üretim teknolojisi gereği siparişlerin renk, adet ve ölçülerinde <strong>%1 ilâ %5 arasında fire (sapma)</strong> olabilir. Bu sektör standardı tolerans, siparişin onaylanmasıyla ALICI tarafından kabul edilmiş sayılır ve bu aralıktaki sapmalar ayıp olarak değerlendirilmez.</p>
+            <p><strong>7.B Renk:</strong> Ekranda görülen renkler ile baskı renkleri arasında, ekran kalibrasyonu ve baskı tekniğinden kaynaklı makul ton farkları oluşabilir.</p>
+
+            <h2>Madde 8 — Cayma Hakkı</h2>
+            <p>Mesafeli Sözleşmeler Yönetmeliği m.15/1-c uyarınca, <strong>ALICI'nın istekleri doğrultusunda ya da kişisel ihtiyaçları için özel olarak üretilen ürünlerde cayma hakkı kullanılamaz.</strong> Markala'da satılan baskı ürünleri ALICI'nın tasarımına/konfigürasyonuna göre kişiye özel üretildiğinden bu kapsamdadır. Bu istisna, ayıplı ürün hâlindeki yasal hakları ortadan kaldırmaz: baskı hatası SATICI'dan kaynaklanıyorsa ürün <strong>ücretsiz yeniden basılır</strong>. Ayrıntı: <a href="/yasal/iade">İade &amp; İptal Politikası</a>.</p>
+
+            <h2>Madde 9 — Uyuşmazlık</h2>
+            <p>İşbu sözleşmeden doğan uyuşmazlıklarda, Ticaret Bakanlığı'nca ilan edilen parasal sınırlar dâhilinde ALICI'nın veya SATICI'nın yerleşim yerindeki Tüketici Hakem Heyetleri ile Tüketici Mahkemeleri yetkilidir.</p>
+
+            <h2>Madde 10 — Yürürlük</h2>
+            <p>ALICI, sipariş vermeden önce işbu sözleşmeyi ve <a href="/yasal/on-bilgilendirme">Ön Bilgilendirme Formu</a>'nu okuduğunu ve kabul ettiğini beyan eder. Sözleşme, siparişin elektronik ortamda onaylandığı anda kurulur.</p>
+            $mk$ WHERE slug = 'mesafeli-satis';
+
+            -- Kontrol çıktısı
+            SELECT slug, version, length(content) AS icerik_uzunlugu FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');
+            LEGALSQL
+            ); rc=$?
+            echo "::notice title=psql-out::$(echo "$out" | tail -6 | tr '\n' ' ')"
+            [ "$rc" -eq 0 ] || exit 1
+            echo "::notice title=legal::$(docker exec markala-postgres psql -U markala -d markala -t -A -c "SELECT slug||'='||length(content) FROM legal_pages WHERE slug IN ('gizlilik','kvkk','mesafeli-satis');" | tr '\n' ' ')"
+            echo "OK - yasal icerik PROD'da (storefront 60sn icinde tazelenir)"

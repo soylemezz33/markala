@@ -1,0 +1,64 @@
+# Staging DB'ye PROD KOPYASI — prod veritabanının anlık dökümünü staging'e yükler.
+# PROD'DAN SADECE OKUR (pg_dump); yazma yalnız STAGING veritabanınadır.
+# Amaç: staging'in canlı ile aynı içerikle (ürün/kategori/hero) test edilebilmesi.
+# NOT: Kopya kişisel veri içerir — staging noindex + (istenirse) basic auth arkasındadır,
+# dışarı ÇIKARILMAZ (bkz. docs/STAGING.md uyarısı).
+# Tetik: bu dosyanın kendisine push (staging branch) ya da elle (workflow_dispatch).
+name: Staging DB — Prod Kopyası Yükle
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [staging]
+    paths: [".github/workflows/staging-db-copy-prod.yml"]
+
+jobs:
+  copy:
+    name: Prod dump → staging restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: SSH ile kopyala
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 11m
+          script: |
+            set -e
+            cd /opt/markala
+            echo "→ staging-api durduruluyor (restore sırasında bağlantı olmasın)..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging stop staging-api
+            echo "→ markala_staging sıfırlanıyor..."
+            docker exec markala-staging-postgres psql -U markala -d postgres \
+              -c "DROP DATABASE IF EXISTS markala_staging WITH (FORCE);" \
+              -c "CREATE DATABASE markala_staging;"
+            echo "→ Extension'lar..."
+            docker exec markala-staging-postgres psql -U markala -d markala_staging \
+              -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm";' \
+              -c 'CREATE EXTENSION IF NOT EXISTS "unaccent";' \
+              -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";' \
+              -c 'CREATE EXTENSION IF NOT EXISTS "pgcrypto";'
+            echo "→ Prod dump → staging restore (tek boru, diske yazılmaz)..."
+            docker exec markala-postgres sh -c 'pg_dump -U "${POSTGRES_USER:-markala}" --no-owner --no-privileges "${POSTGRES_DB:-markala}"' \
+              | docker exec -i markala-staging-postgres psql -U markala -d markala_staging -q -v ON_ERROR_STOP=0
+            echo "→ Satır sayısı kontrolü (products)..."
+            docker exec markala-staging-postgres psql -U markala -d markala_staging -t -c "SELECT count(*) FROM products;" || true
+            echo "::notice title=counts::products=$(docker exec markala-staging-postgres psql -U markala -d markala_staging -t -A -c 'SELECT count(*) FROM products;' 2>/dev/null || echo '?') categories=$(docker exec markala-staging-postgres psql -U markala -d markala_staging -t -A -c 'SELECT count(*) FROM categories;' 2>/dev/null || echo '?')"
+            echo "→ staging-api başlatılıyor..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging start staging-api
+            ok=0
+            for i in $(seq 1 12); do
+              st=$(docker inspect -f '{{.State.Health.Status}}' markala-staging-api 2>/dev/null || echo yok)
+              echo "  deneme $i/12: staging-api=$st"
+              if [ "$st" = "healthy" ]; then ok=1; break; fi
+              sleep 10
+            done
+            echo "::notice title=result::staging-api=$(docker inspect -f '{{.State.Health.Status}}' markala-staging-api 2>/dev/null || echo yok)"
+            if [ "$ok" != "1" ]; then echo "❌ staging-api sağlıksız"; docker logs markala-staging-api --tail 30 2>&1 || true; exit 1; fi
+            echo "→ Storefront ISR cache SIFIRLAMA (restart yetmez — container FS'i korur;"
+            echo "   force-recreate taze container = build'deki dolu prerender'a döner)..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --force-recreate --no-deps staging-web
+            echo "✅ Prod kopyası staging'de"

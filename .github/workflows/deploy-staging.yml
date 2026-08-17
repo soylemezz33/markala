@@ -1,0 +1,166 @@
+# Markala — STAGING deploy (test.markala.com.tr)
+# Tetik: `staging` branch'ine push ya da elle (workflow_dispatch).
+# Akış: web+api imajlarını staging build-arg'larıyla build et (tag: staging) →
+# compose+nginx staging dosyalarını VPS'e kopyala → staging stack'i güncelle →
+# nginx reload → sağlık kontrolü. PROD SERVİSLERİNE DOKUNMAZ.
+#
+# Önkoşullar (bir kere): docs/STAGING.md — Cloudflare DNS (test, test-api),
+# /opt/markala/.env.staging, prod network adı doğrulaması.
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: Build & Push Staging Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        app: [web, api]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          # Staging'in kendi API origin'i build-time gömülür. Analytics/doğrulama
+          # ID'leri BİLEREK boş — staging trafiği GA4/Clarity/GTM'e karışmasın.
+          # API_INTERNAL_URL: build-time prerender fetch'leri PROD API'den okur (salt GET) —
+          # staging API imaj build sırasında henüz yok (tavuk-yumurta). Runtime'da compose
+          # bunu http://staging-api:4000 ile ezer.
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://test-api.markala.com.tr
+            API_INTERNAL_URL=https://api.markala.com.tr
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.app }}:staging
+          # Prod build'leriyle aynı cache scope'ları — staging build'leri hızlanır,
+          # prod cache'i bozulmaz (cache-to yok, sadece okur).
+          cache-from: type=gha,scope=${{ matrix.app }}
+          platforms: linux/amd64
+
+  deploy:
+    name: Deploy Staging to VPS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://test.markala.com.tr
+
+    steps:
+      - name: Checkout (compose + nginx conf için)
+        uses: actions/checkout@v6
+
+      # Staging dosyaları henüz main'de olmayabilir (test-önce-merge akışı) —
+      # /opt/markala'daki git checkout'una dokunmadan scp ile bindirilir.
+      - name: Compose + nginx conf'u VPS'e kopyala
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: "docker-compose.staging.yml,nginx/conf.d/staging.conf"
+          target: /opt/markala/
+          overwrite: true
+
+      - name: Staging stack'i güncelle
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 13m
+          script: |
+            set -e
+            cd /opt/markala
+            # İlk çalıştırmada .env.staging'i otomatik üret (idempotent — varsa DOKUNMAZ).
+            # Secrets yalnız VPS'te kalır; staging'e özel, prod .env.production'dan bağımsız.
+            if [ ! -f .env.staging ]; then
+              echo "→ .env.staging yok — otomatik oluşturuluyor..."
+              umask 077
+              cat > .env.staging <<EOF
+            STAGING_POSTGRES_DB=markala_staging
+            STAGING_POSTGRES_USER=markala
+            STAGING_POSTGRES_PASSWORD=$(openssl rand -hex 24)
+            STAGING_JWT_SECRET=$(openssl rand -hex 32)
+            STAGING_REVALIDATE_SECRET=$(openssl rand -hex 16)
+            GITHUB_REPOSITORY=${{ github.repository }}
+            EOF
+              # Heredoc satır başlarındaki YAML girintisini temizle
+              sed -i 's/^[[:space:]]*//' .env.staging
+              echo "  ✓ /opt/markala/.env.staging oluşturuldu"
+            fi
+            # Sonradan eklenen zorunlu anahtarlar — mevcut .env.staging'e idempotent ekle.
+            if ! grep -q '^STAGING_ENCRYPTION_KEY=' .env.staging; then
+              echo "STAGING_ENCRYPTION_KEY=$(openssl rand -hex 24)" >> .env.staging
+              echo "  ✓ STAGING_ENCRYPTION_KEY eklendi"
+            fi
+            echo "→ Staging imajlarını çek..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging pull
+            echo "→ Staging servislerini güncelle (prod'a DOKUNULMAZ)..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --no-build
+            # NOT: ayrıca 'prisma migrate deploy' KOŞULMAZ — api imajının CMD'si açılışta
+            # zaten migrate eder; ikinci bir eşzamanlı migrate boş DB'de yarış yaratıp
+            # P3009 (failed migration kaydı) bırakıyordu (2026-08-07 olayı).
+            echo "→ Prod nginx reload (staging vhost'ları yüklensin)..."
+            docker exec markala-nginx nginx -t && docker exec markala-nginx nginx -s reload
+            echo "→ Sağlık kontrolü (container içinden, maks ~1 dk)..."
+            ok=0
+            for i in $(seq 1 6); do
+              code=$(docker exec markala-nginx sh -c "wget -q -O /dev/null -S http://staging-web:3000/api/health 2>&1 | head -1 | grep -o '[0-9]\{3\}'" || echo 000)
+              echo "  deneme $i/6: staging-web /api/health -> $code"
+              if [ "$code" = "200" ]; then ok=1; break; fi
+              sleep 10
+            done
+            if [ "$ok" != "1" ]; then
+              echo "❌ Staging web sağlıksız:"
+              docker ps --format '{{.Names}} {{.Status}}' | grep staging || true
+              docker logs markala-staging-web --tail 40 2>&1 || true
+              exit 1
+            fi
+            echo "✅ Staging deploy tamam: ${{ github.sha }}"
+
+      - name: Verify staging (external)
+        run: |
+          ok=0
+          for i in $(seq 1 6); do
+            code=$(curl -s -o /dev/null -m 25 -w '%{http_code}' -A "Mozilla/5.0 (GH-Actions verify)" "https://test.markala.com.tr") || code=000
+            echo "https://test.markala.com.tr -> HTTP $code (deneme $i)"
+            # 401 = basic auth açık (beklenen olabilir); <500 = origin ayakta.
+            if [ "$code" -ge 200 ] && [ "$code" -lt 500 ]; then ok=1; break; fi
+            sleep 8
+          done
+          if [ "$ok" != "1" ]; then echo "❌ test.markala.com.tr origin hatası (DNS eklendi mi? docs/STAGING.md)"; exit 1; fi
+          echo "✅ Staging dış doğrulama geçti"

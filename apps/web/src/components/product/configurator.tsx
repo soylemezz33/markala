@@ -14,6 +14,7 @@ import {
   availablePriceDimKeys,
   computeAreaPrice,
   adetTierBadges,
+  getInstallmentAmount,
   DEFAULT_PRICING,
   type PricingSettings,
   type OptionRulesLite,
@@ -28,10 +29,8 @@ import {
   OptionGroup,
   DesignUpload,
   AreaField,
-  PriceCard,
   MobileCta,
 } from "./configurator-fields";
-import { EstimatedDelivery } from "./estimated-delivery";
 
 // Tip — API'den gelen product.options her satırı bu şekildedir
 interface RawOption {
@@ -334,179 +333,180 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
   return (
     <ConfiguratorContext.Provider value={{ state, dispatch, product }}>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-display-md font-serif text-ink-900">{product.name}</h1>
-          <div className="mt-2 flex items-center gap-2 text-sm text-ink-500">
-            {(() => { const rating = ratingProp ?? product.rating; return rating && rating.count > 0 ? (
-              <>
-                <span className="text-brand-500">★</span>
-                <span className="font-medium text-ink-900">
-                  {rating.average.toFixed(1)}
-                </span>
-                <span>({rating.count} yorum)</span>
-                <span className="mx-1 text-paper-200">·</span>
-              </>
-            ) : null; })()}
-            <span>Üretim: {product.productionTime}</span>
-          </div>
-        </div>
-
-        <p className="text-ink-700 leading-relaxed">{product.shortDescription}</p>
-
-        {/* Büyük per-adet fiyat — ürünün yanında (KDV dahil). Fiyatsız üründe gizli;
-            alttaki PriceCard zaten "Teklif Al"ı gösterir. Diğer içerik değişmedi. */}
-        {canBuy ? (
-          <div className="border-t border-paper-200 pt-5">
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <Price amount={show(total)} size="xl" className="text-brand-600 tabular-nums" />
-              {areaAdet > 1 && (
-                <span className="text-base text-ink-500">/ {areaAdet} adet</span>
-              )}
-            </div>
-            {areaAdet > 1 && (
-              <p className="mt-1 text-sm text-ink-500">
-                Birim:{" "}
-                <Price amount={show(total / areaAdet)} size="sm" className="text-ink-700 align-baseline" />{" "}
-                / adet · KDV dahil
-              </p>
-            )}
-          </div>
-        ) : isArea && startingPrice > 0 ? (
-          // Ölçü girilmeden başlangıç fiyatı — "Teklif Al" hissini kırar, erişilebilir giriş fiyatı gösterir.
-          <div className="border-t border-paper-200 pt-5">
-            <div className="flex items-baseline gap-1.5 flex-wrap">
-              <Price amount={show(startingPrice)} size="xl" className="text-brand-600 tabular-nums" />
-              <span className="text-base text-ink-500">'den başlayan</span>
-            </div>
-            <p className="mt-1 text-sm text-ink-500">
-              {kdvDahil ? "KDV dahil" : "KDV hariç"} · en/boy ölçüsünü girin, fiyatınız anında hesaplansın.
-            </p>
-          </div>
-        ) : null}
-
-        <EstimatedDelivery productionTime={product.productionTime} />
-
-        {/* Güven rozeti — persona bulgusu: müşterinin 1 numaralı korkusu "baskı hatalı
-            gelirse ne olur?" idi ve cevabı fold-3'teki güven şeridinde gömülü kalıyordu.
-            Teslim tarihi satırıyla aynı görsel dilde, buybox'ta tek satır. */}
-        <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2.5 text-sm">
-          <ShieldCheck size={16} weight="bold" className="flex-none text-success" />
-          <span className="font-semibold text-ink-900">Hatalı baskıda ücretsiz yeniden basım</span>
-        </div>
-
-        <div className="space-y-6 pt-2">
-          {isArea && <AreaField minM2={pricing.minM2} />}
-          {groups.map((group) => {
-            const visibleOptions =
-              dimFilter && group.groupKey === dimFilter.groupKey
-                ? group.options.filter((o) => dimFilter.keys.has(o.optionKey))
-                : group.options;
-            // Tiraj rozetleri ("Önerilen" / "En avantajlı") — yalnız adet grubunda ve
-            // İSG -%N rozetiyle çakışmayacak ürünlerde. Gizli (seyrek matris) kademeler
-            // rozet alamaz; band/eşik mantığı adetTierBadges'ta.
-            const tierBadges =
-              group.groupKey === "adet" && !isArea && !hasVolumeAdet
-                ? adetTierBadges(
-                    displayedPriceHints["adet"],
-                    new Set(visibleOptions.map((o) => o.optionKey)),
-                  )
-                : undefined;
-            return (
-              <OptionGroup
-                key={group.groupKey}
-                groupKey={group.groupKey}
-                groupLabel={group.groupLabel}
-                options={visibleOptions}
-                selected={effSel[group.groupKey] ?? baseSelections[group.groupKey] ?? ""}
-                locked={group.locked}
-                disabled={resolved.disabledGroups.has(group.groupKey)}
-                onSelect={(optionKey) => handleSelect(group.groupKey, optionKey)}
-                priceHints={displayedPriceHints[group.groupKey]}
-                hintMode={isArea && group.groupKey === "malzeme" ? "total" : groupHintMode(product, group.groupKey)}
-                layout={isArea && group.groupKey === "malzeme" ? "cards" : "auto"}
-                unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
-                volumeBadge={hasVolumeAdet && group.groupKey === "adet"}
-                tierBadges={tierBadges}
-                popularKey={group.groupKey === "paket" ? popularPaketKey : undefined}
-              />
-            );
-          })}
-          <DesignUpload />
-        </div>
-
-        <PriceCard
-          total={show(total)}
-          kdvLabel={kdvDahil ? "KDV dahil" : "KDV hariç"}
-          // Fiyat şoku önleme: büyük rakamın NEYİN karşılığı olduğunu fiyatın yanında söyle
-          // (ör. "1.000 adet için" / "60×150 cm için · 2 adet").
-          context={
-            isArea
-              ? Number(effSel.en) > 0 && Number(effSel.boy) > 0
-                ? `${effSel.en}×${effSel.boy} cm için${areaAdet > 1 ? ` · ${areaAdet} adet` : ""}`
-                : undefined
-              : effSel.adet && Number(effSel.adet) > 0
-                ? `${Number(effSel.adet).toLocaleString("tr-TR")} adet için`
-                : undefined
-          }
-        />
-
-        {/* Kargo şeffaflığı: tutar + ücretsiz eşiği fiyatın hemen altında (sepet sürprizi yok). */}
-        {canBuy && (
-          <p className="text-xs text-ink-500 -mt-2 flex items-center gap-1.5">
-            <Truck size={14} weight="fill" className="text-ink-400" />
-            Kargo {shippingInfo.fee}₺ — {shippingInfo.freeThreshold.toLocaleString("tr-TR")}₺ üzeri ücretsiz
-          </p>
-        )}
-
-        {ctaReason && (
-          <p className="text-xs text-ink-500 -mt-2">{ctaReason}</p>
-        )}
-
-        <div ref={ctaRef}>
-          {canBuy ? (
-            <Button
-              size="lg"
-              fullWidth
-              onClick={handleAddToCart}
-              disabled={state.justAdded}
-            >
-              {state.justAdded ? (
+      {/* 2026-08-07 UX yenilemesi (rakip deseni): SOL = başlık + seçenekler,
+          SAĞ = sticky FİYAT ÖZET KARTI (Toplam Fiyat + KDV + CTA + teslim + güven).
+          Fiyat artık sayfa altında değil — seçenek değiştikçe sağda sabit güncellenir.
+          Mobilde tek kolon akar; alttaki MobileCta sticky bar toplamı zaten gösterir. */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6 lg:items-start">
+        {/* SOL — başlık + açıklama + seçenekler */}
+        <div className="space-y-4 min-w-0">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-serif text-ink-900 leading-tight">{product.name}</h1>
+            <div className="mt-1.5 flex items-center gap-2 text-sm text-ink-500">
+              {(() => { const rating = ratingProp ?? product.rating; return rating && rating.count > 0 ? (
                 <>
-                  <CheckCircle size={20} weight="bold" /> Sepete Eklendi
+                  <span className="text-brand-500">★</span>
+                  <span className="font-medium text-ink-900">
+                    {rating.average.toFixed(1)}
+                  </span>
+                  <span>({rating.count} yorum)</span>
+                  <span className="mx-1 text-paper-200">·</span>
+                </>
+              ) : null; })()}
+              <span>Üretim: {product.productionTime}</span>
+            </div>
+          </div>
+
+          <p className="text-sm text-ink-700 leading-relaxed line-clamp-2">{product.shortDescription}</p>
+
+          <div className="space-y-5 pt-1 border-t border-paper-200">
+            {isArea && <AreaField minM2={pricing.minM2} />}
+            {groups.map((group) => {
+              const visibleOptions =
+                dimFilter && group.groupKey === dimFilter.groupKey
+                  ? group.options.filter((o) => dimFilter.keys.has(o.optionKey))
+                  : group.options;
+              // Tiraj rozetleri ("Önerilen" / "En avantajlı") — yalnız adet grubunda ve
+              // İSG -%N rozetiyle çakışmayacak ürünlerde. Gizli (seyrek matris) kademeler
+              // rozet alamaz; band/eşik mantığı adetTierBadges'ta.
+              const tierBadges =
+                group.groupKey === "adet" && !isArea && !hasVolumeAdet
+                  ? adetTierBadges(
+                      displayedPriceHints["adet"],
+                      new Set(visibleOptions.map((o) => o.optionKey)),
+                    )
+                  : undefined;
+              return (
+                <OptionGroup
+                  key={group.groupKey}
+                  groupKey={group.groupKey}
+                  groupLabel={group.groupLabel}
+                  options={visibleOptions}
+                  selected={effSel[group.groupKey] ?? baseSelections[group.groupKey] ?? ""}
+                  locked={group.locked}
+                  disabled={resolved.disabledGroups.has(group.groupKey)}
+                  onSelect={(optionKey) => handleSelect(group.groupKey, optionKey)}
+                  priceHints={displayedPriceHints[group.groupKey]}
+                  hintMode={isArea && group.groupKey === "malzeme" ? "total" : groupHintMode(product, group.groupKey)}
+                  layout={isArea && group.groupKey === "malzeme" ? "cards" : "auto"}
+                  unitSuffix={isArea && group.groupKey === "malzeme" ? "/m²" : undefined}
+                  volumeBadge={hasVolumeAdet && group.groupKey === "adet"}
+                  tierBadges={tierBadges}
+                  popularKey={group.groupKey === "paket" ? popularPaketKey : undefined}
+                />
+              );
+            })}
+            <DesignUpload />
+          </div>
+        </div>
+
+        {/* SAĞ — sticky fiyat özet kartı (mobilde seçeneklerin altında akar) */}
+        <aside className="mt-6 lg:mt-0 lg:sticky lg:top-24">
+          <div className="rounded-xl border border-paper-200 bg-paper-50 shadow-lg p-5 space-y-4">
+            <div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-sm font-semibold text-ink-900">Toplam Fiyat</span>
+                <span className="text-xs text-ink-500">{kdvDahil ? "KDV dahil" : "KDV hariç"}</span>
+              </div>
+              {canBuy ? (
+                <>
+                  <Price amount={show(total)} size="xl" className="mt-1 block text-brand-600 tabular-nums" />
+                  {/* Fiyat şoku önleme: büyük rakamın NEYİN karşılığı olduğunu hemen altında söyle. */}
+                  <p className="mt-0.5 text-xs text-ink-500">
+                    {isArea
+                      ? Number(effSel.en) > 0 && Number(effSel.boy) > 0
+                        ? `${effSel.en}×${effSel.boy} cm için${areaAdet > 1 ? ` · ${areaAdet} adet` : ""}`
+                        : null
+                      : effSel.adet && Number(effSel.adet) > 0
+                        ? `${Number(effSel.adet).toLocaleString("tr-TR")} adet için`
+                        : null}
+                  </p>
+                  {areaAdet > 1 && (
+                    <p className="mt-0.5 text-xs text-ink-500">
+                      Birim:{" "}
+                      <Price amount={show(total / areaAdet)} size="sm" className="text-ink-700 align-baseline" />{" "}
+                      / adet
+                    </p>
+                  )}
+                  {total > 100 && (
+                    <p className="mt-1 text-xs text-ink-500">
+                      3 taksitle <Price amount={getInstallmentAmount(show(total), 3)} size="sm" className="text-ink-700" />
+                      &apos;den · net <Price amount={show(total) / 1.2} size="sm" className="text-ink-700" />
+                    </p>
+                  )}
+                </>
+              ) : isArea && startingPrice > 0 ? (
+                // Ölçü girilmeden başlangıç fiyatı — "Teklif Al" hissini kırar.
+                <>
+                  <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
+                    <Price amount={show(startingPrice)} size="xl" className="text-brand-600 tabular-nums" />
+                    <span className="text-sm text-ink-500">&apos;den başlayan</span>
+                  </div>
+                  <p className="mt-1 text-xs text-ink-500">
+                    En/boy ölçüsünü girin, fiyatınız anında hesaplansın.
+                  </p>
                 </>
               ) : (
-                <>
-                  <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
-                </>
+                <span className="mt-1 block text-3xl font-medium tracking-tight text-brand-600">Teklif Al</span>
               )}
-            </Button>
-          ) : (
-            <Button
-              size="lg"
-              fullWidth
-              variant="secondary"
-              onClick={handleQuoteClick}
-            >
-              <ChatCircleText size={20} weight="bold" /> Teklif Al / WhatsApp
-            </Button>
-          )}
-        </div>
+            </div>
 
-        <MobileCta
-          total={show(total)}
-          canBuy={canBuy}
-          productName={product.name}
-          visible={stickyBarVisible}
-          onAddToCart={canBuy ? handleAddToCart : handleQuoteClick}
-        />
+            {ctaReason && <p className="text-xs text-ink-500">{ctaReason}</p>}
 
-        <p className="text-xs text-ink-500 text-center">
-          {canBuy
-            ? "Sepete eklediğinde üretim başlamaz — onay sonrası matbaa süreci başlar."
-            : "Bu ürün için sana özel fiyat veriyoruz. Teklif Al'a tıkla, 24 saat içinde sana dönelim — hiçbir ödeme veya taahhüt yok."}
-        </p>
+            <div ref={ctaRef}>
+              {canBuy ? (
+                <Button size="lg" fullWidth onClick={handleAddToCart} disabled={state.justAdded}>
+                  {state.justAdded ? (
+                    <>
+                      <CheckCircle size={20} weight="bold" /> Sepete Eklendi
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button size="lg" fullWidth variant="secondary" onClick={handleQuoteClick}>
+                  <ChatCircleText size={20} weight="bold" /> Teklif Al / WhatsApp
+                </Button>
+              )}
+            </div>
+
+            {/* "En geç X kargoda" teslim tahmini KALDIRILDI (2026-08-08 karar): tarihli
+                kargo sözü, üretim süresiyle karışıp yanlış beklenti yaratıyordu. Üretim
+                süresi başlık altında zaten yazıyor; kargo süresi bilinçli olarak verilmiyor. */}
+
+            {/* Güven rozeti — müşterinin 1 numaralı korkusu: "baskı hatalı gelirse?" */}
+            <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs">
+              <ShieldCheck size={15} weight="bold" className="flex-none text-success" />
+              <span className="font-semibold text-ink-900">Hatalı baskıda ücretsiz yeniden basım</span>
+            </div>
+
+            {/* Kargo şeffaflığı — sepetteki +79₺ sürprizini önler. */}
+            {canBuy && (
+              <p className="text-xs text-ink-500 flex items-center gap-1.5">
+                <Truck size={14} weight="fill" className="text-ink-400" />
+                Kargo {shippingInfo.fee}₺ — {shippingInfo.freeThreshold.toLocaleString("tr-TR")}₺ üzeri ücretsiz
+              </p>
+            )}
+
+            <p className="text-[11px] leading-relaxed text-ink-500">
+              {canBuy
+                ? "Sipariş sonrası ekibimiz sizinle iletişime geçer; baskı, tasarımınızı onaylamanızın ardından başlar."
+                : "Teklif Al'a tıkla, 24 saat içinde sana dönelim — hiçbir ödeme veya taahhüt yok."}
+            </p>
+          </div>
+        </aside>
       </div>
+
+      <MobileCta
+        total={show(total)}
+        canBuy={canBuy}
+        productName={product.name}
+        visible={stickyBarVisible}
+        onAddToCart={canBuy ? handleAddToCart : handleQuoteClick}
+      />
     </ConfiguratorContext.Provider>
   );
 }

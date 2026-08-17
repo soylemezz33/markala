@@ -2,10 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Container, Price } from "@markala/ui";
-import { CaretRight, Truck, ShieldCheck, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
 import { AllProductsClient } from "@/app/urunler/all-products-client";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { formatPriceDisplay } from "@/lib/format";
 import type { Metadata } from "next";
@@ -113,23 +112,15 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <CategoryJsonLd category={cat} products={products} />
       <BreadcrumbJsonLd items={breadcrumbs} />
 
-      <section className="relative bg-paper-100 border-b border-paper-200 overflow-hidden">
-        <div className="absolute inset-0 opacity-25">
-          {/* Dekoratif süs görseli (%25 opaklık, gradyanla örtülü) — LCP adayı DEĞİL;
-              priority kaldırıldı ki tarayıcı bant genişliğini gerçek içeriğe ayırsın. */}
-          <Image
-            src={cat.imageUrl}
-            alt={cat.name}
-            fill
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-paper-100 via-paper-100/90 to-paper-100/40" />
-        </div>
-        <Container className="relative py-12 md:py-20">
+      {/* İnce başlık bandı (2026-08-08): eski büyük hero (dev görsel + uzun açıklama, ~%40
+          ekran) ürün listesini fold altına itiyordu — kullanıcı kararıyla kaldırıldı.
+          Breadcrumb + h1 + ürün sayısı tek bantta; SEO metni (longDescription) sayfa
+          altına taşındı (aşağıda), h1 korunur. */}
+      <div className="bg-paper-100 border-b border-paper-200">
+        <Container className="py-2.5">
           <nav
             aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-sm text-ink-500 mb-6"
+            className="flex items-center gap-1.5 text-sm text-ink-500"
           >
             <Link href="/" className="hover:text-ink-900 transition-colors">
               Anasayfa
@@ -141,42 +132,21 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             <CaretRight size={12} />
             <span className="text-ink-900 font-medium">{cat.name}</span>
           </nav>
-
-          <ScrollReveal className="max-w-3xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-100 text-brand-900 text-xs font-semibold uppercase tracking-wider">
-              <Sparkle size={12} weight="fill" /> {cat.productCount} farklı ürün
-            </span>
-            <h1 className="mt-4 text-4xl md:text-6xl font-semibold text-ink-900 leading-[1.05]">
-              {cat.name}
-            </h1>
-            <p className="mt-4 text-lg md:text-xl text-ink-700 leading-relaxed max-w-2xl">
-              {cat.longDescription}
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-500">
-              <span className="inline-flex items-center gap-1.5">
-                <Truck size={14} className="text-brand-700" /> {cat.productionTime}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-brand-700" /> Kalite garantili
-              </span>
-              <span className="inline-flex items-center gap-2">
-                {cat.startingPrice > 0 ? (
-                  <>
-                    Başlangıç:{" "}
-                    <Price
-                      amount={cat.startingPrice}
-                      size="sm"
-                      className="text-ink-900 font-semibold"
-                    />
-                  </>
-                ) : (
-                  <span className="text-ink-900 font-semibold">Teklif Al</span>
-                )}
-              </span>
-            </div>
-          </ScrollReveal>
         </Container>
-      </section>
+      </div>
+      <Container className="pt-5">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl md:text-3xl font-semibold text-ink-900 leading-tight">
+            {cat.name}
+          </h1>
+          <span className="text-sm text-ink-500">
+            {cat.productCount} ürün · {cat.productionTime}
+            {cat.startingPrice > 0 && (
+              <> · <Price amount={cat.startingPrice} size="sm" className="text-ink-700 font-semibold" />&apos;den başlayan</>
+            )}
+          </span>
+        </div>
+      </Container>
 
       {products.length === 0 ? (
         <Container className="py-12 md:py-16">
@@ -203,6 +173,15 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           hideHero
           hideCategoryFilter
         />
+      )}
+
+      {/* SEO açıklama metni — eski hero'dan taşındı (kullanıcıya değil, aramaya hitap eder). */}
+      {cat.longDescription && (
+        <Container className="pb-10">
+          <p className="max-w-3xl text-sm text-ink-500 leading-relaxed border-t border-paper-200 pt-6">
+            {cat.longDescription}
+          </p>
+        </Container>
       )}
 
       {/* İlgili kategoriler */}

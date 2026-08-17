@@ -1,0 +1,99 @@
+# Staging DB SIFIRLAMA + BASELINE — yalnız STAGING veritabanını temiz kurar.
+# PROD'A ASLA DOKUNMAZ (markala-staging-postgres container'ı + markala_staging DB).
+#
+# Neden düz "migrate deploy" değil: repoda İKİ kopya init migration var
+# (20260613111636_init ve 20260613120156_init — 2026-08-07 P3009 olayı). Taze DB'de
+# ilki tabloları kurar, ikincisi aynı enum/tabloları tekrar CREATE edince patlar.
+# 120156 düzenlenemez (checksum prod'da doğrulanıyor). Çözüm — baseline:
+#   1) 111636'yı psql ile uygula (email_verification_tokens dahil tam küme)
+#   2) 120156'nın 111636'da olmayan parçalarını (hero_slides, site_settings) psql ile ekle
+#   3) her ikisini de `migrate resolve --applied` ile işaretle
+#   4) kalan migration'ları `migrate deploy` normal koşar
+# Ortak 19 tablo iki dosyada birebir aynı (diff doğrulandı) — şema sapması yok.
+#
+# Tetik: bu dosyanın kendisine push (staging branch) ya da elle (workflow_dispatch).
+name: Staging DB Reset (SADECE staging)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [staging]
+    paths: [".github/workflows/staging-db-reset.yml"]
+
+jobs:
+  reset:
+    name: Staging DB sıfırla + baseline + api başlat
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: SSH ile sıfırla ve baseline uygula
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 9m
+          script: |
+            set -e
+            cd /opt/markala
+            echo "→ staging-api durduruluyor..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging stop staging-api
+            echo "→ markala_staging DB düşürülüp yeniden oluşturuluyor..."
+            docker exec markala-staging-postgres psql -U markala -d postgres \
+              -c "DROP DATABASE IF EXISTS markala_staging WITH (FORCE);" \
+              -c "CREATE DATABASE markala_staging;"
+            echo "→ Extension'lar (postgres-init.sql eşleniği — yeni DB'de yeniden gerekir)..."
+            docker exec markala-staging-postgres psql -U markala -d markala_staging \
+              -c 'CREATE EXTENSION IF NOT EXISTS "pg_trgm";' \
+              -c 'CREATE EXTENSION IF NOT EXISTS "unaccent";' \
+              -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";' \
+              -c 'CREATE EXTENSION IF NOT EXISTS "pgcrypto";'
+            echo "→ Baseline 1/3: 111636_init psql ile uygulanıyor (imaj içinden)..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging run --rm --no-deps -T staging-api \
+              sh -c "cat apps/api/prisma/migrations/20260613111636_init/migration.sql" \
+              | docker exec -i markala-staging-postgres psql -U markala -d markala_staging -v ON_ERROR_STOP=1 -q
+            echo "→ Baseline 2/3: 120156'ya özgü tablolar (hero_slides, site_settings)..."
+            docker exec -i markala-staging-postgres psql -U markala -d markala_staging -v ON_ERROR_STOP=1 -q <<'SQL'
+            CREATE TABLE "hero_slides" (
+                "id" TEXT NOT NULL,
+                "title" TEXT NOT NULL,
+                "subtitle" TEXT,
+                "image_url" TEXT NOT NULL,
+                "mobile_image_url" TEXT,
+                "cta_label" TEXT,
+                "cta_href" TEXT,
+                "sort_order" INTEGER NOT NULL DEFAULT 0,
+                "is_active" BOOLEAN NOT NULL DEFAULT true,
+                "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                "updated_at" TIMESTAMP(3) NOT NULL,
+                CONSTRAINT "hero_slides_pkey" PRIMARY KEY ("id")
+            );
+            CREATE TABLE "site_settings" (
+                "key" TEXT NOT NULL,
+                "value" JSONB NOT NULL,
+                "group" TEXT NOT NULL,
+                "updated_at" TIMESTAMP(3) NOT NULL,
+                CONSTRAINT "site_settings_pkey" PRIMARY KEY ("key")
+            );
+            CREATE INDEX "hero_slides_is_active_sort_order_idx" ON "hero_slides"("is_active", "sort_order");
+            CREATE INDEX "site_settings_group_idx" ON "site_settings"("group");
+            SQL
+            echo "→ Baseline 3/3: iki init 'applied' işaretleniyor + kalan migration'lar..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging run --rm --no-deps -T staging-api \
+              sh -c "cd apps/api && npx prisma migrate resolve --applied 20260613111636_init && npx prisma migrate resolve --applied 20260613120156_init && npx prisma migrate deploy"
+            echo "→ staging-api başlatılıyor..."
+            docker compose -f docker-compose.staging.yml --env-file .env.staging start staging-api
+            echo "→ Sağlık bekleniyor (maks ~2 dk)..."
+            ok=0
+            for i in $(seq 1 12); do
+              st=$(docker inspect -f '{{.State.Health.Status}}' markala-staging-api 2>/dev/null || echo yok)
+              echo "  deneme $i/12: staging-api=$st"
+              if [ "$st" = "healthy" ]; then ok=1; break; fi
+              sleep 10
+            done
+            echo "::notice title=result::staging-api=$(docker inspect -f '{{.State.Health.Status}}' markala-staging-api 2>/dev/null || echo yok) | log: $(docker logs markala-staging-api --tail 3 2>&1 | tr '\n' ' ¦ ' | cut -c1-500)"
+            if [ "$ok" != "1" ]; then
+              echo "❌ staging-api sağlıklı olamadı"; docker logs markala-staging-api --tail 30 2>&1 || true; exit 1
+            fi
+            echo "✅ Staging DB baseline'landı, api sağlıklı"

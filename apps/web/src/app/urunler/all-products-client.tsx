@@ -88,6 +88,18 @@ export function AllProductsClient({
     setPage(urlPage);
   }, [urlPage]);
 
+  // Mega menüden grup tıklaması /urunler ÜZERİNDEYKEN yalnız query'yi değiştirir (soft nav);
+  // useState ilk değere kilitli kaldığından liste güncellenmiyordu (2026-08-08 İSG bulgusu —
+  // tüm gruplar etkileniyordu). URL'den türeyen prop değişince state'i URL ile eşitle.
+  // Serileştirilmiş dep: initialGroup her server render'da yeni obje — içerik anahtarı kullan.
+  const groupKey = initialGroup ? `${initialGroup.label}|${initialGroup.slugs.join(",")}` : "";
+  useEffect(() => {
+    setGroupFilter(initialGroup);
+    setActiveCategory(initialCategory);
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupKey, initialCategory]);
+
   /** Sayfalama linki üret: mevcut query korunur (?kategoriler=, ?grup= vb.), yalnız page
    *  değişir. Sayfa 1 = parametresiz kanonik URL (?page=1 hiç üretilmez). */
   function hrefForPage(n: number): string {
@@ -185,27 +197,15 @@ export function AllProductsClient({
 
   return (
     <>
-      {!hideHero && (
-        <div className="bg-paper-100 border-b border-paper-200">
-          <Container className="py-10 md:py-14">
-            <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
-              Katalog
-            </p>
-            <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
-              {activeCat ? activeCat.name : groupFilter ? groupFilter.label : "Tüm Ürünler"}
-            </h1>
-            <p className="mt-3 text-lg text-ink-700 max-w-2xl">
-              {activeCat
-                ? activeCat.longDescription
-                : groupFilter
-                  ? `${groupFilter.label} grubundaki tüm ürünler tek ekranda. Tasarım desteği her siparişte ücretsiz.`
-                  : "Matbaa baskıdan büyük format reklam ürünlerine — tüm katalog tek ekranda. Tasarım desteği her siparişte ücretsiz."}
-            </p>
-          </Container>
-        </div>
-      )}
-
-      <Container className="py-10 md:py-14">
+      <Container className="py-5 md:py-6">
+        {/* Eski büyük hero (Katalog + dev başlık + açıklama, ~%30 ekran) KALDIRILDI
+            (2026-08-08 kullanıcı kararı) — menüden gelen ziyaretçi ürün listesini
+            hemen görsün. h1 SEO için kompakt tek satır olarak toolbar'ın üstünde. */}
+        {!hideHero && (
+          <h1 className="mb-4 text-2xl md:text-3xl font-semibold text-ink-900 leading-tight">
+            {activeCat ? activeCat.name : groupFilter ? groupFilter.label : "Tüm Ürünler"}
+          </h1>
+        )}
         {/* Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-3 text-sm">

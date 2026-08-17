@@ -127,14 +127,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeBody />
         <AuthBootstrap />
 
-        {/* Site wrapper — sabit max genişlik (1440), kenarlarda görsel ayrım YOK */}
-        <div
-          className="mx-auto w-full flex flex-col flex-1"
-          style={{ maxWidth: "1440px" }}
-        >
-          <SiteHeader nav={headerNav ?? undefined} />
-          <main id="main" className="flex-1">{children}</main>
-        </div>
+        {/* Site FULL WIDTH — hero/carousel edge-to-edge kaplar; iç içerik genişliğini
+            bölümlerin kendi <Container>'ı (max-w-content) sınırlar. */}
+        <SiteHeader nav={headerNav ?? undefined} />
+        <main id="main" className="flex-1">{children}</main>
 
         {/* CTA Banner — FULL WIDTH (footer öncesi conversion booster) */}
         <CtaBanner />

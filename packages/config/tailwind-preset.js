@@ -115,7 +115,9 @@ module.exports = {
       },
 
       maxWidth: {
-        content: "1280px",
+        // 1280 → 1536: site full-width düzenine geçince (layout'taki 1440 sarmalayıcı
+        // kaldırıldı) iç içerik genişliği de ferahlatıldı. Hero/carousel zaten edge-to-edge.
+        content: "1536px",
       },
 
       transitionTimingFunction: {

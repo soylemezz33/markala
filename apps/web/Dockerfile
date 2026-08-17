@@ -58,6 +58,12 @@ ENV NODE_ENV=production
 # NEXT_PUBLIC_API_URL build-time'da inline edilmeli (client bundle storefront auth için API'yi çağırır)
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+# BUILD-TIME prerender fetch hedefi (yalnız `next build` sırasında; runtime'da compose env'i
+# geçerli). Staging build'i bunu prod API'ye yönlendirir — staging API imaj build edilirken
+# henüz ayakta olmadığından tavuk-yumurta kırılır. Boş bırakılırsa davranış eskisiyle birebir
+# (kod NEXT_PUBLIC_API_URL'e düşer).
+ARG API_INTERNAL_URL=
+ENV API_INTERNAL_URL=${API_INTERNAL_URL}
 RUN pnpm --filter @markala/web build
 
 # ── 4. Runtime — minimal image (Next.js standalone)

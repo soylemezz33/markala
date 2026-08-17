@@ -1,0 +1,99 @@
+# Markala — STAGING stack (test.markala.com.tr)
+# Prod ile AYNI VPS'te, ayrı container + ayrı DB ile çalışır. Prod nginx'i
+# staging vhost'larını (nginx/conf.d/staging.conf) bu container'lara proxy'ler;
+# bu yüzden staging servisleri prod'un docker network'üne (external) katılır.
+#
+# Komutlar (VPS'te /opt/markala altında):
+#   docker compose -f docker-compose.staging.yml --env-file .env.staging up -d
+#   docker compose -f docker-compose.staging.yml --env-file .env.staging logs -f staging-web
+#   docker compose -f docker-compose.staging.yml --env-file .env.staging down   # prod'a DOKUNMAZ
+#
+# Deploy: .github/workflows/deploy-staging.yml — `staging` branch'ine her push.
+# Kurulum rehberi: docs/STAGING.md
+
+name: markala-staging
+
+services:
+  staging-postgres:
+    image: postgres:16-alpine
+    container_name: markala-staging-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${STAGING_POSTGRES_DB:-markala_staging}
+      POSTGRES_USER: ${STAGING_POSTGRES_USER:-markala}
+      POSTGRES_PASSWORD: ${STAGING_POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=tr_TR.UTF-8"
+      TZ: Europe/Istanbul
+    volumes:
+      - staging-postgres-data:/var/lib/postgresql/data
+      - ./scripts/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${STAGING_POSTGRES_USER:-markala}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - markala
+    expose:
+      - "5432"
+
+  staging-api:
+    image: ghcr.io/${GITHUB_REPOSITORY:-soylemezz33/markala}/api:staging
+    container_name: markala-staging-api
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      staging-postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${STAGING_POSTGRES_USER:-markala}:${STAGING_POSTGRES_PASSWORD}@staging-postgres:5432/${STAGING_POSTGRES_DB:-markala_staging}?schema=public
+      JWT_SECRET: ${STAGING_JWT_SECRET}
+      # EncryptionService (2FA/şifreli alanlar) açılışta ≥32 karakter ister — yoksa API çöker.
+      ENCRYPTION_KEY: ${STAGING_ENCRYPTION_KEY}
+      WEB_ORIGIN: https://test.markala.com.tr
+      LOYALTY_ENABLED: ${LOYALTY_ENABLED:-false}
+      # Entegrasyonlar staging'de BİLEREK boş/sandbox — gerçek ödeme/SMS/fatura tetiklenmez.
+      IYZICO_API_KEY: ${STAGING_IYZICO_API_KEY:-}
+      IYZICO_SECRET: ${STAGING_IYZICO_SECRET:-}
+      IYZICO_BASE_URL: https://sandbox-api.iyzipay.com
+      TZ: Europe/Istanbul
+    networks:
+      - markala
+    expose:
+      - "4000"
+
+  staging-web:
+    image: ghcr.io/${GITHUB_REPOSITORY:-soylemezz33/markala}/web:staging
+    container_name: markala-staging-web
+    restart: unless-stopped
+    depends_on:
+      - staging-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # NEXT_PUBLIC_* build-time gömülü (deploy-staging.yml build-args) — buradakiler
+      # yalnız runtime okumaları için yedek.
+      NEXT_PUBLIC_API_URL: https://test-api.markala.com.tr
+      # SSR/ISR fetch'leri container ağı üzerinden staging API'ye gitsin (prod api'ye DEĞİL).
+      API_INTERNAL_URL: http://staging-api:4000
+      NEXT_PUBLIC_APP_VERSION: staging
+      REVALIDATE_SECRET: ${STAGING_REVALIDATE_SECRET:-staging-revalidate}
+      TZ: Europe/Istanbul
+    networks:
+      - markala
+    expose:
+      - "3000"
+
+volumes:
+  staging-postgres-data:
+    driver: local
+
+networks:
+  # Prod stack'in network'üne katıl (nginx → staging-web/staging-api DNS çözümü için).
+  # Prod compose /opt/markala'da proje adı "markala" ile çalışır → network adı "markala_markala".
+  # Farklıysa: `docker network ls | grep markala` ile doğrula ve burayı güncelle.
+  markala:
+    external: true
+    name: markala_markala
