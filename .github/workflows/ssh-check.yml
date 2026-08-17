@@ -1,15 +1,8 @@
-# SSH BAĞLANTI KONTROLÜ (salt okur) — 2026-08-17 sunucu göçü sonrası.
-#
-# Amaç: deploy'un SSH adımı düştüğünde NEDENİNİ görünür kılmak. İş log'unu okumak
-# repo admin yetkisi ister; bu workflow hatayı ::notice olarak yazar, böylece yetkisiz
-# de teşhis edilebilir. İki durumu ayırır:
-#   * "Connection timed out / refused" -> güvenlik duvarı GitHub Actions'ı engelliyor
-#   * "Permission denied (publickey)"   -> anahtar sunucuda yetkili değil
-# Bu ayrım önemli çünkü çözümleri tamamen farklı.
-#
-# HİÇBİR ŞEY DEĞİŞTİRMEZ: yalnız TCP testi + `hostname` komutu dener.
-# Tetik: elle ya da bu dosyaya push (main).
-name: SSH Bağlantı Kontrolü (salt okur)
+# DEPLOY HAZIRLIK SONDASI (salt okur) — 2026-08-17 sunucu göçü sonrası.
+# Amaç: "Deploy via SSH" neden düşüyor kesinleştirmek. deploy.yml ile AYNI secret'ları
+# (SSH_HOST/USER/PORT/KEY) kullanır; bağlanır, HANGİ makineye düştüğünü ve deploy ön
+# koşullarını (compose dosyası, .env, konteyner adları) raporlar — hiçbir şey değiştirmez.
+name: Deploy Hazırlık Sondası (salt okur)
 
 on:
   workflow_dispatch:
@@ -18,12 +11,12 @@ on:
     paths: [".github/workflows/ssh-check.yml"]
 
 jobs:
-  check:
-    name: SSH erişimi neden başarısız
+  probe:
+    name: Deploy neden basarisiz
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Ağ + kimlik doğrulama testi
+      - name: TCP + kimlik + deploy onkosullari
         env:
           H: ${{ secrets.SSH_HOST }}
           U: ${{ secrets.SSH_USER }}
@@ -32,52 +25,43 @@ jobs:
         run: |
           set +e
           PORT="${P:-22}"
-          echo "hedef port: $PORT"
-          echo "runner public IP: $(curl -s -m 10 https://api.ipify.org || echo bilinmiyor)"
+          echo "SSH_HOST son okteti gizli; port=$PORT"
+          echo "SSH_USER='$U'"
+          echo "::notice title=0-secret::SSH_USER='$U' PORT=$PORT"
 
-          echo "=============== 1) TCP ERİŞİMİ ==============="
-          timeout 12 bash -c "cat < /dev/null > /dev/tcp/$H/$PORT" 2>/tmp/tcp.err
-          TCP=$?
-          TCPERR=$(head -c 200 /tmp/tcp.err | tr '\n' ' ')
-          if [ "$TCP" -eq 0 ]; then
-            echo "TCP: ACIK"
-            echo "::notice title=1-TCP::PORT $PORT ACIK - ag erisimi var"
-          else
-            echo "TCP: KAPALI (kod=$TCP) $TCPERR"
-            echo "::error title=1-TCP::PORT $PORT KAPALI (kod=$TCP) -> guvenlik duvari GitHub Actions IP'lerini engelliyor. $TCPERR"
-          fi
+          echo "=============== 1) TCP ==============="
+          timeout 12 bash -c "cat < /dev/null > /dev/tcp/$H/$PORT" 2>/dev/null && { echo "TCP ACIK"; echo "::notice title=1-TCP::PORT $PORT ACIK"; } || { echo "TCP KAPALI"; echo "::error title=1-TCP::PORT $PORT KAPALI"; }
 
-          echo "=============== 2) SSH KİMLİK DOĞRULAMA ==============="
-          if [ -z "$K" ]; then
-            echo "::error title=2-SSH::SSH_PRIVATE_KEY secret'i BOS"
-          else
-            printf '%s\n' "$K" > /tmp/id_deploy
-            chmod 600 /tmp/id_deploy
-            OUT=$(ssh -i /tmp/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=no \
-                      -o UserKnownHostsFile=/dev/null -o ConnectTimeout=12 \
-                      -p "$PORT" "$U@$H" "hostname; ls -d /opt/markala 2>/dev/null || echo OPT-YOK" 2>&1)
-            RC=$?
-            # Gürültü satırlarını (known_hosts / post-quantum uyarısı) at, KARAR VERİCİ satırı
-            # öne çıkar: "Permission denied (publickey)" mi, "Connection closed" (fail2ban) mi,
-            # "no matching host key type" mi — çözümleri farklı.
-            SHORT=$(printf %s "$OUT" | grep -viE 'known hosts|post-quantum|store now, decrypt' | grep -vE '^\s*$' | tail -4 | tr '\n' ';' | cut -c1-300)
-            [ -z "$SHORT" ] && SHORT="(anlamli satir yok) ham: $(printf %s "$OUT" | tr '\n' ';' | cut -c1-200)"
-            echo "ssh cikis kodu: $RC"
-            echo "ssh cikti: $SHORT"
-            if [ "$RC" -eq 0 ]; then
-              echo "::notice title=2-SSH::BASARILI - anahtar yetkili. Cikti: $SHORT"
-            else
-              echo "::error title=2-SSH::BASARISIZ (kod=$RC) -> $SHORT"
-            fi
-            rm -f /tmp/id_deploy
-          fi
+          if [ -z "$K" ]; then echo "::error title=X::SSH_PRIVATE_KEY bos"; exit 0; fi
+          printf '%s\n' "$K" > /tmp/k; chmod 600 /tmp/k
+          SSHO="-i /tmp/k -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=12 -p $PORT"
 
-          echo "=============== 3) ANAHTARIN AÇIK YARISI ==============="
-          # Sunucuya eklenmesi gereken satır (gizli değil — açık anahtar paylaşılabilir).
-          if [ -n "$K" ]; then
-            printf '%s\n' "$K" > /tmp/id2 && chmod 600 /tmp/id2
-            PUB=$(ssh-keygen -y -f /tmp/id2 2>/dev/null || echo "(acik yari cikarilamadi - anahtar formati parolali/bozuk olabilir)")
-            echo "::notice title=3-acik-anahtar::$(printf %s "$PUB" | cut -c1-250)"
-            rm -f /tmp/id2
+          echo "=============== 2) BAGLANDI MI + HANGI MAKINE ==============="
+          OUT=$(ssh $SSHO "$U@$H" "echo CONNECTED; hostname; hostname -I 2>/dev/null | tr ' ' ','; whoami" 2>&1)
+          RC=$?
+          DEC=$(printf %s "$OUT" | grep -viE 'known hosts|post-quantum|store now|decrypt later|^\s*$' | tail -5 | tr '\n' ';' | cut -c1-260)
+          echo "rc=$RC :: $DEC"
+          if [ "$RC" -ne 0 ]; then
+            echo "::error title=2-SSH::BASARISIZ rc=$RC -> $DEC"
+            echo "  (Permission denied=kullanici/anahtar; Connection=NAT/ag)"
+            rm -f /tmp/k; exit 0
           fi
-          exit 0
+          HN=$(printf %s "$OUT" | sed -n '2p'); IPS=$(printf %s "$OUT" | sed -n '3p'); WHO=$(printf %s "$OUT" | sed -n '4p')
+          echo "::notice title=2-baglandi::hostname=$HN ip=$IPS user=$WHO"
+
+          echo "=============== 3) BU MAKINE APP-VM Mi (markala konteynerleri) ==============="
+          CT=$(ssh $SSHO "$U@$H" "docker ps --format '{{.Names}}' 2>/dev/null | grep -E 'markala' | tr '\n' ',' || echo DOCKER-YOK-veya-YETKI" 2>&1 | tail -1)
+          echo "markala konteynerleri: $CT"
+          echo "::notice title=3-konteynerler::$CT"
+
+          echo "=============== 4) DEPLOY DOSYALARI ==============="
+          FILES=$(ssh $SSHO "$U@$H" "ls -1 /opt/markala/docker-compose.production.yml /opt/markala/.env.production 2>&1 | tr '\n' ';'" 2>&1 | tail -1)
+          echo "deploy dosyalari: $FILES"
+          echo "::notice title=4-dosyalar::$FILES"
+
+          echo "=============== 5) canli /api/health (bu makineden) ==============="
+          UP=$(ssh $SSHO "$U@$H" "docker exec markala-web node -e \"fetch('http://localhost:3000/api/health').then(r=>r.json()).then(j=>console.log('uptime='+Math.round(j.uptime)))\" 2>/dev/null || echo web-yok" 2>&1 | tail -1)
+          echo "$UP"
+          echo "::notice title=5-web::$UP"
+          rm -f /tmp/k
+          echo "SONDA BITTI"
