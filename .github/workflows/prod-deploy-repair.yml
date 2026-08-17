@@ -1,17 +1,20 @@
-# PROD DEPLOY ONARIM + TEŞHİS — 2026-08-17 "yeşil raporlanan ama uygulanmayan deploy" olayı.
+# PROD DEPLOY TEŞHİS — 2026-08-17 "deploy yeşil ama canlı eski" olayı.
 #
-# v4 — Şu ana kadar KANITLANANLAR:
-#   * Yeni kod imajda VAR, markala-web o imajdan çalışıyor, sağlıklı (v2/v3)
-#   * markala-web'in KENDİSİ yeni footer'ı servis ediyor: 243.435 bayt, etbis=1 (v3-B)
-#   * nginx -> web:3000 doğrudan istek de yeni içeriği alıyor (v3-F)
-#   * AMA canlı (Cloudflare üzerinden) 247.367 bayt, etbis=0 — FARKLI bir belge
-#   * Cloudflare cache'i değil (cf-cache-status: DYNAMIC), staging derlemesi de değil
-# Kalan hipotez: nginx'in VPS'teki config'i repodakinden FARKLI ve `location /` HTML'i
-# cache'liyor (deploy nginx/conf.d'yi hiç senkronlamıyor). Bu yüzden v4 nginx'in GERÇEKTEN
-# yüklü konfigini döker, cache dizinini inceler ve gerçek server bloğu üzerinden ölçer.
+# v5 — KANITLANANLAR (v2-v4):
+#   * Yeni kod imajda VAR; markala-web o imajdan çalışıyor ve KENDİSİ yeni footer'ı
+#     servis ediyor (243 KB, etbis=1)
+#   * nginx'in GERÇEK server bloğu (Host: markala.com.tr, TLS) da yeni içeriği dönüyor
+#     (245 KB, etbis=1) — yani ORIGIN DOĞRU
+#   * nginx `location /` HTML'i cache'lemiyor (proxy_cache yalnız 5 statik location'da)
+#   * Cloudflare üzerinden gelen yanıt ise 247 KB, etbis=0 ve TÜM POP'larda (AMS/DUS) aynı;
+#     bu sürüm 2026-08-08 ile bugün 09:36 arası bir derleme
 #
-# GÜVENLİK: postgres'e DOKUNULMAZ. Yalnız nginx proxy cache'i temizlenir (kendini yeniden
-# doldurur) ve nginx reload edilir; nginx konfigi DEĞİŞTİRİLMEZ.
+# v5'in tek sorusu: CF'ten gelen istek ORIGIN'e ULAŞIYOR MU?
+#   - Erişim kaydında görünüyorsa  -> nginx yeni içerik veriyor, CF yanıtı değiştiriyor
+#   - Görünmüyorsa                 -> CF isteği origin'e hiç göndermiyor (edge cache/Always Online)
+# Bu, düzeltmenin VPS'te mi Cloudflare'da mı olduğunu kesinleştirir.
+#
+# SALT OKUR: hiçbir şey değiştirilmez (cache purge dahil yok).
 # Tetik: elle (workflow_dispatch) ya da bu dosyanın kendisine push (main).
 name: Prod Deploy Onarım (teşhis + force-recreate)
 
@@ -23,67 +26,57 @@ on:
 
 jobs:
   repair:
-    name: nginx config/cache teşhisi + cache purge
+    name: CF isteği origin'e ulaşıyor mu (erişim kaydı testi)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
-      - name: SSH ile teşhis ve onarım
+      - name: Runner'dan CF üzerinden benzersiz istek
+        id: probe
+        run: |
+          TOKEN="probe$(date +%s)"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+          BODY=$(curl -s -m 30 -A "Mozilla/5.0 (deploy-probe)" "https://markala.com.tr/?p=$TOKEN")
+          LEN=$(printf %s "$BODY" | wc -c)
+          ETB=$(printf %s "$BODY" | grep -c 'etbis.ticaret.gov.tr' || true)
+          LOGO=$(printf %s "$BODY" | grep -c 'markala-logo.svg' || true)
+          CFS=$(curl -s -m 25 -D - -o /dev/null -A "Mozilla/5.0 (deploy-probe)" "https://markala.com.tr/?p=$TOKEN-h" | grep -i '^cf-cache-status' | tr -d '\r')
+          echo "token=$TOKEN LEN=$LEN ETBIS=$ETB LOGO=$LOGO $CFS"
+          echo "::notice title=A-CF-yaniti::token=$TOKEN LEN=$LEN ETBIS=$ETB LOGO=$LOGO $CFS"
+
+      - name: Origin erişim kaydında bu istek var mı
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          command_timeout: 18m
+          command_timeout: 8m
+          envs: TOKEN
           script: |
-            cd /opt/markala
+            TOKEN="${{ steps.probe.outputs.token }}"
+            echo "aranan token: $TOKEN"
 
-            echo "=============== 1) YÜKLÜ CONF DOSYALARI ==============="
-            docker exec markala-nginx sh -c "ls -la /etc/nginx/conf.d/" || true
-            FILES=$(docker exec markala-nginx sh -c "ls /etc/nginx/conf.d/" 2>/dev/null | tr '\n' ' ')
-            echo "::notice title=A-conf-dosyalari::$FILES"
+            echo "=============== 1) ERİŞİM KAYDI ÇALIŞIYOR MU ==============="
+            TOTAL=$(docker exec markala-nginx sh -c "wc -l < /var/log/nginx/access.log" 2>/dev/null || echo 0)
+            echo "access.log satir sayisi: $TOTAL"
+            docker exec markala-nginx sh -c "tail -2 /var/log/nginx/access.log" 2>/dev/null || echo "(log okunamadi)"
 
-            echo "=============== 2) 'location /' CACHE'LİYOR MU ==============="
-            # markala.com.tr server bloğundaki 'location /' bölümünde proxy_cache var mı?
-            docker exec markala-nginx nginx -T 2>/dev/null > /tmp/ngxT.txt || true
-            echo "nginx -T satir sayisi: $(wc -l < /tmp/ngxT.txt)"
-            CACHEHITS=$(grep -c 'proxy_cache markala_cache' /tmp/ngxT.txt || true)
-            STALE=$(grep -c 'proxy_cache_use_stale' /tmp/ngxT.txt || true)
-            echo "proxy_cache markala_cache sayisi: $CACHEHITS | use_stale: $STALE"
-            echo "::notice title=B-cache-direktifleri::proxy_cache=$CACHEHITS use_stale=$STALE"
-            # 'location / {' sonrasi 12 satirda proxy_cache/proxy_pass ne diyor
-            SLASH=$(awk '/location \/ \{/{f=1;n=0} f&&n<12{print;n++} n>=12{f=0}' /tmp/ngxT.txt | grep -E 'proxy_pass|proxy_cache' | tr '\n' ' ' | cut -c1-400)
-            echo "location / icerigi: $SLASH"
-            echo "::notice title=C-location-slash::$SLASH"
+            echo "=============== 2) TOKEN KAYITTA VAR MI ==============="
+            HIT=$(docker exec markala-nginx sh -c "grep -c '$TOKEN' /var/log/nginx/access.log" 2>/dev/null || echo 0)
+            LINE=$(docker exec markala-nginx sh -c "grep '$TOKEN' /var/log/nginx/access.log | head -1" 2>/dev/null || echo "")
+            echo "token kayit sayisi: $HIT"
+            echo "kayit satiri: $LINE"
+            echo "::notice title=B-log-sayisi::token bulundu=$HIT (access.log toplam=$TOTAL)"
+            echo "::notice title=C-log-satiri::$(echo "$LINE" | cut -c1-300)"
 
-            echo "=============== 3) CACHE DİZİNİ ==============="
-            CSIZE=$(docker exec markala-nginx sh -c "du -sh /var/cache/nginx 2>/dev/null | awk '{print \$1}'" || echo yok)
-            CFILES=$(docker exec markala-nginx sh -c "find /var/cache/nginx -type f 2>/dev/null | wc -l" || echo 0)
-            echo "cache boyut=$CSIZE dosya=$CFILES"
-            echo "::notice title=D-cache-dizini::boyut=$CSIZE dosya=$CFILES"
-
-            echo "=============== 4) GERÇEK SERVER BLOĞU ÜZERİNDEN (Host: markala.com.tr) ==============="
-            BEFORE=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | wc -c" 2>/dev/null || echo 0)
-            BEFORE_E=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
-            echo "server blogu ONCESI: LEN=$BEFORE ETBIS=$BEFORE_E"
-            echo "::notice title=E-serverblok-oncesi::LEN=$BEFORE ETBIS=$BEFORE_E"
-
-            echo "=============== 5) ONARIM: nginx proxy cache PURGE ==============="
-            docker exec markala-nginx sh -c "rm -rf /var/cache/nginx/markala/* 2>/dev/null" || echo "purge uyarisi"
-            docker exec markala-nginx nginx -s reload 2>&1 || echo "reload uyarisi"
-            sleep 8
-            CFILES2=$(docker exec markala-nginx sh -c "find /var/cache/nginx -type f 2>/dev/null | wc -l" || echo 0)
-            echo "purge sonrasi cache dosya=$CFILES2"
-
-            echo "=============== 6) ONARIM SONRASI ==============="
-            AFTER=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | wc -c" 2>/dev/null || echo 0)
-            AFTER_E=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
-            SELF_E=$(docker exec markala-web node -e "fetch('http://127.0.0.1:3000/').then(r=>r.text()).then(t=>console.log(t.length+' '+(t.includes('etbis.ticaret.gov.tr')?1:0))).catch(e=>console.log('ERR'))" 2>&1 | tail -1)
-            echo "server blogu SONRASI: LEN=$AFTER ETBIS=$AFTER_E | markala-web kendisi: $SELF_E"
-            echo "::notice title=F-sonrasi::serverblok LEN=$AFTER ETBIS=$AFTER_E | web-kendisi $SELF_E"
-            if [ "$AFTER_E" -gt 0 ] 2>/dev/null; then
-              echo "::notice title=G-sonuc::BASARILI - server blogu artik yeni icerigi donuyor"
+            if [ "$HIT" -gt 0 ] 2>/dev/null; then
+              echo "::notice title=D-KARAR::ISTEK ORIGINE ULASTI -> sorun CF yanit katmaninda degil, nginx/upstream cevabinda"
             else
-              echo "::error title=G-sonuc::HALA ESKI - cache purge yetmedi, upstream/konfig incelenmeli"
+              echo "::error title=D-KARAR::ISTEK ORIGINE HIC ULASMADI -> Cloudflare edge cache/Always Online eski kopyayi servis ediyor. Cozum: CF cache purge."
             fi
-            echo "TAMAM"
+
+            echo "=============== 3) AYNI ANDA ORIGIN NE DÖNÜYOR ==============="
+            OE=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
+            OL=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | wc -c" 2>/dev/null || echo 0)
+            echo "origin: LEN=$OL ETBIS=$OE"
+            echo "::notice title=E-origin-ayni-an::LEN=$OL ETBIS=$OE"
