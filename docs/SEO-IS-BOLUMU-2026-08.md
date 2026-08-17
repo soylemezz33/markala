@@ -8,14 +8,14 @@ Denetim sonrası görev dağılımı. Kaynak: `markala.com.tr-audit/ACTION-PLAN.
 
 | # | İş | Durum | Görünür? |
 |---|---|---|---|
-| C1 | `/yasal/[slug]` metadata guard — olmayan sayfa ana sayfa başlığı + `index,follow` veriyordu | ⏳ | Hayır |
+| C1 ✅ | `/yasal/[slug]` metadata guard — olmayan sayfa ana sayfa başlığı + `index,follow` veriyordu | **bitti** | Hayır |
 | C2 | Soft-404: sabit rotalarda gerçek 404 (`dynamicParams=false`) | ⏳ | Hayır |
-| C3 | Sitemap: eksik yasal sayfalar (`iade`, `kargo`, `on-bilgilendirme`, `kullanim-kosullari`, `cerez`) | ⏳ | Hayır |
+| C3 ✅ | Sitemap: eksik yasal sayfalar (`iade`, `kargo`, `on-bilgilendirme`, `kullanim-kosullari`, `cerez`) | **bitti** | Hayır |
 | C4 | Sitemap `lastmod` düzeltmesi — 826/897 URL aynı damgayı taşıyor | ⏳ | Hayır |
-| C5 | Ana sayfadan kaldırılmış **HowTo** schema'sını sil (Google Eyl-2023'te kaldırdı) | ⏳ | Hayır |
-| C6 | Uydurma `sku`/`mpn` temizliği — URL slug'ı stok kodu diye yazılmış | ⏳ | Hayır |
-| C7 | `Offer.seller` → dolu Organization `@id`'sine bağla | ⏳ | Hayır |
-| C8 | `LocalBusiness.areaServed` ile gerçek `/matbaa/` şehirlerini eşitle | ⏳ | Hayır |
+| C5 ✅ | Ana sayfadan kaldırılmış **HowTo** schema'sını sil (Google Eyl-2023'te kaldırdı) | **bitti** | Hayır |
+| C6 ✅ | Uydurma `sku`/`mpn` temizliği — URL slug'ı stok kodu diye yazılmış | **bitti** | Hayır |
+| C7 ✅ | `Offer.seller` → dolu Organization `@id`'sine bağla | **bitti** | Hayır |
+| C8 ✅ | `LocalBusiness.areaServed` ile gerçek `/matbaa/` şehirlerini eşitle | **bitti** | Hayır |
 | C9 | Eksik `BreadcrumbList`: `/hakkimizda`, `/iletisim`, `/yardim` | ⏳ | Hayır |
 | C10 | `/blog` dizinine `ItemList` schema | ⏳ | Hayır |
 | ~~C11~~ | ~~`robots.txt` AI bot kuralı~~ → **kod zaten doğru, sorun Cloudflare'de** (H9'a taşındı) | ➡️ H9 | — |
@@ -82,7 +82,7 @@ Merchant Center "Misrepresentation" askısının bir numaralı şüphelisi bu. *
 Denetim sırasında bunları yanlış teşhis etmiştim, canlıda doğrulayınca temiz çıktılar:
 
 - **Görseller zaten optimize.** Next.js WebP servis ediyor: 196 KB JPEG kaynak → tarayıcıya **18 KB WebP**. `srcset`, `fetchpriority="high"`, `sizes` hepsi doğru kurulmuş. *(JPEG yalnız WebP desteklemeyen eski tarayıcıya fallback olarak gidiyor — bu kaldırılmamalı, yoksa o tarayıcılarda görsel hiç görünmez.)*
-- **AI alıntı botları zaten açık.** `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot` engelli değil. Kapalı olanlar yalnız eğitim botları ve onların alıntıya etkisi yok. `Google-Extended` engeli AI Overviews'ı etkilemiyor.
+- **AI alıntı botlarının bir kısmı açık.** `OAI-SearchBot`, `Claude-SearchBot`, `PerplexityBot` engelli değil ve `Google-Extended` engeli AI Overviews'ı etkilemiyor. **Ancak** `ClaudeBot` ve `GPTBot` Cloudflare tarafından engelleniyor → bkz. **H9** (kodda değil, panelde çözülür).
 - **404 sayfası `noindex` veriyor** — soft-404'ler indekse girmiyor, zarar tarama bütçesiyle sınırlı (Kritik değil, Orta).
 - **Schema işaretlemesi güçlü** — Product/AggregateOffer/MerchantReturnPolicy/OfferShippingDetails/LocalBusiness/FAQPage/BreadcrumbList mevcut ve hatasız.
 - **Alt metinler, title/description uzunlukları, canonical'lar** — örneklemde sorun yok.
@@ -92,7 +92,7 @@ Denetim sırasında bunları yanlış teşhis etmiştim, canlıda doğrulayınca
 ## Sıra
 
 1. **H2** (adres kararı) — her şeyi kilitleyen tek madde
-2. **C1-C11** (ben, hemen başlıyorum — H2 beklemiyor)
+2. **C1, C3, C5-C8 bitti** ✅ · C2, C9, C10 sırada · C12 H2 bekliyor
 3. **H1, H3** → **H7** (Merchant itirazı)
 4. **H4** (İSG içerik) — en yüksek sıralama getirisi
 5. **H5, H6** → **H8** (backlink)
