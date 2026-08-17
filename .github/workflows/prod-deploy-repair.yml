@@ -1,15 +1,17 @@
 # PROD DEPLOY ONARIM + TEŞHİS — 2026-08-17 "yeşil raporlanan ama uygulanmayan deploy" olayı.
 #
-# v3 — v2'de kanıtlandı: yeni kod İMAJDA VAR, markala-web o imajdan çalışıyor ve sağlıklı;
-# yine de canlı HTML eski footer'ı taşıyor (Cloudflare cache DEĞİL: cf-cache-status DYNAMIC).
-# Kalan tek açıklama: nginx `web` adını BAYAT bir konteynere çözüyor (Docker DNS'te aynı
-# alias'ı taşıyan artık konteyner). Bu yüzden v3:
-#   - konteynerin KENDİSİ ne servis ediyor (node fetch ile — wget bu imajda yok, v2'de HTML=0)
-#   - nginx `web`'i hangi IP/konteynere çözüyor
-#   - ağdaki tüm konteynerler + alias'ları
-# ve ardından bayat konteynerleri temizleyip nginx'i yeniden yükler.
+# v4 — Şu ana kadar KANITLANANLAR:
+#   * Yeni kod imajda VAR, markala-web o imajdan çalışıyor, sağlıklı (v2/v3)
+#   * markala-web'in KENDİSİ yeni footer'ı servis ediyor: 243.435 bayt, etbis=1 (v3-B)
+#   * nginx -> web:3000 doğrudan istek de yeni içeriği alıyor (v3-F)
+#   * AMA canlı (Cloudflare üzerinden) 247.367 bayt, etbis=0 — FARKLI bir belge
+#   * Cloudflare cache'i değil (cf-cache-status: DYNAMIC), staging derlemesi de değil
+# Kalan hipotez: nginx'in VPS'teki config'i repodakinden FARKLI ve `location /` HTML'i
+# cache'liyor (deploy nginx/conf.d'yi hiç senkronlamıyor). Bu yüzden v4 nginx'in GERÇEKTEN
+# yüklü konfigini döker, cache dizinini inceler ve gerçek server bloğu üzerinden ölçer.
 #
-# GÜVENLİK: postgres'e DOKUNULMAZ. nginx yalnız reload/restart edilir (config değişmez).
+# GÜVENLİK: postgres'e DOKUNULMAZ. Yalnız nginx proxy cache'i temizlenir (kendini yeniden
+# doldurur) ve nginx reload edilir; nginx konfigi DEĞİŞTİRİLMEZ.
 # Tetik: elle (workflow_dispatch) ya da bu dosyanın kendisine push (main).
 name: Prod Deploy Onarım (teşhis + force-recreate)
 
@@ -21,7 +23,7 @@ on:
 
 jobs:
   repair:
-    name: Bayat konteyner teşhisi + nginx upstream onarımı
+    name: nginx config/cache teşhisi + cache purge
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -36,61 +38,52 @@ jobs:
           script: |
             cd /opt/markala
 
-            echo "=============== 1) TÜM KONTEYNERLER ==============="
-            docker ps -a --format '{{.Names}} | {{.Status}} | {{.Image}}' || true
-            ALL=$(docker ps -a --format '{{.Names}}' | tr '\n' ',' )
-            echo "::notice title=A-konteynerler::$ALL"
+            echo "=============== 1) YÜKLÜ CONF DOSYALARI ==============="
+            docker exec markala-nginx sh -c "ls -la /etc/nginx/conf.d/" || true
+            FILES=$(docker exec markala-nginx sh -c "ls /etc/nginx/conf.d/" 2>/dev/null | tr '\n' ' ')
+            echo "::notice title=A-conf-dosyalari::$FILES"
 
-            echo "=============== 2) KONTEYNERİN KENDİSİ NE SERVİS EDİYOR (node fetch) ==============="
-            SELF=$(docker exec markala-web node -e "fetch('http://127.0.0.1:3000/').then(r=>r.text()).then(t=>console.log('LEN='+t.length+' ETBIS='+(t.includes('etbis.ticaret.gov.tr')?1:0)+' LOGO='+(t.includes('markala-logo.svg')?1:0))).catch(e=>console.log('ERR '+e.message))" 2>&1 | tail -1)
-            echo "markala-web kendisi: $SELF"
-            echo "::notice title=B-konteyner-kendisi::$SELF"
+            echo "=============== 2) 'location /' CACHE'LİYOR MU ==============="
+            # markala.com.tr server bloğundaki 'location /' bölümünde proxy_cache var mı?
+            docker exec markala-nginx nginx -T 2>/dev/null > /tmp/ngxT.txt || true
+            echo "nginx -T satir sayisi: $(wc -l < /tmp/ngxT.txt)"
+            CACHEHITS=$(grep -c 'proxy_cache markala_cache' /tmp/ngxT.txt || true)
+            STALE=$(grep -c 'proxy_cache_use_stale' /tmp/ngxT.txt || true)
+            echo "proxy_cache markala_cache sayisi: $CACHEHITS | use_stale: $STALE"
+            echo "::notice title=B-cache-direktifleri::proxy_cache=$CACHEHITS use_stale=$STALE"
+            # 'location / {' sonrasi 12 satirda proxy_cache/proxy_pass ne diyor
+            SLASH=$(awk '/location \/ \{/{f=1;n=0} f&&n<12{print;n++} n>=12{f=0}' /tmp/ngxT.txt | grep -E 'proxy_pass|proxy_cache' | tr '\n' ' ' | cut -c1-400)
+            echo "location / icerigi: $SLASH"
+            echo "::notice title=C-location-slash::$SLASH"
 
-            echo "=============== 3) NGINX 'web' ADINI NEYE ÇÖZÜYOR ==============="
-            WEBIP=$(docker exec markala-nginx sh -c "getent hosts web | awk '{print \$1}' | head -1" 2>/dev/null || echo "")
-            REALIP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' markala-web 2>/dev/null | awk '{print $1}')
-            echo "nginx 'web' -> $WEBIP   |   markala-web gercek IP -> $REALIP"
-            if [ "$WEBIP" = "$REALIP" ]; then
-              echo "::notice title=C-dns::DOGRU - nginx web=$WEBIP markala-web=$REALIP"
+            echo "=============== 3) CACHE DİZİNİ ==============="
+            CSIZE=$(docker exec markala-nginx sh -c "du -sh /var/cache/nginx 2>/dev/null | awk '{print \$1}'" || echo yok)
+            CFILES=$(docker exec markala-nginx sh -c "find /var/cache/nginx -type f 2>/dev/null | wc -l" || echo 0)
+            echo "cache boyut=$CSIZE dosya=$CFILES"
+            echo "::notice title=D-cache-dizini::boyut=$CSIZE dosya=$CFILES"
+
+            echo "=============== 4) GERÇEK SERVER BLOĞU ÜZERİNDEN (Host: markala.com.tr) ==============="
+            BEFORE=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | wc -c" 2>/dev/null || echo 0)
+            BEFORE_E=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
+            echo "server blogu ONCESI: LEN=$BEFORE ETBIS=$BEFORE_E"
+            echo "::notice title=E-serverblok-oncesi::LEN=$BEFORE ETBIS=$BEFORE_E"
+
+            echo "=============== 5) ONARIM: nginx proxy cache PURGE ==============="
+            docker exec markala-nginx sh -c "rm -rf /var/cache/nginx/markala/* 2>/dev/null" || echo "purge uyarisi"
+            docker exec markala-nginx nginx -s reload 2>&1 || echo "reload uyarisi"
+            sleep 8
+            CFILES2=$(docker exec markala-nginx sh -c "find /var/cache/nginx -type f 2>/dev/null | wc -l" || echo 0)
+            echo "purge sonrasi cache dosya=$CFILES2"
+
+            echo "=============== 6) ONARIM SONRASI ==============="
+            AFTER=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | wc -c" 2>/dev/null || echo 0)
+            AFTER_E=$(docker exec markala-nginx sh -c "wget -q -O- --no-check-certificate --header='Host: markala.com.tr' https://127.0.0.1/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
+            SELF_E=$(docker exec markala-web node -e "fetch('http://127.0.0.1:3000/').then(r=>r.text()).then(t=>console.log(t.length+' '+(t.includes('etbis.ticaret.gov.tr')?1:0))).catch(e=>console.log('ERR'))" 2>&1 | tail -1)
+            echo "server blogu SONRASI: LEN=$AFTER ETBIS=$AFTER_E | markala-web kendisi: $SELF_E"
+            echo "::notice title=F-sonrasi::serverblok LEN=$AFTER ETBIS=$AFTER_E | web-kendisi $SELF_E"
+            if [ "$AFTER_E" -gt 0 ] 2>/dev/null; then
+              echo "::notice title=G-sonuc::BASARILI - server blogu artik yeni icerigi donuyor"
             else
-              echo "::error title=C-dns::BAYAT UPSTREAM - nginx web=$WEBIP ama markala-web=$REALIP"
+              echo "::error title=G-sonuc::HALA ESKI - cache purge yetmedi, upstream/konfig incelenmeli"
             fi
-
-            echo "=============== 4) AĞDAKİ TÜM IP -> KONTEYNER EŞLEMESİ ==============="
-            MAP=""
-            for c in $(docker ps -q); do
-              nm=$(docker inspect -f '{{.Name}}' "$c" | sed 's|^/||')
-              ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' "$c" | awk '{print $1}')
-              [ -n "$ip" ] && MAP="$MAP $nm=$ip"
-            done
-            echo "$MAP"
-            echo "::notice title=D-ip-map::$MAP"
-
-            echo "=============== 5) NGINX ÜZERİNDEN ==============="
-            VIA=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | wc -c" 2>/dev/null || echo 0)
-            VIAE=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
-            VIAL=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c markala-logo.svg" 2>/dev/null || echo 0)
-            echo "nginx->web: LEN=$VIA ETBIS=$VIAE LOGO=$VIAL"
-            echo "::notice title=E-nginx-uzerinden::LEN=$VIA ETBIS=$VIAE LOGO=$VIAL"
-
-            echo "=============== 6) ONARIM: bayat konteynerleri sil + nginx restart ==============="
-            # compose projesi dışındaki/artık konteynerleri temizle (markala-web/admin/api/nginx/postgres HARİÇ)
-            for c in $(docker ps -aq); do
-              nm=$(docker inspect -f '{{.Name}}' "$c" | sed 's|^/||')
-              case "$nm" in
-                markala-web|markala-admin|markala-api|markala-nginx|markala-postgres|markala-backup|markala-node-exporter|markala-nginx-exporter|markala-postgres-exporter|markala-prometheus|markala-staging-web|markala-staging-api|markala-staging-postgres) ;;
-                *markala*) echo "  bayat siliniyor: $nm"; docker rm -f "$c" >/dev/null 2>&1 || true ;;
-              esac
-            done
-            # nginx'i RESTART et (reload DNS önbelleğini her zaman temizlemez)
-            docker restart markala-nginx >/dev/null 2>&1 || echo "nginx restart hatasi"
-            sleep 12
-
-            echo "=============== 7) ONARIM SONRASI DOĞRULAMA ==============="
-            AFTER_IP=$(docker exec markala-nginx sh -c "getent hosts web | awk '{print \$1}' | head -1" 2>/dev/null || echo "")
-            AFTER_E=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c etbis.ticaret.gov.tr" 2>/dev/null || echo 0)
-            AFTER_L=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c markala-logo.svg" 2>/dev/null || echo 0)
-            echo "sonrasi: web->$AFTER_IP  ETBIS=$AFTER_E LOGO=$AFTER_L"
-            echo "::notice title=F-sonrasi::web=$AFTER_IP ETBIS=$AFTER_E LOGO=$AFTER_L"
-            docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
             echo "TAMAM"
