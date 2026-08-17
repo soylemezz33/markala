@@ -57,7 +57,11 @@ jobs:
                       -o UserKnownHostsFile=/dev/null -o ConnectTimeout=12 \
                       -p "$PORT" "$U@$H" "hostname; ls -d /opt/markala 2>/dev/null || echo OPT-YOK" 2>&1)
             RC=$?
-            SHORT=$(printf %s "$OUT" | tr '\n' ' | ' | cut -c1-300)
+            # Gürültü satırlarını (known_hosts / post-quantum uyarısı) at, KARAR VERİCİ satırı
+            # öne çıkar: "Permission denied (publickey)" mi, "Connection closed" (fail2ban) mi,
+            # "no matching host key type" mi — çözümleri farklı.
+            SHORT=$(printf %s "$OUT" | grep -viE 'known hosts|post-quantum|store now, decrypt' | grep -vE '^\s*$' | tail -4 | tr '\n' ';' | cut -c1-300)
+            [ -z "$SHORT" ] && SHORT="(anlamli satir yok) ham: $(printf %s "$OUT" | tr '\n' ';' | cut -c1-200)"
             echo "ssh cikis kodu: $RC"
             echo "ssh cikti: $SHORT"
             if [ "$RC" -eq 0 ]; then
