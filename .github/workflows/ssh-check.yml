@@ -1,0 +1,79 @@
+# SSH BAĞLANTI KONTROLÜ (salt okur) — 2026-08-17 sunucu göçü sonrası.
+#
+# Amaç: deploy'un SSH adımı düştüğünde NEDENİNİ görünür kılmak. İş log'unu okumak
+# repo admin yetkisi ister; bu workflow hatayı ::notice olarak yazar, böylece yetkisiz
+# de teşhis edilebilir. İki durumu ayırır:
+#   * "Connection timed out / refused" -> güvenlik duvarı GitHub Actions'ı engelliyor
+#   * "Permission denied (publickey)"   -> anahtar sunucuda yetkili değil
+# Bu ayrım önemli çünkü çözümleri tamamen farklı.
+#
+# HİÇBİR ŞEY DEĞİŞTİRMEZ: yalnız TCP testi + `hostname` komutu dener.
+# Tetik: elle ya da bu dosyaya push (main).
+name: SSH Bağlantı Kontrolü (salt okur)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/ssh-check.yml"]
+
+jobs:
+  check:
+    name: SSH erişimi neden başarısız
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Ağ + kimlik doğrulama testi
+        env:
+          H: ${{ secrets.SSH_HOST }}
+          U: ${{ secrets.SSH_USER }}
+          P: ${{ secrets.SSH_PORT }}
+          K: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set +e
+          PORT="${P:-22}"
+          echo "hedef port: $PORT"
+          echo "runner public IP: $(curl -s -m 10 https://api.ipify.org || echo bilinmiyor)"
+
+          echo "=============== 1) TCP ERİŞİMİ ==============="
+          timeout 12 bash -c "cat < /dev/null > /dev/tcp/$H/$PORT" 2>/tmp/tcp.err
+          TCP=$?
+          TCPERR=$(head -c 200 /tmp/tcp.err | tr '\n' ' ')
+          if [ "$TCP" -eq 0 ]; then
+            echo "TCP: ACIK"
+            echo "::notice title=1-TCP::PORT $PORT ACIK - ag erisimi var"
+          else
+            echo "TCP: KAPALI (kod=$TCP) $TCPERR"
+            echo "::error title=1-TCP::PORT $PORT KAPALI (kod=$TCP) -> guvenlik duvari GitHub Actions IP'lerini engelliyor. $TCPERR"
+          fi
+
+          echo "=============== 2) SSH KİMLİK DOĞRULAMA ==============="
+          if [ -z "$K" ]; then
+            echo "::error title=2-SSH::SSH_PRIVATE_KEY secret'i BOS"
+          else
+            printf '%s\n' "$K" > /tmp/id_deploy
+            chmod 600 /tmp/id_deploy
+            OUT=$(ssh -i /tmp/id_deploy -o BatchMode=yes -o StrictHostKeyChecking=no \
+                      -o UserKnownHostsFile=/dev/null -o ConnectTimeout=12 \
+                      -p "$PORT" "$U@$H" "hostname; ls -d /opt/markala 2>/dev/null || echo OPT-YOK" 2>&1)
+            RC=$?
+            SHORT=$(printf %s "$OUT" | tr '\n' ' | ' | cut -c1-300)
+            echo "ssh cikis kodu: $RC"
+            echo "ssh cikti: $SHORT"
+            if [ "$RC" -eq 0 ]; then
+              echo "::notice title=2-SSH::BASARILI - anahtar yetkili. Cikti: $SHORT"
+            else
+              echo "::error title=2-SSH::BASARISIZ (kod=$RC) -> $SHORT"
+            fi
+            rm -f /tmp/id_deploy
+          fi
+
+          echo "=============== 3) ANAHTARIN AÇIK YARISI ==============="
+          # Sunucuya eklenmesi gereken satır (gizli değil — açık anahtar paylaşılabilir).
+          if [ -n "$K" ]; then
+            printf '%s\n' "$K" > /tmp/id2 && chmod 600 /tmp/id2
+            PUB=$(ssh-keygen -y -f /tmp/id2 2>/dev/null || echo "(acik yari cikarilamadi - anahtar formati parolali/bozuk olabilir)")
+            echo "::notice title=3-acik-anahtar::$(printf %s "$PUB" | cut -c1-250)"
+            rm -f /tmp/id2
+          fi
+          exit 0
