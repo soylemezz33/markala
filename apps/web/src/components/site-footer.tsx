@@ -164,8 +164,16 @@ export function SiteFooter() {
             </Link>
             <TrustBadge>1-2 İş Günü Üretim</TrustBadge>
             <TrustBadge>81 İle Kargo</TrustBadge>
-            {/* ETBİS rozeti — ETBİS kaydı tamamlandığında etbis.gtb.gov.tr'den resmi rozet kodu alınacak */}
-            {/* <a href="https://etbis.gtb.gov.tr" target="_blank" rel="noopener noreferrer"><TrustBadge>ETBİS Kayıtlı</TrustBadge></a> */}
+            {/* ETBİS kaydı tamamlandı (17.08.2026). Rozet, Ticaret Bakanlığı'nın bu siteye
+                özel resmî sorgulama sonucuna linklenir — ziyaretçi kaydı doğrulayabilir. */}
+            <a
+              href="https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=6c81d5f8-88a6-4899-8443-bc9f102db393"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded transition-colors hover:text-brand-700"
+            >
+              <TrustBadge>ETBİS Kayıtlı</TrustBadge>
+            </a>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
             <span>Ödeme:</span>

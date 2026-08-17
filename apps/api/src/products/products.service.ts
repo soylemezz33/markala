@@ -175,6 +175,9 @@ export class ProductsService {
       ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       ...(dto.pricingMode !== undefined && { pricingMode: dto.pricingMode }),
       ...(dto.parameters !== undefined && { parameters: dto.parameters as Prisma.InputJsonValue }),
+      ...(dto.content !== undefined && {
+        content: dto.content === null ? Prisma.JsonNull : (dto.content as Prisma.InputJsonValue),
+      }),
       ...(dto.categoryId !== undefined && { category: { connect: { id: dto.categoryId } } }),
     };
 

@@ -30,10 +30,14 @@ const TAX_OFFICE = "İstiklal Vergi Dairesi";
 const TAX_NUMBER = "0012655788";
 const MERSIS = "0001265578800001";
 const TRADE_REGISTRY = "Mersin Ticaret Sicil 66377";
-// 324 Ajans için resmi KEP henüz alınmadı — alındığında doldur (PTT'den)
-const KEP = "[BAŞVURU BEKLEMEDE — PTT'den 324ajans@hs01.kep.tr formatında al]";
+// KEP adresi ETBİS kaydından teyitli (2026-08-17). NOT: kayıt hs03 sunucusunda —
+// koddaki eski tahmin hs01 idi, resmi kayıtla değiştirildi.
+const KEP = "324ajans@hs03.kep.tr";
 const VERBIS_NO = "[BAŞVURU BEKLEMEDE — VERBİS kaydı sonrası eklenecek]";
-const ETBIS_NO = "[BAŞVURU BEKLEMEDE — ETBİS kaydı sonrası eklenecek]";
+// ETBİS kaydı tamamlandı (17.08.2026). ETBİS tekil bir "kayıt numarası" yayınlamaz;
+// doğrulama, Ticaret Bakanlığı'nın site sorgulama bağlantısı üzerinden yapılır.
+const ETBIS_DOGRULAMA_URL =
+  "https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=6c81d5f8-88a6-4899-8443-bc9f102db393";
 
 const EMAIL = "merhaba@markala.com.tr";
 const PHONE = "0324 433 33 51";
@@ -518,7 +522,9 @@ export const legalPages: Record<string, LegalPage> = {
       <p>
         <strong>ETBİS Kaydı:</strong> Sitemiz, 6563 sayılı Elektronik Ticaretin Düzenlenmesi
         Hakkında Kanun kapsamında Ticaret Bakanlığı tarafından yürütülen Elektronik Ticaret
-        Bilgi Sistemi'ne (ETBİS) kayıtlıdır. ETBİS kayıt numarası: <strong>${ETBIS_NO}</strong>.
+        Bilgi Sistemi'ne (ETBİS) <strong>kayıtlıdır</strong> (kayıt tarihi: 17.08.2026).
+        Kaydımızı Ticaret Bakanlığı'nın resmî sorgulama sayfasından doğrulayabilirsiniz:
+        <a href="${ETBIS_DOGRULAMA_URL}" target="_blank" rel="noopener noreferrer">ETBİS site sorgulama</a>.
       </p>
 
       <h2>1. Tanımlar</h2>

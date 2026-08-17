@@ -140,6 +140,19 @@ const articles: Record<string, HelpArticle> = {
   },
 };
 
+/**
+ * Bu rotanın parametreleri KODDA sabit (lib/*.ts) — yalnız deploy ile değişir.
+ * dynamicParams=false → listede olmayan slug router seviyesinde GERÇEK 404 döner.
+ *
+ * Neden gerekli (2026-08 denetimi): ISR'li rotalarda gövdedeki notFound() üretimde
+ * 404 statüsü ÜRETMİYOR — /urun/olmayan-xyz canlıda "HTTP 200 + Sayfa Bulunamadı"
+ * dönüyordu (soft-404) ve sonuç ISR önbelleğine yazılıp tekrar tekrar 200 servis
+ * ediliyordu. Parametre kümesi sabit olan rotalarda bunun temiz çözümü budur.
+ * (Ürün/kategori/blog gibi admin'den büyüyen kataloglara UYGULANMADI: orada yeni
+ * kayıt bir sonraki build'e kadar 404 olurdu.)
+ */
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return Object.keys(articles).map((slug) => ({ slug }));
 }

@@ -152,5 +152,15 @@ export class UpdateProductDto {
 
   @IsOptional()
   parameters?: unknown;
+
+  /**
+   * Zengin ürün içeriği — esnek JSON: specifications / features / useCases / faqs /
+   * seo / sku / brand / relatedSlugs. Prisma şemasında sütun (Product.content) ve
+   * storefront bunu okuyup ürün sekmelerinde + FAQPage JSON-LD'sinde kullanıyordu,
+   * ama YAZMA yolu hiç yoktu — İSG kataloğunun içeriksiz kalmasının sebebi buydu
+   * (2026-08 SEO denetimi). CategoriesDto'daki `content` deseniyle aynı.
+   */
+  @IsOptional()
+  content?: unknown;
 }
 

@@ -17,7 +17,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await getLegalPage(params.slug);
-  if (!page) return {};
+  // Sayfa yoksa notFound() — eskiden `return {}` idi ve metadata kök layout'a düşüyordu:
+  // /yasal/olmayan-bir-slug ANA SAYFA başlığıyla ve `robots: index,follow` ile render
+  // ediliyordu (gövde 404'ü ayrıca noindex basıyordu → çelişkili robots sinyali).
+  if (!page) notFound();
   const url = `/yasal/${page.slug}`;
   return {
     title: page.title,
