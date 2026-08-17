@@ -1,0 +1,97 @@
+# PROD DEPLOY ONARIM + TEŞHİS — 2026-08-17 "yeşil raporlanan ama uygulanmayan deploy" olayı.
+#
+# Neden ayrı workflow: normal deploy yeşil dönerken canlıda ESKİ kod çalışıyordu. Kök nedeni
+# görmek için imajın İÇERİĞİ (yeni kod imajda var mı?) ve .env.production TAG değeri
+# doğrulanır — sonra app konteynerleri zorla yeniden oluşturulur.
+#
+# GÜVENLİK: postgres ve nginx'e DOKUNULMAZ; yalnız web/admin/api recreate edilir.
+# Tetik: elle (workflow_dispatch) ya da bu dosyanın kendisine push (main).
+name: Prod Deploy Onarım (teşhis + force-recreate)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/prod-deploy-repair.yml"]
+
+jobs:
+  repair:
+    name: Teşhis + app konteynerlerini yenile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: SSH ile teşhis ve onarım
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          command_timeout: 18m
+          script: |
+            cd /opt/markala
+
+            echo "=============== 1) TAG DEĞERİ ==============="
+            TAGLINE=$(grep -E '^TAG=' .env.production || echo 'TAG tanimsiz->latest')
+            echo "$TAGLINE"
+            echo "::notice title=1-TAG::$TAGLINE"
+
+            echo "=============== 2) MEVCUT KONTEYNERLER ==============="
+            docker ps --format '{{.Names}} | {{.Status}} | {{.Image}}' | grep markala || true
+            WEBSTART=$(docker inspect -f '{{.State.StartedAt}}' markala-web 2>/dev/null || echo yok)
+            WEBIMG=$(docker inspect -f '{{.Image}}' markala-web 2>/dev/null | cut -c1-19 || echo yok)
+            echo "::notice title=2-oncesi::web StartedAt=$WEBSTART imageId=$WEBIMG"
+
+            echo "=============== 3) COMPOSE HANGİ İMAJI İSTİYOR ==============="
+            WANT=$(docker compose -f docker-compose.production.yml --env-file .env.production config 2>/dev/null | grep -A2 '^  web:' | grep 'image:' | awk '{print $2}')
+            echo "istenen imaj: $WANT"
+            echo "::notice title=3-istenen-imaj::$WANT"
+
+            echo "=============== 4) İMAJLARI ÇEK ==============="
+            docker compose -f docker-compose.production.yml --env-file .env.production pull web admin api 2>&1 | tail -12
+
+            echo "=============== 5) YENİ KOD İMAJIN İÇİNDE Mİ? (etbis linki) ==============="
+            # Kritik teşhis: imaj yeni kodu içermiyorsa sorun build/tag tarafında,
+            # içeriyorsa sorun konteyner yenilenmemesinde ya da cache'te.
+            HIT=$(docker run --rm --entrypoint sh "$WANT" -c "grep -rl 'etbis.ticaret.gov.tr' /app 2>/dev/null | head -2" 2>/dev/null || echo "")
+            if [ -n "$HIT" ]; then
+              echo "İMAJDA VAR: $HIT"
+              echo "::notice title=5-imaj-icerigi::YENI KOD IMAJDA VAR"
+            else
+              echo "İMAJDA YOK — build/tag sorunu!"
+              echo "::error title=5-imaj-icerigi::YENI KOD IMAJDA YOK - build veya TAG yanlis"
+            fi
+
+            echo "=============== 6) APP KONTEYNERLERİNİ ZORLA YENİLE ==============="
+            docker rm -f $(docker ps -aq --filter name=_markala- 2>/dev/null) 2>/dev/null || true
+            docker compose -f docker-compose.production.yml --env-file .env.production up -d --no-build --no-deps --force-recreate web admin api 2>&1 | tail -12
+            sleep 8
+            docker exec markala-nginx nginx -s reload 2>&1 || echo "nginx reload uyarisi"
+
+            echo "=============== 7) SAĞLIK ==============="
+            ok=0
+            for i in $(seq 1 15); do
+              n=$(docker inspect -f '{{.State.Health.Status}}' markala-web markala-admin markala-api 2>/dev/null | grep -c '^healthy$' || true)
+              echo "  deneme $i/15: healthy=$n/3"
+              if [ "$n" = "3" ]; then ok=1; break; fi
+              sleep 10
+            done
+            NEWSTART=$(docker inspect -f '{{.State.StartedAt}}' markala-web 2>/dev/null || echo yok)
+            echo "::notice title=7-sonrasi::healthy=$ok/1 web StartedAt=$NEWSTART"
+
+            echo "=============== 8) CANLI İÇERİK DOĞRULAMASI (konteyner içinden) ==============="
+            # nginx konteynerinden web:3000'e istek — CDN/Cloudflare cache'i devre dışı,
+            # gerçekten YENİ kodun servis edildiğini kanıtlar.
+            SERVED=$(docker exec markala-nginx sh -c "wget -q -O- --timeout=20 http://web:3000/ 2>/dev/null | grep -c 'etbis.ticaret.gov.tr'" 2>/dev/null || echo 0)
+            echo "anasayfada etbis linki sayisi (origin): $SERVED"
+            if [ "$SERVED" -gt 0 ] 2>/dev/null; then
+              echo "::notice title=8-origin-dogrulama::BASARILI - yeni kod servis ediliyor (etbis x$SERVED)"
+            else
+              echo "::error title=8-origin-dogrulama::BASARISIZ - origin hala eski HTML donuyor (etbis yok)"
+            fi
+
+            if [ "$ok" != "1" ]; then
+              echo "Konteyner durumlari:"; docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
+              exit 1
+            fi
+            echo "TAMAM - onarim adimlari kosuldu"
