@@ -24,8 +24,18 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           command_timeout: 4m
           script: |
+            # 2026-08-17: SSH_HOST yeni prod sunucusuna (185.121.126.22) çevrildi.
+            # Bu blok HANGİ makineye bağlandığımızı kanıtlar — yanlış sunucuya deploy
+            # olayının tekrarını önlemek için kimlik bilgisi en başta raporlanır.
+            echo "=== HANGİ SUNUCUYA BAĞLANDIK ==="
+            HN=$(hostname 2>/dev/null || echo yok)
+            PUBIP=$(curl -s -m 8 https://api.ipify.org 2>/dev/null || wget -qO- -T 8 https://api.ipify.org 2>/dev/null || echo bilinmiyor)
+            OPT=$(ls -d /opt/markala 2>/dev/null || echo YOK)
+            echo "hostname=$HN publicIP=$PUBIP /opt/markala=$OPT"
+            echo "::notice title=SUNUCU-KIMLIGI::hostname=$HN publicIP=$PUBIP /opt/markala=$OPT"
             echo "=== KONTEYNERLER ==="
             docker ps --format '{{.Names}} | {{.Status}}' | grep markala || true
+            echo "::notice title=KONTEYNERLER::$(docker ps --format '{{.Names}}=({{.Status}})' | grep markala | head -8 | tr '\n' ' ' || echo yok)"
             echo "=== DİSK / BELLEK ==="
             df -h / | tail -1
             free -m | head -2
