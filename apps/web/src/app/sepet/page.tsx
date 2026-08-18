@@ -172,8 +172,10 @@ export default function CartPage() {
         <div className="grid lg:grid-cols-12 gap-8">
           <section className="lg:col-span-8 space-y-3">
             {items.map((item) => (
+              // data-testid: E2E testleri ürün satırını buradan bulur (bkz. cart-drawer.tsx).
               <article
                 key={item.id}
+                data-testid="cart-item"
                 className="flex gap-4 md:gap-5 p-4 md:p-5 bg-paper-50 border border-paper-200 rounded-xl hover:border-ink-300 transition-colors"
               >
                 <Link href={`/urun/${item.productSlug}`} className="relative w-24 h-24 md:w-28 md:h-28 rounded-lg bg-paper-100 overflow-hidden flex-none">
@@ -340,12 +342,17 @@ export default function CartPage() {
               )}
 
               <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
-                <details className="text-sm">
-                  <summary className="cursor-pointer font-medium text-ink-900 flex items-center gap-2">
+                {/* data-testid: kupon alanı KATLANMIŞ (<details>) — E2E testi önce summary'ye
+                    tıklayıp açmalı, yoksa input görünmez ve fill zaman aşımına düşer. */}
+                <details className="text-sm" data-testid="coupon-details">
+                  <summary
+                    data-testid="coupon-toggle"
+                    className="cursor-pointer font-medium text-ink-900 flex items-center gap-2"
+                  >
                     <Tag size={16} /> Kupon kodun var mı?
                   </summary>
                   <div className="mt-3 flex gap-2">
-                    <input type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(null); }} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
+                    <input data-testid="coupon-input" type="text" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponError(null); }} placeholder="Kupon kodu" className="flex-1 px-3 py-2 rounded border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30" />
                     <Button variant="outline" size="md" onClick={handleApplyCoupon} disabled={!coupon.trim() || couponChecking}>{couponChecking ? "Kontrol…" : "Uygula"}</Button>
                   </div>
                   {/* banner kaynaklı hata bandın içinde gösterilir; diğerleri (manuel giriş +

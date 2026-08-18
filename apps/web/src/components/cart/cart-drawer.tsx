@@ -119,7 +119,9 @@ export function CartDrawer() {
               <>
                 <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
                   {items.map((item) => (
-                    <article key={item.id} className="flex gap-3">
+                    // data-testid: E2E testleri ürün satırını buradan bulur. Etiket/sınıf
+                    // yapısına bağlanan seçiciler tasarım değişince kırılıyordu (2026-08-18).
+                    <article key={item.id} data-testid="cart-item" className="flex gap-3">
                       <Link
                         href={`/urun/${item.productSlug}`}
                         onClick={close}
