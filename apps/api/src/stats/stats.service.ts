@@ -23,19 +23,42 @@ export class StatsService {
   }
 
   async summary() {
-    const [orderCount, revenueAgg, customerCount, pendingCorporate, byStatus] = await Promise.all([
-      this.prisma.order.count({ where: { deletedAt: null } }),
-      this.prisma.order.aggregate({ _sum: { total: true }, where: { paymentStatus: "basarili", deletedAt: null } }),
-      this.prisma.user.count({ where: { role: "customer" } }),
-      this.prisma.corporateApplication.count({ where: { status: "pending" } }),
-      this.prisma.order.groupBy({ by: ["status"], _count: true, where: { deletedAt: null } }),
-    ]);
+    // GERÇEKLEŞEN sipariş şartı: ödemesi başarılı VEYA cari (açık hesap — online ödeme
+    // beklenmez). 2026-08-18: ödeme sağlayıcısına yönlendirmeden ÖNCE sipariş kaydı açıldığı
+    // için yarıda bırakılan her deneme DB'de satır bırakıyor; orderCount ve ordersByStatus
+    // bunları da sayınca panel gerçekte olmayan siparişleri raporluyordu. `revenue` zaten
+    // doğru filtreliyordu — sayımlar da onunla hizalandı (toplam ile kırılım tutarlı kalsın).
+    const realOrder = {
+      deletedAt: null,
+      OR: [{ paymentStatus: "basarili" as const }, { paymentMethod: "cari" }],
+    };
+    const [orderCount, revenueAgg, customerCount, pendingCorporate, byStatus, unpaidCount] =
+      await Promise.all([
+        this.prisma.order.count({ where: realOrder }),
+        this.prisma.order.aggregate({
+          _sum: { total: true },
+          where: { paymentStatus: "basarili", deletedAt: null },
+        }),
+        this.prisma.user.count({ where: { role: "customer" } }),
+        this.prisma.corporateApplication.count({ where: { status: "pending" } }),
+        this.prisma.order.groupBy({ by: ["status"], _count: true, where: realOrder }),
+        // Ödemesi tamamlanmamış (terk edilmiş olabilir) siparişler — panelde takip için.
+        this.prisma.order.count({
+          where: {
+            deletedAt: null,
+            paymentStatus: "beklemede",
+            paymentMethod: { not: "cari" },
+            status: { not: "iptal_edildi" },
+          },
+        }),
+      ]);
 
     return {
       orderCount,
       revenue: Number(revenueAgg._sum.total ?? 0),
       customerCount,
       pendingCorporate,
+      unpaidCount,
       ordersByStatus: byStatus.map((r) => ({ status: r.status, count: r._count })),
       integrations: this.integrationStatus(),
     };

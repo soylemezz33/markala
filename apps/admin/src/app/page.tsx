@@ -1,6 +1,7 @@
 import { AdminShell } from "@/components/admin-shell";
 import { getAdminApi } from "@/lib/api";
 import { LoadErrorBanner } from "@/components/load-error-banner";
+import { RecentOrdersTable } from "./recent-orders-table";
 import Link from "next/link";
 import type { AdminStatsDto } from "@markala/api-client";
 import {
@@ -79,10 +80,18 @@ export default async function DashboardPage() {
       color: "text-success",
     },
     {
+      // 2026-08-18: artık YALNIZ gerçekleşen siparişler (ödemesi başarılı + cari).
+      // Yarıda bırakılan ödemeler ayrı "Ödeme Bekleyen" kutusunda izlenir.
       label: "Toplam Sipariş",
       value: String(stats.orderCount),
       icon: ShoppingCart,
       color: "text-brand-700",
+    },
+    {
+      label: "Ödeme Bekleyen",
+      value: String(stats.unpaidCount ?? 0),
+      icon: ClockCounterClockwise,
+      color: "text-warning",
     },
     {
       label: "Müşteri",
@@ -123,7 +132,8 @@ export default async function DashboardPage() {
       </header>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      {/* 5 kart: "Ödeme Bekleyen" eklendi (2026-08-18) → lg'de 5 sütun */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         {kpis.map((k) => (
           <div key={k.label} className="bg-paper-50 border border-paper-200 rounded-lg p-4 md:p-5">
             <div className="flex items-center justify-between text-ink-500">
@@ -210,47 +220,10 @@ export default async function DashboardPage() {
             Tümünü gör →
           </Link>
         </header>
+        {/* 2026-08-18: Ödeme durumu sütunu + ödenmemişte "İletişime Geç" — bkz.
+            recent-orders-table.tsx başlığındaki gerekçe. */}
         <div className="overflow-x-auto">
-          {recentOrders.length === 0 ? (
-            <p className="px-5 py-6 text-sm text-ink-400">Henüz sipariş yok.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
-                <tr>
-                  <th className="text-left px-5 py-3 font-semibold">Sipariş No</th>
-                  <th className="text-left px-5 py-3 font-semibold">Müşteri</th>
-                  <th className="text-right px-5 py-3 font-semibold">Tutar</th>
-                  <th className="text-right px-5 py-3 font-semibold">Durum</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-paper-200">
-                {(recentOrders as any[]).map((o) => {
-                  const badge = statusBadge(String(o.status ?? ""));
-                  const customerName = o.customerName ?? o.user?.fullName ?? o.email ?? "—";
-                  const totalVal = typeof o.total === "object" && o.total !== null
-                    ? Number(o.total.toString())
-                    : Number(o.total ?? 0);
-                  const amount = `₺ ${totalVal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
-                  return (
-                    <tr key={o.id} className="hover:bg-paper-100/40">
-                      <td className="px-5 py-3 font-mono text-xs font-semibold text-ink-900">
-                        {o.orderNumber ?? o.id?.slice(0, 8)}
-                      </td>
-                      <td className="px-5 py-3 text-ink-700">{customerName}</td>
-                      <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">
-                        {amount}
-                      </td>
-                      <td className="px-5 py-3 text-right">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${badge.className}`}>
-                          {badge.label}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
+          <RecentOrdersTable orders={recentOrders as never} />
         </div>
       </section>
 

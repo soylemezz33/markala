@@ -854,10 +854,13 @@ export interface LedgerStatementDto {
 }
 
 export interface AdminStatsDto {
+  /** Yalnız GERÇEKLEŞEN siparişler: ödemesi başarılı + cari (açık hesap). */
   orderCount: number;
   revenue: number;
   customerCount: number;
   pendingCorporate: number;
+  /** Ödemesi tamamlanmamış siparişler (terk edilmiş olabilir) — opsiyonel: eski API ile uyum. */
+  unpaidCount?: number;
   ordersByStatus: Array<{ status: string; count: number }>;
   /** Entegrasyonların gerçek yapılandırma durumu (env'den) — opsiyonel (eski API ile uyum). */
   integrations?: {

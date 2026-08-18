@@ -362,21 +362,98 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  function canProceed(): boolean {
-    // Telefon '+90XXXXXXXXXX' saklanır; ulusal kısım TAM 10 hane olmalı ('+90'+7 hane =
-    // 10 karakter olduğundan phone.length>=10 eksik numarayı geçiriyordu).
-    if (step === "iletisim") return email.includes("@") && toNationalPhone(phone).length === 10;
-    if (step === "fatura") {
-      if (accountType === "individual") return fullName.length >= 3; // TC opsiyonel (iyzico yer tutucuyla çalışır)
-      return companyName.length >= 2 && taxNumber.length >= 9 && taxOffice.length >= 2;
+  /**
+   * Adımdaki eksik/hatalı alanlar. 2026-08-18 UX düzeltmesi: eskiden `canProceed()` yalnız
+   * true/false döndürüyor ve "Devam Et" SESSİZCE pasif kalıyordu — kullanıcı hangi alanın
+   * sorunlu olduğunu anlayamıyordu (hiçbir alan hata göstermiyor, sayfada <form> olmadığı
+   * için tarayıcının kendi "bu alanı doldurun" balonu da hiç çalışmıyor). Artık alan alan
+   * sebep dönüyor; buton hep TIKLANABİLİR, tıklanınca eksikler gösterilip ilk hatalı alana
+   * gidiliyor. Eşikler bilerek GEVŞEK — amaç kullanıcıyı elemek değil, teslimatı mümkün kılmak.
+   */
+  type FieldIssue = { field: string; message: string };
+
+  function stepIssues(s: Step = step): FieldIssue[] {
+    const out: FieldIssue[] = [];
+    if (s === "iletisim") {
+      // Gevşek e-posta kontrolü: yalnız bariz yazım hatasını yakalar (a@b gibi eksik alan adı).
+      if (!/.+@.+\..+/.test(email.trim()))
+        out.push({ field: "email", message: "E-posta adresini kontrol edin (ornek@firma.com)" });
+      // Telefon '+90XXXXXXXXXX' saklanır; ulusal kısım 10 hane olmalı — kargo için zorunlu.
+      if (toNationalPhone(phone).length !== 10)
+        out.push({ field: "phone", message: "Telefon numarasını 10 haneli girin (5XX XXX XX XX)" });
     }
-    if (step === "teslimat")
-      return city.length >= 2 && district.length >= 2 && fullAddress.length >= 10;
+    if (s === "fatura") {
+      if (accountType === "individual") {
+        if (fullName.trim().length < 2) out.push({ field: "fullName", message: "Ad soyad girin" });
+      } else {
+        if (companyName.trim().length < 2)
+          out.push({ field: "companyName", message: "Firma unvanı girin" });
+        if (taxNumber.replace(/\D/g, "").length < 10)
+          out.push({ field: "taxNumber", message: "Vergi/TC kimlik numarasını girin" });
+        if (taxOffice.trim().length < 2)
+          out.push({ field: "taxOffice", message: "Vergi dairesi girin" });
+      }
+    }
+    if (s === "teslimat") {
+      if (city.trim().length < 2 || district.trim().length < 2)
+        out.push({ field: "city", message: "İl ve ilçe seçin" });
+      // Eşik 10 → 8: kısa ama geçerli adresler ("Barbaros M. No 7") elenmesin.
+      if (fullAddress.trim().length < 8)
+        out.push({
+          field: "fullAddress",
+          message: "Adresi biraz daha ayrıntılı yazın (mahalle, sokak, bina/daire no)",
+        });
+    }
+    return out;
+  }
+
+  /**
+   * Ödemeden ÖNCE tüm adımları doğrular. Kullanıcı "Düzenle" ile geri dönüp bir alanı
+   * boşaltırsa son adıma kadar gelebiliyordu; eskiden bu durumda yalnız backend'den gelen
+   * genel "Sipariş oluşturulamadı" mesajı görünüyordu (hangi alan olduğu belirsiz).
+   * Artık eksik varsa ilgili ADIMA dönülüp eksikler gösteriliyor.
+   */
+  function guardAllSteps(): boolean {
+    for (const s of ["iletisim", "fatura", "teslimat"] as Step[]) {
+      if (stepIssues(s).length > 0) {
+        setStep(s);
+        setShowIssues(true);
+        requestAnimationFrame(() =>
+          document.getElementById(s)?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        );
+        return false;
+      }
+    }
     return true;
   }
 
+  /** Kullanıcı "Devam Et"e bastıysa hatalar gösterilir; öncesinde form sessiz kalır. */
+  const [showIssues, setShowIssues] = useState(false);
+  const issues = stepIssues();
+  const issueOf = (field: string) =>
+    showIssues ? issues.find((i) => i.field === field)?.message : undefined;
+
+  // Adım değişince hata gösterimi sıfırlanır (yeni adım baştan "temiz" başlasın).
+  useEffect(() => {
+    setShowIssues(false);
+  }, [step]);
+
   function handleNext() {
-    if (!canProceed()) return;
+    const found = stepIssues();
+    if (found.length > 0) {
+      // Sessizce durma: eksikleri göster + ilk hatalı alana götür ve odakla.
+      setShowIssues(true);
+      const first = found[0]?.field;
+      if (first) {
+        requestAnimationFrame(() => {
+          const el = document.querySelector<HTMLElement>(`[data-field="${first}"]`);
+          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+          el?.querySelector<HTMLElement>("input, textarea, select")?.focus({ preventScroll: true });
+        });
+      }
+      return;
+    }
+    setShowIssues(false);
     const order: Step[] = ["iletisim", "fatura", "teslimat", "onay"];
     const idx = order.indexOf(step);
     if (idx < order.length - 1) {
@@ -520,6 +597,7 @@ export default function CheckoutPage() {
    */
   async function handlePayWithCard() {
     if (!consentOk || processing) return;
+    if (!guardAllSteps()) return; // eksik alan → ilgili adıma dön, sebebi göster
     setPayError(null);
     setProcessing(true);
 
@@ -595,6 +673,7 @@ export default function CheckoutPage() {
    */
   async function handlePlaceOnAccount() {
     if (!consentOk || processing || !isApprovedCorporate) return;
+    if (!guardAllSteps()) return; // eksik alan → ilgili adıma dön, sebebi göster
     setPayError(null);
     setProcessing(true);
 
@@ -679,6 +758,8 @@ export default function CheckoutPage() {
               <div className="grid sm:grid-cols-2 gap-3">
                 <Input
                   label="E-posta"
+                  name="email"
+                  error={issueOf("email")}
                   value={email}
                   onChange={setEmail}
                   type="email"
@@ -687,7 +768,14 @@ export default function CheckoutPage() {
                   inputMode="email"
                   required
                 />
-                <PhoneInput value={phone} onChange={setPhone} label="Telefon" required />
+                <div data-field="phone">
+                  <PhoneInput value={phone} onChange={setPhone} label="Telefon" required />
+                  {issueOf("phone") && (
+                    <span className="mt-1 block text-xs font-medium text-error">
+                      {issueOf("phone")}
+                    </span>
+                  )}
+                </div>
               </div>
               {user ? (
                 <p className="mt-3 text-xs text-ink-500">
@@ -743,21 +831,40 @@ export default function CheckoutPage() {
               </div>
               {accountType === "individual" ? (
                 <div className="grid gap-3">
-                  <Input label="Ad Soyad" value={fullName} onChange={setFullName} autoComplete="name" required />
+                  <Input
+                    label="Ad Soyad"
+                    name="fullName"
+                    error={issueOf("fullName")}
+                    value={fullName}
+                    onChange={setFullName}
+                    autoComplete="name"
+                    required
+                  />
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-3">
                   <Input
                     label="Firma Ünvanı"
+                    name="companyName"
+                    error={issueOf("companyName")}
                     value={companyName}
                     onChange={setCompanyName}
                     className="sm:col-span-2"
                     autoComplete="organization"
                     required
                   />
-                  <Input label="Vergi Dairesi" value={taxOffice} onChange={setTaxOffice} required />
+                  <Input
+                    label="Vergi Dairesi"
+                    name="taxOffice"
+                    error={issueOf("taxOffice")}
+                    value={taxOffice}
+                    onChange={setTaxOffice}
+                    required
+                  />
                   <Input
                     label="Vergi No"
+                    name="taxNumber"
+                    error={issueOf("taxNumber")}
                     value={taxNumber}
                     onChange={setTaxNumber}
                     maxLength={11}
@@ -828,19 +935,29 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className="grid sm:grid-cols-2 gap-3">
-                <IlIlceSelect
-                  il={city}
-                  ilce={district}
-                  onIlChange={setCity}
-                  onIlceChange={setDistrict}
-                  required
-                  className="sm:col-span-2 grid sm:grid-cols-2 gap-3"
-                />
+                <div data-field="city" className="sm:col-span-2">
+                  <IlIlceSelect
+                    il={city}
+                    ilce={district}
+                    onIlChange={setCity}
+                    onIlceChange={setDistrict}
+                    required
+                    className="grid sm:grid-cols-2 gap-3"
+                  />
+                  {issueOf("city") && (
+                    <span className="mt-1 block text-xs font-medium text-error">
+                      {issueOf("city")}
+                    </span>
+                  )}
+                </div>
                 <Input
                   label="Adres"
+                  name="fullAddress"
+                  error={issueOf("fullAddress")}
+                  hint="Mahalle, sokak/cadde, bina ve daire no"
                   value={fullAddress}
                   onChange={setFullAddress}
-                  placeholder="Mahalle, sokak, bina no, daire"
+                  placeholder="Örn. Barbaros Mah. 1234 Sk. No:7 D:3"
                   className="sm:col-span-2"
                   autoComplete="street-address"
                   multiline
@@ -1047,11 +1164,34 @@ export default function CheckoutPage() {
               </div>
             </Section>
 
+            {/* 2026-08-18: Buton artık PASİF DEĞİL. Eskiden eksik alan varsa sessizce
+                devre dışı kalıyor, kullanıcı sebebini göremiyordu. Şimdi tıklanabilir;
+                eksik varsa hem liste gösterilir hem ilk hatalı alana gidilir. */}
             {step !== "onay" && (
-              <div className="flex justify-end pt-4">
-                <Button size="lg" onClick={handleNext} disabled={!canProceed()}>
-                  Devam Et <ArrowRight size={18} weight="bold" />
-                </Button>
+              <div className="pt-4">
+                {showIssues && issues.length > 0 && (
+                  <div
+                    role="alert"
+                    className="mb-3 rounded-lg border border-error/30 bg-error/5 px-4 py-3"
+                  >
+                    <p className="text-sm font-semibold text-ink-900">
+                      Devam etmek için {issues.length} alanı tamamlayın:
+                    </p>
+                    <ul className="mt-1.5 space-y-1">
+                      {issues.map((i) => (
+                        <li key={i.field} className="text-sm text-ink-700 flex items-start gap-1.5">
+                          <span className="text-error leading-5">•</span>
+                          {i.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <Button size="lg" onClick={handleNext}>
+                    Devam Et <ArrowRight size={18} weight="bold" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -1366,6 +1506,9 @@ function Input({
   required,
   autoComplete,
   inputMode,
+  error,
+  name,
+  hint,
 }: {
   label: string;
   value: string;
@@ -1378,9 +1521,15 @@ function Input({
   required?: boolean;
   autoComplete?: string;
   inputMode?: "text" | "email" | "tel" | "numeric" | "decimal" | "search" | "url" | "none";
+  /** Doldurulmamış/hatalıysa gösterilecek mesaj (2026-08-18: sessiz doğrulama kaldırıldı). */
+  error?: string;
+  /** stepIssues() alan anahtarı — hatalı alana kaydırma/odaklama için. */
+  name?: string;
+  /** Hata olmadan da gösterilen yardımcı ipucu (beklentiyi önden söyler). */
+  hint?: string;
 }) {
   return (
-    <label className={cn("block", className)}>
+    <label className={cn("block", className)} data-field={name}>
       <span className="text-sm font-medium text-ink-900">
         {label}
         {required && (
@@ -1397,9 +1546,15 @@ function Input({
           maxLength={maxLength}
           required={required}
           aria-required={required ? "true" : undefined}
+          aria-invalid={error ? "true" : undefined}
           autoComplete={autoComplete}
           rows={3}
-          className="mt-1.5 w-full px-3 py-2 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30 resize-none"
+          className={cn(
+            "mt-1.5 w-full px-3 py-2 rounded border text-sm focus:outline-none focus-visible:ring-2 resize-none",
+            error
+              ? "border-error focus:border-error focus-visible:ring-error/25"
+              : "border-paper-200 focus:border-ink-900 focus-visible:ring-brand-300/30",
+          )}
         />
       ) : (
         <input
@@ -1410,11 +1565,22 @@ function Input({
           maxLength={maxLength}
           required={required}
           aria-required={required ? "true" : undefined}
+          aria-invalid={error ? "true" : undefined}
           autoComplete={autoComplete}
           inputMode={inputMode}
-          className="mt-1.5 w-full px-3 py-2.5 rounded border border-paper-200 text-sm focus:border-ink-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300/30"
+          className={cn(
+            "mt-1.5 w-full px-3 py-2.5 rounded border text-sm focus:outline-none focus-visible:ring-2",
+            error
+              ? "border-error focus:border-error focus-visible:ring-error/25"
+              : "border-paper-200 focus:border-ink-900 focus-visible:ring-brand-300/30",
+          )}
         />
       )}
+      {error ? (
+        <span className="mt-1 block text-xs font-medium text-error">{error}</span>
+      ) : hint ? (
+        <span className="mt-1 block text-xs text-ink-500">{hint}</span>
+      ) : null}
     </label>
   );
 }

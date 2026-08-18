@@ -146,7 +146,18 @@ export class AnalyticsService {
       this.prisma.analyticsEvent.count({ where: { ...where, type: AnalyticsService.T_PRODUCT_VIEW } }),
       this.prisma.analyticsEvent.count({ where: { ...where, type: AnalyticsService.T_ADD_TO_CART } }),
       this.prisma.analyticsEvent.count({ where: { ...where, type: AnalyticsService.T_CHECKOUT } }),
-      this.prisma.order.count({ where: { createdAt: { gte: from, lte: to }, deletedAt: null } }),
+      // GERÇEKLEŞEN sipariş sayısı. 2026-08-18: eskiden TÜM siparişler sayılıyordu —
+      // ödeme sağlayıcısına yönlendirmeden önce kayıt açıldığı için yarıda bırakılan her
+      // ödeme denemesi de siparişmiş gibi sayılıyor ve conversionRate'i (satır ~176)
+      // şişiriyordu. Sayılanlar: ödemesi başarılı olanlar + cari (açık hesap; online
+      // ödeme beklenmez, borç kaydı gerçek siparişi ifade eder).
+      this.prisma.order.count({
+        where: {
+          createdAt: { gte: from, lte: to },
+          deletedAt: null,
+          OR: [{ paymentStatus: "basarili" }, { paymentMethod: "cari" }],
+        },
+      }),
       this.prisma.analyticsEvent.aggregate({
         where: { ...where, type: AnalyticsService.T_PRODUCT_VIEW, dwellMs: { not: null } },
         _avg: { dwellMs: true },
