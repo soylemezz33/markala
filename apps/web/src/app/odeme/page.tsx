@@ -27,6 +27,7 @@ import { useOrdersStore } from "@/lib/orders-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { generateOrderNumber } from "@/lib/format";
 import { whatsappUrl } from "@/lib/whatsapp";
+import { readAttribution } from "@/lib/attribution";
 import { track, trackBeginCheckout } from "@/lib/analytics";
 import { track as trackVisitor } from "@/lib/visitor-analytics";
 import type { Address, Order } from "@markala/types";
@@ -550,6 +551,10 @@ export default function CheckoutPage() {
         couponCode: appliedCoupon ?? undefined,
         redeemPoints: redeemApplied > 0 ? redeemApplied : undefined,
         paymentMethod: opts.paymentMethod,
+        // Sipariş kaynağı (gclid/gbraid/wbraid/utm) — iniş anında yakalanır, çerez onayından
+        // BAĞIMSIZ. `_gcl_aw` çerezi onay verilmeyince hiç yazılmadığı için siparişlerin
+        // kaynağı bilinmiyordu (2026-08-18 denetimi). Route'ta çerez > body > referer sırası.
+        attribution: readAttribution() ?? undefined,
         items: cartItems.map((i) => ({
           productSlug: i.productSlug,
           configuration: i.configuration,

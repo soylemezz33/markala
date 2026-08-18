@@ -267,11 +267,38 @@ export class CreateOrderDto {
   @MaxLength(400)
   fbc?: string;
 
-  /** Google Ads tıklama kimliği (_gcl_aw çerezi/referer'dan) — offline dönüşüm/atıf eşleşmesi. */
+  /** Google Ads tıklama kimliği (_gcl_aw çerezi / istemci atfı / referer) — offline dönüşüm eşleşmesi. */
   @IsString()
   @IsOptional()
   @MaxLength(200)
   gclid?: string;
+
+  /** iOS/uygulama kampanyalarında gclid YERİNE gelir (2026-08-18 atıf çalışması). */
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  gbraid?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  wbraid?: string;
+
+  /** UTM — reklam DIŞI kanalları (e-posta, sosyal, AI asistan) ölçülebilir kılar. */
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  utmSource?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(100)
+  utmMedium?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(150)
+  utmCampaign?: string;
 
   /** Sipariş anı tarayıcı User-Agent'ı — Meta CAPI action_source=website için fiilen zorunlu. */
   @IsString()

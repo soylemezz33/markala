@@ -260,6 +260,12 @@ export class OrdersService {
     fbc?: string;
     // Google Ads atıf + CAPI eşleşme sinyalleri (checkout isteğinden snapshot).
     gclid?: string;
+    // gbraid/wbraid: iOS/uygulama kampanyalarında gclid yerine gelir. utm*: reklam dışı kanallar.
+    gbraid?: string;
+    wbraid?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
     clientUserAgent?: string;
     clientIp?: string;
   }) {
@@ -639,6 +645,11 @@ export class OrdersService {
           fbc: input.fbc ?? null,
           // Ads atıf (gclid) + sipariş anı UA/IP — CAPI client_user_agent/client_ip_address kaynağı.
           gclid: input.gclid ?? null,
+          gbraid: input.gbraid ?? null,
+          wbraid: input.wbraid ?? null,
+          utmSource: input.utmSource ?? null,
+          utmMedium: input.utmMedium ?? null,
+          utmCampaign: input.utmCampaign ?? null,
           clientUserAgent: input.clientUserAgent ?? null,
           clientIp: input.clientIp ?? null,
           shippingAddressId: resolvedAddresses.shippingAddressId,

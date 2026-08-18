@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { DM_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { getHeaderNav } from "@/lib/catalog";
@@ -9,6 +10,7 @@ import { CartDrawer } from "@/components/cart/cart-drawer";
 import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/seo/json-ld";
 import { Analytics } from "@/components/analytics";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { AttributionCapture } from "@/components/attribution-capture";
 import { CookieConsent } from "@/components/cookie-consent";
 import { FloatingActions } from "@/components/floating-actions";
 import { WebVitals } from "@/components/web-vitals";
@@ -143,6 +145,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CookieConsent />
         <Analytics />
         <AnalyticsTracker />
+        {/* Sipariş kaynağı yakalama — çerez onayından BAĞIMSIZ (bkz. lib/attribution.ts).
+            useSearchParams kullandığı için Suspense sınırı zorunlu. */}
+        <Suspense fallback={null}>
+          <AttributionCapture />
+        </Suspense>
         <WebVitals />
       </body>
     </html>

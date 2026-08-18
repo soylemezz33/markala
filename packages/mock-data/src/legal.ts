@@ -393,6 +393,18 @@ export const legalPages: Record<string, LegalPage> = {
         <li><strong>Google Ads:</strong> Dönüşüm takibi ve yeniden pazarlama</li>
       </ul>
 
+      <h2>2.1. Sipariş Kaynağı Bilgisi (Birinci Taraf)</h2>
+      <p>
+        Site'ye bir reklam veya kampanya bağlantısıyla geldiğinizde, bağlantıdaki kaynak
+        bilgisi (örn. reklam tıklama kimliği ve kampanya etiketleri) tarayıcınızın yerel
+        depolamasında en fazla 90 gün saklanır ve sipariş vermeniz hâlinde sipariş kaydınıza
+        eklenir. Bu bilgi <strong>yalnızca kendi siparişimizin hangi kanaldan geldiğini
+        ölçmek</strong> için kullanılır; tek başına kimliğinizi tanımlamaz ve
+        <strong>üçüncü taraflara aktarılmaz</strong>. Reklam platformlarına veri aktarımı
+        (Meta, Google) yalnızca <strong>pazarlama çerezi onayı verdiyseniz</strong> yapılır —
+        bu onayı vermemeniz hâlinde hiçbir veri dışarı çıkmaz.
+      </p>
+
       <h2>3. Çerez Tercihleri</h2>
       <p>
         Tarayıcı ayarlarınızdan çerezleri silebilir veya engelleyebilirsiniz. Ancak

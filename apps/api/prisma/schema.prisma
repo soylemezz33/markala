@@ -434,6 +434,14 @@ model Order {
   fbc              String? @map("fbc") // _fbc çerezi (Meta tıklama kimliği — reklamdan gelenler)
   // Google Ads tıklama kimliği (_gcl_aw çerezi/URL'den) — offline dönüşüm/atıf eşleşmesi için.
   gclid            String? @map("gclid")
+  // gbraid/wbraid: iOS/uygulama kampanyalarında gclid YERİNE gelir (2026-08-18 atıf çalışması).
+  // Ayrı kolon olmazsa o trafiğin tamamı "kaynak bilinmiyor" görünür.
+  gbraid           String? @map("gbraid")
+  wbraid           String? @map("wbraid")
+  // UTM: reklam DIŞI kanalları (e-posta, sosyal, AI asistan, organik kampanya) ölçülebilir kılar.
+  utmSource        String? @map("utm_source")
+  utmMedium        String? @map("utm_medium")
+  utmCampaign      String? @map("utm_campaign")
   // Sipariş anı UA/IP snapshot'ı — Meta CAPI action_source=website için client_user_agent
   // fiilen zorunlu; client_ip_address eşleşme kalitesini artırır. Sadece bu amaçla saklanır.
   clientUserAgent  String? @map("client_user_agent")

@@ -39,6 +39,8 @@ const o = arr.find((x) => (x.orderNumber || "").toUpperCase() === no.toUpperCase
 if (!o) { console.error(`Sipariş bulunamadı: ${no} (son ${arr.length} sipariş tarandı)`); process.exit(1); }
 
 const g = o.gclid, fbc = o.fbc;
+const gb = o.gbraid, wb = o.wbraid;
+const utm = [o.utmSource, o.utmMedium, o.utmCampaign].filter(Boolean).join(" / ");
 console.log(`\n═══ ${o.orderNumber} ═══`);
 console.log(`  Tarih        : ${o.createdAt}`);
 console.log(`  Tutar        : ${o.total} TL`);
@@ -47,13 +49,19 @@ console.log(`  Sipariş durumu: ${o.status}`);
 console.log(`  Pazarlama onayı: ${o.marketingConsent}`);
 console.log(`\n─── ATIF (kaynak) ───`);
 console.log(`  Google Ads gclid : ${g || "(YOK)"}`);
+console.log(`  Google gbraid    : ${gb || "(yok)"}`);
+console.log(`  Google wbraid    : ${wb || "(yok)"}`);
 console.log(`  Meta fbc         : ${fbc || "(yok)"}`);
+console.log(`  UTM (kaynak/ortam/kampanya): ${utm || "(yok)"}`);
 console.log();
-if (g) {
+if (g || gb || wb) {
   console.log("  ✅ SONUÇ: Bu sipariş GOOGLE ADS REKLAMINDAN geldi.");
-  console.log("     gclid dolu = müşteri bir reklama tıklayarak siteye girmiş.");
+  console.log(`     ${g ? "gclid" : gb ? "gbraid" : "wbraid"} dolu = müşteri reklama tıklayarak siteye girmiş.`);
 } else if (fbc) {
   console.log("  ✅ SONUÇ: Bu sipariş META (Facebook/Instagram) reklamından geldi.");
+} else if (utm) {
+  console.log(`  ℹ️  SONUÇ: Reklam tıklaması yok, ama kampanya etiketi var → ${utm}`);
+  console.log("     (e-posta, sosyal medya veya etiketli bir bağlantıdan gelmiş)");
 } else {
   console.log("  ❌ SONUÇ: Reklam tıklaması kaydı YOK.");
   console.log("     Sipariş organik arama, doğrudan giriş, AI asistan veya");

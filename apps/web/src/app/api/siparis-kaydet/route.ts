@@ -75,6 +75,22 @@ interface IncomingPayload {
   /** Ödeme yolu — backend doğrular (cari = yalnız onaylı kurumsal). */
   paymentMethod?: string; // iyzico | cari | havale
   notes?: string;
+  /**
+   * Sipariş kaynağı — istemcide iniş anında yakalanır (lib/attribution.ts), ÇEREZ ONAYINDAN
+   * BAĞIMSIZ. `_gcl_aw` yalnız onay verilince yazıldığı için onaysız siparişlerde tek kaynak.
+   */
+  attribution?: {
+    gclid?: string;
+    gbraid?: string;
+    wbraid?: string;
+    utm?: {
+      source?: string;
+      medium?: string;
+      campaign?: string;
+      term?: string;
+      content?: string;
+    };
+  };
   items?: IncomingItem[];
 }
 
@@ -142,12 +158,20 @@ export async function POST(req: NextRequest) {
   // snapshot'lanır (fbp/fbc ile aynı yol). Öncelik: gtag'in yazdığı _gcl_aw first-party çerezi
   // (format "GCL.<timestamp>.<GCLID>" → üçüncü parçadan itibaren, GCLID nadiren nokta içerebilir);
   // çerez yoksa geldiği sayfanın (referer) ?gclid= parametresine düşülür.
+  //
+  // 2026-08-18: Araya İSTEMCİ ATFI eklendi. Sıralama bilinçli:
+  //   1) _gcl_aw çerezi — onay verilmişse en güvenilir (gtag'in kendi yazdığı değer)
+  //   2) body.attribution — iniş anında localStorage'a yakalanan; onay YOKKEN tek çalışan yol
+  //   3) referer ?gclid= — eski fallback (ödeme adımında referer site-içi olduğu için
+  //      pratikte hiç dolmaz, yine de zarar vermez; en sonda bırakıldı)
   let gclid: string | undefined;
   const gclAw = req.cookies.get("_gcl_aw")?.value;
   if (gclAw) {
     const parts = gclAw.split(".");
     if (parts.length >= 3) gclid = clamp(parts.slice(2).join("."), 200);
   }
+  const attr = body.attribution;
+  if (!gclid) gclid = clamp(attr?.gclid, 200);
   if (!gclid) {
     try {
       const referer = req.headers.get("referer");
@@ -156,6 +180,14 @@ export async function POST(req: NextRequest) {
       // bozuk referer → gclid yok say
     }
   }
+  // gbraid/wbraid: iOS/uygulama kampanyalarında gclid YERİNE gelir — ayrı kolonlarda tutulur,
+  // yoksa o trafiğin tamamı "kaynak yok" görünür.
+  const gbraid = clamp(attr?.gbraid, 200);
+  const wbraid = clamp(attr?.wbraid, 200);
+  // UTM: reklam dışı kanalları (e-posta, sosyal, AI asistan) da ölçülebilir kılar.
+  const utmSource = clamp(attr?.utm?.source, 100);
+  const utmMedium = clamp(attr?.utm?.medium, 100);
+  const utmCampaign = clamp(attr?.utm?.campaign, 150);
 
   // Sipariş anı UA/IP snapshot'ı — Meta CAPI action_source=website için client_user_agent
   // fiilen zorunlu; IP eşleşme kalitesini artırır. Cloudflare/nginx arkasında gerçek client IP
@@ -173,6 +205,11 @@ export async function POST(req: NextRequest) {
     fbp,
     fbc,
     gclid,
+    gbraid,
+    wbraid,
+    utmSource,
+    utmMedium,
+    utmCampaign,
     clientUserAgent,
     clientIp,
     items,
