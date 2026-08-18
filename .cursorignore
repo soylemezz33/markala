@@ -1,0 +1,6 @@
+docs/ekran-goruntuleri/
+build/
+.claude/worktrees/
+.playwright-mcp/
+*.jpeg
+*.png
