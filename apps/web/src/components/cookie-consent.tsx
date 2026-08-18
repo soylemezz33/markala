@@ -41,6 +41,25 @@ function readConsent(): ConsentState | null {
   }
 }
 
+/**
+ * Onay bannerı olayını GA4'e bildirir — ÖLÇÜM İÇİN, onaydan bağımsız.
+ *
+ * Neden track() KULLANILMIYOR: lib/analytics.ts'deki track() onay yoksa olayı yutar.
+ * Reddedenleri de sayabilmek için gtag'e DOĞRUDAN gönderilir. Consent Mode v2
+ * default-denied altında bu çağrı çerezsiz (cookieless) ping olarak gider — kişisel
+ * veri taşımaz, yalnız olay sayısı birikir. KVKK açısından güvenli: kimlik/çerez yok.
+ *
+ * Neden gerekli: 2026-08 reklam denetiminde Ads 45 tıklama gösterirken GA4 yalnız 1
+ * "Paid Search" oturumu görüyordu. Onay oranını ölçmeden reklam performansı hakkında
+ * konuşmak mümkün değil.
+ */
+function consentOlcum(event: string, params: Record<string, unknown> = {}): void {
+  if (typeof window === "undefined") return;
+  const g = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+  if (typeof g !== "function") return;
+  g("event", event, { ...params, non_interaction: true });
+}
+
 function writeConsent(state: ConsentState): void {
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
   document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(state))}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax${secure}`;
@@ -87,7 +106,10 @@ export function CookieConsent() {
     const isStale = !existing || existing.version !== CONSENT_VERSION;
     if (isStale) {
       // İlk yüklemede ya da consent şeması güncellendiyse banner'ı tekrar göster.
-      const t = setTimeout(() => setShow(true), 800);
+      const t = setTimeout(() => {
+        setShow(true);
+        consentOlcum("cookie_banner_shown", { yeniden_onay: Boolean(existing) });
+      }, 800);
       // Eski tercihleri pre-fill yap ki kullanıcı tekrar onay verirken zorlanmasın
       if (existing) {
         setAnalytics(existing.analytics);
@@ -126,6 +148,7 @@ export function CookieConsent() {
       timestamp: Date.now(),
       version: CONSENT_VERSION,
     });
+    consentOlcum("cookie_consent", { karar: "tumunu_kabul", analytics: true, marketing: true });
     setShow(false);
   }
 
@@ -138,6 +161,7 @@ export function CookieConsent() {
       timestamp: Date.now(),
       version: CONSENT_VERSION,
     });
+    consentOlcum("cookie_consent", { karar: "reddet", analytics: false, marketing: false });
     setShow(false);
   }
 
@@ -150,6 +174,7 @@ export function CookieConsent() {
       timestamp: Date.now(),
       version: CONSENT_VERSION,
     });
+    consentOlcum("cookie_consent", { karar: "ozel", analytics, marketing });
     setShow(false);
   }
 
