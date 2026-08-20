@@ -5,27 +5,94 @@ import { CreateProductDto, UpdateProductDto } from "./products.dto";
 import { SettingsService } from "../settings/settings.service";
 import { computeAreaPrice } from "../orders/pricing";
 
+// Türkçe harf katlama (arama için). Müşteri klavyede şapkalı harf yazmıyor:
+// "brosur" yazıp "Broşür"ü bulamamak 2026-08-20'de ölçüldü — "brosur"→0 sonuç,
+// "broşür"→4 sonuç. Postgres `ILIKE`/Prisma `mode:"insensitive"` yalnız BÜYÜK-küçük
+// harfi çözer, aksanı çözmez. `unaccent` eklentisi yerine built-in `translate()`
+// kullanılıyor: eklenti kurulumu/migration gerektirmez, katalog 860 satır olduğu için
+// seq-scan maliyeti ihmal edilebilir.
+const TR_FROM = "ıİşŞğĞüÜöÖçÇÂâÎîÛû";
+const TR_TO = "iIsSgGuUoOcCAaIiUu";
+
+function foldTr(s: string): string {
+  let out = "";
+  for (const ch of s) {
+    const i = TR_FROM.indexOf(ch);
+    out += i >= 0 ? TR_TO[i] : ch;
+  }
+  return out.toLowerCase();
+}
+
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService, private settings: SettingsService) {}
 
+  /**
+   * Arama eşleşen ürün ID'lerini ALAKA SIRASIYLA döndürür.
+   *
+   * Neden ayrı sorgu: eski hâlde sıralama `createdAt desc` idi. Katalogun %96'sı (860
+   * üründen 827'si) toplu ve EN SON yüklenen İSG levhaları olduğu için her arama onlarla
+   * doluyordu — "folyo" yazınca 12 sonucun 12'si "Lümen Folyolu ..." çıkıyor, gerçek
+   * "Cam Vitrin Folyo" ürünü hiç görünmüyordu.
+   *
+   * Sıralama ölçütleri (önem sırasıyla):
+   *   1. Tam eşleşme → adın başında → kelime başında → herhangi bir yerde
+   *   2. Ad uzunluğu (kısa ad = daha genel//spesifik ürün; "Cam Vitrin Folyo" uzun
+   *      levha adlarını geçer)
+   *   3. Yenilik (eşitlik bozucu)
+   */
+  private async searchProductIds(
+    tokens: string[],
+    opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; includeInactive?: boolean },
+  ): Promise<string[]> {
+    const norm = Prisma.sql`lower(translate(p.name, ${TR_FROM}, ${TR_TO}))`;
+    const first = tokens[0];
+    const rows = await this.prisma.$queryRaw<{ id: string }[]>(Prisma.sql`
+      SELECT p.id
+      FROM products p
+      LEFT JOIN categories c ON c.id = p.category_id
+      WHERE ${Prisma.join(
+        tokens.map((t) => Prisma.sql`${norm} LIKE ${"%" + t + "%"}`),
+        " AND ",
+      )}
+        ${opts.includeInactive ? Prisma.empty : Prisma.sql`AND p.is_active = true`}
+        ${opts.bestseller === undefined ? Prisma.empty : Prisma.sql`AND p.bestseller = ${opts.bestseller}`}
+        ${opts.categorySlug ? Prisma.sql`AND c.slug = ${opts.categorySlug}` : Prisma.empty}
+      ORDER BY
+        CASE
+          WHEN ${norm} = ${first} THEN 0
+          WHEN ${norm} LIKE ${first + "%"} THEN 1
+          WHEN ${norm} LIKE ${"% " + first + "%"} THEN 2
+          ELSE 3
+        END,
+        length(p.name) ASC,
+        p.created_at DESC
+      LIMIT ${opts.take ?? 50} OFFSET ${opts.skip ?? 0}
+    `);
+    return rows.map((r) => r.id);
+  }
+
   async findAll(opts: { categorySlug?: string; bestseller?: boolean; take?: number; skip?: number; q?: string; list?: boolean; includeInactive?: boolean } = {}) {
     // Arama: çok-kelimeli sorgu token'lara bölünür, HER token isimde geçmeli (AND).
     // Böylece "kart vizit" → "Klasik Kartvizit" eşleşir (boşluklu yazımda da bulunur).
-    const tokens = (opts.q ?? "").trim().split(/\s+/).filter(Boolean);
+    // Token'lar Türkçe katlanır ki "brosur" da "Broşür"ü bulsun.
+    const tokens = (opts.q ?? "").trim().split(/\s+/).filter(Boolean).map(foldTr);
+
+    // Arama varsa: filtre + sıralama ham SQL'de yapılır, buraya sıralı ID listesi döner.
+    // Sayfalama da orada uygulandığı için aşağıda take/skip TEKRAR uygulanmaz.
+    const searchIds = tokens.length ? await this.searchProductIds(tokens, opts) : null;
+    if (searchIds && searchIds.length === 0) return [];
+
     // includeInactive YALNIZ admin (guarded admin-list) için: storefront daima aktif-filtreli.
     const where = {
       ...(opts.includeInactive ? {} : { isActive: true }),
       ...(opts.bestseller !== undefined && { bestseller: opts.bestseller }),
       ...(opts.categorySlug && { category: { slug: opts.categorySlug } }),
-      ...(tokens.length
-        ? { AND: tokens.map((t) => ({ name: { contains: t, mode: "insensitive" as const } })) }
-        : {}),
+      ...(searchIds ? { id: { in: searchIds } } : {}),
     };
     const common = {
       where,
-      take: opts.take ?? 50,
-      skip: opts.skip ?? 0,
+      ...(searchIds ? {} : { take: opts.take ?? 50, skip: opts.skip ?? 0 }),
       orderBy: { createdAt: "desc" as const },
     };
     // PERF — LİSTE MODU: storefront katalog/anasayfa/kategori binlerce ürünü tek seferde
@@ -95,10 +162,16 @@ export class ProductsService {
       }
     }
 
-    return products.map((p) => ({
+    const result = products.map((p) => ({
       ...p,
       displayPrice: p.pricingMode === "area" ? (areaDisplay.get(p.id) ?? null) : (minMap.get(p.id) ?? null),
     }));
+
+    // `id: { in: [...] }` sırayı KORUMAZ — alaka sıralaması ham SQL'de hesaplandığı için
+    // burada geri uygulanmalı, yoksa tüm ranking boşa gider.
+    if (!searchIds) return result;
+    const rank = new Map(searchIds.map((id, i) => [id, i]));
+    return result.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
   }
 
   async findBySlug(slug: string) {
