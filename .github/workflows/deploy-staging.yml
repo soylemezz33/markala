@@ -69,9 +69,15 @@ jobs:
           platforms: linux/amd64
 
   deploy:
-    name: Deploy Staging to VPS
+    name: Deploy Staging (self-hosted APP-VM)
     needs: build-and-push
-    runs-on: ubuntu-latest
+    # 2026-08-20: staging deploy'u "Compose + nginx conf'u VPS'e kopyala" adımında
+    # düşüyordu. Sebep prod'da 2026-08-17'de teşhis edilenin AYNISI: production/staging
+    # iç ağdaki APP-VM'de (10.20.33.5), GitHub'ın hosted runner'ı oraya SSH ile
+    # ulaşamıyor. Prod bu yüzden self-hosted runner'a taşındı; staging geride kalmıştı.
+    # Staging stack'i ZATEN aynı makinede (/opt/markala, aynı markala-nginx) durduğu
+    # için çözüm birebir aynı: runner APP-VM'in İÇİNDE, deploy yerel docker ile.
+    runs-on: [self-hosted, app-vm]
     timeout-minutes: 15
     environment:
       name: staging
@@ -82,75 +88,24 @@ jobs:
         uses: actions/checkout@v6
 
       # Staging dosyaları henüz main'de olmayabilir (test-önce-merge akışı) —
-      # /opt/markala'daki git checkout'una dokunmadan scp ile bindirilir.
-      - name: Compose + nginx conf'u VPS'e kopyala
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          source: "docker-compose.staging.yml,nginx/conf.d/staging.conf"
-          target: /opt/markala/
-          overwrite: true
+      # /opt/markala'daki git checkout'una DOKUNMADAN üzerine kopyalanır.
+      # (Eskiden scp ile yapılıyordu; runner artık aynı makinede olduğu için düz cp.)
+      - name: Compose + nginx conf'u yerine koy
+        run: |
+          set -e
+          sudo install -m 644 docker-compose.staging.yml /opt/markala/docker-compose.staging.yml
+          sudo install -D -m 644 nginx/conf.d/staging.conf /opt/markala/nginx/conf.d/staging.conf
+          echo "✓ staging compose + nginx conf güncellendi"
 
-      - name: Staging stack'i güncelle
-        uses: appleboy/ssh-action@v1.2.5
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          command_timeout: 13m
-          script: |
-            set -e
-            cd /opt/markala
-            # İlk çalıştırmada .env.staging'i otomatik üret (idempotent — varsa DOKUNMAZ).
-            # Secrets yalnız VPS'te kalır; staging'e özel, prod .env.production'dan bağımsız.
-            if [ ! -f .env.staging ]; then
-              echo "→ .env.staging yok — otomatik oluşturuluyor..."
-              umask 077
-              cat > .env.staging <<EOF
-            STAGING_POSTGRES_DB=markala_staging
-            STAGING_POSTGRES_USER=markala
-            STAGING_POSTGRES_PASSWORD=$(openssl rand -hex 24)
-            STAGING_JWT_SECRET=$(openssl rand -hex 32)
-            STAGING_REVALIDATE_SECRET=$(openssl rand -hex 16)
-            GITHUB_REPOSITORY=${{ github.repository }}
-            EOF
-              # Heredoc satır başlarındaki YAML girintisini temizle
-              sed -i 's/^[[:space:]]*//' .env.staging
-              echo "  ✓ /opt/markala/.env.staging oluşturuldu"
-            fi
-            # Sonradan eklenen zorunlu anahtarlar — mevcut .env.staging'e idempotent ekle.
-            if ! grep -q '^STAGING_ENCRYPTION_KEY=' .env.staging; then
-              echo "STAGING_ENCRYPTION_KEY=$(openssl rand -hex 24)" >> .env.staging
-              echo "  ✓ STAGING_ENCRYPTION_KEY eklendi"
-            fi
-            echo "→ Staging imajlarını çek..."
-            docker compose -f docker-compose.staging.yml --env-file .env.staging pull
-            echo "→ Staging servislerini güncelle (prod'a DOKUNULMAZ)..."
-            docker compose -f docker-compose.staging.yml --env-file .env.staging up -d --no-build
-            # NOT: ayrıca 'prisma migrate deploy' KOŞULMAZ — api imajının CMD'si açılışta
-            # zaten migrate eder; ikinci bir eşzamanlı migrate boş DB'de yarış yaratıp
-            # P3009 (failed migration kaydı) bırakıyordu (2026-08-07 olayı).
-            echo "→ Prod nginx reload (staging vhost'ları yüklensin)..."
-            docker exec markala-nginx nginx -t && docker exec markala-nginx nginx -s reload
-            echo "→ Sağlık kontrolü (container içinden, maks ~1 dk)..."
-            ok=0
-            for i in $(seq 1 6); do
-              code=$(docker exec markala-nginx sh -c "wget -q -O /dev/null -S http://staging-web:3000/api/health 2>&1 | head -1 | grep -o '[0-9]\{3\}'" || echo 000)
-              echo "  deneme $i/6: staging-web /api/health -> $code"
-              if [ "$code" = "200" ]; then ok=1; break; fi
-              sleep 10
-            done
-            if [ "$ok" != "1" ]; then
-              echo "❌ Staging web sağlıksız:"
-              docker ps --format '{{.Names}} {{.Status}}' | grep staging || true
-              docker logs markala-staging-web --tail 40 2>&1 || true
-              exit 1
-            fi
-            echo "✅ Staging deploy tamam: ${{ github.sha }}"
+      # Mantık betikte (scripts/deploy-staging-appvm.sh) — prod deploy ile aynı desen.
+      # sudo: .env.staging root-only ve docker soketi root'a ait.
+      - name: Staging stack'i güncelle (yerel docker)
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          chmod +x scripts/deploy-staging-appvm.sh
+          sudo -E bash scripts/deploy-staging-appvm.sh
 
       - name: Verify staging (external)
         run: |
