@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
 import { Sparkle, ShieldCheck, PaintBrush, Truck, Eye, EyeSlash, ShoppingBag } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
@@ -32,11 +32,16 @@ export default function LoginPage() {
     if (typeof window === "undefined") return "/hesabim";
     return safeNextPath(new URLSearchParams(window.location.search).get("next")) ?? "/hesabim";
   }
-  // "next"i mount'ta state'e al (render sırasında window okumak hydration uyumsuzluğu yapar).
-  const [nextParam, setNextParam] = useState<string | null>(null);
-  useEffect(() => {
-    setNextParam(safeNextPath(new URLSearchParams(window.location.search).get("next")));
-  }, []);
+  // CLS (2026-08-20): eskiden `next` mount'ta useEffect ile state'e alınıyordu. Sonuç:
+  // sunucu ve ilk client render'ında null → aşağıdaki sepet özeti bloğu YOK sayılıyor,
+  // bir tick sonra beliriyor ve ALTINDAKİ FORMU aşağı itiyordu. Gerçek kullanıcı verisinde
+  // /giris mobil CLS 0,842 çıktı (eşik 0,1) — "Ödemeye Geç"e basıp giriş ekranına düşen
+  // müşteri tam bu duruma giriyor. useSearchParams ilk render'da (SSR dahil) değeri verir,
+  // böylece blok için yer baştan ayrılır. (layout.tsx'te Suspense sınırı eklendi.)
+  const searchParams = useSearchParams();
+  const nextParam = safeNextPath(searchParams.get("next"));
+  // Sepet localStorage'dan hidrasyonla gelir; içeriği geç dolsa da KUTU baştan durur.
+  const showCartSlot = nextParam === "/odeme";
   // Kayıt linki de "next"i taşısın — HOSGELDIN ile gelen yeni müşteri kayıt olup checkout'a dönsün.
   const kayitHref = nextParam ? `/kayit?next=${encodeURIComponent(nextParam)}` : "/kayit";
 
@@ -72,19 +77,25 @@ export default function LoginPage() {
           </div>
 
           {/* Ödeme duvarı: sepetin korunduğunu lafla değil gözle kanıtla (mini özet).
-              nextParam mount'ta set edildiği için bu blok yalnız client'ta render olur — hydration güvenli. */}
-          {nextParam === "/odeme" && cartItems.length > 0 && (
-            <div className="mb-5 flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 px-4 py-3">
-              <ShoppingBag size={20} weight="bold" className="text-success flex-none" />
-              <div className="min-w-0 flex-1 text-sm">
-                <div className="font-semibold text-ink-900">
-                  Sepetiniz sizi bekliyor — {cartItems.length} ürün · <Price amount={cartTotal} size="sm" className="text-ink-900" />
-                </div>
-                <div className="text-xs text-ink-600 truncate">
-                  {cartItems.slice(0, 2).map((i) => i.productName).join(" · ")}
-                  {cartItems.length > 2 ? ` +${cartItems.length - 2} daha` : ""}
-                </div>
-              </div>
+              Yer BAŞTAN ayrılır (min-h): sepet hidrasyonu geç bitse de kutu yerinde durur,
+              içerik dolunca form aşağı itilmez. İki satırlık sabit yapı (ikon + başlık +
+              truncate alt satır) olduğu için yükseklik ürün sayısından bağımsızdır. */}
+          {showCartSlot && (
+            <div className="mb-5 min-h-[68px] flex items-center gap-3 rounded-lg border border-success/30 bg-success/5 px-4 py-3">
+              {cartItems.length > 0 && (
+                <>
+                  <ShoppingBag size={20} weight="bold" className="text-success flex-none" />
+                  <div className="min-w-0 flex-1 text-sm">
+                    <div className="font-semibold text-ink-900">
+                      Sepetiniz sizi bekliyor — {cartItems.length} ürün · <Price amount={cartTotal} size="sm" className="text-ink-900" />
+                    </div>
+                    <div className="text-xs text-ink-600 truncate">
+                      {cartItems.slice(0, 2).map((i) => i.productName).join(" · ")}
+                      {cartItems.length > 2 ? ` +${cartItems.length - 2} daha` : ""}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
