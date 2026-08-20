@@ -44,9 +44,17 @@ export class StatsService {
       pendingReviews,
     ] = await Promise.all([
         this.prisma.order.count({ where: realOrder }),
+        // CİRO: ödemesi başarılı VE iptal edilmemiş siparişler.
+        // 2026-08-20 (Hasan bildirdi): status filtresi YOKTU → ödenip sonra iptal edilen
+        // sipariş ciroda kalıyordu. Gerçek veride 529,00 TL'lik iptal sipariş toplam
+        // cironun %16'sını şişiriyordu. Ayrıca iadesi yapılmış ödemeler de düşülür.
         this.prisma.order.aggregate({
           _sum: { total: true },
-          where: { paymentStatus: "basarili", deletedAt: null },
+          where: {
+            paymentStatus: "basarili",
+            deletedAt: null,
+            status: { not: "iptal_edildi" },
+          },
         }),
         this.prisma.user.count({ where: { role: "customer" } }),
         this.prisma.corporateApplication.count({ where: { status: "pending" } }),
