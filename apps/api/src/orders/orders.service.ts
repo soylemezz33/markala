@@ -945,6 +945,12 @@ export class OrdersService {
       void this.loyalty.refundForOrder(id).catch(() => undefined);
 
     // Müşteri bildirimi (fire-and-forget; hata sipariş durumu güncellemesini bozmaz).
+    // 2026-08-20: üretim süreci tamamen sessizdi (sipariş onayı → kargo arası hiç mail yok).
+    // Hasan kararı: her durum için mail YOK, müşteriyi boğmasın. Bildirilen dört an:
+    // sipariş alındı · baskıya verildi · kargoya verildi · teslim edildi.
+    // "tasarim-bekleniyor" ve "tasarim-onayindi" BİLEREK sessiz.
+    if (status === "uretimde")
+      void this.mail.sendOrderInProductionEmail(id).catch(() => undefined);
     if (status === "kargoya-verildi")
       void this.mail
         .sendOrderShippedEmail(id, { number: extras?.trackingNumber, carrier: extras?.trackingCarrier })

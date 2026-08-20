@@ -383,6 +383,69 @@ export class MailService {
     return ok;
   }
 
+  /**
+   * "Baskıya verildi" bildirimi — müşteriye (2026-08-20, Hasan talebi).
+   *
+   * Neden: 7 sipariş durumundan yalnız 3'ü (kargoya-verildi, teslim-edildi, iptal-edildi)
+   * mail tetikliyordu. Sipariş onayı ile kargo arasındaki üretim süreci tamamen sessizdi;
+   * matbaada bu günler sürüyor ve "siparişim ne oldu" aramalarının ana kaynağı burası.
+   *
+   * KAPSAM KARARI (Hasan): müşteriyi boğmamak için her durum değişikliğinde mail YOK.
+   * Bildirim gönderilen dört an: sipariş alındı · baskıya verildi (bu metot) ·
+   * kargoya verildi · teslim edildi. "tasarim-bekleniyor" ve "tasarim-onayindi"
+   * BİLEREK sessiz bırakıldı.
+   */
+  async sendOrderInProductionEmail(orderId: string): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!order || !order.email) {
+      this.logger.warn(`mail.orderInProduction: sipariş/e-posta yok order=${orderId}`);
+      return false;
+    }
+    const esc = (s: unknown) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = order.user?.fullName?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const orderUrl = `${webUrl}/hesabim/siparislerim`;
+
+    const subject = `Siparişin baskıya verildi 🖨️ ${order.orderNumber}`;
+    const text =
+      `${name ? `Merhaba ${name},` : "Merhaba,"}
+
+${order.orderNumber} numaralı siparişin baskıya verildi.
+` +
+      `Üretim tamamlanınca kargo bilgisini ayrıca ileteceğiz.
+
+Siparişlerim: ${orderUrl}
+
+Markala`;
+    const html = renderEmail({
+      title: "Siparişin Baskıda 🖨️",
+      intro: `${greeting} siparişin baskıya verildi.`,
+      preheader: `${order.orderNumber} — üretim başladı, sırada kargo var`,
+      bodyHtml:
+        `<p style="margin:0 0 8px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>` +
+        `<p style="margin:0 0 12px">Üretim tamamlanınca kargoya veriyoruz ve takip numarasını ayrıca ileteceğiz.</p>` +
+        `<p style="margin:0 0 14px;color:#78716c;font-size:13px">Bu aşamada tasarım değişikliği yapılamıyor; bir sorun varsa lütfen hemen bize ulaş.</p>` +
+        emailButton("Siparişimi görüntüle", orderUrl),
+    });
+
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-in-production", orderNumber: order.orderNumber });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.orderInProduction failed to=${order.email}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-in-production", orderNumber: order.orderNumber });
+      return false;
+    }
+  }
+
   /** Sipariş kargoya verildiğinde müşteriye bildirim (updateStatus "kargoya-verildi" tetikler). */
   async sendOrderShippedEmail(orderId: string, tracking?: { number?: string; carrier?: string }): Promise<boolean> {
     const order = await this.prisma.order.findUnique({
