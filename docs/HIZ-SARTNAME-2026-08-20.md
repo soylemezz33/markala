@@ -109,3 +109,31 @@ görseller hazırlıyor — oran mantığı bu ölçülerle test edilmeli.
 - Görünür tasarım/yerleşim değişikliği YOK.
 - gtag yükleme stratejisine dokunulmayacak.
 - CLS'i iyi olan iniş sayfalarında boyut/oran değişikliği yok.
+
+---
+
+## ✅ DOĞRULAMA — 2026-08-20 (iş sonrası, SEO oturumu)
+
+Aynı makine, aynı komut, iş sonrası 2 tur (tek koşu gürültülü olduğu için):
+
+| Sayfa | Önce | Tur 1 | Tur 2 | Hüküm |
+|---|---|---|---|---|
+| kategori-uyari | 8,8 sn LCP | 3,7 | 6,2 | ✅ **belirgin iyileşme** (~%45) |
+| kategori-branda | 8,8 sn | 5,7 | — | ✅ iyileşme (~%35) |
+| matbaa-mersin | 5,8 sn | 7,2 | 5,5 | ≈ değişmedi (gürültü bandında) |
+| urun-kaygan | 5,4 sn | 6,0 | 6,2 | ⚠️ **tutarlı hafif kötüleşme** |
+
+**P1 (görsel önceliği) hedefi vurdu:** ilk 4 kart `fetchpriority="high"`, 5+ lazy — canlı
+HTML'den doğrulandı; en kötü iki sayfa (kategoriler) belirgin hızlandı.
+
+**⚠️ Geri bildirim — P2 şüphesi:** TBT her sayfada, her iki turda da yükseldi
+(580→~740 · 270→428 · 430→~620 · 360→~550 ms). JS 343→313 KB düştüğü halde TBT'nin
+artması ve ürün sayfasının (P1 değişikliği ALMAYAN sayfa) tutarlı yavaşlaması,
+dinamik bölmenin işi ertelemek yerine parçalayıp hidrasyon maliyeti eklediğini
+düşündürüyor. Öneri: `next/dynamic` ile bölünen bileşenlerden görünür-üstü olanlar
+bölünmeden geri alınsın; yalnız gerçekten ekran-altı/etkileşim-sonrası olanlar
+bölünmeli. Lokal tekrarlı ölçümle doğrulanmalı (tek koşuya güvenme).
+
+**Nihai hakem şunlar olacak:** (1) GA4'e akan gerçek kullanıcı web-vitals verisi
+(birkaç gün), (2) Ads kalite puanı "sayfa deneyimi" bileşeni (1-3 hafta). İkisini
+SEO oturumu takip ediyor.
