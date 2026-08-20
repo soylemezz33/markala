@@ -1,0 +1,111 @@
+# İniş Sayfası Hız Şartnamesi — 2026-08-20
+
+> **Devir:** Geliştirici oturumu. Kaynak: SEO/reklam oturumu ölçümleri.
+> **Neden acil:** Google Ads kalite puanı bileşenlerinde 14 kelimenin 12'si
+> **"sayfa deneyimi: ortalamanın altında"** — reklam alakası ise hemen hepsinde yüksek.
+> Yani Google'a göre reklamlar iyi, SAYFALAR yavaş. Reklam trafiğinin **%90'ı mobil**.
+> Düşük kalite puanı = aynı bütçeyle daha az gösterim + daha pahalı tık + dönüşüm kaybı.
+> Bu iş, reklam bütçesinin kendisinden daha yüksek getirili.
+
+## Ölçülen durum (Lighthouse 13.4.1, mobil emülasyon, 2026-08-20)
+
+| Sayfa (reklam iniş) | Skor | LCP | TBT | CLS |
+|---|---|---|---|---|
+| `/kategori/is-guvenligi-uyari-ikaz` | **57** | **8,8 sn** | **580 ms** | 0 |
+| `/kategori/vinil-branda-afis` | 67 | **8,8 sn** | 270 ms | 0 |
+| `/matbaa/mersin` | 66 | 5,8 sn | 430 ms | 0 |
+| `/urun/dikkat-kaygan-zemin` | 70 | 5,4 sn | 360 ms | 0,004 |
+
+Hedef eşikler: LCP ≤ 2,5 sn · TBT ≤ 200 ms · skor ≥ 85. CLS iniş sayfalarında ZATEN iyi — dokunma.
+
+Ham JSON raporları: scratchpad `lh/` klasöründe üretildi; gerekirse yeniden üretim:
+`npx lighthouse <url> --only-categories=performance --form-factor=mobile --screenEmulation.mobile --chrome-flags="--headless=new"`
+
+---
+
+## P1 — Kategori kartlarında LCP görseline öncelik (en yüksek etki)
+
+**Bulgu:** Kategori sayfasında ekran üstündeki ürün kartları dahil TÜM görseller
+`loading="lazy"` ve hiçbirinde `fetchpriority` yok (canlı HTML'den doğrulandı).
+LCP elementi ilk sıradaki ürün görseli; yavaş 4G'de 343 KB JS ile ağ yarışına girip
+8,8 sn'ye itiliyor.
+
+**İstenen:**
+- `components/product-card.tsx` → `ProductCard`'a opsiyonel `priority?: boolean` prop'u;
+  true iken `<Image priority fetchPriority="high" loading="eager">`, değilse mevcut davranış.
+- `app/urunler/all-products-client.tsx` → grid render'ında **yalnız 1. sayfanın ilk 4
+  kartına** `priority` geçir (mobilde ilk ekran ~2-4 kart). Sayfalama/sort değişince
+  priority verilmez (yalnız ilk boyama önemli).
+- Aynı kart bileşenini kullanan ana sayfa railleri ETKİLENMEMELİ (orada priority zaten
+  hero'ya ait; raillerde lazy doğru).
+
+**Kabul:** Kategori sayfası HTML'inde ilk 4 `<img>` `fetchpriority="high"` taşımalı,
+5. ve sonrası lazy kalmalı. Lighthouse mobil LCP < 4 sn'ye inmeli (tek başına bu adımla).
+
+## P2 — JS yükünü düşür (TBT + LCP yarışı)
+
+**Bulgu:** Kategori sayfası ilk yükte **343 KB gzip JS / 21 chunk**; ürün sayfası 354 KB.
+Lighthouse "unused JavaScript ~0,8-1,1 sn" diyor; TBT 270-580 ms. En büyük parça 92 KB
+(`chunks/2405-*.js`) — içeriği bundle analyzer ile teşhis edilmeli (`ANALYZE=true pnpm build`,
+analyzer zaten kurulu: `next.config.mjs`).
+
+**İstenen:**
+- 92 KB'lık chunk'ın ne taşıdığını isimlendir (şüpheliler: framer-motion, carousel,
+  form/validation kütüphanesi). Ekran-altı ve etkileşim-sonrası bileşenleri
+  `next/dynamic` (ssr:false gerekmeyenlerde) ile böl: yorumlar bölümü, cross-sell,
+  recently-viewed, cart-drawer, arama overlay'i tipik adaylar.
+- `AllProductsClient` içindeki toolbar/sort/filtre mantığının kategori sayfasına
+  taşıdığı bağımlılıkları gözden geçir — kategori sayfası için filtreler gizliyken
+  bile tüm kod iniyor.
+- Hedef: kategori ilk-yük JS ≤ 250 KB gzip, TBT ≤ 200 ms.
+
+**Kabul:** Lighthouse "unused JS" fırsatı < 0,3 sn; TBT dört sayfada da ≤ 200 ms.
+
+## P3 — Üçüncü taraf script erteleme (dikkatli)
+
+**Bulgu:** gtag (GA4+Ads) `afterInteractive`, Meta Pixel `lazyOnload` (`components/analytics.tsx`).
+
+**İstenen:** gtag `afterInteractive` KALMALI (Ads dönüşüm/gclid işleme bozulmasın —
+kırmızı çizgi). Clarity/Hotjar/GTM env ile açılırsa `lazyOnload` olduklarını doğrula.
+Başka müdahale gerekmiyor; bu madde "bozma" korumasıdır.
+
+## P4 — Ana sayfa CLS 0,292 (ayrı iş, iniş sayfası değil)
+
+Reklamlar ana sayfaya inmiyor ama marka trafiği iniyor. Bulgu (önceki denetim):
+`components/home/premium-hero-slider.tsx` → `HeroArtDirectedImage` oran ipucu olarak
+masaüstü boyutunu (2120×742) veriyor, mobil görsel ise 0,844 oranlı dikey →
+mobilde yükleme sonrası zıplama. Çözüm: `<picture>` içinde mobil `<source>` için de
+doğru oran bilgisini ver (CSS `aspect-ratio` media query ile ya da mobil boyutları
+admin verisinden geçirerek). Hasan yeni 3840×1344 masaüstü / 1440×1706 mobil
+görseller hazırlıyor — oran mantığı bu ölçülerle test edilmeli.
+
+## P5 — Küçük işler
+
+- Kategori sayfalarında font preload yok (ana sayfada var) — layout seviyesine taşınabilir mi bak; değilse geç.
+- `api.markala.com.tr` preconnect'i layout'ta — kategori HTML'inde de geldiğini doğrula (muhtemelen tamam).
+
+---
+
+## Doğrulama protokolü (iş bitince)
+
+1. Aynı 4 URL'de Lighthouse mobil → hedef: skor ≥ 85, LCP ≤ 2,5, TBT ≤ 200.
+2. Deploy sonrası SEO/reklam oturumuna haber ver → kalite puanı takibi bizde:
+   "sayfa deneyimi" bileşeninin BELOW_AVERAGE → AVERAGE'a dönmesi 1-3 hafta sürer
+   (Google yeniden tarayınca). QS 3→5-6 = aynı bütçeyle ~%30-50 daha fazla tıklama.
+3. CWV alan verisi (gerçek kullanıcı) zaten GA4'e akıyor (web-vitals events) —
+   LCP dağılımındaki iyileşme oradan da izlenecek.
+
+## Dokunulacak dosyalar (özet)
+
+| Dosya | İş |
+|---|---|
+| `apps/web/src/components/product-card.tsx` | `priority` prop |
+| `apps/web/src/app/urunler/all-products-client.tsx` | ilk 4 karta priority |
+| bundle analyzer çıktısına göre 3-6 bileşen | `next/dynamic` bölme |
+| `apps/web/src/components/home/premium-hero-slider.tsx` | mobil oran (P4) |
+
+## Yapılmayacaklar
+
+- Görünür tasarım/yerleşim değişikliği YOK.
+- gtag yükleme stratejisine dokunulmayacak.
+- CLS'i iyi olan iniş sayfalarında boyut/oran değişikliği yok.
