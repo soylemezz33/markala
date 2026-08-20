@@ -137,3 +137,34 @@ bölünmeli. Lokal tekrarlı ölçümle doğrulanmalı (tek koşuya güvenme).
 **Nihai hakem şunlar olacak:** (1) GA4'e akan gerçek kullanıcı web-vitals verisi
 (birkaç gün), (2) Ads kalite puanı "sayfa deneyimi" bileşeni (1-3 hafta). İkisini
 SEO oturumu takip ediyor.
+
+## 📌 EK — Ana sayfa ölçümü (2026-08-20, kullanıcı PSI 58 gördü)
+
+Hasan PSI'da ana sayfayı ölçtü: 58/100. Bizim eş zamanlı lokal ölçüm: 52/100.
+Ana sayfa şartnamenin ilk kapsamında YOKTU (reklamlar oraya inmiyor) — ama artık
+sıradaki iş. Skorun anatomisi:
+
+| Metrik | Değer | Skora etkisi |
+|---|---|---|
+| LCP | 3,9 sn | orta (eski denetimde 8,85'ti — P1/P2 dolaylı düzeltmiş) |
+| **CLS** | **0,292** | **ana katil #1** (eşik 0,1; skor ağırlığı %25) |
+| **TBT** | **880 ms** | **ana katil #2** (eşik 200; skor ağırlığı %30) |
+
+**CLS kaynağı ölçümle isimlendi:** kayan öğe `<section class="bg-paper-50 py-12 …">`
+— hero'nun hemen altındaki bölüm. Yani hero mobilde geç gelen görseliyle büyüyüp
+altındaki her şeyi itiyor = şartnamedeki **P4** teşhisinin ölçüm kanıtı
+(`HeroArtDirectedImage` mobil oran ipucu masaüstü boyutlarıyla veriliyor).
+
+**Karar: P4 artık ertelenmiş değil, P2-TBT geri bildirimiyle birlikte sıradaki iş.**
+
+1. **P4 (CLS 0,292):** hero'nun mobil görünümünde doğru en-boy oranını rezerve et
+   (CSS `aspect-ratio` media query ya da mobil boyutları props'tan geçir). Hasan'ın
+   hazırlayacağı yeni görseller: masaüstü 3840×1344 (oran 2,857), mobil 1440×1706
+   (oran 0,844) — rezervasyon bu oranlarla kurulmalı. Kabul: ana sayfa mobil CLS ≤ 0,05.
+2. **TBT 880 ms:** doğrulama bölümündeki P2 geri bildirimiyle aynı kök — ana sayfa
+   315 KB JS + hidrasyon. Görünür-üstü dynamic bölmeleri geri al; ana sayfada
+   ekran-altı raylar (product-rail, trusted-by, process-timeline) ertelenebilir.
+   Kabul: ana sayfa mobil TBT ≤ 300 ms.
+
+İkisi bitince beklenen: ana sayfa mobil skor 52 → **80+** (CLS %25 + TBT %30 ağırlık
+taşıyor; LCP zaten toparlamış durumda).
