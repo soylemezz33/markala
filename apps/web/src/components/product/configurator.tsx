@@ -56,6 +56,8 @@ interface OptionGroupData {
     optionLabel: string;
     optionSublabel?: string | null;
     optionSort: number;
+    /** rules.tier — seçenek çok olan gruplarda 2 adımlı seçim için (bkz. OptionGroup). */
+    tier?: string | null;
   }>;
 }
 
@@ -77,6 +79,7 @@ function buildGroups(raw: unknown[]): OptionGroupData[] {
       optionLabel: o.optionLabel,
       optionSublabel: o.optionSublabel,
       optionSort: o.optionSort,
+      tier: (o.rules as { tier?: string } | null | undefined)?.tier ?? null,
     });
   }
   return [...map.values()].sort((a, b) => a.groupSort - b.groupSort);

@@ -11,7 +11,21 @@ interface OptionItem {
   optionLabel: string;
   optionSublabel?: string | null;
   optionSort: number;
+  /** rules.tier — doluysa grup 2 adımlı gösterilir (önce seviye, sonra seçenek). */
+  tier?: string | null;
 }
+
+/**
+ * Seviye tanımları — 2026-08-20. Kartvizitte 16 seçenek düz liste hâlinde sunuluyordu;
+ * müşteri "hangisi bana uyar" sorusunu 16 satır okuyarak çözmek zorundaydı. Seviyeler
+ * Hasan'ın fiyat listesindeki EKO/LAK/VIP ayrımından geliyor (zaten var olan ticari yapı).
+ * Burada tanımlı olmayan bir tier gelirse anahtarın kendisi başlık olarak kullanılır.
+ */
+const TIER_META: Record<string, { label: string; desc: string }> = {
+  standart: { label: "Standart", desc: "Günlük kullanım, ince karton" },
+  kabartma: { label: "Kabartmalı & Kalın", desc: "Elle hissedilen kabartma, kalın sıvama" },
+  yaldiz: { label: "Yaldızlı", desc: "Altın / gümüş yaldız uygulaması" },
+};
 
 interface Props {
   groupKey: string;
@@ -87,19 +101,47 @@ function PopularBadgePill({ isSelected, className }: { isSelected: boolean; clas
  * (eşleşme includes ile bağımsız) — sıra yalnız gösterim sırasını belirler.
  */
 const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
-  { match: "selefon", name: "Selefon", desc: "çizilmeye karşı koruyucu parlak/mat film" },
+  // 2026-08-20 Hasan: müşteri terimleri bilmiyor; en çok kararsızlık selefon ve
+  // mat/parlak tercihinde yaşanıyor. Metinler bilinçli olarak "ne işe yarar" odaklı.
+  {
+    match: "selefon",
+    name: "Selefon",
+    desc: "ürüne ekstra koruma sağlayan ince kaplama — baskının kalıcılığını artırır, yıpranmayı ve yırtılmayı zorlaştırır",
+  },
+  { match: "mat", name: "Mat", desc: "parmak izi tutmaz, sakin ve kurumsal durur" },
+  { match: "parlak", name: "Parlak", desc: "renkleri daha canlı gösterir" },
   { match: "bristol", name: "Bristol", desc: "kartvizitlerde standart sert karton" },
   { match: "kuşe", name: "Kuşe", desc: "broşürlerde standart parlak kağıt" },
-  { match: "sıvama", name: "Sıvama", desc: "kenarlara kadar tam kaplama" },
-  { match: "kabartma lak", name: "Kabartma Lak", desc: "logoda parlak kabartma efekti" },
+  {
+    match: "sıvama",
+    name: "Sıvama",
+    desc: "iki kartonun birbirine yapıştırılmasıyla elde edilen kalın, sert kartvizit",
+  },
+  {
+    match: "kabartma lak",
+    name: "Kabartma Lak",
+    desc: "yazı veya logonun üzerine uygulanan, elle hissedilen kabartmalı parlak katman",
+  },
+  { match: "yaldız", name: "Yaldız", desc: "sıcak baskıyla uygulanan metalik altın/gümüş folyo" },
+  { match: "oval köşe", name: "Oval köşe", desc: "köşeleri yuvarlatılmış kesim" },
+  { match: "özel kesim", name: "Özel kesim", desc: "istediğiniz forma göre bıçakla kesim" },
   { match: "otokopili", name: "Otokopili", desc: "kendinden karbonlu — alt kopyaya yazıyı geçirir" },
 ];
 
-/** Etikette geçen jargon terimlerini "Terim: açıklama · …" satırına çevirir; terim yoksa null. */
+/**
+ * Etikette geçen jargon terimlerini "Terim: açıklama · …" satırına çevirir; terim yoksa null.
+ * Eşleşme KELİME SINIRINA bağlı: düz `includes` kullanılırsa "mat" gibi kısa terimler
+ * "format"/"matbaa"/"otomatik" içinde de eşleşip alakasız açıklama basardı.
+ */
+// Sözlük terimleri sabit ve düz metin (harf + boşluk) olduğu için regex kaçışına gerek yok.
+const TR_WORD = "a-zçğıöşü0-9";
+function matchesTerm(haystack: string, term: string): boolean {
+  return new RegExp(`(^|[^${TR_WORD}])${term}([^${TR_WORD}]|$)`).test(haystack);
+}
 function jargonHelpFor(label: string | null | undefined): string | null {
   if (!label) return null;
   const lower = trLower(label);
-  const parts = JARGON_GLOSSARY.filter((j) => lower.includes(j.match)).map(
+  const parts = JARGON_GLOSSARY.filter((j) => matchesTerm(lower, j.match)).map(
     (j) => `${j.name}: ${j.desc}`,
   );
   return parts.length > 0 ? parts.join(" · ") : null;
@@ -360,7 +402,61 @@ function SearchableDropdown({
 }
 
 function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, disabled, onSelect, priceHints, hintMode = "none", layout = "auto", unitSuffix, volumeBadge, tierBadges, popularKey }: Props) {
-  const sorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
+  const allSorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
+
+  // --- 2 adımlı seçim: önce seviye, sonra o seviyenin seçenekleri -----------------
+  // Seviye DEĞİŞTİRMEK seçimi değiştirmez; yalnız listeyi filtreler. Aksi hâlde
+  // müşteri sekmeye dokunur dokunmaz fiyat zıplardı (istenmeyen sürpriz).
+  const tierKeys: string[] = [];
+  for (const o of allSorted) {
+    if (o.tier && !tierKeys.includes(o.tier)) tierKeys.push(o.tier);
+  }
+  const hasTiers = tierKeys.length > 1;
+  const selectedTier = allSorted.find((o) => o.optionKey === selected)?.tier ?? null;
+  const [tierOverride, setTierOverride] = useState<string | null>(null);
+  // Seçim başka seviyeye geçerse (ör. dışarıdan reset) sekme onu takip etsin.
+  useEffect(() => {
+    setTierOverride(null);
+  }, [selectedTier]);
+  const activeTier = hasTiers ? (tierOverride ?? selectedTier ?? tierKeys[0]!) : null;
+  const sorted = hasTiers ? allSorted.filter((o) => o.tier === activeTier) : allSorted;
+
+  const tierBar = hasTiers ? (
+    <div className="mb-3 grid grid-cols-3 gap-2" role="tablist" aria-label={`${groupLabel} seviyesi`}>
+      {tierKeys.map((t) => {
+        const meta = TIER_META[t] ?? { label: t, desc: "" };
+        const isActive = t === activeTier;
+        const hasSelection = selectedTier === t;
+        return (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => setTierOverride(t)}
+            className={cn(
+              "flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-md border text-left transition-all duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
+              isActive
+                ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
+                : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
+            )}
+          >
+            <span className="flex items-center gap-1 font-medium text-sm leading-tight">
+              {meta.label}
+              {/* Seçili ürün bu seviyedeyse nokta ile işaretle — sekme gezerken kaybolmasın. */}
+              {hasSelection && !isActive && <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />}
+            </span>
+            {meta.desc && (
+              <span className={cn("text-[11px] leading-snug", isActive ? "text-paper-200" : "text-ink-500")}>
+                {meta.desc}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
 
   // Jargon yardımcı satırı — seçili seçeneğin adında/alt etiketinde geçen matbaa
   // terimlerinin açıklaması, seçimin ALTINDA düz metin (tooltip değil → mobil uyumlu).
@@ -428,6 +524,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
         <label id={`group-${groupKey}-label`} className="block text-sm font-medium text-ink-900 mb-3">
           {groupLabel}
         </label>
+        {tierBar}
         <div role="radiogroup" aria-labelledby={`group-${groupKey}-label`} className="grid grid-cols-2 gap-2">
           {sorted.map((opt) => {
             const isSelected = selected === opt.optionKey;
@@ -473,9 +570,10 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
   }
 
   // Many options → searchable dropdown
-  if (options.length > MANY) {
+  if (sorted.length > MANY) {
     return (
       <div>
+        {tierBar}
         <SearchableDropdown
           groupKey={groupKey}
           groupLabel={groupLabel}
@@ -521,6 +619,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
       >
         {groupLabel}
       </label>
+      {tierBar}
       <div
         role="radiogroup"
         aria-labelledby={`group-${groupKey}-label`}
