@@ -315,6 +315,18 @@ export class MarkalaApiClient {
 
   // === Payments ===
   payments = {
+    /**
+     * ADMIN: siparişin ödemesini iyzico'dan iade eder (2026-08-20).
+     * Tutar SUNUCUDA belirlenir — istemciden tutar alınmaz. Sunucu idempotent:
+     * ikinci çağrı ikinci iade üretmez, { alreadyRefunded: true } döner.
+     */
+    refund: (orderId: string) =>
+      this.request<{ ok: boolean; alreadyRefunded?: boolean; method?: "cancel" | "refund"; refunded?: number; message?: string }>(
+        "POST",
+        "/payments/refund",
+        { orderId },
+        { auth: true },
+      ),
     /** "Ödeme Yap" tekrar — giriş yapmış müşteri kendi beklemede siparişi için ödemeyi yeniden başlatır. */
     retry: (orderId: string) =>
       this.request<{ paymentPageUrl?: string }>(

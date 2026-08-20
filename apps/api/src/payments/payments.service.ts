@@ -38,6 +38,84 @@ export class PaymentsService implements OnModuleInit {
     private loyalty: LoyaltyService,
   ) {}
 
+  /**
+   * ADMIN: siparişin ödemesini iyzico'dan geri öder. 2026-08-20 (Hasan talebi: panelde iade butonu).
+   *
+   * PARA HAREKETİ — prod'da CANLI iyzico API'si kullanılıyor (IYZICO_BASE_URL=api.iyzipay.com).
+   * Bu yüzden üç koruma var:
+   *  1) Yalnız paymentStatus="basarili" ve iyzicoPaymentId dolu siparişler iade edilebilir.
+   *  2) ÖNCE DB'de atomik işaretleme (basarili → iade_edildi) yapılır; updateMany count=0
+   *     dönerse başka bir istek işi almış demektir ve iyzico'ya HİÇ gidilmez. Butona iki kez
+   *     basmak ikinci bir iade üretmez.
+   *  3) iyzico başarısız olursa işaretleme GERİ ALINIR — yoksa parası iade edilmemiş sipariş
+   *     "iade edildi" görünürdü (sessiz para kaybı).
+   */
+  async refundOrder(orderId: string, actor?: { userId?: string; ip?: string }) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, orderNumber: true, total: true, paymentStatus: true, paymentMethod: true, iyzicoPaymentId: true, iyzicoConversationId: true },
+    });
+    if (!order) throw new NotFoundException("Sipariş bulunamadı");
+    if (order.paymentStatus === "iade_edildi") {
+      return { ok: true, alreadyRefunded: true, message: "Bu sipariş zaten iade edilmiş." };
+    }
+    if (order.paymentStatus !== "basarili") {
+      return { ok: false, message: "Yalnız ödemesi başarılı siparişler iade edilebilir." };
+    }
+    if (order.paymentMethod === "cari") {
+      return { ok: false, message: "Açık hesap (cari) siparişte iyzico ödemesi yok; cari bakiyeden düzeltilmeli." };
+    }
+    if (!order.iyzicoPaymentId) {
+      return { ok: false, message: "Siparişte iyzico ödeme kimliği yok — iade otomatik yapılamıyor." };
+    }
+
+    // (2) Atomik kilit: yarışan ikinci istek buradan geçemez.
+    const claim = await this.prisma.order.updateMany({
+      where: { id: orderId, paymentStatus: "basarili" },
+      data: { paymentStatus: "iade_edildi" },
+    });
+    if (claim.count === 0) {
+      return { ok: true, alreadyRefunded: true, message: "Bu sipariş zaten iade edilmiş." };
+    }
+
+    const res = await this.iyzico.refundPaymentFully({
+      paymentId: order.iyzicoPaymentId,
+      conversationId: order.iyzicoConversationId ?? undefined,
+      ip: actor?.ip,
+    });
+
+    if (!res.ok) {
+      // (3) iyzico reddetti → işaretlemeyi geri al, yoksa para iade edilmemiş sipariş
+      // panelde "iade edildi" görünür ve kimse fark etmez.
+      await this.prisma.order.updateMany({
+        where: { id: orderId, paymentStatus: "iade_edildi" },
+        data: { paymentStatus: "basarili" },
+      });
+      this.logger.error(`iade BAŞARISIZ order=${order.orderNumber}: ${res.error}`);
+      return { ok: false, message: `iyzico iadeyi reddetti: ${res.error ?? "bilinmeyen hata"}` };
+    }
+
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actor?.userId ?? null,
+          entityType: "Order",
+          entityId: orderId,
+          action: "refund",
+          diff: {
+            orderNumber: order.orderNumber,
+            method: res.method,
+            refunded: res.refunded ?? Number(order.total),
+          },
+          ipAddress: actor?.ip ?? null,
+        },
+      })
+      .catch((e) => this.logger.error(`[audit] iade denetim kaydı yazılamadı: ${(e as Error)?.message}`));
+
+    this.logger.log(`iade OK order=${order.orderNumber} yöntem=${res.method} tutar=${res.refunded ?? order.total}`);
+    return { ok: true, method: res.method, refunded: res.refunded ?? Number(order.total), message: "İade iyzico'ya iletildi." };
+  }
+
   onModuleInit() {
     // GÜVENLİK AĞI: callback kaçan ("para çekildi ama işaretlenmedi") ödemeleri periyodik kurtar.
     // Başlangıçtan 30sn sonra bir kez + her 10 dk. Tek api instance'ı olduğundan setInterval yeterli.

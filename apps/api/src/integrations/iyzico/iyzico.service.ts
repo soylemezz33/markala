@@ -121,4 +121,82 @@ export class IyzicoService {
       );
     });
   }
+
+  /**
+   * Ödemenin TAMAMINI müşteriye geri döndürür. 2026-08-20 (Hasan talebi: panelden iade butonu).
+   *
+   * iyzico'da iki ayrı işlem var ve hangisinin geçerli olduğu ZAMANA bağlı:
+   *   - cancel : yalnız gün sonu kapanışından ÖNCE (pratikte aynı gün), TAM tutar, paymentId yeterli
+   *   - refund : kapanış SONRASI, kalem (paymentTransactionId) bazında çalışır
+   * Panelden iade çoğunlukla ertesi gün+ yapıldığı için ikisini de deniyoruz: önce cancel,
+   * başarısızsa ödeme detayını çekip her kalem için refund.
+   *
+   * Elimizde yalnız iyzicoPaymentId var (paymentTransactionId saklanmıyor); bu yüzden refund
+   * yolunda önce payment.retrieve ile itemTransactions alınır.
+   */
+  async refundPaymentFully(input: {
+    paymentId: string;
+    conversationId?: string;
+    ip?: string;
+  }): Promise<{ ok: boolean; method?: "cancel" | "refund"; refunded?: number; error?: string }> {
+    if (!this.isConfigured()) return { ok: false, error: "iyzico_yapilandirilmamis" };
+    const client = this.getClient();
+    const locale = Iyzipay.LOCALE.TR;
+    const conversationId = input.conversationId ?? "";
+    const ip = input.ip && input.ip.length > 0 ? input.ip : "127.0.0.1";
+
+    // 1) Aynı gün ise iptal en temizi: tek çağrı, tam tutar.
+    const cancelRes = await new Promise<{ ok: boolean; msg?: string }>((resolve) => {
+      client.cancel.create({ locale, conversationId, paymentId: input.paymentId, ip }, (err, result) => {
+        if (err) return resolve({ ok: false, msg: (err as Error)?.message ?? String(err) });
+        resolve({ ok: result?.status === "success", msg: result?.errorMessage ?? result?.errorCode });
+      });
+    });
+    if (cancelRes.ok) {
+      this.logger.log(`iyzico iptal (cancel) başarılı payment=${input.paymentId}`);
+      return { ok: true, method: "cancel" };
+    }
+    this.logger.warn(`iyzico cancel başarısız (kapanış geçmiş olabilir) payment=${input.paymentId}: ${cancelRes.msg}`);
+
+    // 2) Kapanış geçmiş → kalem bazlı iade. Önce işlem kimliklerini al.
+    const detail = await new Promise<{ items: Array<{ id: string; paidPrice: string }>; error?: string }>((resolve) => {
+      client.payment.retrieve({ locale, conversationId, paymentId: input.paymentId }, (err, result) => {
+        if (err) return resolve({ items: [], error: (err as Error)?.message ?? String(err) });
+        if (result?.status !== "success") return resolve({ items: [], error: result?.errorMessage ?? "retrieve_failure" });
+        const items = (result?.itemTransactions ?? []).map((t: { paymentTransactionId: string; paidPrice: unknown }) => ({
+          id: String(t.paymentTransactionId),
+          paidPrice: String(t.paidPrice),
+        }));
+        resolve({ items });
+      });
+    });
+    if (detail.items.length === 0) {
+      return { ok: false, error: detail.error ?? "iade_edilecek_kalem_bulunamadi" };
+    }
+
+    // Her kalem ayrı iade edilir; BİRİ bile başarısızsa kısmi iade oluşur — bu durumu
+    // çağırana bildiriyoruz ki panelde "kısmen iade edildi" olarak ele alınabilsin.
+    let refunded = 0;
+    const errors: string[] = [];
+    for (const it of detail.items) {
+      const r = await new Promise<{ ok: boolean; msg?: string }>((resolve) => {
+        client.refund.create(
+          { locale, conversationId, paymentTransactionId: it.id, price: it.paidPrice, ip, currency: Iyzipay.CURRENCY.TRY },
+          (err, result) => {
+            if (err) return resolve({ ok: false, msg: (err as Error)?.message ?? String(err) });
+            resolve({ ok: result?.status === "success", msg: result?.errorMessage ?? result?.errorCode });
+          },
+        );
+      });
+      if (r.ok) refunded += Number(it.paidPrice) || 0;
+      else errors.push(`${it.id}: ${r.msg ?? "bilinmeyen"}`);
+    }
+
+    if (errors.length > 0) {
+      this.logger.error(`iyzico iade KISMİ/BAŞARISIZ payment=${input.paymentId}: ${errors.join(" | ")}`);
+      return { ok: refunded > 0, method: "refund", refunded, error: errors.join(" | ") };
+    }
+    this.logger.log(`iyzico iade başarılı payment=${input.paymentId} tutar=${refunded}`);
+    return { ok: true, method: "refund", refunded };
+  }
 }

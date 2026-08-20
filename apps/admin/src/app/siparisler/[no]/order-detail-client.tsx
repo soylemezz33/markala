@@ -17,8 +17,9 @@ import {
   XCircle,
   DownloadSimple,
   PaintBrush,
+  ArrowCounterClockwise,
 } from "@phosphor-icons/react";
-import { updateOrderStatus } from "./actions";
+import { updateOrderStatus, refundOrder } from "./actions";
 
 const STATUSES = [
   { id: "siparis-alindi",     label: "Sipariş Alındı" },
@@ -48,6 +49,7 @@ export interface OrderDetailProps {
   createdAt: string;
   status: string;
   paymentStatus?: string | null;
+  paymentMethod?: string | null;
   total: unknown;
   subtotal?: unknown;
   shippingFee?: unknown;
@@ -135,6 +137,32 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const [statusError, setStatusError] = useState<string | null>(null);
   const [internalNote, setInternalNote] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [refunding, setRefunding] = useState(false);
+
+  // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
+  const payStatus = String(order.paymentStatus ?? "beklemede");
+  const canRefund = payStatus === "basarili" && order.paymentMethod !== "cari";
+  const alreadyRefunded = payStatus === "iade-edildi" || payStatus === "iade_edildi";
+
+  const handleRefund = () => {
+    if (refunding) return;
+    // PARA HAREKETİ — geri alınamaz. Tutarı da göstererek onay iste.
+    const ok = window.confirm(
+      "Bu siparişin ödemesi iyzico üzerinden müşteriye İADE EDİLECEK.\n\n" +
+        `Sipariş: ${order.orderNumber}\n` +
+        `Tutar: ${Number(order.total ?? 0).toFixed(2)} ₺\n\n` +
+        "Bu işlem GERİ ALINAMAZ. Devam edilsin mi?",
+    );
+    if (!ok) return;
+    setRefundMsg(null);
+    setRefunding(true);
+    startTransition(async () => {
+      const res = await refundOrder(order.id);
+      setRefunding(false);
+      setRefundMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+    });
+  };
 
   const handleStatusChange = (statusId: string) => {
     if (statusId === currentStatus || isPending) return;
@@ -385,6 +413,40 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                   <XCircle size={14} /> Siparişi İptal Et
                 </button>
               </div>
+            )}
+
+            {/* İADE — para hareketi. Yalnız ödemesi başarılı ve online (cari değil)
+                siparişlerde görünür; zaten iade edilmişse buton yerine durum yazısı çıkar. */}
+            {alreadyRefunded ? (
+              <div className="mb-4 text-xs text-ink-500 bg-paper-100 border border-paper-200 rounded-md px-3 py-2">
+                Bu siparişin ödemesi iade edildi.
+              </div>
+            ) : canRefund ? (
+              <div className="mb-4">
+                <button
+                  onClick={handleRefund}
+                  disabled={refunding || isPending}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-warning/40 text-warning hover:bg-warning/10 disabled:opacity-60"
+                >
+                  <ArrowCounterClockwise size={14} />
+                  {refunding ? "İade ediliyor…" : "Ödemeyi İade Et"}
+                </button>
+                <p className="mt-1.5 text-[11px] text-ink-500">
+                  iyzico üzerinden müşteriye geri ödeme yapılır. Geri alınamaz.
+                </p>
+              </div>
+            ) : null}
+
+            {refundMsg && (
+              <p
+                className={`mb-4 text-xs rounded-md px-3 py-2 border ${
+                  refundMsg.ok
+                    ? "text-success bg-success/10 border-success/20"
+                    : "text-error bg-error/10 border-error/20"
+                }`}
+              >
+                {refundMsg.text}
+              </p>
             )}
 
             {statusError && (

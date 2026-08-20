@@ -46,6 +46,12 @@ class CariPaydownDto {
   clientIp?: string;
 }
 
+/** Admin iade isteği — yalnız sipariş kimliği; tutar sunucuda belirlenir (kullanıcıya güvenilmez). */
+class RefundDto {
+  @IsString()
+  orderId!: string;
+}
+
 @ApiTags("payments")
 @Controller("payments")
 export class PaymentsController {
@@ -90,5 +96,18 @@ export class PaymentsController {
   @ApiBearerAuth()
   reconcile() {
     return this.payments.reconcilePendingPayments();
+  }
+
+  /**
+   * Admin: siparişin ödemesini iyzico'dan iade et (2026-08-20, panelde "İade Et" butonu).
+   * PARA HAREKETİ — servis tarafında atomik kilit + başarısızlıkta geri alma var.
+   */
+  @Post("refund")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  refund(@Body() dto: RefundDto, @Req() req: Request) {
+    const actorId = (req as Request & { user?: { sub?: string } }).user?.sub;
+    return this.payments.refundOrder(dto.orderId, { userId: actorId, ip: req.ip });
   }
 }

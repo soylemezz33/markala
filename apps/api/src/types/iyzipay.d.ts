@@ -14,6 +14,12 @@ declare module "iyzipay" {
     constructor(options: IyzipayOptions);
     checkoutFormInitialize: { create(request: unknown, cb: IyzipayCallback): void };
     checkoutForm: { retrieve(request: unknown, cb: IyzipayCallback): void };
+    /** Ödeme detayı — itemTransactions[].paymentTransactionId iade için ŞART. */
+    payment: { retrieve(request: unknown, cb: IyzipayCallback): void };
+    /** İptal: yalnız gün sonu kapanışından ÖNCE (aynı gün) ve TAM tutar. paymentId yeterli. */
+    cancel: { create(request: unknown, cb: IyzipayCallback): void };
+    /** İade: kapanış sonrası, kısmi olabilir; paymentTransactionId bazında çalışır. */
+    refund: { create(request: unknown, cb: IyzipayCallback): void };
 
     static LOCALE: { TR: string; EN: string };
     static CURRENCY: { TRY: string; USD: string; EUR: string };
