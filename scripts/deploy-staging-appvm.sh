@@ -46,7 +46,33 @@ echo "→ Staging imajlarını çek..."
 docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull
 
 echo "→ Staging servislerini güncelle (prod servislerine DOKUNULMAZ)..."
-docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-build
+# --force-recreate YALNIZ web+api'ye: 2026-08-20'de deploy yeşil raporlanmasına ve
+# GHCR'daki imaj taze olmasına rağmen staging ESKİ kodu servis etmeye devam etti;
+# yani `up -d` konteyneri yenilemiyordu. postgres BİLEREK listede yok (verisi kalsın).
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --no-build \
+  --force-recreate staging-web staging-api
+
+# --- İMAJ KANITI ---------------------------------------------------------------
+# Prod'daki "uptime kanıtı" adımının staging karşılığı. Deploy'un YEŞİL raporlanıp
+# canlıya yansımaması bu projede iki kez yaşandı (2026-08-17 prod, 2026-08-20 staging).
+# Konteynerin çalıştırdığı imaj ID'si, az önce çekilen tag'in ID'siyle AYNI değilse
+# deploy başarısız sayılır — sessiz eski-kod servisi bir daha fark edilmeden geçmesin.
+repo="${GITHUB_REPOSITORY:-soylemezz33/markala}"
+for svc in web api; do
+  want=$(docker image inspect --format '{{.Id}}' "ghcr.io/${repo}/${svc}:staging" 2>/dev/null || echo "")
+  got=$(docker inspect --format '{{.Image}}' "markala-staging-${svc}" 2>/dev/null || echo "")
+  if [ -z "$want" ] || [ -z "$got" ]; then
+    echo "❌ imaj kanıtı okunamadı (${svc}): want='${want}' got='${got}'"
+    exit 1
+  fi
+  if [ "$want" != "$got" ]; then
+    echo "❌ staging-${svc} ESKİ imajı çalıştırıyor — deploy yansımamış!"
+    echo "   çekilen tag : $want"
+    echo "   konteyner   : $got"
+    exit 1
+  fi
+  echo "  ✓ staging-${svc} doğru imajda (${got#sha256:})"
+done
 
 # NOT: ayrıca 'prisma migrate deploy' KOŞULMAZ — api imajının CMD'si açılışta
 # zaten migrate eder; ikinci bir eşzamanlı migrate boş DB'de yarış yaratıp
