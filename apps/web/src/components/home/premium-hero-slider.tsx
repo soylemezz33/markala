@@ -172,13 +172,27 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
  * eski ham <picture>/<img> davranışıyla birebir, ama artık _next/image optimize varyantlarıyla.
  *
  * Notlar:
- * - width/height oran ipucu desktop görseline aittir (mobil görselin gerçek boyutunu admin
- *   belirler; `w-full h-auto` ile tarayıcı, seçilen kaynağın gerçek oranını kullanır — eski
- *   davranışla aynı).
  * - getImageProps preload <link>'i EKLEMEZ; ilk slaytta priority=true'nun ürettiği
  *   fetchpriority="high" + eager, tarayıcı preload-scanner'ı ile aynı işi görür
  *   (önceki ham <img> yaklaşımına eşdeğer, gerileme yok).
+ *
+ * CLS (2026-08-20 hız şartnamesi P4) — ÇÖZÜLDÜ:
+ * `<img>`'nin width/height'ı MASAÜSTÜ görseline ait (2120×742 → oran 2,857). Mobilde ise
+ * `<source>` 0,844 oranlı DİKEY görseli indiriyordu. Tarayıcı yükleme öncesi kısa-geniş bir
+ * kutu ayırıp görsel gelince kutuyu boyuna büyütüyor, altındaki her şey aşağı itiliyordu →
+ * ana sayfa mobil CLS 0,292 (eşik 0,1) ve kayan öğe olarak hero'nun hemen altındaki
+ * `<section class="bg-paper-50 py-12">` ölçüldü.
+ *
+ * Çözüm: oran, `<source>` ile AYNI kırılımda (767/768 px) CSS `aspect-ratio` olarak rezerve
+ * edilir. Tailwind `md:` = min-width 768px, `<source>` = max-width 767px → tam hizalı.
+ * Oranlar mevcut görsellerle de Hasan'ın hazırladığı yeni setle de uyumlu:
+ *   mobil   1080×1280 = 0,8438  ·  yeni 1440×1706 = 0,8440  (fark %0,04, göze görünmez)
+ *   masaüstü 2120×742 = 2,8571  ·  yeni 3840×1344 = 2,8571  (birebir aynı)
+ * Oranlar gerçek görsel oranlarıyla eşleştiği için sıkışma/kırpılma olmaz.
  */
+const HERO_RATIO_MOBILE = "aspect-[1440/1706]";
+const HERO_RATIO_DESKTOP = "md:aspect-[3840/1344]";
+
 function HeroArtDirectedImage({ slide, isFirst }: { slide: HeroBannerData; isFirst: boolean }) {
   const shared = { alt: slide.title, width: 2120, height: 742, sizes: "100vw" };
   const {
@@ -195,7 +209,11 @@ function HeroArtDirectedImage({ slide, isFirst }: { slide: HeroBannerData; isFir
       <source media="(max-width: 767px)" srcSet={mobileSrcSet} sizes={mobileSizes} />
       {/* getImageProps deseni ham <img> gerektirir (alt/decoding/fetchpriority imgProps'ta) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img {...imgProps} alt={slide.title} className="block w-full h-auto" />
+      <img
+        {...imgProps}
+        alt={slide.title}
+        className={`block w-full h-auto ${HERO_RATIO_MOBILE} ${HERO_RATIO_DESKTOP}`}
+      />
     </picture>
   );
 }

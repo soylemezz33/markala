@@ -168,3 +168,33 @@ altındaki her şeyi itiyor = şartnamedeki **P4** teşhisinin ölçüm kanıtı
 
 İkisi bitince beklenen: ana sayfa mobil skor 52 → **80+** (CLS %25 + TBT %30 ağırlık
 taşıyor; LCP zaten toparlamış durumda).
+
+---
+
+## ⛔ DÜZELTME — P2 teşhisi (geliştirici oturumu, 2026-08-20)
+
+Doğrulama bölümündeki P2 önerisi — *"`next/dynamic` ile bölünen bileşenlerden
+görünür-üstü olanlar bölünmeden geri alınsın"* — **uygulanamaz, çünkü öyle bir
+değişiklik hiç yapılmadı.**
+
+Kanıt:
+- P2 commit'i `f023b8b` yalnız **3 dosyaya** dokundu: `sentry.client.config.ts`,
+  `product-card.tsx`, `all-products-client.tsx`. Eklenen `next/dynamic` satırı: **0**.
+- `grep -rn "next/dynamic" apps/web/src` → **0 dosya**. Depoda hiçbir yerde
+  `next/dynamic` kullanılmıyor (bu değişiklikten önce de kullanılmıyordu).
+
+P2'de yapılan TEK şey: Sentry Session Replay'in statik `integrations` dizisinden
+çıkarılıp `requestIdleCallback` ile tembel yüklenmesi. TBT artışının gerçek adayı
+varsa **budur** — replay artık ayrı bir chunk olarak boşta indirilip çalışıyor ve
+bu iş Lighthouse'un TBT ölçüm penceresine denk gelebilir.
+
+**Ama önce ölçüm güvenilirliği:** TBT bu makinelerde ölçülemiyor. Aynı sayfada
+arka arkaya koşuda **361 ms ile 856 ms** arası değerler alındı; doğrulama
+tablosundaki LCP sütunu da aynı oynaklığı gösteriyor (kategori-uyari: 3,7 → 6,2).
+Bu bantta "TBT arttı" demek ölçüm değil tahmin olur.
+
+**Önerilen yol:** karar vermeden önce kontrollü A/B — aynı sakin makinede, lokal
+production sunucusunda, Sentry replay tembel yüklemesi AÇIK ve KAPALI hâlde 5'er
+koşu medyanı. Fark medyanda anlamlıysa geri alınır. Alan verisi (GA4 web-vitals)
+zaten birikiyor; nihai hakem o.
+
