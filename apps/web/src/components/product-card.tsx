@@ -22,9 +22,16 @@ interface ProductCardProps {
   product: Product;
   /** Geriye dönük uyum için kaldı; artık her iki değer de aynı görünür. */
   surface?: "light" | "dark";
+  /**
+   * LCP adayı kartlar için (kategori sayfası ilk ekran). true → görsel eager +
+   * fetchpriority=high yüklenir; yoksa next/image varsayılanı (lazy) kalır.
+   * 2026-08-20 hız şartnamesi P1: reklam iniş sayfalarında LCP 8,8sn'ydi çünkü
+   * ekran üstü kartlar dahil TÜM görseller lazy'ydi ve JS ile ağ yarışı yapıyordu.
+   */
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   // Detayın açılıştaki fiyatıyla AYNI (tek kaynak: configurator). startingPrice'a güvenme.
   const startingPrice = getDisplayPrice(product);
   const [imgError, setImgError] = useState(false);
@@ -48,6 +55,11 @@ export function ProductCard({ product }: ProductCardProps) {
             alt={product.name}
             fill
             sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
+            // priority: yalnız LCP adayı kartlarda (kategori/katalog ilk ekran). next/image
+            // priority=true → preload + fetchpriority="high" + eager. Diğer kartlarda
+            // varsayılan lazy KORUNUR (ana sayfa railleri etkilenmez — şartname P1).
+            priority={priority}
+            fetchPriority={priority ? "high" : undefined}
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
             onError={() => setImgError(true)}
           />

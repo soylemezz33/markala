@@ -427,8 +427,13 @@ export function AllProductsClient({
               <>
                 {/* Mobilde 2 kolon: 860 ürünlük katalogda tek kolon aşırı kaydırma yaratıyordu. */}
                 <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 md:gap-5">
-                  {paginated.map((p) => (
-                    <ProductCard key={p.slug} product={p} />
+                  {paginated.map((p, i) => (
+                    // Hız şartnamesi P1 (2026-08-20): reklam iniş sayfalarında LCP 8,8 sn'ydi —
+                    // ekran üstü kartlar dahil TÜM görseller lazy'di ve JS ile ağ yarışına
+                    // giriyordu. Mobilde ilk ekranda ~2-4 kart görünür → yalnız İLK 4 karta
+                    // öncelik ver. Yalnız 1. SAYFA: sonraki sayfalara geçiş bir "ilk boyama"
+                    // değil, orada preload faydasız (hatta bant genişliği çalar).
+                    <ProductCard key={p.slug} product={p} priority={page === 1 && i < 4} />
                   ))}
                 </div>
 
