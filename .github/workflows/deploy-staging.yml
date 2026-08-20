@@ -100,12 +100,13 @@ jobs:
       # Mantık betikte (scripts/deploy-staging-appvm.sh) — prod deploy ile aynı desen.
       # sudo: .env.staging root-only ve docker soketi root'a ait.
       - name: Staging stack'i güncelle (yerel docker)
-        env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_SHA: ${{ github.sha }}
         run: |
           chmod +x scripts/deploy-staging-appvm.sh
-          sudo -E bash scripts/deploy-staging-appvm.sh
+          # Değişkenler AÇIKÇA geçiriliyor: `sudo -E` sudoers'da SETENV izni yoksa
+          # "not allowed to preserve the environment" ile reddedilir.
+          sudo GITHUB_REPOSITORY='${{ github.repository }}' \
+               GITHUB_SHA='${{ github.sha }}' \
+               bash scripts/deploy-staging-appvm.sh
 
       - name: Verify staging (external)
         run: |
