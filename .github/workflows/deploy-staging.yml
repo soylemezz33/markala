@@ -8,9 +8,17 @@
 # /opt/markala/.env.staging, prod network adı doğrulaması.
 name: Deploy to Staging
 
+# 2026-08-20: staging ortamı KAPATILDI (Hasan kararı). Sebep: 15 Ağustos sunucu
+# göçünde test.markala.com.tr / test-api.markala.com.tr DNS'i taşınmadı; bu adresler
+# ESKİ sunucuyu göstermeye devam etti. Sonuç: deploy'lar APP-VM'e doğru iniyordu ama
+# dışarıdan eski sunucunun kopyası görünüyordu — "deploy yansımıyor" yanılgısı.
+# Otomatik tetik KAPALI: kapatılmış bir ortam için boşuna imaj üretilmesin.
+# Geri açmak istenirse: (1) aşağıdaki push tetiğinin yorumunu kaldır, (2) Cloudflare'de
+# test + test-api kayıtlarını markala.com.tr ile AYNI IP'ye çevir, (3) staging DB boş
+# olduğu için staging-db-copy-prod workflow'unu çalıştır.
 on:
-  push:
-    branches: [staging]
+  # push:
+  #   branches: [staging]
   workflow_dispatch:
 
 concurrency:
