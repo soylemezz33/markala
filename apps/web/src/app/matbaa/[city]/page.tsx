@@ -39,12 +39,29 @@ export function generateMetadata({ params }: Props): Metadata {
   const city = getCityBySlug(params.city);
   if (!city) return { title: "Şehir bulunamadı" };
 
-  // Layout zaten "%s · Markala" template ekliyor — burada "| Markala" duplikasyonu olmasın
-  const title = `${city.name} Matbaa & Baskı — ${
-    city.deliveryDays.min === 0 ? "Aynı Gün Üretim" : `${city.deliveryDays.min}-${city.deliveryDays.max} Gün Teslim`
-  }`;
+  // Layout zaten "%s · Markala" template ekliyor — burada "| Markala" duplikasyonu olmasın.
+  //
+  // CTR düzeni (2026-08-20, GSC verisiyle): şehir sayfaları #7-12 bandında yüksek gösterim
+  // alıp 0 tık üretiyordu (osmaniye 92 gösterim/0 tık). Eski başlık "1-1 Gün Teslim" gibi
+  // bozuk kalıplar üretebiliyor, açıklama ise şehir ansiklopedisi cümlesiyle başlıyordu
+  // (intro.slice). Yeni düzen: başlıkta "Fiyatları" ("gaziantep matbaa fiyat listesi"
+  // sorguları) + net teslim vaadi; açıklamada ürün sayımı + eylem çağrısı.
+  const { min, max } = city.deliveryDays;
+  const teslim =
+    min === 0 || city.sameDayCourier
+      ? "Aynı Gün Teslim"
+      : min === max
+        ? `${min} Günde Kapında`
+        : `${min}-${max} Günde Kapında`;
+  const teslimCumle =
+    min === 0 || city.sameDayCourier
+      ? "aynı gün"
+      : min === max
+        ? `${min} iş gününde`
+        : `${min}-${max} iş gününde`;
+  const title = `${city.name} Matbaa & Baskı Fiyatları — ${teslim}`;
 
-  const description = city.intro.slice(0, 158);
+  const description = `${city.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün, siparişiniz ${teslimCumle} DHL ile kapınızda.`;
 
   return {
     title,
@@ -52,8 +69,8 @@ export function generateMetadata({ params }: Props): Metadata {
     alternates: { canonical: `/matbaa/${city.slug}` },
     openGraph: {
       type: "website",
-      title: `${city.name} Matbaa Hizmeti — Markala`,
-      description: city.intro.slice(0, 200),
+      title: `${city.name} Matbaa & Baskı Fiyatları — Markala`,
+      description,
       url: `/matbaa/${city.slug}`,
       images: [
         {

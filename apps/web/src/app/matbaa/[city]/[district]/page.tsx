@@ -41,19 +41,23 @@ export function generateMetadata({ params }: Props): Metadata {
   const district = getDistrictBySlug(params.city, params.district);
   if (!city || !district) return { title: "Bulunamadı" };
 
-  // Layout "%s · Markala" template ekliyor — duplikasyon önle
-  const title = `${district.name} ${city.name} Matbaa & Baskı — ${
-    district.sameDayDelivery ? "Aynı Gün Motor Kurye" : "1 İş Günü Teslim"
-  }`;
+  // Layout "%s · Markala" template ekliyor — duplikasyon önle.
+  // CTR düzeni (2026-08-20): şehir sayfalarıyla aynı gerekçe — "Fiyatları" + teslim vaadi
+  // başlıkta, ansiklopedik intro yerine eylem çağrılı açıklama.
+  const teslim = district.sameDayDelivery ? "Aynı Gün Motor Kurye" : "1 Günde Kapında";
+  const title = `${district.name} ${city.name} Matbaa & Baskı Fiyatları — ${teslim}`;
+  const description = `${district.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün — ${
+    district.sameDayDelivery ? "aynı gün motor kurye ile teslim" : "1 iş gününde kapınızda"
+  }.`;
 
   return {
     title,
-    description: district.intro.slice(0, 158),
+    description,
     alternates: { canonical: `/matbaa/${city.slug}/${district.slug}` },
     openGraph: {
       type: "website",
-      title: `${district.name} ${city.name} Matbaa — Markala`,
-      description: district.intro.slice(0, 200),
+      title: `${district.name} ${city.name} Matbaa & Baskı Fiyatları — Markala`,
+      description,
       url: `/matbaa/${city.slug}/${district.slug}`,
       images: [
         {

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Container, Price } from "@markala/ui";
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
+import { BookOpen, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
 import { AllProductsClient } from "@/app/urunler/all-products-client";
 import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -12,6 +12,36 @@ import type { Metadata } from "next";
 interface Props {
   params: { slug: string };
   searchParams?: { page?: string | string[] };
+}
+
+/**
+ * Kategori → fiyat rehberi eşlemesi. Rehber sayfaları başka hiçbir sayfadan
+ * bağlantı almıyordu (yetim içerik) — Google için keşif/otorite sinyali sıfırdı.
+ * İSG kategorileri (is-guvenligi-*) prefix ile tek rehbere gider.
+ */
+const KATEGORI_REHBERI: Record<string, { href: string; label: string }> = {
+  kartvizit: { href: "/rehber/kartvizit-fiyatlari-2026", label: "Kartvizit Fiyatları 2026 Rehberi" },
+  brosur: { href: "/rehber/brosur-baski-fiyatlari-2026", label: "Broşür Baskı Fiyatları 2026 Rehberi" },
+  "kapi-aski-brosur": {
+    href: "/rehber/brosur-baski-fiyatlari-2026",
+    label: "Broşür Baskı Fiyatları 2026 Rehberi",
+  },
+  "vinil-branda-afis": {
+    href: "/rehber/branda-baski-m2-fiyati-2026",
+    label: "Branda Baskı m² Fiyatı 2026 Rehberi",
+  },
+  afis: { href: "/rehber/afis-baski-fiyatlari-2026", label: "Afiş Baskı Fiyatları 2026 Rehberi" },
+  rollup: { href: "/rehber/rollup-fiyatlari-2026", label: "Rollup Fiyatları 2026 Rehberi" },
+};
+
+function rehberBul(slug: string) {
+  if (slug.startsWith("is-guvenligi-")) {
+    return {
+      href: "/rehber/isg-zorunlu-uyari-levhalari",
+      label: "İSG Uyarı Levhaları Rehberi — Renkler ve Zorunlu İşaretler",
+    };
+  }
+  return KATEGORI_REHBERI[slug];
 }
 
 /** Tekrarlı query anahtarı (?x=a&x=b) Next'te string[] gelir — ilkini al (crash guard). */
@@ -51,9 +81,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const page = parsePage(first(searchParams?.page));
   const pageSuffix = page > 1 ? ` — Sayfa ${page}` : "";
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
+  // Fiyat eki: "115.92 TL'den" gibi ondalıklı görüntü SERP'te itici — tam TL'ye yuvarla,
+  // "KDV Dahil" güveni ekle (sitede tüm fiyatlar KDV dahildir).
+  const fiyatEki = cat.startingPrice
+    ? ` — ${Math.round(Number(cat.startingPrice))} TL'den (KDV Dahil)`
+    : "";
   const seoTitle =
-    (cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
-      `${cat.name} Baskı${cat.startingPrice ? ` — ${cat.startingPrice} TL'den` : ""}`) +
+    (cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ?? `${cat.name} Baskı${fiyatEki}`) +
     pageSuffix;
   const seoDesc = cat.seo?.description ?? cat.longDescription;
   const url = page > 1 ? `/kategori/${cat.slug}?page=${page}` : `/kategori/${cat.slug}`;
@@ -183,6 +217,24 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           </p>
         </Container>
       )}
+
+      {/* İlgili fiyat rehberi — rehberlere tek iç bağlantı kaynağı (yetim sayfa düzeltmesi). */}
+      {(() => {
+        const rehber = rehberBul(cat.slug);
+        if (!rehber) return null;
+        return (
+          <Container className="pb-10">
+            <Link
+              href={rehber.href}
+              className="inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:text-brand-900 transition-colors"
+            >
+              <BookOpen size={16} weight="fill" />
+              <span>{rehber.label}</span>
+              <CaretRight size={14} weight="bold" />
+            </Link>
+          </Container>
+        );
+      })()}
 
       {/* İlgili kategoriler */}
       <section className="bg-paper-100 border-t border-paper-200 py-12 md:py-16">

@@ -24,7 +24,9 @@ const PAGE_PATH = "/rehber/brosur-baski-fiyatlari-2026";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Broşür Baskı Fiyatları 2026 — A5/A4 El İlanı Ne Kadar? (KDV Dahil)",
+    // GSC (2026-08-20): sorgu ailesi "1000 adet (a5) broşür fiyatı" / "a4 el ilanı fiyatları"
+    // biçiminde geliyor — başlık tiraj sayısını açıkça söylesin.
+    title: "Broşür ve El İlanı Fiyatları 2026 — 1.000 Adet Ne Kadar?",
     description:
       "2026 güncel broşür ve el ilanı baskı fiyatları: A7'den A3'e ebat, 1.000–10.000 adet tiraj tablosu ve kağıt seçim rehberi. Tüm fiyatlar KDV dahil — sepette değişmez.",
     alternates: { canonical: PAGE_PATH },
