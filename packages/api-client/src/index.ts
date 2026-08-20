@@ -861,6 +861,10 @@ export interface AdminStatsDto {
   pendingCorporate: number;
   /** Ödemesi tamamlanmamış siparişler (terk edilmiş olabilir) — opsiyonel: eski API ile uyum. */
   unpaidCount?: number;
+  /** Sol menü rozetleri + bildirim çanı (2026-08-20). Opsiyonel: eski API ile uyum. */
+  unreadMessages?: number;
+  newQuotes?: number;
+  pendingReviews?: number;
   ordersByStatus: Array<{ status: string; count: number }>;
   /** Entegrasyonların gerçek yapılandırma durumu (env'den) — opsiyonel (eski API ile uyum). */
   integrations?: {

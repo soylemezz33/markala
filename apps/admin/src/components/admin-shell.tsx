@@ -84,9 +84,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const userMenuRef = useRef<HTMLDivElement | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement | null>(null);
-  const [notifs, setNotifs] = useState<{ count: number; items: Array<{ label: string; href: string }> }>({
+  const [notifs, setNotifs] = useState<{
+    count: number;
+    items: Array<{ label: string; href: string }>;
+    // href → bekleyen iş sayısı. Sol menüde ilgili linkin yanında rozet olarak çıkar.
+    badges: Record<string, number>;
+  }>({
     count: 0,
     items: [],
+    badges: {},
   });
   // Sistem sağlığı: null = bilinmiyor (ilk yükleme), true = ok, false = sorun var.
   const [systemOk, setSystemOk] = useState<boolean | null>(null);
@@ -110,9 +116,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/notifications")
-      .then((r) => (r.ok ? r.json() : { count: 0, items: [] }))
+      .then((r) => (r.ok ? r.json() : { count: 0, items: [], badges: {} }))
       .then((d) => {
-        if (!cancelled) setNotifs({ count: d.count ?? 0, items: d.items ?? [] });
+        if (!cancelled)
+          setNotifs({ count: d.count ?? 0, items: d.items ?? [], badges: d.badges ?? {} });
       })
       .catch((err) => {
         console.error("[admin-shell] /api/notifications fetch başarısız:", err);
@@ -176,7 +183,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex bg-paper-100">
       {/* Sidebar — Desktop */}
       <aside className="hidden lg:flex w-64 bg-ink-900 text-paper-100 flex-col fixed inset-y-0 left-0 z-30">
-        <SidebarContent pathname={pathname} onNavigate={() => {}} onLogout={logout} />
+        <SidebarContent pathname={pathname} onNavigate={() => {}} onLogout={logout} badges={notifs.badges} />
       </aside>
 
       {/* Sidebar — Mobile slide-in */}
@@ -191,6 +198,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               pathname={pathname}
               onNavigate={() => setMobileOpen(false)}
               onLogout={logout}
+              badges={notifs.badges}
             />
           </aside>
         </>
@@ -231,7 +239,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <Bell size={18} />
               {notifs.count > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-paper-50 text-[10px] font-bold grid place-items-center leading-none">
-                  {notifs.count > 9 ? "9+" : notifs.count}
+                  {notifs.count > 99 ? "99+" : notifs.count}
                 </span>
               )}
             </button>
@@ -241,9 +249,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 role="menu"
                 className="absolute right-0 top-full mt-1 w-72 bg-paper-50 border border-paper-200 rounded-lg shadow-lg overflow-hidden z-30"
               >
-                <div className="px-4 py-3 border-b border-paper-200 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-ink-900">Bildirimler</span>
-                  <span className="text-[11px] text-ink-500">{notifs.count} bekleyen</span>
+                <div className="px-4 py-3 border-b border-paper-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-ink-900">Bekleyen İşler</span>
+                    <span className="text-[11px] text-ink-500">{notifs.count} adet</span>
+                  </div>
+                  {/* Beklentiyi net kur: bu bir gelen kutusu DEĞİL, canlı iş listesi.
+                      Tıklamak "okundu" yapmaz — iş yapılınca satır kendiliğinden düşer. */}
+                  <p className="mt-1 text-[11px] leading-snug text-ink-500">
+                    İş tamamlanınca listeden kendiliğinden düşer.
+                  </p>
                 </div>
                 {notifs.items.length === 0 ? (
                   <div className="px-4 py-6 text-center text-sm text-ink-500">Bekleyen iş yok 🎉</div>
@@ -347,10 +362,13 @@ function SidebarContent({
   pathname,
   onNavigate,
   onLogout,
+  badges,
 }: {
   pathname: string;
   onNavigate: () => void;
   onLogout: () => void;
+  /** href → bekleyen iş sayısı (/api/notifications). Boşsa rozet çıkmaz. */
+  badges: Record<string, number>;
 }) {
   return (
     <>
@@ -394,7 +412,7 @@ function SidebarContent({
                       <l.icon size={16} weight={isActive ? "fill" : "regular"} />
                       {l.label}
                     </span>
-                    {l.badge && (
+                    {(badges[l.href] ?? 0) > 0 && (
                       <span
                         className={cn(
                           "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
@@ -403,7 +421,7 @@ function SidebarContent({
                             : "bg-error text-paper-50",
                         )}
                       >
-                        {l.badge}
+                        {badges[l.href]! > 99 ? "99+" : badges[l.href]}
                       </span>
                     )}
                   </Link>

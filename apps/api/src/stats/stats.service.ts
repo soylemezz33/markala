@@ -32,8 +32,17 @@ export class StatsService {
       deletedAt: null,
       OR: [{ paymentStatus: "basarili" as const }, { paymentMethod: "cari" }],
     };
-    const [orderCount, revenueAgg, customerCount, pendingCorporate, byStatus, unpaidCount] =
-      await Promise.all([
+    const [
+      orderCount,
+      revenueAgg,
+      customerCount,
+      pendingCorporate,
+      byStatus,
+      unpaidCount,
+      unreadMessages,
+      newQuotes,
+      pendingReviews,
+    ] = await Promise.all([
         this.prisma.order.count({ where: realOrder }),
         this.prisma.order.aggregate({
           _sum: { total: true },
@@ -51,6 +60,12 @@ export class StatsService {
             status: { not: "iptal_edildi" },
           },
         }),
+        // Sol menü rozetleri + bildirim çanı için okunmamış/işlenmemiş sayaçları.
+        // 2026-08-20: panelde "Gelen Kutusu"/"Teklif Talepleri" yanında hiç rozet
+        // çıkmıyordu — sayaçlar hiç hesaplanmıyordu, alan admin-shell'de boş duruyordu.
+        this.prisma.contactMessage.count({ where: { status: "new" } }),
+        this.prisma.quoteRequest.count({ where: { status: "new" } }),
+        this.prisma.review.count({ where: { isApproved: false } }),
       ]);
 
     return {
@@ -59,6 +74,9 @@ export class StatsService {
       customerCount,
       pendingCorporate,
       unpaidCount,
+      unreadMessages,
+      newQuotes,
+      pendingReviews,
       ordersByStatus: byStatus.map((r) => ({ status: r.status, count: r._count })),
       integrations: this.integrationStatus(),
     };

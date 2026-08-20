@@ -406,6 +406,13 @@ function EmptyCart() {
   // Popüler kategoriler CANLI API'den (admin'in eklediği kategoriler de görünsün);
   // API boş → kategori listesi gösterilmez.
   const [categories, setCategories] = useState<Category[]>([]);
+  // CLS (2026-08-20): kategoriler istemcide çekildiği için ızgara ÖNCE boş (0 yükseklik)
+  // render ediliyor, veri gelince 6 kart beliriyor ve altındaki her şeyi aşağı itiyordu.
+  // Gerçek kullanıcı verisi bu sayfada mobil CLS 0,312-0,596 gösterdi (eşik 0,1).
+  // Çözüm: veri gelene kadar AYNI ızgarada 6 iskelet kutu — yükseklik baştan sabit.
+  // `loaded` ayrı tutuluyor: "henüz yüklenmedi" ile "yüklendi ama boş" ayrımı olmadan
+  // API hatasında iskeletler sonsuza kadar kalırdı.
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let active = true;
     apiClient.categories
@@ -413,7 +420,10 @@ function EmptyCart() {
       .then((list) => {
         if (active && Array.isArray(list)) setCategories(list);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
     return () => {
       active = false;
     };
@@ -434,12 +444,25 @@ function EmptyCart() {
         {/* Doğrudan büyük harfle yazıldı — CSS uppercase Türkçe İ'yi bazı ortamlarda I yapıyordu. */}
         <h2 className="text-center text-sm font-semibold tracking-wider text-ink-500 mb-6">POPÜLER KATEGORİLER</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 max-w-4xl mx-auto">
-          {popular.map((c) => (
-            <Link key={c.slug} href={`/kategori/${c.slug}`} className="flex flex-col items-center gap-2 p-4 bg-paper-50 border border-paper-200 rounded-lg hover:border-ink-300 hover:shadow-md transition-all">
-              <div className="w-10 h-10 rounded-md bg-brand-100 text-brand-700 grid place-items-center"><Storefront size={18} /></div>
-              <span className="text-xs font-medium text-ink-900 text-center">{c.name}</span>
-            </Link>
-          ))}
+          {!loaded
+            ? // Yer tutucu: gerçek kartla AYNI kutu ölçüleri (p-4 + 10×10 ikon + metin satırı)
+              // → veri gelince yükseklik değişmez, kayma olmaz.
+              Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={`ph-${i}`}
+                  aria-hidden
+                  className="flex flex-col items-center gap-2 p-4 bg-paper-50 border border-paper-200 rounded-lg"
+                >
+                  <div className="w-10 h-10 rounded-md bg-paper-100" />
+                  <span className="h-4 w-16 rounded bg-paper-100" />
+                </div>
+              ))
+            : popular.map((c) => (
+                <Link key={c.slug} href={`/kategori/${c.slug}`} className="flex flex-col items-center gap-2 p-4 bg-paper-50 border border-paper-200 rounded-lg hover:border-ink-300 hover:shadow-md transition-all">
+                  <div className="w-10 h-10 rounded-md bg-brand-100 text-brand-700 grid place-items-center"><Storefront size={18} /></div>
+                  <span className="text-xs font-medium text-ink-900 text-center">{c.name}</span>
+                </Link>
+              ))}
         </div>
       </section>
     </Container>
