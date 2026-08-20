@@ -709,6 +709,11 @@ export class OrdersService {
     // siparişler ödeme başarısında (payments.handleCallback) mail alır. Fire-and-forget.
     if (onAccount && input.userId) {
       void this.mail.sendOrderConfirmationEmail((placed as { id: string }).id).catch(() => undefined);
+      // Yöneticiye "yeni sipariş" bildirimi. BİLEREK onay mailiyle AYNI noktada: sipariş
+      // ancak burada (cari) ya da ödeme başarısında "gerçek" olur. Sipariş oluşturma anına
+      // bağlansaydı terk edilmiş ödemeler de bildirim üretirdi (2026-08-18'de panelde
+      // ödemesiz siparişlerin görünmesi zaten sorun olmuştu).
+      void this.mail.sendNewOrderAdminEmail((placed as { id: string }).id).catch(() => undefined);
       // Meta CAPI Purchase: cari sipariş iyzico callback'inden GEÇMEZ → burada tetiklenmezse
       // kurumsal dönüşümler Meta'da hiç görünmüyordu. event_id=orderNumber olduğundan tarayıcı
       // Pixel'iyle dedup korunur (handleCallback'teki çağrı deseninin aynısı, fire-and-forget).

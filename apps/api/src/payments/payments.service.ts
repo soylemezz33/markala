@@ -500,6 +500,9 @@ export class PaymentsService implements OnModuleInit {
         // ALMIYOR ("param gitti mi?") ve Meta Purchase dönüşümü kaybediliyordu. Kurtarmada da
         // (yalnız count>0 = ilk işaretleme) fire-and-forget olarak tetikle.
         void this.mail.sendOrderConfirmationEmail(o.id).catch(() => undefined);
+        // Yöneticiye "yeni sipariş" bildirimi — kaçan callback kurtarıldığında da gitsin,
+        // yoksa o sipariş hiç haber vermeden panele düşerdi.
+        void this.mail.sendNewOrderAdminEmail(o.id).catch(() => undefined);
         void this.metaCapi.sendPurchase(o.id).catch(() => undefined);
         // Sadakat kazanımı (idempotent + best-effort) — callback kaçmış siparişte de kazanım kaybolmasın.
         void this.loyalty.earnForOrder(o.id).catch(() => undefined);
@@ -597,6 +600,9 @@ export class PaymentsService implements OnModuleInit {
       // callback'lerde çift mail gitmez. Fire-and-forget: redirect'i geciktirmez, akışı bloke etmez.
       if (upd.count > 0) {
         void this.mail.sendOrderConfirmationEmail(orderId).catch(() => undefined);
+        // Yöneticiye "yeni sipariş" bildirimi. Müşteri onayıyla AYNI koşulda (upd.count>0)
+        // → yinelenen callback'te çift bildirim gitmez.
+        void this.mail.sendNewOrderAdminEmail(orderId).catch(() => undefined);
         // Meta Conversions API: sunucu-taraflı Purchase (KVKK onay-gate'li, event_id=orderNumber
         // ile tarayıcı Pixel'ine dedup). Fire-and-forget: redirect'i geciktirmez, akışı bloke etmez.
         void this.metaCapi.sendPurchase(orderId).catch(() => undefined);

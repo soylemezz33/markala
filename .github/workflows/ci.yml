@@ -100,6 +100,13 @@ jobs:
         run: pnpm --filter @markala/web build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
+          # 2026-08-20: bu adım 2026-08-18'den beri düşüyordu ve CI'ı kırmızı tutuyordu.
+          # Sebep: lib/catalog.ts API adresini `API_INTERNAL_URL || NEXT_PUBLIC_API_URL ||
+          # "http://api:4000"` diye çözüyor. CI ikisini de vermediği için Docker-içi hostname
+          # olan api:4000'e düşüyor, prerender veri çekemiyor ve build patlıyordu.
+          # Docker imaj build'i çalışıyordu çünkü Dockerfile bu değeri ARG olarak veriyor —
+          # yani deploy yeşilken CI kırmızıydı. Aynı değeri CI'a da veriyoruz.
+          NEXT_PUBLIC_API_URL: "https://api.markala.com.tr"
 
       - name: Build (admin)
         run: pnpm --filter @markala/admin build

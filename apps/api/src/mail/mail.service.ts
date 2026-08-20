@@ -271,6 +271,118 @@ export class MailService {
     }
   }
 
+  /**
+   * YENİ SİPARİŞ → YÖNETİCİ bildirimi (2026-08-20, Hasan talebi).
+   *
+   * Neden eklendi: sipariş geldiğinde yöneticiye HİÇBİR bildirim gitmiyordu. İletişim
+   * formu, numune talebi, kurumsal başvuru, KVKK ve hatta bülten aboneliği CONTACT_TO
+   * adresine mail atarken, parası ödenmiş sipariş hiç haber vermiyordu — sipariş ancak
+   * panele bakınca görülüyordu.
+   *
+   * "Müşteriyle iletişime geç" butonu wa.me bağlantısıdır: telefondan e-postadaki
+   * butona dokununca doğrudan müşterinin WhatsApp sohbeti açılır. Bu yüzden WhatsApp'ın
+   * teslimat kanalı olması gerekmiyor — asıl istenen tek-dokunuş erişimi bu şekilde sağlanıyor.
+   *
+   * Alıcı: ORDER_NOTIFY_TO (virgülle birden fazla) → yoksa ADMIN_EMAIL. İkisi de yoksa no-op.
+   */
+  async sendNewOrderAdminEmail(orderId: string): Promise<boolean> {
+    const raw =
+      (this.config.get<string>("ORDER_NOTIFY_TO") ?? this.config.get<string>("ADMIN_EMAIL") ?? "").trim();
+    const recipients = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (recipients.length === 0) {
+      this.logger.warn("mail.newOrderAdmin: ORDER_NOTIFY_TO/ADMIN_EMAIL tanımsız — bildirim atlandı");
+      return false;
+    }
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, user: { select: { fullName: true } } },
+    });
+    if (!order) {
+      this.logger.warn(`mail.newOrderAdmin: sipariş yok order=${orderId}`);
+      return false;
+    }
+
+    const esc = (s: unknown) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const fmt = (n: unknown) =>
+      new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0);
+
+    // wa.me uluslararası formatı ister, BAŞINDA + OLMADAN. Siparişlerde telefon
+    // "+905301751310" olarak duruyor; yine de 0'la başlayan/boşluklu girdilere karşı normalize edilir.
+    const waNumber = (() => {
+      const digits = String(order.phone ?? "").replace(/\D/g, "");
+      if (!digits) return null;
+      if (digits.startsWith("90")) return digits;
+      if (digits.startsWith("0")) return "90" + digits.slice(1);
+      if (digits.length === 10) return "90" + digits;
+      return digits;
+    })();
+
+    const adminUrl = (this.config.get<string>("ADMIN_URL") ?? "https://admin.markala.com.tr").replace(/\/$/, "");
+    const orderAdminUrl = `${adminUrl}/siparisler`;
+    const customerName = order.user?.fullName?.trim() || "Müşteri";
+    const waText = encodeURIComponent(
+      `Merhaba, ${order.orderNumber} numaralı siparişiniz için Markala'dan yazıyoruz.`,
+    );
+    const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waText}` : null;
+
+    const isCari = order.paymentMethod === "cari";
+    const paid = order.paymentStatus === "basarili";
+    const payLabel = isCari ? "Açık hesap (cari)" : paid ? "Ödendi" : "ÖDEME BEKLİYOR";
+
+    const rowsHtml = (order.items ?? [])
+      .map(
+        (it) =>
+          `<tr><td style="padding:4px 8px">${esc(it.productName)}</td>` +
+          `<td style="padding:4px 8px;text-align:center">${esc(it.quantity)}</td>` +
+          `<td style="padding:4px 8px;text-align:right">${fmt(it.lineTotal)} ₺</td></tr>`,
+      )
+      .join("");
+
+    const subject = `🔔 Yeni sipariş — ${order.orderNumber} · ${fmt(order.total)} ₺${paid || isCari ? "" : " (ödeme bekliyor)"}`;
+    const text =
+      `Yeni sipariş: ${order.orderNumber}\nTutar: ${fmt(order.total)} ₺ (KDV dahil)\nÖdeme: ${payLabel}\n\n` +
+      `Müşteri: ${customerName}\nTelefon: ${order.phone ?? "-"}\nE-posta: ${order.email ?? "-"}\n` +
+      (waUrl ? `WhatsApp: ${waUrl}\n` : "") +
+      `\nPanel: ${orderAdminUrl}`;
+
+    const html = renderEmail({
+      title: "Yeni sipariş",
+      bodyHtml:
+        `<p style="margin:0 0 10px"><strong style="font-size:18px">${esc(order.orderNumber)}</strong> · ` +
+        `<strong style="font-size:18px">${fmt(order.total)} ₺</strong> <span style="color:#78716c">(KDV dahil)</span></p>` +
+        `<p style="margin:0 0 14px;color:${paid || isCari ? "#16a34a" : "#dc2626"};font-weight:600">Ödeme: ${esc(payLabel)}</p>` +
+        `<table role="presentation" style="width:100%;border-collapse:collapse;font-size:14px;margin:0 0 14px">` +
+        `<tr><td style="padding:3px 0;color:#78716c;width:90px">Müşteri</td><td style="padding:3px 0"><strong>${esc(customerName)}</strong></td></tr>` +
+        `<tr><td style="padding:3px 0;color:#78716c">Telefon</td><td style="padding:3px 0">${esc(order.phone ?? "-")}</td></tr>` +
+        `<tr><td style="padding:3px 0;color:#78716c">E-posta</td><td style="padding:3px 0">${esc(order.email ?? "-")}</td></tr>` +
+        `</table>` +
+        `<table role="presentation" style="width:100%;border-collapse:collapse;font-size:13px;margin:0 0 16px">` +
+        `<thead><tr style="background:#F5F3F0"><th style="padding:6px 8px;text-align:left">Ürün</th>` +
+        `<th style="padding:6px 8px;text-align:center">Adet</th><th style="padding:6px 8px;text-align:right">Tutar</th></tr></thead>` +
+        `<tbody>${rowsHtml}</tbody></table>` +
+        (waUrl ? emailButtonColored("💬 Müşteriyle WhatsApp'tan iletişime geç", waUrl, "#25D366") : "") +
+        emailButton("Siparişi panelde aç", orderAdminUrl) +
+        (waUrl ? emailFallbackLink(waUrl) : ""),
+    });
+
+    let ok = false;
+    for (const to of recipients) {
+      try {
+        const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+        await this.logNotification(to, "sent", { messageId: info.messageId, template: "new-order-admin", orderNumber: order.orderNumber });
+        ok = true;
+      } catch (err) {
+        this.logger.warn(`mail.newOrderAdmin failed to=${to}: ${(err as Error).message}`);
+        await this.logNotification(to, "failed", { error: (err as Error).message, template: "new-order-admin", orderNumber: order.orderNumber });
+      }
+    }
+    return ok;
+  }
+
   /** Sipariş kargoya verildiğinde müşteriye bildirim (updateStatus "kargoya-verildi" tetikler). */
   async sendOrderShippedEmail(orderId: string, tracking?: { number?: string; carrier?: string }): Promise<boolean> {
     const order = await this.prisma.order.findUnique({
