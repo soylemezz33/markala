@@ -102,21 +102,28 @@ export function SectorShowcase() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        {/* Mobilde TEK sütun (2026-08-20): iki sütunda her kart ~190px'e sıkışıyor, ikon
+            (48px) + boşluk düşünce metne ~85px kalıyordu → "İnşaat & Sanayi" üç satıra
+            bölünüyor, açıklamalar 4-5 satıra çıkıyor ve kartlar orantısız duruyordu.
+            Tam genişlikte başlık tek satıra sığar, açıklama 1-2 satırda biter. */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {SECTORS.map((s) => (
             <Link
               key={s.label}
               href={`/teklif-al?sektor=${encodeURIComponent(s.label)}`}
-              className={`group flex items-start gap-4 p-5 md:p-6 border rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${s.tint}`}
+              className={`group flex items-start gap-4 p-4 sm:p-5 md:p-6 border rounded-xl transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${s.tint}`}
             >
               <div
-                className={`flex-none w-12 h-12 rounded-xl bg-gradient-to-br ${s.grad} text-white grid place-items-center shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6`}
+                className={`flex-none w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${s.grad} text-white grid place-items-center shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6`}
               >
                 <s.icon size={24} weight="fill" />
               </div>
               <div className="min-w-0">
+                {/* Başlık tek satırda kalsın — dar ekranda "İnşaat & Sanayi" bölünüp
+                    kart yüksekliğini oynatıyordu. */}
                 <div className="font-semibold text-ink-900 flex items-center gap-1.5">
-                  {s.label}
+                  {/* min-w-0: flex öğesi varsayılan olarak daralmaz, truncate çalışmazdı. */}
+                  <span className="min-w-0 truncate">{s.label}</span>
                   <ArrowRight
                     size={14}
                     weight="bold"

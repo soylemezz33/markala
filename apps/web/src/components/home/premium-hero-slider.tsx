@@ -13,6 +13,9 @@ import type { HeroBannerData } from "@/lib/catalog";
  * Görsel slider alanını TAM kaplar (edge-to-edge). SEO için görünmez h1.
  */
 const AUTOPLAY_MS = 6000;
+/** Slayt değiştirmek için gereken en az yatay parmak hareketi (px). Kazara dokunuşta
+ *  slayt atlamasın diye tıklama toleransından (~10px) belirgin şekilde yüksek. */
+const SWIPE_MIN_PX = 45;
 
 /** API boş/erişilemezse gösterilecek yedek (public/hero statik). */
 const FALLBACK: HeroBannerData[] = [
@@ -46,6 +49,48 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
   const goTo = useCallback((n: number) => setIndex(((n % count) + count) % count), [count]);
   const next = useCallback(() => setIndex((i) => (i + 1) % count), [count]);
   const prev = useCallback(() => setIndex((i) => (i - 1 + count) % count), [count]);
+
+  // --- Mobil kaydırma (swipe) ---------------------------------------------------
+  // 2026-08-20: mobilde slider parmakla kaydırılamıyordu. Sebep: bileşende hiç dokunma
+  // işleyicisi yoktu; ok butonları da `hidden md:grid` olduğu için mobilde görünmüyor,
+  // geriye yalnız alttaki noktalar kalıyordu.
+  //
+  // İki tuzağa dikkat edildi:
+  //  1) DİKEY KAYDIRMA BOZULMAMALI → touchmove'da preventDefault ÇAĞRILMIYOR; yatay
+  //     hareket dikeyden büyük değilse hiç müdahale etmiyoruz, sayfa normal kayıyor.
+  //  2) Slaytın tamamı bir <Link> → parmak kaldırınca tarayıcı click üretir ve ürün
+  //     sayfasına gider. Kaydırma algılandıysa bir sonraki click bastırılır.
+  const touchRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressClickRef = useRef(false);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (!t) return;
+    // Her yeni dokunuşta sıfırla: kaydırma sonrası click hiç gelmezse bayrak asılı
+    // kalıp SONRAKİ geçerli tıklamayı yutardı.
+    suppressClickRef.current = false;
+    touchRef.current = { x: t.clientX, y: t.clientY };
+    setPaused(true);
+  }, []);
+
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const start = touchRef.current;
+      touchRef.current = null;
+      setPaused(false);
+      if (!start || count <= 1) return;
+      const t = e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      // Yatay niyet: yatay hareket dikeyden büyük VE eşiği aşmış olmalı.
+      if (Math.abs(dx) <= Math.abs(dy) || Math.abs(dx) < SWIPE_MIN_PX) return;
+      suppressClickRef.current = true;
+      if (dx < 0) next();
+      else prev();
+    },
+    [count, next, prev],
+  );
 
   // İndeks aralık dışına düşerse (slayt sayısı değişirse) sıfırla.
   useEffect(() => {
@@ -81,6 +126,12 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={() => {
+        touchRef.current = null;
+        setPaused(false);
+      }}
       aria-roledescription="carousel"
       aria-label="Markala öne çıkanlar"
       className="relative overflow-hidden bg-ink-900 outline-none focus-visible:ring-4 focus-visible:ring-brand-300/40"
@@ -95,6 +146,14 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
         key={slide.id + index}
         href={slide.ctaHref || "/urunler"}
         aria-label={slide.title}
+        // Kaydırma sonrası tarayıcının ürettiği click'i yut — parmakla slayt geçerken
+        // yanlışlıkla ürün sayfasına gitmeyi engeller.
+        onClick={(e) => {
+          if (suppressClickRef.current) {
+            e.preventDefault();
+            suppressClickRef.current = false;
+          }
+        }}
         className="block group animate-fade-up focus-visible:outline-none"
       >
         {/* LCP: ham <img> yerine next/image — srcset/sizes ile cihaz genişliğine uygun
