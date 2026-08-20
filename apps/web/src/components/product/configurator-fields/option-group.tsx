@@ -95,38 +95,43 @@ function PopularBadgePill({ isSelected, className }: { isSelected: boolean; clas
 }
 
 /**
- * Matbaa jargonu sözlüğü — seçili seçeneğin adında geçen terimlerin kısa açıklaması.
+ * Matbaa jargonu sözlüğü — seçili seçeneğin adında/künyesinde geçen terimlerin kısa açıklaması.
  * Tooltip DEĞİL: mobilde de çalışsın diye seçimin altında düz yardımcı metin olarak gösterilir.
- * "kabartma lak" iki kelime olduğu için listede tek kelimeli terimlerden ÖNCE durmalı şart değil
- * (eşleşme includes ile bağımsız) — sıra yalnız gösterim sırasını belirler.
+ * Eşleşme kelime sınırına bağlı (bkz. matchesTerm); dizideki SIRA hem öncelik hem gösterim
+ * sırasıdır, çünkü yalnız ilk JARGON_MAX eşleşme gösterilir.
  */
 const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
   // 2026-08-20 Hasan: müşteri terimleri bilmiyor; en çok kararsızlık selefon ve
-  // mat/parlak tercihinde yaşanıyor. Metinler bilinçli olarak "ne işe yarar" odaklı.
+  // mat/parlak tercihinde yaşanıyor. Metinler "ne işe yarar" odaklı yazıldı.
+  // SIRA ÖNEMLİ: en az bilinen terim üstte — aşağıda yalnız ilk JARGON_MAX tanesi gösterilir.
   {
     match: "selefon",
     name: "Selefon",
     desc: "ürüne ekstra koruma sağlayan ince kaplama — baskının kalıcılığını artırır, yıpranmayı ve yırtılmayı zorlaştırır",
-  },
-  { match: "mat", name: "Mat", desc: "parmak izi tutmaz, sakin ve kurumsal durur" },
-  { match: "parlak", name: "Parlak", desc: "renkleri daha canlı gösterir" },
-  { match: "bristol", name: "Bristol", desc: "kartvizitlerde standart sert karton" },
-  { match: "kuşe", name: "Kuşe", desc: "broşürlerde standart parlak kağıt" },
-  {
-    match: "sıvama",
-    name: "Sıvama",
-    desc: "iki kartonun birbirine yapıştırılmasıyla elde edilen kalın, sert kartvizit",
   },
   {
     match: "kabartma lak",
     name: "Kabartma Lak",
     desc: "yazı veya logonun üzerine uygulanan, elle hissedilen kabartmalı parlak katman",
   },
+  {
+    match: "sıvama",
+    name: "Sıvama",
+    desc: "iki kartonun birbirine yapıştırılmasıyla elde edilen kalın, sert kartvizit",
+  },
   { match: "yaldız", name: "Yaldız", desc: "sıcak baskıyla uygulanan metalik altın/gümüş folyo" },
-  { match: "oval köşe", name: "Oval köşe", desc: "köşeleri yuvarlatılmış kesim" },
+  { match: "mat", name: "Mat", desc: "parmak izi tutmaz, sakin ve kurumsal durur" },
+  { match: "parlak", name: "Parlak", desc: "renkleri daha canlı gösterir" },
   { match: "özel kesim", name: "Özel kesim", desc: "istediğiniz forma göre bıçakla kesim" },
+  { match: "oval köşe", name: "Oval köşe", desc: "köşeleri yuvarlatılmış kesim" },
+  { match: "bristol", name: "Bristol", desc: "kartvizitlerde standart sert karton" },
+  { match: "kuşe", name: "Kuşe", desc: "broşürlerde standart parlak kağıt" },
   { match: "otokopili", name: "Otokopili", desc: "kendinden karbonlu — alt kopyaya yazıyı geçirir" },
 ];
+
+/** Tek seferde gösterilecek en fazla terim. Künyeler zenginleştikten sonra 6 terim
+ *  birden eşleşip yardımcı satır paragrafa dönüşüyordu; en bilinmeyen 3 tanesi yeter. */
+const JARGON_MAX = 3;
 
 /**
  * Etikette geçen jargon terimlerini "Terim: açıklama · …" satırına çevirir; terim yoksa null.
@@ -141,9 +146,8 @@ function matchesTerm(haystack: string, term: string): boolean {
 function jargonHelpFor(label: string | null | undefined): string | null {
   if (!label) return null;
   const lower = trLower(label);
-  const parts = JARGON_GLOSSARY.filter((j) => matchesTerm(lower, j.match)).map(
-    (j) => `${j.name}: ${j.desc}`,
-  );
+  const parts = JARGON_GLOSSARY.filter((j) => matchesTerm(lower, j.match)).slice(0, JARGON_MAX)
+    .map((j) => `${j.name}: ${j.desc}`);
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
