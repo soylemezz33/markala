@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Container } from "@markala/ui";
 import { Clock, ArrowRight } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
-import { apiClient } from "@/lib/api";
+import { resolveProductSlugs } from "@/lib/resolve-products";
 import { ProductImageFallback } from "@/components/product/product-image-fallback";
 import { getDisplayPrice } from "@/lib/configurator";
 import { formatPriceDisplay } from "@/lib/format";
@@ -42,25 +42,11 @@ export function RecentlyViewedRail({
   useEffect(() => {
     let cancelled = false;
 
-    // Slug'ları CANLI API'den çöz; admin güncellemeleri (görsel/isim/fiyat) anında yansısın.
-    // Mock yalnızca API'de bulunamayan slug için fallback.
-    async function resolve(slugs: string[]): Promise<Product[]> {
-      let live: Product[] = [];
-      try {
-        live = await apiClient.products.list({ take: 500 });
-      } catch {
-        live = [];
-      }
-      const liveBySlug = new Map(live.map((p) => [p.slug, p]));
-      return slugs
-        .map((s) => liveBySlug.get(s))
-        .filter((p): p is Product => p !== undefined)
-        .slice(0, 8);
-    }
-
     function load() {
+      // Slug'lar tekil /products/:slug ile çözülür — bkz. resolveProductSlugs (eski
+      // take:500 liste penceresi katalog 870+ olunca eski ürünleri kaçırıyordu).
       const slugs = getRecentlyViewed().filter((s) => s !== currentSlug);
-      resolve(slugs).then((found) => {
+      resolveProductSlugs(slugs.slice(0, 8)).then((found) => {
         if (!cancelled) setItems(found);
       });
     }

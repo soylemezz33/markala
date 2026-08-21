@@ -6,7 +6,7 @@ import { Container } from "@markala/ui";
 import { Heart, ArrowRight, ShoppingBag } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
-import { apiClient } from "@/lib/api";
+import { resolveProductSlugs } from "@/lib/resolve-products";
 import { getWishlist } from "@/lib/client-storage";
 
 export default function WishlistPage() {
@@ -17,24 +17,11 @@ export default function WishlistPage() {
     setMounted(true);
     let cancelled = false;
 
-    // Favori slug'ları CANLI API'den çöz; API-only/admin ürünleri de görünsün,
-    // admin güncellemeleri anında yansısın. Mock yalnız fallback.
-    async function resolve(slugs: string[]): Promise<Product[]> {
-      let live: Product[] = [];
-      try {
-        live = await apiClient.products.list({ take: 500 });
-      } catch {
-        live = [];
-      }
-      const liveBySlug = new Map(live.map((p) => [p.slug, p]));
-      return slugs
-        .map((s) => liveBySlug.get(s))
-        .filter((p): p is Product => p !== undefined);
-    }
-
     function load() {
+      // Slug'lar tekil /products/:slug ile çözülür — bkz. resolveProductSlugs (eski
+      // take:500 liste penceresi katalog 870+ olunca eski ürünleri kaçırıyordu).
       const slugs = getWishlist();
-      resolve(slugs).then((resolved) => {
+      resolveProductSlugs(slugs).then((resolved) => {
         if (!cancelled) setItems(resolved);
       });
     }

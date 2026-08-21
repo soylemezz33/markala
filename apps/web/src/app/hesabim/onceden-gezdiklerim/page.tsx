@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, ArrowRight } from "@phosphor-icons/react";
 import { Button } from "@markala/ui";
-import { apiClient } from "@/lib/api";
+import { resolveProductSlugs } from "@/lib/resolve-products";
 import { getRecentlyViewed } from "@/lib/client-storage";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@markala/types";
@@ -15,24 +15,11 @@ export default function RecentlyViewedPage() {
   useEffect(() => {
     let cancelled = false;
 
-    // Slug'ları CANLI API'den çöz; admin güncellemeleri (görsel/isim/fiyat) anında yansısın.
-    // Mock yalnızca API'de bulunamayan slug için fallback.
-    async function resolve(slugs: string[]): Promise<Product[]> {
-      let live: Product[] = [];
-      try {
-        live = await apiClient.products.list({ take: 500 });
-      } catch {
-        live = [];
-      }
-      const liveBySlug = new Map(live.map((p) => [p.slug, p]));
-      return slugs
-        .map((s) => liveBySlug.get(s))
-        .filter((p): p is Product => p !== undefined);
-    }
-
     function load() {
+      // Slug'lar tekil /products/:slug ile çözülür — bkz. resolveProductSlugs (eski
+      // take:500 liste penceresi katalog 870+ olunca eski ürünleri kaçırıyordu).
       const slugs = getRecentlyViewed();
-      resolve(slugs).then((resolved) => {
+      resolveProductSlugs(slugs).then((resolved) => {
         if (!cancelled) setItems(resolved);
       });
     }
