@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import sharp from "sharp";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -142,8 +143,33 @@ export class StorageService {
       throw new BadRequestException("Görsel boyutu en fazla 5MB olabilir.");
     }
 
-    const key = `${randomUUID()}.${ext}`;
-    return this.driver === "r2" ? this.putR2(key, file) : this.putLocal(key, file);
+    // WEBP'E ÇEVİR + SIKIŞTIR (2026-08-21, Hasan): panelden JPG/PNG yüklenirse sunucuda
+    // WebP'ye dönüştürülür. Neden sunucuda: yükleyen kişinin (tasarımcı) dönüştürmeyi
+    // hatırlamasına güvenilmez; kaynak dosya bir kez büyük girerse depoda ve yedeklerde
+    // kalıcı olarak büyük kalır.
+    // q=82: fotoğrafta gözle ayırt edilemeyen bant (slider görsellerinde ölçüldü, PSNR 40-43 dB).
+    // WEBP zaten ise DOKUNULMAZ — yeniden kodlamak nesil kaybı yaratır, kazancı da azdır.
+    let out = file;
+    let finalExt = ext;
+    if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+      try {
+        const webp = await sharp(file.buffer).webp({ quality: 82, effort: 4 }).toBuffer();
+        // Nadir de olsa WebP daha büyük çıkabilir (çok küçük/az renkli PNG). O zaman aslını koru.
+        if (webp.length < file.buffer.length) {
+          out = { buffer: webp, mimetype: "image/webp" };
+          finalExt = "webp";
+          this.logger.log(
+            `görsel webp'e çevrildi: ${Math.round(file.buffer.length / 1024)}KB → ${Math.round(webp.length / 1024)}KB`,
+          );
+        }
+      } catch (e) {
+        // Dönüştürme başarısızsa YÜKLEMEYİ ENGELLEME — orijinal dosya kaydedilir.
+        this.logger.warn(`webp dönüşümü başarısız, orijinal kaydediliyor: ${(e as Error).message}`);
+      }
+    }
+
+    const key = `${randomUUID()}.${finalExt}`;
+    return this.driver === "r2" ? this.putR2(key, out) : this.putLocal(key, out);
   }
 
   /**

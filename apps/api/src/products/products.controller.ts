@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
 import { ProductsService } from "./products.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { CreateProductDto, UpdateProductDto } from "./products.dto";
 
 @ApiTags("products")
@@ -41,6 +42,7 @@ export class ProductsController {
   @Get("admin-list")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
   @ApiBearerAuth()
   @ApiQuery({ name: "take", required: false })
   @ApiQuery({ name: "q", required: false })
@@ -67,6 +69,7 @@ export class ProductsController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
   @ApiBearerAuth()
   create(@Body() dto: CreateProductDto) {
     return this.service.create(dto);
@@ -75,6 +78,7 @@ export class ProductsController {
   @Patch(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
   @ApiBearerAuth()
   update(@Param("id") id: string, @Body() dto: UpdateProductDto) {
     return this.service.update(id, dto);
@@ -83,6 +87,7 @@ export class ProductsController {
   @Delete(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
   @ApiBearerAuth()
   remove(@Param("id") id: string) {
     return this.service.remove(id);

@@ -56,6 +56,10 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
     PERM.CUSTOMERS_READ,
     PERM.MEDIA,
     PERM.REVIEWS,
+    // 2026-08-21 (Hasan): ürün görsellerini de güncelleyebilsin. Ürün düzenleme sayfası
+    // katalog iznine bağlı; bu izinle ürün/kategori/blog/SSS içeriğini de düzenleyebilir.
+    // Fiyat AYRI izindir (PERM.PRICING) ve tasarımcıda YOK — tutar hâlâ görünmez.
+    PERM.CATALOG,
   ],
 
   /**

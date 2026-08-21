@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { CategoriesService } from "./categories.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { CreateCategoryDto, UpdateCategoryDto } from "./categories.dto";
 
 @ApiTags("categories")
@@ -24,6 +25,7 @@ export class CategoriesController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
   @ApiBearerAuth()
   create(@Body() dto: CreateCategoryDto) {
     return this.service.create(dto);
@@ -32,6 +34,7 @@ export class CategoriesController {
   @Patch(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
   @ApiBearerAuth()
   update(@Param("id") id: string, @Body() dto: UpdateCategoryDto) {
     return this.service.update(id, dto);
@@ -40,6 +43,7 @@ export class CategoriesController {
   @Delete(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
   @ApiBearerAuth()
   remove(@Param("id") id: string) {
     return this.service.remove(id);

@@ -3,12 +3,14 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { FaqsService } from "./faqs.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { CreateFaqDto, UpdateFaqDto } from "./faqs.dto";
 
 @ApiTags("faqs")
 @Controller("faqs")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("admin", "super_admin")
+@Perms(PERM.CATALOG)
 @ApiBearerAuth()
 export class FaqsController {
   constructor(private service: FaqsService) {}

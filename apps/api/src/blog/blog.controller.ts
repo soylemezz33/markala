@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@n
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { Roles, RolesGuard } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { CreateBlogCategoryDto, CreateBlogPostDto, UpdateBlogPostDto } from "./blog.dto";
 import { BlogService } from "./blog.service";
 
@@ -9,6 +10,7 @@ import { BlogService } from "./blog.service";
 @Controller("blog")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("admin", "super_admin")
+@Perms(PERM.CATALOG)
 @ApiBearerAuth()
 export class BlogController {
   constructor(private service: BlogService) {}
