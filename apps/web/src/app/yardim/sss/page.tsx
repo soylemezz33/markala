@@ -39,11 +39,17 @@ const KATEGORILER: Array<{ key: string; label: string }> = [
 ];
 
 async function sssGetir(): Promise<Faq[]> {
-  const res = await fetch(`${API}/api/faqs/public`, { next: { revalidate: 300 } });
-  // API hatasında throw → ISR son sağlıklı sürümü servis etmeye devam eder
-  // (boş sayfa cache'lenmesin).
-  if (!res.ok) throw new Error(`SSS alınamadı: ${res.status}`);
-  return res.json();
+  // Hata build'i ÖLDÜRMEMELİ: bu sayfa docker build sırasında prerender edilir ve
+  // canlı API'yi çağırır — yeni API ucu aynı deploy'da geldiğinden ilk build anında
+  // henüz 404'tür (tavuk-yumurta; 2026-08-21'de deploy bu yüzden düştü). Hatada boş
+  // liste döner, sayfa "yüklenemedi" durumunu gösterir; ISR (300sn) kendini iyileştirir.
+  try {
+    const res = await fetch(`${API}/api/faqs/public`, { next: { revalidate: 300 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
 }
 
 export const metadata: Metadata = {
@@ -78,10 +84,12 @@ export default async function SssPage() {
   return (
     <>
       {/* Görünen metin ile şema TEK kaynaktan — tüm sorular tek FAQPage bloğunda. */}
-      <FAQPageJsonLd
-        questions={sss.map((f) => ({ q: f.question, a: f.answer }))}
-        url="/yardim/sss"
-      />
+      {sss.length > 0 && (
+        <FAQPageJsonLd
+          questions={sss.map((f) => ({ q: f.question, a: f.answer }))}
+          url="/yardim/sss"
+        />
+      )}
       <BreadcrumbJsonLd items={breadcrumbs} />
 
       <div className="bg-paper-100 border-b border-paper-200">
@@ -106,13 +114,23 @@ export default async function SssPage() {
             Sıkça Sorulan Sorular
           </h1>
           <p className="text-ink-600 leading-relaxed mb-10">
-            Tasarım dosyasından kargo takibine, ödemeden iade koşullarına — en çok sorulan{" "}
-            {sss.length} soru ve net cevapları. Aradığınızı bulamazsanız{" "}
+            Tasarım dosyasından kargo takibine, ödemeden iade koşullarına — en çok sorulan
+            sorular ve net cevapları. Aradığınızı bulamazsanız{" "}
             <Link href="/iletisim" className="text-brand-700 hover:text-brand-900 font-medium">
               bize ulaşın
             </Link>
             .
           </p>
+
+          {sss.length === 0 && (
+            <p className="text-ink-500 text-sm bg-paper-100 border border-paper-200 rounded-lg px-4 py-3">
+              Sorular şu anda yüklenemiyor — birkaç dakika içinde tekrar deneyin veya{" "}
+              <Link href="/iletisim" className="text-brand-700 font-medium">
+                bize ulaşın
+              </Link>
+              .
+            </p>
+          )}
 
           {gruplar.map((g) => (
             <section key={g.key} className="mb-10">
