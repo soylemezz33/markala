@@ -286,8 +286,17 @@ export class MailService {
    * Alıcı: ORDER_NOTIFY_TO (virgülle birden fazla) → yoksa ADMIN_EMAIL. İkisi de yoksa no-op.
    */
   async sendNewOrderAdminEmail(orderId: string): Promise<boolean> {
+    // 2026-08-21 DÜZELTME: ilk sürüm yalnız ORDER_NOTIFY_TO/ADMIN_EMAIL'e bakıyordu ve
+    // bildirim HİÇ gitmedi. Sebep: ADMIN_EMAIL .env.production'da tanımlı ama API
+    // KONTEYNERİNE geçmiyor (compose'da api servisine verilmemiş); konteynerde dolu olan
+    // değişken CONTACT_TO. Zincire eklendi — CONTACT_TO zaten tüm form bildirimlerinin
+    // gittiği yönetici adresi, doğru varsayılan o.
+    // `??` KULLANILMIYOR: değişken tanımlı ama BOŞ ise ("ADMIN_EMAIL=") nullish değildir,
+    // zincir orada takılıp CONTACT_TO'ya hiç düşmezdi. İlk DOLU değer seçiliyor.
     const raw =
-      (this.config.get<string>("ORDER_NOTIFY_TO") ?? this.config.get<string>("ADMIN_EMAIL") ?? "").trim();
+      ["ORDER_NOTIFY_TO", "ADMIN_EMAIL", "CONTACT_TO"]
+        .map((k) => (this.config.get<string>(k) ?? "").trim())
+        .find((v) => v.length > 0) ?? "";
     const recipients = raw.split(",").map((s) => s.trim()).filter(Boolean);
     if (recipients.length === 0) {
       this.logger.warn("mail.newOrderAdmin: ORDER_NOTIFY_TO/ADMIN_EMAIL tanımsız — bildirim atlandı");
