@@ -432,9 +432,12 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                     </p>
                   )}
                   {total > 100 && (
+                    // Taksit KDV DAHİL toplamdan hesaplanır (total/3). Yanındaki matrah
+                    // "net" diye etiketliyken taksit tabanı sanılıyordu (test geri bildirimi
+                    // 2026-08) → "KDV hariç" olarak açık yazılır.
                     <p className="mt-1 text-xs text-ink-500">
                       3 taksitle <Price amount={getInstallmentAmount(show(total), 3)} size="sm" className="text-ink-700" />
-                      &apos;den · net <Price amount={show(total) / 1.2} size="sm" className="text-ink-700" />
+                      &apos;den · KDV hariç <Price amount={show(total) / 1.2} size="sm" className="text-ink-700" />
                     </p>
                   )}
                 </>
