@@ -4,6 +4,7 @@ import { IsOptional, IsString, Matches } from "class-validator";
 import { CorporateInvoicingService } from "./corporate-invoicing.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 
 export class RunMonthDto {
   /** Faturalanacak dönem "YYYY-MM" (örn. "2026-05"). Yoksa controller reddeder. */
@@ -27,6 +28,7 @@ export class InvoiceCustomerDto {
 @Controller("admin/corporate-invoicing")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("admin", "super_admin")
+@Perms(PERM.FINANCE)
 @ApiBearerAuth()
 export class CorporateInvoicingController {
   constructor(private service: CorporateInvoicingService) {}

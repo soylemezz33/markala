@@ -5,6 +5,7 @@ import type { Request, Response } from "express";
 import { PaymentsService } from "./payments.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 
 class InitPaymentDto {
   @IsString()
@@ -93,6 +94,7 @@ export class PaymentsController {
   @Post("reconcile")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.FINANCE)
   @ApiBearerAuth()
   reconcile() {
     return this.payments.reconcilePendingPayments();
@@ -105,6 +107,7 @@ export class PaymentsController {
   @Post("refund")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.FINANCE)
   @ApiBearerAuth()
   refund(@Body() dto: RefundDto, @Req() req: Request) {
     const actorId = (req as Request & { user?: { sub?: string } }).user?.sub;

@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { HeroSlidesService } from "./hero-slides.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { CreateHeroSlideDto, UpdateHeroSlideDto } from "./hero-slides.dto";
 
 @ApiTags("hero-slides")
@@ -18,6 +19,7 @@ export class HeroSlidesController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.MEDIA)
   @ApiBearerAuth()
   create(@Body() dto: CreateHeroSlideDto) {
     return this.service.create(dto);
@@ -26,6 +28,7 @@ export class HeroSlidesController {
   @Patch(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.MEDIA)
   @ApiBearerAuth()
   update(@Param("id") id: string, @Body() dto: UpdateHeroSlideDto) {
     return this.service.update(id, dto);
@@ -34,6 +37,7 @@ export class HeroSlidesController {
   @Delete(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.MEDIA)
   @ApiBearerAuth()
   remove(@Param("id") id: string) {
     return this.service.remove(id);

@@ -3,12 +3,14 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { BannersService } from "./banners.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { CreateBannerDto, UpdateBannerDto } from "./banners.dto";
 
 @ApiTags("banners")
 @Controller("banners")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("admin", "super_admin")
+@Perms(PERM.MEDIA)
 @ApiBearerAuth()
 export class BannersController {
   constructor(private service: BannersService) {}

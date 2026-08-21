@@ -3,12 +3,14 @@ import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { ReviewsService } from "./reviews.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { SetApprovalDto } from "./reviews.dto";
 
 @ApiTags("reviews")
 @Controller("reviews")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("admin", "super_admin")
+@Perms(PERM.REVIEWS)
 @ApiBearerAuth()
 export class ReviewsController {
   constructor(private service: ReviewsService) {}

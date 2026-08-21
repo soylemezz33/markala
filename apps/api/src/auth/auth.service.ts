@@ -12,6 +12,7 @@ import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
 import * as crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
+import { permsForRole } from "./permissions";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 
@@ -517,7 +518,9 @@ export class AuthService {
     if (!user) throw new UnauthorizedException("Oturum geçersiz.");
     // emailVerifiedAt (tarih) → emailVerified (boolean); frontend "doğrula" uyarısını buna göre gösterir.
     const { emailVerifiedAt, ...rest } = user;
-    return { ...rest, emailVerified: !!emailVerifiedAt };
+    // permissions: panel menüsünü/sayfalarını filtrelemek için (2026-08-21 kullanıcı grupları).
+    // GÜVENLİK NOTU: bu liste yalnız ARAYÜZ içindir; gerçek sınır uçlardaki RolesGuard'dır.
+    return { ...rest, emailVerified: !!emailVerifiedAt, permissions: permsForRole(user.role) };
   }
 
   private async issueTokenPair(

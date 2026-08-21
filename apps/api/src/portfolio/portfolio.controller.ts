@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@n
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { Roles, RolesGuard } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 import { PortfolioService } from "./portfolio.service";
 import { CreatePortfolioItemDto, UpdatePortfolioItemDto } from "./portfolio.dto";
 
@@ -26,6 +27,7 @@ export class PortfolioController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.MEDIA)
   @ApiBearerAuth()
   list() {
     return this.service.findAll();
@@ -34,6 +36,7 @@ export class PortfolioController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.MEDIA)
   @ApiBearerAuth()
   create(@Body() dto: CreatePortfolioItemDto) {
     return this.service.create(dto);
@@ -42,6 +45,7 @@ export class PortfolioController {
   @Patch(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.MEDIA)
   @ApiBearerAuth()
   update(@Param("id") id: string, @Body() dto: UpdatePortfolioItemDto) {
     return this.service.update(id, dto);
@@ -50,6 +54,7 @@ export class PortfolioController {
   @Delete(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
+  @Perms(PERM.MEDIA)
   @ApiBearerAuth()
   remove(@Param("id") id: string) {
     return this.service.remove(id);

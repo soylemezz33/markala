@@ -46,7 +46,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: data.message ?? "Giriş başarısız." }, { status: apiRes.status || 401 });
   }
 
-  if (data.user.role !== "admin" && data.user.role !== "super_admin") {
+  // 2026-08-21: panel grupları eklendi (tasarimci, muhasebe). Müşteri rolü hâlâ giremez.
+  const PANEL_ROLES = ["admin", "super_admin", "tasarimci", "muhasebe"];
+  if (!PANEL_ROLES.includes(data.user.role)) {
     return NextResponse.json({ error: "Bu hesabın yönetim paneline erişim yetkisi yok." }, { status: 403 });
   }
 
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest) {
     refreshToken,
     email: data.user.email,
     name: data.user.email,
-    role: data.user.role as "admin" | "super_admin",
+    role: data.user.role as AdminSession["role"],
     iat: Math.floor(Date.now() / 1000),
   };
   const token = await signSession(session, secret);

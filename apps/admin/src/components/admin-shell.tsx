@@ -16,8 +16,54 @@ import { ToastContainer } from "@/components/toast";
 interface CurrentUser {
   email: string;
   name: string;
-  role: "super_admin" | "admin";
+  role: "super_admin" | "admin" | "tasarimci" | "muhasebe";
+  /** API'den gelen izin listesi — menüyü filtrelemek için (GÜVENLİK SINIRI DEĞİL). */
+  permissions?: string[];
 }
+
+/** Rol etiketleri — kullanıcı menüsünde gösterilir. */
+const ROLE_LABEL: Record<string, string> = {
+  super_admin: "Süper Admin",
+  admin: "Admin",
+  tasarimci: "Grafik Tasarım",
+  muhasebe: "Muhasebe",
+};
+
+/**
+ * Menü öğesi → gerekli izin. Burada listelenmeyen öğe HERKESE görünür (ör. Dashboard).
+ * NOT: menü gizlemek güvenlik değildir; gerçek sınır API'deki RolesGuard'dır. Bu yalnız
+ * kullanıcıya erişemeyeceği sayfaları göstermemek için.
+ */
+const NAV_PERM: Record<string, string> = {
+  "/analitik": "finance.manage",
+  "/ciro": "finance.manage",
+  "/siparisler": "orders.read",
+  "/musteriler": "customers.read",
+  "/musteriler/kurumsal-basvurular": "customers.read",
+  "/iletisim-mesajlari": "customers.read",
+  "/teklif-talepleri": "customers.read",
+  "/bulten-aboneleri": "settings.manage",
+  "/urunler": "catalog.manage",
+  "/urunler/fiyat-toplu": "pricing.manage",
+  "/fiyat-hesaplama-sablonu": "pricing.manage",
+  "/kategoriler": "catalog.manage",
+  "/kuponlar": "pricing.manage",
+  "/kampanya-paketleri": "pricing.manage",
+  "/menu": "catalog.manage",
+  "/slider": "media.manage",
+  "/banner": "media.manage",
+  "/blog": "catalog.manage",
+  "/yorumlar": "reviews.manage",
+  "/referanslar": "media.manage",
+  "/sss": "catalog.manage",
+  "/yasal": "settings.manage",
+  "/ayarlar/genel": "settings.manage",
+  "/ayarlar/fiyat": "pricing.manage",
+  "/ayarlar/api": "settings.manage",
+  "/ayarlar/seo": "settings.manage",
+  "/ayarlar/bildirim": "settings.manage",
+  "/ayarlar/bakim": "settings.manage",
+};
 
 const navGroups: Array<{
   title: string;
@@ -184,7 +230,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex bg-paper-100">
       {/* Sidebar — Desktop */}
       <aside className="hidden lg:flex w-64 bg-ink-900 text-paper-100 flex-col fixed inset-y-0 left-0 z-30">
-        <SidebarContent pathname={pathname} onNavigate={() => {}} onLogout={logout} badges={notifs.badges} />
+        <SidebarContent pathname={pathname} onNavigate={() => {}} onLogout={logout} badges={notifs.badges} perms={user?.permissions} />
       </aside>
 
       {/* Sidebar — Mobile slide-in */}
@@ -200,6 +246,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               onNavigate={() => setMobileOpen(false)}
               onLogout={logout}
               badges={notifs.badges}
+              perms={user?.permissions}
             />
           </aside>
         </>
@@ -294,7 +341,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <div className="hidden md:block leading-tight text-left">
                 <div className="text-sm font-medium text-ink-900">{user?.name ?? "..."}</div>
                 <div className="text-[11px] text-ink-500">
-                  {user?.role === "super_admin" ? "Süper Admin" : user?.role ?? ""}
+                  {ROLE_LABEL[user?.role ?? ""] ?? user?.role ?? ""}
                 </div>
               </div>
               <CaretDown size={12} className="hidden md:block text-ink-500" />
@@ -364,13 +411,22 @@ function SidebarContent({
   onNavigate,
   onLogout,
   badges,
+  perms,
 }: {
   pathname: string;
   onNavigate: () => void;
   onLogout: () => void;
   /** href → bekleyen iş sayısı (/api/notifications). Boşsa rozet çıkmaz. */
   badges: Record<string, number>;
+  /** Kullanıcının izinleri; undefined = henüz yüklenmedi (tam menü gösterilir). */
+  perms?: string[];
 }) {
+  // Izin bilgisi gelene kadar filtreleme YAPMA (aksi halde menü bir an boş görünür).
+  const canSee = (href: string) => {
+    if (!perms) return true;
+    const need = NAV_PERM[href];
+    return !need || perms.includes(need);
+  };
   return (
     <>
       <div className="p-5 border-b border-white/10 flex items-center justify-between">
@@ -388,7 +444,10 @@ function SidebarContent({
       </div>
 
       <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
-        {navGroups.map((group) => (
+        {navGroups
+          .map((group) => ({ ...group, links: group.links.filter((l) => canSee(l.href)) }))
+          .filter((group) => group.links.length > 0)
+          .map((group) => (
           <div key={group.title}>
             <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-paper-100/40">
               {group.title}

@@ -27,6 +27,9 @@ enum UserRole {
   customer
   admin
   super_admin
+  /// Panel grupları (2026-08-21) — izinler kodda ROLE_PERMISSIONS'ta tanımlı.
+  tasarimci
+  muhasebe
 }
 
 enum CorporateStatus {

@@ -9,7 +9,8 @@ export interface AdminSession {
   refreshToken: string;  // API mk_refresh ham değeri (30 gün)
   email: string;
   name: string;
-  role: "admin" | "super_admin";
+  /** 2026-08-21: panel grupları eklendi. Müşteri rolü panele giremez. */
+  role: "admin" | "super_admin" | "tasarimci" | "muhasebe";
   iat: number; // saniye
 }
 

@@ -4,11 +4,13 @@ import { StatsService } from "./stats.service";
 import { ProfitService } from "./profit.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
+import { Perms, PERM } from "../auth/permissions";
 
 @ApiTags("admin-stats")
 @Controller("admin/stats")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("admin", "super_admin")
+@Perms(PERM.FINANCE)
 @ApiBearerAuth()
 export class StatsController {
   constructor(private service: StatsService, private profit: ProfitService) {}
