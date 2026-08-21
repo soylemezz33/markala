@@ -28,6 +28,7 @@ const navGroups: Array<{
     links: [
       { href: "/", label: "Dashboard", icon: ChartLineUp },
       { href: "/analitik", label: "Ziyaretçi Analizi", icon: Pulse },
+      { href: "/ciro", label: "Ciro & Kâr", icon: CurrencyCircleDollar },
       { href: "/siparisler", label: "Siparişler", icon: ShoppingCart },
       { href: "/musteriler", label: "Müşteriler", icon: Users },
       { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings },

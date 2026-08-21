@@ -665,6 +665,13 @@ export class MarkalaApiClient {
       this.request<LedgerStatementDto>("GET", "/users/me/ledger", undefined, { auth: true }),
   };
 
+  /** Kâr analizi — ciro KDV hariç; maliyeti bilinmeyen kalemler ayrı raporlanır. */
+  adminProfit = (days?: number) =>
+    this.request<AdminProfitDto>("GET", "/admin/stats/profit", undefined, {
+      auth: true,
+      query: days ? { days } : undefined,
+    });
+
   adminStats = () => this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
 }
 
@@ -1079,4 +1086,28 @@ export function createMarkalaClient(opts?: Partial<ApiClientConfig>): MarkalaApi
     getToken: opts?.getToken,
     onError: opts?.onError,
   });
+}
+
+export interface AdminProfitDto {
+  kapsam: { gunSayisi: number | null; kalemSayisi: number; not: string };
+  toplam: {
+    ciro: number;
+    maliyet: number;
+    kar: number;
+    marjYuzde: number | null;
+    /** Maliyeti girilmemiş ürünlerden gelen ciro — kâr hesabına KATILMAZ. */
+    maliyetiBilinmeyenCiro: number;
+  };
+  urunler: Array<{
+    productSlug: string;
+    productName: string;
+    adet: number;
+    ciro: number;
+    maliyet: number;
+    /** null = maliyeti girilmemiş (kâr hesaplanamıyor). */
+    kar: number | null;
+    marjYuzde: number | null;
+    maliyetBilinen: boolean;
+  }>;
+  aylik: Array<{ ay: string; ciro: number; maliyet: number; kar: number | null }>;
 }

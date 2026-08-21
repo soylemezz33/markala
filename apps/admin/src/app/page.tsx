@@ -78,6 +78,8 @@ export default async function DashboardPage() {
       value: `₺ ${stats.revenue.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: TrendUp,
       color: "text-success",
+      // Hasan: "ciroya tıklandığında ne kadar kâr etmişiz" → kâr analizi sayfası.
+      href: "/ciro",
     },
     {
       // 2026-08-18: artık YALNIZ gerçekleşen siparişler (ödemesi başarılı + cari).
@@ -134,19 +136,31 @@ export default async function DashboardPage() {
       {/* KPI Cards */}
       {/* 5 kart: "Ödeme Bekleyen" eklendi (2026-08-18) → lg'de 5 sütun */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
-        {kpis.map((k) => (
-          <div key={k.label} className="bg-paper-50 border border-paper-200 rounded-lg p-4 md:p-5">
-            <div className="flex items-center justify-between text-ink-500">
-              <span className="text-xs md:text-sm">{k.label}</span>
-              <span className={k.color}><k.icon size={18} /></span>
-            </div>
-            <div className="mt-2 text-xl md:text-2xl font-semibold text-ink-900 tabular-nums">
-              {k.value}
-            </div>
-            {/* Delta/karşılaştırma verisi API'de yok — boş gösteriliyor */}
-            <div className="mt-1 text-[11px] md:text-xs text-ink-400">—</div>
-          </div>
-        ))}
+        {kpis.map((k) => {
+          const inner = (
+            <>
+              <div className="flex items-center justify-between text-ink-500">
+                <span className="text-xs md:text-sm">{k.label}</span>
+                <span className={k.color}><k.icon size={18} /></span>
+              </div>
+              <div className="mt-2 text-xl md:text-2xl font-semibold text-ink-900 tabular-nums">
+                {k.value}
+              </div>
+              {/* Delta/karşılaştırma verisi API'de yok — tıklanabilir kartta ipucu gösterilir */}
+              <div className="mt-1 text-[11px] md:text-xs text-ink-400">
+                {"href" in k && k.href ? "Kâr detayını gör →" : "—"}
+              </div>
+            </>
+          );
+          const cls = "bg-paper-50 border border-paper-200 rounded-lg p-4 md:p-5";
+          return "href" in k && k.href ? (
+            <Link key={k.label} href={k.href} className={`${cls} block hover:border-ink-300 transition-colors`}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={k.label} className={cls}>{inner}</div>
+          );
+        })}
       </div>
 
       {/* Sipariş Durumları + Aksiyon Bekleyenler */}
