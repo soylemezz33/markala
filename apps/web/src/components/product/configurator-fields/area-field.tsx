@@ -9,6 +9,22 @@ const PRESETS: Array<[number, number]> = [
   [200, 300],
 ];
 
+// Sert giriş tavanları — "150000000000 m²" gibi absürt girişler hem absürt fiyat gösteriyor
+// hem taşma/NaN riski yaratıyordu. 9.999 cm (~100 m) hiçbir gerçek işi engellemez; tek parça
+// üretim sınırı zaten malzemenin maxM2'si + server'daki 100 m² tavanı ile ayrıca korunur.
+const HARD_MAX_CM = 9999;
+const HARD_MAX_ADET = 100000;
+
+/** Sayısal girişi [0..cap] aralığına kıstır; sayı olmayanı boşalt (yazmayı bozmadan). */
+function clampDim(raw: string, cap: number): string {
+  if (raw === "") return raw;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return "";
+  if (n < 0) return "";
+  if (n > cap) return String(cap);
+  return raw;
+}
+
 /**
  * m² (area) ürünleri için özel ölçü girişi: En×Boy (cm) + hazır ölçü çipleri + adet.
  * Değerleri selections.en / selections.boy / selections.adet'e yazar — computeAreaPrice bunları okur.
@@ -45,13 +61,10 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const maxEnRaw = matOpt?.rules?.maxEn;
   const maxEn = typeof maxEnRaw === "number" && maxEnRaw > 0 ? maxEnRaw : undefined;
   const presets = maxEn ? PRESETS.filter(([e]) => e <= maxEn) : PRESETS;
-  const setEn = (raw: string) => {
-    if (maxEn) {
-      const n = Number(raw);
-      if (Number.isFinite(n) && n > maxEn) return set("en", String(maxEn));
-    }
-    set("en", raw);
-  };
+  const enCap = Math.min(maxEn ?? HARD_MAX_CM, HARD_MAX_CM);
+  const setEn = (raw: string) => set("en", clampDim(raw, enCap));
+  const setBoy = (raw: string) => set("boy", clampDim(raw, HARD_MAX_CM));
+  const setAdet = (raw: string) => set("adet", clampDim(raw, HARD_MAX_ADET));
 
   const inputCls =
     "w-full rounded-lg border border-paper-300 px-3 py-2.5 text-ink-900 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-300/40";
@@ -91,7 +104,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
           <input
             type="number"
             min={1}
-            max={maxEn}
+            max={enCap}
             inputMode="numeric"
             value={en}
             onChange={(e) => setEn(e.target.value)}
@@ -104,9 +117,10 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
           <input
             type="number"
             min={1}
+            max={HARD_MAX_CM}
             inputMode="numeric"
             value={boy}
-            onChange={(e) => set("boy", e.target.value)}
+            onChange={(e) => setBoy(e.target.value)}
             className={inputCls}
             placeholder="Özel ölçü"
           />
@@ -118,10 +132,10 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
         <input
           type="number"
           min={1}
-          max={100000}
+          max={HARD_MAX_ADET}
           inputMode="numeric"
           value={adet}
-          onChange={(e) => set("adet", e.target.value)}
+          onChange={(e) => setAdet(e.target.value)}
           className={inputCls}
         />
       </label>
