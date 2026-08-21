@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useServerPerms } from "@/components/perms-provider";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { MagnifyingGlass, Eye, Download, Package } from "@phosphor-icons/react";
@@ -71,6 +72,12 @@ const DATE_OPTIONS: Array<{ value: DateRange; label: string }> = [
 const PAGE_SIZE = 20;
 
 export function OrdersClient({ orders }: Props) {
+  // Finans izni yoksa tutar alanlari API'den GELMIYOR -> Number(undefined)=NaN olup
+  // "₺ NaN" basiliyordu (2026-08-21, Hasan bildirdi). Sutunu ve toplam satirini gizle;
+  // siralama secenekleri de tutara gore siralayamaz.
+  const perms = useServerPerms();
+  const showMoney = !perms || perms.includes("finance.manage");
+
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
@@ -159,7 +166,7 @@ export function OrdersClient({ orders }: Props) {
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Siparişler</h1>
           <p className="text-ink-500 text-sm mt-1">
             {filtered.length} sipariş · Toplam{" "}
-            <strong className="text-ink-900">₺ {totalAmount.toLocaleString("tr-TR")}</strong>
+            {showMoney && <strong className="text-ink-900">₺ {totalAmount.toLocaleString("tr-TR")}</strong>}
           </p>
         </div>
         <button
@@ -251,7 +258,7 @@ export function OrdersClient({ orders }: Props) {
                 <th className="text-left px-4 py-3 font-semibold">Sipariş</th>
                 <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
                 <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Tarih</th>
-                <th className="text-right px-4 py-3 font-semibold">Tutar</th>
+                {showMoney && <th className="text-right px-4 py-3 font-semibold">Tutar</th>}
                 <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Tür</th>
                 <th className="text-center px-4 py-3 font-semibold">Durum</th>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
@@ -288,9 +295,11 @@ export function OrdersClient({ orders }: Props) {
                       <td className="px-4 py-3 text-ink-700 text-xs hidden md:table-cell">
                         {formatDate(o.createdAt)}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold text-ink-900 tabular-nums">
-                        ₺ {Number(o.total).toLocaleString("tr-TR")}
-                      </td>
+                      {showMoney && (
+                        <td className="px-4 py-3 text-right font-semibold text-ink-900 tabular-nums">
+                          ₺ {Number(o.total).toLocaleString("tr-TR")}
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-center hidden lg:table-cell">
                         {o.paymentMethod === "cari" ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-100 text-brand-900">

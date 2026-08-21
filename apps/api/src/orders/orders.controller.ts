@@ -20,12 +20,24 @@ import type { Request } from "express";
 const MONEY_FIELDS = ["total", "subtotal", "vat", "shippingFee", "discount", "unitPrice", "lineTotal", "paymentStatus", "paymentMethod"];
 function stripAmounts<T>(data: T, role: string | undefined): T {
   if (role !== "tasarimci") return data;
+  /**
+   * SADECE DÜZ NESNE/DİZİ içinde gezilir.
+   * 2026-08-21 hata: ilk sürüm `typeof v === "object"` diyip Date'leri de yeniden
+   * kuruyordu; Date'in kendi enumerable alanı olmadığı için tarih {} oluyor ve panelde
+   * "Invalid Date" görünüyordu (Hasan bildirdi). Prisma Decimal gibi sınıf örnekleri de
+   * aynı şekilde bozulurdu. Bu yüzden yalnız prototipi Object.prototype olan nesnelere
+   * inilir; diğer her şey OLDUĞU GİBİ bırakılır.
+   */
+  const isPlain = (v: unknown): v is Record<string, unknown> => {
+    if (v === null || typeof v !== "object" || Array.isArray(v)) return false;
+    const proto = Object.getPrototypeOf(v);
+    return proto === Object.prototype || proto === null;
+  };
   const walk = (v: unknown): unknown => {
     if (Array.isArray(v)) return v.map(walk);
-    if (v && typeof v === "object") {
-      const o = v as Record<string, unknown>;
+    if (isPlain(v)) {
       const out: Record<string, unknown> = {};
-      for (const [k, val] of Object.entries(o)) {
+      for (const [k, val] of Object.entries(v)) {
         if (MONEY_FIELDS.includes(k)) continue;
         out[k] = walk(val);
       }

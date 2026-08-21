@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useServerPerms } from "@/components/perms-provider";
 import Link from "next/link";
 import { CurrencyCircleDollar, Phone, X, WhatsappLogo, EnvelopeSimple } from "@phosphor-icons/react";
 
@@ -78,6 +79,13 @@ function waNumber(phone: string): string {
 }
 
 export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
+  // 2026-08-21 (Hasan bildirdi): finans izni olmayan rolde tutar/odeme alanlari API'den
+  // GELMIYOR; arayuz bunu "yok" degil "beklemede" sanip ODENMIS siparislere
+  // "Odeme Bekliyor" yaziyordu ve tutar "0,00"/NaN cikiyordu. Yanlis bilgi, eksik
+  // bilgiden kotudur -> sutunlari komple gostermiyoruz.
+  const perms = useServerPerms();
+  const showMoney = !perms || perms.includes("finance.manage");
+
   const [contact, setContact] = useState<OrderRow | null>(null);
 
   if (orders.length === 0) {
@@ -91,8 +99,8 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
           <tr>
             <th className="text-left px-5 py-3 font-semibold">Sipariş No</th>
             <th className="text-left px-5 py-3 font-semibold">Müşteri</th>
-            <th className="text-right px-5 py-3 font-semibold">Tutar</th>
-            <th className="text-right px-5 py-3 font-semibold">Ödeme</th>
+            {showMoney && <th className="text-right px-5 py-3 font-semibold">Tutar</th>}
+            {showMoney && <th className="text-right px-5 py-3 font-semibold">Ödeme</th>}
             <th className="text-right px-5 py-3 font-semibold">Durum</th>
           </tr>
         </thead>
@@ -107,9 +115,12 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
                   {o.orderNumber ?? o.id?.slice(0, 8)}
                 </td>
                 <td className="px-5 py-3 text-ink-700">{customerName}</td>
-                <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">
-                  {toAmount(o.total)}
-                </td>
+                {showMoney && (
+                  <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">
+                    {toAmount(o.total)}
+                  </td>
+                )}
+                {showMoney && (
                 <td className="px-5 py-3 text-right whitespace-nowrap">
                   {o.paymentMethod === "cari" ? (
                     <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-100 text-brand-800">
@@ -134,6 +145,7 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
                     </span>
                   )}
                 </td>
+                )}
                 <td className="px-5 py-3 text-right">
                   <span
                     className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold ${
