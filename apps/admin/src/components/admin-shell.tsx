@@ -13,6 +13,7 @@ import {
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
 import { useServerPerms } from "@/components/perms-provider";
+import { permForPath } from "@/lib/route-perms";
 
 interface CurrentUser {
   email: string;
@@ -30,42 +31,9 @@ const ROLE_LABEL: Record<string, string> = {
   muhasebe: "Muhasebe",
 };
 
-/**
- * Menü öğesi → gerekli izin. Burada listelenmeyen öğe HERKESE görünür (ör. Dashboard).
- * NOT: menü gizlemek güvenlik değildir; gerçek sınır API'deki RolesGuard'dır. Bu yalnız
- * kullanıcıya erişemeyeceği sayfaları göstermemek için.
- */
-const NAV_PERM: Record<string, string> = {
-  "/analitik": "finance.manage",
-  "/ciro": "finance.manage",
-  "/siparisler": "orders.read",
-  "/musteriler": "customers.read",
-  "/musteriler/kurumsal-basvurular": "customers.read",
-  "/iletisim-mesajlari": "customers.read",
-  "/teklif-talepleri": "customers.read",
-  "/bulten-aboneleri": "settings.manage",
-  "/urunler": "catalog.manage",
-  "/urunler/fiyat-toplu": "pricing.manage",
-  "/fiyat-hesaplama-sablonu": "pricing.manage",
-  "/kategoriler": "catalog.manage",
-  "/kuponlar": "pricing.manage",
-  "/kampanya-paketleri": "pricing.manage",
-  "/menu": "catalog.manage",
-  "/slider": "media.manage",
-  "/banner": "media.manage",
-  "/blog": "catalog.manage",
-  "/yorumlar": "reviews.manage",
-  "/referanslar": "media.manage",
-  "/sss": "catalog.manage",
-  "/yasal": "settings.manage",
-  "/ayarlar/genel": "settings.manage",
-  "/ayarlar/fiyat": "pricing.manage",
-  "/ayarlar/api": "settings.manage",
-  "/ayarlar/seo": "settings.manage",
-  "/ayarlar/bildirim": "settings.manage",
-  "/ayarlar/bakim": "settings.manage",
-  "/ayarlar/yetkililer": "settings.manage",
-};
+// Menü görünürlüğü, sayfa erişimiyle AYNI haritadan gelir (lib/route-perms.ts).
+// 2026-08-21: önceden burada ayrı bir NAV_PERM kopyası vardı; middleware sayfa
+// koruması eklenince iki harita ayrışabilirdi — tek kaynağa indirildi.
 
 const navGroups: Array<{
   title: string;
@@ -431,7 +399,7 @@ function SidebarContent({
   // Izin bilgisi gelene kadar filtreleme YAPMA (aksi halde menü bir an boş görünür).
   const canSee = (href: string) => {
     if (!perms) return true;
-    const need = NAV_PERM[href];
+    const need = permForPath(href);
     return !need || perms.includes(need);
   };
   return (

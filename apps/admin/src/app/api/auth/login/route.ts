@@ -54,6 +54,22 @@ export async function POST(req: NextRequest) {
 
   const refreshToken = parseRefreshFromSetCookie(apiRes.headers.getSetCookie?.() ?? []) ?? "";
 
+  // İzinleri girişte API'den al ve oturum çerezine yaz (2026-08-21). Middleware her
+  // sayfada bunu okur — rol→izin haritası panele KOPYALANMAZ, API kaynak kalır.
+  // Alınamazsa perms boş kalır; middleware kısıtlı rolleri yeniden girişe yollar.
+  let perms: string[] | undefined;
+  try {
+    const meRes = await fetch(`${API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${data.accessToken}` },
+    });
+    if (meRes.ok) {
+      const me = (await meRes.json()) as { permissions?: string[] };
+      if (Array.isArray(me.permissions)) perms = me.permissions;
+    }
+  } catch {
+    // sessiz — aşağıda perms'siz oturum kurulur
+  }
+
   const secret = process.env.ADMIN_SESSION_SECRET;
   if (!secret || secret.length < 32) {
     return NextResponse.json({ error: "ADMIN_SESSION_SECRET eksik/kısa." }, { status: 500 });
@@ -65,6 +81,7 @@ export async function POST(req: NextRequest) {
     email: data.user.email,
     name: data.user.email,
     role: data.user.role as AdminSession["role"],
+    perms,
     iat: Math.floor(Date.now() / 1000),
   };
   const token = await signSession(session, secret);

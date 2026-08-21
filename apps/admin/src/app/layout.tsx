@@ -24,9 +24,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // İzinler SUNUCUDA çözülür → menü ilk boyamada doğru çıkar, sayfa geçişlerinde
   // "tam menü parlaması" olmaz (2026-08-21, bkz. PermsProvider notu).
   // Rol→izin haritası panele KOPYALANMIYOR; API tek doğruluk kaynağı olarak kalıyor.
-  let perms: string[] | null = null;
+  // İzinler girişte oturum çerezine yazılıyor (2026-08-21) → sayfa başına API çağrısı yok.
+  // Eski çerezlerde perms alanı olmayabilir; o durumda API'den bir kez çekilir.
   const session = await getAdminSession();
-  if (session) {
+  let perms: string[] | null = session?.perms ?? null;
+  if (!perms && session) {
     try {
       const api = await getAdminApi();
       const me = (await api.auth.me()) as unknown as { permissions?: string[] };

@@ -3,6 +3,7 @@ import {
   signSession, verifySession, needsRefresh,
   SESSION_COOKIE, SESSION_MAX_AGE, type AdminSession,
 } from "@/lib/admin-session";
+import { permForPath } from "@/lib/route-perms";
 
 const PUBLIC_PATHS = ["/giris", "/api/auth/login"];
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -40,6 +41,31 @@ export async function middleware(req: NextRequest) {
     const url = new URL("/giris", req.url);
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
+  }
+
+  // ── SAYFA YETKİ KONTROLÜ (2026-08-21) ─────────────────────────────────────────
+  // Menü gizlemek yetmiyordu: tasarımcı /ayarlar/genel'e URL'den girip boş form
+  // görüyordu (Hasan bildirdi). Erişim artık BURADA, tek yol haritasından zorlanır
+  // (lib/route-perms.ts — menü de aynı haritayı kullanır, tutarsızlık imkânsız).
+  // /api/* hariç: o uçların kendi kontrolleri var; asıl güvenlik sınırı da zaten
+  // API'deki RolesGuard — burası kullanıcıyı anlamsız/boş sayfalardan uzak tutar.
+  if (!pathname.startsWith("/api/")) {
+    const need = permForPath(pathname);
+    if (need && session.role !== "admin" && session.role !== "super_admin") {
+      if (!session.perms) {
+        // Eski oturum çerezi (perms alanı yok) → çerezi temizleyip yeniden girişe
+        // yolla ki oturum izin listesiyle kurulsun. Bir kereye mahsus yaşanır.
+        const url = new URL("/giris", req.url);
+        url.searchParams.set("redirect", pathname);
+        const res = NextResponse.redirect(url);
+        res.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
+        return res;
+      }
+      if (!session.perms.includes(need)) {
+        // Yetkisi olmayan sayfa → dashboard. ("/" haritada yok = tüm panel rollerine açık.)
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+    }
   }
 
   // Access token süresi yakınsa proaktif refresh.

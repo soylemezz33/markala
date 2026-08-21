@@ -11,6 +11,12 @@ export interface AdminSession {
   name: string;
   /** 2026-08-21: panel grupları eklendi. Müşteri rolü panele giremez. */
   role: "admin" | "super_admin" | "tasarimci" | "muhasebe";
+  /**
+   * Girişte API /auth/me'den alınan izin listesi (2026-08-21). Middleware sayfa erişimini,
+   * layout menüyü bununla kurar — sayfa başına API çağrısı gerekmez. Rol değişirse yeni
+   * izinler SONRAKI girişte yüklenir; güvenlik sınırı zaten API'deki RolesGuard.
+   */
+  perms?: string[];
   iat: number; // saniye
 }
 
