@@ -30,27 +30,13 @@ interface HelpArticle {
   content: Array<{ heading: string; body: string }>;
 }
 
+/*
+ * NOT (2026-08-21): "sss" makalesi bu kayıttan çıkarıldı — /yardim/sss artık kendi
+ * statik rotasında (yardim/sss/page.tsx) ve ADMIN PANELİNDEN yönetilen DB verisiyle
+ * (GET /api/faqs/public) render edilir. Buradaki kod-gömülü soruların tamamı
+ * scripts/sss/ekle.mjs ile panele taşındı.
+ */
 const articles: Record<string, HelpArticle> = {
-  "sss": {
-    slug: "sss",
-    title: "Sıkça Sorulan Sorular",
-    description: "En çok sorulan 30+ soru ve cevabı — tasarım, sipariş, kargo, iade.",
-    content: [
-      { heading: "Tasarım dosyamı hangi formatta göndermeliyim?", body: "CMYK renk uzayında, 300 dpi çözünürlükte PDF, AI veya PSD ideal. Kenarda 2 mm taşma payı bırakılmalı, önemli yazılar kenardan en az 3 mm içeride olmalı." },
-      { heading: "Selefon ile UV lak farkı nedir?", body: "Selefon kartın tüm yüzeyini ince filmle kaplar (mat ya da parlak), sıvı/çizilme korur. UV lak ise sadece istediğiniz alana (logo, isim) uygulanır ve dokunsal kabartma yaratır." },
-      { heading: "Kaç günde elime ulaşır?", body: "Üretim süresi ürüne göre değişir (kartvizit 1-2 iş günü, dekota 2-3 iş günü). Üretim biter bitmez aynı gün DHL kargoya teslim edilir; Türkiye geneli 1-3 iş günü içinde ulaşır." },
-      { heading: "Üretim toleransı (fire) ne demek?", body: "Matbaa baskısının doğası gereği siparişinizin Renk, Adet ve Ölçülerinde %1 ila %5 arasında fire olabilir. Bu sektör standardıdır ve sözleşme şartı olarak kabul edilmiştir (Mesafeli Satış Sözleşmesi Madde 7.A)." },
-      { heading: "Minimum sipariş adedi nedir?", body: "Ürünlere göre değişir — kartvizit 1.000 adet, broşür 1.000 adet, kupa 1 adet, kaşe 1 adet. Her ürün sayfasındaki konfigüratörde minimum adet görünür." },
-      { heading: "Tasarım yoksa ne yapacağım?", body: "Ücretsiz şablonlarımızdan birini seçebilir veya 89 TL'den itibaren özel tasarım hizmetimizden yararlanabilirsiniz. Sipariş sırasında 'Tasarım desteği istiyorum' seçeneğini işaretleyin." },
-      { heading: "Kurumsal cari hesap nasıl açarım?", body: "İletişim formundan 'Kurumsal Hesap' başlığıyla başvuru yapın; Vergi levhası ve imza sirküleri ile 24 saat içinde değerlendirme yaparız. Onay sonrası açık hesap, 30/60/90 gün vadeli fatura, özel fiyat anlaşmaları aktif olur." },
-      { heading: "İptal hakkım var mı?", body: "Üretim başlamadan önce (tasarım onayı aşamasında) tam iade ile iptal edebilirsiniz. Üretim başladıktan sonra iptal mümkün değildir; bu kişiye özel matbaa ürünlerinin yasal niteliğidir (Mesafeli Sözleşmeler Yönetmeliği 15/1-ç)." },
-      { heading: "Selefon nedir? Mat mı parlak mı seçmeliyim?", body: "Selefon, baskı yüzeyine ısıyla yapıştırılan ince bir plastik filmdir. Mat selefon göz yormaz, parmak izi göstermez; kartvizit ve broşür için popülerdir. Parlak selefon ise renkleri daha canlı yansıtır, fotoğraf ağırlıklı tasarımlarda tercih edilir. İkisi de baskıyı nem ve çizilmeden korur." },
-      { heading: "Tek yön ve çift yön baskı farkı nedir?", body: "Tek yön (1+0) baskıda yalnızca bir yüze baskı yapılır. Çift yön (4+4 veya 1+1) baskıda ön ve arka yüzün ikisi de basılır. Kartvizitlerde çift yön ek fiyat gerektirebilir; konfigüratörde seçtiğinizde fiyat otomatik güncellenir." },
-      { heading: "Ebat/boyut seçimi nasıl yapılır?", body: "Her ürün sayfasındaki konfigüratörde hazır ebat seçenekleri listelenir (örn. 85×55 mm kartvizit, A4 broşür). Standart dışı ebat gerekiyorsa 'Özel Boyut' seçeneğini işaretleyin veya WhatsApp'tan bize ulaşın. Ebat seçimi fiyatı etkiler; konfigüratörde anlık güncellenir." },
-      { heading: "Fiyat neden 'Teklif Al' gösteriyor?", body: "'Teklif Al' ifadesi, o ürün için henüz sabit liste fiyatı girilmediği anlamına gelir. Bu ürünler için ürün sayfasındaki teklif formunu doldurun; 24 iş saati içinde size özel fiyat iletilir. Sipariş büyüklüğü (adet) arttıkça birim fiyat düşer." },
-      { heading: "Adet seçimini konfigüratörde nasıl ayarlarım?", body: "Ürün sayfasındaki konfigüratörde 'Adet' adımından standart paketler (ör. 250, 500, 1.000) arasından seçim yapabilirsiniz. Daha yüksek bir adet girebileceğiniz ürünlerde serbest giriş alanı açılır. Toplu sipariş (1.000+ adet) için kurumsal teklif almanızı öneririz." },
-    ],
-  },
   "dosya-hazirlama": {
     slug: "dosya-hazirlama",
     title: "Dosya Hazırlama Rehberi",

@@ -13,6 +13,22 @@ export class FaqsService {
     });
   }
 
+  /** Halka açık liste (storefront /yardim/sss) — yalnız aktif kayıtlar. */
+  findAllPublic() {
+    return this.prisma.faq.findMany({
+      where: { isActive: true },
+      orderBy: [{ category: "asc" }, { sortOrder: "asc" }],
+      select: {
+        id: true,
+        question: true,
+        answer: true,
+        category: true,
+        productSlug: true,
+        sortOrder: true,
+      },
+    });
+  }
+
   create(dto: CreateFaqDto) {
     return this.prisma.faq.create({
       data: {

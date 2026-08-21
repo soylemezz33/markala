@@ -35,3 +35,19 @@ export class FaqsController {
     return this.service.remove(id);
   }
 }
+
+/**
+ * Halka açık SSS ucu — storefront /yardim/sss bu uçtan beslenir.
+ * Ana controller sınıf seviyesinde admin-guard'lı olduğundan (yönetim uçları),
+ * public okuma AYRI controller'da: guard yok, yalnız aktif kayıtlar döner.
+ */
+@ApiTags("faqs")
+@Controller("faqs/public")
+export class PublicFaqsController {
+  constructor(private service: FaqsService) {}
+
+  @Get()
+  list() {
+    return this.service.findAllPublic();
+  }
+}
