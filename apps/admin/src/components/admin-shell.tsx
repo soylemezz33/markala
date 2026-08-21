@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
+import { useServerPerms } from "@/components/perms-provider";
 
 interface CurrentUser {
   email: string;
@@ -143,6 +144,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     items: [],
     badges: {},
   });
+  // İzinler ÖNCE sunucudan (ilk render'da hazır) → menü parlaması yok.
+  // Sunucu getiremediyse client fetch'ten gelen değere düşülür.
+  const serverPerms = useServerPerms();
+
   // Sistem sağlığı: null = bilinmiyor (ilk yükleme), true = ok, false = sorun var.
   const [systemOk, setSystemOk] = useState<boolean | null>(null);
 
@@ -232,7 +237,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex bg-paper-100">
       {/* Sidebar — Desktop */}
       <aside className="hidden lg:flex w-64 bg-ink-900 text-paper-100 flex-col fixed inset-y-0 left-0 z-30">
-        <SidebarContent pathname={pathname} onNavigate={() => {}} onLogout={logout} badges={notifs.badges} perms={user?.permissions} />
+        <SidebarContent pathname={pathname} onNavigate={() => {}} onLogout={logout} badges={notifs.badges} perms={serverPerms ?? user?.permissions} />
       </aside>
 
       {/* Sidebar — Mobile slide-in */}
@@ -248,7 +253,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               onNavigate={() => setMobileOpen(false)}
               onLogout={logout}
               badges={notifs.badges}
-              perms={user?.permissions}
+              perms={serverPerms ?? user?.permissions}
             />
           </aside>
         </>
