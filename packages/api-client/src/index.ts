@@ -670,13 +670,13 @@ export class MarkalaApiClient {
   panelUsers = {
     list: () =>
       this.request<{ users: Array<{ id: string; email: string; fullName: string | null; role: string; createdAt: string }>; assignableRoles: string[] }>(
-        "GET", "/admin/users", undefined, { auth: true },
+        "GET", "/admin/panel-users", undefined, { auth: true },
       ),
     /** E-postadan bulup rol atar. Kullanıcı yoksa 404 — önce siteden üye olmalı. */
     invite: (email: string, role: string) =>
-      this.request<{ ok: boolean; message?: string }>("PATCH", "/admin/users/invite", { email, role }, { auth: true }),
+      this.request<{ ok: boolean; message?: string }>("PATCH", "/admin/panel-users/invite", { email, role }, { auth: true }),
     setRole: (id: string, role: string) =>
-      this.request<{ ok: boolean; message?: string }>("PATCH", `/admin/users/${id}/role`, { role }, { auth: true }),
+      this.request<{ ok: boolean; message?: string }>("PATCH", `/admin/panel-users/${id}/role`, { role }, { auth: true }),
   };
 
   adminProfit = (days?: number) =>

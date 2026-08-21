@@ -39,8 +39,11 @@ class InviteDto {
  *    geçer, panelde ikinci bir hesap oluşturma yolu (ve zayıf şifre riski) açılmaz.
  *  - Her değişiklik audit_logs'a yazılır (kim, kimi, neden→ne, IP).
  */
-@ApiTags("admin-users")
-@Controller("admin/users")
+@ApiTags("admin-panel-users")
+// YOL ÇAKIŞMASI DÜZELTMESİ (2026-08-21): "admin/users" yolunu UsersAdminController
+// (müşteri yönetimi) ZATEN kullanıyor ve onun @Get()'i benimkini yutuyordu; sayfa dizi
+// alıp `data.users` tanımsız kalınca çöküyordu. Ayrı yola taşındı.
+@Controller("admin/panel-users")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("super_admin")
 @ApiBearerAuth()

@@ -12,7 +12,14 @@ export default async function YetkililerPage() {
   let loadError = false;
   try {
     const api = await getAdminApi();
-    data = await api.panelUsers.list();
+    const res = await api.panelUsers.list();
+    // SAVUNMA: beklenmedik sekil gelirse sayfa COKMESIN. 2026-08-21'de tam bu oldu —
+    // yol cakismasi yuzunden dizi donmus, `data.users` tanimsiz kalinca arayuz patlamisti.
+    if (res && Array.isArray((res as { users?: unknown }).users)) {
+      data = res;
+    } else {
+      loadError = true;
+    }
   } catch {
     // 403 = super_admin değil; sayfa yine açılır ama liste boş + uyarı görünür.
     loadError = true;

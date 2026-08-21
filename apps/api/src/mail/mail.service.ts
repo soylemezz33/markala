@@ -298,6 +298,27 @@ export class MailService {
         .map((k) => (this.config.get<string>(k) ?? "").trim())
         .find((v) => v.length > 0) ?? "";
     const recipients = raw.split(",").map((s) => s.trim()).filter(Boolean);
+
+    // 2026-08-21 (Hasan): grafik tasarımcılar da haberdar olsun — üretim onlarla başlıyor,
+    // siparişi panelde görmek için beklemeleri gereksiz gecikme yaratıyordu.
+    // Rol veritabanından okunur; panelden tasarımcı eklenince otomatik listeye girer,
+    // ayrıca env düzenlemek gerekmez. Rolü kaldırılınca da otomatik çıkar.
+    try {
+      const designers = await this.prisma.user.findMany({
+        where: { role: "tasarimci" },
+        select: { email: true },
+      });
+      for (const d of designers) {
+        const mail = (d.email ?? "").trim();
+        // Aynı adres iki kez eklenmesin (tasarımcı aynı zamanda bildirim adresiyse).
+        if (mail && !recipients.some((r) => r.toLowerCase() === mail.toLowerCase())) {
+          recipients.push(mail);
+        }
+      }
+    } catch (e) {
+      // Tasarımcı listesi alınamazsa yönetici bildirimi YİNE gitsin — asıl bildirim kaybolmasın.
+      this.logger.warn(`mail.newOrderAdmin: tasarımcı listesi alınamadı: ${(e as Error).message}`);
+    }
     if (recipients.length === 0) {
       this.logger.warn("mail.newOrderAdmin: ORDER_NOTIFY_TO/ADMIN_EMAIL tanımsız — bildirim atlandı");
       return false;
