@@ -5,7 +5,34 @@ import { revalidatePath } from "next/cache";
 
 type Res = { ok: true; message: string } | { ok: false; error: string };
 
-/** E-postadan kullanıcı bulup yetki verir. Kişi kayıtlı değilse API 404 + açıklama döner. */
+/**
+ * Panelden yetkili hesabı oluşturur (e-posta + şifre). 2026-08-21 Hasan kararı:
+ * kişi siteden üye olmasın, hesabı yönetici tanımlasın.
+ * E-posta zaten kayıtlıysa API 409 + açıklama döner (şifre ezilmez).
+ */
+export async function createPanelUser(
+  email: string,
+  password: string,
+  role: string,
+  fullName?: string,
+): Promise<Res> {
+  try {
+    const api = await getAdminApi();
+    const r = await api.panelUsers.create({ email: email.trim(), password, role, fullName });
+    revalidatePath("/ayarlar/yetkililer");
+    const promoted = (r as { promoted?: boolean }).promoted;
+    return {
+      ok: true,
+      message: promoted
+        ? `${r.email} zaten kayıtlıydı — şifresine dokunulmadan yetkisi verildi (${r.role}).`
+        : `${r.email} oluşturuldu (${r.role}).`,
+    };
+  } catch (e) {
+    return { ok: false, error: (e as { message?: string })?.message ?? "Kullanıcı oluşturulamadı" };
+  }
+}
+
+/** Mevcut (siteden üye olmuş) bir kullanıcıya yetki verir. */
 export async function inviteUser(email: string, role: string): Promise<Res> {
   try {
     const api = await getAdminApi();

@@ -1,6 +1,7 @@
-import { Body, Controller, ForbiddenException, Get, NotFoundException, Param, Patch, Req, UseGuards } from "@nestjs/common";
+import { Body, ConflictException, Controller, ForbiddenException, Get, NotFoundException, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { IsEmail, IsIn, IsString } from "class-validator";
+import { IsEmail, IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from "class-validator";
+import * as argon2 from "argon2";
 import type { Request } from "express";
 import { PrismaService } from "../prisma/prisma.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
@@ -14,6 +15,37 @@ class SetRoleDto {
   @IsString()
   @IsIn(ASSIGNABLE as unknown as string[])
   role!: string;
+}
+
+/**
+ * Panelden hesap oluşturma (2026-08-21, Hasan kararı: "siteden üye olmasın, ben
+ * panelden e-posta ve şifre tanımlayacağım").
+ *
+ * Şifre kuralları KAYIT FORMUYLA AYNI tutuldu (min 8, büyük+küçük+rakam, max 128).
+ * Max 128: argon2 hash'i CPU/RAM DoS'una karşı. Panelden açılan hesap diye kural
+ * gevşetilmedi — bu hesaplar panele giriyor, yani daha değerli hedefler.
+ */
+class CreateUserDto {
+  @IsEmail({}, { message: "Geçerli bir e-posta adresi girin." })
+  @MaxLength(254)
+  email!: string;
+
+  @IsString()
+  @MinLength(8, { message: "Şifre en az 8 karakter olmalı." })
+  @MaxLength(128, { message: "Şifre çok uzun." })
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
+    message: "Şifre büyük harf, küçük harf ve rakam içermelidir.",
+  })
+  password!: string;
+
+  @IsString()
+  @IsIn(PANEL_ROLES as unknown as string[])
+  role!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  fullName?: string;
 }
 
 class InviteDto {
@@ -77,6 +109,61 @@ export class AdminUsersController {
       );
     }
     return this.applyRole(target.id, dto.role, req.user.sub, req.ip);
+  }
+
+  /**
+   * Panelden yetkili hesabı OLUŞTUR. E-posta zaten kayıtlıysa 409 — o durumda
+   * "yetki ver" akışı (invite) kullanılmalı, mevcut hesabın şifresi ezilmemeli.
+   *
+   * emailVerifiedAt DOLU yazılır: hesabı yönetici açtığı için doğrulama maili
+   * beklemeye gerek yok, aksi halde kişi panele giremezdi.
+   */
+  @Post()
+  async create(@Body() dto: CreateUserDto, @Req() req: Request & { user: { sub: string } }) {
+    const email = dto.email.toLowerCase().trim();
+    const exists = await this.prisma.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      select: { id: true, role: true },
+    });
+    if (exists) {
+      // Kayıtlı e-posta iki farklı durumdur:
+      //  a) MÜŞTERİ hesabı → yetki ver (rolü yükselt). Şifresine DOKUNMA; kendi şifresi kalsın.
+      //     Aksi halde çıkmaz sokak olurdu: kişi listede görünmediği için rolü de değiştirilemezdi.
+      //  b) Zaten panel yetkilisi → 409; rolü aşağıdaki listeden değiştirilmeli.
+      if (exists.role !== "customer") {
+        throw new ConflictException(
+          "Bu e-posta zaten panel yetkilisi. Rolünü aşağıdaki listeden değiştirebilirsiniz.",
+        );
+      }
+      const promoted = await this.applyRole(exists.id, dto.role, req.user.sub, req.ip);
+      return { ...promoted, promoted: true, email, role: dto.role };
+    }
+    const passwordHash = await argon2.hash(dto.password);
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        fullName: dto.fullName?.trim() || email,
+        role: dto.role as never,
+        emailVerifiedAt: new Date(),
+      },
+      select: { id: true, email: true, role: true },
+    });
+
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: req.user.sub,
+          entityType: "User",
+          entityId: user.id,
+          action: "panel_user_create",
+          diff: { email: user.email, role: user.role },
+          ipAddress: req.ip ?? null,
+        },
+      })
+      .catch(() => undefined);
+
+    return { ok: true, email: user.email, role: user.role };
   }
 
   @Patch(":id/role")

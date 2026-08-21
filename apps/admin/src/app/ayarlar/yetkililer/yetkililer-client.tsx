@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { ShieldCheck, UserPlus, Info } from "@phosphor-icons/react";
-import { inviteUser, changeRole } from "./actions";
+import { createPanelUser, changeRole } from "./actions";
 
 const ROLE_LABEL: Record<string, string> = {
   super_admin: "Süper Admin",
@@ -25,18 +25,24 @@ type U = { id: string; email: string; fullName: string | null; role: string; cre
 
 export function PanelUsersClient({ users, roles }: { users: U[]; roles: string[] }) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [role, setRole] = useState("tasarimci");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || isPending) return;
+    if (!email.trim() || !password || isPending) return;
     setMsg(null);
     startTransition(async () => {
-      const r = await inviteUser(email, role);
+      const r = await createPanelUser(email, password, role, fullName);
       setMsg(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.error });
-      if (r.ok) setEmail("");
+      if (r.ok) {
+        setEmail("");
+        setPassword("");
+        setFullName("");
+      }
     });
   };
 
@@ -62,19 +68,36 @@ export function PanelUsersClient({ users, roles }: { users: U[]; roles: string[]
         </p>
       </div>
 
-      {/* Yetki verme — kullanıcı ÖNCE siteden üye olmalı. */}
+      {/* Hesap oluşturma. E-posta zaten müşteri olarak kayıtlıysa API şifreye
+          DOKUNMADAN rolünü yükseltir; zaten yetkiliyse 409 döner. */}
       <form onSubmit={submit} className="mb-6 bg-paper-50 border border-paper-200 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-ink-900">
-          <UserPlus size={16} /> Yetkili ekle
+          <UserPlus size={16} /> Yeni yetkili hesabı oluştur
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Ad Soyad (opsiyonel)"
+            className="px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm"
+          />
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="kisi@ornek.com"
-            className="flex-1 min-w-[220px] px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm"
+            className="px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm"
+          />
+          <input
+            type="text"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Şifre (en az 8; büyük, küçük ve rakam)"
+            autoComplete="new-password"
+            className="px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm font-mono"
           />
           <select
             value={role}
@@ -94,14 +117,15 @@ export function PanelUsersClient({ users, roles }: { users: U[]; roles: string[]
             disabled={isPending}
             className="px-4 py-2 rounded-md bg-ink-900 text-paper-50 text-sm font-medium disabled:opacity-60"
           >
-            {isPending ? "İşleniyor…" : "Yetki ver"}
+            {isPending ? "Oluşturuluyor…" : "Hesabı oluştur"}
           </button>
         </div>
         <p className="mt-2 flex items-start gap-1.5 text-xs text-ink-500">
           <Info size={14} className="flex-none mt-0.5" />
-          Kişi <strong>önce siteden normal üye olmalı</strong>; sonra buradan yetkisini
-          yükseltirsiniz. Böylece şifresini kendisi belirler, panelde ikinci bir hesap
-          oluşturma yolu açılmaz.
+          Şifreyi siz belirlersiniz; kişi ilk girişte kullanır. Şifre bir daha
+          görüntülenemez — kaydedip kişiye güvenli bir kanaldan iletin. E-posta zaten
+          kayıtlıysa yeni hesap açılmaz: kişi müşteriyse şifresine dokunulmadan yetkisi
+          yükseltilir, zaten yetkiliyse aşağıdaki listeden değiştirmeniz istenir.
         </p>
         <p className="mt-1 text-xs text-ink-500">{ROLE_DESC[role]}</p>
       </form>

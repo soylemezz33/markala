@@ -672,7 +672,13 @@ export class MarkalaApiClient {
       this.request<{ users: Array<{ id: string; email: string; fullName: string | null; role: string; createdAt: string }>; assignableRoles: string[] }>(
         "GET", "/admin/panel-users", undefined, { auth: true },
       ),
-    /** E-postadan bulup rol atar. Kullanıcı yoksa 404 — önce siteden üye olmalı. */
+    /**
+     * Panelden yetkili hesabı OLUŞTURUR (e-posta + şifre). E-posta kayıtlıysa 409 döner —
+     * o durumda mevcut kullanıcının rolü setRole ile değiştirilmeli (şifresi ezilmesin).
+     */
+    create: (data: { email: string; password: string; role: string; fullName?: string }) =>
+      this.request<{ ok: boolean; email: string; role: string }>("POST", "/admin/panel-users", data, { auth: true }),
+    /** Mevcut (siteden üye olmuş) bir kullanıcıya yetki verir. */
     invite: (email: string, role: string) =>
       this.request<{ ok: boolean; message?: string }>("PATCH", "/admin/panel-users/invite", { email, role }, { auth: true }),
     setRole: (id: string, role: string) =>
