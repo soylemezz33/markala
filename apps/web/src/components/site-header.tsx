@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MagnifyingGlass,
@@ -1216,6 +1216,16 @@ function CartButton({
 
 const SEARCH_HISTORY_KEY = "markala_search_history";
 
+/**
+ * Türkçe katlamalı küçük harf — kategori önerisi eşleşmesi için ("DE" → "de", "Kağıt" → "kagit").
+ * API'deki foldTr (products.service) ile aynı mantık: önce tr-TR lowercase (İ→i, I→ı),
+ * sonra aksanlı harfler sadeleştirilir; müşteri "kagit" yazsa da "Kağıt" bulunur.
+ */
+function foldTr(s: string): string {
+  const map: Record<string, string> = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" };
+  return s.toLocaleLowerCase("tr-TR").replace(/[çğıöşü]/g, (ch) => map[ch] ?? ch);
+}
+
 function loadSearchHistory(): string[] {
   if (typeof window === "undefined") return [];
   try {
@@ -1345,6 +1355,20 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
       clearTimeout(timer);
     };
   }, [query]);
+
+  // Kategori önerileri — "de" yazınca "Dekota Baskı" görünsün (test geri bildirimi: müşteri
+  // ürünün tam adını yazmak zorunda kalmasın). Kategoriler zaten canlı çekili; client-side
+  // Türkçe-katlamalı eşleşme yeterli. Başta-eşleşen önce gelir.
+  const categorySuggestions = useMemo(() => {
+    const term = foldTr(query.trim());
+    if (term.length < 2) return [];
+    return categories
+      .map((c) => ({ c, pos: foldTr(c.name).indexOf(term) }))
+      .filter((m) => m.pos >= 0)
+      .sort((a, b) => a.pos - b.pos || a.c.name.length - b.c.name.length)
+      .slice(0, 4)
+      .map((m) => m.c);
+  }, [query, categories]);
 
   if (!open) return null;
 
@@ -1497,7 +1521,35 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 
           {query && (
             <div className="p-3 max-h-[55vh] overflow-y-auto">
-              {results.length === 0 ? (
+              {categorySuggestions.length > 0 && (
+                <div className="mb-2">
+                  <div className="px-3 pt-1 pb-2 text-[11px] font-bold uppercase tracking-wider text-ink-500">
+                    Kategoriler
+                  </div>
+                  <ul>
+                    {categorySuggestions.map((c) => (
+                      <li key={c.slug}>
+                        <Link
+                          href={`/kategori/${c.slug}`}
+                          onClick={() => {
+                            saveSearch(query);
+                            onClose();
+                          }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors group"
+                        >
+                          <Tag size={15} className="text-brand-700 flex-none" />
+                          <span className="text-sm font-medium text-ink-900 truncate">{c.name}</span>
+                          <ArrowRight
+                            size={14}
+                            className="ml-auto text-ink-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {results.length === 0 && categorySuggestions.length === 0 ? (
                 <div className="p-5 text-center text-sm text-ink-500">
                   "<span className="text-ink-900 font-medium">{query}</span>" için sonuç bulunamadı.
                   <br />
@@ -1506,23 +1558,30 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                   </span>
                 </div>
               ) : (
-                <ul className="divide-y divide-paper-200">
-                  {results.map((p) => (
-                    <li key={p.slug}>
-                      <Link
-                        href={`/urun/${p.slug}`}
-                        onClick={() => {
-                          saveSearch(query);
-                          onClose();
-                        }}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors"
-                      >
-                        <MagnifyingGlass size={15} className="text-ink-500 flex-none" />
-                        <span className="text-sm font-medium text-ink-900 truncate">{p.name}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  {categorySuggestions.length > 0 && results.length > 0 && (
+                    <div className="px-3 pt-1 pb-2 text-[11px] font-bold uppercase tracking-wider text-ink-500 border-t border-paper-200">
+                      Ürünler
+                    </div>
+                  )}
+                  <ul className="divide-y divide-paper-200">
+                    {results.map((p) => (
+                      <li key={p.slug}>
+                        <Link
+                          href={`/urun/${p.slug}`}
+                          onClick={() => {
+                            saveSearch(query);
+                            onClose();
+                          }}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors"
+                        >
+                          <MagnifyingGlass size={15} className="text-ink-500 flex-none" />
+                          <span className="text-sm font-medium text-ink-900 truncate">{p.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               )}
             </div>
           )}
