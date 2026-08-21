@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin-shell";
-import { getAdminApi } from "@/lib/api";
+import { getAdminApi, getAdminSession } from "@/lib/api";
 import { LoadErrorBanner } from "@/components/load-error-banner";
 import { RecentOrdersTable } from "./recent-orders-table";
 import Link from "next/link";
@@ -47,6 +47,13 @@ function statusBadge(status: string): { label: string; className: string } {
 }
 
 export default async function DashboardPage() {
+  // 2026-08-21 (Hasan, tasarimci hesabiyla test): parasal kutular herkese gorunuyor ve
+  // veri gelmedigi icin "0,00" yaziyordu. Cozum blur/gri degil, KUTUYU HIC BASMAMAK.
+  // API zaten finans izni olmayan role `revenue`/`unpaidCount` GONDERMIYOR; burada da
+  // gostermiyoruz. Iki katman: veri kesilir + arayuz basmaz.
+  const session = await getAdminSession();
+  const canSeeFinance = session?.role === "admin" || session?.role === "super_admin";
+
   let stats: AdminStatsDto = EMPTY_STATS;
   let recentOrders: unknown[] = [];
   let loadError = false;
@@ -73,14 +80,14 @@ export default async function DashboardPage() {
   ];
 
   const kpis = [
-    {
+    ...(canSeeFinance ? [{
       label: "Toplam Ciro",
       value: `₺ ${stats.revenue.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       icon: TrendUp,
       color: "text-success",
       // Hasan: "ciroya tıklandığında ne kadar kâr etmişiz" → kâr analizi sayfası.
       href: "/ciro",
-    },
+    }] : []),
     {
       // 2026-08-18: artık YALNIZ gerçekleşen siparişler (ödemesi başarılı + cari).
       // Yarıda bırakılan ödemeler ayrı "Ödeme Bekleyen" kutusunda izlenir.
@@ -89,12 +96,14 @@ export default async function DashboardPage() {
       icon: ShoppingCart,
       color: "text-brand-700",
     },
-    {
-      label: "Ödeme Bekleyen",
-      value: String(stats.unpaidCount ?? 0),
-      icon: ClockCounterClockwise,
-      color: "text-warning",
-    },
+    ...(canSeeFinance
+      ? [{
+          label: "Ödeme Bekleyen",
+          value: String(stats.unpaidCount ?? 0),
+          icon: ClockCounterClockwise,
+          color: "text-warning",
+        }]
+      : []),
     {
       label: "Müşteri",
       value: String(stats.customerCount),

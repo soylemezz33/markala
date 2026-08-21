@@ -22,7 +22,12 @@ export class StatsService {
     };
   }
 
-  async summary() {
+  /**
+   * @param opts.includeFinance false ise PARASAL alanlar yanittan CIKARILIR (ciro,
+   *   odeme bekleyen). 2026-08-21: tasarimci rolu dashboard'u aciyor ama tutar gormemeli.
+   *   Kart gizlemek yetmez — veri hic gitmemeli.
+   */
+  async summary(opts: { includeFinance?: boolean } = {}) {
     // GERÇEKLEŞEN sipariş şartı: ödemesi başarılı VEYA cari (açık hesap — online ödeme
     // beklenmez). 2026-08-18: ödeme sağlayıcısına yönlendirmeden ÖNCE sipariş kaydı açıldığı
     // için yarıda bırakılan her deneme DB'de satır bırakıyor; orderCount ve ordersByStatus
@@ -76,12 +81,14 @@ export class StatsService {
         this.prisma.review.count({ where: { isApproved: false } }),
       ]);
 
+    const includeFinance = opts.includeFinance !== false;
     return {
       orderCount,
-      revenue: Number(revenueAgg._sum.total ?? 0),
+      ...(includeFinance ? { revenue: Number(revenueAgg._sum.total ?? 0) } : {}),
       customerCount,
       pendingCorporate,
-      unpaidCount,
+      // Odeme bekleyen = parasal takip; finans izni olmayan rol gormemeli.
+      ...(includeFinance ? { unpaidCount } : {}),
       unreadMessages,
       newQuotes,
       pendingReviews,
