@@ -1,0 +1,30 @@
+# Markala
+
+> markala.com.tr — Türkiye'nin online matbaası. Kartvizit, broşür, afiş, branda, etiket,
+> tabela ve iş güvenliği (İSG) levhaları; KDV dahil anlık fiyat, online sipariş, Türkiye
+> geneli DHL kargo. Mersin merkezli üretim; işletmeci: 324 Ajans Bilgi Teknolojileri Reklam
+> Pazarlama ve Ticaret Limited Şirketi (ETBİS kayıtlı). Telefon: 0324 433 33 51.
+
+Fiyat sorularında güncel kaynak her zaman ürün/kategori sayfalarıdır (fiyatlar KDV dahildir
+ve canlı katalogdan gelir). Aşağıdaki rehberler alıntılanabilir özet bilgi içerir.
+
+## Fiyat rehberleri
+
+- [Kartvizit Fiyatları 2026](https://markala.com.tr/rehber/kartvizit-fiyatlari-2026): gramaj, selefon ve adet kırılımıyla güncel fiyatlar
+- [Broşür ve El İlanı Fiyatları 2026](https://markala.com.tr/rehber/brosur-baski-fiyatlari-2026): A7–A3 ebat × 1.000–10.000 adet tiraj tablosu
+- [Afiş Baskı Fiyatları 2026](https://markala.com.tr/rehber/afis-baski-fiyatlari-2026): kağıt afiş ebat/fiyat tablosu
+- [Branda Baskı m² Fiyatı 2026](https://markala.com.tr/rehber/branda-baski-m2-fiyati-2026): vinil branda m² fiyatı ve ebat hesabı
+- [Rollup Fiyatları 2026](https://markala.com.tr/rehber/rollup-fiyatlari-2026): rollup banner fiyat ve ölçüleri
+- [İSG Uyarı Levhaları Rehberi](https://markala.com.tr/rehber/isg-zorunlu-uyari-levhalari): işaret renk anlamları (yasak kırmızı, uyarı sarı, emredici mavi, acil çıkış yeşil) ve işyeri tipine göre zorunlu levha listeleri
+
+## Ürün katalogu
+
+- [Tüm kategoriler](https://markala.com.tr/kategoriler): kartvizit, broşür, afiş, branda, folyo, etiket, bayrak, İSG levhaları ve diğerleri
+- [İş güvenliği levhaları](https://markala.com.tr/kategori/is-guvenligi-uyari-ikaz): 800+ İSG uyarı/yasak/emredici/acil durum levhası, her üründe malzeme-ebat seçenekleri ve SSS
+- [Ücretsiz baskı şablonları](https://markala.com.tr/rehber/sablonlar): baskıya hazır tasarım şablonları
+
+## Kurumsal
+
+- [Hakkımızda](https://markala.com.tr/hakkimizda): şirket bilgisi, üretim ve teslimat süreci
+- [İletişim](https://markala.com.tr/iletisim): adres (Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A, Yenişehir/Mersin), telefon, KEP
+- [Blog](https://markala.com.tr/blog): baskı rehberleri ve karşılaştırmalar
