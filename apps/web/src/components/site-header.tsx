@@ -28,6 +28,7 @@ import {
   Heart,
   Tag,
   Gift,
+  SquaresFour,
 } from "@phosphor-icons/react";
 import { Container, cn } from "@markala/ui";
 import type { Category, Product } from "@markala/types";
@@ -292,15 +293,27 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  // Mega menü (Varyant B) — tek paylaşılan panel, aktif kategori indexi
+  // Mega menü — iki mod:
+  //  "all"    → en soldaki "Tüm Ürünler" butonu: dikey kategori listesi (rail) + aktif kategori içeriği
+  //  "single" → tek kategori sekmesi: yalnız o kategorinin menüsü (rail YOK)
   const [megaOpen, setMegaOpen] = useState(false);
+  const [megaMode, setMegaMode] = useState<"all" | "single">("all");
   const [megaIndex, setMegaIndex] = useState(0);
   const megaCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
 
-  const openMega = (i: number) => {
+  // Panelde gösterilebilir kategoriler — alt menüsü olmayanlar (ör. Kurumsal) rail'e girmez
+  const megaItems = useMemo(() => NAV.filter((n) => n.groups && n.groups.length > 0), [NAV]);
+
+  const openAll = () => {
     if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    setMegaMode("all");
+    setMegaOpen(true);
+  };
+  const openSingle = (i: number) => {
+    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    setMegaMode("single");
     setMegaIndex(i);
     setMegaOpen(true);
   };
@@ -539,46 +552,72 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             onMouseLeave={scheduleMegaClose}
           >
             <Container className="flex items-center gap-1">
-              {NAV.map((nav, i) => (
-                <Link
-                  key={nav.label}
-                  href={nav.href}
-                  onMouseEnter={() => openMega(i)}
-                  onFocus={() => openMega(i)}
-                  aria-haspopup="true"
-                  aria-expanded={megaOpen && megaIndex === i}
-                  className={cn(
-                    "relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
-                    megaOpen && megaIndex === i ? "text-ink-900" : "text-ink-700 hover:text-ink-900",
-                  )}
-                >
-                  {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
-                  {nav.label}
-                  {nav.highlight === "new" && (
-                    <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
-                  )}
-                  <CaretDown
-                    size={10}
-                    weight="bold"
-                    className={cn("transition-transform", megaOpen && megaIndex === i && "rotate-180")}
-                  />
-                  {megaOpen && megaIndex === i && (
-                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />
-                  )}
-                </Link>
-              ))}
+              {/* Tüm Ürünler — en solda, hover'da tüm kategorileri dikey listeleyen panel */}
               <Link
                 href="/urunler"
-                className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:text-brand-900 px-3 py-2.5"
+                onMouseEnter={openAll}
+                onFocus={openAll}
+                aria-haspopup="true"
+                aria-expanded={megaOpen && megaMode === "all"}
+                className={cn(
+                  "my-1.5 mr-2 inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
+                  megaOpen && megaMode === "all"
+                    ? "bg-ink-900 text-paper-50"
+                    : "bg-paper-100 text-ink-900 hover:bg-ink-900 hover:text-paper-50",
+                )}
               >
-                Tüm Ürünler <ArrowRight size={14} weight="bold" />
+                <SquaresFour size={16} weight="bold" />
+                Tüm Ürünler
+                <CaretDown
+                  size={10}
+                  weight="bold"
+                  className={cn("transition-transform", megaOpen && megaMode === "all" && "rotate-180")}
+                />
               </Link>
+              <span aria-hidden className="h-5 w-px bg-paper-200 mr-1" />
+              {NAV.map((nav) => {
+                const mi = megaItems.indexOf(nav);
+                const isActive = megaOpen && megaMode === "single" && mi >= 0 && megaIndex === mi;
+                return (
+                  <Link
+                    key={nav.label}
+                    href={nav.href}
+                    onMouseEnter={() => (mi >= 0 ? openSingle(mi) : scheduleMegaClose())}
+                    onFocus={() => {
+                      if (mi >= 0) openSingle(mi);
+                    }}
+                    aria-haspopup={mi >= 0 ? "true" : undefined}
+                    aria-expanded={mi >= 0 ? isActive : undefined}
+                    className={cn(
+                      "relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
+                      isActive ? "text-ink-900" : "text-ink-700 hover:text-ink-900",
+                    )}
+                  >
+                    {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
+                    {nav.label}
+                    {nav.highlight === "new" && (
+                      <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
+                    )}
+                    {mi >= 0 && (
+                      <CaretDown
+                        size={10}
+                        weight="bold"
+                        className={cn("transition-transform", isActive && "rotate-180")}
+                      />
+                    )}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />
+                    )}
+                  </Link>
+                );
+              })}
             </Container>
 
             <MegaPanel
-              items={NAV}
+              items={megaItems}
               activeIndex={megaIndex}
               open={megaOpen}
+              mode={megaMode}
               onActive={setMegaIndex}
               onClose={() => setMegaOpen(false)}
             />
@@ -771,9 +810,10 @@ function FeaturedCard({
 }
 
 /**
- * Tek paylaşılan mega menü paneli — Varyant B (kategori-index rail).
- * Sol: tüm kategoriler dikey rail (aktif vurgulu). Sağ: aktif kategorinin
- * alt-grup sütunları + öne çıkan kartlar. Alt: "Tümünü gör" + güven rozetleri.
+ * Tek paylaşılan mega menü paneli — iki mod:
+ *  mode="all"    → "Tüm Ürünler" butonu: sol dikey kategori rail'i + aktif kategorinin içeriği
+ *  mode="single" → kategori sekmesi: rail YOK, yalnız o kategorinin alt-grup sütunları
+ * Sağ: öne çıkan kartlar. Alt: "Tümünü gör" + güven rozetleri.
  * Panel .catnav'a (tam genişlik) tutturulur; Container ile aynı max-w/padding
  * kullanılarak nav ile hizalanır. NOT: framer-motion `y` animasyonu transform'u
  * inline yazdığı için ortalama `-translate-x-1/2` ile DEĞİL `left-0 right-0 mx-auto`
@@ -783,12 +823,14 @@ function MegaPanel({
   items,
   activeIndex,
   open,
+  mode,
   onActive,
   onClose,
 }: {
   items: NavCategory[];
   activeIndex: number;
   open: boolean;
+  mode: "all" | "single";
   onActive: (i: number) => void;
   onClose: () => void;
 }) {
@@ -797,47 +839,67 @@ function MegaPanel({
     <AnimatePresence>
       {open && nav && (
         <motion.div
+          // mode değişince paneli remount et → "all"↔"single" geçişi temiz animasyonla olur
+          key={mode}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.16, ease: "easeOut" }}
           className="absolute left-0 right-0 top-full mx-auto max-w-content px-6 md:px-10 lg:px-16 z-50"
           role="region"
-          aria-label={`${nav.label} kategorisi menüsü`}
+          aria-label={mode === "all" ? "Tüm ürün kategorileri menüsü" : `${nav.label} kategorisi menüsü`}
           onKeyDown={(e) => {
             if (e.key === "Escape") onClose();
           }}
         >
           <div className="bg-paper-50 border border-paper-200 border-t-[3px] border-t-brand-500 rounded-b-2xl shadow-lg overflow-hidden">
-            <div className="grid grid-cols-[248px_1fr]">
-              {/* Sol rail — tüm kategoriler */}
-              <div className="bg-paper-100 border-r border-paper-200 p-3">
-                {items.map((it, i) => (
-                  <button
-                    key={it.label}
-                    type="button"
-                    onMouseEnter={() => onActive(i)}
-                    onFocus={() => onActive(i)}
-                    className={cn(
-                      "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium text-left transition-colors",
-                      i === activeIndex
-                        ? "bg-paper-50 text-brand-700 shadow-sm"
-                        : "text-ink-700 hover:bg-paper-50 hover:text-ink-900",
-                    )}
+            <div className={cn("grid", mode === "all" ? "grid-cols-[248px_1fr]" : "grid-cols-1")}>
+              {/* Sol rail — tüm kategoriler (yalnız "Tüm Ürünler" modunda) */}
+              {mode === "all" && (
+                <div className="bg-paper-100 border-r border-paper-200 p-3">
+                  {items.map((it, i) => (
+                    <Link
+                      key={it.label}
+                      href={it.href}
+                      onMouseEnter={() => onActive(i)}
+                      onFocus={() => onActive(i)}
+                      className={cn(
+                        "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium text-left transition-colors",
+                        i === activeIndex
+                          ? "bg-paper-50 text-brand-700 shadow-sm"
+                          : "text-ink-700 hover:bg-paper-50 hover:text-ink-900",
+                      )}
+                    >
+                      <span>{it.label}</span>
+                      <CaretRight
+                        size={13}
+                        weight="bold"
+                        className={i === activeIndex ? "text-brand-600" : "text-ink-300"}
+                      />
+                    </Link>
+                  ))}
+                  <Link
+                    href="/urunler"
+                    className="mt-2 flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-brand-700 hover:text-brand-900 hover:bg-paper-50 border-t border-paper-200 transition-colors"
                   >
-                    <span>{it.label}</span>
-                    <CaretRight
-                      size={13}
-                      weight="bold"
-                      className={i === activeIndex ? "text-brand-600" : "text-ink-300"}
-                    />
-                  </button>
-                ))}
-              </div>
+                    Tüm ürünleri gör <ArrowRight size={13} weight="bold" />
+                  </Link>
+                </div>
+              )}
 
               {/* Sağ içerik — aktif kategori */}
-              <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1.15fr] min-h-[280px]">
-                <div className="grid grid-cols-2 gap-x-7 gap-y-1 p-7">
+              <div
+                className={cn(
+                  "grid grid-cols-1 xl:grid-cols-[1.55fr_1.15fr]",
+                  mode === "all" ? "min-h-[280px]" : "min-h-[220px]",
+                )}
+              >
+                <div
+                  className="grid gap-x-7 gap-y-1 p-7 content-start"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.min(Math.max(nav.groups?.length ?? 1, 1), 3)}, minmax(0, 1fr))`,
+                  }}
+                >
                   {nav.groups?.map((g) => (
                     <div key={g.title}>
                       <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 pb-2.5">
