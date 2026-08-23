@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@markala/ui";
-import { UploadSimple, CheckCircle, SpinnerGap, WarningCircle } from "@phosphor-icons/react";
+import { UploadSimple, CheckCircle, SpinnerGap, WarningCircle, PencilSimple } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
 
 const MAX_MB = 50;
@@ -130,6 +130,35 @@ export function DesignUpload() {
             </>
           )}
         </label>
+      )}
+
+      {/* Dosya kalitesi bilgilendirmesi (Hasan talebi 2026-08-23): müşteriler yapay zekâ
+          çıktısı / düşük çözünürlüklü dosya gönderiyor, baskıda bulanıklık çıkınca itiraz
+          oluyor. Uyarı SİPARİŞ ÖNCESİ burada; sözleşme maddesi (7.C), sipariş başarı sayfası
+          ve onay e-postasında da tekrarlanır. Uyarının yanında ücretsiz vektörel çizim
+          teklifi verilir — kuru "sorumlu değiliz" yerine hizmete çevrilir. */}
+      {!needsDesign && (
+        <div className="mt-3 space-y-2">
+          <p className="flex items-start gap-2 text-xs text-ink-700 bg-warning/10 border border-warning/25 rounded-md px-3 py-2 leading-relaxed">
+            <WarningCircle size={14} className="flex-none mt-0.5 text-warning" weight="fill" />
+            <span>
+              <strong className="text-ink-900">Dosya kalitesi hakkında:</strong> Yapay zekâ ile
+              üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık
+              ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite
+              sorunlarından markala.com.tr sorumlu değildir. Baskıya en uygun format: vektörel
+              PDF/AI (yazılar convert edilmiş) veya 300 DPI CMYK.
+            </span>
+          </p>
+          <p className="flex items-start gap-2 text-xs text-ink-700 bg-brand-100 border border-brand-300 rounded-md px-3 py-2 leading-relaxed">
+            <PencilSimple size={14} className="flex-none mt-0.5 text-brand-700" weight="fill" />
+            <span>
+              Dosyanız bu niteliklere uygun değilse endişelenmeyin: görselinizi yine de
+              yükleyin, grafik ekibimiz görselinize istinaden{" "}
+              <strong className="text-ink-900">vektörel çizimi ücretsiz hazırlar</strong> ve
+              baskı öncesi onayınıza sunar. Üretim, tasarım onayınızdan sonra başlar.
+            </span>
+          </p>
+        </div>
       )}
 
       {error && (

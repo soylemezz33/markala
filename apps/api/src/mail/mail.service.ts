@@ -233,13 +233,25 @@ export class MailService {
       ? "Siparişiniz <strong>açık hesap (cari)</strong> ile alınmıştır; ay sonunda faturalandırılır."
       : "Ödemeniz alınmıştır, siparişiniz onaylandı.";
 
+    // Dosya kalitesi notu (sipariş SONRASI bilgilendirme ayağı — ürün sayfası uyarısı ve
+    // sözleşme m.7.C ile aynı kurgu): yalnız tasarım dosyası yüklenmiş siparişlerde eklenir.
+    // E-postada yer alması, müşterinin elinde tarihli yazılı bildirim kalmasını sağlar.
+    const hasUploadedFile = (order.items ?? []).some((i) => i.uploadedFileName);
+    const fileQualityText = hasUploadedFile
+      ? "\n\nYüklediğiniz tasarım dosyası hakkında: Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından markala.com.tr sorumlu değildir. Gerekirse grafik ekibimiz görselinize istinaden vektörel çizimi ücretsiz hazırlayıp onayınıza sunar; üretim, tasarım onayınızdan sonra başlar."
+      : "";
+    const fileQualityHtml = hasUploadedFile
+      ? `<p style="margin:14px 0 0;padding:10px 12px;background:#FDF3E7;border:1px solid #F5D7B2;border-radius:8px;color:#57534e;font-size:13px;line-height:1.5"><strong style="color:#1A1410">Yüklediğiniz tasarım dosyası hakkında:</strong> Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından markala.com.tr sorumlu değildir. Gerekirse grafik ekibimiz görselinize istinaden <strong style="color:#1A1410">vektörel çizimi ücretsiz hazırlayıp onayınıza sunar</strong>; üretim, tasarım onayınızdan sonra başlar.</p>`
+      : "";
+
     const subject = `Markala — Siparişiniz alındı (${order.orderNumber})`;
     const text =
       `${name ? `Merhaba ${name},` : "Merhaba,"}\n\nSiparişinizi aldık. Sipariş No: ${order.orderNumber}\n\n` +
       (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} — ${fmt(i.lineTotal)} ₺`).join("\n") +
       `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
-      `${isCari ? "Açık hesap (cari) ile alındı; ay sonu faturalandırılır." : "Ödemeniz alındı, siparişiniz onaylandı."}\n\n` +
-      `Siparişlerim: ${orderUrl}\n\nMarkala — 324 Ajans güvencesiyle.`;
+      `${isCari ? "Açık hesap (cari) ile alındı; ay sonu faturalandırılır." : "Ödemeniz alındı, siparişiniz onaylandı."}` +
+      fileQualityText +
+      `\n\nSiparişlerim: ${orderUrl}\n\nMarkala — 324 Ajans güvencesiyle.`;
 
     const html = renderEmail({
       title: "Siparişiniz Alındı 🎉",
@@ -257,6 +269,7 @@ export class MailService {
           <tfoot>${totalsHtml}</tfoot>
         </table>
         ${emailButton("Siparişimi görüntüle", orderUrl)}
+        ${fileQualityHtml}
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Üretim tamamlanınca kargo bilgisini ayrıca ileteceğiz. Sorularınız için bu e-postayı yanıtlayabilirsiniz.</p>`,
     });
 

@@ -290,6 +290,7 @@ export const legalPages: Record<string, LegalPage> = {
       </p>
       <ul>
         <li>ALICI'nın yüklediği tasarım dosyasındaki hata, hatalı renk profili (RGB yerine CMYK gönderilmemesi), düşük çözünürlük, taşma payı eksikliği</li>
+        <li><strong>Yapay zekâ ile üretilmiş veya vektörel olmayan dosyalar:</strong> bu dosyalardan kaynaklanan baskıdaki bulanıklık, metin kaybı ve bozulmalar (bkz. Madde 7.B)</li>
         <li>ALICI'nın onay verdiği taslak/proof üzerinden üretilen siparişin sonradan beğenilmemesi</li>
         <li>ALICI'nın hatalı/yanlış adres vermesi sonucu oluşan teslimat sorunları</li>
         <li><strong>Üretim toleransı:</strong> Matbaa üretim süreçlerinin doğası gereği <strong>siparişin renk, adet ve ölçülerinde %1 ila %5 arasında fire</strong> oluşabilir. Bu tolerans aralığı sektör standardıdır ve SATICI sorumluluğu dışındadır; iade/değişim talebine konu edilemez.</li>
@@ -314,6 +315,21 @@ export const legalPages: Record<string, LegalPage> = {
         etiket, makbuz, bloknot, çanta vb.) profesyonel matbaa üretim süreçlerinde gerçekleştirilir. ALICI
         sipariş verdiğinde işbu sözleşmeyi onaylayarak bu fire toleransını okumuş, anlamış ve kabul etmiş
         sayılır.
+      </p>
+
+      <h2>MADDE 7.B – DOSYA KALİTESİ VE YAPAY ZEKÂ İLE ÜRETİLEN GÖRSELLER</h2>
+      <p>
+        Baskı kalitesi, ALICI'nın ilettiği dosyanın teknik kalitesiyle sınırlıdır. Yapay zekâ
+        araçlarıyla üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda
+        <strong> bulanıklık, metin kayıpları ve bozulmalar</strong> oluşabilir; bu tür dosyalardan
+        kaynaklanan kalite sorunlarından SATICI (${BRAND}) sorumlu değildir. Baskıya uygun format:
+        vektörel PDF/AI (yazılar convert edilmiş) veya en az 300 DPI çözünürlükte CMYK dosyadır.
+      </p>
+      <p>
+        ALICI dilerse görselini iletebilir; SATICI'nın grafik ekibi görsele istinaden
+        <strong> vektörel çizimi ücretsiz hazırlayıp ALICI'nın onayına sunar</strong>. Üretim,
+        ALICI'nın tasarım onayından sonra başlar; onaylanan tasarım üzerinden üretilen üründe bu
+        husus iade/değişim talebine konu edilemez.
       </p>
 
       <h2>MADDE 8 – TEMERRÜT HALİ VE HUKUKİ SONUÇLARI</h2>

@@ -81,7 +81,7 @@ UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
 <p>Haklarınızı kullanmak için <a href="/kvkk-basvuru">KVKK Başvuru Formu</a>'nu doldurabilir veya yazılı başvurunuzu yukarıdaki adrese iletebilirsiniz. Başvurular en geç 30 gün içinde ücretsiz sonuçlandırılır.</p>
 $mk$ WHERE slug = 'kvkk';
 
-UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
+UPDATE legal_pages SET version = 'v1.2', updated_at = now(), content = $mk$
 <h2>Madde 1 — Taraflar</h2>
 <p><strong>SATICI:</strong> 324 Ajans Bilgi Teknolojileri Reklam Pazarlama (Markala / markala.com.tr) — Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin · Tel: 0324 433 33 51 · E-posta: merhaba@markala.com.tr</p>
 <p><strong>ALICI:</strong> Sipariş formunda ad-soyad/unvan, adres ve iletişim bilgileri yer alan gerçek veya tüzel kişi.</p>
@@ -104,6 +104,7 @@ UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
 <h2>Madde 7 — Üretim Koşulları</h2>
 <p><strong>7.A Üretim toleransı (fire):</strong> Matbaa üretim teknolojisi gereği siparişlerin renk, adet ve ölçülerinde <strong>%1 ilâ %5 arasında fire (sapma)</strong> olabilir. Bu sektör standardı tolerans, siparişin onaylanmasıyla ALICI tarafından kabul edilmiş sayılır ve bu aralıktaki sapmalar ayıp olarak değerlendirilmez.</p>
 <p><strong>7.B Renk:</strong> Ekranda görülen renkler ile baskı renkleri arasında, ekran kalibrasyonu ve baskı tekniğinden kaynaklı makul ton farkları oluşabilir.</p>
+<p><strong>7.C Dosya kalitesi ve yapay zekâ ile üretilen görseller:</strong> Baskı kalitesi, ALICI'nın ilettiği dosyanın teknik kalitesiyle sınırlıdır. Yapay zekâ araçlarıyla üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda <strong>bulanıklık, metin kayıpları ve bozulmalar</strong> oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından SATICI (markala.com.tr) sorumlu değildir. Baskıya uygun format: vektörel PDF/AI (yazılar convert edilmiş) veya en az 300 DPI çözünürlükte CMYK dosyadır. ALICI dilerse görselini iletebilir; SATICI'nın grafik ekibi görsele istinaden <strong>vektörel çizimi ücretsiz hazırlayıp ALICI'nın onayına sunar</strong>. Üretim, Madde 5 uyarınca ALICI'nın tasarım onayından sonra başlar; onaylanan tasarım üzerinden üretilen üründe bu husus iade/değişim talebine konu edilemez.</p>
 
 <h2>Madde 8 — Cayma Hakkı</h2>
 <p>Mesafeli Sözleşmeler Yönetmeliği m.15/1-c uyarınca, <strong>ALICI'nın istekleri doğrultusunda ya da kişisel ihtiyaçları için özel olarak üretilen ürünlerde cayma hakkı kullanılamaz.</strong> Markala'da satılan baskı ürünleri ALICI'nın tasarımına/konfigürasyonuna göre kişiye özel üretildiğinden bu kapsamdadır. Bu istisna, ayıplı ürün hâlindeki yasal hakları ortadan kaldırmaz: baskı hatası SATICI'dan kaynaklanıyorsa ürün <strong>ücretsiz yeniden basılır</strong>. Ayrıntı: <a href="/yasal/iade">İade &amp; İptal Politikası</a>.</p>

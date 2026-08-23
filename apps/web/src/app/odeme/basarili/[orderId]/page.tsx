@@ -164,6 +164,22 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
         <InfoTile icon={<House size={20} />} title="Hesabım" desc={<Link href="/hesabim/siparislerim" className="text-brand-700 hover:underline">Siparişlerimi gör</Link>} />
       </div>
 
+      {/* Dosya kalitesi bilgilendirmesi (sipariş SONRASI ayağı — üründeki upload uyarısı +
+          sözleşme 7.C ile aynı kurgu): yalnız dosya yüklenmiş siparişlerde gösterilir. */}
+      {order.items.some((it) => it.uploadedFileName) && (
+        <div className="mt-6 p-4 bg-warning/10 border border-warning/25 rounded-lg text-sm text-ink-700 leading-relaxed">
+          <p>
+            <strong className="text-ink-900">Yüklediğiniz tasarım dosyası hakkında:</strong>{" "}
+            Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda
+            bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite
+            sorunlarından markala.com.tr sorumlu değildir. Dosyanızın baskıya uygunluğunu ekibimiz
+            kontrol eder — gerekirse grafik ekibimiz görselinize istinaden{" "}
+            <strong className="text-ink-900">vektörel çizimi ücretsiz hazırlayıp onayınıza sunar</strong>.
+            Üretim, tasarım onayınızdan sonra başlar.
+          </p>
+        </div>
+      )}
+
       <section className="mt-10 p-6 bg-paper-50 border border-paper-200 rounded-lg">
         <header className="flex items-center justify-between mb-4">
           <h2 className="font-medium text-ink-900">Sipariş Detayı</h2>
