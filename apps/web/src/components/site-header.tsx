@@ -611,6 +611,15 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                   </Link>
                 );
               })}
+              {/* İndirimli Paketler — en sağda, renkle ayrışır (Hasan 2026-08-25: masaüstünde
+                  paketlere ulaşmak zordu; mobil menüde zaten en üstte). Hover'da panel açmaz. */}
+              <Link
+                href="/kampanyalar"
+                onMouseEnter={scheduleMegaClose}
+                className="ml-auto inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold text-error hover:opacity-80 transition-opacity"
+              >
+                <Tag size={14} weight="fill" /> İndirimli Paketler
+              </Link>
             </Container>
 
             <MegaPanel
@@ -666,7 +675,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                       onClick={() => setMenuOpen(false)}
                       className="flex flex-col gap-1 p-3 bg-error/10 border border-error/20 rounded-lg text-error font-semibold text-sm"
                     >
-                      🔥 Kampanyalar
+                      🔥 İndirimli Paketler
                       <span className="text-[11px] text-ink-700 font-normal">Hazır paketler</span>
                     </Link>
                     <Link
@@ -1550,7 +1559,7 @@ function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                     onClose={onClose}
                     icon={<Sparkle size={12} weight="fill" />}
                   >
-                    Kampanyalar
+                    İndirimli Paketler
                   </QuickLink>
                   <QuickLink
                     href="/kargo-takip"

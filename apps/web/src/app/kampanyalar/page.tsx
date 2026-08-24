@@ -10,7 +10,6 @@ import {
   Sparkle,
   Tag,
   ArrowRight,
-  PaintBrush,
   Lightning,
   Package,
   Storefront,
@@ -46,13 +45,6 @@ const sectors: {
   { id: "promosyon", label: "Promosyon", desc: "Hediyelik & tanıtım", icon: Gift, quote: "Diğer" },
 ];
 
-const valueProps = [
-  { icon: Lightning, title: "Tek tıkla sepet", desc: "Paket hazır, anında ekle" },
-  { icon: Package, title: "Tek seferde teslim", desc: "Tüm ürünler birlikte gelir" },
-  { icon: PaintBrush, title: "Tasarım dahil", desc: "Ücretsiz tasarım desteği" },
-  { icon: Tag, title: "Paket indirimi", desc: "Tek tek almaktan ucuz" },
-];
-
 export default function KampanyalarPage() {
   const [filter, setFilter] = useState<CampaignBundleCategory | "all">("all");
   // CANLI paketler (admin yönetir, DB'den). API boş → zengin boş durum gösterilir.
@@ -73,88 +65,23 @@ export default function KampanyalarPage() {
 
   return (
     <div className="bg-paper-50 min-h-screen">
-      {/* Hero — kompakt, koyu premium, sağda tasarruf görseli */}
-      <section className="relative overflow-hidden bg-ink-900 text-paper-50">
-        <div
-          aria-hidden
-          className="absolute -top-32 -right-24 w-[460px] h-[460px] rounded-full opacity-30 blur-3xl"
-          style={{ background: "radial-gradient(circle, #F5B800, transparent 70%)" }}
-        />
-        <div
-          aria-hidden
-          className="absolute -bottom-40 -left-20 w-[380px] h-[380px] rounded-full opacity-15 blur-3xl"
-          style={{ background: "radial-gradient(circle, #00D9FF, transparent 70%)" }}
-        />
-        <Container className="relative py-12 md:py-16 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          {/* Sol — metin */}
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/15 text-brand-400 text-xs font-semibold uppercase tracking-wider">
-              <Sparkle size={12} weight="fill" /> Kampanya Paketleri
-            </span>
-            <h1 className="mt-5 text-display-lg font-serif leading-[1.05]">
-              Hazır paketlerle <span className="text-brand-400">daha az öde</span>, tek teslimde al
-            </h1>
-            <p className="mt-4 text-paper-100/70 text-lg leading-relaxed max-w-xl">
-              Açılış, esnaf, kurumsal ve etkinlik için önceden kurgulanmış paketler. Tek tıkla
-              sepete, tek seferde teslim — tasarım desteği dahil.
-            </p>
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-paper-100/80">
-              {["Tek tıkla sepet", "Tasarım dahil", "Tek teslim"].map((c) => (
-                <span key={c} className="inline-flex items-center gap-1.5">
-                  <CheckCircle size={16} weight="fill" className="text-brand-400" /> {c}
-                </span>
-              ))}
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#paketler">
-                <Button size="lg">
-                  Paketleri Gör <ArrowRight size={16} weight="bold" />
-                </Button>
-              </a>
-              <Link
-                href="/teklif-al"
-                className="inline-flex items-center gap-2 px-5 h-12 rounded-lg border border-paper-100/20 text-paper-50 hover:bg-paper-50/10 transition-colors font-medium"
-              >
-                Özel Teklif Al
-              </Link>
-            </div>
-          </div>
-
-          {/* Sağ — tasarruf görseli (CSS, görsel gerektirmez) */}
-          <div className="relative hidden lg:block">
-            <div className="relative mx-auto max-w-sm">
-              <div className="rounded-2xl bg-gradient-to-br from-brand-400 to-brand-600 text-ink-900 p-7 shadow-2xl">
-                <div className="text-xs font-bold uppercase tracking-wider opacity-70">
-                  Paket avantajı
-                </div>
-                <div className="mt-1 text-5xl font-serif font-semibold leading-none">
-                  %25<span className="text-2xl">'e varan</span>
-                </div>
-                <div className="mt-1 text-lg font-semibold">tasarruf</div>
-                <div className="mt-4 pt-4 border-t border-ink-900/15 text-sm font-medium">
-                  Tek tek almak yerine paketle al, hem indirim kazan hem tek teslimde topla.
-                </div>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* Değer şeridi — divide-x: ayraçlar yalnız hücreler ARASINDA, kenarlarda hizasız gri
-          blok bırakmaz (önceki gap-px bg-paper-200 tekniği container kenarında taşıyordu). */}
+      {/* Kompakt başlık — eski dev hero + değer şeridi kaldırıldı (Hasan, 2026-08-25:
+          "çok büyük ve yer kaplıyor"). Paketler ilk ekranda görünür. */}
       <section className="border-b border-paper-200 bg-paper-50">
-        <Container className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-paper-200">
-          {valueProps.map((v) => (
-            <div key={v.title} className="px-4 py-5 flex items-start gap-3">
-              <div className="flex-none w-10 h-10 rounded-lg bg-brand-100 text-brand-700 grid place-items-center">
-                <v.icon size={20} weight="fill" />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-ink-900">{v.title}</div>
-                <div className="text-xs text-ink-500 mt-0.5">{v.desc}</div>
-              </div>
-            </div>
-          ))}
+        <Container className="py-8 md:py-10 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-serif text-ink-900">İndirimli Paketler</h1>
+            <p className="mt-2 text-ink-700 max-w-2xl">
+              Açılış, esnaf, kurumsal ve etkinlik için hazır kurgulanmış paketler — tek tıkla
+              sepete, tasarım desteği dahil, tek tek almaktan daha ucuz.
+            </p>
+          </div>
+          <Link
+            href="/teklif-al"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-900"
+          >
+            Özel Teklif Al <ArrowRight size={14} weight="bold" />
+          </Link>
         </Container>
       </section>
 
@@ -372,10 +299,12 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
       <div className="p-5 flex flex-col flex-1">
         <h2 className="font-serif text-xl text-ink-900 leading-tight">{bundle.name}</h2>
         <p className="mt-1 text-sm text-brand-700 font-medium">{bundle.tagline}</p>
-        <p className="mt-2 text-sm text-ink-700 leading-relaxed">{bundle.description}</p>
+        {/* min-h + line-clamp: açıklama 1 ya da 2 satır olsa da kartlar aynı hizada kalır
+            (Hasan, 2026-08-25: kartlar arası yazı hizası tutarsızdı). */}
+        <p className="mt-2 text-sm text-ink-700 leading-relaxed line-clamp-2 min-h-[2.85rem]">{bundle.description}</p>
 
-        {/* İçerik */}
-        <div className="mt-4 p-4 bg-paper-100 rounded-lg">
+        {/* İçerik — mb-5: fiyat bloğu mt-auto ile alta yaslandığında bile asgari boşluk kalsın */}
+        <div className="mt-4 mb-5 p-4 bg-paper-100 rounded-lg">
           <div className="text-[11px] uppercase tracking-wider text-ink-500 font-medium mb-2">
             Paket içeriği
           </div>
@@ -405,8 +334,9 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
           </ul>
         </div>
 
-        {/* Fiyat + CTA */}
-        <div className="mt-5 pt-5 border-t border-paper-200 flex items-end justify-between gap-3">
+        {/* Fiyat + CTA — mt-auto: içerik listesi kısa/uzun fark etmeksizin fiyat ve buton
+            tüm kartlarda AYNI hizada (alta yaslı) durur. */}
+        <div className="mt-auto pt-5 border-t border-paper-200 flex items-end justify-between gap-3">
           <div>
             <div className="flex items-baseline gap-2">
               <Price amount={bundle.bundlePrice} size="xl" className="text-ink-900" />

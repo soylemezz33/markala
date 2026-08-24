@@ -64,7 +64,7 @@ export function SiteFooter() {
           <FooterLink href="/sepet">Sepetim</FooterLink>
           <FooterLink href="/favorilerim">Favorilerim</FooterLink>
           <FooterLink href="/kargo-takip">Kargo Takip</FooterLink>
-          <FooterLink href="/kampanyalar">Kampanyalar</FooterLink>
+          <FooterLink href="/kampanyalar">İndirimli Paketler</FooterLink>
           <FooterLink href="/kurumsal">Kurumsal Hesap (B2B)</FooterLink>
           <FooterLink href="/kurumsal/basvuru">Kurumsal Başvuru</FooterLink>
           <FooterLink href="/yasal/kullanim-kosullari">Kullanım Şartları</FooterLink>

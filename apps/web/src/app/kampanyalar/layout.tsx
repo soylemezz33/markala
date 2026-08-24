@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Kampanyalar — Esnaf, Kurumsal, Açılış Paketleri",
+  title: "İndirimli Paketler — Esnaf, Kurumsal, Açılış Paketleri",
   description:
-    "Markala'nın hazır kampanya paketleri: esnaf başlangıç seti, kurumsal kimlik paketi, açılış kampanyası, etkinlik paketi ve promosyon paketleri. Avantajlı bundle fiyatlar.",
+    "Markala'nın indirimli hazır paketleri: esnaf başlangıç seti, kurumsal kimlik paketi, açılış paketi, etkinlik ve promosyon paketleri. Tek tek almaktan daha ucuz.",
   alternates: { canonical: "/kampanyalar" },
   openGraph: {
     type: "website",
-    title: "Markala Kampanya Paketleri",
+    title: "Markala İndirimli Paketler",
     description: "Tek tek almak yerine hazır paketler — %20'ye kadar avantaj.",
     url: "/kampanyalar",
-    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Kampanyalar" }],
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala İndirimli Paketler" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Markala Kampanya Paketleri",
+    title: "Markala İndirimli Paketler",
     description: "Tek tek almak yerine hazır paketler — %20'ye kadar avantaj.",
     images: ["/og-default.png"],
   },
