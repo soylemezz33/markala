@@ -10,6 +10,17 @@ const API_BASE =
 const CATS = ["esnaf", "kurumsal", "etkinlik", "acilis", "promosyon"];
 
 /**
+ * Pakete özel tasarlanmış görseller (Hasan, 2026-08-25) — public/images/kampanyalar/<slug>.webp.
+ * Yeni paket görseli eklerken: 1200×900 webp'yi o klasöre koy + buraya satır ekle.
+ * Haritada olmayan paketler kategori bazlı /api/mockup fallback'ine düşer (eski davranış).
+ */
+const BUNDLE_IMAGES: Record<string, string> = {
+  "restoran-acilis": "/images/kampanyalar/restoran-acilis.webp",
+  "esnaf-baslangic": "/images/kampanyalar/esnaf-baslangic.webp",
+  "yeni-isletme": "/images/kampanyalar/yeni-isletme.webp",
+};
+
+/**
  * Storefront kampanya paketleri — CANLI API (admin yönetir). Mock yerine DB'den okunur ki
  * sepete eklenen paketin slug'ı backend'de çözülebilsin (checkout çalışsın). Hata → client mock'a düşer.
  * API CampaignPackage (contents: TEXT) → web CampaignBundle şekline maplenir.
@@ -40,9 +51,9 @@ export async function GET() {
         contents: contents.length ? contents : [{ quantity: 1, productName: contentsText || p.name }],
         originalPrice: original,
         bundlePrice: bundle,
-        // Bundle'lar için ayrı görsel dosyası yok → mockup endpoint kategori bazlı branded
+        // Pakete özel tasarım varsa onu kullan; yoksa mockup endpoint kategori bazlı branded
         // SVG üretir (her zaman 200). Statik /images/bundles/*.jpg DB slug'larında 404 veriyordu.
-        imageUrl: `/api/mockup?category=${category}&w=800&h=600&theme=brand`,
+        imageUrl: BUNDLE_IMAGES[String(p.slug)] ?? `/api/mockup?category=${category}&w=800&h=600&theme=brand`,
         badge: "FIRSAT",
         category,
         isActive: true,

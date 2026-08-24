@@ -311,6 +311,10 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
     bundle.imageUrl && !bundle.imageUrl.startsWith("/images/bundles/")
       ? bundle.imageUrl
       : `/api/mockup?category=${bundle.category}&w=800&h=600&theme=brand`;
+  // Pakete özel tasarlanmış görseller (public/images/kampanyalar) indirim yüzdesini ve
+  // logoyu ZATEN içerir — rozet bindirmek bilgiyi çiftler, logonun üstüne biner. Mockup
+  // fallback'inde rozetler kalır (o görselde bilgi yok).
+  const customArt = imgSrc.startsWith("/images/kampanyalar/");
 
   function handleAdd() {
     const summary = bundle.contents
@@ -345,6 +349,7 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
           sizes="(min-width:1024px) 33vw, (min-width:768px) 50vw, 100vw"
           className="object-cover"
         />
+        {!customArt && (
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
           <span className="px-2.5 py-1 rounded-sm text-[11px] font-medium tracking-wide bg-error text-paper-50">
             {bundle.badge}
@@ -353,6 +358,7 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
             %{savingsPercent} İNDİRİM
           </span>
         </div>
+        )}
         {bundle.highlight && (
           <div className="absolute bottom-3 left-3 right-3">
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-ink-900/85 backdrop-blur text-paper-50 text-[11px] font-medium">
