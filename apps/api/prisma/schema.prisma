@@ -641,11 +641,6 @@ model BlogPost {
 
 // === A/B Testing ===
 
-/// ⚠️ KULLANILMIYOR (2026-08-24 denetimi): AbTest/AbTestEvent modelleri şemada tanımlı ama
-/// kod tabanının HİÇBİR yerinde (api/web/admin) referans edilmiyor ve production'da 0 satır var.
-/// Planlanmış ama hayata geçmemiş bir A/B testi altyapısı. Boş tablo maliyeti olmadığı ve
-/// DROP geri dönüşsüz olduğu için BİLEREK silinmedi — ileride A/B testi yapılacaksa zemin hazır.
-/// Bu satırlar, "bu tablolar neden boş?" sorusunun cevabı olarak bırakıldı.
 model AbTest {
   id          String    @id @default(cuid())
   testKey     String    @unique @map("test_key")

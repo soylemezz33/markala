@@ -198,3 +198,50 @@ Implementasyon: `apps/api/src/health/health.controller.ts`.
 - [ ] R2 backup credentials `.env` içinde (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET=markala-backups`)
 - [ ] `scripts/restore-postgres.sh` ile **drill** yapıldı (bkz. `DISASTER_RECOVERY.md`)
 - [ ] Public status page link `markala.com.tr` footer'a eklendi
+
+---
+
+## 10. n8n tabanlı iş/uygulama izleme (2026-08-24)
+
+Yukarıdaki 1-9. bölümler **altyapı** izlemesidir (sunucu ayakta mı, disk, CPU).
+Bu bölüm **uygulama/iş seviyesi** izlemeyi anlatır: n8n (`https://n8n.324ajans.com`,
+APP-VM'de Docker) Markala veritabanını **salt-okunur** bir rolle (`n8n_readonly`) periyodik
+tarar ve bulguları Trello panosuna kart olarak düşürür.
+
+> **Neden zamanlayıcı, neden webhook değil?** Bu dört kontrol de "zaman içinde durum"
+> sorusudur (son 1 saatte kaç mail hata verdi / bugün ne bekliyor). Ortada bir *olay* yok,
+> dolayısıyla webhook uygulanamaz. Buna karşılık sipariş/lead bildirimleri gerçek olaydır
+> ve **webhook** ile çalışır (bkz. `payments.service.ts`, `contact.service.ts`).
+> Bu ayrım bilinçlidir.
+
+**Hedef:** Trello panosu "324 Ajans Bilgi Teknolojileri Reklam Pazarlama" →
+liste **⚙️ Sistem Uyarıları**.
+
+### 10.1 Sistem Uyarıları (15 dakikada bir)
+
+| Kol | Ne izler | Eşik / davranış |
+|---|---|---|
+| **SMTP sağlığı** | `notification_logs` son 1 saat | `status='failed'` ≥ 3 → uyarı kartı. **Histerezis:** bozulunca 1 kart, düzelince 1 "DÜZELDİ" kartı; arada tekrar etmez. |
+| **Güvenlik** | `audit_logs` | `role_change`, `panel_user_create`, `refund` → kart (kim/ne/hedef/IP/zaman). `status_change` bilerek hariç (rutin sipariş gürültüsü). İlk çalıştırmada checkpoint "şimdi"ye kurulur, geçmiş kayıtlar için kart açılmaz. |
+
+SMTP kolu neden önemli: kayıt doğrulama, şifre sıfırlama ve sipariş onayı mailleri
+bu yoldan gider. SMTP sessizce bozulursa müşteri kayıt olamaz/giriş yapamaz — bu kontrol
+o durumu ~15 dakika içinde yakalar.
+
+### 10.2 Günlük Özet (her gün 09:00)
+
+Tek sorguda panelde bekleyen kalemleri sayar: bekleyen kurumsal başvuru, okunmamış
+iletişim mesajı, yeni teklif talebi, onay bekleyen yorum, ödemesi tamamlanmamış sipariş,
+**fiyatsız aktif ürün**. Hepsi sıfırsa **kart açılmaz** (gürültü yok); günde en fazla 1 kart.
+
+> **Fiyatsız ürün ne demek:** `products.is_active = true` ama `product_prices` kaydı yok.
+> Bu ürünler sitede görünür ama `orders.service.ts` fiyatı hesaplayamadığı için
+> (`configuredUnit <= 0`) **sipariş edilemez** — yani sessiz satış kaybıdır.
+> 2026-08-24 itibarıyla 9 üründe bu durum vardı.
+
+### 10.3 Bilinen ölü şema (aksiyon gerekmiyor)
+
+`ab_tests` / `ab_test_events` tabloları şemada tanımlı ama kod tabanının hiçbir yerinde
+kullanılmıyor ve 0 satır içeriyor — planlanıp hayata geçmemiş bir A/B testi altyapısı.
+Boş tablo maliyetsiz ve `DROP` geri dönüşsüz olduğu için **bilerek silinmedi**.
+"Bu tablolar neden boş?" sorusunun cevabı budur.
