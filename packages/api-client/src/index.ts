@@ -908,7 +908,9 @@ export interface AdminStatsDto {
   integrations?: {
     iyzico: boolean;
     parasut: boolean;
-    sendgrid: boolean;
+    /** 2026-08-24: `sendgrid` idi — SendGrid hiç kullanılmıyordu (stub, kaldırıldı).
+     *  Gerçek mail yolu nodemailer/SMTP (MDaemon). Bkz. stats.service.ts integrationStatus. */
+    smtp: boolean;
     netgsm: boolean;
     dhl: boolean;
     r2: boolean;

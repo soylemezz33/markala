@@ -162,7 +162,7 @@ Kritik değişkenler:
 | `DATABASE_URL` | Postgres bağlantı string |
 | `JWT_SECRET` | Access token imzalamak için |
 | `IYZICO_API_KEY` | Ödeme gateway |
-| `SENDGRID_API_KEY` | E-posta |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | E-posta gönderimi (MDaemon) |
 | `R2_*` | Cloudflare R2 nesne deposu |
 | `NEXT_PUBLIC_GA4_ID` | Google Analytics |
 
