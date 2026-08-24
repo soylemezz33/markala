@@ -1,5 +1,13 @@
 # Markala — Production stack
-# Hetzner VPS üzerinde çalıştırılır.
+# ESXi APP-VM (/opt/markala) üzerinde çalıştırılır.
+#
+# ÖNEMLİ (2026-08-24 keşfi): deploy-appvm.sh SADECE app imajlarını (web/admin/api)
+# çeker ve konteynerleri yeniler — bu dosyayı /opt/markala'ya KOPYALAMAZ/SENKRONİZE
+# ETMEZ. Bu dosyada (git) yaptığın değişiklik (yeni env var, port, volume vb.)
+# CANLIYA YANSIMAZ; /opt/markala/docker-compose.production.yml'i AYRICA elle
+# (SSH ile) güncellemen gerekir. Aynı şey .env için de geçerli: canlıdaki
+# /opt/markala/.env.production root-only, git'te YOK, elle yönetilir.
+#
 # Komutlar:
 #   docker compose -f docker-compose.production.yml up -d
 #   docker compose -f docker-compose.production.yml logs -f web
@@ -73,8 +81,9 @@ services:
       # Token yoksa MetaCapiService sessizce no-op olur (checkout etkilenmez).
       META_CAPI_TOKEN: ${META_CAPI_TOKEN:-}
       META_PIXEL_ID: ${META_PIXEL_ID:-1112404194692078}
-      # n8n webhook (odeme onayi -> Trello kart otomasyonu). Bos ise no-op.
+      # n8n webhook'lari (Trello kart otomasyonu). Bos ise no-op.
       N8N_ORDER_WEBHOOK_URL: ${N8N_ORDER_WEBHOOK_URL:-}
+      N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}
       TZ: Europe/Istanbul
     networks:
       - markala
