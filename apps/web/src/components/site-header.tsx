@@ -455,6 +455,15 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                   </span>
                 </div>
                 <nav className="flex items-center gap-4 md:gap-5">
+                  {/* İndirimli Paketler — üst şeritte (Hasan 2026-08-25: kategori nav'ına
+                      koymak menüyü sıkıştırıp başlıkları iki satıra kırdırdı; burada bol yer
+                      var, her sayfada görünür). Mobil erişim hamburger menünün en üstünde. */}
+                  <Link
+                    href="/kampanyalar"
+                    className="hidden sm:flex items-center gap-1.5 font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+                  >
+                    <Tag size={13} weight="fill" /> İndirimli Paketler
+                  </Link>
                   <Link
                     href="/teklif-al"
                     className="rounded-md bg-brand-500 px-2.5 py-1 font-semibold text-ink-900 hover:bg-brand-400 transition-colors"
@@ -611,15 +620,6 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                   </Link>
                 );
               })}
-              {/* İndirimli Paketler — en sağda, renkle ayrışır (Hasan 2026-08-25: masaüstünde
-                  paketlere ulaşmak zordu; mobil menüde zaten en üstte). Hover'da panel açmaz. */}
-              <Link
-                href="/kampanyalar"
-                onMouseEnter={scheduleMegaClose}
-                className="ml-auto inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-semibold text-error hover:opacity-80 transition-opacity"
-              >
-                <Tag size={14} weight="fill" /> İndirimli Paketler
-              </Link>
             </Container>
 
             <MegaPanel
