@@ -60,19 +60,17 @@ export function computeItemCostTotal(
   if (!selections || Object.keys(selections).length === 0) return null;
 
   // Fiyat motorunu `price` yerine `cost` ile çalıştır → mantık satışla birebir aynı.
-  // cost'u olmayan satır 0'a düşüp maliyeti eksik göstermesin: eksik cost varsa hesap geçersiz.
-  let eksikCost = false;
-  const costRows = rows.map((r) => {
-    const c = r.cost;
-    if (c === null || c === undefined) eksikCost = true;
-    return { ...r, price: (c ?? 0) as number | string };
-  });
+  const costRows = rows.map((r) => ({ ...r, price: (r.cost ?? 0) as number | string }));
   const unitCost = computeConfiguredPrice(
     (product.options ?? []) as never,
     costRows as never,
     selections as Record<string, string>,
   );
-  if (unitCost <= 0) return eksikCost ? null : 0;
+  // 0 SONUÇ = "bilinmiyor" (null), "bedava" DEĞİL. İki sebep olabilir: (a) seçilen satırın
+  // cost'u eksik, (b) eski siparişin selections'ı ürünün DEĞİŞMİŞ şemasıyla eşleşmiyor
+  // (2026-08-24 backfill'de yakalandı: klasik-kartvizit'in 80 satırı da maliyetliyken eski
+  // kalem 0 hesaplanıyordu). İkisinde de %100 kâr yanılsaması üretmek yerine null dönülür.
+  if (unitCost <= 0) return null;
   // Motor "bir set"in maliyetini döndürür (unitPrice ile aynı kapsam); satır = set × adet.
   return round2(unitCost * qty);
 }

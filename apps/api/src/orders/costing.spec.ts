@@ -62,6 +62,21 @@ describe("computeItemCostTotal", () => {
     expect(computeItemCostTotal(p, config, 3, 124.75, 1.2)).toBe(90);
   });
 
+  it("eski selections ürünün değişmiş şemasıyla eşleşmiyorsa null (0 = %100 kâr yanılsaması OLMAZ)", () => {
+    const p = {
+      pricingMode: "additive",
+      options: [
+        { groupKey: "ebat", groupRole: "dimension", groupSort: 0, optionKey: "25x35" },
+        { groupKey: "malzeme", groupRole: "priced", groupSort: 1, optionKey: "pvc" },
+      ],
+      prices: [{ groupKey: "malzeme", optionKey: "pvc", dimKey: "25x35", price: 49.9, cost: 30 }],
+    };
+    // sipariş anındaki eski anahtarlar artık yok → motor satır bulamaz → null
+    expect(
+      computeItemCostTotal(p, { selections: { ebat: "eski-ebat", malzeme: "eski-malzeme" } }, 1, 40, 1.2),
+    ).toBeNull();
+  });
+
   it("seçenekli üründe selections boşsa null (hangi kombinasyon satıldığı bilinemez)", () => {
     const p = {
       pricingMode: "additive",

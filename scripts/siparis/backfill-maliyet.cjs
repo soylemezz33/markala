@@ -107,14 +107,10 @@ function computeItemCostTotal(product, configuration, quantity, satisHaricLine, 
   }
   const selections = extractSelections(configuration);
   if (!selections || Object.keys(selections).length === 0) return null;
-  let eksikCost = false;
-  const costRows = rows.map((r) => {
-    const c = r.cost;
-    if (c === null || c === undefined) eksikCost = true;
-    return { ...r, price: c ?? 0 };
-  });
+  const costRows = rows.map((r) => ({ ...r, price: r.cost ?? 0 }));
   const unitCost = computeConfiguredPrice(optRows, costRows, selections);
-  if (unitCost <= 0) return eksikCost ? null : 0;
+  // 0 = bilinmiyor (eksik cost VEYA eski selections yeni şemayla eşleşmiyor) — null bırak.
+  if (unitCost <= 0) return null;
   return round2(unitCost * qty);
 }
 
