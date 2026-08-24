@@ -73,6 +73,7 @@ export function CustomersClient({ customers }: Props) {
                 <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">İletişim</th>
                 <th className="text-center px-4 py-3 font-semibold">Tip</th>
                 <th className="text-center px-4 py-3 font-semibold hidden md:table-cell">Sipariş</th>
+                <th className="text-center px-4 py-3 font-semibold hidden md:table-cell">Üyelik Tarihi</th>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
               </tr>
             </thead>
@@ -131,6 +132,9 @@ export function CustomersClient({ customers }: Props) {
                   </td>
                   <td className="px-4 py-3 text-center text-ink-700 hidden md:table-cell tabular-nums">
                     {c.orderCount ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-center text-ink-700 hidden md:table-cell tabular-nums text-xs">
+                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString("tr-TR") : "—"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link

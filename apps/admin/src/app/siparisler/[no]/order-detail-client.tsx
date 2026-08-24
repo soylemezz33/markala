@@ -46,6 +46,10 @@ export interface OrderDetailProps {
   orderNumber: string;
   email?: string | null;
   customerName?: string | null;
+  /** Üye siparişinde dolu; misafir (üyeliksiz) siparişte null. */
+  userId?: string | null;
+  /** Üye siparişinde API'nin daralttığı kullanıcı özeti (üyelik tarihi rozeti için). */
+  user?: { id: string; fullName?: string | null; createdAt?: string } | null;
   createdAt: string;
   status: string;
   paymentStatus?: string | null;
@@ -515,6 +519,23 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
         <div className="space-y-5">
           <Card title="Müşteri">
             <div className="font-semibold text-ink-900">{customer}</div>
+            {/* Üye mi, misafir mi verdi? (Hasan talebi 2026-08-24) — userId üye siparişinde dolu. */}
+            <div className="mt-2">
+              {order.userId ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success/10 text-success">
+                  ● Üye siparişi
+                  {order.user?.createdAt && (
+                    <span className="font-normal text-ink-500">
+                      · üyelik: {new Date(order.user.createdAt).toLocaleDateString("tr-TR")}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-paper-200 text-ink-700">
+                  ● Misafir siparişi (üyeliksiz)
+                </span>
+              )}
+            </div>
             <div className="mt-3 space-y-1.5 text-xs">
               {order.email && (
                 <div className="flex items-center gap-2 text-ink-700">

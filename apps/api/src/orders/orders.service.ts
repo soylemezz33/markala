@@ -888,7 +888,15 @@ export class OrdersService {
   async findById(id: string, userId?: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: { items: true, shippingAddress: true, billingAddress: true, user: true },
+      // user DARALTILDI (2026-08-24): `user: true` TÜM satırı — passwordHash dahil —
+      // yanıta koyuyordu (admin paneline ve müşterinin kendi sipariş detayına sızıyordu).
+      // Panelin ihtiyacı üye kimliği + üyelik tarihi (üye/misafir rozeti) kadarıdır.
+      include: {
+        items: true,
+        shippingAddress: true,
+        billingAddress: true,
+        user: { select: { id: true, fullName: true, email: true, accountType: true, createdAt: true } },
+      },
     });
     if (!order) throw new NotFoundException("Sipariş bulunamadı.");
     if (userId && order.userId !== userId) throw new ForbiddenException("Bu siparişe erişim izniniz yok.");
