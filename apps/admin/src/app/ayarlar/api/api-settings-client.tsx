@@ -22,7 +22,7 @@ interface Integration {
 }
 
 // NOT: GA4 ve Search Console buradan ÇIKARILDI — backend integrationStatus() yalnız
-// iyzico/parasut/sendgrid/netgsm/dhl/r2 anahtarlarını döndürüyor; bu ikisi env/kod ile
+// iyzico/parasut/smtp/netgsm/dhl/r2 anahtarlarını döndürüyor; bu ikisi env/kod ile
 // yapılandırılır, panelden bağlanmaz. Yanıltıcı "Bağlı Değil" göstermemek için listede değiller.
 const integrations: Integration[] = [
   {
@@ -59,19 +59,23 @@ const integrations: Integration[] = [
     status: "unknown",
   },
   {
-    id: "sendgrid",
-    name: "SendGrid",
-    vendor: "SendGrid - E-posta",
-    description: "Sipariş onayı, teslimat bildirimi, kampanya e-postaları.",
+    // 2026-08-24: Bu kart eskiden "SendGrid" idi ve YANILTICIYDI — SendGrid hiç kullanılmıyordu
+    // (kod tarafı saf stub'dı, kaldırıldı). Markala'nın TÜM transactional maili nodemailer/SMTP
+    // ile Lisan Fen mail sunucusu (MDaemon) üzerinden gidiyor. Kart artık gerçek yolu gösteriyor.
+    id: "smtp",
+    name: "SMTP (MDaemon)",
+    vendor: "E-posta gönderimi",
+    description: "Sipariş onayı, kargo/teslimat bildirimi, şifre sıfırlama, sepet hatırlatma.",
     category: "email",
     icon: EnvelopeSimple,
     fields: [
-      { key: "apiKey", label: "API Key", type: "password", required: true, placeholder: "SG..." },
-      { key: "fromEmail", label: "Gönderen E-posta", type: "text", required: true, placeholder: "merhaba@markala.com.tr" },
-      { key: "fromName", label: "Gönderen Adı", type: "text", required: true, placeholder: "Markala" },
-      { key: "replyToEmail", label: "Reply-To E-posta", type: "text", placeholder: "destek@markala.com.tr" },
+      { key: "host", label: "SMTP Sunucu", type: "text", required: true, placeholder: "mail.markala.com.tr" },
+      { key: "port", label: "Port", type: "text", required: true, placeholder: "465" },
+      { key: "user", label: "Kullanıcı", type: "text", required: true, placeholder: "bilgi@markala.com.tr" },
+      { key: "pass", label: "Şifre", type: "password", required: true },
+      { key: "from", label: "Gönderen", type: "text", required: true, placeholder: "Markala <bilgi@markala.com.tr>" },
     ],
-    docsUrl: "https://docs.sendgrid.com",
+    docsUrl: "https://mdaemon.com/pages/documentation",
     status: "unknown",
   },
   {

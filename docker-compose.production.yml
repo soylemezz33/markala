@@ -69,7 +69,8 @@ services:
       PARASUT_USERNAME: ${PARASUT_USERNAME}
       PARASUT_PASSWORD: ${PARASUT_PASSWORD}
       PARASUT_COMPANY_ID: ${PARASUT_COMPANY_ID}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      # SENDGRID_API_KEY kaldirildi (2026-08-24): SendGrid hic kullanilmiyordu (stub),
+      # tum mail SMTP_* uzerinden nodemailer ile gidiyor. Bkz. integrations.module.ts notu.
       NETGSM_USERNAME: ${NETGSM_USERNAME}
       NETGSM_PASSWORD: ${NETGSM_PASSWORD}
       DHL_API_KEY: ${DHL_API_KEY}
