@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
   //     where: { userId: user.id },
   //     data: { customerName: "ANONIM", customerEmail: null }, // VUK için sipariş kalır
   //   });
-  //   await sendgrid.send({ to: email, subject: "Hesap silme talebiniz alındı", ... });
+  //   await mail.send({ to: email, subject: "Hesap silme talebiniz alındı", ... });  // MailService (SMTP)
   //   await auditLog.create({ event: "ACCOUNT_DELETION", userId: user.id, ip, ua });
 
   return NextResponse.json({

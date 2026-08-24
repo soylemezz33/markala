@@ -15,7 +15,10 @@ export class StatsService {
     return {
       iyzico: this.has("IYZICO_API_KEY", "IYZICO_SECRET"),
       parasut: this.has("PARASUT_CLIENT_ID", "PARASUT_CLIENT_SECRET", "PARASUT_USERNAME", "PARASUT_PASSWORD", "PARASUT_COMPANY_ID"),
-      sendgrid: this.has("SENDGRID_API_KEY"),
+      // 2026-08-24: eskiden "sendgrid: has(SENDGRID_API_KEY)" idi — YANILTICIYDI. SendGrid
+      // hiç kullanılmıyordu (stub); tüm mail MailService → nodemailer/SMTP üzerinden gidiyor.
+      // Panel artık GERÇEK mail yolunun yapılandırma durumunu gösteriyor.
+      smtp: this.has("SMTP_HOST", "SMTP_USER", "SMTP_PASS"),
       netgsm: this.has("NETGSM_USERNAME", "NETGSM_PASSWORD"),
       dhl: this.has("DHL_API_KEY"),
       r2: this.has("R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"),
