@@ -584,6 +584,7 @@ export class PaymentsService implements OnModuleInit {
         void this.metaCapi.sendPurchase(o.id).catch(() => undefined);
         // Sadakat kazanımı (idempotent + best-effort) — callback kaçmış siparişte de kazanım kaybolmasın.
         void this.loyalty.earnForOrder(o.id).catch(() => undefined);
+        void this.notifyN8nOrderPaid(o.id).catch(() => undefined);
         this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı) → mail+CAPI tetiklendi`);
       } catch (e) {
         /* tek sipariş hatası tüm taramayı bozmasın — ama logla */
@@ -686,6 +687,8 @@ export class PaymentsService implements OnModuleInit {
         void this.metaCapi.sendPurchase(orderId).catch(() => undefined);
         // Sadakat kazanımı (LOYALTY_ENABLED açıksa; idempotent + best-effort). Akışı bloke etmez.
         void this.loyalty.earnForOrder(orderId).catch(() => undefined);
+        // n8n'e ödeme onayı bildirimi (Trello kart otomasyonu). Fire-and-forget, akışı bloke etmez.
+        void this.notifyN8nOrderPaid(orderId).catch(() => undefined);
       }
       this.logger.log(
         `iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} price=${result.price} paid=${result.paidPrice}`,
@@ -706,5 +709,24 @@ export class PaymentsService implements OnModuleInit {
       `iyzico ödeme BAŞARISIZ order=${orderId}: status=${result.paymentStatus} kod=${result.errorCode ?? "-"} mesaj=${result.errorMessage ?? "-"}`,
     );
     return { redirectUrl: `${webOrigin}/odeme/hata?siparis=${orderId}` };
+  }
+
+  /**
+   * n8n'e ödeme onayı webhook'u (Trello kart otomasyonu için). N8N_ORDER_WEBHOOK_URL
+   * tanımlı değilse no-op. Hatalar yutulur — ödeme akışını asla bozmaz.
+   */
+  private async notifyN8nOrderPaid(orderId: string): Promise<void> {
+    const url = this.config.get<string>("N8N_ORDER_WEBHOOK_URL");
+    if (!url) return;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) this.logger.warn(`n8n webhook HTTP ${res.status} order=${orderId}`);
+    } catch (err) {
+      this.logger.warn(`n8n webhook gönderilemedi order=${orderId}: ${(err as Error).message}`);
+    }
   }
 }
