@@ -19,6 +19,7 @@ import { CurrencyCircleDollar, Phone, X, WhatsappLogo, EnvelopeSimple } from "@p
 interface OrderRow {
   id?: string;
   orderNumber?: string;
+  createdAt?: string;
   status?: string;
   paymentStatus?: string | null;
   paymentMethod?: string | null;
@@ -64,6 +65,22 @@ function isUnpaid(o: OrderRow): boolean {
   return String(o.paymentStatus ?? "beklemede") !== "basarili";
 }
 
+/** Tarih + saat (Hasan talebi 2026-08-24) — DB tam timestamp tutuyor, saat de gösterilir. */
+function formatDateTime(iso: string | undefined): string {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("tr-TR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 function toAmount(total: unknown): string {
   const v = typeof total === "object" && total !== null ? Number(String(total)) : Number(total ?? 0);
   return `₺ ${v.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}`;
@@ -99,6 +116,7 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
           <tr>
             <th className="text-left px-5 py-3 font-semibold">Sipariş No</th>
             <th className="text-left px-5 py-3 font-semibold">Müşteri</th>
+            <th className="text-left px-5 py-3 font-semibold whitespace-nowrap">Tarih</th>
             {showMoney && <th className="text-right px-5 py-3 font-semibold">Tutar</th>}
             {showMoney && <th className="text-right px-5 py-3 font-semibold">Ödeme</th>}
             <th className="text-right px-5 py-3 font-semibold">Durum</th>
@@ -115,6 +133,9 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
                   {o.orderNumber ?? o.id?.slice(0, 8)}
                 </td>
                 <td className="px-5 py-3 text-ink-700">{customerName}</td>
+                <td className="px-5 py-3 text-ink-500 text-xs whitespace-nowrap tabular-nums">
+                  {formatDateTime(o.createdAt)}
+                </td>
                 {showMoney && (
                   <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">
                     {toAmount(o.total)}

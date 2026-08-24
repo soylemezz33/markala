@@ -49,6 +49,22 @@ function formatDate(iso: string): string {
   }
 }
 
+/** Tarih + saat (Hasan talebi 2026-08-24). Dosya adında ":" geçemeyeceği için
+ * CSV dosya adı formatDate'te kaldı; tablo ve CSV satırları bunu kullanır. */
+function formatDateTime(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString("tr-TR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 type SortKey = "date-desc" | "date-asc" | "amount-desc" | "amount-asc" | "order-asc" | "status";
 const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
   { value: "date-desc", label: "Tarih (yeni → eski)" },
@@ -143,7 +159,7 @@ export function OrdersClient({ orders }: Props) {
       o.orderNumber,
       o.customerName ?? "",
       o.email ?? "",
-      formatDate(o.createdAt),
+      formatDateTime(o.createdAt),
       String(Number(o.total)),
       STATUS_LABELS[toSlug(o.status)]?.label ?? o.status,
     ]);
@@ -293,7 +309,7 @@ export function OrdersClient({ orders }: Props) {
                         )}
                       </td>
                       <td className="px-4 py-3 text-ink-700 text-xs hidden md:table-cell">
-                        {formatDate(o.createdAt)}
+                        {formatDateTime(o.createdAt)}
                       </td>
                       {showMoney && (
                         <td className="px-4 py-3 text-right font-semibold text-ink-900 tabular-nums">
