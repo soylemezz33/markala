@@ -1,6 +1,6 @@
 import type { Product, Category, FaqItem } from "@markala/types";
 import { cities } from "@/lib/cities";
-import { POSTAL_ADDRESS_SCHEMA } from "@/lib/company";
+import { POSTAL_ADDRESS_SCHEMA, GEO, MAPS_SHORT_LINK } from "@/lib/company";
 
 const SITE = "https://markala.com.tr";
 
@@ -291,10 +291,14 @@ export function LocalBusinessJsonLd() {
     email: "merhaba@markala.com.tr",
     priceRange: "₺₺",
     address: POSTAL_ADDRESS_SCHEMA,
-    // geo KALDIRILDI: eski koordinat (36.812061, 34.641482) Çiftlikköy/Astoria One
-    // adresini gösteriyordu. Doğru adres Menteş Mah. olduğu için o koordinat artık
-    // yanlış; uydurmak yerine alan çıkarıldı. Hasan gerçek koordinatı verdiğinde
-    // company.ts üzerinden geri eklenecek.
+    // geo GERİ EKLENDİ (2026-08-24): Hasan resmî Google Business Profile linkini
+    // iletti; koordinat o kaydın place URL'inden (company.ts GEO tek kaynak).
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: GEO.lat,
+      longitude: GEO.lng,
+    },
+    hasMap: MAPS_SHORT_LINK,
     openingHoursSpecification: [
       {
         "@type": "OpeningHoursSpecification",

@@ -231,7 +231,9 @@ export const cities: CityData[] = [
         a: "Evet — randevu ile Yenişehir'deki atölye ve showroom'umuza gelebilirsiniz. Numune kâğıtları, baskı türleri ve renk kataloglarını yerinde görebilirsiniz.",
       },
     ],
-    geo: { lat: 36.812061, lng: 34.641482 },
+    // 2026-08-24: eski değer (36.812061, 34.641482) Çiftlikköy'deki eski ofisti;
+    // resmî GBP kaydının koordinatıyla güncellendi (lib/company.ts GEO ile aynı).
+    geo: { lat: 36.7899463, lng: 34.577764 },
     serviceRadius: 80,
   },
 

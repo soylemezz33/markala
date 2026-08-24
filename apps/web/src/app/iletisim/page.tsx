@@ -10,7 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { trackLead } from "@/lib/analytics";
 import { PhoneInput } from "@/components/forms/phone-input";
-import { ADDRESS, MAPS_LINK } from "@/lib/company";
+import { ADDRESS, MAPS_LINK, MAPS_EMBED } from "@/lib/company";
 
 const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
@@ -291,13 +291,17 @@ export default function ContactPage() {
                 </div>
               ))}
 
-              {/* Map placeholder */}
-              <div className="aspect-[4/3] rounded-xl bg-paper-100 border border-paper-200 grid place-items-center text-ink-500 text-sm">
-                <div className="text-center">
-                  <MapPin size={32} className="mx-auto mb-2 text-brand-700" weight="fill" />
-                  <div>Mersin, Türkiye</div>
-                  <div className="text-xs mt-1">Harita yakında eklenecek</div>
-                </div>
+              {/* Google Maps embed — resmî işletme kaydı (company.ts MAPS_EMBED tek kaynak,
+                  hakkimizda sayfasıyla aynı desen). Keyless embed: API anahtarı gerekmez. */}
+              <div className="aspect-[4/3] rounded-xl overflow-hidden border border-paper-200">
+                <iframe
+                  title="Markala ofis konumu — Yenişehir, Mersin"
+                  src={MAPS_EMBED}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="w-full h-full border-0"
+                  allowFullScreen
+                />
               </div>
 
               {/* B2B CTA */}

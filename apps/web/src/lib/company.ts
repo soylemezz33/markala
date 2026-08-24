@@ -36,16 +36,20 @@ export const ADDRESS = {
 export const ADDRESS_LINE = `${ADDRESS.street}, ${ADDRESS.locality} / ${ADDRESS.region}`;
 
 /**
- * Google Haritalar bağlantısı — koordinat yerine ADRES sorgusuyla.
- * Eski kodda sabit lat/lng (36.812061, 34.641482) vardı ama o koordinat eski
- * Çiftlikköy adresini gösteriyordu; yeni adresin koordinatı elimizde olmadığı için
- * uydurmak yerine adres sorgusu kullanılıyor (Google doğru noktayı kendisi bulur).
+ * Google Haritalar — RESMİ işletme kaydı (Hasan iletti, 2026-08-24).
+ * Kısa link Google Business Profile "Markala.com.tr" kaydına gider; koordinatlar
+ * o kaydın place URL'inden alındı (uydurma değil). Eski adres-sorgusu yaklaşımı
+ * (koordinat bilinmiyordu) artık gerekmiyor.
  */
+export const MAPS_SHORT_LINK = "https://maps.app.goo.gl/2v85cgEgq3dcj6ut5";
+export const GEO = { lat: 36.7899463, lng: 34.577764 } as const;
+
+/** İşletme kaydını hedefleyen sorgu (embed'de kart adıyla çıksın diye ad + adres). */
 export const MAPS_QUERY = encodeURIComponent(
-  `${ADDRESS.street} ${ADDRESS.locality} ${ADDRESS.region}`,
+  `Markala.com.tr ${ADDRESS.street} ${ADDRESS.locality} ${ADDRESS.region}`,
 );
-export const MAPS_LINK = `https://maps.google.com/?q=${MAPS_QUERY}`;
-export const MAPS_EMBED = `https://maps.google.com/maps?q=${MAPS_QUERY}&z=16&hl=tr&output=embed`;
+export const MAPS_LINK = MAPS_SHORT_LINK;
+export const MAPS_EMBED = `https://maps.google.com/maps?q=${MAPS_QUERY}&ll=${GEO.lat},${GEO.lng}&z=16&hl=tr&output=embed`;
 
 export const PHONE = "0324 433 33 51";
 /** schema.org / tel: için E.164 biçimi. */
