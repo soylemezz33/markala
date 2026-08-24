@@ -81,9 +81,11 @@ services:
       # Token yoksa MetaCapiService sessizce no-op olur (checkout etkilenmez).
       META_CAPI_TOKEN: ${META_CAPI_TOKEN:-}
       META_PIXEL_ID: ${META_PIXEL_ID:-1112404194692078}
-      # n8n webhook'lari (Trello kart otomasyonu). Bos ise no-op.
+      # n8n webhook'lari (Trello kart otomasyonu + sepet terk hatirlaticisi). Bos ise no-op.
       N8N_ORDER_WEBHOOK_URL: ${N8N_ORDER_WEBHOOK_URL:-}
       N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}
+      # n8n -> Markala geri-cagri paylasimli gizli anahtari (POST /internal/cart-reminder).
+      INTERNAL_WEBHOOK_SECRET: ${INTERNAL_WEBHOOK_SECRET:-}
       TZ: Europe/Istanbul
     networks:
       - markala

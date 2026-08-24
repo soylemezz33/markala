@@ -16,6 +16,7 @@ import { consumeReorderNotice, type ReorderNotice } from "@/lib/reorder";
 import { PromoBanner } from "@/components/promo-banner";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartCrossSell } from "@/components/cart/cross-sell";
+import { CartEmailCapture } from "@/components/cart/cart-email-capture";
 import { VAT_RATE } from "@/lib/vat";
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
@@ -340,6 +341,10 @@ export default function CartPage() {
                   ✓ HOSGELDIN uygulandı — ilk siparişine %10 indirim sepetinde.
                 </div>
               )}
+
+              {/* Sepet terk hatırlatması — sadece misafirlere: üyenin e-postası zaten sistemde
+                  var, ayrı yakalamaya gerek yok. Bootstrap sürerken flicker olmasın diye bekle. */}
+              {!user && !isBootstrapping && <CartEmailCapture />}
 
               <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl">
                 {/* data-testid: kupon alanı KATLANMIŞ (<details>) — E2E testi önce summary'ye

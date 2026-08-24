@@ -703,6 +703,24 @@ model NotificationLog {
   @@map("notification_logs")
 }
 
+/// Misafir sepet e-posta yakalama (sepet terk hatırlatması, 2026-08-24). Sepet sayfasındaki
+/// pasif kutudan doldurulur. consent=false ise kayıt tutulur ama ASLA hatırlatma gönderilmez
+/// (n8n sorgusu consent=true şartı arar). cartSnapshot: doldurma anındaki sepet içeriği
+/// ([{productSlug,productName,quantity}]) — sepet sonradan değişse/boşalsa bile hatırlatma
+/// neyin unutulduğunu gösterebilsin diye an'ı dondurur.
+model CartLead {
+  id           String   @id @default(cuid())
+  sessionId    String   @map("session_id")
+  email        String
+  cartSnapshot Json     @map("cart_snapshot")
+  consent      Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@index([consent, createdAt])
+  @@map("cart_leads")
+}
+
 /// İletişim formu mesajları — SMTP'den BAĞIMSIZ kalıcı kayıt (mail gitmese bile lead kaybolmaz).
 /// Admin "Gelen Kutusu"ndan görüntülenir; corporate_applications ile aynı DB-first deseni.
 model ContactMessage {

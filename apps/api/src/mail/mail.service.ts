@@ -718,6 +718,65 @@ Markala`;
     }
   }
 
+  /**
+   * Sepet terk hatırlatması — misafir (cart_leads'ten yakalanmış e-posta) veya üye
+   * (sepete eklemiş ama sipariş oluşturmamış) için. n8n'in günlük kontrolü tetikler
+   * (bkz. internal-notify.controller.ts). Hata fırlatmaz.
+   */
+  async sendCartReminderEmail(
+    to: string,
+    items: Array<{ productName: string; quantity: number }>,
+    opts: { name?: string | null; kind: "guest" | "member" },
+  ): Promise<boolean> {
+    if (!to) return false;
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = opts.name?.trim();
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const cartUrl = `${webUrl}/sepet`;
+    const template = opts.kind === "guest" ? "cart-reminder-guest" : "cart-reminder-member";
+    const subject = "Sepetinde ürünler seni bekliyor";
+    const safeItems = items ?? [];
+
+    const rowsHtml = safeItems
+      .map(
+        (i) =>
+          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${esc(i.productName)}</td>` +
+          `<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td></tr>`,
+      )
+      .join("");
+
+    const text =
+      `${greeting}\n\nSepetine eklediğin şu ürünler hâlâ seni bekliyor:\n\n` +
+      safeItems.map((i) => `  • ${i.productName} × ${i.quantity}`).join("\n") +
+      `\n\nSepetine dön: ${cartUrl}\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir.`;
+
+    const html = renderEmail({
+      title: "Sepetin Seni Bekliyor",
+      intro: `${greeting} sepetine eklediğin ürünler hâlâ orada duruyor.`,
+      preheader: `Sepetinde ${safeItems.length} ürün seni bekliyor`,
+      bodyHtml: `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
+          <thead><tr>
+            <th style="padding:8px;text-align:left;border-bottom:2px solid #1A1410;color:#1A1410">Ürün</th>
+            <th style="padding:8px;text-align:center;border-bottom:2px solid #1A1410;color:#1A1410">Adet</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        ${emailButton("Sepetime Dön", cartUrl)}
+        ${emailFallbackLink(cartUrl)}`,
+    });
+
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template });
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.cartReminder(${opts.kind}) failed to=${to}: ${(err as Error).message}`);
+      await this.logNotification(to, "failed", { error: (err as Error).message, template });
+      return false;
+    }
+  }
+
   /** Yeni kayıt sonrası hoş geldin + ilk sipariş kuponu (register tetikler). */
   async sendWelcomeEmail(to: string, name?: string | null): Promise<boolean> {
     if (!to) return false;

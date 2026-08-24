@@ -33,6 +33,8 @@ import { PortfolioModule } from "./portfolio/portfolio.module";
 import { LoyaltyModule } from "./loyalty/loyalty.module";
 import { ContactModule } from "./contact/contact.module";
 import { QuoteRequestsModule } from "./quote-requests/quote-requests.module";
+import { CartLeadsModule } from "./cart-leads/cart-leads.module";
+import { InternalNotifyModule } from "./internal-notify/internal-notify.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
 import { LifecycleModule } from "./lifecycle/lifecycle.module";
 
@@ -73,6 +75,8 @@ import { LifecycleModule } from "./lifecycle/lifecycle.module";
     LoyaltyModule,
     ContactModule,
     QuoteRequestsModule,
+    CartLeadsModule,
+    InternalNotifyModule,
     NewsletterModule,
     LifecycleModule,
   ],
