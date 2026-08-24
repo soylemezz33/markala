@@ -504,6 +504,10 @@ model OrderItem {
   unitPrice            Decimal @map("unit_price") @db.Decimal(10, 2)
   quantity             Int
   lineTotal            Decimal @map("line_total") @db.Decimal(10, 2)
+  /// Sipariş ANINDAKİ satır maliyeti (snapshot; lineTotal ölçeğinde, kalem adedi dahil).
+  /// null = bilinmiyor (maliyeti girilmemiş ürün / kampanya paketi). Kâr raporu önce bunu
+  /// okur; sonradan yapılan maliyet güncellemeleri geçmiş kârı DEĞİŞTİRMEZ. Bkz. orders/costing.ts
+  costTotal            Decimal? @map("cost_total") @db.Decimal(10, 2)
 
   needsDesignSupport Boolean @default(false) @map("needs_design_support")
   uploadedFileName   String? @map("uploaded_file_name")

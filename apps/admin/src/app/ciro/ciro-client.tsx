@@ -205,8 +205,9 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
       )}
 
       <p className="mt-6 text-xs text-ink-500 leading-relaxed">
-        {kapsam.not} Maliyet, siparişin verildiği andaki değil ürünün <strong>güncel</strong>{" "}
-        maliyetidir; maliyet güncellenirse geçmiş kâr da değişir.
+        {kapsam.not} Maliyet, <strong>siparişin verildiği anda</strong> kaleme kaydedilir
+        (24.08.2026 öncesi siparişlere o günkü maliyet tek seferlik yazıldı); sonradan yapılan
+        maliyet güncellemeleri geçmiş kârı değiştirmez, yalnız yeni siparişlere yansır.
         {kapsam.kalemSayisi > 0 && ` Bu rapor ${kapsam.kalemSayisi} sipariş kalemine dayanıyor.`}
       </p>
     </AdminShell>

@@ -8,6 +8,7 @@ import { SettingsService } from "../settings/settings.service";
 import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
+import { computeItemCostTotal } from "./costing";
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -405,6 +406,17 @@ export class OrdersService {
         } else {
           this.logger.debug(`Sunucu fiyat [${product.slug}]: ${unitPrice}₺ × ${quantity}`);
         }
+        const lineTotal = round2(unitPrice * quantity);
+        // Maliyet SNAPSHOT'ı (2026-08-24): sipariş anındaki maliyet kaleme yazılır —
+        // sonradan yapılan maliyet güncellemeleri geçmiş kâr raporunu DEĞİŞTİRMEZ.
+        // null = maliyeti girilmemiş ürün (rapor "maliyet girilmemiş" olarak toplar).
+        const costTotal = computeItemCostTotal(
+          product as { pricingMode?: string | null; options?: unknown; prices?: unknown },
+          { selections },
+          quantity,
+          lineTotal / 1.2,
+          Number(pricing.marj) > 0 ? Number(pricing.marj) : DEFAULT_PRICING.marj,
+        );
         return {
           ...common,
           productId: product.id as string | null,
@@ -412,7 +424,8 @@ export class OrdersService {
           productName: product.name,
           productImage: product.images?.[0] ?? "",
           unitPrice,
-          lineTotal: round2(unitPrice * quantity),
+          lineTotal,
+          costTotal,
         };
       }
 
@@ -431,6 +444,7 @@ export class OrdersService {
           productImage: "",
           unitPrice,
           lineTotal: round2(unitPrice * quantity),
+          costTotal: null as number | null, // paket maliyeti sistemde yok — bilinmiyor
         };
       }
 
@@ -672,6 +686,7 @@ export class OrdersService {
               unitPrice: new Prisma.Decimal(i.unitPrice),
               quantity: i.quantity,
               lineTotal: new Prisma.Decimal(i.lineTotal),
+              costTotal: i.costTotal == null ? null : new Prisma.Decimal(i.costTotal),
               needsDesignSupport: i.needsDesignSupport,
               uploadedFileName: i.uploadedFileName,
               uploadedFileUrl: i.uploadedFileUrl,
