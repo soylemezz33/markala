@@ -1,19 +1,22 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateQuoteRequestDto } from "./quote-requests.dto";
 
 @Injectable()
 export class QuoteRequestsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(QuoteRequestsService.name);
+
+  constructor(private prisma: PrismaService, private config: ConfigService) {}
 
   /** Teklif talebini kalıcı kaydet (SMTP'den bağımsız — lead kaybolmaz). */
-  create(dto: CreateQuoteRequestDto) {
+  async create(dto: CreateQuoteRequestDto) {
     const ticketId = dto.ticketId?.trim() || `TQ-${Date.now().toString(36).toUpperCase()}`;
     const products = (dto.products ?? [])
       .map((p) => p.trim())
       .filter((p) => p.length > 0)
       .slice(0, 30);
-    return this.prisma.quoteRequest.create({
+    const req = await this.prisma.quoteRequest.create({
       data: {
         ticketId,
         name: dto.name,
@@ -28,6 +31,28 @@ export class QuoteRequestsService {
         source: dto.source?.trim() || "teklif-al",
       },
     });
+    // n8n'e yeni talep bildirimi (Trello kart otomasyonu). Fire-and-forget, akışı bloke etmez.
+    void this.notifyN8nNewLead(req.id).catch(() => undefined);
+    return req;
+  }
+
+  /**
+   * n8n'e yeni teklif talebi webhook'u. N8N_LEAD_WEBHOOK_URL tanımlı değilse
+   * no-op. Hatalar yutulur — kayıt akışını asla bozmaz.
+   */
+  private async notifyN8nNewLead(id: string): Promise<void> {
+    const url = this.config.get<string>("N8N_LEAD_WEBHOOK_URL");
+    if (!url) return;
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "quote", id }),
+      });
+      if (!res.ok) this.logger.warn(`n8n webhook HTTP ${res.status} quote=${id}`);
+    } catch (err) {
+      this.logger.warn(`n8n webhook gönderilemedi quote=${id}: ${(err as Error).message}`);
+    }
   }
 
   /** Admin: talep listesi (en yeni önce). Opsiyonel durum filtresi. */
