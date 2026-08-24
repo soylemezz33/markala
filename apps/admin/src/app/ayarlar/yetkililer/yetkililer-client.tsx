@@ -16,7 +16,7 @@ const ROLE_LABEL: Record<string, string> = {
 const ROLE_DESC: Record<string, string> = {
   super_admin: "Her şeye erişir; yetki atayabilir.",
   admin: "Her şeye erişir; yetki atayamaz.",
-  tasarimci: "Sipariş içeriği, müşteri iletişimi, görsel/slider/banner, yorumlar. Tutarları GÖRMEZ.",
+  tasarimci: "Sipariş içeriği (fiyat/ödeme durumu dahil), müşteri iletişimi, görsel/slider/banner, yorumlar. Ciroyu (dashboard finans kutuları) GÖRMEZ.",
   muhasebe: "Para akışı, fatura/Paraşüt, cari, fiyat güncelleme. Görsel/içerik menüleri kapalı.",
   customer: "Panel erişimi kaldırılır.",
 };

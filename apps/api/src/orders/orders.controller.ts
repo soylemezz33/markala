@@ -10,44 +10,15 @@ import { paymentNonce } from "../payments/payment-nonce";
 import type { Request } from "express";
 
 
-/**
- * TUTAR GİZLEME — 2026-08-21 (Hasan kararı: grafik tasarımcı tutarları görmesin).
+/*
+ * TUTAR GİZLEME KALDIRILDI — 2026-08-24 (Hasan kararı revize edildi).
  *
- * Menüyü/sütunu gizlemek YETMEZ; uç hâlâ tutarı döndürür ve ağ sekmesinden görülür.
- * Bu yüzden parasal alanlar YANITTAN SİLİNİR. Tasarımcının işi için gereken
- * ürün/adet/konfigürasyon/dosya ve müşteri iletişimi aynen kalır.
+ * 2026-08-21'de tasarımcı rolü için sipariş yanıtlarından parasal alanlar siliniyordu
+ * (stripAmounts). Ama listeye paymentStatus da girdiğinden panel ödenmiş siparişi
+ * "Ödeme Bekliyor" gösterdi, tutarlar ₺0/NaN oldu. Asıl kısıt "tasarımcı CİRO görmesin"
+ * idi — sipariş bazında fiyat görmesinde sakınca yok. Ciro kısıtı stats tarafında
+ * (stats.service summary includeFinance=false) DURUYor; burada tutar silme yok artık.
  */
-const MONEY_FIELDS = ["total", "subtotal", "vat", "shippingFee", "discount", "unitPrice", "lineTotal", "paymentStatus", "paymentMethod"];
-function stripAmounts<T>(data: T, role: string | undefined): T {
-  if (role !== "tasarimci") return data;
-  /**
-   * SADECE DÜZ NESNE/DİZİ içinde gezilir.
-   * 2026-08-21 hata: ilk sürüm `typeof v === "object"` diyip Date'leri de yeniden
-   * kuruyordu; Date'in kendi enumerable alanı olmadığı için tarih {} oluyor ve panelde
-   * "Invalid Date" görünüyordu (Hasan bildirdi). Prisma Decimal gibi sınıf örnekleri de
-   * aynı şekilde bozulurdu. Bu yüzden yalnız prototipi Object.prototype olan nesnelere
-   * inilir; diğer her şey OLDUĞU GİBİ bırakılır.
-   */
-  const isPlain = (v: unknown): v is Record<string, unknown> => {
-    if (v === null || typeof v !== "object" || Array.isArray(v)) return false;
-    const proto = Object.getPrototypeOf(v);
-    return proto === Object.prototype || proto === null;
-  };
-  const walk = (v: unknown): unknown => {
-    if (Array.isArray(v)) return v.map(walk);
-    if (isPlain(v)) {
-      const out: Record<string, unknown> = {};
-      for (const [k, val] of Object.entries(v)) {
-        if (MONEY_FIELDS.includes(k)) continue;
-        out[k] = walk(val);
-      }
-      return out;
-    }
-    return v;
-  };
-  return walk(data) as T;
-}
-
 @ApiTags("orders")
 @Controller("orders")
 export class OrdersController {
@@ -110,21 +81,19 @@ export class OrdersController {
   @Roles("admin", "super_admin")
   @Perms(PERM.ORDERS_READ)
   @ApiBearerAuth()
-  async listAll(@Query() query: ListOrdersQueryDto, @Req() req: Request & { user: { role: string } }) {
-    const rows = await this.service.listAll({
+  async listAll(@Query() query: ListOrdersQueryDto) {
+    return this.service.listAll({
       status: query.status,
       take: query.take,
       skip: query.skip,
     });
-    return stripAmounts(rows, req.user?.role);
   }
 
   @Get(":id")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   async detail(@Req() req: Request & { user: { sub: string; role: string } }, @Param("id") id: string) {
-    const order = await this.service.findById(id, req.user.role === "customer" ? req.user.sub : undefined);
-    return stripAmounts(order, req.user?.role);
+    return this.service.findById(id, req.user.role === "customer" ? req.user.sub : undefined);
   }
 
   @Patch(":id/status")
