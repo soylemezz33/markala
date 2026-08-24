@@ -94,7 +94,7 @@ export class ProfitService {
     for (const it of items) {
       const ciroHaric = Number(it.lineTotal) / ProfitService.VAT_DIVISOR;
       const p = it.productId ? byId.get(it.productId) : undefined;
-      const cost = this.costForItem(p, it.configuration, ciroHaric, marj);
+      const cost = this.costForItem(p, it.configuration, ciroHaric, marj, it.quantity ?? 1);
 
       ciroToplam += ciroHaric;
       if (cost === null) ciroMaliyetiBilinmeyen += ciroHaric;
@@ -166,6 +166,7 @@ export class ProfitService {
     configuration: unknown,
     ciroHaric: number,
     marj: number,
+    quantity = 1,
   ): number | null {
     if (!product) return null; // kampanya paketi vb. — ürün ilişkisi yok
 
@@ -179,6 +180,18 @@ export class ProfitService {
     if (rows.length === 0) return null;
     // Ürünün HİÇ maliyeti yoksa (İSG kataloğu) tahmin yürütme.
     if (!rows.some((r) => r.cost !== null && r.cost !== undefined)) return null;
+
+    // Seçenek grubu OLMAYAN ürün (tek fiyat/tek maliyet): selections'ın boş olması
+    // NORMALDİR — taban satırın maliyeti kalem adediyle çarpılır. (2026-08-24 düzeltme:
+    // eski kod boş selections'ta hemen null döndürüyordu; maliyeti girilmiş tek fiyatlı
+    // ürünler raporda yanlışlıkla "maliyet girilmemiş" görünüyordu — Hasan bildirdi.)
+    const optRows = (product.options ?? []) as unknown[];
+    if (optRows.length === 0) {
+      const base = rows.find((r) => r.groupKey == null && r.optionKey == null);
+      const c = base?.cost;
+      if (c === null || c === undefined) return null;
+      return round2(Number(c) * Math.max(1, quantity));
+    }
 
     const selections = extractSelections(configuration);
     if (!selections || Object.keys(selections).length === 0) return null;
