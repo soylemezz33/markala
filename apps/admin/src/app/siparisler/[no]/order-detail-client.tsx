@@ -72,6 +72,8 @@ export interface OrderDetailProps {
     needsDesignSupport?: boolean;
     uploadedFileName?: string | null;
     uploadedFileUrl?: string | null;
+    /** Seçimlerin ürün şemasındaki etiket + teknik açıklaması (API findById üretir). */
+    optionDetails?: Array<{ group: string; label: string; detail?: string | null }>;
   }>;
   shippingAddress?: {
     fullName?: string;
@@ -295,6 +297,22 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                       <div className="font-semibold text-ink-900 truncate">{item.productName}</div>
                       {item.configurationSummary && (
                         <div className="text-xs text-ink-500 mt-0.5">{item.configurationSummary}</div>
+                      )}
+                      {/* Seçenek teknik detayları (Hasan 2026-08-25): "Çift yüz · mat"ın
+                          ne olduğu — gramaj, kağıt, selefon — üretim için burada görünür. */}
+                      {item.optionDetails?.some((d) => d.detail) && (
+                        <ul className="mt-1.5 space-y-0.5 border-l-2 border-paper-200 pl-2">
+                          {item.optionDetails
+                            .filter((d) => d.detail)
+                            .map((d, j) => (
+                              <li key={j} className="text-[11px] text-ink-500 leading-snug">
+                                <span className="font-medium text-ink-700">
+                                  {d.group}: {d.label}
+                                </span>{" "}
+                                — {d.detail}
+                              </li>
+                            ))}
+                        </ul>
                       )}
                       {item.quantity != null && (
                         <div className="text-[11px] text-ink-500 mt-1">Adet: {item.quantity}</div>

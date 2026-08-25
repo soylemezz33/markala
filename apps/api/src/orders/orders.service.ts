@@ -164,6 +164,30 @@ function normalizeAddressSnapshot(a: InlineAddress): InlineAddress {
  * misafir siparişi ise snapshot JSON'unu `shippingAddress`/`billingAddress` olarak yüzeye çıkarır.
  * Böylece admin panel (order.shippingAddress.fullAddress ...) FK olsun snapshot olsun aynı şekilde render eder.
  */
+/**
+ * Sipariş kaleminin seçimlerini ürün seçenek şemasıyla eşleyip görüntüleme detayı üretir:
+ * { group: "Baskı", label: "Çift yüz · mat", detail: "350 gr Kuşe · mat selefon" }.
+ * Eşleşmeyen/boş seçimler atlanır; sıra ürün şemasının grup sırasıdır.
+ */
+function optionDetailsFor(
+  options: Array<{ groupKey: string; groupLabel: string; optionKey: string; optionLabel: string; optionSublabel: string | null }>,
+  configuration: unknown,
+): Array<{ group: string; label: string; detail: string | null }> {
+  const sels = extractSelections(configuration) as Record<string, string>;
+  const out: Array<{ group: string; label: string; detail: string | null }> = [];
+  const seen = new Set<string>();
+  for (const o of options) {
+    if (seen.has(o.groupKey)) continue;
+    const sel = sels[o.groupKey];
+    if (sel === undefined || sel === null || String(sel) === "") continue;
+    const match = options.find((x) => x.groupKey === o.groupKey && x.optionKey === String(sel));
+    if (!match) continue;
+    seen.add(o.groupKey);
+    out.push({ group: match.groupLabel, label: match.optionLabel, detail: match.optionSublabel ?? null });
+  }
+  return out;
+}
+
 function withAddressView<
   T extends {
     shippingAddress?: unknown;
@@ -915,8 +939,24 @@ export class OrdersService {
     });
     if (!order) throw new NotFoundException("Sipariş bulunamadı.");
     if (userId && order.userId !== userId) throw new ForbiddenException("Bu siparişe erişim izniniz yok.");
+    // Kalem seçenek DETAYLARI (2026-08-25, Hasan: panelde "Çift yüz · mat" yetmiyor,
+    // "350 gr Kuşe · mat selefon" gibi teknik açıklama da görünmeli). Seçimler ürünün
+    // GÜNCEL şemasındaki etiket + alt açıklamayla (optionSublabel) eşlenir. Salt
+    // görüntüleme; şeması değişmiş eski siparişte eşleşmeyen seçim sessizce atlanır.
+    const pIds = [...new Set(order.items.map((i) => i.productId).filter((v): v is string => !!v))];
+    const optProducts = pIds.length
+      ? await this.prisma.product.findMany({
+          where: { id: { in: pIds } },
+          select: { id: true, options: { orderBy: [{ groupSort: "asc" }, { optionSort: "asc" }] } },
+        })
+      : [];
+    const optsById = new Map(optProducts.map((p) => [p.id, p.options]));
+    const items = order.items.map((it) => ({
+      ...it,
+      optionDetails: optionDetailsFor(optsById.get(it.productId ?? "") ?? [], it.configuration),
+    }));
     // Misafir siparişinde FK relation null; snapshot'ı adres olarak yüzeye çıkar (admin detay render).
-    return withAddressView(order);
+    return withAddressView({ ...order, items });
   }
 
   async updateStatus(
