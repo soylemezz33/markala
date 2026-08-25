@@ -279,6 +279,12 @@ const DEFAULT_NAV: NavCategory[] = [
         ],
       },
     ],
+    // Öne çıkanlar (Hasan 2026-08-25): İSG panelinde sağ blok boş kalıyordu.
+    // Admin header_nav kaydına da aynı iki ürün eklendi (canlı oradan okur).
+    featured: [
+      { slug: "sigara-icmek-ve-acik-alev-yasaktir", label: "Sigara İçmek ve Açık Alev Yasaktır", theme: "brand" },
+      { slug: "dikkat-yuksek-gerilim-yaklasma-levhasi", label: "Dikkat Yüksek Gerilim", theme: "ink" },
+    ],
   },
   {
     label: "Kurumsal",
