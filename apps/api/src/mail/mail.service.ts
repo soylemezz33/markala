@@ -50,11 +50,11 @@ export class MailService {
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
-      await this.logNotification(to, "sent", { messageId: info.messageId });
+      await this.logNotification(to, "sent", { messageId: info.messageId }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.verification failed to=${to}: ${(err as Error).message}`);
-      await this.logNotification(to, "failed", { error: (err as Error).message });
+      await this.logNotification(to, "failed", { error: (err as Error).message }, subject);
       return false;
     }
   }
@@ -75,11 +75,11 @@ export class MailService {
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
-      await this.logNotification(to, "sent", { messageId: info.messageId, template: "password-reset" });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template: "password-reset" }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.passwordReset failed to=${to}: ${(err as Error).message}`);
-      await this.logNotification(to, "failed", { error: (err as Error).message, template: "password-reset" });
+      await this.logNotification(to, "failed", { error: (err as Error).message, template: "password-reset" }, subject);
       return false;
     }
   }
@@ -104,11 +104,11 @@ export class MailService {
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
-      await this.logNotification(to, "sent", { messageId: info.messageId, template: "corporate-invite" });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template: "corporate-invite" }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.corporateInvite failed to=${to}: ${(err as Error).message}`);
-      await this.logNotification(to, "failed", { error: (err as Error).message, template: "corporate-invite" });
+      await this.logNotification(to, "failed", { error: (err as Error).message, template: "corporate-invite" }, subject);
       return false;
     }
   }
@@ -175,11 +175,11 @@ export class MailService {
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: input.to, subject, text, html });
-      await this.logNotification(input.to, "sent", { messageId: info.messageId, template: "corporate-monthly-statement", period: input.period });
+      await this.logNotification(input.to, "sent", { messageId: info.messageId, template: "corporate-monthly-statement", period: input.period }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.corporateMonthlyStatement failed to=${input.to}: ${(err as Error).message}`);
-      await this.logNotification(input.to, "failed", { error: (err as Error).message, template: "corporate-monthly-statement", period: input.period });
+      await this.logNotification(input.to, "failed", { error: (err as Error).message, template: "corporate-monthly-statement", period: input.period }, subject);
       return false;
     }
   }
@@ -275,11 +275,11 @@ export class MailService {
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-confirmation", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-confirmation", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.orderConfirmation failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-confirmation", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-confirmation", orderNumber: order.orderNumber }, subject);
       return false;
     }
   }
@@ -416,11 +416,11 @@ export class MailService {
     for (const to of recipients) {
       try {
         const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
-        await this.logNotification(to, "sent", { messageId: info.messageId, template: "new-order-admin", orderNumber: order.orderNumber });
+        await this.logNotification(to, "sent", { messageId: info.messageId, template: "new-order-admin", orderNumber: order.orderNumber }, subject);
         ok = true;
       } catch (err) {
         this.logger.warn(`mail.newOrderAdmin failed to=${to}: ${(err as Error).message}`);
-        await this.logNotification(to, "failed", { error: (err as Error).message, template: "new-order-admin", orderNumber: order.orderNumber });
+        await this.logNotification(to, "failed", { error: (err as Error).message, template: "new-order-admin", orderNumber: order.orderNumber }, subject);
       }
     }
     return ok;
@@ -480,11 +480,11 @@ Markala`;
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-in-production", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-in-production", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.orderInProduction failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-in-production", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-in-production", orderNumber: order.orderNumber }, subject);
       return false;
     }
   }
@@ -518,11 +518,11 @@ Markala`;
     });
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-shipped", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-shipped", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.orderShipped failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-shipped", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-shipped", orderNumber: order.orderNumber }, subject);
       return false;
     }
   }
@@ -555,11 +555,11 @@ Markala`;
     });
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-cancelled", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-cancelled", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.orderCancelled failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-cancelled", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-cancelled", orderNumber: order.orderNumber }, subject);
       return false;
     }
   }
@@ -609,17 +609,17 @@ Markala`;
     // gerçek gönderim için SMTP_HOST env beklenir (spec c: "yoksa kaydet + log at").
     if (!this.config.get<string>("SMTP_HOST")) {
       this.logger.log(`mail.orderDelivered: SMTP_HOST yok → gönderim atlandı, log bırakıldı order=${order.orderNumber} to=${order.email}`);
-      await this.logNotification(order.email, "skipped", { template: "order-delivered", orderNumber: order.orderNumber, reason: "smtp-not-configured" });
+      await this.logNotification(order.email, "skipped", { template: "order-delivered", orderNumber: order.orderNumber, reason: "smtp-not-configured" }, subject);
       return false;
     }
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-delivered", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-delivered", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.orderDelivered failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-delivered", orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-delivered", orderNumber: order.orderNumber }, subject);
       return false;
     }
   }
@@ -709,11 +709,11 @@ Markala`;
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template, orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, template, orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.paymentRecovery(${stage}) failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template, orderNumber: order.orderNumber });
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, template, orderNumber: order.orderNumber }, subject);
       return false;
     }
   }
@@ -768,11 +768,11 @@ Markala`;
 
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
-      await this.logNotification(to, "sent", { messageId: info.messageId, template });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.cartReminder(${opts.kind}) failed to=${to}: ${(err as Error).message}`);
-      await this.logNotification(to, "failed", { error: (err as Error).message, template });
+      await this.logNotification(to, "failed", { error: (err as Error).message, template }, subject);
       return false;
     }
   }
@@ -802,11 +802,11 @@ Markala`;
     });
     try {
       const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
-      await this.logNotification(to, "sent", { messageId: info.messageId, template: "welcome" });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template: "welcome" }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.welcome failed to=${to}: ${(err as Error).message}`);
-      await this.logNotification(to, "failed", { error: (err as Error).message, template: "welcome" });
+      await this.logNotification(to, "failed", { error: (err as Error).message, template: "welcome" }, subject);
       return false;
     }
   }
@@ -876,7 +876,7 @@ Markala`;
         messageId: info.messageId,
         template: "review-invitation",
         orderNumber: order.orderNumber,
-      });
+      }, subject);
       return true;
     } catch (err) {
       this.logger.warn(`mail.reviewInvitation failed to=${order.email}: ${(err as Error).message}`);
@@ -884,12 +884,19 @@ Markala`;
         error: (err as Error).message,
         template: "review-invitation",
         orderNumber: order.orderNumber,
-      });
+      }, subject);
       return false;
     }
   }
 
-  private async logNotification(recipient: string, status: "sent" | "failed" | "skipped", metadata: Record<string, unknown>) {
+  private async logNotification(
+    recipient: string,
+    status: "sent" | "failed" | "skipped",
+    metadata: Record<string, unknown>,
+    // GERÇEK e-posta konusu (2026-08-25, Hasan: panelde "hangi konulu mail gitmiş"
+    // görünsün). Verilmezse eski davranış — şablon adı yazılır (geçmiş kayıtlar öyle).
+    subject?: string,
+  ) {
     // template metadata'dan türetilir; yalnız doğrulama mailleri template geçmez (varsayılan).
     // Eskiden her mail "email-verification" olarak loglanıyordu → şablon bazlı rapor kördü.
     const template = typeof metadata.template === "string" ? metadata.template : "email-verification";
@@ -899,7 +906,7 @@ Markala`;
           channel: "email",
           template,
           recipient,
-          subject: template,
+          subject: subject ?? template,
           body: "",
           status,
           metadata: metadata as any,

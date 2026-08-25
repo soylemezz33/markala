@@ -635,6 +635,15 @@ export class MarkalaApiClient {
     }) => this.request<CorporateApplicationDto>("POST", "/corporate-applications", data),
   };
 
+  // === Admin: e-posta gönderim logları ===
+  adminNotificationLogs = {
+    list: (opts: { take?: number; skip?: number; q?: string; status?: string } = {}) =>
+      this.request<AdminNotificationLogsDto>("GET", "/admin/notification-logs", undefined, {
+        auth: true,
+        query: opts,
+      }),
+  };
+
   // === Admin: users + stats ===
   adminUsers = {
     list: (opts: { take?: number; skip?: number; q?: string } = {}) =>
@@ -838,6 +847,21 @@ export interface AdminUserOrderDto {
   /** "cari" (açık hesap) | "iyzico" | "havale" | null — cari sipariş etiketi/harcama sayımı için. */
   paymentMethod?: string | null;
   createdAt: string;
+}
+
+/** Müşteriye giden e-posta log satırı (GET /admin/notification-logs). */
+export interface AdminNotificationLogRowDto {
+  id: string;
+  createdAt: string;
+  recipient: string;
+  template: string;
+  subject: string | null;
+  status: "sent" | "failed" | "skipped" | string;
+  orderNumber: string | null;
+}
+export interface AdminNotificationLogsDto {
+  total: number;
+  rows: AdminNotificationLogRowDto[];
 }
 
 export interface AdminUserDto {

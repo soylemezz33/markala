@@ -19,6 +19,7 @@ export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]>
   ["/ciro", "finance.manage"],
   ["/siparisler", "orders.read"],
   ["/musteriler", "customers.read"],
+  ["/e-postalar", "customers.read"],
   ["/iletisim-mesajlari", "customers.read"],
   ["/teklif-talepleri", "customers.read"],
   ["/bulten-aboneleri", "settings.manage"],
