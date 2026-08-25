@@ -6,7 +6,7 @@ import { getHeaderNav } from "@/lib/catalog";
 import { SiteFooter } from "@/components/site-footer";
 import { CtaBanner } from "@/components/home/cta-banner";
 import { ThemeBody } from "@/components/theme-body";
-import { CartDrawer } from "@/components/cart/cart-drawer";
+import { CartDrawerLazy } from "@/components/cart/cart-drawer-lazy";
 import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/seo/json-ld";
 import { Analytics } from "@/components/analytics";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
@@ -140,7 +140,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Footer — FULL WIDTH */}
         <SiteFooter />
 
-        <CartDrawer />
+        <CartDrawerLazy />
         <FloatingActions />
         <CookieConsent />
         <Analytics />

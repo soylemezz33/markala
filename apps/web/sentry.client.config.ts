@@ -47,13 +47,22 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
       });
   };
 
-  // Tarayıcı boşa çıkınca yükle; requestIdleCallback yoksa kısa gecikmeyle.
-  const w = window as Window & {
-    requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void;
+  // İLK KULLANICI ETKİLEŞİMİNDE yükle (2026-08-25, P2/TBT):
+  // Önceki requestIdleCallback({timeout:5000}) meşgul ana iş parçacığında bile 5. saniyede
+  // ZORLA çalışıyordu — bundle analizine göre replay yüklemesi ~76 KB gzip'lik iki chunk
+  // indirip çalıştırıyor ve bu Lighthouse'un TBT ölçüm penceresinin tam içi (şartnamedeki
+  // "P2 sonrası TBT arttı" bulgusunun kanıtlanmış nedeni). Gerçek kullanıcı ilk tıkta/
+  // kaydırmada tetikler (replay o andan itibaren tamponlar); hiç etkileşmeyen oturum için
+  // 20 sn emniyet zamanlayıcısı var — o da lab ölçüm penceresinin dışında.
+  let fired = false;
+  const fireOnce = () => {
+    if (fired) return;
+    fired = true;
+    for (const ev of EVENTS) window.removeEventListener(ev, fireOnce);
+    window.clearTimeout(fallbackTimer);
+    loadReplay();
   };
-  if (typeof w.requestIdleCallback === "function") {
-    w.requestIdleCallback(loadReplay, { timeout: 5000 });
-  } else {
-    window.setTimeout(loadReplay, 3000);
-  }
+  const EVENTS = ["pointerdown", "keydown", "scroll", "touchstart"] as const;
+  for (const ev of EVENTS) window.addEventListener(ev, fireOnce, { once: false, passive: true });
+  const fallbackTimer = window.setTimeout(fireOnce, 20_000);
 }

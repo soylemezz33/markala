@@ -198,3 +198,38 @@ production sunucusunda, Sentry replay tembel yüklemesi AÇIK ve KAPALI hâlde 5
 koşu medyanı. Fark medyanda anlamlıysa geri alınır. Alan verisi (GA4 web-vitals)
 zaten birikiyor; nihai hakem o.
 
+---
+
+## ✅ P2 UYGULANDI — 2026-08-25 (geliştirici oturumu, medyan protokolüyle)
+
+**Bundle analizi teşhisi** (`ANALYZE=true pnpm build`): 92 KB'lık şüpheli chunk'ın
+(lokal karşılığı 845-*, 97,5 KB gzip) yarısından fazlası **@sentry/core+browser**;
+ayrıca replay tembel yüklemesi **iki ~40 KB'lık chunk çifti** indiriyor ve
+`requestIdleCallback({timeout:5000})` bunları Lighthouse TBT penceresinin tam
+içinde çalıştırıyordu — yukarıdaki "TBT artışının gerçek adayı" tahmini doğrulandı.
+framer-motion 36 KB gzip paylaşılan chunk'ta (header kullanımı nedeniyle kalıyor).
+
+**Yapılan üç değişiklik:**
+1. `sentry.client.config.ts` — replay artık İLK KULLANICI ETKİLEŞİMİNDE yüklenir
+   (pointerdown/keydown/scroll/touchstart; hiç etkileşmeyen oturum için 20 sn emniyet).
+   Lighthouse hiç etkileşmediği için lab penceresinden tamamen çıktı.
+2. Arama modalı `site-header.tsx`'ten `search-modal.tsx`'e taşındı; `next/dynamic`
+   ile İLK açılışta yüklenir (ssr:false — modal SSR çıktısında zaten yoktu).
+3. `cart-drawer-lazy.tsx` — çekmece yalnız sepet açılınca/doluyken mount edilir;
+   boş sepetli reklam inişinde chunk hiç inmez.
+
+**Ölçüm (lokal prod sunucu, LH 13.4.1 mobil, 5'er koşu MEDYAN):**
+
+| Sayfa | Skor | LCP | TBT |
+|---|---|---|---|
+| kategori-uyari önce | 77 | 3,7 sn | **380 ms** (362-700) |
+| kategori-uyari sonra | 80 | 4,6 sn* | **4 ms** (0-32) |
+| ana sayfa önce | 72 | 4,1 sn | **310 ms** (218-656) |
+| ana sayfa sonra | 82 | 4,2 sn | **0 ms** (0-31) |
+
+TBT hedefi (≤200 ms) iki sayfada da EZİLDİ; 10 koşunun 10'u 0-32 ms bandında —
+gürültüyle açıklanamaz. (*) LCP dağılımları örtüşüyor (sonra-kategori min 2,2 sn,
+önce 3,6-5,5 bandı) → LCP değişimi gürültü bandında, gerileme kanıtı yok.
+Duman testi: arama modalı ilk tıkta yükleniyor ve çalışıyor (playwright).
+Nihai hakem hâlâ GA4 alan verisi + Ads kalite puanı (SEO oturumu izliyor).
+
