@@ -252,11 +252,27 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
 const HERO_RATIO_MOBILE = "aspect-[1440/1706]";
 const HERO_RATIO_DESKTOP = "md:aspect-[3840/1344]";
 
+/** srcset'ten verilen genişliğin ÜSTÜNDEKİ varyantları at (LCP 2026-08-25):
+ * DPR-3 telefonlar (412×3≈1236px) varsayılan listeden w=1920'yi seçip mobil hero için
+ * 200 KB+ indiriyordu. 1080 tavanı DPR-3'te göze fark ettirmeden yükü ~yarıya indirir. */
+function capSrcSet(srcSet: string, maxW: number): string {
+  return srcSet
+    .split(", ")
+    .filter((e) => {
+      const m = e.match(/ (\d+)w$/);
+      return !m || Number(m[1]) <= maxW;
+    })
+    .join(", ");
+}
+
 function HeroArtDirectedImage({ slide, isFirst }: { slide: HeroBannerData; isFirst: boolean }) {
   const shared = { alt: slide.title, width: 2120, height: 742, sizes: "100vw" };
   const {
-    props: { srcSet: mobileSrcSet, sizes: mobileSizes },
-  } = getImageProps({ ...shared, src: slide.mobileImageUrl! });
+    props: { srcSet: mobileSrcSetRaw, sizes: mobileSizes },
+    // Mobil q=65: hero fotoğrafik değil (grafik ağırlıklı); 75→65 webp'de ~%20 bayt
+    // kazandırır, görünür fark yok. Masaüstü 75'te kaldı (büyük ekranda bantlanma riski).
+  } = getImageProps({ ...shared, src: slide.mobileImageUrl!, quality: 65 });
+  const mobileSrcSet = capSrcSet(mobileSrcSetRaw ?? "", 1080);
   const { props: imgProps } = getImageProps({
     ...shared,
     src: slide.imageUrl,

@@ -118,6 +118,22 @@ const nextConfig = {
         ],
       },
       {
+        // public/ görselleri (logo, kampanya webp'leri) — PSI 2026-08-25: 4 saatlik TTL
+        // "verimli önbellek" uyarısı veriyordu. Dosyalar hash'siz ama nadiren değişir;
+        // 7 gün + SWR: değişiklik deploy'dan sonra en geç 7 günde yayılır, tekrar
+        // ziyaretler ve sayfa geçişleri hızlanır.
+        source: "/:file(markala-logo\\.svg|favicon\\.ico)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" },
+        ],
+      },
+      {
+        source: "/images/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" },
+        ],
+      },
+      {
         // API endpoint'leri için no-cache — ANCAK /api/mockup HARİÇ (o route kendi 7-günlük
         // s-maxage'ini set ediyor; no-store onu eziyordu → mega-menü görselleri cache'lenmiyordu).
         source: "/api/:path((?!mockup).*)",
