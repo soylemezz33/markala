@@ -6,6 +6,7 @@ import {
   ShoppingCart, Ruler, Scissors, CaretDown, Info,
 } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
+import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 
 /**
@@ -129,6 +130,9 @@ export default function FiyatHesaplamaSablonuPage() {
   };
 
   return (
+    // AdminShell sarmalayıcısı (2026-08-25, Hasan: "sayfaya girince menü kayboluyor") —
+    // bu sayfa paneldeki TEK shell'siz sayfaydı; sol menü ve üst bar görünmüyordu.
+    <AdminShell>
     <div className="space-y-6">
       {/* Başlık */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -427,6 +431,7 @@ export default function FiyatHesaplamaSablonuPage() {
         </aside>
       </div>
     </div>
+    </AdminShell>
   );
 }
 

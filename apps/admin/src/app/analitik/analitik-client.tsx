@@ -160,7 +160,7 @@ export function AnalyticsClient({ overview, days }: Props) {
 /* ---------- tarih aralığı seçici ---------- */
 
 function DateRangePicker({ days }: { days: number }) {
-  const opts = [7, 30, 90];
+  const opts = [1, 7, 30, 90];
   return (
     <div className="inline-flex rounded-lg border border-paper-200 bg-paper-50 p-0.5">
       {opts.map((d) => (
@@ -171,7 +171,7 @@ function DateRangePicker({ days }: { days: number }) {
             d === days ? "bg-ink-900 text-paper-50" : "text-ink-700 hover:bg-paper-100"
           }`}
         >
-          {d} gün
+          {d === 1 ? "Bugün" : `${d} gün`}
         </Link>
       ))}
     </div>

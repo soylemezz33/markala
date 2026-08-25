@@ -5,7 +5,8 @@ import type { AnalyticsOverviewDto } from "@markala/api-client";
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_DAYS = [7, 30, 90] as const;
+// 1 gün eklendi (2026-08-25, Hasan: "1 günlük de analiz etmek istiyorum") — API 1-365 kabul ediyor.
+const ALLOWED_DAYS = [1, 7, 30, 90] as const;
 
 /** Veri çekimi başarısızsa kullanılan boş/güvenli özet (sayfa çökmesin diye). */
 function emptyOverview(days: number): AnalyticsOverviewDto {
