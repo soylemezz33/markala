@@ -9,13 +9,15 @@
 name: Deploy to Staging
 
 # 2026-08-20: staging KAPATILMIŞTI (DNS taşınmamıştı, "deploy yansımıyor" yanılgısı).
-# 2026-08-22: header menü işi test-önce-canlı akışıyla isteneceği için YENİDEN AÇILDI.
-# DNS önkoşulu: Cloudflare'de test + test-api A kayıtları markala.com.tr ile AYNI
-# IP'ye, Proxied olarak eklenmeli (bkz. docs/STAGING.md). Staging DB boşsa
-# staging-db-copy-prod ile prod kopyası yüklenmeli.
+# 2026-08-22: header menü işi için yeniden açılmıştı.
+# 2026-08-25: TEKRAR KAPATILDI (Hasan) — test/test-api DNS kayıtları hiç eklenmedi,
+# her push'ta deploy sonundaki dış doğrulama NXDOMAIN'e takılıp job'ı Failed gösteriyordu
+# (canlıyı etkilemeyen gürültü). Geri açmak için: (1) Cloudflare'e test + test-api A
+# kayıtlarını markala.com.tr ile AYNI IP'ye Proxied ekle, (2) aşağıdaki push tetiğinin
+# yorumunu kaldır, (3) staging DB bayatsa staging-db-copy-prod çalıştır.
 on:
-  push:
-    branches: [staging]
+  # push:
+  #   branches: [staging]
   workflow_dispatch:
 
 concurrency:
