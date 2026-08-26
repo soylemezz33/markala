@@ -79,6 +79,7 @@ export function SiteFooter() {
           <FooterLink href="/rehber/sablonlar">Ücretsiz Baskı Şablonları</FooterLink>
           <FooterLink href="/fiyat-listesi">Fiyat Listesi</FooterLink>
           <FooterLink href="/sozluk">Matbaa Sözlüğü</FooterLink>
+          <FooterLink href="/blog">Blog & Rehberler</FooterLink>
           <FooterLink href="/yardim/dosya-hazirlama">Dosya Hazırlama Rehberi</FooterLink>
           <FooterLink href="/yardim/sss">Sıkça Sorulanlar</FooterLink>
           <FooterLink href="/yardim/iade">İade & Değişim</FooterLink>
