@@ -87,7 +87,7 @@ export function SiteFooter() {
         <FooterColumn title="Destek">
           <FooterLink href="/yardim">Yardım Merkezi</FooterLink>
           <FooterLink href="https://wa.me/905319004102" external>WhatsApp Destek</FooterLink>
-          <FooterLink href="mailto:merhaba@markala.com.tr" external>merhaba@markala.com.tr</FooterLink>
+          <FooterMailLink email="merhaba@markala.com.tr" />
           <FooterLink href="tel:+903244333351" external>0324 433 33 51</FooterLink>
           {/* KEP tebligat adresi — PTT KEP başvurusu tamamlandığında aktif edilecek */}
           {/* <FooterLink href="mailto:324ajans@hs01.kep.tr" external>KEP: 324ajans@hs01.kep.tr</FooterLink> */}
@@ -144,8 +144,8 @@ export function SiteFooter() {
           {" · "}
           <Link href="tel:+903244333351" className="hover:text-paper-50">0324 433 33 51</Link>
           {" · "}
-          <Link href="mailto:merhaba@markala.com.tr" className="hover:text-paper-50">merhaba@markala.com.tr</Link>
-          {" · "}KEP: 324ajans@hs03.kep.tr
+          <CfSafeHtml html={`<a href="mailto:merhaba@markala.com.tr" class="hover:text-paper-50">merhaba@markala.com.tr</a>`} />
+          {" · "}KEP: <CfSafeHtml html="324ajans@hs03.kep.tr" />
           {" · "}
           <a
             href="https://etbis.ticaret.gov.tr/tr/SiteSorgulamaSonuc?siteId=6c81d5f8-88a6-4899-8443-bc9f102db393"
@@ -195,6 +195,38 @@ function FooterColumn({ title, children }: { title: string; children: React.Reac
       <h3 className="text-paper-50 font-semibold text-sm mb-4 font-sans">{title}</h3>
       <ul className="space-y-2.5 text-sm">{children}</ul>
     </div>
+  );
+}
+
+/**
+ * E-POSTA + HİDRASYON (2026-08-26) — sitedeki en pahalı sessiz hataydı.
+ *
+ * Cloudflare'in "Email Address Obfuscation" özelliği, Next.js'in ürettiği HTML'i EDGE'DE
+ * değiştiriyor: düz e-posta metnini `<span class="__cf_email__" data-cfemail="…">` haline
+ * getirip bir çözücü script ekliyor. Tarayıcıdaki React ise kendi çıktısını (düz e-posta)
+ * bekliyor; DOM tutmayınca React #418/#423 verip **tüm ağacı sıfırdan istemcide çiziyordu**
+ * — yani her sayfa yüklemesinde sunucu render'ı çöpe gidiyor, ana iş parçacığı boşuna
+ * yoruluyordu. Yerelde görünmez (yalnız Cloudflare arkasında olur), üretimde her sayfada vardı.
+ *
+ * Çözüm iki katmanlı — Cloudflare ayarına DOKUNMADAN (spam koruması korunur):
+ *  1. `<!--email_off-->` işaretleri: Cloudflare'in dokümanlı "burayı değiştirme" yöntemi.
+ *  2. dangerouslySetInnerHTML: React bu düğümün içeriğini hidrasyonda KARŞILAŞTIRMAZ →
+ *     ayar ileride değişse/işaret çalışmasa bile hidrasyon bir daha kırılmaz.
+ *
+ * İçerik derleme-zamanı sabiti (kullanıcı girdisi yok) → XSS riski yok.
+ */
+function CfSafeHtml({ html }: { html: string }) {
+  return <span dangerouslySetInnerHTML={{ __html: `<!--email_off-->${html}<!--email_on-->` }} />;
+}
+
+/** Footer listesinde e-posta bağlantısı — bkz. CfSafeHtml notu. */
+function FooterMailLink({ email }: { email: string }) {
+  return (
+    <li>
+      <CfSafeHtml
+        html={`<a href="mailto:${email}" class="text-paper-100/70 hover:text-brand-300 transition-colors">${email}</a>`}
+      />
+    </li>
   );
 }
 
