@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
 import { Button, Price } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, ChatCircleText, ShieldCheck, Truck } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle, ChatCircleText, ShieldCheck, Truck, SpinnerGap } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import {
   calculateTotal,
@@ -212,7 +212,17 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     return typeof maxM2 === "number" && maxM2 > 0 && alan > maxM2;
   }, [isArea, effSel, product.options]);
 
-  const canBuy = total > 0 && !areaMaxExceeded;
+  /**
+   * Tasarım dosyası HÂLÂ YÜKLENİYOR mu? (2026-08-26 UX denetimi #5)
+   * Reducer, dosya seçilince `uploadedFileName`i yazıp `uploadedFileUrl`i temizler; URL
+   * ancak yükleme bitince gelir. Yükleme sürerken "Sepete Ekle"ye basılabildiği için
+   * yavaş bağlantıda kalem DOSYASIZ kaydediliyordu — müşteri tasarımını gönderdiğini
+   * sanıyor, üretim eli boş kalıyordu. Yükleme başarısız olursa reducer adı da temizler,
+   * yani bu bayrak kilitli kalmaz.
+   */
+  const uploadPending = !state.needsDesign && !!state.uploadedFileName && !state.uploadedFileUrl;
+
+  const canBuy = total > 0 && !areaMaxExceeded && !uploadPending;
 
   // Area başlangıç fiyatı: ölçü girilmeden gösterilecek "X₺'den başlayan".
   // = minM2 × en-ucuz malzemenin m²-fiyatı (KDV dahil, priceHintsMap.malzeme'den).
@@ -229,11 +239,13 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
 
   // CTA "Teklif Al"a düştüğünde sebebi açıkla (buton sessizce değişmesin).
   const ctaReason = useMemo(() => {
+    // Yükleme sebebi ürün tipinden bağımsız (area olmayanlarda da olur) → önce o.
+    if (uploadPending) return "Tasarım dosyanız yükleniyor — bitince sepete ekleyebilirsiniz.";
     if (!isArea || canBuy) return null;
     if (!hasValidSize) return "Fiyat için en ve boy ölçüsünü girin.";
     if (areaMaxExceeded) return "Bu ölçü tek parça üretim sınırını aşıyor — özel teklif alın.";
     return null;
-  }, [isArea, canBuy, hasValidSize, areaMaxExceeded]);
+  }, [isArea, canBuy, hasValidSize, areaMaxExceeded, uploadPending]);
 
   /** Gösterim dönüşümü: KDV dahil modda ham değer, hariç modda exVat uygular. */
   const show = (n: number) => (kdvDahil ? n : exVat(n));
@@ -452,6 +464,9 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                     En/boy ölçüsünü girin, fiyatınız anında hesaplansın.
                   </p>
                 </>
+              ) : uploadPending ? (
+                // Fiyat hesaplanabiliyor; yalnız dosya bekleniyor → "Teklif Al" yazmak yanıltıcı olur.
+                <Price amount={show(total)} size="xl" className="mt-1 block text-brand-600 tabular-nums" />
               ) : (
                 <span className="mt-1 block text-3xl font-medium tracking-tight text-brand-600">Teklif Al</span>
               )}
@@ -471,6 +486,11 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                       <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
                     </>
                   )}
+                </Button>
+              ) : uploadPending ? (
+                // Yükleme sürerken "Teklif Al"a DÖNMEZ — fiyat belli, sadece dosya bekleniyor.
+                <Button size="lg" fullWidth disabled>
+                  <SpinnerGap size={20} weight="bold" className="animate-spin" /> Dosya yükleniyor…
                 </Button>
               ) : (
                 <Button size="lg" fullWidth variant="secondary" onClick={handleQuoteClick}>
@@ -509,6 +529,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       <MobileCta
         total={show(total)}
         canBuy={canBuy}
+        uploading={uploadPending}
         productName={product.name}
         visible={stickyBarVisible}
         onAddToCart={canBuy ? handleAddToCart : handleQuoteClick}

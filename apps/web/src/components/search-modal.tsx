@@ -91,6 +91,10 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [results, setResults] = useState<Product[]>([]);
+  /** Arama isteği HATA aldı mı — "sonuç yok" ile karıştırılmamalı (UX denetimi #12). */
+  const [searchFailed, setSearchFailed] = useState(false);
+  /** "Tekrar dene" sayacı — artınca arama efekti yeniden koşar (aynı query ile de). */
+  const [retryTick, setRetryTick] = useState(0);
   const modalRef = useRef<HTMLDivElement>(null);
   const categories = useLiveCategories(open);
 
@@ -145,6 +149,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     const term = query.trim();
     if (term.length < 2) {
       setResults([]);
+      setSearchFailed(false);
       return;
     }
     let active = true;
@@ -152,17 +157,23 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
       apiClient.products
         .list({ q: term, take: 12 })
         .then((list) => {
-          if (active && Array.isArray(list)) setResults(list);
+          if (!active) return;
+          setSearchFailed(false);
+          if (Array.isArray(list)) setResults(list);
         })
         .catch(() => {
-          if (active) setResults([]);
+          // ARAMA HATASI ≠ SONUÇ YOK (2026-08-26 UX denetimi #12): API kesintisinde her
+          // arama "bulunamadı" görünüyordu — müşteri ürünü yok sanıp siteden çıkıyordu.
+          if (!active) return;
+          setResults([]);
+          setSearchFailed(true);
         });
     }, 250);
     return () => {
       active = false;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, retryTick]);
 
   // Kategori önerileri — "de" yazınca "Dekota Baskı" görünsün (test geri bildirimi: müşteri
   // ürünün tam adını yazmak zorunda kalmasın). Kategoriler zaten canlı çekili; client-side
@@ -357,7 +368,21 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
                   </ul>
                 </div>
               )}
-              {results.length === 0 && categorySuggestions.length === 0 ? (
+              {results.length === 0 && categorySuggestions.length === 0 && searchFailed ? (
+                <div className="p-5 text-center text-sm">
+                  <p className="text-ink-900 font-medium">Aramaya şu an ulaşılamıyor</p>
+                  <p className="mt-1 text-xs text-ink-500">
+                    Bağlantı veya sunucu kaynaklı geçici bir sorun olabilir.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setRetryTick((n) => n + 1)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-paper-100 px-3 py-1.5 text-xs font-semibold text-ink-900 hover:bg-brand-100"
+                  >
+                    Tekrar dene
+                  </button>
+                </div>
+              ) : results.length === 0 && categorySuggestions.length === 0 ? (
                 <div className="p-5 text-center text-sm text-ink-500">
                   "<span className="text-ink-900 font-medium">{query}</span>" için sonuç bulunamadı.
                   <br />

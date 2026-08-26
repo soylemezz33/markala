@@ -65,6 +65,17 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const setEn = (raw: string) => set("en", clampDim(raw, enCap));
   const setBoy = (raw: string) => set("boy", clampDim(raw, HARD_MAX_CM));
   const setAdet = (raw: string) => set("adet", clampDim(raw, HARD_MAX_ADET));
+  /**
+   * Adet alanı asla 0/boş kalamaz (2026-08-26 UX denetimi #4/İş 1).
+   * Önceki davranış: "0" yazınca ekranda 0 kalıyordu ama sepete sessizce 1 adet düşüyordu
+   * (`adetN = Math.max(1, …)`) — ekran ile sepet çelişiyordu. Artık alandan çıkınca (blur)
+   * görünen değer de 1'e çekilir, yani kullanıcı ne olduğunu GÖRÜR.
+   */
+  const normalizeAdet = () => {
+    const n = Math.floor(Number(adet));
+    if (!Number.isFinite(n) || n < 1) set("adet", "1");
+    else if (String(n) !== adet) set("adet", String(n));
+  };
 
   const inputCls =
     "w-full rounded-lg border border-paper-300 px-3 py-2.5 text-ink-900 focus:border-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-300/40";
@@ -136,6 +147,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
           inputMode="numeric"
           value={adet}
           onChange={(e) => setAdet(e.target.value)}
+          onBlur={normalizeAdet}
           className={inputCls}
         />
       </label>

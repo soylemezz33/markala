@@ -389,7 +389,10 @@ export default function TeklifAlPage() {
                 <PhoneInput
                   value={form.phone}
                   onChange={(v) => update("phone", v)}
+                  // Sunucu telefonu ZORUNLU tutuyor (api/teklif-al: phone.length < 7 → 400)
+                  // ama alan opsiyonel görünüyordu (UX denetimi #13) → yıldız eklendi.
                   label="Telefon"
+                  required
                   inputClassName={inputClass}
                 />
               </fieldset>

@@ -15,6 +15,24 @@
     font-feature-settings: "ss01", "cv11";
   }
 
+  /**
+   * iOS SAFARI OTOMATİK YAKINLAŞTIRMA ENGELİ (2026-08-26 UX denetimi #9).
+   *
+   * iOS Safari, yazı tipi 16px'ten KÜÇÜK bir alana dokunulduğunda sayfayı otomatik
+   * yakınlaştırır ve geri çıkmaz — kullanıcı formu bitirene kadar kaymış bir sayfayla
+   * uğraşır. Sitedeki form alanları Tailwind `text-sm` (14px) ile yazılmıştı; checkout
+   * dahil 8+ dosyada tek tek düzeltmek yerine tek kural: yalnız DOKUNMATİK/dar ekranda
+   * (mobil) form alanları 16px'e çıkar. Masaüstü görünüm değişmez.
+   * Not: `select` de dahil — iOS'ta o da yakınlaştırma tetikler.
+   */
+  @media (max-width: 767px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+  }
+
   ::selection {
     @apply bg-brand-500 text-ink-900;
   }

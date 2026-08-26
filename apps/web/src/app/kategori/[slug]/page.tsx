@@ -174,7 +174,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             {cat.name}
           </h1>
           <span className="text-sm text-ink-500">
-            {cat.productCount} ürün · {cat.productionTime}
+            {/* SAYAÇ TEK KAYNAKTAN (2026-08-26 UX denetimi #8): önce `cat.productCount`
+                kullanılıyordu — o değer API'de Prisma `_count.products` ham ilişki sayısı,
+                yani PASİF ürünleri de sayıyor (uyarı-ikaz kategorisinde başlıkta 164, grid'de
+                146 görünüyordu = 18 pasif ürün). Aynı sayfada zaten çekilmiş aktif liste
+                kullanılınca tutarsızlık yapısal olarak imkânsızlaşır. */}
+            {products.length} ürün · {cat.productionTime}
             {cat.startingPrice > 0 && (
               <> · <Price amount={cat.startingPrice} size="sm" className="text-ink-700 font-semibold" />&apos;den başlayan</>
             )}
