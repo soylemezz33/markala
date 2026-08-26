@@ -74,6 +74,59 @@
 - 10 sayfa × 2 viewport sıfır yatay taşma; tutarlı header/breadcrumb/footer
 - Checkout'un çekirdeği: submit kilidi, idempotency, boş sepet yönlendirmesi, iskeletler
 
+## DEV OTURUMU GÖREV PROMPTU (2026-08-26 ek — Hasan'ın seçtiği 3 iş)
+
+> Aşağıdaki bloğu olduğu gibi geliştirici oturumuna verebilirsin.
+
+---
+
+**Görev: Konfigüratör doğrulama + kategori sayacı düzeltmeleri (3 iş)**
+Bağlam: docs/UX-DENETIM-2026-08-26.md denetiminin 4. ve 8. bulguları. Storefront: apps/web.
+
+**İş 1 — Adet alanına 0/geçersiz değer girilemesin (site geneli kural)**
+- Belirti: Vinil branda konfigüratöründe Adet=0 girilip "Sepete Ekle"ye basılınca sepete sessizce
+  1 adet ekleniyor ama ekrandaki input 0 göstermeye devam ediyor (ekran-sepet tutarsızlığı).
+- İstenen davranış: adet asla 0/negatif/boş kalamaz — blur ve sepete-ekleme anında otomatik 1'e
+  yuvarlanır VE görünür input değeri de 1'e güncellenir (kullanıcı ne olduğunu görür).
+  İnput'a `min=1 inputMode=numeric` + değer temizleme (`onBlur` clamp) uygulanır.
+- Kapsam taraması: yalnız branda değil — TÜM konfigüratör tiplerindeki sayısal alanları denetle
+  (apps/web/src/components/product/configurator-fields/ altındaki alan bileşenleri + reducer).
+  Serbest adet girişi olan her üründe aynı clamp; en/boy alanları İş 2'nin konusu.
+- Kabul ölçütü: Adet=0 yazıp sepete ekleyince input 1'i gösterir ve sepete 1 düşer; 0 ile
+  "Sepete Ekle" hiçbir üründe 0'lı kalem yaratamaz.
+
+**İş 2 — Ürün bazlı minimum/maksimum ölçü sistemi (sistem geneli)**
+- Belirti: Özel ölçülü üründe En=5 cm (üretim minimumu 30 cm'in altında) hiç uyarısız kabul
+  ediliyor. Üst sınır (50 m²) ise doğru çalışıyor: kırmızı hata + CTA'nın "Teklif Al/WhatsApp"a
+  dönüşmesi — İSTENEN kalite bu, alt sınıra ve tüm ürünlere simetrik uygulanacak.
+- Yapılacak:
+  1. Veri modeli: özel ölçü (en/boy) girişi olan ürünlerin konfigürasyon şemasına
+     `minEn/maxEn/minBoy/maxBoy` (cm) alanları ekle (ürün `content`/options yapısında nerede
+     duruyorsa oraya; mevcut 50 m² alan-kuralı nasıl tanımlıysa onunla tutarlı biçimde).
+  2. Veri doldurma: özel ölçülü TÜM ürünleri tara (admin API), her biri için üretim min/max
+     değerlerini mevcut ürün açıklama/spec'lerinden türet; açıklamada yoksa kategori bazlı makul
+     varsayılan uygula ve doldurulan değerleri Hasan'ın onayına tablo hâlinde sun (üretilemez
+     değer basmayalım).
+  3. Konfigüratör: sınır dışı girişte üst-sınır davranışının aynısı — kırmızı inline hata
+     ("Bu ürün için en az X cm / en fazla Y cm"), Sepete Ekle kilitlenir; makul durumlarda
+     "Teklif Al/WhatsApp" alternatifi gösterilir.
+  4. Sunucu tarafı: aynı sınırlar sipariş kaydında da doğrulanır (yalnız client değil).
+- Kabul ölçütü: hiçbir özel ölçülü ürün, tanımlı min/max dışında bir ölçüyle sepete eklenemez;
+  sınır ihlali kullanıcıya alanın yanında Türkçe ve net gösterilir.
+
+**İş 3 — Kategori ürün sayacı tutarsızlığı (164 vs 146)**
+- Kök sebep (tespit edildi): başlık bandı `cat.productCount` gösteriyor — bu değer API'nin
+  Prisma `_count.products` ham ilişki sayısından geliyor (apps/web/src/lib/catalog.ts:236) ve
+  pasif/yayında olmayan ürünleri de sayıyor. Grid ise `getProductsByCategory()` ile gelen GERÇEK
+  (aktif) listeyi gösteriyor → 164 (ham) vs 146 (aktif) farkı = 18 pasif ürün.
+- Düzeltme (ikisinden biri, tercihen a):
+  a) Basit ve garantili: kategori sayfası başlığında `cat.productCount` yerine sayfada zaten
+     çekilmiş `products.length` kullan (tek kaynak, tutarsızlık imkânsızlaşır); VEYA
+  b) API'de `_count`'u filtrele (yalnız aktif ürünler) — diğer tüketiciler de düzelir.
+- Kabul ölçütü: başlık ve grid her kategoride aynı sayıyı gösterir.
+
+---
+
 ## İş bölümü önerisi
 - **Dev oturumu (çekirdek ödeme/checkout):** #2, #3, #5, #6, #9, #10, #11, #13, #16-18 — bu dosyadan spec olarak işletilebilir.
 - **SEO oturumu (Hasan onayıyla, küçük/izole):** #1 (yazım hatası), #8 (sayaç tutarsızlığı araştırma+düzeltme), #12 (arama hata durumu), #14 (blog kapakları — otomasyona kapak üretimi eklenebilir)
