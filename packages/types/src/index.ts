@@ -181,6 +181,8 @@ export interface Product {
   rating?: { average: number; count: number };
   /** Bu ürün anasayfada öne çıkacak mı (bestseller) */
   bestseller?: boolean;
+  /** Çok satılanlar vitrin sırası (1 = ciro lideri) — haftalık senkron content.bestsellerRank yazar */
+  bestsellerRank?: number;
   /** "Tasarım", "Üretim", "Kullanım" başlıklarıyla maddeler */
   features?: string[];
   /** Bu ürün hangi kullanım senaryolarında uygundur */

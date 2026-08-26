@@ -72,6 +72,8 @@ function mapProduct(p: ApiProduct): Product {
       typeof p.ratingCount === "number" && p.ratingCount > 0 && p.ratingAverage != null
         ? { average: num(p.ratingAverage), count: p.ratingCount }
         : undefined,
+    bestsellerRank:
+      typeof content.bestsellerRank === "number" ? content.bestsellerRank : undefined,
     features: content.features as string[] | undefined,
     useCases: content.useCases as string[] | undefined,
     specifications: content.specifications as Product["specifications"] | undefined,
@@ -105,6 +107,23 @@ export async function getProducts(): Promise<Product[]> {
     const data = await fetchJson("/products?take=5000&list=true");
     if (!Array.isArray(data)) return [];
     return data.map(mapProduct);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Çok satılanlar (anasayfa vitrini) — list=true HAFİF yanıt content'i içermediği için
+ * bestsellerRank oradan gelmez; bu çağrı TAM yanıtı çeker (≤12 ürün, payload küçük) ve
+ * gerçek ciro sırasıyla (content.bestsellerRank, haftalık senkron yazar) sıralı döner.
+ */
+export async function getBestsellers(take = 12): Promise<Product[]> {
+  try {
+    const data = await fetchJson(`/products?bestseller=true&take=${take}`);
+    if (!Array.isArray(data)) return [];
+    return data
+      .map(mapProduct)
+      .sort((a, b) => (a.bestsellerRank ?? 999) - (b.bestsellerRank ?? 999));
   } catch {
     return [];
   }

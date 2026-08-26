@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { Product } from "@markala/types";
-import { getProducts, getHeroBanners } from "@/lib/catalog";
+import { getProducts, getBestsellers, getHeroBanners } from "@/lib/catalog";
 import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
 import { HeroCtaBand } from "@/components/home/hero-cta-band";
 import { TrustBadges } from "@/components/home/trust-badges";
@@ -52,8 +52,10 @@ export default async function HomePage() {
   const products = await getProducts();
   // Anasayfa hero slaytları — admin panelinden yönetilen DB (hero_slides) kaynağı.
   const heroBanners = await getHeroBanners();
-  // Çok satılanlar (bestseller flag)
-  const bestsellers = products.filter((p) => p.bestseller).slice(0, 12).map(slimForCard);
+  // Çok satılanlar — GERÇEK ciro sırasıyla (getBestsellers: content.bestsellerRank'e göre
+  // sıralı döner; rank'i haftalık senkron yazar, 1 = ciro lideri, dolgu ürünler sona).
+  // Not: buradaki `products` list=true hafif yanıttır ve content taşımaz — o yüzden ayrı çağrı.
+  const bestsellers = (await getBestsellers(12)).map(slimForCard);
 
   // Yeni gelenler — "yeni" badge'li ürünler + diğerleri
   const newArrivals = [
