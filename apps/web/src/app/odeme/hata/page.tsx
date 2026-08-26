@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Container, Button } from "@markala/ui";
 import { XCircle, ClipboardText, WhatsappLogo } from "@phosphor-icons/react";
 import { whatsappUrl } from "@/lib/whatsapp";
+import { useAuthStore } from "@/lib/auth-store";
 
 /**
  * iyzico ödeme başarısız/iptal yönlendirmesi.
@@ -21,6 +22,19 @@ import { whatsappUrl } from "@/lib/whatsapp";
 function PaymentFailedContent() {
   const params = useSearchParams();
   const orderId = params.get("siparis");
+  const user = useAuthStore((s) => s.user);
+  // Hidrasyon güvenliği: sunucu daima "misafir" varyantını basar, üyelik durumu mount sonrası
+  // uygulanır (oturum bilgisi yalnız istemcide var).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isMember = mounted && !!user;
+
+  /** WhatsApp mesajı sipariş referansını taşısın — destek aramadan bulsun. */
+  const supportUrl = whatsappUrl(
+    orderId
+      ? `Merhaba, ödeme sırasında sorun yaşadım. Sipariş referansım: ${orderId}. Ödememi tamamlamak istiyorum.`
+      : "Merhaba, ödeme sırasında sorun yaşadım. Yardımcı olur musunuz?",
+  );
 
   return (
     <Container className="py-16 md:py-24 max-w-xl text-center">
@@ -34,42 +48,57 @@ function PaymentFailedContent() {
         ödemeyi tamamlayabilirsin.
       </p>
 
+      {/* Sipariş referansı ekranda GÖRÜNÜR olsun — misafir müşterinin elinde tutunacak
+          tek şey bu (2026-08-26 UX denetimi #3). */}
+      {orderId && (
+        <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-paper-100 px-4 py-1.5 text-sm">
+          Sipariş referansı: <span className="font-mono font-medium text-ink-900">{orderId}</span>
+        </p>
+      )}
+
+      {/**
+       * CTA sırası müşterinin durumuna göre (UX denetimi #3):
+       * Eskiden birincil buton HERKESİ `/hesabim/siparislerim/...`e gönderiyordu; misafir
+       * müşteri orada giriş duvarına çarpıyor, misafir siparişi hesapta görünmüyor ve sepet de
+       * boşaltılmış olduğu için kendi başına kurtulamıyordu. Artık: üye ise hesap linki
+       * birincil, MİSAFİR ise WhatsApp birincil (mesajda sipariş referansı hazır gider).
+       * `mounted` kapısı: sunucu çıktısı daima misafir varyantı → hidrasyon uyuşmazlığı olmaz.
+       */}
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-        {orderId ? (
-          <Link href={`/hesabim/siparislerim/${orderId}`}>
-            <Button size="lg">
-              <ClipboardText size={18} weight="bold" /> Bu Siparişin Ödemesini Tamamla
-            </Button>
-          </Link>
+        {isMember ? (
+          <>
+            <Link href={orderId ? `/hesabim/siparislerim/${orderId}` : "/hesabim/siparislerim"}>
+              <Button size="lg">
+                <ClipboardText size={18} weight="bold" />{" "}
+                {orderId ? "Bu Siparişin Ödemesini Tamamla" : "Siparişlerim → Ödeme Yap"}
+              </Button>
+            </Link>
+            <a href={supportUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" variant="outline" className="text-[#1FB358] border-[#25D366]">
+                <WhatsappLogo size={18} weight="fill" /> WhatsApp'tan Destek
+              </Button>
+            </a>
+          </>
         ) : (
-          <Link href="/hesabim/siparislerim">
-            <Button size="lg">
-              <ClipboardText size={18} weight="bold" /> Siparişlerim → Ödeme Yap
-            </Button>
-          </Link>
+          <>
+            <a href={supportUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="lg">
+                <WhatsappLogo size={18} weight="fill" /> WhatsApp'tan Ödemeyi Tamamla
+              </Button>
+            </a>
+            <Link href="/giris">
+              <Button size="lg" variant="outline">
+                <ClipboardText size={18} weight="bold" /> Üye Girişi
+              </Button>
+            </Link>
+          </>
         )}
-        <a
-          href={whatsappUrl("Merhaba, ödeme sırasında sorun yaşadım. Yardımcı olur musunuz?")}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Button size="lg" variant="outline" className="text-[#1FB358] border-[#25D366]">
-            <WhatsappLogo size={18} weight="fill" /> WhatsApp'tan Destek
-          </Button>
-        </a>
       </div>
 
       <p className="mt-8 text-sm text-ink-500">
-        Giriş yapmadan sipariş verdiysen ödemeni tamamlamak için{" "}
-        <a
-          href={whatsappUrl("Merhaba, misafir olarak sipariş verdim, ödememi tamamlamak istiyorum.")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-brand-700 hover:underline"
-        >
-          WhatsApp'tan bize ulaş
-        </a>
-        , sipariş numaranla ödeme bağlantısını ilet edelim.
+        {isMember
+          ? "Ödemeni hesabındaki sipariş sayfasından dilediğin zaman tamamlayabilirsin."
+          : "Giriş yapmadan sipariş verdiğin için ödeme bağlantısını hesabından açamazsın — WhatsApp'tan yaz, sipariş referansınla ödeme bağlantısını hemen ilet edelim."}
       </p>
     </Container>
   );

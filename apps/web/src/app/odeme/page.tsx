@@ -578,8 +578,12 @@ export default function CheckoutPage() {
         paymentNonce?: string;
         error?: string;
       };
-      // Sipariş yazıldı → sonraki (bilinçli) sipariş için yeni tuz (payload aynı kalsa bile).
-      if (parsed.orderId) idemSaltRef.current = newIdempotencyKey();
+      // NOT: tuz BURADA yenilenMEZ (2026-08-26 UX denetimi #2 düzeltmesi).
+      // Eskiden sipariş DB'ye yazılır yazılmaz tuz yenileniyordu; iyzico başlatma hata verip
+      // müşteri "tekrar dene" dediğinde anahtar değiştiği için İKİNCİ bir "ödeme bekliyor"
+      // siparişi açılıyordu (21 Ağustos'taki ikili bekleyen siparişlerin sebebi). Artık tuz
+      // yalnız ödeme GERÇEKTEN başladığında (iyzico'ya yönlenirken) ya da cari sipariş
+      // tamamlandığında yenilenir → aynı payload'lı retry mevcut siparişi geri getirir.
       return parsed;
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
@@ -652,6 +656,9 @@ export default function CheckoutPage() {
         .catch(() => null);
 
       if (payRes?.ok && payRes.paymentPageUrl) {
+        // Ödeme GERÇEKTEN başladı → bundan sonraki (bilinçli) sipariş yeni anahtar alsın.
+        // Tuz yenilemesinin doğru yeri burası; sipariş yazımı değil (bkz. saveOrder notu).
+        idemSaltRef.current = newIdempotencyKey();
         // Sipariş oluştu + ödeme başlatıldı → sepeti boşalt. Ödeme tamamlanmazsa müşteri
         // "Siparişlerim → Ödeme Yap" ile devam eder (sipariş "Ödeme Bekliyor" olarak durur).
         clearCart();
@@ -700,6 +707,8 @@ export default function CheckoutPage() {
       const order = buildOrder(saveRes.orderNumber ?? generateOrderNumber());
       order.id = saveRes.orderId;
       addOrder(order);
+      // Cari sipariş TAMAMLANDI → sonraki sipariş yeni anahtar alsın (bkz. saveOrder notu).
+      idemSaltRef.current = newIdempotencyKey();
       clearCart();
       router.push(`/odeme/basarili/${saveRes.orderId}?method=cari`);
     } catch {
