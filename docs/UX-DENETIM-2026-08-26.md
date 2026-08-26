@@ -125,6 +125,31 @@ Bağlam: docs/UX-DENETIM-2026-08-26.md denetiminin 4. ve 8. bulguları. Storefro
   b) API'de `_count`'u filtrele (yalnız aktif ürünler) — diğer tüketiciler de düzelir.
 - Kabul ölçütü: başlık ve grid her kategoride aynı sayıyı gösterir.
 
+**İş 4 — WhatsApp tıklama ölçümü (GA4 olayı, site geneli)**
+- Amaç: WhatsApp butonlarına yapılan tıklamalar şu an hiç ölçülmüyor; özellikle teklif-usulü
+  satışlarda (İSG levhaları) reklam getirisinin kör noktası. Tıklamalar GA4 olayı olarak
+  gönderilecek; sonrasında SEO oturumu bunu GA4 anahtar etkinliği + Google Ads ikincil dönüşümü
+  olarak bağlayacak ve raporlara/grafiklere ekleyecek (o kısım dev işi DEĞİL — yalnız olay gönderimi).
+- Yapılacak:
+  1. Mevcut ölçüm altyapısını izle: `apps/web/src/lib/analytics.ts` içindeki olay gönderme
+     desenini (generate_lead / cookie_consent nasıl gönderiliyorsa aynı yol) kullan — consent
+     mimarisini BOZMA; gtag consent mode zaten onay/onaysız davranışı yönetiyor.
+  2. Tek merkezî nokta: dağınık onClick'ler yerine ortak bir helper/bileşen
+     (ör. `WhatsAppLink` veya `trackWhatsAppClick(kaynak)`).
+  3. Olay şeması: ad `whatsapp_tikla`, parametreler: `kaynak`
+     (`balon` | `urun_cta` | `iletisim` | `odeme_hata` | `footer` | başka nereden geliyorsa)
+     ve `sayfa` (pathname).
+  4. Kapsam — sitedeki TÜM WhatsApp temas noktaları taransın ve bağlansın; bilinenler:
+     yüzen WhatsApp balonu (site geneli), konfigüratörün üst-sınır aşımında çıkan
+     "Teklif Al / WhatsApp" CTA'sı, iletişim sayfası WhatsApp kartı, ödeme hata sayfasındaki
+     WhatsApp linki, (varsa) footer/yardım sayfası linkleri.
+  5. Teknik dikkat: link aynı sekmede navigasyona yol açıyorsa olay kaybolmasın
+     (`transport_type: 'beacon'` veya `target="_blank"` garanti edilsin — balon zaten _blank ise sorun yok).
+- Kabul ölçütü: GA4 DebugView/Realtime'da her temas noktasından `whatsapp_tikla` olayı doğru
+  `kaynak` parametresiyle düşer; consent reddedilmiş oturumda site davranışı değişmez (hata yok).
+- Deploy sonrası SEO oturumuna haber verilsin: anahtar etkinlik işaretleme + Ads ikincil dönüşüm
+  bağlama + günlük rapora ekleme oradan yapılacak.
+
 ---
 
 ## İş bölümü önerisi
