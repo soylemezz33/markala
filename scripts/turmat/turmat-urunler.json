@@ -1,0 +1,1728 @@
+[
+  {
+    "grup": "Kartvizit",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NK",
+        "adet": null,
+        "ozellik": "250 gr. Bristol Tek Yön Renkli Parlak Selefonlu",
+        "fiyatlar": {
+          "tek": 220
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKA",
+        "adet": null,
+        "ozellik": "250 gr. Bristol Tek Yön Renkli Parlak Selefonlu Arkası Tek Renk Siyah",
+        "fiyatlar": {
+          "tek": 240
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NSK",
+        "adet": null,
+        "ozellik": "300 gr. Bristol Tek Yön Renkli Arkası Tek Renk Siyah",
+        "fiyatlar": {
+          "tek": 200
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "MNA",
+        "adet": null,
+        "ozellik": "350 gr. Bristol Tek Yön Renkli Mat Selefonlu Arkası Tek renk Siyah",
+        "fiyatlar": {
+          "tek": 260
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "CYP",
+        "adet": null,
+        "ozellik": "350 gr. Kuşe Çift Yön Renkli Parlak Selefonlu",
+        "fiyatlar": {
+          "tek": 320
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "CYM",
+        "adet": null,
+        "ozellik": "350 gr. Kuşe Çift Yön Renkli Mat Selefonlu",
+        "fiyatlar": {
+          "tek": 310
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "KL",
+        "adet": null,
+        "ozellik": "350 gr. Kuşe Tek Yön Renkli Mat Selefonlu Kabartma Laklı",
+        "fiyatlar": {
+          "tek": 320
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "CYML4",
+        "adet": null,
+        "ozellik": "400 gr. Kuşe Çift Yön Renkli Mat Selefonlu Laklı",
+        "fiyatlar": {
+          "tek": 400
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "O-COK",
+        "adet": null,
+        "ozellik": "350 gr. Kuşe Çift Yön Renkli Mat Selefonlu Kabartma Laklı Oval Kesim",
+        "fiyatlar": {
+          "tek": 430
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "S-COK",
+        "adet": null,
+        "ozellik": "350 gr. Kuşe Çift Yön Renkli Mat Selefonlu Kabartma Laklı Özel Kesim",
+        "fiyatlar": {
+          "tek": 500
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "O-SEK",
+        "adet": null,
+        "ozellik": "700 gr. Sıvama Mat Selefon Kabartma Laklı Oval Kesim Çift Yön",
+        "fiyatlar": {
+          "tek": 650
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "EKO-SEK",
+        "adet": null,
+        "ozellik": "A.Bristol Sıvama Mat Selefon Kabartma Laklı Oval Kesim Çift Yön, Bitmiş Ebat 82x50",
+        "fiyatlar": {
+          "tek": 600
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "S-SEK",
+        "adet": null,
+        "ozellik": "700 gr. Sıvama Mat Selefon Kabartma Laklı Özel Kesim Çift Yön",
+        "fiyatlar": {
+          "tek": 750
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "A-SEK",
+        "adet": null,
+        "ozellik": "700 gr. Sıvama Mat Selefon Kabartma Laklı Tek Yön Altın Yaldız Özel Kesim Çift Yön",
+        "fiyatlar": {
+          "tek": 1000
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "AC-SEK",
+        "adet": null,
+        "ozellik": "700 gr. Sıvama Mat Selefon Kabartma Laklı Çift Yön Altın Yaldız Özel Kesim Çift Yön",
+        "fiyatlar": {
+          "tek": 1100
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "TANK",
+        "adet": null,
+        "ozellik": "800 gr. Bristol Sıvama Mat Selefon Kabartma Laklı Özel Kesim Çift Yön",
+        "fiyatlar": {
+          "tek": 715
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "AY",
+        "adet": null,
+        "ozellik": "350 gr. Bristol Tek Yön Renkli Mat Selefonlu Altın Yaldızlı Arkası Tek Renk Siyah",
+        "fiyatlar": {
+          "tek": 600
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "GY",
+        "adet": null,
+        "ozellik": "350 gr. Bristol Tek Yön Renkli Mat Selefonlu Gümüş Yaldızlı Arkası Tek Renk Siyah",
+        "fiyatlar": {
+          "tek": 620
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "VIP",
+        "adet": null,
+        "ozellik": "350 gr. Kuşe Çift Yön Renkli Mat Selefonlu Özel Kesim Laklı - Ön Yüz Altın Yaldız",
+        "fiyatlar": {
+          "tek": 800
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "FAN",
+        "adet": null,
+        "ozellik": "280 gr. Tuale Renkli Tek Yön",
+        "fiyatlar": {
+          "tek": 450
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "F-SEK",
+        "adet": null,
+        "ozellik": "560 gr. Tuale Renkli Çift Yön",
+        "fiyatlar": {
+          "tek": 780
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Broşür",
+    "varyantlar": [
+      {
+        "baglam": "A79.5x20 cm",
+        "kod": "1CA7",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 800
+        }
+      },
+      {
+        "baglam": "9.5x20 cm",
+        "kod": "2CA7",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1100
+        }
+      },
+      {
+        "baglam": "9.5x20 cm",
+        "kod": "5CA7",
+        "adet": "5000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1950
+        }
+      },
+      {
+        "baglam": "9.5x20 cm",
+        "kod": "10CA7",
+        "adet": "10000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3700
+        }
+      },
+      {
+        "baglam": "A514x20 cm",
+        "kod": "1CA5",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 900
+        }
+      },
+      {
+        "baglam": "14x20 cm",
+        "kod": "2CA5",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1200
+        }
+      },
+      {
+        "baglam": "14x20 cm",
+        "kod": "5CA5",
+        "adet": "5000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2100
+        }
+      },
+      {
+        "baglam": "14x20 cm",
+        "kod": "10CA5",
+        "adet": "10000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3900
+        }
+      },
+      {
+        "baglam": "A420x28 cm",
+        "kod": "1CA4",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1600
+        }
+      },
+      {
+        "baglam": "20x28 cm",
+        "kod": "2CA4",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2200
+        }
+      },
+      {
+        "baglam": "20x28 cm",
+        "kod": "5CA4",
+        "adet": "5000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3950
+        }
+      },
+      {
+        "baglam": "20x28 cm",
+        "kod": "10CA4",
+        "adet": "10000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 7600
+        }
+      },
+      {
+        "baglam": "A328x40 cm",
+        "kod": "1CA3",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3100
+        }
+      },
+      {
+        "baglam": "28x40 cm",
+        "kod": "2CA3",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 4300
+        }
+      },
+      {
+        "baglam": "28x40 cm",
+        "kod": "5CA3",
+        "adet": "5000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 7800
+        }
+      },
+      {
+        "baglam": "28x40 cm",
+        "kod": "10CA3",
+        "adet": "10000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 14900
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Pro Broşür",
+    "varyantlar": [
+      {
+        "baglam": "A710x21 cm",
+        "kod": "PRO1A7",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1000
+        }
+      },
+      {
+        "baglam": "10x21 cm",
+        "kod": "PRO2A7",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1250
+        }
+      },
+      {
+        "baglam": "A515x21 cm",
+        "kod": "PRO1A5",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1100
+        }
+      },
+      {
+        "baglam": "15x21 cm",
+        "kod": "PRO2A5",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1450
+        }
+      },
+      {
+        "baglam": "A421x30 cm",
+        "kod": "PRO1A4",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1950
+        }
+      },
+      {
+        "baglam": "21x30 cm",
+        "kod": "PRO2A4",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2600
+        }
+      },
+      {
+        "baglam": "A330x42 cm",
+        "kod": "PRO1A3",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3800
+        }
+      },
+      {
+        "baglam": "30x42 cm",
+        "kod": "PRO2A3",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 5000
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Selefonlu Broşür",
+    "varyantlar": [
+      {
+        "baglam": "A710x21 cm",
+        "kod": "CBS1",
+        "adet": "3000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3300
+        }
+      },
+      {
+        "baglam": "10x21 cm",
+        "kod": "CBS2",
+        "adet": "6000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6300
+        }
+      },
+      {
+        "baglam": "10x21 cm",
+        "kod": "CBS3",
+        "adet": "12000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 12300
+        }
+      },
+      {
+        "baglam": "A515x21 cm",
+        "kod": "CBS4",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3200
+        }
+      },
+      {
+        "baglam": "15x21 cm",
+        "kod": "CBS5",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6200
+        }
+      },
+      {
+        "baglam": "15x21 cm",
+        "kod": "CBS6",
+        "adet": "6000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 9200
+        }
+      },
+      {
+        "baglam": "A421x30 cm",
+        "kod": "CBS7",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3100
+        }
+      },
+      {
+        "baglam": "21x30 cm",
+        "kod": "CBS8",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6000
+        }
+      },
+      {
+        "baglam": "21x30 cm",
+        "kod": "CBS9",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 11500
+        }
+      },
+      {
+        "baglam": "A330x42 cm",
+        "kod": "CBS10",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6000
+        }
+      },
+      {
+        "baglam": "30x42 cm",
+        "kod": "CBS11",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 11500
+        }
+      },
+      {
+        "baglam": "30x42 cm",
+        "kod": "CBS12",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 21000
+        }
+      }
+    ]
+  },
+  {
+    "grup": "El ilanı",
+    "varyantlar": [
+      {
+        "baglam": "A79.2x20 cm",
+        "kod": "ELI3",
+        "adet": "6000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1850
+        }
+      },
+      {
+        "baglam": "9.2x20 cm",
+        "kod": "ELI4",
+        "adet": "12000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3600
+        }
+      },
+      {
+        "baglam": "A513.8x20 cm",
+        "kod": "ELI5",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 900
+        }
+      },
+      {
+        "baglam": "13.8x20 cm",
+        "kod": "ELI6",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1800
+        }
+      },
+      {
+        "baglam": "13.8x20 cm",
+        "kod": "ELI7",
+        "adet": "6000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2600
+        }
+      },
+      {
+        "baglam": "13.8x20 cm",
+        "kod": "ELI8",
+        "adet": "8000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3400
+        }
+      },
+      {
+        "baglam": "A419x27.2 cm",
+        "kod": "ELI9",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1650
+        }
+      },
+      {
+        "baglam": "19x27.2 cm",
+        "kod": "ELI10",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3100
+        }
+      },
+      {
+        "baglam": "19x27.2 cm",
+        "kod": "ELI11",
+        "adet": "6000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 4600
+        }
+      },
+      {
+        "baglam": "19x27.2 cm",
+        "kod": "ELI12",
+        "adet": "8000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6000
+        }
+      },
+      {
+        "baglam": "A327,5x40 cm",
+        "kod": "ELI13",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3100
+        }
+      },
+      {
+        "baglam": "27,5x40 cm",
+        "kod": "ELI14",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6000
+        }
+      },
+      {
+        "baglam": "27,5x40 cm",
+        "kod": "ELI15",
+        "adet": "6000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 9000
+        }
+      },
+      {
+        "baglam": "27,5x40 cm",
+        "kod": "ELI16",
+        "adet": "8000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 11200
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Afişler",
+    "varyantlar": [
+      {
+        "baglam": "34 x 49",
+        "kod": "AF1",
+        "adet": "250 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 1950
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "AF2",
+        "adet": "500 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2500
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "AF3",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3000
+        }
+      },
+      {
+        "baglam": "49 x 69",
+        "kod": "AF4",
+        "adet": "250 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3300
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "AF5",
+        "adet": "500 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3850
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "AF6",
+        "adet": "1000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 5200
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Antetli",
+    "varyantlar": [
+      {
+        "baglam": "A515x21 cm",
+        "kod": "ANT1",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2100
+        }
+      },
+      {
+        "baglam": "15x21 cm",
+        "kod": "ANT2",
+        "adet": "8000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 4000
+        }
+      },
+      {
+        "baglam": "15x21 cm",
+        "kod": "ANT3",
+        "adet": "12000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 5850
+        }
+      },
+      {
+        "baglam": "A421x29.7 cm",
+        "kod": "ANT4",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2000
+        }
+      },
+      {
+        "baglam": "21x29.7 cm",
+        "kod": "ANT5",
+        "adet": "4000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 3700
+        }
+      },
+      {
+        "baglam": "21x29.7 cm",
+        "kod": "ANT6",
+        "adet": "6000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 5400
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Zarf",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "Z1",
+        "adet": "1000 Adet",
+        "ozellik": "110 gr. 10.5x24cm Diplomat Tek Renk",
+        "fiyatlar": {
+          "fiyat1": 1750,
+          "fiyat2": 1075
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "Z2",
+        "adet": "1000 Adet",
+        "ozellik": "110 gr. 10.5x24cm Diplomat Renkli",
+        "fiyatlar": {
+          "fiyat1": 2375,
+          "fiyat2": 1250
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "Z3",
+        "adet": "500 Adet",
+        "ozellik": "110 gr. 24x32cm Torba Zarf Renkli",
+        "fiyatlar": {
+          "fiyat1": 3500,
+          "fiyat2": 1875
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Magnet",
+    "varyantlar": [
+      {
+        "baglam": "46x68 mm.",
+        "kod": "MAG1",
+        "adet": "1000Adet",
+        "ozellik": "Parlak Selefonlu Özel Kesimli",
+        "fiyatlar": {
+          "tek": 750
+        }
+      },
+      {
+        "baglam": "46x68 mm.",
+        "kod": "MAG2",
+        "adet": "1000Adet",
+        "ozellik": "Parlak Selefonlu Kenarları Oval Kesimli",
+        "fiyatlar": {
+          "tek": 650
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "MAG3",
+        "adet": "1000Adet",
+        "ozellik": "CM Kare Fiyatıdır",
+        "fiyatlar": {
+          "tek": 25
+        }
+      },
+      {
+        "baglam": "46x68 mm.",
+        "kod": "10+MAG1",
+        "adet": "10000Adet",
+        "ozellik": "Parlak Selefonlu Özel Kesimli",
+        "fiyatlar": {
+          "tek": 730
+        }
+      },
+      {
+        "baglam": "46x68 mm.",
+        "kod": "10+MAG2",
+        "adet": "10000Adet",
+        "ozellik": "Parlak Selefonlu Kenarları Oval Kesimli",
+        "fiyatlar": {
+          "tek": 630
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "10+MAG3",
+        "adet": "10000Adet",
+        "ozellik": "CM Kare Fiyatıdır",
+        "fiyatlar": {
+          "tek": 23
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Amerikan Servis",
+    "varyantlar": [
+      {
+        "baglam": "31x44 cm.",
+        "kod": "SRV1",
+        "adet": null,
+        "ozellik": "Tek Yön Renkli Baskı (90 gr. 1.Hamur)",
+        "fiyatlar": {
+          "fiyat1": 4000,
+          "fiyat2": 3000
+        }
+      },
+      {
+        "baglam": "27,5x40 cm.",
+        "kod": "SRV2",
+        "adet": null,
+        "ozellik": "Tek Yön Renkli Baskı (100 gr. Kuşe)",
+        "fiyatlar": {
+          "fiyat1": 3000,
+          "fiyat2": 2450
+        }
+      },
+      {
+        "baglam": "34x49 cm.",
+        "kod": "SRV3",
+        "adet": null,
+        "ozellik": "Tek Yön Renkli Baskı (120 gr. 1.Hamur)",
+        "fiyatlar": {
+          "fiyat1": 5350,
+          "fiyat2": 3125
+        }
+      }
+    ]
+  },
+  {
+    "grup": "KAPI ASKI BROŞÜRLERİ",
+    "varyantlar": [
+      {
+        "baglam": "10,5x24",
+        "kod": "ASK1",
+        "adet": null,
+        "ozellik": "Çift Yön Renkli Baskı Mat Selefon Kabartma Lak 350 gr. Kuşe",
+        "fiyatlar": {
+          "tek": 2800
+        }
+      },
+      {
+        "baglam": "10,5x24",
+        "kod": "ASK2",
+        "adet": null,
+        "ozellik": "Çift Yön Renkli Baskı Mat Selefon Kabartma Lak 700 gr. Bristol",
+        "fiyatlar": {
+          "tek": 3000
+        }
+      },
+      {
+        "baglam": "21x26",
+        "kod": "ASK3",
+        "adet": null,
+        "ozellik": "Çift Yön Renkli Baskı Parlak Selefon 200 gr. Kuşe",
+        "fiyatlar": {
+          "tek": 4850
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Dosyalar",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "MND500",
+        "adet": "500 Adet",
+        "ozellik": "350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon - İçi Tek Renk",
+        "fiyatlar": {
+          "tek": 5900
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "KLD500",
+        "adet": "500 Adet",
+        "ozellik": "350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon Kabartma Lak - İçi Tek Renk",
+        "fiyatlar": {
+          "tek": 6400
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "PD",
+        "adet": "1000Adet",
+        "ozellik": "350 gr. Kuşe Tek Yön Çok Renkli Parlak Selefon",
+        "fiyatlar": {
+          "tek": 8750
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "MND",
+        "adet": "1000Adet",
+        "ozellik": "350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon - İçi Tek Renk",
+        "fiyatlar": {
+          "tek": 9000
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "KLD",
+        "adet": "1000Adet",
+        "ozellik": "350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon Kabartma Lak - İçi Tek Renk",
+        "fiyatlar": {
+          "tek": 9750
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "CYPD",
+        "adet": "1000Adet",
+        "ozellik": "350 gr. Kuşe Çift Yön Baskı Parlak Selefonlu",
+        "fiyatlar": {
+          "tek": 11250
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "CYMD",
+        "adet": "1000Adet",
+        "ozellik": "350 gr. Kuşe Çift Yön Baskı Mat Selefonlu",
+        "fiyatlar": {
+          "tek": 11500
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "CYML4D",
+        "adet": "1000Adet",
+        "ozellik": "400 gr. Kuşe Çift Yön Renkli Baskı Mat Selefon Laklı",
+        "fiyatlar": {
+          "tek": 15000
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "AVD500",
+        "adet": "500 Adet",
+        "ozellik": "300 gr Bristol Tek Yön Arkası Tek Renk Siyah Selefonsuz",
+        "fiyatlar": {
+          "tek": 5000
+        }
+      },
+      {
+        "baglam": "500 Adet",
+        "kod": "AVD1000",
+        "adet": "1000Adet",
+        "ozellik": "300 gr Bristol Tek Yön Arkası Tek Renk Siyah Selefonsuz",
+        "fiyatlar": {
+          "tek": 6150
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Etiket",
+    "varyantlar": [
+      {
+        "baglam": "53x83 mm.",
+        "kod": "E",
+        "adet": null,
+        "ozellik": "90 gr. Kuşe Çıkartma Tek Yön Renkli Parlak Selefonlu",
+        "fiyatlar": {
+          "tek": 300
+        }
+      },
+      {
+        "baglam": "53x83 mm.",
+        "kod": "ES",
+        "adet": null,
+        "ozellik": "90 gr. Kuşe Çıkartma Tek Yön Renkli Selefonsuz",
+        "fiyatlar": {
+          "tek": 280
+        }
+      },
+      {
+        "baglam": "52x82 mm.",
+        "kod": "EO",
+        "adet": null,
+        "ozellik": "90 gr. Kuşe Çıkartma Tek Yön Renkli Parlak Selefonlu özel Kesim",
+        "fiyatlar": {
+          "tek": 500
+        }
+      },
+      {
+        "baglam": "52x82 mm.",
+        "kod": "EOY",
+        "adet": null,
+        "ozellik": "90 gr. Kuşe Çıkartma Tek Yön Renkli Parlak Selefonlu Altın Yaldız",
+        "fiyatlar": {
+          "tek": 740
+        }
+      },
+      {
+        "baglam": "15.5x25.5 cm.",
+        "kod": "ETM",
+        "adet": null,
+        "ozellik": "90 gr. Kuşe Çıkartma Tek Yön Renkli Parlak Selefonlu",
+        "fiyatlar": {
+          "tek": 2600
+        }
+      },
+      {
+        "baglam": "25.5x33 cm.",
+        "kod": "ETL",
+        "adet": null,
+        "ozellik": "90 gr. Kuşe Çıkartma Tek Yön Renkli Parlak Selefonlu",
+        "fiyatlar": {
+          "tek": 5100
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Makbuz",
+    "varyantlar": [
+      {
+        "baglam": "10x14 cm.",
+        "kod": "M1",
+        "adet": "20 Cilt Tek Renk Siyah",
+        "ozellik": "50'lik 20 Cilt",
+        "fiyatlar": {
+          "tek": 1200
+        }
+      },
+      {
+        "baglam": "10x20 cm.",
+        "kod": "M2",
+        "adet": "30 Cilt Tek Renk Siyah",
+        "ozellik": "50'lik 30 Cilt",
+        "fiyatlar": {
+          "tek": 1900
+        }
+      },
+      {
+        "baglam": "14x20 cm.",
+        "kod": "M3",
+        "adet": "10 Cilt Tek Renk Siyah",
+        "ozellik": "50'lik 10 Cilt",
+        "fiyatlar": {
+          "tek": 900
+        }
+      },
+      {
+        "baglam": "20x29 cm.",
+        "kod": "M4",
+        "adet": "10 Cilt Tek Renk Siyah",
+        "ozellik": "50'lik 10 Cilt",
+        "fiyatlar": {
+          "tek": 1500
+        }
+      },
+      {
+        "baglam": "10x14 cm.",
+        "kod": "MR1",
+        "adet": "20 Cilt Renkli",
+        "ozellik": "50'lik 20 Cilt",
+        "fiyatlar": {
+          "tek": 1300
+        }
+      },
+      {
+        "baglam": "10x20 cm.",
+        "kod": "MR2",
+        "adet": "30 Cilt Renkli",
+        "ozellik": "50'lik 30 Cilt",
+        "fiyatlar": {
+          "tek": 2200
+        }
+      },
+      {
+        "baglam": "14x20 cm.",
+        "kod": "MR3",
+        "adet": "10 Cilt Renkli",
+        "ozellik": "50'lik 10 Cilt",
+        "fiyatlar": {
+          "tek": 1200
+        }
+      },
+      {
+        "baglam": "20x29 cm.",
+        "kod": "MR4",
+        "adet": "10 Cilt Renkli",
+        "ozellik": "50'lik 10 Cilt",
+        "fiyatlar": {
+          "tek": 1800
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Oto Paspas",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "P1",
+        "adet": "1000 Adet",
+        "ozellik": "85 gr. karft",
+        "fiyatlar": {
+          "tek": 1750
+        }
+      },
+      {
+        "baglam": "85 gr. karft",
+        "kod": "P2",
+        "adet": "2000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 2700
+        }
+      },
+      {
+        "baglam": "85 gr. karft",
+        "kod": "P3",
+        "adet": "5000 Adet",
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 4800
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Küp Bloknot",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKKB-250-100",
+        "adet": null,
+        "ozellik": "Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.",
+        "fiyatlar": {
+          "fiyat1": 100,
+          "fiyat2": 7200
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKKB-250-250",
+        "adet": null,
+        "ozellik": "Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.",
+        "fiyatlar": {
+          "fiyat1": 250,
+          "fiyat2": 8750
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKKB-250-500",
+        "adet": null,
+        "ozellik": "Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.",
+        "fiyatlar": {
+          "fiyat1": 500,
+          "fiyat2": 11250
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKKB-250-1000",
+        "adet": null,
+        "ozellik": "Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.",
+        "fiyatlar": {
+          "fiyat1": 1000,
+          "fiyat2": 17500
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKKB-500-100",
+        "adet": null,
+        "ozellik": "Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.",
+        "fiyatlar": {
+          "fiyat1": 100,
+          "fiyat2": 9375
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKKB-500-250",
+        "adet": null,
+        "ozellik": "Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.",
+        "fiyatlar": {
+          "fiyat1": 250,
+          "fiyat2": 13125
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NKKB-500-500",
+        "adet": null,
+        "ozellik": "Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.",
+        "fiyatlar": {
+          "fiyat1": 500,
+          "fiyat2": 18125
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Spiralli Bloknot",
+    "varyantlar": [
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "NK",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 10200,
+          "1000CİLT": 17400
+        }
+      },
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "CYP",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 10800,
+          "1000CİLT": 18000
+        }
+      },
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "CYM",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 10800,
+          "1000CİLT": 18000
+        }
+      },
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "CYML4",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 11520,
+          "1000CİLT": 18720
+        }
+      },
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "SEK",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 13440,
+          "1000CİLT": 20640
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "NK",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 15000,
+          "1000CİLT": 24000
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "CYP",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 16200,
+          "1000CİLT": 25200
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "CYM",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 16200,
+          "1000CİLT": 25200
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "CYML4",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 17400,
+          "1000CİLT": 27000
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "SEK",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 22800,
+          "1000CİLT": 31800
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Kapaklı Bloknot",
+    "varyantlar": [
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "NK",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 12600,
+          "1000CİLT": 16800
+        }
+      },
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "CYP",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 13800,
+          "1000CİLT": 17400
+        }
+      },
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "CYM",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 13800,
+          "1000CİLT": 17400
+        }
+      },
+      {
+        "baglam": "9.4x13.3cm",
+        "kod": "CYML4",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 14400,
+          "1000CİLT": 17640
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "NK",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 17400,
+          "1000CİLT": 24000
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "CYP",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 18600,
+          "1000CİLT": 24000
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "CYM",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 18600,
+          "1000CİLT": 24000
+        }
+      },
+      {
+        "baglam": "14x20cm",
+        "kod": "CYML4",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 19800,
+          "1000CİLT": 25800
+        }
+      }
+    ]
+  },
+  {
+    "grup": "Kapaksız Bloknot",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "9.4x13.3cm",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (9.4x13.3cm)",
+        "fiyatlar": {
+          "500CİLT": 5400,
+          "1000CİLT": 7800
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "14x20cm",
+        "adet": null,
+        "ozellik": "80 gr. 1.Hamur Tek Renk (14x20cm)",
+        "fiyatlar": {
+          "500CİLT": 8400,
+          "1000CİLT": 13800
+        }
+      }
+    ]
+  },
+  {
+    "grup": "NOTLUK",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "NOTLUK",
+        "adet": null,
+        "ozellik": "7.8x14cm - İç 110 gr. 1.Hamur Renkli - Dış 350 gr. Amerikan Bristol Mat Selefon",
+        "fiyatlar": {
+          "tek": 16200
+        }
+      }
+    ]
+  },
+  {
+    "grup": "ÇANTALAR",
+    "varyantlar": [
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "25x37x8",
+        "adet": null,
+        "ozellik": "CNT1",
+        "fiyatlar": {
+          "fiyat1": 9850,
+          "fiyat2": 14400,
+          "fiyat3": 11875,
+          "fiyat4": 1250,
+          "fiyat5": 1875,
+          "fiyat6": 2500
+        }
+      },
+      {
+        "baglam": "25x37x8 (200 gr. Tek Renk)",
+        "kod": "CNT1-KRAFT",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "fiyat1": 6900,
+          "fiyat2": 10200,
+          "fiyat3": 8500,
+          "fiyat4": 2500
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "38x23x9",
+        "adet": null,
+        "ozellik": "CNT2",
+        "fiyatlar": {
+          "fiyat1": 10800,
+          "fiyat2": 15600,
+          "fiyat3": 14375,
+          "fiyat4": 1250,
+          "fiyat5": 1875,
+          "fiyat6": 2500
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "17x24x7",
+        "adet": null,
+        "ozellik": "CNT3",
+        "fiyatlar": {
+          "fiyat1": 9000,
+          "fiyat2": 11400,
+          "fiyat3": 8125,
+          "fiyat4": 1000,
+          "fiyat5": 1500,
+          "fiyat6": 2500
+        }
+      },
+      {
+        "baglam": "17x24x7 (200 gr. Tek Renk)",
+        "kod": "CNT3-KRAFT",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "fiyat1": 6600,
+          "fiyat2": 8400,
+          "fiyat3": 6875,
+          "fiyat4": 2500
+        }
+      },
+      {
+        "baglam": "(belirtilmemiş)",
+        "kod": "51x33x13",
+        "adet": null,
+        "ozellik": "CNT4",
+        "fiyatlar": {
+          "fiyat1": 13800,
+          "fiyat2": 22800,
+          "fiyat3": 19375,
+          "fiyat4": 1600,
+          "fiyat5": 2250,
+          "fiyat6": 5000
+        }
+      }
+    ]
+  },
+  {
+    "grup": "ÜRÜN KUTULARI",
+    "varyantlar": [
+      {
+        "baglam": "17.2x21.4 cm",
+        "kod": "KT1",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 4150
+        }
+      },
+      {
+        "baglam": "16x25.8 cm",
+        "kod": "KT2",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 4500
+        }
+      },
+      {
+        "baglam": "21.4x25.8 cm",
+        "kod": "KT3",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 5500
+        }
+      },
+      {
+        "baglam": "25.8x26.7 cm",
+        "kod": "KT4",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6400
+        }
+      },
+      {
+        "baglam": "21.4x34.4 cm",
+        "kod": "KT5",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 6700
+        }
+      },
+      {
+        "baglam": "26.7x34.4 cm",
+        "kod": "KT6",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 8100
+        }
+      },
+      {
+        "baglam": "26.7x43 cm",
+        "kod": "KT7",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 9850
+        }
+      },
+      {
+        "baglam": "21.4x60 cm",
+        "kod": "KT8",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 10500
+        }
+      },
+      {
+        "baglam": "32x43 cm",
+        "kod": "KT9",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 11300
+        }
+      },
+      {
+        "baglam": "26.7x60 cm",
+        "kod": "KT10",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 12700
+        }
+      },
+      {
+        "baglam": "32X51.6 CM",
+        "kod": "KT11",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 13200
+        }
+      },
+      {
+        "baglam": "37x51.6 cm",
+        "kod": "KT12",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 15600
+        }
+      },
+      {
+        "baglam": "42.8x51.6 cm",
+        "kod": "KT13",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 16800
+        }
+      },
+      {
+        "baglam": "42.8x60 cm",
+        "kod": "KT14",
+        "adet": null,
+        "ozellik": null,
+        "fiyatlar": {
+          "tek": 19300
+        }
+      }
+    ]
+  }
+]

@@ -1,0 +1,42 @@
+afis-105gr|Afiş — 105 gr Kuşe Tek Yön Renkli|afis|6
+amerikan-servis|Amerikan Servis — Tek Yön Renkli Baskı|amerikan-servis|9
+antetli-kagit|Antetli Kağıt — 90 gr 1.Hamur|antetli-kagit|6
+arac-magneti-30x40|Araç Magneti |arac-magneti|3
+arac-sticker-yan|Araç Yan Cam Sticker|arac-sticker|4
+kapakli-bloknot|Kapaklı Bloknot — Amerikan Cilt 50'lik|bloknot|16
+kapaksiz-bloknot|Kapaksız Bloknot — 50'lik Tutkallı Cilt|bloknot|4
+kup-bloknot|Küp Bloknot — 78×78 mm 80 gr 1.Hamur|bloknot|7
+notluk|Notluk — 7.8×14 cm 70'lik|bloknot|1
+spiralli-bloknot|Spiralli Bloknot — 50'lik Cilt|bloknot|20
+brosur|Broşür — 115 gr Kuşe Çift Yön Renkli|brosur|16
+pro-brosur|Pro Broşür — 128 gr Kuşe Tam Ebat Tam Gramaj|brosur|8
+selefonlu-brosur|Selefonlu Broşür — 200 gr Kuşe Parlak Selefon|brosur|12
+canta|Çanta — 210 gr Amerikan Bristol Parlak/Mat Selefon|canta-kese|18
+cepli-dosya|Cepli Dosya — Kapalı Hâli 22.5×31 cm|cepli-dosya|10
+dekota-baski-5mm|Dekota Baskı|dekota-baski|8
+el-ilani|El İlanı — 105 gr Kuşe Tek Yön Renkli|el-ilani|0
+etiket|Etiket — 90 gr Kuşe Çıkartma Renkli|etiket|6
+cam-folyosu-kesimli|Cam Vitrin Folyosu — Kesimli|folyo|5
+fosforlu-cikis-folyo|Fosforlu Acil Çıkış Folyosu|fosforlu-folyo|0
+guvenlik-levhasi-sigorta|İSG Güvenlik Levhası — Standart|guvenlik-uyari-levhalari|0
+kapi-aski-brosur|Kapı Askı Broşür|kapi-aski-brosur|3
+klasik-kartvizit|Klasik Kartvizit|kartvizit|80
+trodat-printy-4912|Trodat Printy 4912 Kaşe|kase|0
+kirlangic-bayrak-3m|Kırlangıç Bayrak |kirlangic-bayrak|2
+klasik-beyaz-kupa|Klasik Beyaz Kupa|kupa|0
+lightbox-led-100cm|Lightbox LED Tabela — 100x70 cm|lightbox|0
+madalya-7cm-kurdela|Madalya — 7cm Kurdela Dahil|madalya|0
+magnet-promosyon|Promosyon Magnet — 60 Mikron 46×68 mm|magnet|4
+makam-bayragi-puskullu|Püsküllü Makam Bayrağı|makam-bayragi|4
+makbuz|Makbuz — 54 gr Kendinden Kopyalı (1 Asıl + 1 Suret)|makbuz|8
+masa-bayragi-krom|Krom Direkli Masa Bayrağı|masa-bayragi|1
+oto-paspas|Oto Paspas — 85 gr karft 34×49 cm Tek Renk|oto-paspas|3
+kristal-plaket|Kristal Plaket — Lazer Kazıma|plaket|0
+plastik-duba-baskili|Plastik Reklam Dubası — Baskılı|plastik-reklam-dubasi|0
+rollup-standart|Standart Roll-Up — 85 x 200 cm|rollup|2
+mesh-branda|Mesh (Gözenekli) Branda|vinil-branda-afis|2
+vinil-branda-440gr|Vinil Branda Afiş|vinil-branda-afis|8
+yelken-bayrak-damla|Yelken Bayrak|yelken-bayrak|2
+zarf-diplomat-renkli|Diplomat Zarf — 10.5×24 cm Renkli Baskı|zarf|5
+zarf-diplomat-tek-renk|Diplomat Zarf — 10.5×24 cm Tek Renk|zarf|5
+zarf-torba|Torba Zarf — 24×32 cm Renkli|zarf|5

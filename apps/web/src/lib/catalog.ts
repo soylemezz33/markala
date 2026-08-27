@@ -147,7 +147,12 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
     console.error(`[catalog] getProductBySlug ${slug} -> HTTP ${res.status}`);
     throw new Error(`getProductBySlug ${slug} -> ${res.status}`); // geçici → ISR stale'i korur
   }
-  return mapProduct((await res.json()) as ApiProduct);
+  const data = (await res.json()) as ApiProduct & { isActive?: boolean };
+  // PASİF ÜRÜN VİTRİNDE YOK. /products/:slug pasifleri de döndürür — admin ürünü
+  // düzenleyebilmek için buna muhtaç. Ama storefront'ta doğrudan URL ile açılırsa
+  // listelerde görünmeyen, görselsiz/yarım bir ürün satışa açık kalırdı (2026-08-27).
+  if (data.isActive === false) return undefined;
+  return mapProduct(data);
 }
 
 const HERO_THEMES: HeroSlide["theme"][] = ["yellow", "ink", "cyan", "cream"];
