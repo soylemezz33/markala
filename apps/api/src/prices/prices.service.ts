@@ -315,11 +315,14 @@ export class PricesService {
     const global = await this.globalMargin();
     const degisecek: Array<{ productSlug: string; priceId: string; option: string; dim: string; cost: number; eskiFiyat: number; yeniFiyat: number }> = [];
     const maliyetsiz: Array<{ productSlug: string; option: string; dim: string }> = [];
-    let kullanilanMarj = 0, marjKaynagi = "";
+    // Kategori kapsamında her ürünün marjı FARKLI olabilir (ürün bazlı marj varsa).
+    // Tek bir değer raporlamak yanıltıcı olur → hepsi sayılır, sonda özetlenir.
+    const marjSayaci = new Map<string, number>();
 
     for (const u of urunler) {
       const r = resolveMargin({ product: override ?? (u.profitMargin as unknown as number), category: u.category?.profitMargin as unknown as number, global });
-      kullanilanMarj = r.margin; marjKaynagi = override != null ? "manuel" : r.source;
+      const anahtar = `${r.margin}|${override != null ? "manuel" : r.source}`;
+      marjSayaci.set(anahtar, (marjSayaci.get(anahtar) ?? 0) + 1);
       for (const pr of u.prices) {
         const cost = pr.cost == null ? null : Number(pr.cost);
         const yeni = priceFromCost(cost, r.margin);
@@ -335,7 +338,19 @@ export class PricesService {
         degisecek.map((d) => this.prisma.productPrice.update({ where: { id: d.priceId }, data: { price: new Prisma.Decimal(d.yeniFiyat) } })),
       );
     }
-    return { dryRun, marj: kullanilanMarj, marjKaynagi, urunSayisi: urunler.length, degisecekSatir: degisecek.length, maliyetsizSatir: maliyetsiz.length, degisecek: degisecek.slice(0, 200), maliyetsiz: maliyetsiz.slice(0, 50) };
+    const sirali = [...marjSayaci.entries()].sort((a, b) => b[1] - a[1]);
+    const [baskinMarj, baskinKaynak] = (sirali[0]?.[0] ?? "0|yok").split("|");
+    return {
+      dryRun,
+      marj: Number(baskinMarj),
+      marjKaynagi: sirali.length > 1 ? `${baskinKaynak} (+${sirali.length - 1} farklı marj)` : baskinKaynak!,
+      urunSayisi: urunler.length,
+      degisecekSatir: degisecek.length,
+      maliyetsizSatir: maliyetsiz.length,
+      // Önizleme listesi kırpılır; SAYILAR tam. Uygulama tam listeyle çalışır.
+      degisecek: degisecek.slice(0, 200),
+      maliyetsiz: maliyetsiz.slice(0, 50),
+    };
   }
 
   /** Bir ürünün marj durumu — panelde "şu an %X kâr" ve hangi seviyeden geldiği. */

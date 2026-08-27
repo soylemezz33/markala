@@ -254,6 +254,12 @@ export function MarginClient({
                       </tbody>
                     </table>
                   </div>
+                  {onizleme.degisecek.length < onizleme.degisecekSatir && (
+                    <p className="mt-2 text-xs text-ink-500">
+                      Tabloda ilk {onizleme.degisecek.length} satır gösteriliyor; uygulama{" "}
+                      {onizleme.degisecekSatir} satırın tamamını günceller.
+                    </p>
+                  )}
                   <button
                     type="button"
                     onClick={uygula}
