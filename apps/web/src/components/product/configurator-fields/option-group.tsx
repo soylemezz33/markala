@@ -411,8 +411,11 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
   const allSorted = [...options].sort((a, b) => a.optionSort - b.optionSort);
 
   // --- 2 adımlı seçim: önce seviye, sonra o seviyenin seçenekleri -----------------
-  // Seviye DEĞİŞTİRMEK seçimi değiştirmez; yalnız listeyi filtreler. Aksi hâlde
-  // müşteri sekmeye dokunur dokunmaz fiyat zıplardı (istenmeyen sürpriz).
+  // Seviye sekmesine basınca O SEVİYENİN İLK seçeneği otomatik işaretlenir (2026-08-27,
+  // Hasan geri bildirimi). Önceden sekme yalnız listeyi filtreliyordu: sekme koyu
+  // görünürken altta hiçbir radyo işaretli olmuyordu ve müşteri o türü seçtiğini
+  // sanıp devam edebiliyordu. Fiyatın sekmeyle birlikte değişmesi sürpriz değil —
+  // seçilen seçenek ve fiyatı ekranda aynı anda görünür.
   // Seviyesi OLMAYAN seçenek "diger" kovasına düşer. Aksi hâlde panelden tier'sız bir
   // seçenek eklendiğinde hiçbir sekmeye girmez ve müşteriye HİÇ görünmezdi (sessiz kayıp).
   const tierOf = (o: OptionItem) => o.tier || "diger";
@@ -446,7 +449,13 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
             type="button"
             role="tab"
             aria-selected={isActive}
-            onClick={() => setTierOverride(t)}
+            onClick={() => {
+              setTierOverride(t);
+              if (selectedTier !== t) {
+                const ilk = allSorted.find((o) => tierOf(o) === t);
+                if (ilk) onSelect(ilk.optionKey);
+              }
+            }}
             className={cn(
               "flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-md border text-left transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
