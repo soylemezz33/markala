@@ -12,6 +12,7 @@ import { Analytics } from "@/components/analytics";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { AttributionCapture } from "@/components/attribution-capture";
 import { CookieConsent } from "@/components/cookie-consent";
+import { WhatsAppOlcum } from "@/components/whatsapp-olcum";
 import { FloatingActions } from "@/components/floating-actions";
 import { WebVitals } from "@/components/web-vitals";
 import { AuthBootstrap } from "@/components/auth-bootstrap";
@@ -143,6 +144,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CartDrawerLazy />
         <FloatingActions />
         <CookieConsent />
+        {/* Site geneli WhatsApp tıklama ölçümü (whatsapp_tikla) — görsel etkisi yok */}
+        <WhatsAppOlcum />
         <Analytics />
         <AnalyticsTracker />
         {/* Sipariş kaynağı yakalama — çerez onayından BAĞIMSIZ (bkz. lib/attribution.ts).

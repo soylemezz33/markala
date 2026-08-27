@@ -87,6 +87,7 @@ export function FloatingActions() {
                 href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(QUICK_MESSAGE)}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-wa-kaynak="balon"
                 onClick={() => track("contact", { method: "whatsapp", location: "floating" })}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-paper-100 transition-colors"
               >
