@@ -68,7 +68,10 @@ export function AnalyticsClient({ overview, days }: Props) {
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Ziyaretçi Analizi & CRM</h1>
           <p className="mt-1 text-ink-500 text-sm">
-            Ziyaretçi davranışı, dönüşüm hunisi ve müşteri segmentleri — son {days} gün
+            {/* Aralık artık TAKVİM gününe hizalı (API: startOfDayInReportTz) — "Bugün"
+                gerçekten bugün 00:00'dan itibaren, kayan 24 saat değil. */}
+            Ziyaretçi davranışı, dönüşüm hunisi ve müşteri segmentleri —{" "}
+            {days === 1 ? "bugün (00:00'dan itibaren)" : `son ${days} gün (bugün dahil)`}
           </p>
         </div>
         <DateRangePicker days={days} />

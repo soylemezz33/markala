@@ -2,6 +2,33 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 
+/** Raporlama takvimi — işletmenin saat dilimi (konteyner saati UTC, tzdata yok). */
+const REPORT_TZ = "Europe/Istanbul";
+
+/** Verilen anın REPORT_TZ ofseti (ms). DST'ye dayanıklı — sabit +3 varsaymaz. */
+function tzOffsetMs(at: Date): number {
+  const local = new Date(at.toLocaleString("en-US", { timeZone: REPORT_TZ }));
+  const utc = new Date(at.toLocaleString("en-US", { timeZone: "UTC" }));
+  return local.getTime() - utc.getTime();
+}
+
+/**
+ * REPORT_TZ'de takvim gününün BAŞLANGICI (UTC Date olarak döner).
+ * `daysBack=0` → bugün 00:00, `daysBack=6` → 6 gün önce 00:00.
+ *
+ * Neden gerekli (2026-08-27, Hasan): rapor aralığı "şu andan geriye N×24 saat" hesaplanıyordu.
+ * "Bugün" seçildiğinde saat 14:00'te DÜN 14:00'ten beri olan veri geliyordu — yani dünün yarısı
+ * bugüne karışıyordu. Artık aralık takvim günlerine hizalı: "Bugün" = bugün 00:00'dan şimdiye,
+ * "7 gün" = 6 gün önce 00:00'dan şimdiye (bugün dahil). Günlük grafik kovaları da böylece tam gün.
+ */
+function startOfDayInReportTz(at: Date, daysBack = 0): Date {
+  const off = tzOffsetMs(at);
+  const shifted = new Date(at.getTime() + off);
+  shifted.setUTCHours(0, 0, 0, 0);
+  shifted.setUTCDate(shifted.getUTCDate() - daysBack);
+  return new Date(shifted.getTime() - off);
+}
+
 /**
  * Ziyaretçi analizi & CRM servisi.
  *
@@ -76,7 +103,9 @@ export class AnalyticsService {
   async overview(days: number) {
     const safeDays = Number.isFinite(days) && days > 0 ? Math.min(Math.floor(days), 365) : 30;
     const to = new Date();
-    const from = new Date(to.getTime() - safeDays * 24 * 60 * 60 * 1000);
+    // TAKVİM GÜNÜNE hizalı aralık (bkz. startOfDayInReportTz notu): "Bugün" gerçekten bugün,
+    // "7 gün" bugün dahil son 7 takvim günü. Eskiden kayan 24 saatlik pencereydi.
+    const from = startOfDayInReportTz(to, safeDays - 1);
     const range = { days: safeDays, from: from.toISOString(), to: to.toISOString() };
 
     // Her blok bağımsız + hata-izole. Promise.all yerine ayrı try/catch ile dayanıklılık.
@@ -246,16 +275,18 @@ export class AnalyticsService {
 
   private async computeTrafficByDay(from: Date, to: Date, days: number) {
     // Günlük distinct oturum (event) + günlük sipariş — raw, tek sorgu ikilisi.
+    // created_at UTC saklanır; gün kovaları TÜRKİYE gününe göre olmalı (heatmap ile aynı
+    // +3 deseni). Aksi hâlde gece 00:00-03:00 arası trafik bir ÖNCEKİ güne yazılıyordu.
     const [sessionRows, orderRows] = await Promise.all([
       this.prisma.$queryRaw<Array<{ day: string; sessions: bigint }>>(Prisma.sql`
-        SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+        SELECT to_char(date_trunc('day', created_at + interval '3 hours'), 'YYYY-MM-DD') AS day,
                COUNT(DISTINCT session_id) AS sessions
         FROM analytics_events
         WHERE created_at >= ${from} AND created_at <= ${to}
         GROUP BY 1
       `),
       this.prisma.$queryRaw<Array<{ day: string; orders: bigint }>>(Prisma.sql`
-        SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+        SELECT to_char(date_trunc('day', created_at + interval '3 hours'), 'YYYY-MM-DD') AS day,
                COUNT(*) AS orders
         FROM orders
         WHERE created_at >= ${from} AND created_at <= ${to} AND deleted_at IS NULL
@@ -266,14 +297,16 @@ export class AnalyticsService {
     const sessionByDay = new Map(sessionRows.map((r) => [r.day, Number(r.sessions)]));
     const orderByDay = new Map(orderRows.map((r) => [r.day, Number(r.orders)]));
 
-    // range'deki HER gün için satır üret (boş günler 0).
+    // range'deki HER gün için satır üret (boş günler 0). Etiketler de Türkiye günü olmalı —
+    // `from` UTC anı olduğu için toISOString() ile kesmek yanlış gün adı üretiyordu.
     const out: Array<{ date: string; sessions: number; orders: number }> = [];
+    const label = (d: Date) =>
+      new Date(d.getTime() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const cursor = new Date(from);
-    cursor.setHours(0, 0, 0, 0);
-    for (let i = 0; i <= days; i++) {
-      const date = cursor.toISOString().slice(0, 10);
+    for (let i = 0; i < days; i++) {
+      const date = label(cursor);
       out.push({ date, sessions: sessionByDay.get(date) ?? 0, orders: orderByDay.get(date) ?? 0 });
-      cursor.setDate(cursor.getDate() + 1);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
       if (cursor > to) break;
     }
     return out;
