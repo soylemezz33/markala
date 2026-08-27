@@ -9,20 +9,20 @@ const mkPrisma = () => ({
 });
 it("getForProduct ürün yoksa NotFound", async () => {
   const p = mkPrisma(); p.product.findUnique.mockResolvedValue(null);
-  const s = new PricesService(p as any);
+  const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
   await expect(s.getForProduct("x")).rejects.toBeInstanceOf(NotFoundException);
 });
 it("getForProduct options+prices döndürür", async () => {
   const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
   p.productOption.findMany.mockResolvedValue([{ id: "o1", groupKey: "paket" }]);
   p.productPrice.findMany.mockResolvedValue([{ id: "pr1", price: "50" }]);
-  const s = new PricesService(p as any);
+  const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
   expect(await s.getForProduct("p1")).toEqual({ options: [{ id: "o1", groupKey: "paket" }], prices: [{ id: "pr1", price: "50" }] });
 });
 it("setOptions replace-all yapar (delete+create)", async () => {
   const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
   p.productOption.createMany.mockResolvedValue({ count: 2 });
-  const s = new PricesService(p as any);
+  const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
   const rows = [
     { groupKey:"paket", groupLabel:"Paket", groupRole:"priced", groupSort:0, optionKey:"nk", optionLabel:"NK", optionSort:0 },
     { groupKey:"adet", groupLabel:"Adet", groupRole:"dimension", groupSort:0, optionKey:"1000", optionLabel:"1.000", optionSort:0 },
@@ -35,7 +35,7 @@ it("setOptions replace-all yapar (delete+create)", async () => {
 it("setPrices replace-all + Decimal map", async () => {
   const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
   p.productPrice.createMany.mockResolvedValue({ count: 1 });
-  const s = new PricesService(p as any);
+  const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
   const r = await s.setPrices("p1", [{ groupKey:"paket", optionKey:"nk", dimKey:"1000", price: 50 }] as any);
   expect(p.productPrice.deleteMany).toHaveBeenCalledWith({ where: { productId: "p1" } });
   const arg = p.productPrice.createMany.mock.calls[0][0].data[0];
@@ -55,7 +55,7 @@ it("categorySet basit ürüne yazar, seçenekliyi atlar", async () => {
   p.productOption.findMany = vi.fn().mockResolvedValue([{ productId: "matrix" }]); // matrix'in option'ı var
   p.productPrice.deleteMany = vi.fn(); p.productPrice.createMany = vi.fn().mockResolvedValue({ count: 1 });
   p.$transaction = vi.fn().mockResolvedValue([]);
-  const s = new PricesService(p as any);
+  const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
   const r = await s.categorySet("cat1", 250);
   expect(r).toEqual({ set: 1, skipped: 1 });
 });
@@ -70,7 +70,7 @@ describe("setOptions — kural referans doğrulaması", () => {
   it("geçerli forcesOption (varolan grup+seçenek) → başarıyla kaydeder", async () => {
     const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
     p.productOption.createMany.mockResolvedValue({ count: 2 });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     const rows = [
       { ...baseRows[0], rules: { forcesOption: { groupKey: "adet", optionKey: "1000" } } },
       baseRows[1],
@@ -80,7 +80,7 @@ describe("setOptions — kural referans doğrulaması", () => {
 
   it("forcesOption.groupKey geçersiz grup → BadRequestException", async () => {
     const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     const rows = [
       { ...baseRows[0], rules: { forcesOption: { groupKey: "yok-grup", optionKey: "1000" } } },
       baseRows[1],
@@ -90,7 +90,7 @@ describe("setOptions — kural referans doğrulaması", () => {
 
   it("forcesOption.optionKey geçersiz seçenek → BadRequestException", async () => {
     const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     const rows = [
       { ...baseRows[0], rules: { forcesOption: { groupKey: "adet", optionKey: "yok-secenek" } } },
       baseRows[1],
@@ -100,7 +100,7 @@ describe("setOptions — kural referans doğrulaması", () => {
 
   it("disablesGroups geçersiz grup → BadRequestException", async () => {
     const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     const rows = [
       { ...baseRows[0], rules: { disablesGroups: ["adet", "hayalet-grup"] } },
       baseRows[1],
@@ -111,7 +111,7 @@ describe("setOptions — kural referans doğrulaması", () => {
   it("disablesGroups tüm geçerli gruplar → başarıyla kaydeder", async () => {
     const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
     p.productOption.createMany.mockResolvedValue({ count: 2 });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     const rows = [
       { ...baseRows[0], rules: { disablesGroups: ["adet"] } },
       baseRows[1],
@@ -163,14 +163,14 @@ describe("countStructureSiblings", () => {
         { productId: "sib2", groupKey: "malzeme", optionKey: "m", groupRole: "priced" },
         { productId: "sibDiff", groupKey: "ebat", optionKey: "z", groupRole: "dimension" },
       ]); // siblings
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     expect(await s.countStructureSiblings("src")).toEqual({ count: 2 });
   });
 
   it("kategorisiz ürün → 0", async () => {
     const p = mkPrisma();
     p.product.findUnique.mockResolvedValue({ id: "src", categoryId: null });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     expect(await s.countStructureSiblings("src")).toEqual({ count: 0 });
   });
 });
@@ -181,7 +181,7 @@ describe("applyToCategory", () => {
     p.product.findUnique.mockResolvedValue({ id: "src", categoryId: "cat1" });
     p.productOption.findMany.mockResolvedValue([{ groupKey: "ebat", optionKey: "a", groupRole: "dimension" }]);
     p.productPrice.findMany.mockResolvedValue([]); // fiyat yok
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     await expect(s.applyToCategory("src")).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -203,7 +203,7 @@ describe("applyToCategory", () => {
     ]); // src prices
     p.product.findMany.mockResolvedValue([{ id: "sib1" }, { id: "sibDiff" }]);
     p.productPrice.createMany.mockResolvedValue({ count: 1 });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     const r = await s.applyToCategory("src");
     expect(r).toEqual({ applied: 1, skipped: 1, priceRowsPerProduct: 1 });
     // sib1 için delete+create çağrıldı (transaction ops)
@@ -219,7 +219,7 @@ describe("setOptions — geçerli label ile kayıt çalışır", () => {
   it("groupLabel ve optionLabel dolu olunca setOptions başarılı döner", async () => {
     const p = mkPrisma(); p.product.findUnique.mockResolvedValue({ id: "p1" });
     p.productOption.createMany.mockResolvedValue({ count: 1 });
-    const s = new PricesService(p as any);
+    const s = new PricesService(p as any, { getPricing: async () => ({ kur: 49, marj: 1.2, kdv: 0.2, minM2: 1 }) } as any);
     const rows = [
       { groupKey: "paket", groupLabel: "Paket", groupRole: "priced" as const, groupSort: 0, optionKey: "nk", optionLabel: "NK Mat", optionSort: 0 },
     ];

@@ -318,6 +318,10 @@ model Category {
   sortOrder        Int     @default(0) @map("sort_order")
   isActive         Boolean @default(true) @map("is_active")
   content          Json?
+  /// KÂR MARJI ÇARPANI (2026-08-27). Satış = maliyet × marj (örn. 1.8 → %80 kâr).
+  /// null = kategoriye özel marj yok → global ayara (pricing.marj) düşer.
+  /// ÖNCELİK: ürün → kategori → global. Bkz. apps/api/src/prices/margin.ts
+  profitMargin     Decimal? @map("profit_margin") @db.Decimal(6, 3)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -347,6 +351,10 @@ model Product {
   isActive         Boolean  @default(true) @map("is_active")
   /// Fiyatlama modu: "additive" (hücre-bazlı, mevcut) | "area" (m² bazlı maliyet motoru)
   pricingMode      String   @default("additive") @map("pricing_mode")
+  /// KÂR MARJI ÇARPANI (2026-08-27) — ürüne ÖZEL. Satış = maliyet × marj (1.8 → %80 kâr).
+  /// null = ürüne özel marj yok → kategori marjına, o da yoksa global ayara düşer.
+  /// Marj yalnız "uygula" denince fiyatlara yazılır; kendiliğinden fiyat değiştirmez.
+  profitMargin     Decimal? @map("profit_margin") @db.Decimal(6, 3)
   /// Konfigüratör parametreleri JSON: { id, label, kind, options, ... }
   parameters       Json     @default("[]")
   /// SEO/içerik JSON: { features, useCases, specifications, faqs, relatedSlugs, seo, brand, sku, rating }

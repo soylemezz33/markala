@@ -8,7 +8,7 @@ import {
   Gear, SignOut, Sliders, ImageSquare, Bell, List, X,
   PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
   ChatCircle, CurrencyCircleDollar, Receipt, Buildings, CaretDown, UserCircle,
-  Pulse, Medal, EnvelopeSimple, PaperPlaneTilt, ListBullets, Calculator, Wrench, ShieldCheck,
+  Pulse, Medal, EnvelopeSimple, PaperPlaneTilt, ListBullets, Calculator, Wrench, ShieldCheck, Percent,
 } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
@@ -59,6 +59,7 @@ const navGroups: Array<{
     links: [
       { href: "/urunler", label: "Ürünler", icon: Package },
       { href: "/urunler/fiyat-toplu", label: "Toplu Fiyat Güncelleme", icon: CurrencyCircleDollar },
+      { href: "/urunler/kar-marji", label: "Kâr Marjı", icon: Percent },
       { href: "/fiyat-hesaplama-sablonu", label: "Fiyat Hesaplama Şablonu", icon: Calculator },
       { href: "/kategoriler", label: "Kategoriler", icon: Storefront },
       { href: "/kuponlar", label: "Kuponlar", icon: Tag },

@@ -25,6 +25,7 @@ export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]>
   ["/bulten-aboneleri", "settings.manage"],
   ["/urunler", "catalog.manage"],
   ["/urunler/fiyat-toplu", "pricing.manage"],
+  ["/urunler/kar-marji", "pricing.manage"],
   ["/fiyat-hesaplama-sablonu", "pricing.manage"],
   ["/kategoriler", "catalog.manage"],
   ["/kuponlar", "pricing.manage"],

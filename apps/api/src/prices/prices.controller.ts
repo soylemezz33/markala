@@ -4,7 +4,7 @@ import { PricesService } from "./prices.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
 import { Perms, PERM } from "../auth/permissions";
-import { SetOptionsDto, SetPricesDto, BulkAdjustDto, CategorySetDto, ApplyToCategoryDto } from "./prices.dto";
+import { SetOptionsDto, SetPricesDto, BulkAdjustDto, CategorySetDto, ApplyToCategoryDto, ApplyMarginDto, SetMarginDto } from "./prices.dto";
 
 @ApiTags("prices")
 @Controller()
@@ -74,5 +74,35 @@ export class PricesController {
   @ApiBearerAuth()
   applyToCategory(@Body() dto: ApplyToCategoryDto) {
     return this.service.applyToCategory(dto.sourceProductId);
+  }
+  // ── KÂR MARJI (2026-08-27) ─────────────────────────────────────────────
+  /** Ürünün marj durumu: ürün/kategori/global değerleri + gerçekleşen ortalama. */
+  @Get("prices/margin/:productId")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.PRICING)
+  @ApiBearerAuth()
+  marginInfo(@Param("productId") productId: string) {
+    return this.service.marginInfo(productId);
+  }
+
+  /** Kategori/ürün marjını kaydeder (null → kaldır). Fiyatlara DOKUNMAZ. */
+  @Post("prices/margin")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.PRICING)
+  @ApiBearerAuth()
+  setMargin(@Body() dto: SetMarginDto) {
+    return this.service.setMargin(dto.scope, dto.targetId, dto.margin ?? null);
+  }
+
+  /** Marjı fiyatlara uygular. dryRun varsayılan TRUE — önce önizleme. */
+  @Post("prices/apply-margin")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.PRICING)
+  @ApiBearerAuth()
+  applyMargin(@Body() dto: ApplyMarginDto) {
+    return this.service.applyMargin(dto.scope, dto.targetId, dto.margin, dto.dryRun !== false);
   }
 }

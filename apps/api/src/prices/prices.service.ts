@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { SettingsService } from "../settings/settings.service";
+import { resolveMargin, priceFromCost, actualMargin, MIN_MARGIN, MAX_MARGIN } from "./margin";
 
 export function adjustPrice(
   price: number,
@@ -34,7 +36,7 @@ export function structureSignature(
 
 @Injectable()
 export class PricesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private settings: SettingsService) {}
 
   private async assertProduct(productId: string) {
     const p = await this.prisma.product.findUnique({ where: { id: productId }, select: { id: true } });
@@ -277,5 +279,79 @@ export class PricesService {
     ]);
     if (ops.length) await this.prisma.$transaction(ops);
     return { set: simple.length, skipped: ids.length - simple.length };
+  }
+
+  // ── KÂR MARJI (2026-08-27) ───────────────────────────────────────────────
+  /** Global marj ayarı (site_settings → pricing.marj). */
+  private async globalMargin(): Promise<number | null> {
+    const p = await this.settings.getPricing().catch(() => null);
+    const m = Number(p?.marj);
+    return Number.isFinite(m) && m > 0 ? m : null;
+  }
+
+  /** Kategori/ürün marjını kaydeder. margin=null → marjı kaldırır (üst seviyeye düşer). */
+  async setMargin(scope: "product" | "category", targetId: string, margin?: number | null) {
+    if (margin != null && (margin < MIN_MARGIN || margin > MAX_MARGIN)) {
+      throw new BadRequestException(
+        `Marj ${MIN_MARGIN} ile ${MAX_MARGIN} arasında olmalı (örn. 1.8 = %80 kâr). Yazım hatasına karşı sınırlıdır.`,
+      );
+    }
+    const data = { profitMargin: margin == null ? null : new Prisma.Decimal(margin) };
+    if (scope === "product") return this.prisma.product.update({ where: { id: targetId }, data, select: { id: true, slug: true, profitMargin: true } });
+    return this.prisma.category.update({ where: { id: targetId }, data, select: { id: true, slug: true, profitMargin: true } });
+  }
+
+  /**
+   * Marjı fiyatlara uygular: satış = maliyet × marj. dryRun=true iken HİÇBİR ŞEY yazılmaz,
+   * yalnız önizleme döner — yönetici neyin değişeceğini görmeden uygulamasın.
+   * Maliyeti olmayan satırlar ATLANIR (fiyat uydurulmaz) ve ayrıca raporlanır.
+   */
+  async applyMargin(scope: "product" | "category", targetId: string, override?: number, dryRun = true) {
+    const urunler = scope === "product"
+      ? await this.prisma.product.findMany({ where: { id: targetId }, include: { category: true, prices: true } })
+      : await this.prisma.product.findMany({ where: { categoryId: targetId }, include: { category: true, prices: true } });
+    if (!urunler.length) throw new NotFoundException("Ürün bulunamadı.");
+
+    const global = await this.globalMargin();
+    const degisecek: Array<{ productSlug: string; priceId: string; option: string; dim: string; cost: number; eskiFiyat: number; yeniFiyat: number }> = [];
+    const maliyetsiz: Array<{ productSlug: string; option: string; dim: string }> = [];
+    let kullanilanMarj = 0, marjKaynagi = "";
+
+    for (const u of urunler) {
+      const r = resolveMargin({ product: override ?? (u.profitMargin as unknown as number), category: u.category?.profitMargin as unknown as number, global });
+      kullanilanMarj = r.margin; marjKaynagi = override != null ? "manuel" : r.source;
+      for (const pr of u.prices) {
+        const cost = pr.cost == null ? null : Number(pr.cost);
+        const yeni = priceFromCost(cost, r.margin);
+        if (yeni == null) { maliyetsiz.push({ productSlug: u.slug, option: pr.optionKey ?? "", dim: pr.dimKey ?? "" }); continue; }
+        const eski = Number(pr.price);
+        if (Math.abs(eski - yeni) < 0.01) continue;
+        degisecek.push({ productSlug: u.slug, priceId: pr.id, option: pr.optionKey ?? "", dim: pr.dimKey ?? "", cost: cost as number, eskiFiyat: eski, yeniFiyat: yeni });
+      }
+    }
+
+    if (!dryRun && degisecek.length) {
+      await this.prisma.$transaction(
+        degisecek.map((d) => this.prisma.productPrice.update({ where: { id: d.priceId }, data: { price: new Prisma.Decimal(d.yeniFiyat) } })),
+      );
+    }
+    return { dryRun, marj: kullanilanMarj, marjKaynagi, urunSayisi: urunler.length, degisecekSatir: degisecek.length, maliyetsizSatir: maliyetsiz.length, degisecek: degisecek.slice(0, 200), maliyetsiz: maliyetsiz.slice(0, 50) };
+  }
+
+  /** Bir ürünün marj durumu — panelde "şu an %X kâr" ve hangi seviyeden geldiği. */
+  async marginInfo(productId: string) {
+    const u = await this.prisma.product.findUnique({ where: { id: productId }, include: { category: true, prices: true } });
+    if (!u) throw new NotFoundException("Ürün bulunamadı.");
+    const global = await this.globalMargin();
+    const r = resolveMargin({ product: u.profitMargin as unknown as number, category: u.category?.profitMargin as unknown as number, global });
+    const gercek = u.prices.map((p) => actualMargin(p.cost == null ? null : Number(p.cost), Number(p.price))).filter((x): x is number => x != null);
+    const ort = gercek.length ? Math.round((gercek.reduce((a, b) => a + b, 0) / gercek.length) * 1000) / 1000 : null;
+    return {
+      productMargin: u.profitMargin == null ? null : Number(u.profitMargin),
+      categoryMargin: u.category?.profitMargin == null ? null : Number(u.category.profitMargin),
+      globalMargin: global,
+      etkin: r.margin, kaynak: r.source,
+      gerceklesenOrtalama: ort, fiyatSatiri: u.prices.length,
+    };
   }
 }

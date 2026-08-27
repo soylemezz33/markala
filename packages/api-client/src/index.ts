@@ -581,6 +581,15 @@ export class MarkalaApiClient {
 
   // === Prices (toplu fiyat işlemleri) ===
   prices = {
+    /** Ürünün marj durumu: ürün/kategori/global + gerçekleşen ortalama (2026-08-27). */
+    marginInfo: (productId: string) =>
+      this.request<MarginInfoDto>("GET", `/prices/margin/${productId}`, undefined, { auth: true }),
+    /** Kategori/ürün marjını kaydeder; margin=null → kaldırır. Fiyatlara DOKUNMAZ. */
+    setMargin: (input: { scope: "product" | "category"; targetId: string; margin: number | null }) =>
+      this.request<{ id: string; slug: string; profitMargin: string | null }>("POST", "/prices/margin", input, { auth: true }),
+    /** Marjı fiyatlara uygular. dryRun=true (varsayılan) → yalnız önizleme. */
+    applyMargin: (input: { scope: "product" | "category"; targetId: string; margin?: number; dryRun?: boolean }) =>
+      this.request<ApplyMarginResultDto>("POST", "/prices/apply-margin", input, { auth: true }),
     /** Tüm/kategori ürünlerini yüzde veya sabit tutar ile artır/azalt. */
     bulkAdjust: (input: BulkAdjustInput) =>
       this.request<{ updated: number }>("POST", "/prices/bulk-adjust", input, { auth: true }),
@@ -862,6 +871,30 @@ export interface AdminNotificationLogRowDto {
 export interface AdminNotificationLogsDto {
   total: number;
   rows: AdminNotificationLogRowDto[];
+}
+
+/** Marj durumu (GET /prices/margin/:productId). */
+export interface MarginInfoDto {
+  productMargin: number | null;
+  categoryMargin: number | null;
+  globalMargin: number | null;
+  /** Fiilen uygulanacak marj ve hangi seviyeden geldiği. */
+  etkin: number;
+  kaynak: "product" | "category" | "global" | "default";
+  /** Mevcut fiyat/maliyet oranlarının ortalaması (null = maliyet girilmemiş). */
+  gerceklesenOrtalama: number | null;
+  fiyatSatiri: number;
+}
+
+export interface ApplyMarginResultDto {
+  dryRun: boolean;
+  marj: number;
+  marjKaynagi: string;
+  urunSayisi: number;
+  degisecekSatir: number;
+  maliyetsizSatir: number;
+  degisecek: Array<{ productSlug: string; option: string; dim: string; cost: number; eskiFiyat: number; yeniFiyat: number }>;
+  maliyetsiz: Array<{ productSlug: string; option: string; dim: string }>;
 }
 
 export interface AdminUserDto {

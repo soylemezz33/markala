@@ -48,3 +48,24 @@ export class CategorySetDto {
 export class ApplyToCategoryDto {
   @IsString() sourceProductId!: string;
 }
+
+/**
+ * Marj uygulama (2026-08-27). Satış fiyatlarını maliyetten yeniden hesaplar.
+ * `dryRun` ile ÖNCE önizleme alınır — yönetici neyin değişeceğini görmeden uygulamaz.
+ */
+export class ApplyMarginDto {
+  /** "product" → tek ürün · "category" → kategorideki tüm ürünler */
+  @IsIn(["product", "category"]) scope!: "product" | "category";
+  @IsString() @MinLength(1) targetId!: string;
+  /** Verilirse bu marj kullanılır; verilmezse ürün→kategori→global zinciri çözülür. */
+  @IsNumber() @IsOptional() @Min(1) margin?: number;
+  /** true = yalnız önizleme, hiçbir şey yazılmaz. */
+  @IsBoolean() @IsOptional() dryRun?: boolean;
+}
+
+/** Kategori/ürün marjını kaydetme. null → marjı kaldır (üst seviyeye düş). */
+export class SetMarginDto {
+  @IsIn(["product", "category"]) scope!: "product" | "category";
+  @IsString() @MinLength(1) targetId!: string;
+  @IsOptional() @IsNumber() @Min(1) margin?: number | null;
+}
