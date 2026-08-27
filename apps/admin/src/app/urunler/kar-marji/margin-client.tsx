@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { Percent, FloppyDisk, Eye, CheckCircle, WarningCircle, Info } from "@phosphor-icons/react";
 import { marjBilgisi, marjKaydet, marjUygula } from "./actions";
@@ -23,6 +24,7 @@ export function MarginClient({
   const [onizleme, setOnizleme] = useState<ApplyMarginResultDto | null>(null);
   const [mesaj, setMesaj] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
+  const router = useRouter();
 
   const secilenKategori = categories.find((c) => c.id === targetId);
   const secilenUrun = products.find((p) => p.id === targetId);
@@ -55,6 +57,9 @@ export function MarginClient({
       try {
         await marjKaydet({ scope, targetId, margin: v });
         setMesaj({ ok: true, text: v == null ? "Marj kaldırıldı — üst seviyeye düşecek." : `Marj kaydedildi: ${v} (${yuzde(v)}). Fiyatlar DEĞİŞMEDİ; uygulamak için aşağıdaki adımı kullanın.` });
+        // Listedeki "(marj x)" etiketleri sunucudan gelir; yenilenmezse eski değer görünür.
+        router.refresh();
+        if (scope === "product") { try { setBilgi(await marjBilgisi(targetId)); } catch { /* sessiz */ } }
       } catch (e) {
         setMesaj({ ok: false, text: (e as Error).message || "Kaydedilemedi." });
       }

@@ -25,6 +25,8 @@ const TIER_META: Record<string, { label: string; desc: string }> = {
   standart: { label: "Standart", desc: "Günlük kullanım, ince karton" },
   kabartma: { label: "Kabartmalı & Kalın", desc: "Elle hissedilen kabartma, kalın sıvama" },
   yaldiz: { label: "Yaldızlı", desc: "Altın / gümüş yaldız uygulaması" },
+  dokulu: { label: "Dokulu (Tuale)", desc: "Tırtıklı yüzey, elde hissedilen doku" },
+  diger: { label: "Diğer", desc: "Seviyesi belirtilmemiş seçenekler" },
 };
 
 interface Props {
@@ -411,22 +413,29 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
   // --- 2 adımlı seçim: önce seviye, sonra o seviyenin seçenekleri -----------------
   // Seviye DEĞİŞTİRMEK seçimi değiştirmez; yalnız listeyi filtreler. Aksi hâlde
   // müşteri sekmeye dokunur dokunmaz fiyat zıplardı (istenmeyen sürpriz).
+  // Seviyesi OLMAYAN seçenek "diger" kovasına düşer. Aksi hâlde panelden tier'sız bir
+  // seçenek eklendiğinde hiçbir sekmeye girmez ve müşteriye HİÇ görünmezdi (sessiz kayıp).
+  const tierOf = (o: OptionItem) => o.tier || "diger";
   const tierKeys: string[] = [];
   for (const o of allSorted) {
-    if (o.tier && !tierKeys.includes(o.tier)) tierKeys.push(o.tier);
+    if (!tierKeys.includes(tierOf(o))) tierKeys.push(tierOf(o));
   }
-  const hasTiers = tierKeys.length > 1;
-  const selectedTier = allSorted.find((o) => o.optionKey === selected)?.tier ?? null;
+  const hasTiers = tierKeys.length > 1 && allSorted.some((o) => o.tier);
+  const selectedTier = allSorted.find((o) => o.optionKey === selected) ? tierOf(allSorted.find((o) => o.optionKey === selected)!) : null;
   const [tierOverride, setTierOverride] = useState<string | null>(null);
   // Seçim başka seviyeye geçerse (ör. dışarıdan reset) sekme onu takip etsin.
   useEffect(() => {
     setTierOverride(null);
   }, [selectedTier]);
   const activeTier = hasTiers ? (tierOverride ?? selectedTier ?? tierKeys[0]!) : null;
-  const sorted = hasTiers ? allSorted.filter((o) => o.tier === activeTier) : allSorted;
+  const sorted = hasTiers ? allSorted.filter((o) => tierOf(o) === activeTier) : allSorted;
 
   const tierBar = hasTiers ? (
-    <div className="mb-3 grid grid-cols-3 gap-2" role="tablist" aria-label={`${groupLabel} seviyesi`}>
+    <div
+      className={cn("mb-3 grid gap-2", tierKeys.length >= 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}
+      role="tablist"
+      aria-label={`${groupLabel} seviyesi`}
+    >
       {tierKeys.map((t) => {
         const meta = TIER_META[t] ?? { label: t, desc: "" };
         const isActive = t === activeTier;
