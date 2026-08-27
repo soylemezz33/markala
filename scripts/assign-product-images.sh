@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 # Markala — ürün mockup'larını toplu olarak R2'ye yükler ve products.images'a atar.
 #
+# ⚠️ 2026-08-27 — BU SCRIPT HAM JPEG YÜKLER, SIKIŞTIRMAZ.
+#    Katalogdaki 903 görsel bu scriptle konmuştu ve panelin sharp hattından (WebP q82)
+#    hiç geçmemişti; 60 MB yer kaplıyorlardı. Hepsi WebP'ye çevrildi (20.9 MB) ve
+#    products.images .webp'e güncellendi.
+#    BU SCRIPTİ TEKRAR ÇALIŞTIRIRSAN o kazancı geri alırsın. Önce görselleri
+#    scripts/gorsel-webp-donustur.mjs ile çevir, sonra .webp olarak yükle
+#    (aşağıdaki *.jpg / image-jpeg varsayımlarını da güncellemen gerekir).
+#    ⚠️ Ayrıca: prod şu an R2 DEĞİL yerel disk sürücüsünü kullanıyor (R2_ACCESS_KEY_ID yok).
+#
 # Slug-adlı görseller (<slug>.jpg) bir dizinde olmalı; her biri ilgili ürünün
 # slug'ıyla eşleşir → R2'ye `products/<slug>.jpg` anahtarıyla yüklenir →
 # products.images = ARRAY['<R2_PUBLIC_URL>/products/<slug>.jpg'] (kapak) yapılır.

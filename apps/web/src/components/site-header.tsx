@@ -809,7 +809,7 @@ function FeaturedCard({
         </span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://api.markala.com.tr/uploads/products/${slug}.jpg?v=3`}
+          src={`https://api.markala.com.tr/uploads/products/${slug}.webp?v=3`}
           alt={label}
           loading="lazy"
           onError={(e) => {
@@ -1087,7 +1087,7 @@ function MobileNavGroup({ nav, onClose }: { nav: NavCategory; onClose: () => voi
                         <span className="relative block aspect-[4/3] bg-paper-100 overflow-hidden">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={`https://api.markala.com.tr/uploads/products/${f.slug}.jpg?v=3`}
+                            src={`https://api.markala.com.tr/uploads/products/${f.slug}.webp?v=3`}
                             alt={f.label}
                             loading="lazy"
                             onError={(e) => {
