@@ -226,14 +226,26 @@ const DEFAULT_NAV: NavCategory[] = [
         items: [
           { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr", badge: "POPÜLER" },
           { label: "Mesh Branda", href: "/urun/mesh-branda" },
+          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
         ],
       },
       {
-        title: "Folyo & Levha",
+        title: "Folyo & Film",
         items: [
           { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
+          { label: "Baskes Folyo", href: "/urun/baskes-folyo" },
+          { label: "One Way Vision", href: "/urun/one-way-vision-baski" },
+          { label: "UV DTF Baskı", href: "/urun/uv-dtf-baski" },
+          { label: "Duvar Kağıdı", href: "/urun/duvar-kagidi-baski" },
+        ],
+      },
+      {
+        title: "Levha & Tablo",
+        items: [
           { label: "Dekota / Foreks Baskı", href: "/urun/dekota-baski-5mm" },
-          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
+          { label: "Pleksi Baskı", href: "/urun/pleksi-baski" },
+          { label: "Kompozit Baskı", href: "/urun/kompozit-baski" },
+          { label: "Kanvas Tablo Baskı", href: "/urun/kanvas-tablo-baski" },
         ],
       },
     ],
