@@ -31,6 +31,8 @@ const KATEGORI_REHBERI: Record<string, { href: string; label: string }> = {
     label: "Branda Baskı m² Fiyatı 2026 Rehberi",
   },
   afis: { href: "/rehber/afis-baski-fiyatlari-2026", label: "Afiş Baskı Fiyatları 2026 Rehberi" },
+  // Pleksi/kompozit/kanvas aynı kategoride (dekota-baski) → hepsi pleksi rehberine bağlanır.
+  "dekota-baski": { href: "/rehber/pleksi-baski-fiyatlari-2026", label: "Pleksi Baskı Fiyatları 2026 Rehberi" },
   rollup: { href: "/rehber/rollup-fiyatlari-2026", label: "Rollup Fiyatları 2026 Rehberi" },
 };
 
