@@ -31,7 +31,6 @@
       "body-parser@^1": "^1.20.6",
       "file-type@^21": "^21.3.2",
       "@babel/core": "^7.29.6",
-      "@opentelemetry/core": "^2.8.0",
       "multer": "^2.2.0",
       "rollup@^3": "^3.30.0"
     }
