@@ -73,12 +73,15 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
   const waiting = active !== visible;
 
   return (
-    <div>
-      {/* Mobilde kare (dikey alan bol); masaüstünde yükseklik viewport'a bağlı
-          (min(48vh, 460px)) → 24" altı / düşük yükseklikli ekranlarda görsel ekranı
-          yutmaz, fiyat+CTA+seçenekler scroll'suz görünür (2026-08-07 kullanıcı geri
-          bildirimi ile 58vh/540'tan düşürüldü). */}
-      <div className="relative aspect-square lg:aspect-auto lg:h-[min(48vh,460px)] bg-paper-100 rounded-lg overflow-hidden">
+    <div className="lg:mx-auto lg:w-[clamp(320px,48vh,460px)]">
+      {/* Kutu HER ZAMAN KARE. Masaüstünde eskiden yalnız YÜKSEKLİK sabitti
+          (lg:h-[min(48vh,460px)]) ama genişlik sütunu dolduruyordu → 563x460'lık
+          dikdörtgen kutuya 1080x1080 kare görsel object-cover ile oturunca üstten ve
+          alttan %18'i kırpılıyordu (2026-08-28, Hasan ekran görüntüsü). Artık genişlik
+          de aynı ölçüye clamp'lenir; yükseklik sınırı (fiyat+CTA scroll'suz görünsün,
+          2026-08-07) böylece korunur, kırpma biter. mx-auto: küçük resimler de
+          büyük görselle aynı hizada kalsın diye sarmalayıcıya uygulanır. */}
+      <div className="relative aspect-square bg-paper-100 rounded-lg overflow-hidden">
         {hasImages
           ? images.map((src, i) =>
               mounted.has(i) && !brokenImages.has(i) ? (
@@ -91,9 +94,11 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
                   fill
                   priority={i === 0}
                   loading={i === 0 ? undefined : "eager"}
-                  sizes="(min-width:1024px) 50vw, 100vw"
+                  sizes="(min-width:1024px) 460px, 100vw"
                   className={cn(
-                    "object-cover transition-opacity duration-300 ease-out",
+                    // contain: kare olmayan bir görsel yüklenirse de HİÇBİR ŞEY kırpılmaz;
+                    // kare görselde kare kutuda cover ile birebir aynı sonucu verir.
+                    "object-contain transition-opacity duration-300 ease-out",
                     i === visible ? "opacity-100" : "opacity-0",
                   )}
                   onLoad={() => setLoaded((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))}
@@ -110,8 +115,8 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
               alt={alt}
               fill
               priority
-              sizes="(min-width:1024px) 50vw, 100vw"
-              className="object-cover"
+              sizes="(min-width:1024px) 460px, 100vw"
+              className="object-contain"
               unoptimized
             />
           ) : (
@@ -159,7 +164,7 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
                   fill
                   loading="lazy"
                   sizes="100px"
-                  className="object-cover"
+                  className="object-contain"
                   onError={() => markBroken(i)}
                 />
               )}
