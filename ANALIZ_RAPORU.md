@@ -271,7 +271,7 @@ Sayfalar genelinde tespit edilen CTA'lar:
 
 **Birincil CTA'lar:**
 1. Ürün konfigüratörü → Sepete ekle akışı (en güçlü)
-2. WhatsApp `wa.me/905319004102` — En hızlı kanal, ortalama 5 dk yanıt
+2. WhatsApp `wa.me/905057417028` — En hızlı kanal, ortalama 5 dk yanıt
 3. "Fiyat Listesi" → `/fiyat-listesi` (anasayfadan)
 4. "Kurumsal Başvuru" → `/kurumsal`
 

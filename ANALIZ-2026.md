@@ -281,7 +281,7 @@ Yalnızca `HOSGELDIN` kuponu var. Tekrar müşteriye yönelik sadakat kuponu, B2
 - Footer'da Mersin ilçeleri + komşu şehirler linkleri (Antalya, Adana, Gaziantep, Hatay, Şanlıurfa, Osmaniye)
 - `/matbaa/[city]` dinamik şehir sayfaları
 - `LocalBusinessJsonLd` fiziksel adres ile (Yenişehir / Mersin)
-- WhatsApp: `905319004102`, Tel: `0324 433 33 51`
+- WhatsApp: `905057417028`, Tel: `0324 433 33 51`
 
 **ISR Yapılandırması**  
 - Anasayfa: `revalidate = 300` (5 dakika)

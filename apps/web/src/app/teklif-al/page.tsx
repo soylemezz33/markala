@@ -454,7 +454,7 @@ export default function TeklifAlPage() {
                     WhatsApp hattımızdan yazarsan ortalama 5 dakikada dönüş yaparız.
                   </p>
                   <a
-                    href="https://wa.me/905319004102"
+                    href="https://wa.me/905057417028"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-400 hover:text-brand-300"

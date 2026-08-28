@@ -297,7 +297,7 @@ export class PaymentsService implements OnModuleInit {
         res.errorCode === "5008" || /limit|aşıl|tutar/i.test(res.errorMessage ?? "");
       if (limitError) {
         throw new BadRequestException(
-          "Bu tutarda online kart ödemesi alınamadı (banka/iyzico işlem limiti). Havale/EFT ya da kurumsal cari hesap için bize ulaşın: 0324 433 33 51 (WhatsApp: 0531 900 41 02).",
+          "Bu tutarda online kart ödemesi alınamadı (banka/iyzico işlem limiti). Havale/EFT ya da kurumsal cari hesap için bize ulaşın: 0324 433 33 51 (WhatsApp: 0505 741 70 28).",
         );
       }
       throw new ServiceUnavailableException("Ödeme başlatılamadı, lütfen tekrar deneyin.");

@@ -50,7 +50,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
         <p style="margin:6px 0 0;font-size:12px;color:#a8a29e;line-height:1.7">
           324 Ajans güvencesiyle online matbaa &amp; reklam ürünleri<br>
           <a href="https://markala.com.tr" style="color:${BRAND};text-decoration:none">markala.com.tr</a>
-          &nbsp;·&nbsp; <a href="tel:+905319004102" style="color:#a8a29e;text-decoration:none">0531 900 41 02</a>
+          &nbsp;·&nbsp; <a href="tel:+905057417028" style="color:#a8a29e;text-decoration:none">0505 741 70 28</a>
           &nbsp;·&nbsp; <a href="mailto:bilgi@markala.com.tr" style="color:#a8a29e;text-decoration:none">bilgi@markala.com.tr</a>
         </p>
       </td></tr>

@@ -451,7 +451,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                     <Phone size={12} weight="fill" /> 0324 433 33 51
                   </a>
                   <a
-                    href="https://wa.me/905319004102"
+                    href="https://wa.me/905057417028"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hidden sm:flex items-center gap-1.5 hover:text-brand-400 transition-colors"

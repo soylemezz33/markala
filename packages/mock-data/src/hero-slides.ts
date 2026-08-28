@@ -49,7 +49,7 @@ export const heroSlides: HeroSlide[] = [
     ctaLabel: "Ücretsiz Tasarım İste",
     ctaHref: "/hizmetler/tasarim-destegi",
     secondaryCtaLabel: "WhatsApp'tan yaz",
-    secondaryCtaHref: "https://wa.me/905319004102",
+    secondaryCtaHref: "https://wa.me/905057417028",
     productImage: "",
     theme: "yellow",
     visualType: "design-stack",

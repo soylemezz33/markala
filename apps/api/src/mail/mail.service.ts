@@ -544,7 +544,7 @@ Markala`;
       ? "Ödemen 3-7 iş günü içinde kartına iade edilir; gecikirse bu e-postayı yanıtlaman yeterli."
       : "Bu sipariş için tahsil edilmiş bir ödeme yok.";
     const subject = `Siparişin iptal edildi — ${order.orderNumber}`;
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (WhatsApp: 0531 900 41 02).\n\nMarkala`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (WhatsApp: 0505 741 70 28).\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişin İptal Edildi",
       intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin iptal edildi.`,
@@ -587,7 +587,7 @@ Markala`;
     // mobil hattı (apps/web/src/lib/whatsapp.ts MARKALA_WHATSAPP_NUMBER ile aynı — 0324 sabit
     // hat WhatsApp'a kayıtlı DEĞİL). Ön-doldurulmuş mesaj müşteri-kaynaklı değer içermediğinden
     // (yalnız orderNumber) güvenli; encodeURIComponent Türkçe + boşlukları güvenle kodlar.
-    const waNumber = (this.config.get<string>("WHATSAPP_NUMBER") ?? "905319004102").replace(/\D/g, "");
+    const waNumber = (this.config.get<string>("WHATSAPP_NUMBER") ?? "905057417028").replace(/\D/g, "");
     const waMessage = `Sipariş ${order.orderNumber} için değerlendirmemi paylaşıyorum: `;
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 

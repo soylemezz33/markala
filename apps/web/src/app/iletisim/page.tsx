@@ -18,11 +18,11 @@ const channels = [
   {
     icon: WhatsappLogo,
     label: "WhatsApp",
-    // Görünen numara, href'teki GERÇEK WhatsApp hattıyla (wa.me/905319004102) tutarlı
+    // Görünen numara, href'teki GERÇEK WhatsApp hattıyla (wa.me/905057417028) tutarlı
     // olmalı — önce sabit hat (0324…) yazılıydı, tık GSM'e açılıp kullanıcıyı şaşırtıyordu.
-    value: "0531 900 41 02",
+    value: "0505 741 70 28",
     sub: "En hızlı kanal · ortalama 5 dk yanıt",
-    href: "https://wa.me/905319004102",
+    href: "https://wa.me/905057417028",
     accent: "bg-success/10 text-success",
     cta: "WhatsApp aç",
   },
@@ -309,7 +309,7 @@ export default function ContactPage() {
                 <ChatCircle size={24} className="text-brand-400" weight="fill" />
                 <h3 className="mt-3 font-semibold text-lg">Kurumsal Satın Alma</h3>
                 <p className="mt-1 text-sm text-paper-100/70">Aylık fatura, cari hesap ve özel taksit imkânı için satış ekibimize yazın.</p>
-                <a href="https://wa.me/905319004102" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-400 hover:text-brand-300">
+                <a href="https://wa.me/905057417028" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-400 hover:text-brand-300">
                   B2B WhatsApp hattı <ArrowRight size={14} weight="bold" />
                 </a>
                 <a href="mailto:kurumsal@markala.com.tr" className="mt-2 inline-flex items-center gap-1.5 text-sm text-paper-100/60 hover:text-paper-100">

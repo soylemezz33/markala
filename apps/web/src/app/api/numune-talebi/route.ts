@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
       ticketId,
       degraded: true,
       message:
-        "Numune talebini aldık. En hızlı dönüş için WhatsApp hattımızdan da yazabilirsin: 0531 900 41 02",
+        "Numune talebini aldık. En hızlı dönüş için WhatsApp hattımızdan da yazabilirsin: 0505 741 70 28",
     });
   }
 

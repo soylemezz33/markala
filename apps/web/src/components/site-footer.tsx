@@ -47,7 +47,7 @@ export function SiteFooter() {
           <div className="mt-5 flex items-center gap-2">
             <SocialLink href="https://instagram.com/markala.com.tr" label="Instagram"><InstagramLogo size={18} /></SocialLink>
             <SocialLink href="https://www.linkedin.com/company/324ajans" label="LinkedIn"><LinkedinLogo size={18} /></SocialLink>
-            <SocialLink href="https://wa.me/905319004102" label="WhatsApp"><WhatsappLogo size={18} /></SocialLink>
+            <SocialLink href="https://wa.me/905057417028" label="WhatsApp"><WhatsappLogo size={18} /></SocialLink>
           </div>
         </div>
 
@@ -87,7 +87,7 @@ export function SiteFooter() {
 
         <FooterColumn title="Destek">
           <FooterLink href="/yardim">Yardım Merkezi</FooterLink>
-          <FooterLink href="https://wa.me/905319004102" external>WhatsApp Destek</FooterLink>
+          <FooterLink href="https://wa.me/905057417028" external>WhatsApp Destek</FooterLink>
           <FooterMailLink email="merhaba@markala.com.tr" />
           <FooterLink href="tel:+903244333351" external>0324 433 33 51</FooterLink>
           {/* KEP tebligat adresi — PTT KEP başvurusu tamamlandığında aktif edilecek */}
