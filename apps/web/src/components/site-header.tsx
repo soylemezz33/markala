@@ -138,8 +138,10 @@ const DEFAULT_NAV: NavCategory[] = [
     ],
   },
   {
-    label: "Bayrak & Branda",
-    href: groupHref("Bayrak & Branda", ["yelken-bayrak", "kirlangic-bayrak", "masa-bayragi", "makam-bayragi", "vinil-branda-afis", "rollup"]),
+    // Vinil ve Mesh branda "Dijital Baskı" sekmesine taşındı (2026-08-28) — ikisi de
+    // m² solvent/UV baskı. Sekmede branda kalmayınca ad da "Bayrak & Stand" oldu.
+    label: "Bayrak & Stand",
+    href: groupHref("Bayrak & Stand", ["yelken-bayrak", "kirlangic-bayrak", "masa-bayragi", "makam-bayragi", "rollup"]),
     groups: [
       {
         title: "Bayrak",
@@ -151,17 +153,13 @@ const DEFAULT_NAV: NavCategory[] = [
         ],
       },
       {
-        title: "Branda & Stand",
-        items: [
-          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr" },
-          { label: "Mesh Branda", href: "/urun/mesh-branda" },
-          { label: "Rollup 85×200", href: "/urun/rollup-standart" },
-        ],
+        title: "Stand",
+        items: [{ label: "Rollup 85×200", href: "/urun/rollup-standart" }],
       },
     ],
     featured: [
       { slug: "yelken-bayrak-damla", label: "Yelken Bayrak", theme: "ink" },
-      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
+      { slug: "rollup-standart", label: "Roll-Up Banner", theme: "brand" },
     ],
   },
   {
@@ -193,30 +191,54 @@ const DEFAULT_NAV: NavCategory[] = [
     ],
   },
   {
+    // Dekota, Folyo Çeşitleri ve Araç Sticker "Dijital Baskı"ya taşındı (2026-08-28).
+    // Bu sekmede yalnız HAZIR/monte ürünler kalır — baskı hizmetleri yandaki sekmede.
     label: "Reklam Tabela",
-    href: groupHref("Reklam Tabela", ["lightbox", "dekota-baski", "guvenlik-uyari-levhalari", "fosforlu-folyo", "plastik-reklam-dubasi", "folyo", "arac-magneti", "arac-sticker"]),
+    href: groupHref("Reklam Tabela", ["lightbox", "guvenlik-uyari-levhalari", "fosforlu-folyo", "plastik-reklam-dubasi", "arac-magneti"]),
     groups: [
       {
         title: "Tabela & Levha",
         items: [
           { label: "Lightbox LED", href: "/urun/lightbox-led-100cm" },
-          { label: "Dekota Baskı", href: "/urun/dekota-baski-5mm" },
           { label: "Güvenlik Levhası", href: "/urun/guvenlik-levhasi-sigorta" },
           { label: "Fosforlu Acil Çıkış", href: "/urun/fosforlu-cikis-folyo" },
           { label: "Plastik Duba", href: "/urun/plastik-duba-baskili" },
-        ],
-      },
-      {
-        title: "Folyo & Araç",
-        items: [
-          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
           { label: "Araç Magneti", href: "/urun/arac-magneti-30x40" },
-          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
         ],
       },
     ],
     featured: [
       { slug: "lightbox-led-100cm", label: "Lightbox LED", theme: "ink" },
+      { slug: "arac-magneti-30x40", label: "Araç Magneti", theme: "paper" },
+    ],
+  },
+  {
+    // DİJİTAL BASKI (2026-08-28, Hasan) — m² hesaplı baskı hizmetleri tek sekmede.
+    // Reklam Tabela'nın YANINA konumlandı. Çakışma bırakılmadı: buraya taşınan
+    // ürünler eski sekmelerinden ÇIKARILDI, iki yerde birden görünmüyorlar.
+    // Baskes Folyo, Duvar Kağıdı, Pleksi, Kompozit, Kanvas ve UV DTF eklendiğinde
+    // "Levha & Özel" grubuna ve featured kartlarına buradan bağlanacak.
+    label: "Dijital Baskı",
+    href: groupHref("Dijital Baskı", ["vinil-branda-afis", "folyo", "dekota-baski", "arac-sticker"]),
+    groups: [
+      {
+        title: "Vinil & Branda",
+        items: [
+          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr", badge: "POPÜLER" },
+          { label: "Mesh Branda", href: "/urun/mesh-branda" },
+        ],
+      },
+      {
+        title: "Folyo & Levha",
+        items: [
+          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
+          { label: "Dekota / Foreks Baskı", href: "/urun/dekota-baski-5mm" },
+          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
+        ],
+      },
+    ],
+    featured: [
+      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
       { slug: "dekota-baski-5mm", label: "Dekota Baskı", theme: "paper" },
     ],
   },

@@ -66,7 +66,8 @@ export const DEFAULT_NAV: NavCategory[] = [
     ],
   },
   {
-    label: "Bayrak & Branda",
+    // Vinil/Mesh branda "Dijital Baskı" sekmesine taşındı (2026-08-28) → ad güncellendi.
+    label: "Bayrak & Stand",
     href: "/urunler",
     groups: [
       {
@@ -79,17 +80,13 @@ export const DEFAULT_NAV: NavCategory[] = [
         ],
       },
       {
-        title: "Branda & Stand",
-        items: [
-          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr" },
-          { label: "Mesh Branda", href: "/urun/mesh-branda" },
-          { label: "Roll-up 85×200", href: "/urun/rollup-standart" },
-        ],
+        title: "Stand",
+        items: [{ label: "Roll-up 85×200", href: "/urun/rollup-standart" }],
       },
     ],
     featured: [
       { slug: "yelken-bayrak-damla", label: "Yelken Bayrak", theme: "ink" },
-      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
+      { slug: "rollup-standart", label: "Roll-Up Banner", theme: "brand" },
     ],
   },
   {
@@ -121,6 +118,7 @@ export const DEFAULT_NAV: NavCategory[] = [
     ],
   },
   {
+    // Dekota / Folyo / Araç Sticker "Dijital Baskı"ya taşındı — çakışma bırakılmadı.
     label: "Reklam Tabela",
     href: "/urunler",
     groups: [
@@ -128,23 +126,41 @@ export const DEFAULT_NAV: NavCategory[] = [
         title: "Tabela & Levha",
         items: [
           { label: "Lightbox LED", href: "/urun/lightbox-led-100cm" },
-          { label: "Dekota Baskı", href: "/urun/dekota-baski-5mm" },
           { label: "Güvenlik Levhası", href: "/urun/guvenlik-levhasi-sigorta" },
           { label: "Fosforlu Acil Çıkış", href: "/urun/fosforlu-cikis-folyo" },
           { label: "Plastik Duba", href: "/urun/plastik-duba-baskili" },
-        ],
-      },
-      {
-        title: "Folyo & Araç",
-        items: [
-          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
           { label: "Araç Magneti", href: "/urun/arac-magneti-30x40" },
-          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
         ],
       },
     ],
     featured: [
       { slug: "lightbox-led-100cm", label: "Lightbox LED", theme: "ink" },
+      { slug: "arac-magneti-30x40", label: "Araç Magneti", theme: "paper" },
+    ],
+  },
+  {
+    // DİJİTAL BASKI (2026-08-28) — m² hesaplı baskı hizmetleri, Reklam Tabela'nın yanında.
+    label: "Dijital Baskı",
+    href: "/urunler",
+    groups: [
+      {
+        title: "Vinil & Branda",
+        items: [
+          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr", badge: "POPÜLER" },
+          { label: "Mesh Branda", href: "/urun/mesh-branda" },
+        ],
+      },
+      {
+        title: "Folyo & Levha",
+        items: [
+          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
+          { label: "Dekota / Foreks Baskı", href: "/urun/dekota-baski-5mm" },
+          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
+        ],
+      },
+    ],
+    featured: [
+      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
       { slug: "dekota-baski-5mm", label: "Dekota Baskı", theme: "paper" },
     ],
   },
