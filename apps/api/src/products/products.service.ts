@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto, UpdateProductDto } from "./products.dto";
 import { SettingsService } from "../settings/settings.service";
-import { computeAreaPrice } from "../orders/pricing";
+import { areaStartingPrice, type AreaDisplayOption } from "./display-price";
 
 // Türkçe harf katlama (arama için). Müşteri klavyede şapkalı harf yazmıyor:
 // "brosur" yazıp "Broşür"ü bulamamak 2026-08-20'de ölçüldü — "brosur"→0 sonuç,
@@ -21,44 +21,6 @@ function foldTr(s: string): string {
     out += i >= 0 ? TR_TO[i] : ch;
   }
   return out.toLowerCase();
-}
-
-interface AreaDisplayOption {
-  groupKey: string;
-  groupRole: string;
-  groupSort: number;
-  optionKey: string;
-  rules?: { effect?: string } | null;
-}
-
-/**
- * m² ürünlerinde "…₺'den başlar" fiyatı: EN UCUZ ANA MALZEME × 1 m² (KDV dahil).
- *
- * ⚠️ YALNIZ BİRİNCİL GRUP taranır (en küçük groupSort). Önceden tüm `priced` gruplar
- * taranıyordu; 2026-08-28'de ürünlere "Ek İşlem" grubu (CNC kesim, laminasyon…)
- * eklenince bunlar da aday sayıldı ve ana malzemeden UCUZ oldukları için başlangıç
- * fiyatı çöktü: Pleksi 3.175 ₺ yerine 177 ₺ (CNC kesimin m² fiyatı), Folyo 212 ₺
- * yerine 142 ₺ (laminasyon) gösteriyordu. Ek işlem tek başına satılan bir şey değil,
- * ana malzemenin üstüne eklenir — dolayısıyla başlangıç fiyatı adayı olamaz.
- */
-function areaStartingPrice(
-  opts: AreaDisplayOption[],
-  rawOptions: unknown,
-  rows: { groupKey: string | null; optionKey: string | null; dimKey: string | null; price: number; cost: number | null }[],
-  pricing: { kur: number; marj: number; kdv: number; minM2: number },
-): number | null {
-  const priced = opts.filter((o) => o.groupRole === "priced");
-  if (!priced.length) return null;
-  const anaSort = Math.min(...priced.map((o) => o.groupSort ?? 0));
-  let min: number | null = null;
-  for (const opt of priced) {
-    if ((opt.groupSort ?? 0) !== anaSort) continue; // ek işlem grupları elenir
-    const eff = opt.rules?.effect ?? "perM2";
-    if (eff !== "perM2" && eff !== "perPiece") continue;
-    const r = computeAreaPrice(rawOptions as never, rows, { [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
-    if (r > 0 && (min === null || r < min)) min = r;
-  }
-  return min;
 }
 
 @Injectable()
