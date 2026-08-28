@@ -28,6 +28,8 @@ const STATIC_ROUTES = [
   { path: "/rehber/pleksi-baski-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
   { path: "/rehber/folyo-baski-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
   { path: "/rehber/uv-dtf-baski-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
+  { path: "/rehber/duvar-kagidi-baski-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
+  { path: "/rehber/kanvas-tablo-baski-fiyatlari-2026", priority: 0.85, freq: "weekly" as const },
   { path: "/kurumsal", priority: 0.85, freq: "monthly" as const },
   { path: "/teklif-al", priority: 0.8, freq: "monthly" as const },
   { path: "/numune-talebi", priority: 0.75, freq: "monthly" as const },
