@@ -137,7 +137,7 @@ export const DEFAULT_NAV: NavCategory[] = [
       {
         title: "Folyo & Araç",
         items: [
-          { label: "Cam Vitrin Folyo", href: "/urun/cam-folyosu-kesimli" },
+          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
           { label: "Araç Magneti", href: "/urun/arac-magneti-30x40" },
           { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
         ],

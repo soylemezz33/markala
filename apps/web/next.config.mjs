@@ -165,6 +165,14 @@ const nextConfig = {
         destination: "/icon.png",
         permanent: false,
       },
+      // Ürün adı "Cam Vitrin Folyosu" → "Folyo Çeşitleri" olunca slug da güncellendi
+      // (2026-08-28). Kalıcı yönlendirme: Google'daki mevcut sıralama ve dışarıdan
+      // gelen linkler yeni adrese TAŞINIR, kaybolmaz.
+      {
+        source: "/urun/cam-folyosu-kesimli",
+        destination: "/urun/folyo-cesitleri",
+        permanent: true,
+      },
       // Mükerrer KVKK sayfası → DB-yönetimli kanonik yasal sayfa
       {
         source: "/kvkk-aydinlatma",
