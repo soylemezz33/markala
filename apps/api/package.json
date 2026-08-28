@@ -38,13 +38,13 @@
     "google-auth-library": "^9.15.1",
     "helmet": "^8.2.0",
     "iyzipay": "^2.0.67",
-    "nodemailer": "^8.0.11",
+    "nodemailer": "^9.0.6",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^3.23.8",
-    "sharp": "^0.33.5"
+    "sharp": "^0.35.0"
   },
   "devDependencies": {
     "@markala/config": "workspace:*",
