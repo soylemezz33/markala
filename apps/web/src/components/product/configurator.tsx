@@ -278,7 +278,13 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       .filter((o) => o.groupKey === "paket")
       .sort((a, b) => a.optionSort - b.optionSort);
     // Rozet tek seçenekli "listede" anlamsız — en az 2 seçenek varsa göster.
-    return paketOpts.length >= 2 ? paketOpts[0]!.optionKey : undefined;
+    if (paketOpts.length < 2) return undefined;
+    // Rozet AÇILIŞTA SEÇİLİ olanı işaretler; ikisi de rules.varsayilan'ı takip eder
+    // (initSelections ile aynı kural), yoksa listenin ilki.
+    const isaretli = paketOpts.find(
+      (o) => (o.rules as { varsayilan?: boolean } | null | undefined)?.varsayilan === true,
+    );
+    return (isaretli ?? paketOpts[0]!).optionKey;
   }, [product.options]);
 
   // Hacim indirimi YALNIZ "adet" ayrı çarpan-boyutu olan lineer ürünlerde (İSG) uygulanır: adet

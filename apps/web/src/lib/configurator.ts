@@ -14,6 +14,8 @@ interface PricingOption {
   optionLabel: string;
   optionSublabel?: string | null;
   optionSort: number;
+  /** rules.varsayilan=true → grubun AÇILIŞTA seçili seçeneği (bkz. initSelections). */
+  rules?: { varsayilan?: boolean } | null;
 }
 
 /** DB product_prices satırına karşılık gelen tip */
@@ -165,19 +167,28 @@ export function calculateTotal(
 }
 
 /**
- * Ürünün options listesinden her grup için ilk option'ı (optionSort'a göre) seçer.
- * Yeni konfigüratör UI için başlangıç seçimleri.
+ * Her grup için açılışta seçili gelecek seçeneği belirler.
+ *
+ * ÖNCELİK: `rules.varsayilan = true` işaretli seçenek → yoksa optionSort'u en küçük olan.
+ *
+ * NEDEN İŞARET (2026-08-28, Hasan): broşürde açılış A7'ydi çünkü listede ilk sıradaydı,
+ * ama en çok satan A5. Sırf varsayılanı değiştirmek için A5'i listenin başına almak
+ * ebat sıralamasını (A7→A3) bozardı. İşaret sayesinde GÖRÜNEN SIRA ile VARSAYILAN
+ * SEÇİM birbirinden ayrılır; ikisi de panelden ayrı ayrı ayarlanabilir.
  */
 export function initSelections(product: Product): Record<string, string> {
   const opts = (product.options ?? []) as unknown as PricingOption[];
   const result: Record<string, string> = {};
-  // Her grup için optionSort en küçük olanı seç
-  const seen = new Map<string, { optionKey: string; optionSort: number }>();
+  const seen = new Map<string, { optionKey: string; optionSort: number; isaretli: boolean }>();
   for (const o of opts) {
-    const existing = seen.get(o.groupKey);
-    if (!existing || o.optionSort < existing.optionSort) {
-      seen.set(o.groupKey, { optionKey: o.optionKey, optionSort: o.optionSort });
-    }
+    const isaretli = o.rules?.varsayilan === true;
+    const mevcut = seen.get(o.groupKey);
+    // İşaretli seçenek her zaman kazanır; iki işaretli varsa sırası önde olan.
+    const kazanir =
+      !mevcut ||
+      (isaretli && !mevcut.isaretli) ||
+      (isaretli === mevcut.isaretli && o.optionSort < mevcut.optionSort);
+    if (kazanir) seen.set(o.groupKey, { optionKey: o.optionKey, optionSort: o.optionSort, isaretli });
   }
   for (const [groupKey, { optionKey }] of seen) {
     result[groupKey] = optionKey;
