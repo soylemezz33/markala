@@ -59,14 +59,25 @@ wb_in = openpyxl.load_workbook(KAYNAK, data_only=True)
 urunler = []
 for ws in wb_in.worksheets:
     cur = None
+    onceki_tek_hucre = False
     for row in ws.iter_rows(values_only=True):
         c = ["" if x is None else str(x).strip() for x in row]
         if not any(c):
+            onceki_tek_hucre = False                     # boş satır → blok bitti
             continue
-        if c[0] and not any(c[1:]):                      # yalnız ilk hücre dolu → ürün başlığı
-            cur = {"sayfa": ws.title, "urun": c[0], "gruplar": []}
-            urunler.append(cur)
+        if c[0] and not any(c[1:]):                      # yalnız ilk hücre dolu
+            # ÜST ÜSTE iki tek-hücreli satır: ikincisi YENİ ÜRÜN DEĞİL, DEĞERİ BOŞ
+            # BIRAKILMIŞ bir seçenek grubudur. Kaşelerde böyle: "Standart Kaşe" (ürün)
+            # → "Marka" (değerleri yazılmamış grup) → "Ebat" / "Renk" (ürünün grupları).
+            # Bu ayrım olmadan Ebat ve Renk, ürün sanılan "Marka"ya bağlanıyordu.
+            if onceki_tek_hucre and cur is not None:
+                cur["bos_gruplar"].append(c[0])
+            else:
+                cur = {"sayfa": ws.title, "urun": c[0], "gruplar": [], "bos_gruplar": []}
+                urunler.append(cur)
+            onceki_tek_hucre = True
             continue
+        onceki_tek_hucre = False
         if cur is not None and c[0]:
             cur["gruplar"].append({"ad": c[0], "secenekler": [v for v in c[1:] if v]})
 
@@ -127,6 +138,10 @@ for u in urunler:
     fiyatli = [g for g in gruplar_ek_haric if len(g["secenekler"]) > 1]
     sabit = " · ".join(f'{g["ad"]}: {g["secenekler"][0]}'
                        for g in gruplar_ek_haric if len(g["secenekler"]) == 1)
+    # Değerleri yazılmamış gruplar (ör. kaşede "Marka") — doldurulması gerektiği görünsün.
+    if u.get("bos_gruplar"):
+        eksik_not = "DEĞERLER EKSİK → " + ", ".join(u["bos_gruplar"])
+        sabit = f"{sabit} · {eksik_not}" if sabit else eksik_not
 
     # m² ÜRÜNLERDE gruplar ÇARPILIR, toplanmaz: 5 mm siyah pleksi tek bir malzemedir,
     # "5 mm" + "siyah farkı" değil. Aynı şekilde malzeme × baskı türü tek satırdır.
