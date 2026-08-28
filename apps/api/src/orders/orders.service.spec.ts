@@ -5,7 +5,7 @@ import {
   NotFoundException,
   ConflictException,
 } from "@nestjs/common";
-import { OrdersService, validStatusTransitions } from "./orders.service";
+import { OrdersService, validStatusTransitions, STATUS_ORDER, isGeriAdim } from "./orders.service";
 
 /**
  * Kapsamlı test alanları:
@@ -479,12 +479,42 @@ describe("OrdersService.updateStatus — durum makinesi", () => {
     expect(prisma.order.update).toHaveBeenCalledOnce();
   });
 
-  it("izinsiz geçiş: teslim-edildi → siparis-alindi → BadRequestException", async () => {
+  // 2026-08-28: geri dönüş artık SERBEST — yanlış tıklanan durum düzeltilebilmeli.
+  it("geri dönüş serbest: teslim-edildi → siparis-alindi çalışır", async () => {
     const prisma = makePrisma();
     prisma.order.findUnique.mockResolvedValue({ status: "teslim_edildi" });
     const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendNewOrderAdminEmail: vi.fn().mockResolvedValue(true), sendOrderInProductionEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never, { isEnabled: () => false } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never);
 
-    await expect(svc.updateStatus("ord1", "siparis-alindi")).rejects.toBeInstanceOf(BadRequestException);
+    await svc.updateStatus("ord1", "siparis-alindi");
+    expect(prisma.order.update).toHaveBeenCalledOnce();
+  });
+
+  it("iptal terminal kalır: iptal-edildi → uretimde → BadRequestException", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({ status: "iptal_edildi" });
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendNewOrderAdminEmail: vi.fn().mockResolvedValue(true), sendOrderInProductionEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never, { isEnabled: () => false } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never);
+
+    await expect(svc.updateStatus("ord1", "uretimde")).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("GERİ adımda müşteriye mail GİTMEZ (düzeltme, olay değil)", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({ status: "teslim_edildi" });
+    const mail = { sendOrderConfirmationEmail: vi.fn(), sendNewOrderAdminEmail: vi.fn(), sendOrderInProductionEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) };
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, mail as never, { isEnabled: () => false } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never);
+
+    await svc.updateStatus("ord1", "uretimde");
+    expect(mail.sendOrderInProductionEmail).not.toHaveBeenCalled();
+  });
+
+  it("İLERİ adımda mail gider", async () => {
+    const prisma = makePrisma();
+    prisma.order.findUnique.mockResolvedValue({ status: "tasarim_onayindi" });
+    const mail = { sendOrderConfirmationEmail: vi.fn(), sendNewOrderAdminEmail: vi.fn(), sendOrderInProductionEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) };
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, mail as never, { isEnabled: () => false } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never);
+
+    await svc.updateStatus("ord1", "uretimde");
+    expect(mail.sendOrderInProductionEmail).toHaveBeenCalledOnce();
   });
 
   it("kargoya-verildi → shippedAt atanır", async () => {
@@ -507,13 +537,38 @@ describe("OrdersService.updateStatus — durum makinesi", () => {
 });
 
 describe("validStatusTransitions export", () => {
-  it("teslim-edildi ve iptal-edildi terminal state — boş dizi", () => {
-    expect(validStatusTransitions["teslim-edildi"]).toHaveLength(0);
+  it("iptal-edildi terminal — para hareketi olduğu için geri açılamaz", () => {
     expect(validStatusTransitions["iptal-edildi"]).toHaveLength(0);
   });
 
-  it("siparis-alindi'dan birden fazla hedef var", () => {
-    expect(validStatusTransitions["siparis-alindi"].length).toBeGreaterThan(1);
+  // 2026-08-28: teslim-edildi ARTIK terminal DEĞİL. Yanlış tıklanan durum geri alınabilmeli;
+  // aksi hâlde panel kilitleniyordu (Hasan: "tasarım onayındaya aldım, geri alınca hata veriyor").
+  it("teslim-edildi'den geri dönülebilir", () => {
+    expect(validStatusTransitions["teslim-edildi"]).toContain("kargoya-verildi");
+    expect(validStatusTransitions["teslim-edildi"]).toContain("uretimde");
+  });
+
+  it("her aktif durumdan diğer tüm aktif durumlara + iptale gidilebilir", () => {
+    for (const s of STATUS_ORDER) {
+      expect(validStatusTransitions[s]).toContain("iptal-edildi");
+      expect(validStatusTransitions[s]).not.toContain(s);
+      expect(validStatusTransitions[s]).toHaveLength(STATUS_ORDER.length); // 5 diğer + iptal
+    }
+  });
+});
+
+describe("isGeriAdim", () => {
+  it("sürecin gerisine gitmek geri adımdır", () => {
+    expect(isGeriAdim("tasarim-onayindi", "siparis-alindi")).toBe(true);
+    expect(isGeriAdim("teslim-edildi", "uretimde")).toBe(true);
+  });
+  it("ileri gitmek geri adım değildir", () => {
+    expect(isGeriAdim("siparis-alindi", "uretimde")).toBe(false);
+    expect(isGeriAdim("uretimde", "kargoya-verildi")).toBe(false);
+  });
+  it("iptal sıralamada yok — geri adım sayılmaz (iptal maili DAİMA gider)", () => {
+    expect(isGeriAdim("uretimde", "iptal-edildi")).toBe(false);
+    expect(isGeriAdim("iptal-edildi", "uretimde")).toBe(false);
   });
 });
 

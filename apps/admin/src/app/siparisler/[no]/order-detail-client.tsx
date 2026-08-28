@@ -33,6 +33,16 @@ const STATUSES = [
 /** Prisma enum (underscore) → STATUSES id (hyphen). API status'ünü tabloyla eşleştirir. */
 const toSlug = (s: string) => String(s ?? "").replace(/_/g, "-");
 
+/**
+ * Hedef durum süreçte geride mi? API'deki isGeriAdim ile AYNI mantık (orders.service.ts).
+ * Geri adım = düzeltme → müşteriye mail gitmez; onay metni bunu yazar.
+ */
+function geriAdimMi(mevcut: string, hedef: string): boolean {
+  const a = STATUSES.findIndex((s) => s.id === mevcut);
+  const b = STATUSES.findIndex((s) => s.id === hedef);
+  return a >= 0 && b >= 0 && b < a;
+}
+
 /** Ödeme durumu etiketleri (sipariş durumundan AYRI). */
 const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
   beklemede: { label: "Ödeme Bekliyor", color: "bg-warning/10 text-warning" },
@@ -172,14 +182,34 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
 
   const handleStatusChange = (statusId: string) => {
     if (statusId === currentStatus || isPending) return;
-    // Terminal durumlar (teslim/iptal) GERİ ALINAMAZ → ekstra onay iste.
-    const TERMINAL: Record<string, string> = {
-      "teslim-edildi": "Teslim Edildi",
-      "iptal-edildi": "İptal Edildi",
-    };
-    if (TERMINAL[statusId]) {
+    // HER durum değişikliği onay ister (2026-08-28, Hasan: "tek tıkla yürümesin,
+    // çünkü müşteriye mail gidiyor"). Onay metni ne olacağını AÇIKÇA yazar: müşteriye
+    // mail gidip gitmeyeceğini ve işlemin geri alınabilir olup olmadığını.
+    if (statusId === currentStatus) return;
+    const hedef = STATUSES.find((s) => s.id === statusId)?.label ?? statusId;
+    const mevcut = STATUSES.find((s) => s.id === currentStatus)?.label ?? currentStatus;
+
+    if (statusId === "iptal-edildi") {
       const ok = window.confirm(
-        `Sipariş "${TERMINAL[statusId]}" olarak işaretlenecek.\n\nBu işlem GERİ ALINAMAZ (durum bundan sonra değiştirilemez). Devam etmek istiyor musunuz?`,
+        `Sipariş İPTAL EDİLECEK.\n\n` +
+          `• Müşteriye iptal e-postası GİDECEK.\n` +
+          `• Bu işlem GERİ ALINAMAZ — iptal edilen sipariş yeniden açılamaz.\n\n` +
+          `Devam edilsin mi?`,
+      );
+      if (!ok) return;
+    } else {
+      // Geri adımda müşteriye mail gitmez (API tarafında da böyle) — onay metni bunu söyler.
+      const geri = geriAdimMi(currentStatus, statusId);
+      const mailliDurumlar = ["uretimde", "kargoya-verildi", "teslim-edildi"];
+      const mailGidecek = !geri && mailliDurumlar.includes(statusId);
+      const ok = window.confirm(
+        `${mevcut} → ${hedef}\n\n` +
+          (mailGidecek
+            ? `⚠ Müşteriye "${hedef}" bildirimi E-POSTA ile GÖNDERİLECEK.\n\n`
+            : geri
+              ? `Bu bir geri alma. Müşteriye e-posta GÖNDERİLMEZ.\n\n`
+              : `Müşteriye e-posta gönderilmez.\n\n`) +
+          `Devam edilsin mi?`,
       );
       if (!ok) return;
     }

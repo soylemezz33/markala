@@ -39,18 +39,39 @@ function round2(n: number): number {
  * yalnızca aşağıdaki izinli komşu durumlara taşıyabilir.
  * Örn. teslim_edildi → siparis_alindi YASAK.
  */
-// Admin esnekliği: İLERİ yönde herhangi bir aşamaya atlama + her aktif durumdan iptal serbest.
-// GERİ dönüş ve terminal (teslim/iptal) durumlardan çıkış YASAK. Böylece admin "tasarım"ı
-// atlayıp doğrudan "üretimde"/"kargoda" işaretleyebilir; yanlışlıkla geri alma engellenir.
+/**
+ * Sürecin ileri yönü. Sıra hem "ileri mi geri mi gidiyoruz" sorusunu yanıtlar
+ * (bkz. isGeriAdim) hem de geçiş matrisini üretir.
+ */
+export const STATUS_ORDER = [
+  "siparis-alindi",
+  "tasarim-bekleniyor",
+  "tasarim-onayindi",
+  "uretimde",
+  "kargoya-verildi",
+  "teslim-edildi",
+] as const;
+
+// 2026-08-28 (Hasan): geri dönüş ARTIK SERBEST. Önceden yalnız ileri gidilebiliyordu;
+// yanlışlıkla "Tasarım Onayında"ya alınan sipariş geri alınamıyor, panel kilitleniyordu.
+// Yanlış tıklamayı engellemek adına doğru olanı düzeltmeyi imkânsız kılmak kötü bir takas —
+// koruma artık admin panelindeki onay adımında (müşteriye mail gidecek mi, orada yazıyor).
+//
+// İPTAL hâlâ terminal: iade ve sadakat puanı geri alınmış olur, siparişi yeniden açmak
+// ayrı bir iştir (para hareketi) ve sessizce yapılmamalı.
 export const validStatusTransitions: Record<string, string[]> = {
-  "siparis-alindi": ["tasarim-bekleniyor", "tasarim-onayindi", "uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi"],
-  "tasarim-bekleniyor": ["tasarim-onayindi", "uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi"],
-  "tasarim-onayindi": ["uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi"],
-  uretimde: ["kargoya-verildi", "teslim-edildi", "iptal-edildi"],
-  "kargoya-verildi": ["teslim-edildi", "iptal-edildi"],
-  "teslim-edildi": [],
+  ...Object.fromEntries(
+    STATUS_ORDER.map((s) => [s, [...STATUS_ORDER.filter((o) => o !== s), "iptal-edildi"]]),
+  ),
   "iptal-edildi": [],
 };
+
+/** Hedef durum, mevcut durumdan ÖNCEyse bu bir düzeltmedir (geri adım). */
+export function isGeriAdim(current: string, next: string): boolean {
+  const a = STATUS_ORDER.indexOf(current as (typeof STATUS_ORDER)[number]);
+  const b = STATUS_ORDER.indexOf(next as (typeof STATUS_ORDER)[number]);
+  return a >= 0 && b >= 0 && b < a;
+}
 
 /**
  * URL slug (hyphen: "kargoya-verildi") → Prisma OrderStatus enum üyesi (underscore: "kargoya_verildi").
@@ -1012,13 +1033,19 @@ export class OrdersService {
     // Hasan kararı: her durum için mail YOK, müşteriyi boğmasın. Bildirilen dört an:
     // sipariş alındı · baskıya verildi · kargoya verildi · teslim edildi.
     // "tasarim-bekleniyor" ve "tasarim-onayindi" BİLEREK sessiz.
-    if (status === "uretimde")
+    //
+    // GERİ ADIMDA MAİL YOK (2026-08-28): geri alma bir DÜZELTMEdir, müşteriyi
+    // ilgilendiren bir olay değil. "Kargoya verildi"yi yanlışlıkla işaretleyip geri alan
+    // admin, müşteriye ikinci bir bildirim göndermiş olmamalı. İleri gidince yine gider.
+    const geriAdim = isGeriAdim(currentSlug, status);
+    if (geriAdim) this.logger.log(`Durum geri alındı (mail gönderilmedi): ${currentSlug} → ${status} order=${id}`);
+    if (!geriAdim && status === "uretimde")
       void this.mail.sendOrderInProductionEmail(id).catch(() => undefined);
-    if (status === "kargoya-verildi")
+    if (!geriAdim && status === "kargoya-verildi")
       void this.mail
         .sendOrderShippedEmail(id, { number: extras?.trackingNumber, carrier: extras?.trackingCarrier })
         .catch(() => undefined);
-    if (status === "teslim-edildi")
+    if (!geriAdim && status === "teslim-edildi")
       void this.mail.sendOrderDeliveredEmail(id).catch(() => undefined);
     // İptal bildirimi — müşteri iptali maille öğrenir (ödenmişse iade beklentisi yönetilir).
     if (status === "iptal-edildi")
