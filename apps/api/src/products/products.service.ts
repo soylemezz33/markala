@@ -23,6 +23,44 @@ function foldTr(s: string): string {
   return out.toLowerCase();
 }
 
+interface AreaDisplayOption {
+  groupKey: string;
+  groupRole: string;
+  groupSort: number;
+  optionKey: string;
+  rules?: { effect?: string } | null;
+}
+
+/**
+ * m² ürünlerinde "…₺'den başlar" fiyatı: EN UCUZ ANA MALZEME × 1 m² (KDV dahil).
+ *
+ * ⚠️ YALNIZ BİRİNCİL GRUP taranır (en küçük groupSort). Önceden tüm `priced` gruplar
+ * taranıyordu; 2026-08-28'de ürünlere "Ek İşlem" grubu (CNC kesim, laminasyon…)
+ * eklenince bunlar da aday sayıldı ve ana malzemeden UCUZ oldukları için başlangıç
+ * fiyatı çöktü: Pleksi 3.175 ₺ yerine 177 ₺ (CNC kesimin m² fiyatı), Folyo 212 ₺
+ * yerine 142 ₺ (laminasyon) gösteriyordu. Ek işlem tek başına satılan bir şey değil,
+ * ana malzemenin üstüne eklenir — dolayısıyla başlangıç fiyatı adayı olamaz.
+ */
+function areaStartingPrice(
+  opts: AreaDisplayOption[],
+  rawOptions: unknown,
+  rows: { groupKey: string | null; optionKey: string | null; dimKey: string | null; price: number; cost: number | null }[],
+  pricing: { kur: number; marj: number; kdv: number; minM2: number },
+): number | null {
+  const priced = opts.filter((o) => o.groupRole === "priced");
+  if (!priced.length) return null;
+  const anaSort = Math.min(...priced.map((o) => o.groupSort ?? 0));
+  let min: number | null = null;
+  for (const opt of priced) {
+    if ((opt.groupSort ?? 0) !== anaSort) continue; // ek işlem grupları elenir
+    const eff = opt.rules?.effect ?? "perM2";
+    if (eff !== "perM2" && eff !== "perPiece") continue;
+    const r = computeAreaPrice(rawOptions as never, rows, { [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
+    if (r > 0 && (min === null || r < min)) min = r;
+  }
+  return min;
+}
+
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService, private settings: SettingsService) {}
@@ -148,17 +186,9 @@ export class ProductsService {
         select: { id: true, options: true, prices: true },
       });
       for (const ap of areaProducts) {
-        const opts = ap.options as unknown as { groupKey: string; groupRole: string; optionKey: string; rules?: { effect?: string } | null }[];
+        const opts = ap.options as unknown as AreaDisplayOption[];
         const rows = ap.prices.map((pr) => ({ groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey, price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost) }));
-        let min: number | null = null;
-        for (const opt of opts) {
-          if (opt.groupRole !== "priced") continue;
-          const eff = opt.rules?.effect ?? "perM2";
-          if (eff !== "perM2" && eff !== "perPiece") continue; // yalnız ana malzeme/takım
-          const r = computeAreaPrice(ap.options as never, rows, { [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
-          if (r > 0 && (min === null || r < min)) min = r;
-        }
-        areaDisplay.set(ap.id, min);
+        areaDisplay.set(ap.id, areaStartingPrice(opts, ap.options, rows, pricing));
       }
     }
 
@@ -194,16 +224,8 @@ export class ProductsService {
       if (priceRows.length) {
         const pricing = await this.settings.getPricing();
         const rows = priceRows.map((pr) => ({ groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey, price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost) }));
-        const opts = product.options as unknown as { groupKey: string; groupRole: string; optionKey: string; rules?: { effect?: string } | null }[];
-        let min: number | null = null;
-        for (const opt of opts) {
-          if (opt.groupRole !== "priced") continue;
-          const eff = opt.rules?.effect ?? "perM2";
-          if (eff !== "perM2" && eff !== "perPiece") continue;
-          const r = computeAreaPrice(product.options as never, rows, { [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
-          if (r > 0 && (min === null || r < min)) min = r;
-        }
-        displayPrice = min;
+        const opts = product.options as unknown as AreaDisplayOption[];
+        displayPrice = areaStartingPrice(opts, product.options, rows, pricing);
       }
     } else if (priceRows.length) {
       const positive = priceRows.map((pr) => Number(pr.price)).filter((v) => v > 0);
