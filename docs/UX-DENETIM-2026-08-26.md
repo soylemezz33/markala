@@ -150,6 +150,26 @@ Bağlam: docs/UX-DENETIM-2026-08-26.md denetiminin 4. ve 8. bulguları. Storefro
 - Deploy sonrası SEO oturumuna haber verilsin: anahtar etkinlik işaretleme + Ads ikincil dönüşüm
   bağlama + günlük rapora ekleme oradan yapılacak.
 
+**İş 5 — Admin: iade ve iptal akışlarının bağlanması (2026-08-29, Hasan'ın canlı testinden)**
+- Belirti: "Ödemeyi İade Et" ile "Siparişi İptal Et" tamamen bağımsız. Hasan test siparişinde
+  iadeyi yaptı → para döndü, paymentStatus=iade_edildi oldu; ama sipariş durumu "Kargoda" kaldı
+  ve iptal ayrıca yapılmadıkça öyle görünmeye devam ediyor. Kafa karıştırıcı + müşteri
+  "Siparişlerim"de iade edilmiş siparişini hâlâ "Kargoda" görür.
+- İstenen davranış:
+  1. **"Siparişi İptal Et"** akışı: sipariş ödenmişse (paymentStatus=basarili) onay penceresine
+     seçenek eklensin: "Ödeme de iade edilsin mi?" → evet ise önce refundOrder, başarılıysa
+     updateStatus(iptal-edildi) zinciri; iade başarısızsa iptal DURDURULUR ve hata gösterilir
+     (parası iade edilmemiş "iptal edilmiş" sipariş oluşmasın).
+  2. **"Ödemeyi İade Et"** tek başına kullanıldığında sipariş durumu değişmez (kısmi/istisna
+     senaryolar için doğru) AMA: (a) detay sayfasındaki mevcut bant kalsın, (b) siparişler
+     LİSTESİNDE ödeme sütununda "İade Edildi" rozeti net görünsün, (c) müşteri tarafında
+     (hesabım/siparişlerim) da "Ödemesi iade edildi" ibaresi gösterilsin.
+  3. İade edilmiş+iptal edilmiş siparişin zaman çizelgesi yeşil "tamamlandı" adımları yerine
+     iptal görünümüne dönsün (yeşil tikler yanıltıcı).
+- Kabul ölçütü: iade+iptal tek akışta tamamlanabilir; iade edilen sipariş hem admin listesinde
+  hem müşteri panelinde doğru etiketlenir; para iadesi olmadan iptal işaretlenemez (ödenmiş
+  siparişlerde) ya da bilinçli onayla ayrışır.
+
 ---
 
 ## İş bölümü önerisi
