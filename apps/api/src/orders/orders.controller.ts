@@ -10,6 +10,7 @@ import {
   ListOrdersQueryDto,
   UpdateOrderStatusDto,
   UpdateOrderTrackingDto,
+  MailOnizlemeDto,
   TrackOrderDto,
 } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
@@ -125,6 +126,26 @@ export class OrdersController {
    * Kargoya verilmiş ama takip numarası girilmemiş siparişleri sonradan tamamlamak
    * ve yanlış girilen numarayı düzeltmek için (bkz. UpdateOrderTrackingDto).
    */
+  /**
+   * Mail önizleme (admin) — gerçek sipariş verisiyle işlemsel maili İSTENEN adrese gönderir;
+   * müşteriye HİÇBİR ŞEY gitmez, sipariş durumu değişmez. Şablon testleri için (2026-08-29).
+   */
+  @Post(":id/mail-onizleme")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_STATUS)
+  @ApiBearerAuth()
+  async mailOnizleme(@Param("id") id: string, @Body() dto: MailOnizlemeDto) {
+    const ok =
+      dto.sablon === "siparis-alindi"
+        ? await this.service.mailOnizlemeSiparisAlindi(id, dto.alici)
+        : await this.service.mailOnizlemeKargoyaVerildi(id, dto.alici, {
+            number: dto.takipNo,
+            carrier: dto.kargoFirma,
+          });
+    return { gonderildi: ok, alici: dto.alici, sablon: dto.sablon };
+  }
+
   @Patch(":id/tracking")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")

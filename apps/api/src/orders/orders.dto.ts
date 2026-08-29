@@ -349,6 +349,25 @@ export class UpdateOrderStatusDto {
  * müşteriye tekrar kargo maili atardı. Bu uç YALNIZ kolonları yazar + denetim kaydı
  * düşer; hiçbir bildirim tetiklemez.
  */
+/** Admin mail-önizleme testi: gerçek sipariş verisiyle şablonu, MÜŞTERİYE DEĞİL verilen adrese gönderir. */
+export class MailOnizlemeDto {
+  @IsIn(["siparis-alindi", "kargoya-verildi"])
+  sablon!: "siparis-alindi" | "kargoya-verildi";
+
+  @IsEmail()
+  alici!: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  takipNo?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  kargoFirma?: string;
+}
+
 export class UpdateOrderTrackingDto {
   @IsString()
   @IsOptional()

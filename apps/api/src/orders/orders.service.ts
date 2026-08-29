@@ -1144,4 +1144,16 @@ export class OrdersService {
       this.logger.error(`issueInvoiceIfNeeded beklenmedik hata order=${orderId}: ${(e as Error).message}`);
     }
   }
+  /** Admin mail-önizleme köprüleri — müşteriye değil, verilen adrese gönderir (controller: mail-onizleme). */
+  async mailOnizlemeSiparisAlindi(orderId: string, alici: string): Promise<boolean> {
+    return this.mail.sendOrderConfirmationEmail(orderId, alici);
+  }
+  async mailOnizlemeKargoyaVerildi(
+    orderId: string,
+    alici: string,
+    tracking?: { number?: string; carrier?: string },
+  ): Promise<boolean> {
+    return this.mail.sendOrderShippedEmail(orderId, tracking, alici);
+  }
+
 }

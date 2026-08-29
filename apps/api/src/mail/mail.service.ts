@@ -189,7 +189,8 @@ export class MailService {
    * gönderilir. orderId ile siparişi + kalemleri çeker, KDV-dahil özet + tutar tablosu yollar.
    * HATA FIRLATMAZ — sipariş/ödeme akışını bloke etmez (fire-and-forget güvenli).
    */
-  async sendOrderConfirmationEmail(orderId: string): Promise<boolean> {
+  /** aliciOverride: yalnız admin mail-önizleme testinde dolu — müşteriye DEĞİL, verilen adrese gider. */
+  async sendOrderConfirmationEmail(orderId: string, aliciOverride?: string): Promise<boolean> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: true, user: { select: { fullName: true } } },
@@ -304,13 +305,14 @@ export class MailService {
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Üretim tamamlanınca kargo bilgisini ayrıca ileteceğiz. Sorularınız için bu e-postayı yanıtlayabilirsiniz.</p>`,
     });
 
+    const alici = aliciOverride ?? order.email;
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-confirmation", orderNumber: order.orderNumber }, subject);
+      const info = await this.transporter.sendMail({ from: this.from, to: alici, subject: aliciOverride ? `[ÖNİZLEME] ${subject}` : subject, text, html });
+      await this.logNotification(alici, "sent", { messageId: info.messageId, template: "order-confirmation", orderNumber: order.orderNumber, onizleme: Boolean(aliciOverride) }, subject);
       return true;
     } catch (err) {
-      this.logger.warn(`mail.orderConfirmation failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-confirmation", orderNumber: order.orderNumber }, subject);
+      this.logger.warn(`mail.orderConfirmation failed to=${alici}: ${(err as Error).message}`);
+      await this.logNotification(alici, "failed", { error: (err as Error).message, template: "order-confirmation", orderNumber: order.orderNumber, onizleme: Boolean(aliciOverride) }, subject);
       return false;
     }
   }
@@ -521,7 +523,8 @@ Markala`;
   }
 
   /** Sipariş kargoya verildiğinde müşteriye bildirim (updateStatus "kargoya-verildi" tetikler). */
-  async sendOrderShippedEmail(orderId: string, tracking?: { number?: string; carrier?: string }): Promise<boolean> {
+  /** aliciOverride: yalnız admin mail-önizleme testinde dolu — müşteriye DEĞİL, verilen adrese gider. */
+  async sendOrderShippedEmail(orderId: string, tracking?: { number?: string; carrier?: string }, aliciOverride?: string): Promise<boolean> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: true, user: { select: { fullName: true } } },
@@ -614,13 +617,14 @@ Markala`;
         ${emailButton("Siparişlerim", orderUrl)}
         <p style="margin:12px 0 0;color:#78716c;font-size:13px">Bir sorun olursa bu e-postayı yanıtlayabilir ya da WhatsApp'tan yazabilirsin.</p>`,
     });
+    const alici = aliciOverride ?? order.email;
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
-      await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-shipped", orderNumber: order.orderNumber }, subject);
+      const info = await this.transporter.sendMail({ from: this.from, to: alici, subject: aliciOverride ? `[ÖNİZLEME] ${subject}` : subject, text, html });
+      await this.logNotification(alici, "sent", { messageId: info.messageId, template: "order-shipped", orderNumber: order.orderNumber, onizleme: Boolean(aliciOverride) }, subject);
       return true;
     } catch (err) {
-      this.logger.warn(`mail.orderShipped failed to=${order.email}: ${(err as Error).message}`);
-      await this.logNotification(order.email, "failed", { error: (err as Error).message, template: "order-shipped", orderNumber: order.orderNumber }, subject);
+      this.logger.warn(`mail.orderShipped failed to=${alici}: ${(err as Error).message}`);
+      await this.logNotification(alici, "failed", { error: (err as Error).message, template: "order-shipped", orderNumber: order.orderNumber, onizleme: Boolean(aliciOverride) }, subject);
       return false;
     }
   }
