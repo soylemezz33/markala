@@ -105,8 +105,17 @@ export default function OrdersPage() {
                 </Link>
                 <p className="text-xs text-ink-500 mt-1">{formatDate(o.createdAt)}</p>
               </div>
-              <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", statusToneClass[st] ?? "bg-paper-100 text-ink-700")}>
-                {orderStatusLabel(st)}
+              <span className="flex flex-col items-end gap-1">
+                <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", statusToneClass[st] ?? "bg-paper-100 text-ink-700")}>
+                  {orderStatusLabel(st)}
+                </span>
+                {/* İade ibaresi (2026-08-29 UX denetimi İş 5): ödemesi iade edilmiş sipariş
+                    listede de belli olsun — durum rozeti tek başına bunu söylemiyor. */}
+                {(o.paymentStatus === "iade_edildi" || o.paymentStatus === "iade-edildi") && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-paper-100 text-ink-500 border border-paper-200">
+                    Ödemesi iade edildi
+                  </span>
+                )}
               </span>
             </header>
 

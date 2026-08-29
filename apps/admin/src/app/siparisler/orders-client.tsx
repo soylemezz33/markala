@@ -338,6 +338,13 @@ export function OrdersClient({ orders }: Props) {
                           <span className="mt-1 block text-[10px] font-semibold text-brand-700">
                             ● Açık Hesap (Cari)
                           </span>
+                        ) : o.paymentStatus === "iade_edildi" || o.paymentStatus === "iade-edildi" ? (
+                          /* İade rozeti (2026-08-29 UX denetimi İş 5): eskiden bu satır
+                             "Ödeme Bekliyor"a düşüyordu — iade edilmiş sipariş ödenmemiş
+                             gibi görünüyordu. */
+                          <span className="mt-1 block text-[10px] font-semibold text-ink-500">
+                            ● İade Edildi
+                          </span>
                         ) : o.paymentStatus && o.paymentStatus !== "basarili" && toSlug(o.status) !== "iptal-edildi" ? (
                           <span className="mt-1 block text-[10px] font-semibold text-warning">
                             ● Ödeme Bekliyor

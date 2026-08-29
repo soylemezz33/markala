@@ -232,6 +232,25 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     return typeof maxM2 === "number" && maxM2 > 0 && alan > maxM2;
   }, [isArea, effSel, product.options]);
 
+  // Area: üretim MİNİMUMU altındaki ölçü sipariş edilemez (2026-08-26 UX denetimi İş 2).
+  // Üst sınırla (areaMaxExceeded) simetrik: malzeme kuralındaki minEn/minBoy (cm) altında
+  // giriş varsa Sepete Ekle kilitlenir; alan bileşeni kırmızı satır içi hatayı gösterir.
+  const areaMinViolated = useMemo(() => {
+    if (!isArea) return false;
+    const en = Number(effSel.en) || 0;
+    const boy = Number(effSel.boy) || 0;
+    if (en <= 0 && boy <= 0) return false;
+    const opt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { minEn?: number; minBoy?: number } | null }>).find(
+      (o) => o.groupKey === "malzeme" && o.optionKey === effSel.malzeme,
+    );
+    const minEn = opt?.rules?.minEn;
+    const minBoy = opt?.rules?.minBoy;
+    return (
+      (typeof minEn === "number" && minEn > 0 && en > 0 && en < minEn) ||
+      (typeof minBoy === "number" && minBoy > 0 && boy > 0 && boy < minBoy)
+    );
+  }, [isArea, effSel, product.options]);
+
   /**
    * Tasarım dosyası HÂLÂ YÜKLENİYOR mu? (2026-08-26 UX denetimi #5)
    * Reducer, dosya seçilince `uploadedFileName`i yazıp `uploadedFileUrl`i temizler; URL
@@ -242,7 +261,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
    */
   const uploadPending = !state.needsDesign && !!state.uploadedFileName && !state.uploadedFileUrl;
 
-  const canBuy = total > 0 && !areaMaxExceeded && !uploadPending;
+  const canBuy = total > 0 && !areaMaxExceeded && !areaMinViolated && !uploadPending;
 
   // Area başlangıç fiyatı: ölçü girilmeden gösterilecek "X₺'den başlayan".
   // = minM2 × en-ucuz malzemenin m²-fiyatı (KDV dahil, priceHintsMap.malzeme'den).
@@ -264,8 +283,9 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     if (!isArea || canBuy) return null;
     if (!hasValidSize) return "Fiyat için en ve boy ölçüsünü girin.";
     if (areaMaxExceeded) return "Bu ölçü tek parça üretim sınırını aşıyor — özel teklif alın.";
+    if (areaMinViolated) return "Girilen ölçü bu ürünün üretim minimumunun altında — ölçüyü büyütün.";
     return null;
-  }, [isArea, canBuy, hasValidSize, areaMaxExceeded, uploadPending]);
+  }, [isArea, canBuy, hasValidSize, areaMaxExceeded, areaMinViolated, uploadPending]);
 
   /** Gösterim dönüşümü: KDV dahil modda ham değer, hariç modda exVat uygular. */
   const show = (n: number) => (kdvDahil ? n : exVat(n));

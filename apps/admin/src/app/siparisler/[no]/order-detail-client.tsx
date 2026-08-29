@@ -241,6 +241,47 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
           `Devam edilsin mi?`,
       );
       if (!ok) return;
+      // İade + iptal bağlama (2026-08-29, UX denetimi İş 5): ödemesi alınmış siparişte
+      // iptal, iadeyi de sorar. "Evet" → önce iade, BAŞARILIYSA iptal (iade düşerse iptal
+      // DURUR — parası iade edilmemiş "iptal edilmiş" sipariş oluşamaz). "Hayır" → bilinçli
+      // ikinci onayla iadesiz iptal (istisna senaryolar: kısmi iade, havale ile manuel iade).
+      if (canRefund) {
+        const iadeDe = window.confirm(
+          `Bu siparişin ödemesi alınmış (${Number(order.total ?? 0).toFixed(2)} ₺).\n\n` +
+            `Ödeme de iyzico üzerinden İADE EDİLSİN Mİ?\n\n` +
+            `Tamam = iade + iptal birlikte\nVazgeç = iade YAPILMADAN yalnız iptal`,
+        );
+        if (!iadeDe) {
+          const eminMisin = window.confirm(
+            `DİKKAT: Sipariş iptal edilecek ama ödeme İADE EDİLMEYECEK.\n\n` +
+              `Müşterinin parası sizde kalır; iadeyi ayrıca yapmanız gerekir.\n\n` +
+              `Yine de iadesiz iptal edilsin mi?`,
+          );
+          if (!eminMisin) return;
+        } else {
+          // İade + iptal zinciri — iade başarısızsa iptal YAPILMAZ.
+          const prev = currentStatus;
+          setStatusError(null);
+          setRefundMsg(null);
+          setRefunding(true);
+          startTransition(async () => {
+            const iade = await refundOrder(order.id);
+            setRefunding(false);
+            if (!iade.ok) {
+              setStatusError(`İade başarısız, sipariş İPTAL EDİLMEDİ: ${iade.error}`);
+              return;
+            }
+            setRefundMsg({ ok: true, text: iade.message });
+            setCurrentStatus("iptal-edildi"); // optimistik
+            const res = await updateOrderStatus(order.id, "iptal-edildi");
+            if (!res.ok) {
+              setCurrentStatus(prev);
+              setStatusError(`İade yapıldı ama iptal işaretlenemedi: ${res.error} — durumu elle iptal edin.`);
+            }
+          });
+          return;
+        }
+      }
     } else {
       // Geri adımda müşteriye mail gitmez (API tarafında da böyle) — onay metni bunu söyler.
       const geri = geriAdimMi(currentStatus, statusId);

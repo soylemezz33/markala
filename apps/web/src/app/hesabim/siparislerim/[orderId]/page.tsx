@@ -125,6 +125,23 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
             </Button>
           </div>
         </section>
+      ) : order.paymentStatus === "iade_edildi" || order.paymentStatus === "iade-edildi" ? (
+        /* İade bandı (2026-08-29 UX denetimi İş 5): iadesi yapılmış sipariş müşteriye
+           net söylenir — eskiden hiçbir ibare yoktu, sipariş "Kargoda" görünmeye devam
+           ediyordu ve müşteri parasının döndüğünü siteden göremiyordu. */
+        <section className="p-5 bg-paper-100 border border-paper-200 rounded-xl">
+          <p className="font-semibold text-ink-900 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-ink-400" /> Ödemesi İade Edildi
+          </p>
+          <p className="mt-1 text-sm text-ink-700">
+            Bu siparişin ödemesi kartınıza iade edildi. Tutarın hesabınıza yansıması
+            bankanıza göre 3-10 iş günü sürebilir. Sorunuz varsa{" "}
+            <Link href="/iletisim" className="text-brand-700 hover:underline font-medium">
+              bize ulaşın
+            </Link>
+            .
+          </p>
+        </section>
       ) : order.paymentStatus === "basarili" ? (
         <section className="p-4 bg-success/10 border border-success/30 rounded-xl">
           <p className="text-sm font-medium text-success flex items-center gap-2">

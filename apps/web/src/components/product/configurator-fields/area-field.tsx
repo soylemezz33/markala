@@ -50,11 +50,22 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const minApplied = alan > 0 && alan < minM2;
 
   // Seçili malzemenin maxM2 sınırı (tek parça) — aşılırsa uyarı.
-  const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number; maxEn?: number } | null }>).find(
+  const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number; maxEn?: number; minEn?: number; minBoy?: number } | null }>).find(
     (o) => o.groupKey === "malzeme" && o.optionKey === sel.malzeme,
   );
   const maxM2 = matOpt?.rules?.maxM2;
   const maxExceeded = typeof maxM2 === "number" && maxM2 > 0 && alan > maxM2;
+
+  // Üretim MİNİMUMU (2026-08-26 UX denetimi İş 2): malzeme kuralındaki minEn/minBoy (cm).
+  // Üst sınırla simetrik davranış — kırmızı satır içi hata + Sepete Ekle kilidi (configurator
+  // areaMinViolated). Eskiden En=5 cm hiç uyarısız kabul edilip "min 1 m²" kuralıyla sessizce
+  // fiyatlanıyordu; müşteri üretilemez ölçüyü sipariş edebiliyordu.
+  const minEnRaw = matOpt?.rules?.minEn;
+  const minBoyRaw = matOpt?.rules?.minBoy;
+  const minEn = typeof minEnRaw === "number" && minEnRaw > 0 ? minEnRaw : undefined;
+  const minBoy = typeof minBoyRaw === "number" && minBoyRaw > 0 ? minBoyRaw : undefined;
+  const enTooSmall = minEn !== undefined && enN > 0 && enN < minEn;
+  const boyTooSmall = minBoy !== undefined && boyN > 0 && boyN < minBoy;
 
   // En (genişlik) tavanı — örn. araç magneti eni en fazla 60 cm, boy serbest. Preset'ler
   // filtrelenir, En girişi tavana clamp edilir.
@@ -110,29 +121,34 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
           <span className="mb-1 block text-xs text-ink-500">
-            En (cm){maxEn ? ` · en fazla ${maxEn}` : ""}
+            En (cm)
+            {minEn && maxEn ? ` · ${minEn}-${maxEn}` : minEn ? ` · en az ${minEn}` : maxEn ? ` · en fazla ${maxEn}` : ""}
           </span>
           <input
             type="number"
-            min={1}
+            min={minEn ?? 1}
             max={enCap}
             inputMode="numeric"
             value={en}
             onChange={(e) => setEn(e.target.value)}
-            className={inputCls}
+            aria-invalid={enTooSmall || undefined}
+            className={`${inputCls}${enTooSmall ? " border-red-400 focus:border-red-400 focus:ring-red-300/40" : ""}`}
             placeholder="Özel ölçü"
           />
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs text-ink-500">Boy (cm)</span>
+          <span className="mb-1 block text-xs text-ink-500">
+            Boy (cm){minBoy ? ` · en az ${minBoy}` : ""}
+          </span>
           <input
             type="number"
-            min={1}
+            min={minBoy ?? 1}
             max={HARD_MAX_CM}
             inputMode="numeric"
             value={boy}
             onChange={(e) => setBoy(e.target.value)}
-            className={inputCls}
+            aria-invalid={boyTooSmall || undefined}
+            className={`${inputCls}${boyTooSmall ? " border-red-400 focus:border-red-400 focus:ring-red-300/40" : ""}`}
             placeholder="Özel ölçü"
           />
         </label>
@@ -175,6 +191,18 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
       {maxExceeded && (
         <p role="alert" className="text-xs font-medium text-red-600">
           Bu malzeme tek parçada en fazla {maxM2} m² basılabilir. Daha küçük ölçü girin ya da işi bölün.
+        </p>
+      )}
+
+      {(enTooSmall || boyTooSmall) && (
+        <p role="alert" className="text-xs font-medium text-red-600">
+          Bu ürün için{" "}
+          {enTooSmall && boyTooSmall
+            ? `en az ${minEn}×${minBoy} cm`
+            : enTooSmall
+              ? `en (genişlik) en az ${minEn} cm`
+              : `boy (uzunluk) en az ${minBoy} cm`}{" "}
+          olmalıdır — daha küçüğü üretilemiyor.
         </p>
       )}
 

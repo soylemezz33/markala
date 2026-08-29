@@ -423,12 +423,23 @@ export class OrdersService {
         if ((product as { pricingMode?: string }).pricingMode === "area") {
           const alanPiece = ((Number(selections.en) || 0) * (Number(selections.boy) || 0)) / 10000;
           const matOpt = mappedOpts.find((o) => o.groupKey === "malzeme" && o.optionKey === selections.malzeme);
-          const maxM2 = (matOpt?.rules as { maxM2?: number } | null | undefined)?.maxM2;
+          const matRules = matOpt?.rules as { maxM2?: number; minEn?: number; minBoy?: number } | null | undefined;
+          const maxM2 = matRules?.maxM2;
           if (typeof maxM2 === "number" && maxM2 > 0 && alanPiece > maxM2) {
             throw new BadRequestException(`Bu malzeme tek parçada en fazla ${maxM2} m² basılabilir: ${product.slug}`);
           }
           if (alanPiece > 100) {
             throw new BadRequestException(`Geçersiz ölçü (tek parça ${alanPiece.toFixed(1)} m²): ${product.slug}`);
+          }
+          // Üretim minimumu (2026-08-26 UX denetimi İş 2) — client'taki areaMinViolated'ın
+          // sunucu karşılığı: doğrudan API çağrısıyla da min altı ölçü sipariş edilemez.
+          const enCm = Number(selections.en) || 0;
+          const boyCm = Number(selections.boy) || 0;
+          if (typeof matRules?.minEn === "number" && matRules.minEn > 0 && enCm > 0 && enCm < matRules.minEn) {
+            throw new BadRequestException(`Bu ürün için en (genişlik) en az ${matRules.minEn} cm olmalıdır: ${product.slug}`);
+          }
+          if (typeof matRules?.minBoy === "number" && matRules.minBoy > 0 && boyCm > 0 && boyCm < matRules.minBoy) {
+            throw new BadRequestException(`Bu ürün için boy (uzunluk) en az ${matRules.minBoy} cm olmalıdır: ${product.slug}`);
           }
         }
         // Fiyatı belirlenmemiş ürün (configuredUnit=0 → "Teklif Al") sipariş edilemez:
