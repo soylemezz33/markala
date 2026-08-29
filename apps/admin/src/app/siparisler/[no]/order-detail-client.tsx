@@ -507,7 +507,13 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                       </div>
                       {item.quantity != null && item.unitPrice != null && (
                         <div className="text-[11px] text-ink-500">
-                          {item.quantity} × ₺ {Number(item.unitPrice).toLocaleString("tr-TR")}
+                          {/* Fiyat kırılımı da GERÇEK adetle: 2'li takım × 1 satır → "2 × ₺750"
+                              (satır fiyatı / gerçek adet). Adet satırıyla tutarlı (2026-08-29). */}
+                          {(() => {
+                            const gercekAdet = (item.quantity ?? 1) * birimAdet(item.configurationSummary);
+                            const parcaFiyat = Number(item.lineTotal ?? item.unitPrice ?? 0) / (gercekAdet || 1);
+                            return `${gercekAdet} × ₺ ${parcaFiyat.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}`;
+                          })()}
                         </div>
                       )}
                     </div>
