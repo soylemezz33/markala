@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@markala/ui";
-import { Lock, CaretDown, MagnifyingGlass } from "@phosphor-icons/react";
+import { Lock, CaretDown, MagnifyingGlass, Info } from "@phosphor-icons/react";
 import { formatPrice } from "@/lib/format";
 import { volumeDiscountRate, type TierBadge } from "@/lib/configurator";
 import { memo, useRef, useState, useEffect, useCallback } from "react";
@@ -122,6 +122,48 @@ const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
     desc: "iki kartonun birbirine yapıştırılmasıyla elde edilen kalın, sert kartvizit",
   },
   { match: "yaldız", name: "Yaldız", desc: "sıcak baskıyla uygulanan metalik altın/gümüş folyo" },
+  // 2026-08-29 Hasan: ek işlem terimleri de açıklansın — müşteri CNC/kopça/kolon dikişin
+  // ne olduğunu bilmeden işaretlemiyor. Metinler yine "ne işe yarar" odaklı.
+  {
+    match: "cnc kesim",
+    name: "CNC Kesim",
+    desc: "levhayı istediğiniz forma göre bilgisayar kontrollü kesim — logo, harf, özel şekil",
+  },
+  {
+    match: "laminasyon",
+    name: "Laminasyon",
+    desc: "baskının üzerine çizilmeye ve solmaya karşı koruyucu şeffaf film",
+  },
+  {
+    match: "laminasyonlu",
+    name: "Laminasyonlu",
+    desc: "üzerinde çizilmeye ve solmaya karşı koruyucu şeffaf film olan malzeme",
+  },
+  {
+    match: "kopça",
+    name: "Kopça",
+    desc: "asmak için kenarlara takılan metal halka (kuşgözü) — ip veya kelepçe buradan geçer",
+  },
+  {
+    match: "kolon",
+    name: "Kolon Dikiş",
+    desc: "kenarların katlanıp dikilmesiyle oluşan güçlendirme şeridi — branda yırtılmadan gerilir",
+  },
+  {
+    match: "germe",
+    name: "Germe",
+    desc: "brandanın kasaya/çerçeveye gergin montajına uygun kenar hazırlığı",
+  },
+  {
+    match: "iç mekan",
+    name: "İç Mekan Baskı",
+    desc: "kokusuz mürekkeple baskı — ofis, mağaza gibi kapalı alanlar için uygundur",
+  },
+  {
+    match: "one way vision",
+    name: "One Way Vision",
+    desc: "delikli cam folyosu — içeriden dışarısı görünür, dışarıdan yalnız baskı görünür",
+  },
   { match: "mat", name: "Mat", desc: "parmak izi tutmaz, sakin ve kurumsal durur" },
   { match: "parlak", name: "Parlak", desc: "renkleri daha canlı gösterir" },
   { match: "özel kesim", name: "Özel kesim", desc: "istediğiniz forma göre bıçakla kesim" },
@@ -151,6 +193,33 @@ function jargonHelpFor(label: string | null | undefined): string | null {
   const parts = JARGON_GLOSSARY.filter((j) => matchesTerm(lower, j.match)).slice(0, JARGON_MAX)
     .map((j) => `${j.name}: ${j.desc}`);
   return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/**
+ * Masaüstü hover bilgi kutusu (2026-08-29 Hasan: "üstüne geldiğinde açıklama").
+ * Seçenek satırının ÜZERİNE gelince terim açıklaması belirir — müşteri seçmeden önce
+ * "CNC kesim ne, kopça ne" öğrenir. Mobilde hover olmadığı için gösterilmez (hidden
+ * md:block); orada mevcut jargonLine (seçim sonrası alt satır) aynı işi görmeye devam
+ * eder. pointer-events-none → tıklamayı asla engellemez; içinde etkileşimli öğe yok,
+ * bu yüzden buton içinde geçerli HTML kalır. aria-hidden: içerik jargonLine yoluyla
+ * zaten erişilebilir, ekran okuyucuya iki kez okutmayalım.
+ */
+function HoverInfo({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none absolute left-1 right-1 bottom-full mb-1.5 z-20 hidden md:block",
+        "rounded-md bg-ink-900 text-paper-50 text-xs leading-relaxed px-3 py-2 shadow-lg",
+        "opacity-0 translate-y-0.5 transition-all duration-150 delay-150",
+        "group-hover:opacity-100 group-hover:translate-y-0",
+        "group-focus-within:opacity-100 group-focus-within:translate-y-0",
+      )}
+    >
+      {text}
+    </span>
+  );
 }
 
 const MANY = 8;
@@ -555,32 +624,43 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
               hint !== null && hint !== undefined && Number.isFinite(hint) && hint > 0
                 ? `${formatPrice(hint)} ₺${unitSuffix ?? ""}`
                 : null;
+            const info = jargonHelpFor(`${opt.optionLabel} ${opt.optionSublabel ?? ""}`);
             return (
-              <button
-                key={opt.optionKey}
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                onClick={() => onSelect(opt.optionKey)}
-                className={cn(
-                  "flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-md border text-left transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
-                  isSelected
-                    ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
-                    : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
-                )}
-              >
-                <span className="font-medium text-sm leading-tight">{opt.optionLabel}</span>
-                {priceLabel && (
-                  <span
-                    className={cn(
-                      "text-[11px] tabular-nums",
-                      isSelected ? "text-paper-200" : "text-ink-500",
+              <div key={opt.optionKey} className="relative group">
+                <HoverInfo text={info} />
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => onSelect(opt.optionKey)}
+                  className={cn(
+                    "w-full h-full flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-md border text-left transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
+                    isSelected
+                      ? "border-ink-900 bg-ink-900 text-paper-50 shadow-sm"
+                      : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
+                  )}
+                >
+                  <span className="font-medium text-sm leading-tight inline-flex items-center gap-1">
+                    {opt.optionLabel}
+                    {info && (
+                      <Info
+                        size={13}
+                        className={cn("flex-none hidden md:inline", isSelected ? "text-paper-300" : "text-ink-400")}
+                      />
                     )}
-                  >
-                    {priceLabel}
                   </span>
-                )}
-              </button>
+                  {priceLabel && (
+                    <span
+                      className={cn(
+                        "text-[11px] tabular-nums",
+                        isSelected ? "text-paper-200" : "text-ink-500",
+                      )}
+                    >
+                      {priceLabel}
+                    </span>
+                  )}
+                </button>
+              </div>
             );
           })}
         </div>
@@ -707,15 +787,17 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
             );
           }
 
+          const rowInfo = jargonHelpFor(`${opt.optionLabel} ${opt.optionSublabel ?? ""}`);
           return (
+            <div key={opt.optionKey} className="relative group">
+            <HoverInfo text={rowInfo} />
             <button
-              key={opt.optionKey}
               type="button"
               role="radio"
               aria-checked={isSelected}
               onClick={() => onSelect(opt.optionKey)}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
+                "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left transition-all duration-200 ease-out-expo focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
                 isSelected
                   ? "border-ink-900 bg-paper-50 shadow-sm"
                   : "border-paper-200 bg-paper-50 hover:border-ink-300",
@@ -730,8 +812,9 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 {isSelected && <span className="w-2 h-2 rounded-full bg-ink-900" />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-medium text-ink-900 text-sm">
+                <span className="font-medium text-ink-900 text-sm inline-flex items-center gap-1.5">
                   {opt.optionLabel}
+                  {rowInfo && <Info size={14} className="flex-none hidden md:inline text-ink-400" />}
                 </span>
                 {opt.optionSublabel && (
                   <span className="block text-xs text-ink-500 mt-0.5">
@@ -752,6 +835,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 </span>
               )}
             </button>
+            </div>
           );
         })}
       </div>
