@@ -31,7 +31,6 @@ export const metadata: Metadata = {
 const values = [
   { icon: Lightning, title: "Hızlı Üretim", desc: "Çoğu üründe 24-72 saat içinde teslim. Acil işler için özel hat." },
   { icon: PaintBrush, title: "Ücretsiz Tasarım", desc: "Profesyonel grafik ekibimizle çalışın — sınırsız revize." },
-  { icon: ShieldCheck, title: "Kalite Garantisi", desc: "Hatalı baskıda ücretsiz değişim — kalitemizin arkasındayız." },
   { icon: Truck, title: "81 İle Kargo", desc: "DHL anlaşması — Türkiye'nin her noktasına 1-3 iş günü." },
 ];
 
@@ -151,7 +150,7 @@ export default function AboutPage() {
             </h2>
           </header>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-3 gap-4">
             {values.map((v) => (
               <article key={v.title} className="p-6 bg-paper-50 border border-paper-200 rounded-xl hover:border-ink-300 transition-colors">
                 <div className="w-11 h-11 rounded-lg bg-brand-100 text-brand-700 grid place-items-center mb-4">

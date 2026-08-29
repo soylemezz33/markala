@@ -592,7 +592,7 @@ Markala`;
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 
     const subject = "Siparişiniz teslim edildi — Değerlendirmenizi paylaşır mısınız?";
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişiniz teslim edildi. Umarız beğenirsiniz!\nBaskı kalitesinden memnunsanız, değerlendirmenizi WhatsApp üzerinden bizimle paylaşır mısınız:\n${waUrl}\nAynı ürünlere yeniden ihtiyacınız olursa tek tıkla tekrar sipariş verebilirsiniz: ${reorderUrl}\nHatalı baskı vb. bir sorun varsa hemen yazın — ücretsiz değişim.\n\nMarkala`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişiniz teslim edildi. Umarız beğenirsiniz!\nBaskı kalitesinden memnunsanız, değerlendirmenizi WhatsApp üzerinden bizimle paylaşır mısınız:\n${waUrl}\nAynı ürünlere yeniden ihtiyacınız olursa tek tıkla tekrar sipariş verebilirsiniz: ${reorderUrl}\nBir sorun varsa hemen bize yazın.\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişiniz Teslim Edildi ✅",
       intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişiniz teslim edildi — umarız beğenirsiniz!`,
@@ -601,7 +601,7 @@ Markala`;
         ${emailButtonColored("💬 WhatsApp'tan değerlendir", waUrl)}
         ${emailFallbackLink(waUrl)}
         <p style="margin:14px 0 0;font-size:13px;color:#78716c">Aynı ürünlere yeniden mi ihtiyacınız var? <a href="${reorderUrl}" style="color:#5C4100;font-weight:700">Tekrar sipariş ver →</a></p>
-        <p style="margin:10px 0 0;color:#78716c;font-size:13px">Hatalı baskı ya da bir sorun varsa hemen bize yazın — <strong>ücretsiz değişim</strong> garantisi.</p>`,
+        <p style="margin:10px 0 0;color:#78716c;font-size:13px">Bir sorun varsa hemen bize yazın.</p>`,
     });
 
     // Nodemailer yalnız SMTP_HOST varsa gerçek gönderim yapar. Yoksa localhost:1025'e düşüp

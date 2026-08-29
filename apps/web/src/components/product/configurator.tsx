@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
 import { Button, Price } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, ChatCircleText, ShieldCheck, Truck, SpinnerGap } from "@phosphor-icons/react";
+import { ShoppingBagOpen, CheckCircle, ChatCircleText, Truck, SpinnerGap } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import {
   calculateTotal,
@@ -508,12 +508,6 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
             {/* "En geç X kargoda" teslim tahmini KALDIRILDI (2026-08-08 karar): tarihli
                 kargo sözü, üretim süresiyle karışıp yanlış beklenti yaratıyordu. Üretim
                 süresi başlık altında zaten yazıyor; kargo süresi bilinçli olarak verilmiyor. */}
-
-            {/* Güven rozeti — müşterinin 1 numaralı korkusu: "baskı hatalı gelirse?" */}
-            <div className="flex items-center gap-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2 text-xs">
-              <ShieldCheck size={15} weight="bold" className="flex-none text-success" />
-              <span className="font-semibold text-ink-900">Hatalı baskıda ücretsiz yeniden basım</span>
-            </div>
 
             {/* Kargo şeffaflığı — sepetteki +79₺ sürprizini önler. */}
             {canBuy && (

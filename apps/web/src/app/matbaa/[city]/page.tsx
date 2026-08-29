@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  ArrowLeft, ArrowRight, MapPin, Truck, Lightning, ShieldCheck,
+  ArrowLeft, ArrowRight, MapPin, Truck, Lightning,
   Phone, WhatsappLogo, EnvelopeSimple, CheckCircle, Star,
   Buildings, Receipt, Storefront, Question, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
@@ -202,7 +202,7 @@ export default async function CityLandingPage({ params }: Props) {
           </p>
 
           {/* Hızlı bilgi kartları */}
-          <div className="mt-8 grid sm:grid-cols-3 gap-3">
+          <div className="mt-8 grid sm:grid-cols-2 gap-3">
             <InfoCard
               icon={Truck}
               title={
@@ -220,11 +220,6 @@ export default async function CityLandingPage({ params }: Props) {
               icon={Lightning}
               title="Hızlı üretim"
               desc="Siparişler kısa sürede üretime alınır"
-            />
-            <InfoCard
-              icon={ShieldCheck}
-              title="Kalite garantisi"
-              desc="Hatalı baskıda ücretsiz değişim"
             />
           </div>
 

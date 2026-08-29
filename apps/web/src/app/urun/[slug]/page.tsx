@@ -4,7 +4,6 @@ import { Container } from "@markala/ui";
 import {
   CaretRight,
   Truck,
-  ShieldCheck,
   CreditCard,
   PaintBrush,
   MagnifyingGlass,
@@ -154,13 +153,6 @@ function makeTrustBadges(freeThreshold: number, productionTime?: string) {
       sub: "her siparişte",
       grad: "from-fuchsia-500 to-purple-600",
       tint: "bg-fuchsia-50 border-fuchsia-200",
-    },
-    {
-      icon: ShieldCheck,
-      label: "Kalite garantisi",
-      sub: "hatalı baskıda ücretsiz değişim",
-      grad: "from-emerald-500 to-green-600",
-      tint: "bg-emerald-50 border-emerald-200",
     },
     {
       icon: CreditCard,
@@ -333,7 +325,7 @@ export default async function ProductPage({ params }: Props) {
         </div>
 
         {/* Güven rozetleri — tam genişlik şerit; rozet başına renk kimliği (2026-08-08). */}
-        <ul className="mt-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 border-t border-paper-200 pt-8">
+        <ul className="mt-10 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 border-t border-paper-200 pt-8">
           {makeTrustBadges(shippingThreshold, product.productionTime).map((t) => (
             <li
               key={t.label}
