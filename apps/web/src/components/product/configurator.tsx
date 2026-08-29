@@ -132,6 +132,26 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       : state.selections;
   }, [state.selections, dimFilter, product.options]);
 
+  // Seçime bağlı galeri görseli (2026-08-29, Hasan): rules.gorsel = N (1-tabanlı görsel
+  // sırası) taşıyan bir seçenek seçilince galeriye "markala:gorsel-sec" olayı gönderilir —
+  // ürün fotoğrafı o seçeneğin görseline döner (örn. yelken bayrakta "Kumaş + Takım" →
+  // takım fotoğrafı). İlk açılışta da çalışır: varsayılan seçenek gorsel taşıyorsa sayfa
+  // doğrudan o görselle açılır. Panelsiz genel mekanizma — rules JSON'una sayı yazmak yeter.
+  const oncekiSecimler = useRef<Record<string, string> | null>(null);
+  useEffect(() => {
+    const onceki = oncekiSecimler.current;
+    oncekiSecimler.current = baseSelections;
+    for (const [grup, secenek] of Object.entries(baseSelections)) {
+      if (onceki && onceki[grup] === secenek) continue; // bu grup değişmedi
+      const opt = optionsWithRules.find((o) => o.groupKey === grup && o.optionKey === secenek);
+      const gorsel = (opt?.rules as { gorsel?: unknown } | null | undefined)?.gorsel;
+      if (typeof gorsel === "number" && Number.isInteger(gorsel) && gorsel >= 1) {
+        window.dispatchEvent(new CustomEvent("markala:gorsel-sec", { detail: { index: gorsel - 1 } }));
+        break; // tek geçişte bir görsel yönlendirmesi yeter
+      }
+    }
+  }, [baseSelections, optionsWithRules]);
+
   const resolved = useMemo(
     () => resolveRules(optionsWithRules, baseSelections),
     [optionsWithRules, baseSelections],

@@ -48,6 +48,23 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
     if (loaded.has(active) || brokenImages.has(active)) setVisible(active);
   }, [active, loaded, brokenImages]);
 
+  // Konfigüratör seçimi galeriyi yönlendirsin (2026-08-29, Hasan: "kumaş+takıma
+  // tıklandığında takım görseli seçilsin"). rules.gorsel taşıyan bir seçenek
+  // seçilince configurator "markala:gorsel-sec" olayı yayınlar; galeri o kareye
+  // geçer. prefetch: hedef görsel henüz DOM'da değilse indirmesi başlatılır.
+  useEffect(() => {
+    function onSec(e: Event) {
+      const idx = (e as CustomEvent<{ index?: number }>).detail?.index;
+      if (typeof idx === "number" && Number.isInteger(idx) && idx >= 0 && idx < images.length) {
+        prefetch(idx);
+        setActive(idx);
+      }
+    }
+    window.addEventListener("markala:gorsel-sec", onSec);
+    return () => window.removeEventListener("markala:gorsel-sec", onSec);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- prefetch fonksiyonel setState kullanır, bayat kapanış zararsız
+  }, [images.length]);
+
   // Sayfa yerleştikten sonra kalan görselleri sessizce indir — tıklama anında geçiş için.
   useEffect(() => {
     if (images.length < 2) return;
