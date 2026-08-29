@@ -207,7 +207,7 @@ export class MailService {
       new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0);
 
     const isCari = order.paymentMethod === "cari";
-    const name = order.user?.fullName?.trim();
+    const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const orderUrl = `${webUrl}/hesabim/siparislerim`;
@@ -248,7 +248,7 @@ export class MailService {
       a && (a.fullAddress || a.fullName)
         ? `<td width="50%" style="background:#FAFAF9;border:1px solid #e7e5e4;border-radius:8px;padding:12px 14px;vertical-align:top">
             <p style="margin:0 0 4px;font-size:11px;color:#a8a29e;font-weight:700;letter-spacing:0.5px">${baslik}</p>
-            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(a.fullName ?? "")}${a.fullName ? "<br>" : ""}${esc(a.fullAddress ?? "")}${a.district || a.city ? `<br>${esc(a.district ?? "")}${a.district && a.city ? " / " : ""}${esc(a.city ?? "")}` : ""}</p>
+            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(a.fullName ?? "")}${a.fullName ? "<br>" : ""}${esc(a.fullAddress ?? "")}${(a.district || a.city) && !(a.fullAddress ?? "").includes(a.city ?? " ") ? `<br>${esc(a.district ?? "")}${a.district && a.city ? " / " : ""}${esc(a.city ?? "")}` : ""}</p>
           </td>`
         : "";
     const teslimat = adresKart("TESLİMAT ADRESİ", order.shippingAddressSnapshot as AdresSnap);
@@ -484,7 +484,7 @@ export class MailService {
       String(s ?? "")
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    const name = order.user?.fullName?.trim();
+    const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const orderUrl = `${webUrl}/hesabim/siparislerim`;
@@ -531,7 +531,7 @@ Markala`;
     });
     if (!order || !order.email) { this.logger.warn(`mail.orderShipped: sipariş/e-posta yok order=${orderId}`); return false; }
     const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    const name = order.user?.fullName?.trim();
+    const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const orderUrl = `${webUrl}/hesabim/siparislerim`;
@@ -590,7 +590,7 @@ Markala`;
       ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;margin-top:12px">
           <tr><td style="background:#FAFAF9;border:1px solid #e7e5e4;border-radius:8px;padding:12px 14px">
             <p style="margin:0 0 4px;font-size:11px;color:#a8a29e;font-weight:700;letter-spacing:0.5px">TESLİMAT ADRESİ</p>
-            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(adres.fullName ?? "")}${adres.fullName ? " — " : ""}${esc(adres.fullAddress ?? "")}${adres.district || adres.city ? `, ${esc(adres.district ?? "")}${adres.district && adres.city ? " / " : ""}${esc(adres.city ?? "")}` : ""}</p>
+            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(adres.fullName ?? "")}${adres.fullName ? " — " : ""}${esc(adres.fullAddress ?? "")}${(adres.district || adres.city) && !(adres.fullAddress ?? "").includes(adres.city ?? " ") ? `, ${esc(adres.district ?? "")}${adres.district && adres.city ? " / " : ""}${esc(adres.city ?? "")}` : ""}</p>
             <p style="margin:6px 0 0;font-size:12px;color:#78716c">Tahmini teslim: <strong style="color:#1A1410">1-3 iş günü</strong></p>
           </td></tr>
         </table>`
@@ -638,7 +638,7 @@ Markala`;
     });
     if (!order || !order.email) { this.logger.warn(`mail.orderCancelled: sipariş/e-posta yok order=${orderId}`); return false; }
     const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    const name = order.user?.fullName?.trim();
+    const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const paid = order.paymentStatus === "basarili";
@@ -678,7 +678,7 @@ Markala`;
     });
     if (!order || !order.email) { this.logger.warn(`mail.orderDelivered: sipariş/e-posta yok order=${orderId}`); return false; }
     const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    const name = order.user?.fullName?.trim();
+    const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     // Tekrar sipariş: sipariş detayında "Tekrar Sipariş Et" butonu var → aynı konfigürasyonla
@@ -751,7 +751,8 @@ Markala`;
     const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     const fmt = (n: unknown) =>
       new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0);
-    const name = order.user?.fullName?.trim();
+    // Bu fonksiyonun order tipi dar (snapshot alanı yok) — yalnız üyelik adı kullanılır.
+    const name = order.user?.fullName?.trim() ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     // Sipariş detayında "Ödeme Yap" akışı zaten var → müşteriyi doğrudan oraya götür.
@@ -948,7 +949,7 @@ Markala`;
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
-    const name = order.user?.fullName?.trim();
+    const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const reviewUrl = `${webUrl}/yorum?order=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}`;
