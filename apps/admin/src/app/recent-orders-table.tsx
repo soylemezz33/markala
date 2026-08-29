@@ -57,9 +57,16 @@ function statusBadge(status: string): { label: string; className: string } {
   }
 }
 
+/** Ödemesi iade edilmiş mi? (2026-08-29 İş 5) — "Ödeme Bekliyor"a düşmesin. */
+function isRefunded(o: OrderRow): boolean {
+  const ps = String(o.paymentStatus ?? "");
+  return ps === "iade_edildi" || ps === "iade-edildi";
+}
+
 /** Ödemesi tamamlanmamış mı? Cari (açık hesap) siparişte online ödeme beklenmez. */
 function isUnpaid(o: OrderRow): boolean {
   if (o.paymentMethod === "cari") return false;
+  if (isRefunded(o)) return false; // iade edilmiş ≠ ödenmemiş — "İletişime Geç" saçma olur
   const st = String(o.status ?? "").replace(/_/g, "-");
   if (st === "iptal-edildi") return false;
   return String(o.paymentStatus ?? "beklemede") !== "basarili";
@@ -160,6 +167,10 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
                         <Phone size={11} weight="fill" /> İletişime Geç
                       </button>
                     </div>
+                  ) : isRefunded(o) ? (
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-paper-200 text-ink-500">
+                      İade Edildi
+                    </span>
                   ) : (
                     <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success/10 text-success">
                       Ödendi

@@ -194,6 +194,25 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       const res = await refundOrder(order.id);
       setRefunding(false);
       setRefundMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+      // İade → iptal teklifi (2026-08-29, Hasan: "ücret iade edildiyse iptale çekmesi
+      // gerekiyor"). OTOMATİK değil — kısmi/istisna iadelerde sipariş sürebilir — ama
+      // olağan akışta tek soruyla bağlanır. Hayır denirse durum olduğu gibi kalır.
+      if (res.ok && currentStatus !== "iptal-edildi") {
+        const iptalDe = window.confirm(
+          "İade tamamlandı.\n\nSipariş de İPTAL EDİLSİN Mİ?\n\n" +
+            "• Müşteriye iptal e-postası gider.\n" +
+            "• Hayır derseniz sipariş mevcut durumunda kalır.",
+        );
+        if (iptalDe) {
+          const prev = currentStatus;
+          setCurrentStatus("iptal-edildi"); // optimistik
+          const st = await updateOrderStatus(order.id, "iptal-edildi");
+          if (!st.ok) {
+            setCurrentStatus(prev);
+            setStatusError(`İptal işaretlenemedi: ${st.error}`);
+          }
+        }
+      }
     });
   };
 
