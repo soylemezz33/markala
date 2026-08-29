@@ -211,13 +211,24 @@ export class MailService {
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const orderUrl = `${webUrl}/hesabim/siparislerim`;
 
+    // Yeni tasarım (2026-08-29, Hasan onayı): satırlarda ürün küçük görseli + tıklanabilir ad.
+    // Görsel remote URL'dir (üretim SMTP'si img'leri korur); görseli olmayan kalemde hücre boş kalır.
+    const webBase = webUrl;
     const rowsHtml = (order.items ?? [])
       .map(
         (i) =>
-          `<tr><td style="padding:8px;border-bottom:1px solid #eee">${esc(i.productName)}` +
-          `${i.configurationSummary ? `<br><span style="color:#a8a29e;font-size:12px">${esc(i.configurationSummary)}</span>` : ""}</td>` +
-          `<td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td>` +
-          `<td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${fmt(i.lineTotal)} ₺</td></tr>`,
+          `<tr><td style="padding:12px 8px;border-bottom:1px solid #eee;width:64px;vertical-align:top">` +
+          (i.productImage
+            ? `<img src="${esc(i.productImage)}" width="56" height="56" alt="${esc(i.productName)}" style="display:block;width:56px;height:56px;border-radius:8px;border:1px solid #e7e5e4">`
+            : "") +
+          `</td>` +
+          `<td style="padding:12px 8px;border-bottom:1px solid #eee;vertical-align:top">` +
+          (i.productSlug
+            ? `<a href="${webBase}/urun/${esc(i.productSlug)}" style="color:#1A1410;font-weight:700;text-decoration:none">${esc(i.productName)}</a>`
+            : `<strong>${esc(i.productName)}</strong>`) +
+          `${i.configurationSummary ? `<br><span style="color:#a8a29e;font-size:12px">${esc(i.configurationSummary)}</span>` : ""}` +
+          `<br><span style="color:#78716c;font-size:12px">Adet: ${i.quantity}</span></td>` +
+          `<td style="padding:12px 8px;border-bottom:1px solid #eee;text-align:right;vertical-align:top;white-space:nowrap"><strong>${fmt(i.lineTotal)} ₺</strong></td></tr>`,
       )
       .join("");
 
@@ -227,7 +238,30 @@ export class MailService {
         ? `<tr><td colspan="2" style="padding:4px 8px;text-align:right;color:#16a34a">İndirim</td><td style="padding:4px 8px;text-align:right;color:#16a34a">-${fmt(order.discount)} ₺</td></tr>`
         : "") +
       `<tr><td colspan="2" style="padding:4px 8px;text-align:right;color:#78716c">Kargo</td><td style="padding:4px 8px;text-align:right">${Number(order.shippingFee) > 0 ? fmt(order.shippingFee) + " ₺" : "Ücretsiz"}</td></tr>` +
+      `<tr><td colspan="2" style="padding:4px 8px;text-align:right;color:#78716c">Ödeme yöntemi</td><td style="padding:4px 8px;text-align:right;white-space:nowrap">${isCari ? "Açık Hesap (Cari)" : "Kart (iyzico · 3D)"}</td></tr>` +
       `<tr><td colspan="2" style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">Toplam (KDV dahil)</td><td style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">${fmt(order.total)} ₺</td></tr>`;
+
+    // Teslimat/fatura adres kartları (yeni tasarım) — snapshot JSON'larından; yoksa blok atlanır.
+    type AdresSnap = { fullName?: string; fullAddress?: string; district?: string; city?: string } | null;
+    const adresKart = (baslik: string, a: AdresSnap) =>
+      a && (a.fullAddress || a.fullName)
+        ? `<td width="50%" style="background:#FAFAF9;border:1px solid #e7e5e4;border-radius:8px;padding:12px 14px;vertical-align:top">
+            <p style="margin:0 0 4px;font-size:11px;color:#a8a29e;font-weight:700;letter-spacing:0.5px">${baslik}</p>
+            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(a.fullName ?? "")}${a.fullName ? "<br>" : ""}${esc(a.fullAddress ?? "")}${a.district || a.city ? `<br>${esc(a.district ?? "")}${a.district && a.city ? " / " : ""}${esc(a.city ?? "")}` : ""}</p>
+          </td>`
+        : "";
+    const teslimat = adresKart("TESLİMAT ADRESİ", order.shippingAddressSnapshot as AdresSnap);
+    const fatura = adresKart("FATURA ADRESİ", (order.billingAddressSnapshot ?? order.shippingAddressSnapshot) as AdresSnap);
+    const adresBlok =
+      teslimat || fatura
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;border-spacing:8px 0;margin:14px -8px 0"><tr>${teslimat}${fatura}</tr></table>`
+        : "";
+    // Yasal bağlantılar (mesafeli satışta kalıcı bilgilendirme — İtopya kıyası, 2026-08-29)
+    const yasalBlok = `<p style="margin:12px 0 0;font-size:12px;color:#78716c;line-height:1.7">
+        <a href="${webUrl}/yasal/on-bilgilendirme" style="color:#5C4100">Ön Bilgilendirme Formu</a> ·
+        <a href="${webUrl}/yasal/mesafeli-satis" style="color:#5C4100">Mesafeli Satış Sözleşmesi</a> ·
+        <a href="${webUrl}/yasal/iade-iptal" style="color:#5C4100">İptal &amp; İade Süreçleri</a>
+      </p>`;
 
     const statusNote = isCari
       ? "Siparişiniz <strong>açık hesap (cari)</strong> ile alınmıştır; ay sonunda faturalandırılır."
@@ -260,15 +294,12 @@ export class MailService {
       bodyHtml: `<p style="margin:0 0 4px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
         <p style="margin:0 0 14px;color:#78716c;font-size:13px">${statusNote}</p>
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
-          <thead><tr>
-            <th style="padding:8px;text-align:left;border-bottom:2px solid #1A1410;color:#1A1410">Ürün</th>
-            <th style="padding:8px;text-align:center;border-bottom:2px solid #1A1410;color:#1A1410">Adet</th>
-            <th style="padding:8px;text-align:right;border-bottom:2px solid #1A1410;color:#1A1410">Tutar</th>
-          </tr></thead>
           <tbody>${rowsHtml}</tbody>
           <tfoot>${totalsHtml}</tfoot>
         </table>
+        ${adresBlok}
         ${emailButton("Siparişimi görüntüle", orderUrl)}
+        ${yasalBlok}
         ${fileQualityHtml}
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Üretim tamamlanınca kargo bilgisini ayrıca ileteceğiz. Sorularınız için bu e-postayı yanıtlayabilirsiniz.</p>`,
     });
@@ -493,7 +524,7 @@ Markala`;
   async sendOrderShippedEmail(orderId: string, tracking?: { number?: string; carrier?: string }): Promise<boolean> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { user: { select: { fullName: true } } },
+      include: { items: true, user: { select: { fullName: true } } },
     });
     if (!order || !order.email) { this.logger.warn(`mail.orderShipped: sipariş/e-posta yok order=${orderId}`); return false; }
     const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -501,20 +532,87 @@ Markala`;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const orderUrl = `${webUrl}/hesabim/siparislerim`;
-    const carrier = tracking?.carrier?.trim();
-    const trackNo = tracking?.number?.trim();
-    const trackLine = [carrier ? `🚚 <strong>${esc(carrier)}</strong>` : "", trackNo ? `Takip: <strong>${esc(trackNo)}</strong>` : ""].filter(Boolean).join(" · ");
+    const carrier = (tracking?.carrier ?? order.trackingCarrier ?? "").trim();
+    const trackNo = (tracking?.number ?? order.trackingNumber ?? "").trim();
+
+    // Firma → takip sayfası eşlemesi (numara otomatik dolu gider; eşleşmeyen firmada
+    // sitedeki kargo-takip sayfasına düşer). Kargo anlaşması değişirse buraya ekle.
+    const takipUrl = (() => {
+      const k = carrier.toLowerCase();
+      if (!trackNo) return `${webUrl}/kargo-takip`;
+      if (k.includes("dhl")) return `https://www.dhl.com/tr-tr/home/tracking.html?tracking-id=${encodeURIComponent(trackNo)}`;
+      if (k.includes("yurtiçi") || k.includes("yurtici")) return `https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=${encodeURIComponent(trackNo)}`;
+      if (k.includes("aras")) return `https://kargotakip.araskargo.com.tr/mainpage.aspx?code=${encodeURIComponent(trackNo)}`;
+      if (k.includes("mng")) return `https://kargotakip.mngkargo.com.tr/?takipNo=${encodeURIComponent(trackNo)}`;
+      if (k.includes("ptt")) return `https://gonderitakip.ptt.gov.tr/Track/Verify?q=${encodeURIComponent(trackNo)}`;
+      if (k.includes("sürat") || k.includes("surat")) return `https://www.suratkargo.com.tr/KargoTakip?kargotakipno=${encodeURIComponent(trackNo)}`;
+      return `${webUrl}/kargo-takip`;
+    })();
+
+    // KOŞULLU DAVRANIŞ (2026-08-29, Hasan kararı): takip no GİRİLDİYSE vurgulu kargo kartı
+    // (firma + büyük numara + firmaya giden takip düğmesi); GİRİLMEDİYSE dürüst bilgi cümlesi.
+    const kargoKarti = trackNo
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate">
+          <tr><td bgcolor="#FDF8E7" style="background:#FDF8E7;border:1px solid #F5D77F;border-radius:10px;padding:16px 18px">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+              <td style="vertical-align:middle">
+                ${carrier ? `<p style="margin:0;font-size:11px;color:#8a6d00;font-weight:700;letter-spacing:0.5px">KARGO FİRMASI</p><p style="margin:2px 0 10px;font-size:16px;color:#1A1410;font-weight:700">🚚 ${esc(carrier)}</p>` : ""}
+                <p style="margin:0;font-size:11px;color:#8a6d00;font-weight:700;letter-spacing:0.5px">TAKİP NUMARASI</p>
+                <p style="margin:2px 0 0;font-size:18px;color:#1A1410;font-weight:700;font-family:'Courier New',monospace;letter-spacing:1px">${esc(trackNo)}</p>
+              </td>
+              <td style="vertical-align:middle;text-align:right;white-space:nowrap">
+                <table role="presentation" cellpadding="0" cellspacing="0" align="right"><tr><td bgcolor="#1A1410" style="background:#1A1410;border-radius:8px">
+                  <a href="${takipUrl}" style="display:inline-block;padding:12px 20px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#F5B800;text-decoration:none">Kargoyu Takip Et →</a>
+                </td></tr></table>
+              </td>
+            </tr></table>
+          </td></tr>
+        </table>`
+      : `<p style="margin:0 0 4px;padding:12px 14px;background:#FAFAF9;border:1px solid #e7e5e4;border-radius:8px;color:#57534e;font-size:13px;line-height:1.5">📦 Kargo takip numaranız, ilgili kargo firması tarafından SMS/e-posta ile ayrıca iletilecektir.</p>`;
+
+    // Gönderilen ürünler (küçük görselli) + teslimat adresi kartı
+    const urunSatirlari = (order.items ?? [])
+      .map(
+        (i) =>
+          `<tr><td style="padding:10px 8px;border-bottom:1px solid #eee;width:64px;vertical-align:top">` +
+          (i.productImage ? `<img src="${esc(i.productImage)}" width="56" height="56" alt="${esc(i.productName)}" style="display:block;width:56px;height:56px;border-radius:8px;border:1px solid #e7e5e4">` : "") +
+          `</td><td style="padding:10px 8px;border-bottom:1px solid #eee;vertical-align:top"><strong>${esc(i.productName)}</strong>` +
+          `${i.configurationSummary ? `<br><span style="color:#a8a29e;font-size:12px">${esc(i.configurationSummary)}</span>` : ""}` +
+          `<br><span style="color:#78716c;font-size:12px">Adet: ${i.quantity}</span></td></tr>`,
+      )
+      .join("");
+    type AdresSnap = { fullName?: string; fullAddress?: string; district?: string; city?: string } | null;
+    const adres = order.shippingAddressSnapshot as AdresSnap;
+    const adresBlok = adres && (adres.fullAddress || adres.fullName)
+      ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;margin-top:12px">
+          <tr><td style="background:#FAFAF9;border:1px solid #e7e5e4;border-radius:8px;padding:12px 14px">
+            <p style="margin:0 0 4px;font-size:11px;color:#a8a29e;font-weight:700;letter-spacing:0.5px">TESLİMAT ADRESİ</p>
+            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(adres.fullName ?? "")}${adres.fullName ? " — " : ""}${esc(adres.fullAddress ?? "")}${adres.district || adres.city ? `, ${esc(adres.district ?? "")}${adres.district && adres.city ? " / " : ""}${esc(adres.city ?? "")}` : ""}</p>
+            <p style="margin:6px 0 0;font-size:12px;color:#78716c">Tahmini teslim: <strong style="color:#1A1410">1-3 iş günü</strong></p>
+          </td></tr>
+        </table>`
+      : `<p style="margin:12px 0 0;color:#78716c;font-size:13px">Tahmini teslim: <strong>1-3 iş günü</strong>.</p>`;
+
     const subject = `Siparişin kargoda! 📦 ${order.orderNumber}`;
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin kargoya verildi.\n${carrier ? `Kargo: ${carrier}\n` : ""}${trackNo ? `Takip no: ${trackNo}\n` : ""}Tahmini teslim: 1-3 iş günü.\n\nSiparişlerim: ${orderUrl}\n\nMarkala`;
+    const text =
+      `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin kargoya verildi.\n` +
+      (trackNo
+        ? `${carrier ? `Kargo: ${carrier}\n` : ""}Takip no: ${trackNo}\nTakip: ${takipUrl}\n`
+        : `Kargo takip numaranız, kargo firması tarafından SMS/e-posta ile ayrıca iletilecektir.\n`) +
+      `Tahmini teslim: 1-3 iş günü.\n\nSiparişlerim: ${orderUrl}\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişin Kargoda 📦",
-      intro: `${greeting} siparişin kargoya verildi, yola çıktı!`,
+      intro: `${greeting} paketin yola çıktı!`,
       preheader: `${order.orderNumber} kargoya verildi — tahmini teslim 1-3 iş günü`,
-      bodyHtml: `<p style="margin:0 0 8px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
-        ${trackLine ? `<p style="margin:0 0 12px">${trackLine}</p>` : ""}
-        <p style="margin:0 0 14px;color:#78716c;font-size:13px">Tahmini teslim: <strong>1-3 iş günü</strong>.</p>
-        ${emailButton("Siparişi takip et", orderUrl)}
-        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bir sorun olursa bu e-postayı yanıtlayabilir ya da WhatsApp'tan yazabilirsin.</p>`,
+      bodyHtml: `${kargoKarti}
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px;margin-top:14px">
+          <tr><td colspan="2" style="padding:0 0 6px;font-size:12px;color:#78716c">Sipariş No: <strong style="color:#1A1410">${esc(order.orderNumber)}</strong></td></tr>
+          ${urunSatirlari}
+        </table>
+        ${adresBlok}
+        <p style="margin:14px 0 0;padding:10px 12px;background:#F0F9F1;border:1px solid #BBE5C0;border-radius:8px;color:#57534e;font-size:12px;line-height:1.5">💡 <strong style="color:#1A1410">Teslim alırken:</strong> Pakette gözle görülür hasar varsa kuryeye "hasarlı teslim alındı" tutanağı tutturmanızı öneririz — olası değişim/iade sürecini hızlandırır.</p>
+        ${emailButton("Siparişlerim", orderUrl)}
+        <p style="margin:12px 0 0;color:#78716c;font-size:13px">Bir sorun olursa bu e-postayı yanıtlayabilir ya da WhatsApp'tan yazabilirsin.</p>`,
     });
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
