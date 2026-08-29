@@ -96,6 +96,9 @@ async function bootstrap() {
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/quote-requests", method: "POST" }));
   // Public kargo takip — sipariş no+e-posta tahmin/enumerasyon koruması (30/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 30, path: "/orders/track", method: "POST" }));
+  // DHL takip proxy'si (public GET) — ucumuz üzerinden DHL'e numara taraması yapılmasın +
+  // günlük 250'lik DHL kotası korunusun. Tarayıcıdan doğrudan gelir → gerçek müşteri IP'si.
+  app.use(rateLimit({ windowMs: 60_000, max: 10, path: "/cargo-tracking", method: "GET", prefix: true }));
   // Sepet e-posta yakalama (sepet terk hatırlatması) — public, per-IP spam koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/cart-leads", method: "POST" }));
   // n8n → Markala geri-çağrı (X-Internal-Secret korumalı); brute-force savunması ek katman.

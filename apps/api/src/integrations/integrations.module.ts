@@ -2,6 +2,7 @@ import { Global, Module } from "@nestjs/common";
 import { IyzicoService } from "./iyzico/iyzico.service";
 import { ParasutService } from "./parasut/parasut.service";
 import { DhlService } from "./dhl/dhl.service";
+import { CargoTrackingController } from "./dhl/cargo-tracking.controller";
 import { NetgsmService } from "./netgsm/netgsm.service";
 import { MetaCapiService } from "./meta/meta-capi.service";
 
@@ -14,6 +15,7 @@ import { MetaCapiService } from "./meta/meta-capi.service";
 // gösterecek şekilde düzeltildi (stats.service.ts integrationStatus).
 @Global()
 @Module({
+  controllers: [CargoTrackingController],
   providers: [IyzicoService, ParasutService, DhlService, NetgsmService, MetaCapiService],
   exports: [IyzicoService, ParasutService, DhlService, NetgsmService, MetaCapiService],
 })

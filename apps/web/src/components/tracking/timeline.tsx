@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, Circle, Truck, Package, Path, MapPin } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
@@ -13,7 +14,32 @@ interface Props {
   carrier?: string;
 }
 
-export function TrackingTimeline({ events, trackingNumber, carrier = "DHL" }: Props) {
+/**
+ * Kargo firmasına göre takip sayfası adresi (2026-08-29).
+ *
+ * ÖNCEDEN HATALIYDI: her gönderi için dhl.com/tr-tr/home/takip.html'e (DHL Group/Express)
+ * link veriliyordu. Bizim gönderiler DHL eCommerce Türkiye'den çıkıyor — numara orada
+ * bulunamıyor, müşteri "gönderi yok" ekranıyla karşılaşıyordu.
+ *
+ * DHL eCommerce'in sorgu formu JS ile çalışıyor; takip numarasını URL'e gömen bir derin
+ * bağlantı teyit EDİLEMEDİ, o yüzden numarayı gömmeden takip sayfasına yolluyoruz —
+ * müşteri numarayı yapıştırır. Gerçek bir takip numarasıyla derin bağlantı doğrulanırsa
+ * buraya parametre eklenebilir.
+ */
+function takipAdresi(carrier: string, no: string): string {
+  const c = carrier.toLocaleLowerCase("tr");
+  if (c.includes("ecommerce") || c.includes("e-commerce"))
+    return "https://www.dhlecommerce.com.tr/gonderitakip";
+  if (c.includes("dhl")) return `https://www.dhl.com/tr-tr/home/takip.html?tracking-id=${encodeURIComponent(no)}`;
+  if (c.includes("aras")) return `https://kargotakip.araskargo.com.tr/mainpage.aspx?code=${encodeURIComponent(no)}`;
+  if (c.includes("yurtiçi") || c.includes("yurtici"))
+    return `https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code=${encodeURIComponent(no)}`;
+  if (c.includes("mng")) return "https://kargotakip.mngkargo.com.tr/";
+  if (c.includes("ptt")) return "https://gonderitakip.ptt.gov.tr/";
+  return "";
+}
+
+export function TrackingTimeline({ events, trackingNumber, carrier = "DHL eCommerce" }: Props) {
   const activeIndex = events.findIndex((e) => e.state === "active");
   let lastDoneIndex = -1;
   for (let i = events.length - 1; i >= 0; i--) {
@@ -23,6 +49,8 @@ export function TrackingTimeline({ events, trackingNumber, carrier = "DHL" }: Pr
     }
   }
   const currentLabel = events[activeIndex >= 0 ? activeIndex : lastDoneIndex]?.label ?? "Beklemede";
+  const [kopyalandi, setKopyalandi] = useState(false);
+  const takipUrl = trackingNumber ? takipAdresi(carrier, trackingNumber) : "";
 
   return (
     <div className="space-y-6">
@@ -41,14 +69,31 @@ export function TrackingTimeline({ events, trackingNumber, carrier = "DHL" }: Pr
           {trackingNumber && (
             <div className="text-right">
               <div className="text-xs text-ink-500 uppercase tracking-wider font-medium">{carrier} Takip No</div>
-              <a
-                href={`https://www.dhl.com/tr-tr/home/takip.html?tracking-id=${encodeURIComponent(trackingNumber)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono font-medium text-ink-900 mt-0.5 inline-block hover:underline"
-              >
-                {trackingNumber} ↗
-              </a>
+              <div className="flex items-center justify-end gap-2 mt-0.5">
+                <span className="font-mono font-medium text-ink-900">{trackingNumber}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(trackingNumber).then(
+                      () => setKopyalandi(true),
+                      () => undefined,
+                    );
+                  }}
+                  className="text-xs text-brand-700 hover:underline"
+                >
+                  {kopyalandi ? "Kopyalandı" : "Kopyala"}
+                </button>
+              </div>
+              {takipUrl && (
+                <a
+                  href={takipUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-ink-500 hover:text-ink-900 hover:underline mt-0.5 inline-block"
+                >
+                  {carrier} sitesinde sorgula ↗
+                </a>
+              )}
             </div>
           )}
         </div>
