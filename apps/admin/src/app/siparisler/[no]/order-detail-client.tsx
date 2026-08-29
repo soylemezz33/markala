@@ -42,6 +42,19 @@ const STATUSES = [
 const toSlug = (s: string) => String(s ?? "").replace(/_/g, "-");
 
 /**
+ * Konfigürasyon özetindeki paket adedini çıkarır ("… · 2 Adet · …" → 2, "1.000 Adet" → 1000).
+ * Web müşteri panelindeki unitCountFromSummary ile AYNI kural — görünen adet her yerde
+ * satır×paket olarak hesaplanır (2026-08-29 adet tutarsızlığı düzeltmesi).
+ */
+function birimAdet(summary: string | undefined | null): number {
+  if (!summary) return 1;
+  const m = summary.match(/(\d[\d.]*)\s*adet/i);
+  if (!m || !m[1]) return 1;
+  const n = Number(m[1].replace(/\./g, ""));
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
+/**
  * Hedef durum süreçte geride mi? API'deki isGeriAdim ile AYNI mantık (orders.service.ts).
  * Geri adım = düzeltme → müşteriye mail gitmez; onay metni bunu yazar.
  */
@@ -471,7 +484,15 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                         </ul>
                       )}
                       {item.quantity != null && (
-                        <div className="text-[11px] text-ink-500 mt-1">Adet: {item.quantity}</div>
+                        <div className="text-[11px] text-ink-500 mt-1">
+                          {/* GERÇEK parça sayısı: satır adedi × konfigürasyondaki paket adedi
+                              ("2 Adet"lik yelken takımı × 1 satır = 2). Web müşteri paneliyle
+                              aynı kural (unitCountFromSummary) — 2026-08-29 tutarsızlık düzeltmesi. */}
+                          Adet: {item.quantity * birimAdet(item.configurationSummary)}
+                          {birimAdet(item.configurationSummary) > 1 && (
+                            <span className="text-ink-400"> ({item.quantity} satır × {birimAdet(item.configurationSummary)}'li)</span>
+                          )}
+                        </div>
                       )}
                       {item.needsDesignSupport && (
                         <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-500/15 text-brand-700">

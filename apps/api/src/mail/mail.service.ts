@@ -5,6 +5,19 @@ import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
 import { renderEmail, emailButton, emailButtonColored, emailFallbackLink } from "./email-layout";
 
+/**
+ * Konfigürasyon özetindeki paket adedini çıkarır ("2 Adet" → 2, "1.000 Adet" → 1000).
+ * Görünen adet = satır adedi × paket adedi — web/admin ile aynı kural (2026-08-29).
+ */
+function birimAdet(summary: string | undefined | null): number {
+  if (!summary) return 1;
+  const m = summary.match(/(\d[\d.]*)\s*adet/i);
+  if (!m || !m[1]) return 1;
+  const n = Number(m[1].replace(/\./g, ""));
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -228,7 +241,7 @@ export class MailService {
             ? `<a href="${webBase}/urun/${esc(i.productSlug)}" style="color:#1A1410;font-weight:700;text-decoration:none">${esc(i.productName)}</a>`
             : `<strong>${esc(i.productName)}</strong>`) +
           `${i.configurationSummary ? `<br><span style="color:#a8a29e;font-size:12px">${esc(i.configurationSummary)}</span>` : ""}` +
-          `<br><span style="color:#78716c;font-size:12px">Adet: ${i.quantity}</span></td>` +
+          `<br><span style="color:#78716c;font-size:12px">Adet: ${i.quantity * birimAdet(i.configurationSummary)}</span></td>` +
           `<td style="padding:12px 8px;border-bottom:1px solid #eee;text-align:right;vertical-align:top;white-space:nowrap"><strong>${fmt(i.lineTotal)} ₺</strong></td></tr>`,
       )
       .join("");
@@ -282,7 +295,7 @@ export class MailService {
     const subject = `Markala — Siparişiniz alındı (${order.orderNumber})`;
     const text =
       `${name ? `Merhaba ${name},` : "Merhaba,"}\n\nSiparişinizi aldık. Sipariş No: ${order.orderNumber}\n\n` +
-      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} — ${fmt(i.lineTotal)} ₺`).join("\n") +
+      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity * birimAdet(i.configurationSummary)} — ${fmt(i.lineTotal)} ₺`).join("\n") +
       `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
       `${isCari ? "Açık hesap (cari) ile alındı; ay sonu faturalandırılır." : "Ödemeniz alındı, siparişiniz onaylandı."}` +
       fileQualityText +
@@ -581,7 +594,7 @@ Markala`;
           (i.productImage ? `<img src="${esc(i.productImage)}" width="56" height="56" alt="${esc(i.productName)}" style="display:block;width:56px;height:56px;border-radius:8px;border:1px solid #e7e5e4">` : "") +
           `</td><td style="padding:10px 8px;border-bottom:1px solid #eee;vertical-align:top"><strong>${esc(i.productName)}</strong>` +
           `${i.configurationSummary ? `<br><span style="color:#a8a29e;font-size:12px">${esc(i.configurationSummary)}</span>` : ""}` +
-          `<br><span style="color:#78716c;font-size:12px">Adet: ${i.quantity}</span></td></tr>`,
+          `<br><span style="color:#78716c;font-size:12px">Adet: ${i.quantity * birimAdet(i.configurationSummary)}</span></td></tr>`,
       )
       .join("");
     type AdresSnap = { fullName?: string; fullAddress?: string; district?: string; city?: string } | null;
