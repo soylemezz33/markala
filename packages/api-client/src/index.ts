@@ -290,6 +290,11 @@ export class MarkalaApiClient {
       id: string,
       body: { status: string; trackingNumber?: string; trackingCarrier?: string },
     ) => this.request<Order>("PATCH", `/orders/${id}/status`, body, { auth: true }),
+    /** Takip no/firma günceller — durum değiştirmez, müşteriye mail GÖNDERMEZ. */
+    updateTracking: (
+      id: string,
+      body: { trackingNumber?: string; trackingCarrier?: string },
+    ) => this.request<Order>("PATCH", `/orders/${id}/tracking`, body, { auth: true }),
   };
 
   // === Sadakat (puan) ===

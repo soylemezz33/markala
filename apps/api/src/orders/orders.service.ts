@@ -1070,6 +1070,53 @@ export class OrdersService {
   }
 
   /**
+   * Takip no / kargo firmasını yazar. Durum DEĞİŞMEZ, müşteriye bildirim GİTMEZ.
+   *
+   * updateStatus'tan ayrı tutulmasının sebebi: orada "kargoya-verildi" mail tetikliyor.
+   * Takip numarasını sonradan eklemek/düzeltmek her seferinde müşteriye kargo maili
+   * atmamalı. Boş string → null (kolonu temizler); undefined → dokunulmaz.
+   */
+  async updateTracking(
+    id: string,
+    extras: { trackingNumber?: string; trackingCarrier?: string },
+    actor?: { actorId?: string | null; ipAddress?: string | null },
+  ) {
+    const current = await this.prisma.order.findUnique({
+      where: { id },
+      select: { trackingNumber: true, trackingCarrier: true },
+    });
+    if (!current) throw new NotFoundException("Sipariş bulunamadı.");
+
+    // "" gelirse temizle, undefined gelirse hiç dokunma (kısmi güncelleme).
+    const norm = (v?: string) => (v === undefined ? undefined : v.trim() === "" ? null : v.trim());
+    const data = {
+      ...(norm(extras.trackingNumber) !== undefined && { trackingNumber: norm(extras.trackingNumber) }),
+      ...(norm(extras.trackingCarrier) !== undefined && { trackingCarrier: norm(extras.trackingCarrier) }),
+    };
+    if (Object.keys(data).length === 0) return current;
+
+    const updated = await this.prisma.order.update({ where: { id }, data });
+
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actor?.actorId ?? null,
+          entityType: "Order",
+          entityId: id,
+          action: "tracking_update",
+          diff: {
+            from: { number: current.trackingNumber, carrier: current.trackingCarrier },
+            to: { number: updated.trackingNumber, carrier: updated.trackingCarrier },
+          },
+          ipAddress: actor?.ipAddress ?? null,
+        },
+      })
+      .catch((e) => console.error("[audit] updateTracking denetim kaydı yazılamadı:", e?.message));
+
+    return updated;
+  }
+
+  /**
    * Sipariş için Paraşüt faturası kes (henüz kesilmemişse). Tüm hataları yutar —
    * çağıran akışı (sipariş durumu güncelleme) ASLA bozulmaz. Paraşüt yapılandırılmamışsa
    * servis no-op döner. Başarılı faturada Order.parasutInvoiceId güncellenir.

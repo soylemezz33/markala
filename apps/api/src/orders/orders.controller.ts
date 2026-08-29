@@ -5,7 +5,13 @@ import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
 import { Perms, PERM } from "../auth/permissions";
-import { CreateOrderDto, ListOrdersQueryDto, UpdateOrderStatusDto, TrackOrderDto } from "./orders.dto";
+import {
+  CreateOrderDto,
+  ListOrdersQueryDto,
+  UpdateOrderStatusDto,
+  UpdateOrderTrackingDto,
+  TrackOrderDto,
+} from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
 import type { Request } from "express";
 
@@ -109,6 +115,28 @@ export class OrdersController {
     return this.service.updateStatus(
       id,
       dto.status,
+      { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
+      { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null },
+    );
+  }
+
+  /**
+   * Takip no / kargo firmasını günceller — DURUM DEĞİŞTİRMEZ, MÜŞTERİYE MAİL GİTMEZ.
+   * Kargoya verilmiş ama takip numarası girilmemiş siparişleri sonradan tamamlamak
+   * ve yanlış girilen numarayı düzeltmek için (bkz. UpdateOrderTrackingDto).
+   */
+  @Patch(":id/tracking")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_STATUS)
+  @ApiBearerAuth()
+  updateTracking(
+    @Param("id") id: string,
+    @Body() dto: UpdateOrderTrackingDto,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.service.updateTracking(
+      id,
       { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
       { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null },
     );

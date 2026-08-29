@@ -19,7 +19,15 @@ import {
   PaintBrush,
   ArrowCounterClockwise,
 } from "@phosphor-icons/react";
-import { updateOrderStatus, refundOrder } from "./actions";
+import { updateOrderStatus, updateOrderTracking, refundOrder } from "./actions";
+
+/**
+ * Kargo firmaları (2026-08-29). Markala fiilen YALNIZ DHL eCommerce kullanıyor
+ * (Hasan teyidi) — o yüzden ilk sırada ve varsayılan. Liste yine de açık: istisna
+ * gönderilerde elle başka firma yazılabilsin diye "Diğer" serbest metne düşer.
+ */
+const KARGO_FIRMALARI = ["DHL eCommerce", "Aras Kargo", "MNG Kargo", "Yurtiçi Kargo", "PTT Kargo"];
+const VARSAYILAN_KARGO = KARGO_FIRMALARI[0]!;
 
 const STATUSES = [
   { id: "siparis-alindi",     label: "Sipariş Alındı" },
@@ -156,6 +164,15 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [refunding, setRefunding] = useState(false);
 
+  // Kargo takip bilgisi (2026-08-29). İki giriş noktası var:
+  //  · "kargoya-verildi"ye geçerken açılan pencere → numara müşteriye giden maile girer
+  //  · Kargo kartındaki "düzenle" → yalnız kolonu günceller, mail göndermez
+  const [trackNo, setTrackNo] = useState(order.trackingNumber ?? "");
+  const [trackCarrier, setTrackCarrier] = useState(order.trackingCarrier ?? VARSAYILAN_KARGO);
+  const [shipModal, setShipModal] = useState(false);
+  const [trackEditing, setTrackEditing] = useState(false);
+  const [trackMsg, setTrackMsg] = useState<string | null>(null);
+
   // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
   const payStatus = String(order.paymentStatus ?? "beklemede");
   const canRefund = payStatus === "basarili" && order.paymentMethod !== "cari";
@@ -180,8 +197,35 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
     });
   };
 
+  /** Durum değişikliğini API'ye yazar (onay ALINMIŞ kabul edilir). */
+  const commitStatus = (
+    statusId: string,
+    tracking?: { trackingNumber?: string; trackingCarrier?: string },
+  ) => {
+    const prev = currentStatus;
+    setStatusError(null);
+    setCurrentStatus(statusId); // optimistik
+    startTransition(async () => {
+      const res = await updateOrderStatus(order.id, statusId, tracking);
+      if (!res.ok) {
+        setCurrentStatus(prev); // başarısız → geri al
+        setStatusError(res.error);
+      }
+    });
+  };
+
   const handleStatusChange = (statusId: string) => {
     if (statusId === currentStatus || isPending) return;
+
+    // Kargoya verme İLERİ adımı: takip numarasını burada sor. Numara müşteriye giden
+    // kargo e-postasının içine girer — sonradan eklenirse müşteri o maili takipsiz alır.
+    if (statusId === "kargoya-verildi" && !geriAdimMi(currentStatus, statusId)) {
+      setTrackNo(order.trackingNumber ?? "");
+      setTrackCarrier(order.trackingCarrier ?? VARSAYILAN_KARGO);
+      setShipModal(true);
+      return;
+    }
+
     // HER durum değişikliği onay ister (2026-08-28, Hasan: "tek tıkla yürümesin,
     // çünkü müşteriye mail gidiyor"). Onay metni ne olacağını AÇIKÇA yazar: müşteriye
     // mail gidip gitmeyeceğini ve işlemin geri alınabilir olup olmadığını.
@@ -213,15 +257,37 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       );
       if (!ok) return;
     }
-    const prev = currentStatus;
-    setStatusError(null);
-    setCurrentStatus(statusId); // optimistik
+    commitStatus(statusId);
+  };
+
+  /** Kargo penceresinden onay: takip bilgisiyle birlikte "kargoya-verildi"ye geçir. */
+  const confirmShipment = () => {
+    const no = trackNo.trim();
+    const firma = trackCarrier.trim();
+    if (!no) {
+      // Takip numarası olmadan da kargolanabilir (elden teslim, kurye) — ama bilinçli olsun.
+      const ok = window.confirm(
+        "Takip numarası GİRİLMEDİ.\n\n" +
+          "Müşteriye giden kargo e-postasında takip numarası olmayacak ve " +
+          "kargo takip sayfasında sorgulayamayacak.\n\n" +
+          "Yine de devam edilsin mi?",
+      );
+      if (!ok) return;
+    }
+    setShipModal(false);
+    commitStatus("kargoya-verildi", { trackingNumber: no, trackingCarrier: firma });
+  };
+
+  /** Kargo kartından takip bilgisini güncelle — durum değişmez, müşteriye mail GİTMEZ. */
+  const saveTracking = () => {
+    setTrackMsg(null);
     startTransition(async () => {
-      const res = await updateOrderStatus(order.id, statusId);
-      if (!res.ok) {
-        setCurrentStatus(prev); // başarısız → geri al
-        setStatusError(res.error);
-      }
+      const res = await updateOrderTracking(order.id, {
+        trackingNumber: trackNo.trim(),
+        trackingCarrier: trackCarrier.trim(),
+      });
+      setTrackMsg(res.ok ? "Takip bilgisi kaydedildi." : res.error);
+      if (res.ok) setTrackEditing(false);
     });
   };
 
@@ -271,8 +337,8 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   // Kargo etiketi (gerçek DHL etiketi entegrasyon sonrası; bu çıktı interim)
   const printCargo = () =>
     openPrint(`Kargo ${order.orderNumber}`, `
-      <div class="row"><div class="brand">Markala</div><div class="muted">${esc(order.trackingCarrier ?? "Kargo")}</div></div>
-      <div class="box"><div class="muted">Takip No</div><div class="big">${esc(order.trackingNumber ?? "—")}</div></div>
+      <div class="row"><div class="brand">Markala</div><div class="muted">${esc(trackCarrier || "Kargo")}</div></div>
+      <div class="box"><div class="muted">Takip No</div><div class="big">${esc(trackNo || "—")}</div></div>
       <div class="row" style="gap:12px">
         <div class="box" style="flex:1"><div class="muted">Gönderen</div><div style="font-weight:700">Markala · 324 Ajans</div><div>Yenişehir / Mersin</div><div>0324 433 33 51</div></div>
         <div class="box" style="flex:1"><div class="muted">Alıcı</div><div style="font-weight:700">${esc(a?.fullName ?? customer)}</div>
@@ -619,21 +685,94 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
             </Card>
           )}
 
-          {order.trackingNumber && (
+          {/* Kargo kartı: takip numarası VARSA ya da sipariş kargolanmış/teslim edilmişse
+              görünür. İkinci koşul olmadan, takip numarası girilmemiş kargolu siparişlerde
+              kart hiç çıkmıyordu → numarayı sonradan eklemenin yolu yoktu (2026-08-29). */}
+          {(trackNo || currentStatus === "kargoya-verildi" || currentStatus === "teslim-edildi") && (
             <Card title="Kargo">
-              <div className="flex items-center gap-2 mb-2">
-                <Truck size={16} className="text-brand-700" />
-                <span className="font-semibold text-ink-900 text-sm">
-                  {order.trackingCarrier ?? "Kargo"}
-                </span>
-              </div>
-              <div className="text-xs text-ink-500">
-                Takip No:{" "}
-                <span className="font-mono text-ink-900">{order.trackingNumber}</span>
-              </div>
-              <button onClick={printCargo} className="mt-3 w-full text-center py-2 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100">
-                Kargo Etiketi Yazdır
-              </button>
+              {trackEditing || !trackNo ? (
+                <div className="space-y-2">
+                  <label className="block text-xs font-medium text-ink-700">
+                    Kargo Firması
+                    <select
+                      value={KARGO_FIRMALARI.includes(trackCarrier) ? trackCarrier : "__diger"}
+                      onChange={(e) =>
+                        setTrackCarrier(e.target.value === "__diger" ? "" : e.target.value)
+                      }
+                      className="mt-1 w-full border border-paper-200 rounded px-2 py-1.5 text-sm bg-paper-50"
+                    >
+                      {KARGO_FIRMALARI.map((f) => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                      <option value="__diger">Diğer…</option>
+                    </select>
+                  </label>
+                  {!KARGO_FIRMALARI.includes(trackCarrier) && (
+                    <input
+                      value={trackCarrier}
+                      onChange={(e) => setTrackCarrier(e.target.value)}
+                      placeholder="Kargo firması adı"
+                      maxLength={128}
+                      className="w-full border border-paper-200 rounded px-2 py-1.5 text-sm"
+                    />
+                  )}
+                  <label className="block text-xs font-medium text-ink-700">
+                    Takip Numarası
+                    <input
+                      value={trackNo}
+                      onChange={(e) => setTrackNo(e.target.value)}
+                      placeholder="DHL eCommerce takip no"
+                      maxLength={128}
+                      className="mt-1 w-full border border-paper-200 rounded px-2 py-1.5 text-sm font-mono"
+                    />
+                  </label>
+                  <p className="text-[11px] text-ink-500 leading-snug">
+                    Buradan kaydetmek müşteriye e-posta <strong>göndermez</strong> — yalnız kaydı düzeltir.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveTracking}
+                      disabled={isPending}
+                      className="flex-1 py-2 rounded text-xs font-semibold bg-brand-700 text-paper-50 hover:bg-brand-800 disabled:opacity-50"
+                    >
+                      {isPending ? "Kaydediliyor…" : "Kaydet"}
+                    </button>
+                    {trackEditing && (
+                      <button
+                        onClick={() => {
+                          setTrackEditing(false);
+                          setTrackNo(order.trackingNumber ?? "");
+                          setTrackCarrier(order.trackingCarrier ?? VARSAYILAN_KARGO);
+                        }}
+                        className="px-3 py-2 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100"
+                      >
+                        Vazgeç
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Truck size={16} className="text-brand-700" />
+                    <span className="font-semibold text-ink-900 text-sm">
+                      {trackCarrier || "Kargo"}
+                    </span>
+                  </div>
+                  <div className="text-xs text-ink-500">
+                    Takip No: <span className="font-mono text-ink-900">{trackNo}</span>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={printCargo} className="flex-1 py-2 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100">
+                      Etiket Yazdır
+                    </button>
+                    <button onClick={() => setTrackEditing(true)} className="px-3 py-2 rounded text-xs font-medium border border-paper-200 hover:bg-paper-100">
+                      Düzenle
+                    </button>
+                  </div>
+                </>
+              )}
+              {trackMsg && <p className="mt-2 text-xs text-ink-700">{trackMsg}</p>}
             </Card>
           )}
 
@@ -655,6 +794,81 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
           </Card>
         </div>
       </div>
+
+      {/* Kargoya verme penceresi (2026-08-29). window.confirm YERİNE bu pencere çıkar
+          çünkü takip numarasını burada almamız gerekiyor: numara müşteriye giden kargo
+          e-postasının içine giriyor, sonradan eklenirse müşteri maili takipsiz alıyor. */}
+      {shipModal && (
+        <div
+          className="fixed inset-0 z-50 bg-ink-900/40 flex items-center justify-center p-4"
+          onClick={() => setShipModal(false)}
+        >
+          <div
+            className="bg-paper-50 rounded-lg shadow-xl w-full max-w-md p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-ink-900 flex items-center gap-2">
+              <Truck size={18} className="text-brand-700" /> Kargoya Ver
+            </h3>
+            <p className="mt-1 text-xs text-ink-500 leading-snug">
+              Müşteriye <strong>&ldquo;Kargoya Verildi&rdquo;</strong> e-postası gönderilecek.
+              Aşağıdaki takip numarası e-postanın içinde yer alır.
+            </p>
+
+            <label className="block mt-4 text-xs font-medium text-ink-700">
+              Kargo Firması
+              <select
+                value={KARGO_FIRMALARI.includes(trackCarrier) ? trackCarrier : "__diger"}
+                onChange={(e) => setTrackCarrier(e.target.value === "__diger" ? "" : e.target.value)}
+                className="mt-1 w-full border border-paper-200 rounded px-2.5 py-2 text-sm bg-paper-50"
+              >
+                {KARGO_FIRMALARI.map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+                <option value="__diger">Diğer…</option>
+              </select>
+            </label>
+            {!KARGO_FIRMALARI.includes(trackCarrier) && (
+              <input
+                value={trackCarrier}
+                onChange={(e) => setTrackCarrier(e.target.value)}
+                placeholder="Kargo firması adı"
+                maxLength={128}
+                className="mt-2 w-full border border-paper-200 rounded px-2.5 py-2 text-sm"
+              />
+            )}
+
+            <label className="block mt-3 text-xs font-medium text-ink-700">
+              Takip Numarası
+              <input
+                autoFocus
+                value={trackNo}
+                onChange={(e) => setTrackNo(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && confirmShipment()}
+                placeholder="DHL eCommerce takip no"
+                maxLength={128}
+                className="mt-1 w-full border border-paper-200 rounded px-2.5 py-2 text-sm font-mono"
+              />
+            </label>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={confirmShipment}
+                disabled={isPending}
+                className="flex-1 py-2.5 rounded text-sm font-semibold bg-brand-700 text-paper-50 hover:bg-brand-800 disabled:opacity-50"
+              >
+                Kargoya Ver ve Bildir
+              </button>
+              <button
+                onClick={() => setShipModal(false)}
+                className="px-4 py-2.5 rounded text-sm font-medium border border-paper-200 hover:bg-paper-100"
+              >
+                Vazgeç
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminShell>
   );
 }

@@ -33,18 +33,49 @@ export async function refundOrder(
   }
 }
 
+/**
+ * Sipariş durumunu günceller. "kargoya-verildi"ye geçerken takip bilgisi de gönderilir —
+ * müşteriye giden kargo e-postası takip numarasını İÇİNDE taşısın diye (2026-08-29).
+ * Takip alanları opsiyonel: diğer durum geçişlerinde boş geçilir.
+ */
 export async function updateOrderStatus(
   id: string,
   status: string,
+  tracking?: { trackingNumber?: string; trackingCarrier?: string },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const api = await getAdminApi();
-    await api.orders.updateStatus(id, { status });
+    await api.orders.updateStatus(id, {
+      status,
+      ...(tracking?.trackingNumber ? { trackingNumber: tracking.trackingNumber } : {}),
+      ...(tracking?.trackingCarrier ? { trackingCarrier: tracking.trackingCarrier } : {}),
+    });
     revalidatePath("/siparisler");
     revalidatePath(`/siparisler/${id}`);
     return { ok: true };
   } catch (e) {
     const msg = (e as { message?: string })?.message ?? "Durum güncellenemedi";
+    return { ok: false, error: msg };
+  }
+}
+
+/**
+ * Takip no/firmayı durumdan bağımsız günceller — MÜŞTERİYE MAİL GİTMEZ.
+ * Kargoya verilmiş ama takip numarası girilmemiş eski siparişleri tamamlamak ve
+ * yanlış girilen numarayı düzeltmek için.
+ */
+export async function updateOrderTracking(
+  id: string,
+  tracking: { trackingNumber?: string; trackingCarrier?: string },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const api = await getAdminApi();
+    await api.orders.updateTracking(id, tracking);
+    revalidatePath("/siparisler");
+    revalidatePath(`/siparisler/${id}`);
+    return { ok: true };
+  } catch (e) {
+    const msg = (e as { message?: string })?.message ?? "Takip bilgisi güncellenemedi";
     return { ok: false, error: msg };
   }
 }

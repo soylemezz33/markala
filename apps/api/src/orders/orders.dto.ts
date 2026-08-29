@@ -341,6 +341,26 @@ export class UpdateOrderStatusDto {
   trackingCarrier?: string;
 }
 
+/**
+ * Takip bilgisini durumdan BAĞIMSIZ günceller (2026-08-29).
+ *
+ * Neden ayrı uç: durum güncellemesi "kargoya-verildi"de müşteriye e-posta gönderir.
+ * Takip numarasını sonradan eklemek/düzeltmek için aynı ucu kullanmak, her düzeltmede
+ * müşteriye tekrar kargo maili atardı. Bu uç YALNIZ kolonları yazar + denetim kaydı
+ * düşer; hiçbir bildirim tetiklemez.
+ */
+export class UpdateOrderTrackingDto {
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  trackingNumber?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(128)
+  trackingCarrier?: string;
+}
+
 /** Public kargo takip sorgusu — sipariş no + e-posta eşleşmesi (auth YOK, rate-limitli). */
 export class TrackOrderDto {
   @IsString()
