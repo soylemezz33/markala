@@ -88,7 +88,7 @@ export default function GlossaryPage() {
 
           <p className="mt-4 text-sm text-ink-500">
             <Link
-              href="/yardim/dosya-hazirlama"
+              href="/yardim/tasarim-ve-dosya/baskiya-hazir-dosya-nasil-hazirlanir"
               className="text-brand-700 hover:underline font-medium"
             >
               Dosya hazırlama rehberine git
@@ -233,7 +233,7 @@ export default function GlossaryPage() {
               Ürünleri Keşfet <ArrowRight size={14} weight="bold" />
             </Link>
             <Link
-              href="/yardim/dosya-hazirlama"
+              href="/yardim/tasarim-ve-dosya/baskiya-hazir-dosya-nasil-hazirlanir"
               className="px-6 py-3 border border-paper-100/30 text-paper-50 rounded-lg text-sm font-semibold hover:bg-white/5 inline-flex items-center gap-2"
             >
               Dosya Hazırlama Rehberi

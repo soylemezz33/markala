@@ -173,7 +173,7 @@ export function ProcessTimeline() {
             </div>
           </div>
           <a
-            href="/yardim/siparis"
+            href="/yardim/siparis-sureci/siparis-nasil-olusturulur"
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-[#FF8A00] hover:from-brand-400 hover:to-[#FF9D2E] text-ink-900 rounded-md text-sm font-semibold transition-all shadow-[0_8px_24px_rgba(245,184,0,0.3)] hover:shadow-[0_8px_32px_rgba(245,184,0,0.45)]"
           >
             Detaylı süreç rehberi <ArrowRight size={14} weight="bold" />

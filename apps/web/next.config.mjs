@@ -186,6 +186,44 @@ const nextConfig = {
         destination: "/kategori/is-guvenligi-uyari-ikaz",
         permanent: true,
       },
+      // Yardım merkezi yeniden yapılandırması (2026-08-28): tek seviyeli 7 makale
+      // → kategori/makale iki seviyeli mimari. Eski URL'ler indeksli — 301 ile
+      // sıralama yeni adreslere taşınır. (/yardim/sss değişmedi, yönlendirme yok.)
+      {
+        source: "/yardim/dosya-hazirlama",
+        destination: "/yardim/tasarim-ve-dosya/baskiya-hazir-dosya-nasil-hazirlanir",
+        permanent: true,
+      },
+      {
+        source: "/yardim/siparis",
+        destination: "/yardim/siparis-sureci/siparis-nasil-olusturulur",
+        permanent: true,
+      },
+      {
+        source: "/yardim/kargo",
+        destination: "/yardim/kargo-ve-teslimat",
+        permanent: true,
+      },
+      {
+        source: "/yardim/iade",
+        destination: "/yardim/iade-ve-iptal",
+        permanent: true,
+      },
+      {
+        source: "/yardim/odeme",
+        destination: "/yardim/odeme-ve-fatura",
+        permanent: true,
+      },
+      {
+        source: "/yardim/tasarim-destegi",
+        destination: "/yardim/tasarim-ve-dosya/tasarim-destegi-nasil-calisir",
+        permanent: true,
+      },
+      {
+        source: "/yardim/kurumsal",
+        destination: "/yardim/kurumsal-hesap",
+        permanent: true,
+      },
     ];
   },
 };

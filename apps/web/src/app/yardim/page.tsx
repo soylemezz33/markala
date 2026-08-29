@@ -1,83 +1,63 @@
 import Link from "next/link";
 import { Container } from "@markala/ui";
-import {
-  Question, FileText, Truck, CreditCard, Package, ArrowsClockwise, ArrowRight,
-  PaintBrush, Receipt, Question as QMark, ShieldCheck, ChatCircle,
-} from "@phosphor-icons/react/dist/ssr";
-import { FAQPageJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { Question, ArrowRight, ChatCircle, Lifebuoy } from "@phosphor-icons/react/dist/ssr";
+import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/json-ld";
 import type { Metadata } from "next";
+import { HELP_CATEGORIES, POPULAR_HELP } from "@/lib/help-center";
+import { HelpSearch, type SearchItem } from "./_search";
+import { CATEGORY_ICONS } from "./_components";
+
+/**
+ * Yardım Merkezi hub'ı — kategori → makale iki seviyeli mimarinin girişi.
+ * (2026-08-28: bidolubaski yardım merkezi deseninden uyarlandı; makaleler
+ * lib/help-center.ts'te kodda tutulur, arama istemci tarafındadır.)
+ *
+ * FAQPage JSON-LD bilinçli olarak YOK: cevaplar bu sayfada görünmüyor (yalnız
+ * link listesi) — görünmeyen cevapla FAQ şeması Google yönergesine aykırı.
+ * Şemayı, soru+cevabın birlikte göründüğü makale sayfaları üretir.
+ */
 
 export const metadata: Metadata = {
-  title: "Yardım Merkezi — Sıkça Sorulanlar, Dosya Hazırlama, Kargo, İade",
+  title: "Yardım Merkezi — Sipariş, Dosya Hazırlama, Kargo, İade",
   description:
-    "Markala yardım merkezi: dosya hazırlama rehberi, sipariş süreci, kargo ve teslimat, iade-değişim, ödeme ve fatura, tasarım desteği, kurumsal hesap.",
+    "Markala yardım merkezi: sipariş süreci, dosya hazırlama, üyelik, kampanyalar, ödeme ve fatura, kargo ve teslimat, iade, kurumsal hesap — tüm sorularınızın cevabı.",
   alternates: { canonical: "/yardim" },
   openGraph: {
     type: "website",
     title: "Markala Yardım Merkezi",
-    description: "Dosya hazırlama, kargo, iade ve daha fazlası — tüm sorularınızın cevabı.",
+    description: "Size nasıl yardımcı olabiliriz? Sipariş, dosya hazırlama, kargo, iade ve daha fazlası.",
     url: "/yardim",
     images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Yardım Merkezi" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Markala Yardım Merkezi",
-    description: "Dosya hazırlama, kargo, iade ve daha fazlası — tüm sorularınızın cevabı.",
+    description: "Size nasıl yardımcı olabiliriz? Sipariş, dosya hazırlama, kargo, iade ve daha fazlası.",
     images: ["/og-default.png"],
   },
 };
 
-const topics = [
-  { href: "/yardim/sss", title: "Sıkça Sorulanlar", desc: "En çok sorulan 30+ soru ve cevabı", icon: QMark },
-  { href: "/yardim/dosya-hazirlama", title: "Dosya Hazırlama Rehberi", desc: "CMYK, çözünürlük, taşma payı, format", icon: FileText },
-  { href: "/yardim/siparis", title: "Sipariş Süreci", desc: "Konfigüratörden teslimata kadar", icon: Package },
-  { href: "/yardim/kargo", title: "Kargo & Teslimat", desc: "DHL, süreler, ücretler, takip", icon: Truck },
-  { href: "/yardim/iade", title: "İade & Değişim", desc: "Üretim hatası, hasar, iptal", icon: ArrowsClockwise },
-  { href: "/yardim/odeme", title: "Ödeme & Fatura", desc: "iyzico, taksit, e-Arşiv, kurumsal", icon: CreditCard },
-  { href: "/yardim/tasarim-destegi", title: "Tasarım Desteği", desc: "Ücretsiz tasarım nasıl çalışır", icon: PaintBrush },
-  { href: "/yardim/kurumsal", title: "Kurumsal Hesap", desc: "B2B cari hesap, açık fatura, indirim", icon: ShieldCheck },
-];
-
-const popularFaqs = [
-  { q: "Tasarım dosyamı hangi formatta göndermeliyim?", href: "/yardim/dosya-hazirlama" },
-  { q: "Kaç günde elime ulaşır?", href: "/yardim/kargo" },
-  { q: "Selefon ile UV lak farkı nedir?", href: "/yardim/sss#selefon-uv" },
-  { q: "Üretim toleransı nedir? %1-5 fire ne demek?", href: "/yardim/iade" },
-  { q: "Kurumsal cari hesap nasıl açılır?", href: "/yardim/kurumsal" },
-  { q: "Siparişimi nasıl iptal ederim?", href: "/yardim/iade" },
-];
-
-const faqSchemaItems = [
-  {
-    q: "Tasarım dosyamı hangi formatta göndermeliyim?",
-    a: "CMYK renk profilinde, 300 dpi çözünürlükte PDF/X-1a formatı tercih edilir. Her kenardan 2-3 mm taşma payı bırakmanız baskı kalitesi için önemlidir. Detaylar için Dosya Hazırlama Rehberi sayfamıza bakabilirsiniz.",
-  },
-  {
-    q: "Kaç günde elime ulaşır?",
-    a: "Çoğu üründe üretim süresi 1-2 iş günüdür. Buna DHL kargo süresi olan 1-3 iş günü eklenir. Toplam 2-5 iş günü içinde teslim edilir.",
-  },
-  {
-    q: "Selefon ile UV lak farkı nedir?",
-    a: "Selefon, baskı yüzeyine yapıştırılan mat veya parlak bir film kaplamasıdır; baskıyı nemden ve çizilmeden korur. UV lak ise sıvı hâlde sürülüp ultraviyole ışınla anında kuruyan bir vernik çeşididir; selefona göre daha ince ve daha az koruma sağlar ancak baskıya farklı bir doku katar.",
-  },
-  {
-    q: "Üretim toleransı nedir? %1-5 fire ne demek?",
-    a: "Matbaa üretiminde makineden kaynaklanan adet farkına 'tolerans' veya 'fire' denir. Sipariş ettiğiniz adetten %1-5 daha az veya daha fazla ürün teslim edilmesi sektör standardıdır. Bu durum sipariş onayında otomatik kabul edilmiş sayılır.",
-  },
-  {
-    q: "Kurumsal cari hesap nasıl açılır?",
-    a: "Kurumsal satış ekibimize kurumsal@markala.com.tr üzerinden veya WhatsApp hattımızdan ulaşabilirsiniz. Aylık fatura, açık hesap ve özel taksit imkânları hakkında bilgi verilir.",
-  },
-  {
-    q: "Siparişimi nasıl iptal ederim?",
-    a: "Siparişiniz üretime alınmadan önce iptal edilebilir. Üretim başladıktan sonra iptal mümkün değildir. İptal talebi için WhatsApp veya e-posta ile sipariş numaranızı bildirmeniz yeterlidir.",
-  },
+/** Arama indeksi — tüm makaleler + SSS girişi (build'de hesaplanır, client'a props gider). */
+const searchItems: SearchItem[] = [
+  ...HELP_CATEGORIES.flatMap((c) =>
+    c.articles.map((a) => ({
+      q: a.question,
+      href: `/yardim/${c.slug}/${a.slug}`,
+      category: c.title,
+      keywords: a.keywords ?? [],
+    })),
+  ),
+  { q: "Sıkça Sorulan Sorular", href: "/yardim/sss", category: "SSS", keywords: ["sss", "sorular"] },
 ];
 
 export default function YardimPage() {
   return (
     <>
-      <FAQPageJsonLd questions={faqSchemaItems} url="/yardim" />
+      <ItemListJsonLd
+        name="Markala Yardım Merkezi Kategorileri"
+        url="/yardim"
+        items={HELP_CATEGORIES.map((c) => ({ name: c.title, href: `/yardim/${c.slug}` }))}
+      />
       <BreadcrumbJsonLd
         items={[
           { name: "Anasayfa", href: "/" },
@@ -91,45 +71,70 @@ export default function YardimPage() {
           </div>
           <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">Yardım Merkezi</p>
           <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
-            Aradığınızı bulmanıza yardım edelim
+            Size nasıl yardımcı olabiliriz?
           </h1>
           <p className="mt-4 text-lg text-ink-700 max-w-xl mx-auto">
-            Sipariş süreci, dosya hazırlama, kargo ve teslimat, iade — her konuda detaylı rehberler.
+            Sipariş, dosya hazırlama, kargo, iade — her konuda soru odaklı, net cevaplar.
           </p>
+          <div className="mt-6">
+            <HelpSearch items={searchItems} />
+          </div>
         </Container>
       </div>
 
       <Container className="py-12 md:py-16">
-        {/* Konu kartları */}
+        {/* Kategori kartları */}
         <section>
           <h2 className="text-2xl font-semibold text-ink-900 mb-6">Konular</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {topics.map((t) => (
-              <Link
-                key={t.href}
-                href={t.href}
-                className="group p-5 bg-paper-50 border border-paper-200 rounded-xl hover:border-ink-300 hover:shadow-md transition-all"
-              >
-                <div className="w-11 h-11 rounded-lg bg-brand-100 text-brand-700 grid place-items-center mb-3">
-                  <t.icon size={22} />
-                </div>
-                <h3 className="font-semibold text-ink-900 text-sm">{t.title}</h3>
-                <p className="text-xs text-ink-500 mt-1">{t.desc}</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-700 group-hover:gap-2 transition-all">
-                  Aç <ArrowRight size={10} weight="bold" />
-                </span>
-              </Link>
-            ))}
+            {HELP_CATEGORIES.map((c) => {
+              const Icon = CATEGORY_ICONS[c.icon];
+              return (
+                <Link
+                  key={c.slug}
+                  href={`/yardim/${c.slug}`}
+                  className="group p-5 bg-paper-50 border border-paper-200 rounded-xl hover:border-ink-300 hover:shadow-md transition-all"
+                >
+                  <div className="w-11 h-11 rounded-lg bg-brand-100 text-brand-700 grid place-items-center mb-3">
+                    <Icon size={22} />
+                  </div>
+                  <h3 className="font-semibold text-ink-900 text-sm">{c.title}</h3>
+                  <p className="text-xs text-ink-500 mt-1">{c.short}</p>
+                  <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-700 group-hover:gap-2 transition-all">
+                    {c.articles.length} makale <ArrowRight size={10} weight="bold" />
+                  </span>
+                </Link>
+              );
+            })}
           </div>
+        </section>
+
+        {/* SSS bandı */}
+        <section className="mt-8">
+          <Link
+            href="/yardim/sss"
+            className="flex items-center justify-between gap-4 p-5 bg-brand-100/60 border border-brand-500/30 rounded-xl hover:border-brand-500 transition-colors group"
+          >
+            <span className="flex items-center gap-3">
+              <Lifebuoy size={24} className="flex-none text-brand-700" />
+              <span>
+                <span className="block font-semibold text-ink-900 text-sm">Sıkça Sorulan Sorular</span>
+                <span className="block text-xs text-ink-500 mt-0.5">
+                  En çok sorulan 30+ soru ve kısa cevapları — tek sayfada
+                </span>
+              </span>
+            </span>
+            <ArrowRight size={16} className="flex-none text-brand-700 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </section>
 
         {/* Popüler sorular */}
         <section className="mt-16">
           <h2 className="text-2xl font-semibold text-ink-900 mb-6">Popüler Sorular</h2>
           <div className="bg-paper-50 border border-paper-200 rounded-xl divide-y divide-paper-200">
-            {popularFaqs.map((f) => (
+            {POPULAR_HELP.map((f) => (
               <Link
-                key={f.q}
+                key={f.href}
                 href={f.href}
                 className="flex items-center justify-between gap-3 px-5 py-4 hover:bg-paper-100 group transition-colors"
               >

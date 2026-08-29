@@ -80,9 +80,9 @@ export function SiteFooter() {
           <FooterLink href="/fiyat-listesi">Fiyat Listesi</FooterLink>
           <FooterLink href="/sozluk">Matbaa Sözlüğü</FooterLink>
           <FooterLink href="/blog">Blog & Rehberler</FooterLink>
-          <FooterLink href="/yardim/dosya-hazirlama">Dosya Hazırlama Rehberi</FooterLink>
+          <FooterLink href="/yardim/tasarim-ve-dosya/baskiya-hazir-dosya-nasil-hazirlanir">Dosya Hazırlama Rehberi</FooterLink>
           <FooterLink href="/yardim/sss">Sıkça Sorulanlar</FooterLink>
-          <FooterLink href="/yardim/iade">İade & Değişim</FooterLink>
+          <FooterLink href="/yardim/iade-ve-iptal">İade & Değişim</FooterLink>
         </FooterColumn>
 
         <FooterColumn title="Destek">
