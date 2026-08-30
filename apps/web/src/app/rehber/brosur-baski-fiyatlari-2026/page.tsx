@@ -15,7 +15,7 @@ import { getProductsByCategory, getProductBySlug } from "@/lib/catalog";
 import { calculateTotal, getDisplayPrice } from "@/lib/configurator";
 import { formatPriceWithSymbol, formatPriceDisplay } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
-import { GuideFaqSection, asOfLabel } from "../_shared";
+import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -157,6 +157,10 @@ export default async function BrosurFiyatlariPage() {
           <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
             Broşür baskı fiyatları 2026: ne ödersin?
           </h1>
+          <HizliCevap
+            soru="1.000 adet broşür/el ilanı ne kadar?"
+            cevap="Broşür ve el ilanı fiyatı ebat (A7-A3), kâğıt gramajı ve tiraja göre belirlenir; aşağıdaki tablo ebat × adet kırılımıyla güncel fiyatları verir. Tiraj arttıkça birim fiyat düşer, tüm tutarlar KDV dahildir."
+          />
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.label.toLowerCase()} broşür{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(minStart)}</strong>&apos;den

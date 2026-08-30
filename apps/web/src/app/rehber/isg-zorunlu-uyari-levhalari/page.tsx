@@ -20,7 +20,7 @@ import { getCategories } from "@/lib/catalog";
 import { volumeDiscountRate } from "@/lib/configurator";
 import { formatPriceWithSymbol } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
-import { GuideFaqSection, asOfLabel } from "../_shared";
+import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
 
 // Kategori/fiyat verisi canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -242,6 +242,10 @@ export default async function IsgLevhaRehberiPage() {
           <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
             İşyerinde hangi uyarı levhaları zorunlu?
           </h1>
+          <HizliCevap
+            soru="İş güvenliği levhalarında renkler ne anlama gelir?"
+            cevap="Sağlık ve Güvenlik İşaretleri Yönetmeliği'ne göre kırmızı yasaklayıcı ve yangınla mücadele, sarı uyarı, mavi emredici (zorunluluk), yeşil ise acil çıkış ve ilk yardım anlamına gelir. Hangi levhanın hangi işyerinde zorunlu olduğunu aşağıdaki kontrol listelerinde bulabilirsiniz."
+          />
           <p className="mt-4 text-lg text-ink-700">
             &quot;Sağlık ve Güvenlik İşaretleri Yönetmeliği&quot; işvereni, risk değerlendirmesine
             göre gerekli güvenlik işaretlerini bulundurmakla yükümlü kılar. Bu rehberde işaret

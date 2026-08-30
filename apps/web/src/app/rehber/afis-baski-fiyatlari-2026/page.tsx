@@ -15,7 +15,7 @@ import { getProductBySlug } from "@/lib/catalog";
 import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
-import { GuideFaqSection, asOfLabel } from "../_shared";
+import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -131,6 +131,10 @@ export default async function AfisFiyatlariPage() {
           <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
             Afiş baskı fiyatları 2026: ne ödersin?
           </h1>
+          <HizliCevap
+            soru="Afiş baskı fiyatı nasıl hesaplanır?"
+            cevap="Afiş fiyatı ebat, kâğıt cinsi ve adede göre hesaplanır; tabloda güncel ebat-adet kırılımı yer alır. Fiyatlar KDV dahildir; üretim genellikle 1-2 iş günü sürer ve sipariş Türkiye geneline kargolanır."
+          />
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.optionLabel.toLowerCase()} afiş{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(minStart)}</strong>&apos;den

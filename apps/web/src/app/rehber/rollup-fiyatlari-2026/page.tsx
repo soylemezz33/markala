@@ -15,7 +15,7 @@ import { getProductBySlug } from "@/lib/catalog";
 import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
-import { GuideFaqSection, asOfLabel } from "../_shared";
+import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -143,6 +143,10 @@ export default async function RollupFiyatlariPage() {
           <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
             Roll-up fiyatları 2026: 85x200 banner ne kadar?
           </h1>
+          <HizliCevap
+            soru="Rollup banner fiyatı ne kadar?"
+            cevap="Rollup fiyatı stant kalitesi (ekonomik/premium) ve ebada göre değişir; tabloda güncel seçenekler listelenir. Fiyata baskı, stant ve taşıma çantası dahildir; tutarlar KDV dahil olup üretim 1-2 iş günüdür."
+          />
           <p className="mt-4 text-lg text-ink-700">
             Baskı dahil komple roll-up{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(singleFull > 0 ? singleFull : minStart)}</strong>

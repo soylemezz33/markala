@@ -14,7 +14,7 @@ import { getProductsByCategory, getProducts } from "@/lib/catalog";
 import { getDisplayPrice } from "@/lib/configurator";
 import { formatPriceWithSymbol, formatPriceDisplay } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
-import { GuideFaqSection, asOfLabel } from "../_shared";
+import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -138,6 +138,10 @@ export default async function BrandaM2FiyatiPage() {
           <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
             Branda baskı m² fiyatı 2026: nasıl hesaplanır?
           </h1>
+          <HizliCevap
+            soru="Branda baskı metrekare fiyatı nedir?"
+            cevap="Branda fiyatı metrekare üzerinden hesaplanır: en × boy (cm) çarpımı m²'ye çevrilir ve malzeme gramajıyla (440 gr veya 510 gr) çarpılır. Sayfadaki tablo güncel m² fiyatlarını gösterir; kuşgözü ve kenar katlama standart olarak uygulanır, fiyatlar KDV dahildir."
+          />
           <p className="mt-4 text-lg text-ink-700">
             Branda serbest ölçüyle üretilir ve m² üzerinden fiyatlanır: {asOf} itibarıyla en
             ekonomik malzemede <strong className="text-ink-900">{formatPriceWithSymbol(perM2)}/m²</strong>

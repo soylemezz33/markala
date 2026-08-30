@@ -15,7 +15,7 @@ import { getProductsByCategory, getProductBySlug } from "@/lib/catalog";
 import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol, formatPrice } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
-import { GuideFaqSection, asOfLabel } from "../_shared";
+import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir (rehber içeriği için yeterli).
 export const revalidate = 3600;
@@ -177,6 +177,10 @@ export default async function KartvizitFiyatlariPage() {
           <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
             Kartvizit fiyatları 2026: ne ödersin?
           </h1>
+          <HizliCevap
+            soru="1.000 adet kartvizit ne kadar?"
+            cevap="Kartvizit fiyatı gramaj (350/400 gr), selefon/lak tercihi ve adede göre değişir; sayfadaki tablo canlı katalogdan güncel tutarları gösterir. Tüm fiyatlar KDV dahildir ve sepette değişmez; üretim 1-2 iş günü, kargo Türkiye geneline yapılır."
+          />
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.label} kartvizit{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(minStart)}</strong>&apos;den

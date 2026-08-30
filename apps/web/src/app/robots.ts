@@ -44,9 +44,25 @@ export default function robots(): MetadataRoute.Robots {
         allow: ["/", "/api/mockup"], // Mockup endpoint OG image için crawl edilebilir
         disallow: DISALLOW,
       },
-      // AI arama/cevap botları AÇIK (AEO — 2026-07-20): GPTBot, OAI-SearchBot, ChatGPT-User,
-      // ClaudeBot/Claude-SearchBot/Claude-User, PerplexityBot, Google-Extended `*` kuralına düşer
-      // (Allow / + standart disallow'lar). Rakiplerin 5/5'i açık; görünürlük için biz de açığız.
+      // AI arama/cevap botlarına AÇIK DAVET (2026-08-30): `*` kuralı zaten yeterliydi ama
+      // bazı botlar kendi adına yazılmış grubu "izin verilmiş" sinyali sayıyor ve tarama
+      // önceliğini ona göre kuruyor. Bu yüzden her biri için AÇIK Allow + aynı disallow seti
+      // (kendi grubunu bulan bot `*`ı yok sayar — set kopyalanmak ZORUNDA) + llms.txt işareti.
+      ...[
+        "GPTBot", // OpenAI tarama
+        "OAI-SearchBot", // ChatGPT arama dizini
+        "ChatGPT-User", // kullanıcı isteğiyle canlı getirme
+        "ClaudeBot",
+        "Claude-SearchBot",
+        "Claude-User",
+        "PerplexityBot",
+        "Perplexity-User",
+        "Google-Extended", // Gemini/AI Overviews
+        "Applebot-Extended", // Apple Intelligence
+        "Amazonbot", // Alexa/Rufus cevapları
+        "DuckAssistBot",
+        "Bingbot", // Copilot'un kaynağı
+      ].map((ua) => ({ userAgent: ua, allow: ["/", "/api/mockup", "/llms.txt"], disallow: DISALLOW })),
       // Saf eğitim/scraping koleksiyoncuları kapalı kalır — görünürlük katkıları yok:
       { userAgent: "CCBot", disallow: "/" },
       { userAgent: "Bytespider", disallow: "/" },

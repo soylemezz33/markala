@@ -49,6 +49,30 @@ export function GuideFaqSection({ items, url }: { items: GuideFaqItem[]; url: st
 }
 
 /**
+ * HIZLI CEVAP bloğu (2026-08-30, AEO/GEO): sayfanın en üstünde, soruya 2-3 cümlede
+ * kesin cevap veren kutu.
+ *
+ * Neden: yapay zeka asistanları (ChatGPT/Perplexity/AI Overviews) ve Google'ın öne çıkan
+ * snippet'i, uzun rehberlerin tamamını değil "tek paragrafta cevap" bloklarını alıntılar.
+ * Uzun içerik SEO için değerli ama alıntılanabilirlik için kısa özet şart — ikisini birlikte
+ * sunuyoruz. Metin, sayfadaki verinin AYNISI olmalı (uydurma/eskiyen rakam yazma).
+ */
+export function HizliCevap({ soru, cevap }: { soru: string; cevap: string }) {
+  return (
+    <section
+      aria-label="Kısa cevap"
+      className="mt-6 rounded-xl border border-brand-200 bg-brand-50/60 px-5 py-4"
+    >
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-700">
+        Kısa cevap
+      </p>
+      <p className="mt-1.5 text-base font-medium text-ink-900 leading-relaxed">{soru}</p>
+      <p className="mt-1 text-sm text-ink-700 leading-relaxed">{cevap}</p>
+    </section>
+  );
+}
+
+/**
  * Dürüst tarihleme etiketi — "Temmuz 2026" gibi. Sayfa ISR ile her yeniden üretildiğinde
  * (revalidate 3600) güncel ay/yıl yazılır; fiyatlar da aynı üretimde canlı katalogdan çekildiği
  * için etiket ile veri hep aynı tazeliktedir.
