@@ -391,12 +391,12 @@ export const HELP_CATEGORIES: HelpCategory[] = [
       {
         slug: "teslimat-suresi-ne-kadar",
         question: "Teslimat süresi ne kadar?",
-        description: "Üretim + kargo süresi: çoğu üründe toplam 2-5 iş günü; şehirlere göre farklar.",
+        description: "Üretim + kargo süresi: çoğu üründe toplam 3-6 iş günü; şehirlere göre farklar.",
         shortAnswer:
-          "Çoğu üründe üretim 1-2 iş günü sürer; buna DHL kargo süresi (1-3 iş günü) eklenir. Toplamda siparişiniz genellikle 2-5 iş günü içinde elinizde olur. Büyük ebatlı veya özel üretim işlerde süre 7 iş gününe uzayabilir.",
+          "Çoğu üründe üretim 2-3 iş günü sürer; buna DHL kargo süresi (1-3 iş günü) eklenir. Toplamda siparişiniz genellikle 3-6 iş günü içinde elinizde olur. Büyük ebatlı veya özel üretim işlerde süre 7 iş gününe uzayabilir.",
         keywords: ["teslimat süresi", "kaç günde gelir", "ne zaman gelir", "üretim süresi"],
         sections: [
-          { heading: "Üretim Süresi", body: "Kartvizit, broşür gibi standart işler 1-2 iş günü; branda, tabela, özel kesim gibi işler 3-7 iş günü sürebilir. Her ürünün sayfasında tahmini üretim süresi belirtilir." },
+          { heading: "Üretim Süresi", body: "Kartvizit, broşür gibi standart işler 2-3 iş günü; branda, tabela, özel kesim gibi işler 3-7 iş günü sürebilir. Her ürünün sayfasında tahmini üretim süresi belirtilir." },
           { heading: "Kargo Süresi", body: "İstanbul, Ankara, İzmir, Bursa, Mersin gibi büyük şehirlere 24-48 saat; Doğu Anadolu illerine 2-3 iş günü; adalar ve uzak bölgelere 3-5 iş günü." },
           { heading: "Acil İşler", body: "Teslim tarihi kritikse sipariş notuna yazın ve WhatsApp'tan bildirin; üretim planına öncelikli alınması ve hızlı kargo seçeneği için ekibimiz yardımcı olur." },
         ],

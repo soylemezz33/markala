@@ -56,7 +56,7 @@ export const services: ServiceData[] = [
       },
       {
         title: "Hızlı teslim",
-        desc: "İlk taslak 4-24 saat içinde, onay sonrası üretim 1-2 iş günü.",
+        desc: "İlk taslak 4-24 saat içinde, onay sonrası üretim 2-3 iş günü.",
       },
       {
         title: "Pantone & CMYK uyum",
@@ -90,7 +90,7 @@ export const services: ServiceData[] = [
         n: "4",
         title: "Onay & Üretim",
         desc: "Onayladığınız tasarım üretime alınır, kargo ile teslim edilir.",
-        duration: "1-2 iş günü",
+        duration: "2-3 iş günü",
       },
     ],
     faqs: [

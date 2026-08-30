@@ -241,7 +241,7 @@ export default function SablonlarPage() {
           <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
           <h2 className="text-2xl md:text-3xl font-semibold">Hazır şablonunuz mu var?</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Şablonu doldur, dosyanı yükle — üretim 1–2 iş günü, 81 ile kargo. Tasarımın yoksa
+            Şablonu doldur, dosyanı yükle — üretim 2–3 iş günü, 81 ile kargo. Tasarımın yoksa
             ücretsiz tasarım desteğiyle biz hazırlayalım.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

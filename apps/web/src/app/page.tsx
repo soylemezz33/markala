@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   // SERP bütçesi: title ≤60 kr, description ≤160 kr (kelime sınırında biter) — 2026-08-01 SEO denetimi.
   title: { absolute: "Markala — Online Matbaa: Kartvizit, Broşür & Branda Baskı" },
   description:
-    "Kartvizit, broşür, afiş, branda ve 800+ matbaa ürünü online. Ücretsiz tasarım desteği, 1-2 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
+    "Kartvizit, broşür, afiş, branda ve 800+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
   alternates: { canonical: "/" },
 };
 
@@ -40,7 +40,10 @@ const slimForCard = (p: Product): Product => ({
   startingPrice: p.startingPrice,
   productionTime: p.productionTime,
   sizeLabel: p.sizeLabel,
-  images: p.images.slice(0, 1),
+  // İKİ görsel: [0] kapak, [1] hover'da gösterilen destek görseli (2026-08-31).
+  // Diyet bozulmuyor — bu yalnız bir URL dizesi daha (~80 B/ürün); ikinci görselin
+  // KENDİSİ ProductCard'da ilk hover'a kadar indirilmez, yani LCP'ye etkisi yok.
+  images: p.images.slice(0, 2),
   badges: p.badges,
   displayPrice: p.displayPrice,
   pricingMode: p.pricingMode,

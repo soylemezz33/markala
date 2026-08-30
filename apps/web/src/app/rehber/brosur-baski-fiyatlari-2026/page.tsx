@@ -126,7 +126,7 @@ export default async function BrosurFiyatlariPage() {
     },
     {
       q: "Broşür kaç günde teslim edilir?",
-      a: `Üretim süresi ${matrix.productionTime || "1-2 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Yoğun kampanya dönemleri için siparişi dağıtım tarihinden birkaç gün önce vermeni öneririz.`,
+      a: `Üretim süresi ${matrix.productionTime || "2-3 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Yoğun kampanya dönemleri için siparişi dağıtım tarihinden birkaç gün önce vermeni öneririz.`,
     },
   ];
 

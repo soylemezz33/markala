@@ -108,7 +108,7 @@ export default async function RollupFiyatlariPage() {
     },
     {
       q: "Roll-up kaç günde teslim edilir?",
-      a: `Üretim süresi ${product.productionTime || "1-2 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Fuar/etkinlik tarihin belliyse siparişi birkaç gün önceden vermeni öneririz.`,
+      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Fuar/etkinlik tarihin belliyse siparişi birkaç gün önceden vermeni öneririz.`,
     },
     {
       q: "Tasarımım yok, ne yapmalıyım?",
@@ -145,7 +145,7 @@ export default async function RollupFiyatlariPage() {
           </h1>
           <HizliCevap
             soru="Rollup banner fiyatı ne kadar?"
-            cevap="Rollup fiyatı stant kalitesi (ekonomik/premium) ve ebada göre değişir; tabloda güncel seçenekler listelenir. Fiyata baskı, stant ve taşıma çantası dahildir; tutarlar KDV dahil olup üretim 1-2 iş günüdür."
+            cevap="Rollup fiyatı stant kalitesi (ekonomik/premium) ve ebada göre değişir; tabloda güncel seçenekler listelenir. Fiyata baskı, stant ve taşıma çantası dahildir; tutarlar KDV dahil olup üretim 2-3 iş günüdür."
           />
           <p className="mt-4 text-lg text-ink-700">
             Baskı dahil komple roll-up{" "}

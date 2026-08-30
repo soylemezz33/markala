@@ -96,7 +96,7 @@ export default async function AfisFiyatlariPage() {
     },
     {
       q: "Afiş kaç günde teslim edilir?",
-      a: `Üretim süresi ${product.productionTime || "1-2 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Etkinlik/kampanya tarihine birkaç gün pay bırakmanı öneririz.`,
+      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Etkinlik/kampanya tarihine birkaç gün pay bırakmanı öneririz.`,
     },
     {
       q: "Tasarımım yok, afişi kim hazırlayacak?",
@@ -133,7 +133,7 @@ export default async function AfisFiyatlariPage() {
           </h1>
           <HizliCevap
             soru="Afiş baskı fiyatı nasıl hesaplanır?"
-            cevap="Afiş fiyatı ebat, kâğıt cinsi ve adede göre hesaplanır; tabloda güncel ebat-adet kırılımı yer alır. Fiyatlar KDV dahildir; üretim genellikle 1-2 iş günü sürer ve sipariş Türkiye geneline kargolanır."
+            cevap="Afiş fiyatı ebat, kâğıt cinsi ve adede göre hesaplanır; tabloda güncel ebat-adet kırılımı yer alır. Fiyatlar KDV dahildir; üretim genellikle 2-3 iş günü sürer ve sipariş Türkiye geneline kargolanır."
           />
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.optionLabel.toLowerCase()} afiş{" "}
