@@ -163,6 +163,45 @@ const DEFAULT_NAV: NavCategory[] = [
     ],
   },
   {
+    // DİJİTAL BASKI (2026-08-28, Hasan) — m² hesaplı baskı hizmetleri tek sekmede.
+    // 2026-08-30 Hasan: sıralamada Promosyon'dan HEMEN ÖNCEYE alındı.
+    label: "Dijital Baskı",
+    href: groupHref("Dijital Baskı", ["vinil-branda-afis", "folyo", "dekota-baski", "arac-sticker"]),
+    groups: [
+      {
+        title: "Vinil & Branda",
+        items: [
+          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr", badge: "POPÜLER" },
+          { label: "Mesh Branda", href: "/urun/mesh-branda" },
+          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
+        ],
+      },
+      {
+        title: "Folyo & Film",
+        items: [
+          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
+          { label: "Baskes Folyo", href: "/urun/baskes-folyo" },
+          { label: "One Way Vision", href: "/urun/one-way-vision-baski" },
+          { label: "UV DTF Baskı", href: "/urun/uv-dtf-baski" },
+          { label: "Duvar Kağıdı", href: "/urun/duvar-kagidi-baski" },
+        ],
+      },
+      {
+        title: "Levha & Tablo",
+        items: [
+          { label: "Dekota / Foreks Baskı", href: "/urun/dekota-baski-5mm" },
+          { label: "Pleksi Baskı", href: "/urun/pleksi-baski" },
+          { label: "Kompozit Baskı", href: "/urun/kompozit-baski" },
+          { label: "Kanvas Tablo Baskı", href: "/urun/kanvas-tablo-baski" },
+        ],
+      },
+    ],
+    featured: [
+      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
+      { slug: "dekota-baski-5mm", label: "Dekota Baskı", theme: "paper" },
+    ],
+  },
+  {
     label: "Promosyon & Hediye",
     href: groupHref("Promosyon & Hediye", ["kupa", "magnet", "plaket", "madalya", "bloknot"]),
     groups: [
@@ -210,48 +249,6 @@ const DEFAULT_NAV: NavCategory[] = [
     featured: [
       { slug: "lightbox-led-100cm", label: "Lightbox LED", theme: "ink" },
       { slug: "arac-magneti-30x40", label: "Araç Magneti", theme: "paper" },
-    ],
-  },
-  {
-    // DİJİTAL BASKI (2026-08-28, Hasan) — m² hesaplı baskı hizmetleri tek sekmede.
-    // Reklam Tabela'nın YANINA konumlandı. Çakışma bırakılmadı: buraya taşınan
-    // ürünler eski sekmelerinden ÇIKARILDI, iki yerde birden görünmüyorlar.
-    // Baskes Folyo, Duvar Kağıdı, Pleksi, Kompozit, Kanvas ve UV DTF eklendiğinde
-    // "Levha & Özel" grubuna ve featured kartlarına buradan bağlanacak.
-    label: "Dijital Baskı",
-    href: groupHref("Dijital Baskı", ["vinil-branda-afis", "folyo", "dekota-baski", "arac-sticker"]),
-    groups: [
-      {
-        title: "Vinil & Branda",
-        items: [
-          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr", badge: "POPÜLER" },
-          { label: "Mesh Branda", href: "/urun/mesh-branda" },
-          { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
-        ],
-      },
-      {
-        title: "Folyo & Film",
-        items: [
-          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
-          { label: "Baskes Folyo", href: "/urun/baskes-folyo" },
-          { label: "One Way Vision", href: "/urun/one-way-vision-baski" },
-          { label: "UV DTF Baskı", href: "/urun/uv-dtf-baski" },
-          { label: "Duvar Kağıdı", href: "/urun/duvar-kagidi-baski" },
-        ],
-      },
-      {
-        title: "Levha & Tablo",
-        items: [
-          { label: "Dekota / Foreks Baskı", href: "/urun/dekota-baski-5mm" },
-          { label: "Pleksi Baskı", href: "/urun/pleksi-baski" },
-          { label: "Kompozit Baskı", href: "/urun/kompozit-baski" },
-          { label: "Kanvas Tablo Baskı", href: "/urun/kanvas-tablo-baski" },
-        ],
-      },
-    ],
-    featured: [
-      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
-      { slug: "dekota-baski-5mm", label: "Dekota Baskı", theme: "paper" },
     ],
   },
   {

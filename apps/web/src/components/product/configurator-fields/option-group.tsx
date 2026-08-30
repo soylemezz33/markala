@@ -206,15 +206,16 @@ function jargonHelpFor(label: string | null | undefined): string | null {
  */
 function HoverInfo({ text }: { text: string | null }) {
   if (!text) return null;
+  // 2026-08-30 Hasan: kutu satırın tamamında değil YALNIZ (i) simgesinin üzerinde
+  // açılır (group/info) — tüm satır hover'ı "çok rahatsız edici büyük" bulunmuştu.
   return (
     <span
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute left-1 right-1 bottom-full mb-1.5 z-20 hidden md:block",
         "rounded-md bg-ink-900 text-paper-50 text-xs leading-relaxed px-3 py-2 shadow-lg",
-        "opacity-0 translate-y-0.5 transition-all duration-150 delay-150",
-        "group-hover:opacity-100 group-hover:translate-y-0",
-        "group-focus-within:opacity-100 group-focus-within:translate-y-0",
+        "opacity-0 translate-y-0.5 transition-all duration-150",
+        "group-hover/info:opacity-100 group-hover/info:translate-y-0",
       )}
     >
       {text}
@@ -626,8 +627,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 : null;
             const info = jargonHelpFor(`${opt.optionLabel} ${opt.optionSublabel ?? ""}`);
             return (
-              <div key={opt.optionKey} className="relative group">
-                <HoverInfo text={info} />
+              <div key={opt.optionKey} className="relative">
                 <button
                   type="button"
                   role="radio"
@@ -643,17 +643,20 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                   <span className="font-medium text-sm leading-tight inline-flex items-center gap-1">
                     {opt.optionLabel}
                     {info && (
-                      <Info
-                        size={13}
-                        className={cn("flex-none hidden md:inline", isSelected ? "text-paper-300" : "text-ink-400")}
-                      />
+                      <span className="group/info inline-flex cursor-help">
+                        <Info
+                          size={14}
+                          className={cn("flex-none hidden md:inline", isSelected ? "text-paper-300" : "text-ink-400")}
+                        />
+                        <HoverInfo text={info} />
+                      </span>
                     )}
                   </span>
                   {priceLabel && (
                     <span
                       className={cn(
-                        "text-[11px] tabular-nums",
-                        isSelected ? "text-paper-200" : "text-ink-500",
+                        "text-xs font-semibold tabular-nums",
+                        isSelected ? "text-paper-100" : "text-ink-700",
                       )}
                     >
                       {priceLabel}
@@ -757,11 +760,12 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                     {opt.optionSublabel}
                   </span>
                 )}
+                {/* 2026-08-30 Hasan: fiyat "çok ince ve ufak" — boyut/kalınlık/kontrast artırıldı */}
                 {hintLabel && (
                   <span
                     className={cn(
-                      "text-[11px] tabular-nums mt-0.5",
-                      isSelected ? "text-paper-200" : "text-ink-500",
+                      "text-xs font-semibold tabular-nums mt-0.5",
+                      isSelected ? "text-paper-100" : "text-ink-700",
                     )}
                   >
                     {hintLabel}
@@ -789,8 +793,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
 
           const rowInfo = jargonHelpFor(`${opt.optionLabel} ${opt.optionSublabel ?? ""}`);
           return (
-            <div key={opt.optionKey} className="relative group">
-            <HoverInfo text={rowInfo} />
+            <div key={opt.optionKey} className="relative">
             <button
               type="button"
               role="radio"
@@ -814,7 +817,12 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
               <span className="min-w-0 flex-1">
                 <span className="font-medium text-ink-900 text-sm inline-flex items-center gap-1.5">
                   {opt.optionLabel}
-                  {rowInfo && <Info size={14} className="flex-none hidden md:inline text-ink-400" />}
+                  {rowInfo && (
+                    <span className="group/info inline-flex cursor-help">
+                      <Info size={15} className="flex-none hidden md:inline text-ink-400" />
+                      <HoverInfo text={rowInfo} />
+                    </span>
+                  )}
                 </span>
                 {opt.optionSublabel && (
                   <span className="block text-xs text-ink-500 mt-0.5">
@@ -830,7 +838,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 <PopularBadgePill isSelected={false} className="flex-none" />
               )}
               {hintLabel && (
-                <span className="text-sm tabular-nums text-ink-500 flex-none">
+                <span className="text-sm font-semibold tabular-nums text-ink-700 flex-none">
                   {hintLabel}
                 </span>
               )}
