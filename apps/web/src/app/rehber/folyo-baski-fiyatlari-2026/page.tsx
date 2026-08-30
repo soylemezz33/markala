@@ -40,15 +40,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Folyo türleri — hangi iş için. Fiyat canlı katalogdan, burada YAZILMAZ. */
 const TURLER = [
-  { ad: "Normal Folyo", ne: "Standart beyaz yapışkanlı folyo. Vitrin yazısı, tabela kaplaması ve genel amaçlı kullanımın çoğu bununla yapılır." },
-  { ad: "Mat Folyo", ne: "Parlama yapmaz. Işık altında okunacak yönlendirme ve iç mekan uygulamalarında yansıma sorununu çözer." },
-  { ad: "Şeffaf Folyo", ne: "Cam üstüne uygulanır, arkası görünür. Vitrin camına yazı ve logo giydirmede kullanılır." },
-  { ad: "Arkası Gri Folyo", ne: "Arka yüzü gri olduğu için ışık geçirmez. Altındaki eski yazı veya renk görünmesin isteniyorsa bu tercih edilir." },
-  { ad: "Arkası Gri Mat Folyo", ne: "Hem ışık geçirmez hem parlama yapmaz. Üstü kaplanacak eski tabelalarda en güvenli seçim." },
-  { ad: "Kumlama Folyo", ne: "Buzlu cam görünümü verir. Ofis bölme camları, toplantı odası ve banyo camlarında mahremiyet sağlar." },
-  { ad: "Laminasyonlu Folyo", ne: "Üzeri koruyucu filmle kaplanır. Elle temas eden, çizilme riski olan yüzeylerde ömrü uzatır." },
-  { ad: "Reflektif Folyo", ne: "Işığı geri yansıtır. Gece görünürlüğü gereken araç, güvenlik ve yol uygulamalarında kullanılır." },
-  { ad: "Lümen Folyo", ne: "Gün ışığında şarj olur, karanlıkta parlar. Acil çıkış ve yangın yönlendirmelerinde zorunlu olarak aranır." },
+  { ad: "Normal Folyo", href: "/urun/kesim-folyo", ne: "Standart beyaz yapışkanlı folyo. Vitrin yazısı, tabela kaplaması ve genel amaçlı kullanımın çoğu bununla yapılır." },
+  { ad: "Mat Folyo", href: "/urun/kesim-folyo", ne: "Parlama yapmaz. Işık altında okunacak yönlendirme ve iç mekan uygulamalarında yansıma sorununu çözer." },
+  { ad: "Şeffaf Folyo", href: "/urun/seffaf-folyo", ne: "Cam üstüne uygulanır, arkası görünür. Vitrin camına yazı ve logo giydirmede kullanılır." },
+  { ad: "Arkası Gri Folyo", href: "/urun/kesim-folyo", ne: "Arka yüzü gri olduğu için ışık geçirmez. Altındaki eski yazı veya renk görünmesin isteniyorsa bu tercih edilir." },
+  { ad: "Arkası Gri Mat Folyo", href: "/urun/kesim-folyo", ne: "Hem ışık geçirmez hem parlama yapmaz. Üstü kaplanacak eski tabelalarda en güvenli seçim." },
+  { ad: "Kumlama Folyo", href: "/urun/kumlama-buzlu-cam-folyosu", ne: "Buzlu cam görünümü verir. Ofis bölme camları, toplantı odası ve banyo camlarında mahremiyet sağlar." },
+  { ad: "Laminasyonlu Folyo", href: "/urun/laminasyonlu-folyo", ne: "Üzeri koruyucu filmle kaplanır. Elle temas eden, çizilme riski olan yüzeylerde ömrü uzatır." },
+  { ad: "Reflektif Folyo", href: "/urun/reflektif-folyo", ne: "Işığı geri yansıtır. Gece görünürlüğü gereken araç, güvenlik ve yol uygulamalarında kullanılır." },
+  { ad: "Lümen Folyo", href: "/urun/lumen-folyo", ne: "Gün ışığında şarj olur, karanlıkta parlar. Acil çıkış ve yangın yönlendirmelerinde zorunlu olarak aranır." },
 ];
 
 export default async function FolyoBaskiFiyatlariPage() {
@@ -165,7 +165,11 @@ export default async function FolyoBaskiFiyatlariPage() {
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {TURLER.map((t) => (
               <div key={t.ad} className="rounded-lg border border-paper-200 bg-paper-50 p-4">
-                <h3 className="font-semibold text-ink-900 text-sm">{t.ad}</h3>
+                <h3 className="font-semibold text-sm">
+                  <Link href={t.href} className="text-ink-900 hover:text-brand-600 transition-colors">
+                    {t.ad}
+                  </Link>
+                </h3>
                 <p className="mt-1.5 text-sm text-ink-700 leading-relaxed">{t.ne}</p>
               </div>
             ))}
