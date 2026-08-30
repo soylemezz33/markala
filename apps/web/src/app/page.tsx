@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import type { Product } from "@markala/types";
-import { getProducts, getBestsellers, getHeroBanners } from "@/lib/catalog";
-import { PremiumHeroSlider } from "@/components/home/premium-hero-slider";
-import { HeroCtaBand } from "@/components/home/hero-cta-band";
-import { TrustBadges } from "@/components/home/trust-badges";
+import { getProducts, getBestsellers, getHeroBanners, getHeaderNav } from "@/lib/catalog";
+import { HeroSplit } from "@/components/home/hero-split";
+import { CategoryTiles } from "@/components/home/category-tiles";
 import { ProductRail } from "@/components/home/product-rail";
 import { SectorShowcase } from "@/components/home/sector-showcase";
 import { TrustedBy } from "@/components/home/trusted-by";
@@ -55,6 +54,8 @@ export default async function HomePage() {
   const products = await getProducts();
   // Anasayfa hero slaytları — admin panelinden yönetilen DB (hero_slides) kaynağı.
   const heroBanners = await getHeroBanners();
+  // Hero altı kategori kutuları başlıktaki menünün ilk 6 grubunu kullanır (tek kaynak).
+  const headerNav = await getHeaderNav();
   // Çok satılanlar — GERÇEK ciro sırasıyla (getBestsellers: content.bestsellerRank'e göre
   // sıralı döner; rank'i haftalık senkron yazar, 1 = ciro lideri, dolgu ürünler sona).
   // Not: buradaki `products` list=true hafif yanıttır ve content taşımaz — o yüzden ayrı çağrı.
@@ -71,12 +72,18 @@ export default async function HomePage() {
       {/* HowTo JSON-LD kaldırıldı (2026-08): Google HowTo zengin sonucunu Eylül 2023'te
           tüm sonuçlardan çekti — işaretleme artık hiçbir görsel çıktı üretmiyordu.
           Görünen "Üretim Süreci" bölümü (ProcessTimeline) aynen duruyor. */}
-      {/* Anasayfa hero — DB (hero_slides) kaynaklı saf görsel slider; admin panelinden yönetilir. */}
-      <PremiumHeroSlider slides={heroBanners} />
-      {/* Hero altı CTA + gerçek fiyat çıpası — saf görsel slider'ın eylem boşluğunu kapatır. */}
-      <HeroCtaBand products={products} />
+      {/* Anasayfa hero (2026-08-31): solda gerçek h1 + CTA + canlı fiyat çıpası, sağda
+          slaytlar (mobilde otomatik dönmez). Eski edge-to-edge saf görsel slider ilk ekranda
+          hiç eylem bırakmıyordu; HeroCtaBand'in taşıdığı fiyat/butonlar buraya taşındı. */}
+      <HeroSplit products={products} slides={heroBanners} />
+      {/* İlk ekranda katalog girişi — mobilde kategori menüsü hamburger arkasında olduğu
+          için burası masaüstünden daha kritik. */}
+      <CategoryTiles nav={headerNav} products={products} />
       <PromoBanner location="hero" />
-      <TrustBadges />
+      {/* TrustBadges 2026-08-31'de KALDIRILDI: dört rozetten üçü ("Ücretsiz Tasarım Desteği",
+          "2-3 İş Günü Üretim", "81 İle Kargo") artık HeroSplit'in güven satırında, hemen
+          yukarıda duruyor. Aynı iddiayı 500px arayla iki kez tekrarlamak yer harcıyordu.
+          Bileşen duruyor (components/home/trust-badges.tsx), geri istenirse import et. */}
 
       <ProductRail
         eyebrow="En Çok Tercih Edilenler"
