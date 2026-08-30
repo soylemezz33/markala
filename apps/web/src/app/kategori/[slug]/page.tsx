@@ -5,7 +5,7 @@ import { Container, Price } from "@markala/ui";
 import { BookOpen, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
 import { AllProductsClient } from "@/app/urunler/all-products-client";
-import { CategoryJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { CategoryJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/seo/json-ld";
 import { formatPriceDisplay } from "@/lib/format";
 import type { Metadata } from "next";
 
@@ -89,9 +89,11 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const fiyatEki = cat.startingPrice
     ? ` — ${Math.round(Number(cat.startingPrice))} TL'den (KDV Dahil)`
     : "";
+  // "Dekota Baskı" gibi adı zaten "Baskı" ile biten kategoride "Baskı Baskı" üretiliyordu.
+  const adBaskiliMi = /bask[ıi]\s*$/i.test(cat.name);
   const seoTitle =
-    (cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ?? `${cat.name} Baskı${fiyatEki}`) +
-    pageSuffix;
+    (cat.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
+      `${cat.name}${adBaskiliMi ? "" : " Baskı"}${fiyatEki}`) + pageSuffix;
   const seoDesc = cat.seo?.description ?? cat.longDescription;
   const url = page > 1 ? `/kategori/${cat.slug}?page=${page}` : `/kategori/${cat.slug}`;
   // og:image = gerçek kategori görseli (raster) varsa; mockup-SVG fallback'i ise markalı PNG.
@@ -223,6 +225,100 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           <p className="max-w-3xl text-sm text-ink-500 leading-relaxed border-t border-paper-200 pt-6">
             {cat.longDescription}
           </p>
+        </Container>
+      )}
+
+      {/*
+        TİCARİ SEO BÖLÜMLERİ (2026-08-30) — ürün gridinin ALTINDA, satın almanın önüne geçmeden.
+        Rakip SERP analizi: bu kelimelerde kazanan sayfalarda fiyat tablosu + karşılaştırma +
+        teknik spek + SSS var; bizde tek cümlelik açıklama vardı ve ticari kelimelerde
+        organik görünürlüğümüz sıfırdı. İçerik admin/DB'den (content.seoBolumler) gelir.
+      */}
+      {cat.seoBolumler && cat.seoBolumler.length > 0 && (
+        <Container className="pb-12">
+          <div className="max-w-3xl space-y-8 border-t border-paper-200 pt-8">
+            {cat.seoBolumler.map((b, i) => (
+              <section key={i}>
+                <h2 className="text-xl md:text-2xl font-semibold text-ink-900 mb-3">{b.baslik}</h2>
+                {b.paragraflar?.map((p, j) => (
+                  <p key={j} className="text-sm text-ink-700 leading-relaxed mb-3">
+                    {p}
+                  </p>
+                ))}
+                {b.liste && b.liste.length > 0 && (
+                  <ul className="list-disc pl-5 space-y-1.5 text-sm text-ink-700 mb-3">
+                    {b.liste.map((m, j) => (
+                      <li key={j}>{m}</li>
+                    ))}
+                  </ul>
+                )}
+                {b.tablo && (
+                  <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <table className="w-full text-sm border-collapse min-w-[480px]">
+                      <thead>
+                        <tr>
+                          {b.tablo.basliklar.map((h, j) => (
+                            <th
+                              key={j}
+                              className="text-left font-semibold text-ink-900 border-b-2 border-ink-900 py-2 pr-4"
+                            >
+                              {h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {b.tablo.satirlar.map((satir, j) => (
+                          <tr key={j} className="border-b border-paper-200">
+                            {satir.map((h, k) => (
+                              <td key={k} className="py-2 pr-4 text-ink-700 align-top">
+                                {h}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {b.tablo.not && (
+                      <p className="mt-2 text-xs text-ink-500">{b.tablo.not}</p>
+                    )}
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+        </Container>
+      )}
+
+      {/* Kategori SSS — görünen metin ile FAQPage şeması TEK kaynaktan (rehberlerdeki desen). */}
+      {cat.faqs && cat.faqs.length > 0 && (
+        <Container className="pb-14">
+          <div className="max-w-3xl border-t border-paper-200 pt-8">
+            <FAQPageJsonLd questions={cat.faqs} url={`/kategori/${cat.slug}`} />
+            <h2 className="text-xl md:text-2xl font-semibold text-ink-900 mb-5">
+              Sık Sorulan Sorular
+            </h2>
+            <div className="space-y-3">
+              {cat.faqs.map((f, i) => (
+                <details
+                  key={i}
+                  className="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm"
+                >
+                  <summary className="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors">
+                    <span>{f.q}</span>
+                    <CaretRight
+                      size={14}
+                      weight="bold"
+                      className="transition-transform group-open:rotate-90 text-ink-500 shrink-0 ml-3"
+                    />
+                  </summary>
+                  <div className="px-4 pb-4 pt-3 text-sm text-ink-700 leading-relaxed border-t border-paper-200/50 bg-paper-100/30">
+                    {f.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
         </Container>
       )}
 

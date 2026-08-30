@@ -259,6 +259,7 @@ function mapCategory(c: Record<string, unknown>): Category {
     productionTime: String(c.productionTime ?? "1-3 iş günü"),
     productCount: (c._count as { products?: number } | undefined)?.products ?? 0,
     seoIntro: content.seoIntro as string | undefined,
+    seoBolumler: content.seoBolumler as Category["seoBolumler"],
     features: content.features as string[] | undefined,
     faqs: content.faqs as Category["faqs"],
     seo: content.seo as Category["seo"],

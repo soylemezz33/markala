@@ -21,6 +21,14 @@ export interface SpecItem {
   value: string;
 }
 
+/** Kategori ticari SEO bölümü — H2 + paragraflar (+ opsiyonel liste/tablo). */
+export interface CategorySeoSection {
+  baslik: string;
+  paragraflar?: string[];
+  liste?: string[];
+  tablo?: { basliklar: string[]; satirlar: string[][]; not?: string };
+}
+
 export interface Category {
   slug: string;
   name: string;
@@ -38,6 +46,14 @@ export interface Category {
   features?: string[];
   /** Kategoriye dair sık sorulan sorular — FAQ schema için */
   faqs?: FaqItem[];
+  /**
+   * Ticari SEO bölümleri (2026-08-30): kategori sayfasının ürün gridi ALTINDA render edilen
+   * H2 bölümleri. Rakip SERP analizi: bu kelimelerde kazanan sayfalarda fiyat tablosu +
+   * karşılaştırma tablosu + teknik spek + SSS var; bizde hiçbiri yoktu.
+   *
+   * Ham HTML DEĞİL, yapılandırılmış veri: XSS riski yok, görünüm tutarlı kalır.
+   */
+  seoBolumler?: CategorySeoSection[];
   /** Kategoriye özel meta */
   seo?: SeoMeta;
   /** Son güncelleme (ISO 8601) — sitemap lastModified için. API'den gelir, yoksa undefined. */
