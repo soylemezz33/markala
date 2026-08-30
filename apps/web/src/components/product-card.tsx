@@ -36,6 +36,21 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const startingPrice = getDisplayPrice(product);
   const [imgError, setImgError] = useState(false);
 
+  /**
+   * Hover'da 2. görsel (2026-08-31, Hasan: rakip sitelerdeki gibi) — yalnız masaüstünde
+   * ve yalnız ürünün gerçekten 2. görseli varsa.
+   *
+   * PERFORMANS: ikinci görsel ilk hover'a KADAR DOM'a girmez (ikinciYuklendi state).
+   * Doğrudan render edilseydi listelerde görsel isteği ikiye katlanır, LCP/veri maliyeti
+   * artardı (2026-08-20 hız şartnamesinin tersine iş). Hover'dan sonra DOM'da kalır ki
+   * fareyle girip çıkarken tekrar tekrar indirilmesin.
+   * MOBİL: sarmalayıcı `hidden lg:block` → dokunmatikte hiç mount edilmez, ekstra veri yok.
+   */
+  const ikinciGorsel = product.images[1];
+  const [ikinciYuklendi, setIkinciYuklendi] = useState(false);
+  const [ikinciHata, setIkinciHata] = useState(false);
+  const ikinciGoster = Boolean(ikinciGorsel) && !imgError && !ikinciHata;
+
   return (
     <Link
       href={`/urun/${product.slug}`}
@@ -47,6 +62,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         "hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2",
       )}
+      // İkinci görseli ilk temasta DOM'a al (mouse VE klavye ile gezinen için).
+      onPointerEnter={ikinciGoster ? () => setIkinciYuklendi(true) : undefined}
+      onFocus={ikinciGoster ? () => setIkinciYuklendi(true) : undefined}
     >
       <div className="relative aspect-square overflow-hidden bg-paper-100">
         {product.images[0] && !imgError ? (
@@ -60,11 +78,32 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             // varsayılan lazy KORUNUR (ana sayfa railleri etkilenmez — şartname P1).
             priority={priority}
             fetchPriority={priority ? "high" : undefined}
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            className={cn(
+              "object-cover transition-all duration-500 ease-out group-hover:scale-[1.04]",
+              // 2. görsel varsa kapak hover'da soluklaşır (çapraz geçiş).
+              ikinciGoster && "lg:group-hover:opacity-0 lg:group-focus-within:opacity-0",
+            )}
             onError={() => setImgError(true)}
           />
         ) : (
           <ProductImageFallback name={product.name} />
+        )}
+
+        {/* Hover'daki 2. görsel — masaüstü (lg+), ilk temastan sonra mount edilir. */}
+        {ikinciGoster && ikinciYuklendi && (
+          <Image
+            src={ikinciGorsel!}
+            alt=""
+            aria-hidden="true"
+            fill
+            sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
+            className={cn(
+              "hidden lg:block object-cover opacity-0 transition-all duration-500 ease-out",
+              "group-hover:opacity-100 group-hover:scale-[1.04]",
+              "group-focus-within:opacity-100 group-focus-within:scale-[1.04]",
+            )}
+            onError={() => setIkinciHata(true)}
+          />
         )}
         {product.badges && product.badges.length > 0 && (
           <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
