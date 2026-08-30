@@ -18,6 +18,14 @@ import { HeroVisual } from "@/components/home/hero-visual";
  *    üretiyor; kategori sayfaları 34,9 ₺. İlk ekranda katalog/fiyat girişi yok.
  *
  * Fiyat çıpası canlı katalogdan gelir; fiyatı yoksa o parça hiç basılmaz (uydurma yok).
+ *
+ * H1 SEÇİMİ (2026-08-31, Search Console son 90 gün): ilk h1 "Kartvizitten brandaya tüm
+ * baskı ürünleri" idi ve içinde "matbaa" GEÇMİYORDU — oysa markadan sonraki en büyük
+ * talep kümesi tam da o: osmaniye matbaa 155, antalya matbaa 49, en yakın matbaa 39,
+ * anamur matbaa 33, matbaa gaziantep 30, matbaa osmaniye 30, gaziantep matbaa 23...
+ * İkinci kalıp fiyat niyeti: "a4 el ilanı fiyatları", "branda baskı m2 fiyatı",
+ * "a4 broşür baskı fiyatları", "1000 adet broşür fiyatı". Bu yüzden h1 = baş terim
+ * ("online matbaa") + kapsam (kartvizit→branda) + niyet ("anında fiyat").
  */
 const ANCHOR_SLUG = "klasik-kartvizit";
 const ANCHOR_LABEL = "Kartvizit";
@@ -60,11 +68,12 @@ export function HeroSplit({
           <div>
             {/* Sayfanın TEK h1'i — artık görünür gerçek metin (eski sr-only h1 kaldırıldı). */}
             <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-semibold leading-[1.12] tracking-tight text-ink-900 text-balance">
-              Kartvizitten brandaya tüm baskı ürünleri
+              Online matbaa: kartvizitten brandaya anında fiyat
             </h1>
             <p className="mt-3 text-base md:text-lg text-ink-700 leading-relaxed max-w-xl">
-              {urunSayisi > 0 ? `${urunSayisi}+ üründe ebadını` : "Ebadını"} seç, adedini gir —
-              fiyatı anında gör. Tasarımın yoksa ücretsiz hazırlarız.
+              Kartvizit, broşür, branda, tabela
+              {urunSayisi > 0 ? ` ve ${urunSayisi}+ ürün` : ""}. Ebadını ve adedini seç, tutarı
+              sepete eklemeden gör. Tasarımın yoksa ücretsiz hazırlarız.
             </p>
 
             <div className="mt-6 flex flex-col sm:flex-row gap-2.5">

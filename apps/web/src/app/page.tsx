@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   // SERP bütçesi: title ≤60 kr, description ≤160 kr (kelime sınırında biter) — 2026-08-01 SEO denetimi.
   title: { absolute: "Markala — Online Matbaa: Kartvizit, Broşür & Branda Baskı" },
   description:
-    "Kartvizit, broşür, afiş, branda ve 800+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
+    "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
   alternates: { canonical: "/" },
 };
 
