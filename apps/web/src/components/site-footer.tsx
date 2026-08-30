@@ -107,7 +107,7 @@ export function SiteFooter() {
             >
               KVKK Uyumlu
             </Link>
-            <TrustBadge>1-2 İş Günü Üretim</TrustBadge>
+            <TrustBadge>2-3 İş Günü Üretim</TrustBadge>
             <TrustBadge>81 İle Kargo</TrustBadge>
             {/* ETBİS kaydı tamamlandı (17.08.2026). Rozet, Ticaret Bakanlığı'nın bu siteye
                 özel resmî sorgulama sonucuna linklenir — ziyaretçi kaydı doğrulayabilir. */}

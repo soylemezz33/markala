@@ -1003,7 +1003,7 @@ function MegaPanel({
               </Link>
               <div className="hidden md:flex items-center gap-4 text-xs text-ink-500">
                 <span className="inline-flex items-center gap-1.5">
-                  <Truck size={13} weight="fill" className="text-brand-600" /> 1-2 iş günü üretim
+                  <Truck size={13} weight="fill" className="text-brand-600" /> 2-3 iş günü üretim
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <PencilSimple size={13} weight="fill" className="text-brand-600" /> Ücretsiz tasarım desteği

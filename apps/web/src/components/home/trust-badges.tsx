@@ -14,8 +14,8 @@ const badges = [
   },
   {
     icon: Clock,
-    title: "1–2 İş Günü Üretim",
-    desc: "Onay sonrası siparişin 1–2 iş gününde üretilir.",
+    title: "2–3 İş Günü Üretim",
+    desc: "Onay sonrası siparişin 2–3 iş gününde üretilir.",
   },
   {
     icon: Truck,

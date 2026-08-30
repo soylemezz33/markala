@@ -32,7 +32,7 @@ const steps = [
     icon: Printer,
     title: "Üretim",
     desc: "Onaylı tasarım kalite kontrolünden geçer, üretime alınır.",
-    duration: "1-2 iş günü",
+    duration: "2-3 iş günü",
     grad: "from-[#00D9FF] to-[#0091FF]",
     glow: "shadow-[0_8px_24px_rgba(0,217,255,0.35)]",
   },
