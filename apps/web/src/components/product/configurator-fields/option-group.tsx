@@ -640,7 +640,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                       : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
                   )}
                 >
-                  <span className="font-medium text-sm leading-tight inline-flex items-center gap-1">
+                  <span className="font-semibold text-sm leading-tight inline-flex items-center gap-1">
                     {opt.optionLabel}
                     {info && (
                       <span className="group/info inline-flex cursor-help">
@@ -655,7 +655,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                   {priceLabel && (
                     <span
                       className={cn(
-                        "text-xs font-semibold tabular-nums",
+                        "text-xs font-medium tabular-nums",
                         isSelected ? "text-paper-100" : "text-ink-700",
                       )}
                     >
@@ -749,7 +749,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                     : "border-paper-200 bg-paper-50 text-ink-900 hover:border-ink-300",
                 )}
               >
-                <span className="font-medium text-sm leading-tight">{opt.optionLabel}</span>
+                <span className="font-semibold text-sm leading-tight">{opt.optionLabel}</span>
                 {opt.optionSublabel && (
                   <span
                     className={cn(
@@ -764,7 +764,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 {hintLabel && (
                   <span
                     className={cn(
-                      "text-xs font-semibold tabular-nums mt-0.5",
+                      "text-xs font-medium tabular-nums mt-0.5",
                       isSelected ? "text-paper-100" : "text-ink-700",
                     )}
                   >
@@ -815,7 +815,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 {isSelected && <span className="w-2 h-2 rounded-full bg-ink-900" />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="font-medium text-ink-900 text-sm inline-flex items-center gap-1.5">
+                <span className="font-semibold text-ink-900 text-sm inline-flex items-center gap-1.5">
                   {opt.optionLabel}
                   {rowInfo && (
                     <span className="group/info inline-flex cursor-help">
@@ -838,7 +838,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
                 <PopularBadgePill isSelected={false} className="flex-none" />
               )}
               {hintLabel && (
-                <span className="text-sm font-semibold tabular-nums text-ink-700 flex-none">
+                <span className="text-sm font-medium tabular-nums text-ink-700 flex-none">
                   {hintLabel}
                 </span>
               )}
