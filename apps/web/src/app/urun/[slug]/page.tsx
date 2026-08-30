@@ -241,7 +241,11 @@ export default async function ProductPage({ params }: Props) {
             müşteri fiyatı/seçenekleri hemen galeri altında görür, pazarlama metni aşağıda.
             2026-08: 7/5 → 6/6 kolon + üst padding diyeti — 24" altı (1080p laptop)
             ekranlarda görsel ekranı yutmasın, fiyat+CTA scroll'suz görünsün. */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_auto] gap-y-8 gap-x-8 lg:gap-x-10 items-start">
+        {/* rows [auto_1fr] (2026-08-30): auto_auto iken sağdaki uzun konfigüratörün fazla
+            yüksekliği İLK satıra da dağılıyordu → galeri ile açıklama arasında ürüne göre
+            büyüyen boşluk. 1fr fazlalığı ikinci satıra verir; açıklama galerinin hemen
+            altında başlar. */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 lg:grid-rows-[auto_1fr] gap-y-8 gap-x-8 lg:gap-x-10 items-start">
           {/* 1) Galeri + hızlı aksiyon — mobilde 1. 2026-08-07: 6→5 kolon; konfigüratör
               seçenekler + sağda ayrı fiyat özet kartı (rakip deseni) için 7 kolona çıktı. */}
           <div className="lg:col-span-5 lg:col-start-1 lg:row-start-1 space-y-3">
