@@ -339,11 +339,16 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
     if (searchOpen) setSearchEverOpened(true);
   }, [searchOpen]);
   const [mounted, setMounted] = useState(false);
-  // Mega menü — TEK açılış noktası: en soldaki "Tüm Ürünler" (2026-08-31, Hasan).
-  // Öncesinde her kategori sekmesi de hover'da kendi panelini açıyordu; sekmeye tıklamak
-  // isteyen kullanıcının üstüne panel biniyordu. Artık sekmeler düz bağlantı: tıklayınca
-  // doğrudan o kategorinin liste sayfasına gider, panel açılmaz.
+  // Mega menü — iki mod:
+  //  "all"    → en soldaki "Tüm Ürünler" butonu: dikey kategori listesi (rail) + aktif kategori içeriği
+  //  "single" → tek kategori sekmesi: yalnız o kategorinin menüsü (rail YOK)
+  //
+  // 2026-08-31: sekme hover'ı bir ara kaldırılıp sekmeler düz bağlantıya çevrilmişti; Hasan
+  // geri istedi. Gerekçe: sekmenin varış sayfası (`/urunler?kategoriler=...`) menüdeki tüm
+  // alt grupları KAPSAMIYOR — ör. "Matbaa ve Broşür" sekmesinin linkinde kırtasiye
+  // kategorileri yok, o yüzden Antetli Kağıt/Zarf/Bloknot'a yalnız bu panelden ulaşılıyor.
   const [megaOpen, setMegaOpen] = useState(false);
+  const [megaMode, setMegaMode] = useState<"all" | "single">("all");
   const [megaIndex, setMegaIndex] = useState(0);
   const megaCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -354,8 +359,24 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
 
   const openAll = () => {
     if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    setMegaMode("all");
     setMegaOpen(true);
   };
+  const openSingle = (i: number) => {
+    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
+    setMegaMode("single");
+    setMegaIndex(i);
+    setMegaOpen(true);
+  };
+  /** Sekme hover'ı: alt grubu olan sekme kendi panelini açar, olmayan açık paneli kapatır. */
+  const sekmeHover = (n: NavCategory) => {
+    const i = megaItems.indexOf(n);
+    if (i >= 0) openSingle(i);
+    else scheduleMegaClose();
+  };
+  /** Paneli açık olan sekmenin etiketi (yalnız "single" modunda) — sekme vurgusu için. */
+  const acikSekmeLabel =
+    megaOpen && megaMode === "single" ? (megaItems[megaIndex]?.label ?? null) : null;
   // Küçük gecikmeli kapanma — sekme→panel geçişinde yanlışlıkla kapanmayı önler
   const scheduleMegaClose = () => {
     if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
@@ -606,10 +627,10 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 onMouseEnter={openAll}
                 onFocus={openAll}
                 aria-haspopup="true"
-                aria-expanded={megaOpen}
+                aria-expanded={megaOpen && megaMode === "all"}
                 className={cn(
                   "my-1.5 mr-2 inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
-                  megaOpen
+                  megaOpen && megaMode === "all"
                     ? "bg-ink-900 text-paper-50"
                     : "bg-paper-100 text-ink-900 hover:bg-ink-900 hover:text-paper-50",
                 )}
@@ -619,17 +640,30 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 <CaretDown
                   size={10}
                   weight="bold"
-                  className={cn("transition-transform", megaOpen && "rotate-180")}
+                  className={cn("transition-transform", megaOpen && megaMode === "all" && "rotate-180")}
                 />
               </Link>
               <span aria-hidden className="h-5 w-px bg-paper-200 mr-1" />
-              {/* Kategori sekmeleri — düz bağlantı (açılır menü YOK) + bulunulan grubun
-                  vurgusu. Aktif sekme useSearchParams ile bulunur; header kök layout'ta
-                  olduğu için Suspense sınırı ZORUNLU, yoksa statik sayfalar CSR'a düşer
-                  (aynı desen layout.tsx'teki AttributionCapture'da da var). Fallback,
-                  vurgusuz ama birebir aynı şeridi basar → düzen kayması olmaz. */}
-              <Suspense fallback={<KategoriSekmeleri nav={NAV} aktifGrup={null} onHover={scheduleMegaClose} />}>
-                <AktifKategoriSekmeleri nav={NAV} onHover={scheduleMegaClose} />
+              {/* Kategori sekmeleri — hover'da kendi alt grup panelini açar + bulunulan
+                  grubun vurgusu. Aktif sekme useSearchParams ile bulunur; header kök
+                  layout'ta olduğu için Suspense sınırı ZORUNLU, yoksa statik sayfalar
+                  CSR'a düşer (aynı desen layout.tsx'teki AttributionCapture'da da var).
+                  Fallback, vurgusuz ama birebir aynı şeridi basar → düzen kayması olmaz. */}
+              <Suspense
+                fallback={
+                  <KategoriSekmeleri
+                    nav={NAV}
+                    aktifGrup={null}
+                    acikSekmeLabel={acikSekmeLabel}
+                    onSekmeHover={sekmeHover}
+                  />
+                }
+              >
+                <AktifKategoriSekmeleri
+                  nav={NAV}
+                  acikSekmeLabel={acikSekmeLabel}
+                  onSekmeHover={sekmeHover}
+                />
               </Suspense>
             </Container>
 
@@ -637,6 +671,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
               items={megaItems}
               activeIndex={megaIndex}
               open={megaOpen}
+              mode={megaMode}
               onActive={setMegaIndex}
               onClose={() => setMegaOpen(false)}
             />
@@ -849,42 +884,60 @@ function grupParam(href: string): string | null {
   }
 }
 
-/** Sekme şeridi. `aktifGrup` dışarıdan gelir; sunucu render'ında null olur. */
+/** Sekme şeridi. `aktifGrup` dışarıdan gelir; sunucu render'ında null olur.
+ *  Alt grubu olan sekme hover/focus'ta kendi panelini açar (`onSekmeHover`); olmayan
+ *  sekme aynı çağrıda açık paneli kapatır. */
 function KategoriSekmeleri({
   nav,
   aktifGrup,
-  onHover,
+  acikSekmeLabel,
+  onSekmeHover,
 }: {
   nav: NavCategory[];
   aktifGrup: string | null;
-  onHover: () => void;
+  acikSekmeLabel: string | null;
+  onSekmeHover: (n: NavCategory) => void;
 }) {
   return (
     <>
       {nav.map((n) => {
         const grup = grupParam(n.href);
         const aktif = aktifGrup !== null && grup !== null && grup === aktifGrup;
+        const acilir = !!(n.groups && n.groups.length > 0);
+        const panelAcik = acilir && acikSekmeLabel === n.label;
         return (
           <Link
             key={n.label}
             href={n.href}
-            // Sekmeye gelince açık panel kapanır: kullanıcı sekmeye tıklamaya
-            // giderken panel yolunu kesmesin.
-            onMouseEnter={onHover}
+            onMouseEnter={() => onSekmeHover(n)}
+            onFocus={() => onSekmeHover(n)}
+            aria-haspopup={acilir ? "true" : undefined}
+            aria-expanded={acilir ? panelAcik : undefined}
             aria-current={aktif ? "page" : undefined}
             className={cn(
               "my-1.5 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              aktif
+              aktif || panelAcik
                 ? "bg-ink-900 text-paper-50"
                 : "text-ink-700 hover:bg-paper-100 hover:text-ink-900",
             )}
           >
             {n.highlight === "fire" && (
-              <Lightning size={14} weight="fill" className={aktif ? "text-brand-500" : "text-error"} />
+              <Lightning
+                size={14}
+                weight="fill"
+                className={aktif || panelAcik ? "text-brand-500" : "text-error"}
+              />
             )}
             {n.label}
             {n.highlight === "new" && (
               <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
+            )}
+            {acilir && (
+              <CaretDown
+                size={10}
+                weight="bold"
+                className={cn("transition-transform", panelAcik && "rotate-180")}
+              />
             )}
           </Link>
         );
@@ -895,26 +948,43 @@ function KategoriSekmeleri({
 
 /** useSearchParams okuyan sarmalayıcı — YALNIZ Suspense içinde kullanılmalı.
  *  Vurgu sadece /urunler üzerindeyken anlamlı: sekmelerin hepsi oraya gidiyor. */
-function AktifKategoriSekmeleri({ nav, onHover }: { nav: NavCategory[]; onHover: () => void }) {
+function AktifKategoriSekmeleri({
+  nav,
+  acikSekmeLabel,
+  onSekmeHover,
+}: {
+  nav: NavCategory[];
+  acikSekmeLabel: string | null;
+  onSekmeHover: (n: NavCategory) => void;
+}) {
   const pathname = usePathname();
   const params = useSearchParams();
   const aktifGrup = pathname === "/urunler" ? params.get("grup") : null;
-  return <KategoriSekmeleri nav={nav} aktifGrup={aktifGrup} onHover={onHover} />;
+  return (
+    <KategoriSekmeleri
+      nav={nav}
+      aktifGrup={aktifGrup}
+      acikSekmeLabel={acikSekmeLabel}
+      onSekmeHover={onSekmeHover}
+    />
+  );
 }
 
-/** Tek panel: soldaki dikey kategori rail'i + seçili kategorinin içeriği.
- *  Eski "single" modu (tek kategori sekmesinden açılan rail'siz panel) kaldırıldı —
- *  panel artık yalnız "Tüm Ürünler"den açılıyor. */
+/** İki mod:
+ *  "all"    → soldaki dikey kategori rail'i + seçili kategorinin içeriği ("Tüm Ürünler")
+ *  "single" → yalnız hover'lanan sekmenin içeriği, rail YOK */
 function MegaPanel({
   items,
   activeIndex,
   open,
+  mode,
   onActive,
   onClose,
 }: {
   items: NavCategory[];
   activeIndex: number;
   open: boolean;
+  mode: "all" | "single";
   onActive: (i: number) => void;
   onClose: () => void;
 }) {
@@ -923,20 +993,23 @@ function MegaPanel({
     <AnimatePresence>
       {open && nav && (
         <motion.div
+          // mode değişince paneli remount et → "all"↔"single" geçişi temiz animasyonla olur
+          key={mode}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.16, ease: "easeOut" }}
           className="absolute left-0 right-0 top-full mx-auto max-w-content px-6 md:px-10 lg:px-16 z-50"
           role="region"
-          aria-label="Tüm ürün kategorileri menüsü"
+          aria-label={mode === "all" ? "Tüm ürün kategorileri menüsü" : `${nav.label} kategorisi menüsü`}
           onKeyDown={(e) => {
             if (e.key === "Escape") onClose();
           }}
         >
           <div className="bg-paper-50 border border-paper-200 border-t-[3px] border-t-brand-500 rounded-b-2xl shadow-lg overflow-hidden">
-            <div className="grid grid-cols-[248px_1fr]">
-              {/* Sol rail — tüm kategoriler */}
+            <div className={cn("grid", mode === "all" ? "grid-cols-[248px_1fr]" : "grid-cols-1")}>
+              {/* Sol rail — tüm kategoriler (yalnız "Tüm Ürünler" modunda) */}
+              {mode === "all" && (
               <div className="bg-paper-100 border-r border-paper-200 p-3">
                 {items.map((it, i) => (
                   <Link
@@ -966,6 +1039,7 @@ function MegaPanel({
                   Tüm ürünleri gör <ArrowRight size={13} weight="bold" />
                 </Link>
               </div>
+              )}
 
               {/* Sağ içerik — aktif kategori */}
               <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1.15fr] min-h-[280px]">
