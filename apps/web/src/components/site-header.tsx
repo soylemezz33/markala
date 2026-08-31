@@ -97,8 +97,8 @@ const DEFAULT_NAV: NavCategory[] = [
         title: "Kâğıt Ürünleri",
         items: [
           { label: "Antetli Kağıt", href: "/urun/antetli-kagit" },
-          { label: "Diplomat Zarf — Tek Renk", href: "/urun/zarf-diplomat-tek-renk" },
-          { label: "Diplomat Zarf — Renkli", href: "/urun/zarf-diplomat-renkli" },
+          { label: "Diplomat Zarf - Tek Renk", href: "/urun/zarf-diplomat-tek-renk" },
+          { label: "Diplomat Zarf - Renkli", href: "/urun/zarf-diplomat-renkli" },
           { label: "Torba Zarf 24×32", href: "/urun/zarf-torba" },
           { label: "Cepli Dosya", href: "/urun/cepli-dosya" },
           { label: "Makbuz NCR", href: "/urun/makbuz" },
@@ -339,11 +339,11 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
     if (searchOpen) setSearchEverOpened(true);
   }, [searchOpen]);
   const [mounted, setMounted] = useState(false);
-  // Mega menü — iki mod:
-  //  "all"    → en soldaki "Tüm Ürünler" butonu: dikey kategori listesi (rail) + aktif kategori içeriği
-  //  "single" → tek kategori sekmesi: yalnız o kategorinin menüsü (rail YOK)
+  // Mega menü — TEK açılış noktası: en soldaki "Tüm Ürünler" (2026-08-31, Hasan).
+  // Öncesinde her kategori sekmesi de hover'da kendi panelini açıyordu; sekmeye tıklamak
+  // isteyen kullanıcının üstüne panel biniyordu. Artık sekmeler düz bağlantı: tıklayınca
+  // doğrudan o kategorinin liste sayfasına gider, panel açılmaz.
   const [megaOpen, setMegaOpen] = useState(false);
-  const [megaMode, setMegaMode] = useState<"all" | "single">("all");
   const [megaIndex, setMegaIndex] = useState(0);
   const megaCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
@@ -354,13 +354,6 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
 
   const openAll = () => {
     if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
-    setMegaMode("all");
-    setMegaOpen(true);
-  };
-  const openSingle = (i: number) => {
-    if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
-    setMegaMode("single");
-    setMegaIndex(i);
     setMegaOpen(true);
   };
   // Küçük gecikmeli kapanma — sekme→panel geçişinde yanlışlıkla kapanmayı önler
@@ -546,7 +539,7 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
             )}
           >
             {/* Logo */}
-            <Link href="/" className="flex-none group" aria-label="Markala — ana sayfa">
+            <Link href="/" className="flex-none group" aria-label="Markala, ana sayfa">
               <img
                 src="/markala-logo.svg"
                 alt="markala.com.tr"
@@ -613,10 +606,10 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 onMouseEnter={openAll}
                 onFocus={openAll}
                 aria-haspopup="true"
-                aria-expanded={megaOpen && megaMode === "all"}
+                aria-expanded={megaOpen}
                 className={cn(
                   "my-1.5 mr-2 inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors",
-                  megaOpen && megaMode === "all"
+                  megaOpen
                     ? "bg-ink-900 text-paper-50"
                     : "bg-paper-100 text-ink-900 hover:bg-ink-900 hover:text-paper-50",
                 )}
@@ -626,23 +619,20 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 <CaretDown
                   size={10}
                   weight="bold"
-                  className={cn("transition-transform", megaOpen && megaMode === "all" && "rotate-180")}
+                  className={cn("transition-transform", megaOpen && "rotate-180")}
                 />
               </Link>
               <span aria-hidden className="h-5 w-px bg-paper-200 mr-1" />
               {NAV.map((nav) => {
-                const mi = megaItems.indexOf(nav);
-                const isActive = megaOpen && megaMode === "single" && mi >= 0 && megaIndex === mi;
+                // Panel açılmadığı için sekmenin "aktif" hâli artık bulunulan sayfadan gelir.
+                const isActive = pathname === nav.href || pathname.startsWith(`${nav.href}/`);
                 return (
                   <Link
                     key={nav.label}
                     href={nav.href}
-                    onMouseEnter={() => (mi >= 0 ? openSingle(mi) : scheduleMegaClose())}
-                    onFocus={() => {
-                      if (mi >= 0) openSingle(mi);
-                    }}
-                    aria-haspopup={mi >= 0 ? "true" : undefined}
-                    aria-expanded={mi >= 0 ? isActive : undefined}
+                    // Sekmeye gelince açık panel kapanır: kullanıcı sekmeye tıklamaya
+                    // giderken panel yolunu kesmesin.
+                    onMouseEnter={scheduleMegaClose}
                     className={cn(
                       "relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
                       isActive ? "text-ink-900" : "text-ink-700 hover:text-ink-900",
@@ -652,13 +642,6 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                     {nav.label}
                     {nav.highlight === "new" && (
                       <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
-                    )}
-                    {mi >= 0 && (
-                      <CaretDown
-                        size={10}
-                        weight="bold"
-                        className={cn("transition-transform", isActive && "rotate-180")}
-                      />
                     )}
                     {isActive && (
                       <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />
@@ -672,7 +655,6 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
               items={megaItems}
               activeIndex={megaIndex}
               open={megaOpen}
-              mode={megaMode}
               onActive={setMegaIndex}
               onClose={() => setMegaOpen(false)}
             />
@@ -795,12 +777,12 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                       onClick={() => setMenuOpen(false)}
                       className="block py-3 px-3 rounded-lg bg-ink-900 text-paper-50 text-center text-sm font-semibold"
                     >
-                      Hesabım — {user.fullName.split(" ")[0]}
+                      Hesabım - {user.fullName.split(" ")[0]}
                     </Link>
                   )}
 
                   <div className="text-center text-[11px] text-ink-500 mt-4 pb-2">
-                    324 Ajans · Markala — markala.com.tr
+                    324 Ajans · Markala · markala.com.tr
                   </div>
                 </div>
               </motion.div>
@@ -874,18 +856,19 @@ function FeaturedCard({
  * inline yazdığı için ortalama `-translate-x-1/2` ile DEĞİL `left-0 right-0 mx-auto`
  * ile yapılır (yoksa transform çakışıp panel sağa kayar).
  */
+/** Tek panel: soldaki dikey kategori rail'i + seçili kategorinin içeriği.
+ *  Eski "single" modu (tek kategori sekmesinden açılan rail'siz panel) kaldırıldı —
+ *  panel artık yalnız "Tüm Ürünler"den açılıyor. */
 function MegaPanel({
   items,
   activeIndex,
   open,
-  mode,
   onActive,
   onClose,
 }: {
   items: NavCategory[];
   activeIndex: number;
   open: boolean;
-  mode: "all" | "single";
   onActive: (i: number) => void;
   onClose: () => void;
 }) {
@@ -894,61 +877,52 @@ function MegaPanel({
     <AnimatePresence>
       {open && nav && (
         <motion.div
-          // mode değişince paneli remount et → "all"↔"single" geçişi temiz animasyonla olur
-          key={mode}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.16, ease: "easeOut" }}
           className="absolute left-0 right-0 top-full mx-auto max-w-content px-6 md:px-10 lg:px-16 z-50"
           role="region"
-          aria-label={mode === "all" ? "Tüm ürün kategorileri menüsü" : `${nav.label} kategorisi menüsü`}
+          aria-label="Tüm ürün kategorileri menüsü"
           onKeyDown={(e) => {
             if (e.key === "Escape") onClose();
           }}
         >
           <div className="bg-paper-50 border border-paper-200 border-t-[3px] border-t-brand-500 rounded-b-2xl shadow-lg overflow-hidden">
-            <div className={cn("grid", mode === "all" ? "grid-cols-[248px_1fr]" : "grid-cols-1")}>
-              {/* Sol rail — tüm kategoriler (yalnız "Tüm Ürünler" modunda) */}
-              {mode === "all" && (
-                <div className="bg-paper-100 border-r border-paper-200 p-3">
-                  {items.map((it, i) => (
-                    <Link
-                      key={it.label}
-                      href={it.href}
-                      onMouseEnter={() => onActive(i)}
-                      onFocus={() => onActive(i)}
-                      className={cn(
-                        "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium text-left transition-colors",
-                        i === activeIndex
-                          ? "bg-paper-50 text-brand-700 shadow-sm"
-                          : "text-ink-700 hover:bg-paper-50 hover:text-ink-900",
-                      )}
-                    >
-                      <span>{it.label}</span>
-                      <CaretRight
-                        size={13}
-                        weight="bold"
-                        className={i === activeIndex ? "text-brand-600" : "text-ink-300"}
-                      />
-                    </Link>
-                  ))}
+            <div className="grid grid-cols-[248px_1fr]">
+              {/* Sol rail — tüm kategoriler */}
+              <div className="bg-paper-100 border-r border-paper-200 p-3">
+                {items.map((it, i) => (
                   <Link
-                    href="/urunler"
-                    className="mt-2 flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-brand-700 hover:text-brand-900 hover:bg-paper-50 border-t border-paper-200 transition-colors"
+                    key={it.label}
+                    href={it.href}
+                    onMouseEnter={() => onActive(i)}
+                    onFocus={() => onActive(i)}
+                    className={cn(
+                      "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium text-left transition-colors",
+                      i === activeIndex
+                        ? "bg-paper-50 text-brand-700 shadow-sm"
+                        : "text-ink-700 hover:bg-paper-50 hover:text-ink-900",
+                    )}
                   >
-                    Tüm ürünleri gör <ArrowRight size={13} weight="bold" />
+                    <span>{it.label}</span>
+                    <CaretRight
+                      size={13}
+                      weight="bold"
+                      className={i === activeIndex ? "text-brand-600" : "text-ink-300"}
+                    />
                   </Link>
-                </div>
-              )}
+                ))}
+                <Link
+                  href="/urunler"
+                  className="mt-2 flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-brand-700 hover:text-brand-900 hover:bg-paper-50 border-t border-paper-200 transition-colors"
+                >
+                  Tüm ürünleri gör <ArrowRight size={13} weight="bold" />
+                </Link>
+              </div>
 
               {/* Sağ içerik — aktif kategori */}
-              <div
-                className={cn(
-                  "grid grid-cols-1 xl:grid-cols-[1.55fr_1.15fr]",
-                  mode === "all" ? "min-h-[280px]" : "min-h-[220px]",
-                )}
-              >
+              <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1.15fr] min-h-[280px]">
                 <div
                   className="grid gap-x-7 gap-y-1 p-7 content-start"
                   style={{
@@ -1319,7 +1293,7 @@ function CartButton({
       <div className="hidden sm:block text-left leading-tight">
         <div className="text-[11px] text-ink-500">Sepetim</div>
         <div className="text-sm font-medium text-ink-900 tabular-nums">
-          {mounted ? `${itemCount} ürün` : "—"}
+          {mounted ? `${itemCount} ürün` : "-"}
         </div>
       </div>
       {mounted && itemCount > 0 && (
