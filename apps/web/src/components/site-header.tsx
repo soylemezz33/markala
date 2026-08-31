@@ -1045,34 +1045,54 @@ function MegaPanel({
 
               {/* Sağ içerik — aktif kategori */}
               <div className="grid grid-cols-1 xl:grid-cols-[1.55fr_1.15fr] min-h-[280px]">
-                <div
-                  className="grid gap-x-7 gap-y-1 p-7 content-start"
-                  style={{
-                    gridTemplateColumns: `repeat(${Math.min(Math.max(nav.groups?.length ?? 1, 1), 3)}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {nav.groups?.map((g) => (
-                    <div key={g.title}>
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 pb-2.5">
-                        {g.title}
-                      </div>
-                      {g.items.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className="flex items-center justify-between gap-2 -mx-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-ink-700 hover:bg-paper-100 hover:text-ink-900 transition-colors"
-                        >
-                          <span>{item.label}</span>
-                          {item.badge && (
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-500 text-ink-900">
-                              {item.badge}
-                            </span>
-                          )}
-                        </Link>
-                      ))}
+                {(() => {
+                  // Sütun sayısı GRUP SAYISINA göre veriliyordu; "Dijital Baskı"da
+                  // Vinil & Branda 6, Folyo & Film 12 öğe olunca uzun grup tek sütuna
+                  // dizilip paneli taşırıyor, yanındaki kısa sütun boş kalıyordu
+                  // (2026-08-31, Hasan: "küçük ekranda çok sıkışıyor").
+                  // Artık uzun grup İKİ sütunluk yer kaplar ve öğeleri kendi içinde
+                  // iki sütuna akar → panel yüksekliği yarıya iner, boşluk kalmaz.
+                  const gruplar = nav.groups ?? [];
+                  const UZUN = 8;
+                  const yer = (n: number) => (n > UZUN ? 2 : 1);
+                  const toplam = Math.min(
+                    gruplar.reduce((t, g) => t + yer(g.items.length), 0) || 1,
+                    4,
+                  );
+                  return (
+                    <div
+                      className="grid gap-x-7 gap-y-1 p-7 content-start"
+                      style={{ gridTemplateColumns: `repeat(${toplam}, minmax(0, 1fr))` }}
+                    >
+                      {gruplar.map((g) => {
+                        const genis = yer(g.items.length) === 2;
+                        return (
+                          <div key={g.title} style={genis ? { gridColumn: "span 2" } : undefined}>
+                            <div className="text-[10px] font-bold uppercase tracking-wider text-ink-500 pb-2.5">
+                              {g.title}
+                            </div>
+                            <div className={genis ? "columns-2 gap-x-7" : undefined}>
+                              {g.items.map((item) => (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  className="flex break-inside-avoid items-center justify-between gap-2 -mx-2.5 px-2.5 py-2 rounded-lg text-[13.5px] text-ink-700 hover:bg-paper-100 hover:text-ink-900 transition-colors"
+                                >
+                                  <span>{item.label}</span>
+                                  {item.badge && (
+                                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-500 text-ink-900">
+                                      {item.badge}
+                                    </span>
+                                  )}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
 
                 {nav.featured && nav.featured.length > 0 && (
                   <div className="hidden xl:block bg-paper-100 border-l border-paper-200 p-6">
