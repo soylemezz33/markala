@@ -17,8 +17,17 @@ const cspReportOnly = [
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline' https://accounts.google.com",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net",
-  "connect-src 'self' https://accounts.google.com https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://stats.g.doubleclick.net https://www.facebook.com https://connect.facebook.net",
+  // ad.doubleclick.net (2026-08-31): toplanan raporlarda EN SIK ihlal buydu —
+  // Google Ads dönüşüm bağlayıcısı /ccm/s/collect adresine istek atıyor. Enforce'a
+  // geçilirse Ads dönüşüm ölçümü sessizce bozulurdu.
+  "connect-src 'self' https://accounts.google.com https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://www.google.com https://stats.g.doubleclick.net https://www.facebook.com https://connect.facebook.net",
+  // Google Maps iframe'i 2026-08-31'de kaldırıldı (/iletisim + /hakkimizda artık adres +
+  // "Yol tarifi al" bağlantısı kullanıyor) → frame-src'a Google Maps eklemeye GEREK KALMADI.
   "frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com https://www.iyzipay.com https://sandbox-api.iyzipay.com https://api.iyzipay.com",
+  // worker-src hiç tanımlı değildi → default-src 'self'e düşüyor ve blob: worker'lar
+  // engelleniyordu (raporlarda 5 kez). Worker'ı kodumuz oluşturmuyor (grep: 0 sonuç),
+  // üçüncü taraf betiklerinden geliyor; blob: izni bu yüzden gerekli.
+  "worker-src 'self' blob:",
   "report-uri /api/csp-report",
 ].join("; ");
 

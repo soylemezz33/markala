@@ -263,7 +263,14 @@ export default async function PriceListPage() {
                       <th className="px-3 py-2.5">Boyut/Özellik</th>
                       <th className="px-3 py-2.5">Üretim</th>
                       <th className="px-3 py-2.5 text-right">Başlangıç (KDV dahil)</th>
-                      <th className="px-3 py-2.5 text-right">İncele</th>
+                      {/* "İncele" sütunu KALDIRILDI (2026-08-31). Ürün adı hücresi zaten
+                          /urun/{slug}'a link olduğu için her satırda AYNI hedefe giden iki
+                          link vardı. Kaldırmanın üç kazancı: (1) denetimde bu sayfada
+                          sayılan yüzlerce 47×16px dokunma hedefi tamamen yok oldu
+                          (WCAG 2.2 AA ≥24×24), (2) sütun 5→4 indiği için mobilde 412px'e
+                          çıkan tablo 358px'lik kapsayıcıya sığıyor — 23 tablonun 23'ünde
+                          birden yatay kaydırma bitiyor, (3) aynı satırdaki çift link
+                          taramada da gereksizdi. */}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-paper-100">
@@ -291,18 +298,6 @@ export default async function PriceListPage() {
                           {getDisplayPrice(p) > 0 && (
                             <span className="text-xs text-ink-500 ml-1">'den</span>
                           )}
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          {/* py-2 -my-2: dokunma hedefi 16px'ten ~32px'e çıkar, satır
-                              yüksekliği DEĞİŞMEZ (WCAG 2.2 AA hedef boyutu ≥24×24).
-                              2026-08-31 denetiminde bu sayfada 253 adet 47×16px bağlantı
-                              sayılmıştı — sitedeki en yoğun küçük-hedef yığılması. */}
-                          <Link
-                            href={`/urun/${p.slug}`}
-                            className="inline-flex items-center gap-1 py-2 -my-2 pl-2 -ml-2 text-xs font-medium text-brand-700 hover:text-ink-900"
-                          >
-                            Detay <ArrowRight size={10} weight="bold" />
-                          </Link>
                         </td>
                       </tr>
                     ))}

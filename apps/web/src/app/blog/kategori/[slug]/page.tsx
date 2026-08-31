@@ -23,22 +23,34 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cat = await getBlogCategoryBySlug(params.slug);
   if (!cat) return { title: "Kategori bulunamadı" };
+
+  /**
+   * 2026-08-31 denetimi: /blog/kategori/rehber ve /blog/kategori/karsilastirma
+   * sayfalarında meta açıklama HİÇ yoktu — admin o kategorilere açıklama girmemiş ve
+   * kod da doğrudan `cat.description`'ı kullanıyordu. Açıklamasız sayfada Google
+   * snippet'i sayfadan rastgele bir parça seçer. Yedek metin kategori adından türer;
+   * admin açıklama girdiği anda o kullanılmaya devam eder.
+   */
+  const aciklama =
+    cat.description?.trim() ||
+    `Markala blogunda ${cat.name} kategorisi: matbaa, baskı ve tasarım üzerine rehberler, karşılaştırmalar ve pratik ipuçları.`;
+
   return {
     // Layout template "%s · Markala" uygulanır; suffix'i tekrarlamamak için "— Markala" dahil etme.
-    title: `${cat.name} — Blog`,
-    description: cat.description,
+    title: `${cat.name} | Blog`,
+    description: aciklama,
     alternates: { canonical: `/blog/kategori/${cat.slug}` },
     openGraph: {
       type: "website",
-      title: `${cat.name} — Markala Blog`,
-      description: cat.description,
+      title: `${cat.name} | Markala Blog`,
+      description: aciklama,
       url: `/blog/kategori/${cat.slug}`,
       images: [{ url: "/og-default.png", width: 1200, height: 630, alt: cat.name }],
     },
     twitter: {
       card: "summary_large_image",
-      title: `${cat.name} — Markala Blog`,
-      description: cat.description,
+      title: `${cat.name} | Markala Blog`,
+      description: aciklama,
       images: ["/og-default.png"],
     },
   };
