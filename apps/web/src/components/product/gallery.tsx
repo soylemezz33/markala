@@ -89,8 +89,13 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
   const showFallback = !hasImages || brokenImages.has(visible);
   const waiting = active !== visible;
 
+  // lg:max-w-full ZORUNLU: genişlik 48vh'den, yani EKRAN YÜKSEKLİĞİNDEN türüyor ve
+  // sütunun genişliğinden habersiz. Uzun pencerede clamp 460px'e çıkıyor, oysa 1024px
+  // genişlikte galeri sütunu ~350px; aradaki fark yan sütunun ÜSTÜNE binip ürün
+  // başlığını örtüyordu (2026-08-31). max-w-full taşmayı keser, sığdığı durumlarda
+  // hiçbir şeyi değiştirmez.
   return (
-    <div className="lg:mx-auto lg:w-[clamp(320px,48vh,460px)]">
+    <div className="lg:mx-auto lg:w-[clamp(320px,48vh,460px)] lg:max-w-full">
       {/* Kutu HER ZAMAN KARE. Masaüstünde eskiden yalnız YÜKSEKLİK sabitti
           (lg:h-[min(48vh,460px)]) ama genişlik sütunu dolduruyordu → 563x460'lık
           dikdörtgen kutuya 1080x1080 kare görsel object-cover ile oturunca üstten ve
@@ -163,7 +168,7 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
               onMouseEnter={() => prefetch(i)}
               onFocus={() => prefetch(i)}
               onTouchStart={() => prefetch(i)}
-              aria-label={`${alt} — görsel ${i + 1}`}
+              aria-label={`${alt}, görsel ${i + 1}`}
               aria-pressed={i === active}
               className={cn(
                 "relative aspect-square bg-paper-100 rounded-md overflow-hidden border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
@@ -177,7 +182,7 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
               ) : (
                 <Image
                   src={src}
-                  alt={`${alt} — görsel ${i + 1}`}
+                  alt={`${alt}, görsel ${i + 1}`}
                   fill
                   loading="lazy"
                   sizes="100px"

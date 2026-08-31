@@ -57,7 +57,11 @@ export function CategoryTileLink({ kutu }: { kutu: KategoriKutusu }) {
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold leading-snug text-ink-900">
+        {/* truncate DEĞİL: mobilde 2 sütunda etikete yalnız ~66px kalıyor ve kategori adı
+            "Matbaa v…", "Promosy…" diye kesiliyordu — kutunun tek işi o adı göstermek
+            (2026-08-31). İki satıra izin veriyoruz; kutular h-full olduğu için ızgarada
+            yükseklikler yine eşitleniyor. */}
+        <span className="block line-clamp-2 text-sm font-semibold leading-snug text-ink-900">
           {kutu.label}
         </span>
         {kutu.fiyat > 0 ? (
@@ -71,11 +75,14 @@ export function CategoryTileLink({ kutu }: { kutu: KategoriKutusu }) {
         )}
       </span>
 
+      {/* Ok yalnız hover'da beliriyor, yani dokunmatikte HİÇ görünmüyor — ama 14px + 12px
+          boşluk yer kaplayıp etiketi daraltıyordu. Mobilde tamamen kaldırıldı: görünüm
+          aynı kalır, etiket 26px genişler. */}
       <ArrowRight
         size={14}
         weight="bold"
         aria-hidden="true"
-        className="shrink-0 -translate-x-1 text-ink-500 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+        className="hidden md:block shrink-0 -translate-x-1 text-ink-500 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
       />
     </Link>
   );

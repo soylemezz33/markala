@@ -109,7 +109,7 @@ const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
   {
     match: "selefon",
     name: "Selefon",
-    desc: "ürüne ekstra koruma sağlayan ince kaplama — baskının kalıcılığını artırır, yıpranmayı ve yırtılmayı zorlaştırır",
+    desc: "ürüne ekstra koruma sağlayan ince kaplama: baskının kalıcılığını artırır, yıpranmayı ve yırtılmayı zorlaştırır",
   },
   {
     match: "kabartma lak",
@@ -127,7 +127,7 @@ const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
   {
     match: "cnc kesim",
     name: "CNC Kesim",
-    desc: "levhayı istediğiniz forma göre bilgisayar kontrollü kesim — logo, harf, özel şekil",
+    desc: "levhayı istediğiniz forma göre bilgisayar kontrollü kesim: logo, harf, özel şekil",
   },
   {
     match: "laminasyon",
@@ -142,12 +142,12 @@ const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
   {
     match: "kopça",
     name: "Kopça",
-    desc: "asmak için kenarlara takılan metal halka (kuşgözü) — ip veya kelepçe buradan geçer",
+    desc: "asmak için kenarlara takılan metal halka (kuşgözü), ip veya kelepçe buradan geçer",
   },
   {
     match: "kolon",
     name: "Kolon Dikiş",
-    desc: "kenarların katlanıp dikilmesiyle oluşan güçlendirme şeridi — branda yırtılmadan gerilir",
+    desc: "kenarların katlanıp dikilmesiyle oluşan güçlendirme şeridi, branda yırtılmadan gerilir",
   },
   {
     match: "germe",
@@ -157,12 +157,12 @@ const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
   {
     match: "iç mekan",
     name: "İç Mekan Baskı",
-    desc: "kokusuz mürekkeple baskı — ofis, mağaza gibi kapalı alanlar için uygundur",
+    desc: "kokusuz mürekkeple baskı: ofis, mağaza gibi kapalı alanlar için uygundur",
   },
   {
     match: "one way vision",
     name: "One Way Vision",
-    desc: "delikli cam folyosu — içeriden dışarısı görünür, dışarıdan yalnız baskı görünür",
+    desc: "delikli cam folyosu: içeriden dışarısı görünür, dışarıdan yalnız baskı görünür",
   },
   { match: "mat", name: "Mat", desc: "parmak izi tutmaz, sakin ve kurumsal durur" },
   { match: "parlak", name: "Parlak", desc: "renkleri daha canlı gösterir" },
@@ -170,7 +170,7 @@ const JARGON_GLOSSARY: Array<{ match: string; name: string; desc: string }> = [
   { match: "oval köşe", name: "Oval köşe", desc: "köşeleri yuvarlatılmış kesim" },
   { match: "bristol", name: "Bristol", desc: "kartvizitlerde standart sert karton" },
   { match: "kuşe", name: "Kuşe", desc: "broşürlerde standart parlak kağıt" },
-  { match: "otokopili", name: "Otokopili", desc: "kendinden karbonlu — alt kopyaya yazıyı geçirir" },
+  { match: "otokopili", name: "Otokopili", desc: "kendinden karbonlu, alt kopyaya yazıyı geçirir" },
 ];
 
 /** Tek seferde gösterilecek en fazla terim. Künyeler zenginleştikten sonra 6 terim
@@ -354,7 +354,7 @@ function SearchableDropdown({
       >
         <span className="min-w-0 flex-1">
           <span className="block font-medium text-ink-900 text-sm">
-            {selectedOpt?.optionLabel ?? "—"}
+            {selectedOpt?.optionLabel ?? "-"}
           </span>
           {selectedOpt?.optionSublabel && (
             <span className="block text-xs text-ink-500 mt-0.5">
@@ -386,7 +386,7 @@ function SearchableDropdown({
       </button>
       {!open && (
         <p className="mt-1.5 text-xs text-ink-500">
-          Değiştirmek için tıklayın — {sorted.length} farklı seçenek arasından seçim yapabilirsiniz.
+          Değiştirmek için tıklayın, {sorted.length} farklı seçenek arasından seçim yapabilirsiniz.
         </p>
       )}
 
@@ -505,7 +505,13 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
 
   const tierBar = hasTiers ? (
     <div
-      className={cn("mb-3 grid gap-2", tierKeys.length >= 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3")}
+      // Sütun sayısı EKRAN genişliğine göre değil, bu şeridin OTURDUĞU KUTUYA göre
+      // belirlenir (2026-08-31). Öncesi `grid-cols-2 sm:grid-cols-4` idi ve konfigüratör
+      // masaüstünde dar bir sütunda durduğu için 1024px'te 4 sütun × 39px'e düşüp metin
+      // kartların dışına taşıyordu; 640px'te de kartlar 142px'e inip başlık sarıyordu.
+      // auto-fit + minmax kapsayıcıyı ölçer: dar kutuda tek sütun, geniş kutuda dörde çıkar.
+      // 155px eşiği ölçümle seçildi — "Kabartmalı & Kalın" bu genişliğin altında sarıyor.
+      className="mb-3 grid gap-2 grid-cols-[repeat(auto-fit,minmax(155px,1fr))]"
       role="tablist"
       aria-label={`${groupLabel} seviyesi`}
     >
@@ -568,7 +574,7 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
           aria-disabled="true"
           className="px-4 py-3 rounded-md border border-paper-200 bg-paper-100 text-center text-sm text-ink-400"
         >
-          —
+          -
         </div>
       </div>
     );

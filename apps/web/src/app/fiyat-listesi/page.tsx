@@ -333,7 +333,10 @@ export default async function PriceListPage() {
                 <div
                   key={g.cat.slug}
                   id={g.cat.slug}
-                  className="scroll-mt-24 p-4 bg-paper-50 border border-paper-200 rounded-xl"
+                  // min-w-0: grid hücresi varsayılan olarak min-width:auto'dur; içerideki
+                  // `truncate` bağlantı kısalmak yerine hücreyi şişirip TÜM SAYFAYI yana
+                  // kaydırıyordu (mobilde 352px taşma, 2026-08-31).
+                  className="min-w-0 scroll-mt-24 p-4 bg-paper-50 border border-paper-200 rounded-xl"
                 >
                   <h3 className="text-sm font-semibold text-ink-900">
                     <Link href={`/kategori/${g.cat.slug}`} className="hover:text-brand-700">
@@ -348,7 +351,9 @@ export default async function PriceListPage() {
                       >
                         <Link
                           href={`/urun/${p.slug}`}
-                          className="text-ink-700 hover:text-brand-700 truncate"
+                          // min-w-0: flex öğesi de varsayılan min-width:auto; bu olmadan
+                          // `truncate` hiç devreye girmez (üç nokta yerine taşma olur).
+                          className="min-w-0 truncate text-ink-700 hover:text-brand-700"
                         >
                           {p.name}
                         </Link>
