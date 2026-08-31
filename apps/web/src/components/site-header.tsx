@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Arama modalı AYRI chunk (P2/TBT 2026-08-25): kod ilk AÇILIŞTA yüklenir, başlangıç
@@ -623,27 +623,14 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 />
               </Link>
               <span aria-hidden className="h-5 w-px bg-paper-200 mr-1" />
-              {/* Kategori sekmeleri — düz bağlantı, açılır menü YOK. "Aktif sekme" göstergesi
-                  bilerek yok: sekme hedefleri `/urunler?kategoriler=...&grup=...` biçiminde
-                  sorgu parametreli, `pathname` ile eşleşmiyor; doğru eşleştirme için
-                  useSearchParams gerekirdi ve header kök layout'ta olduğundan tüm sayfaları
-                  Suspense/CSR'a zorlardı. */}
-              {NAV.map((nav) => (
-                <Link
-                  key={nav.label}
-                  href={nav.href}
-                  // Sekmeye gelince açık panel kapanır: kullanıcı sekmeye tıklamaya
-                  // giderken panel yolunu kesmesin.
-                  onMouseEnter={scheduleMegaClose}
-                  className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-ink-700 hover:text-ink-900 transition-colors"
-                >
-                  {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
-                  {nav.label}
-                  {nav.highlight === "new" && (
-                    <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
-                  )}
-                </Link>
-              ))}
+              {/* Kategori sekmeleri — düz bağlantı (açılır menü YOK) + bulunulan grubun
+                  vurgusu. Aktif sekme useSearchParams ile bulunur; header kök layout'ta
+                  olduğu için Suspense sınırı ZORUNLU, yoksa statik sayfalar CSR'a düşer
+                  (aynı desen layout.tsx'teki AttributionCapture'da da var). Fallback,
+                  vurgusuz ama birebir aynı şeridi basar → düzen kayması olmaz. */}
+              <Suspense fallback={<KategoriSekmeleri nav={NAV} aktifGrup={null} onHover={scheduleMegaClose} />}>
+                <AktifKategoriSekmeleri nav={NAV} onHover={scheduleMegaClose} />
+              </Suspense>
             </Container>
 
             <MegaPanel
@@ -851,6 +838,70 @@ function FeaturedCard({
  * inline yazdığı için ortalama `-translate-x-1/2` ile DEĞİL `left-0 right-0 mx-auto`
  * ile yapılır (yoksa transform çakışıp panel sağa kayar).
  */
+/** Sekme hedefindeki `?grup=` değerini çözer (yoksa null). Hedefler
+ *  `/urunler?kategoriler=brosur,el-ilani&grup=Broşür %26 El İlanı` biçiminde;
+ *  URL nesnesi hem yüzde hem `+` kodlamasını doğru çözer. */
+function grupParam(href: string): string | null {
+  try {
+    return new URL(href, "http://x").searchParams.get("grup");
+  } catch {
+    return null;
+  }
+}
+
+/** Sekme şeridi. `aktifGrup` dışarıdan gelir; sunucu render'ında null olur. */
+function KategoriSekmeleri({
+  nav,
+  aktifGrup,
+  onHover,
+}: {
+  nav: NavCategory[];
+  aktifGrup: string | null;
+  onHover: () => void;
+}) {
+  return (
+    <>
+      {nav.map((n) => {
+        const grup = grupParam(n.href);
+        const aktif = aktifGrup !== null && grup !== null && grup === aktifGrup;
+        return (
+          <Link
+            key={n.label}
+            href={n.href}
+            // Sekmeye gelince açık panel kapanır: kullanıcı sekmeye tıklamaya
+            // giderken panel yolunu kesmesin.
+            onMouseEnter={onHover}
+            aria-current={aktif ? "page" : undefined}
+            className={cn(
+              "my-1.5 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              aktif
+                ? "bg-ink-900 text-paper-50"
+                : "text-ink-700 hover:bg-paper-100 hover:text-ink-900",
+            )}
+          >
+            {n.highlight === "fire" && (
+              <Lightning size={14} weight="fill" className={aktif ? "text-brand-500" : "text-error"} />
+            )}
+            {n.label}
+            {n.highlight === "new" && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
+            )}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
+/** useSearchParams okuyan sarmalayıcı — YALNIZ Suspense içinde kullanılmalı.
+ *  Vurgu sadece /urunler üzerindeyken anlamlı: sekmelerin hepsi oraya gidiyor. */
+function AktifKategoriSekmeleri({ nav, onHover }: { nav: NavCategory[]; onHover: () => void }) {
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const aktifGrup = pathname === "/urunler" ? params.get("grup") : null;
+  return <KategoriSekmeleri nav={nav} aktifGrup={aktifGrup} onHover={onHover} />;
+}
+
 /** Tek panel: soldaki dikey kategori rail'i + seçili kategorinin içeriği.
  *  Eski "single" modu (tek kategori sekmesinden açılan rail'siz panel) kaldırıldı —
  *  panel artık yalnız "Tüm Ürünler"den açılıyor. */
