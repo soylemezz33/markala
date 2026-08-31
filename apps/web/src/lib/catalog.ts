@@ -209,6 +209,10 @@ export interface HeroBannerData {
   mobileImageUrl?: string | null;
   ctaHref?: string | null;
   title: string;
+  /** Slaydın alt satırı — GERÇEK HTML metni (görsele gömülü değil), 2026-08-31. */
+  subtitle?: string | null;
+  /** Slayt butonunun metni; boşsa hero varsayılan bir etiket basar. */
+  ctaLabel?: string | null;
 }
 /** ctaHref güvenlik süzgeci: yalnız site-içi mutlak yol VEYA http(s) URL. javascript:/data:
  *  gibi şemalar (admin/DB ele geçse bile XSS yüzeyi) reddedilir → link basılmaz. */
@@ -235,6 +239,8 @@ export async function getHeroBanners(): Promise<HeroBannerData[]> {
         mobileImageUrl: s.mobileImageUrl ? String(s.mobileImageUrl) : null,
         ctaHref: safeHref(s.ctaHref),
         title: String(s.title ?? ""),
+        subtitle: typeof s.subtitle === "string" && s.subtitle.trim() ? s.subtitle.trim() : null,
+        ctaLabel: typeof s.ctaLabel === "string" && s.ctaLabel.trim() ? s.ctaLabel.trim() : null,
       }));
   } catch {
     return [];

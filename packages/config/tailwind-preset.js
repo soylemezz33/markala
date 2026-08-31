@@ -143,11 +143,18 @@ module.exports = {
           "0%, 100%": { opacity: "0.6" },
           "50%": { opacity: "1" },
         },
+        // Hero slaytının ilerleme çubuğu: süre bileşende inline animationDuration ile
+        // otomatik geçiş aralığına (AUTOPLAY_MS) eşitlenir.
+        "hero-progress": {
+          "0%": { width: "0%" },
+          "100%": { width: "100%" },
+        },
       },
       animation: {
         "fade-up": "fade-up 400ms cubic-bezier(0.16, 1, 0.3, 1)",
         "blur-in": "blur-in 600ms cubic-bezier(0.16, 1, 0.3, 1)",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "hero-progress": "hero-progress linear forwards",
       },
     },
   },

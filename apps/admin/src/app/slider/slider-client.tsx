@@ -60,7 +60,12 @@ function buildPayload(form: FormState): Record<string, unknown> {
   return payload;
 }
 
+/** API'deki MAX_AKTIF_SLAYT ile aynı olmalı (hero-slides.service.ts). Kural orada
+ *  zorlanır; buradaki sayı yalnızca kullanıcıya durumu göstermek için. */
+const MAX_AKTIF = 4;
+
 export function SliderClient({ slides }: Props) {
+  const aktifSayisi = slides.filter((s) => s.isActive).length;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -98,24 +103,19 @@ export function SliderClient({ slides }: Props) {
 
   function handleToggle(s: HeroSlideDto) {
     startTransition(async () => {
-      try {
-        await updateSlide(s.id, { isActive: !s.isActive });
-        toast.success(`"${s.title}" ${s.isActive ? "pasifleştirildi" : "aktifleştirildi"}.`);
-      } catch {
-        toast.error("Durum değiştirme başarısız.");
-      }
+      // API tavanı reddederse gerçek gerekçeyi göster (örn. "en fazla 4 slayt").
+      const r = await updateSlide(s.id, { isActive: !s.isActive });
+      if (r.ok) toast.success(`"${s.title}" ${s.isActive ? "pasifleştirildi" : "aktifleştirildi"}.`);
+      else toast.error(r.message);
     });
   }
 
   function handleDelete(s: HeroSlideDto) {
     if (!window.confirm(`"${s.title}" slide'ı kalıcı olarak silinecek. Emin misin?`)) return;
     startTransition(async () => {
-      try {
-        await removeSlide(s.id);
-        toast.success(`"${s.title}" silindi.`);
-      } catch {
-        toast.error("Silme başarısız.");
-      }
+      const r = await removeSlide(s.id);
+      if (r.ok) toast.success(`"${s.title}" silindi.`);
+      else toast.error(r.message);
     });
   }
 
@@ -128,18 +128,15 @@ export function SliderClient({ slides }: Props) {
     const payload = buildPayload(form);
 
     startTransition(async () => {
-      try {
-        if (editingId) {
-          await updateSlide(editingId, payload);
-          toast.success("Slide güncellendi.");
-        } else {
-          await createSlide(payload);
-          toast.success("Slide oluşturuldu.");
-        }
-        closeModal();
-      } catch {
-        toast.error(editingId ? "Güncelleme başarısız." : "Oluşturma başarısız.");
+      const r = editingId ? await updateSlide(editingId, payload) : await createSlide(payload);
+      if (!r.ok) {
+        // Modal AÇIK kalır: tavan hatasında kullanıcı "Yayında" kutusunu kapatıp
+        // taslak olarak kaydedebilsin, girdiği metinler kaybolmasın.
+        toast.error(r.message);
+        return;
       }
+      toast.success(editingId ? "Slide güncellendi." : "Slide oluşturuldu.");
+      closeModal();
     });
   }
 
@@ -150,7 +147,24 @@ export function SliderClient({ slides }: Props) {
         <div>
           <h1 className="text-3xl font-semibold text-ink-900">Anasayfa Slider</h1>
           <p className="text-ink-500 text-sm mt-1">
-            Hero carousel slide&apos;larını ekle, düzenle, sırala. Her 6 saniyede otomatik geçer.
+            Anasayfa hero&apos;sunun sağ panelindeki slaytlar. Masaüstünde 7 saniyede bir
+            otomatik geçer; mobilde otomatik geçmez, parmakla kaydırılır.
+          </p>
+          <p className="text-sm mt-2">
+            <span
+              className={
+                aktifSayisi >= MAX_AKTIF
+                  ? "font-semibold text-amber-700"
+                  : "font-semibold text-ink-700"
+              }
+            >
+              {aktifSayisi} / {MAX_AKTIF} slayt yayında
+            </span>
+            <span className="text-ink-500">
+              {aktifSayisi >= MAX_AKTIF
+                ? " — tavan doldu. Yenisini yayına almak için önce birini pasifleştirin."
+                : ` — en fazla ${MAX_AKTIF} slayt aynı anda yayında olabilir.`}
+            </span>
           </p>
         </div>
         <button
@@ -161,15 +175,22 @@ export function SliderClient({ slides }: Props) {
         </button>
       </header>
 
-      {/* Bilgi: anasayfa hero'su artık kodlu premium slider — bu slide'lar geçici olarak gösterilmiyor */}
-      <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg flex gap-3">
-        <div className="flex-none w-9 h-9 rounded-md bg-amber-400 text-ink-900 grid place-items-center">
+      {/* 2026-08-31: bu kutu eskiden "slide'lar anasayfada gösterilmiyor" diyordu — artık
+          YANLIŞ. Slaytlar 31 Ağustos düzenlemesinden beri hero'nun sağ panelinde canlıda. */}
+      <div className="mb-6 p-4 bg-brand-50 border border-brand-300 rounded-lg flex gap-3">
+        <div className="flex-none w-9 h-9 rounded-md bg-brand-500 text-ink-900 grid place-items-center">
           <Info size={18} weight="fill" />
         </div>
-        <div className="text-sm text-ink-800">
-          <strong>Not:</strong> Anasayfa hero alanı şu an <strong>kodlu premium slider</strong> kullanıyor;
-          buradaki slide&apos;lar geçici olarak anasayfada gösterilmiyor. Bu slider&apos;ı tekrar devreye almak
-          (admin&apos;den yönetilebilir hero) istersen geliştirme ekibine bildir.
+        <div className="text-sm text-ink-800 space-y-1">
+          <p>
+            <strong>Başlık ve alt başlık artık görselin üstüne yazı olarak basılıyor.</strong>{" "}
+            Yani metni görselin İÇİNE gömmeye gerek yok — hatta gömme: üst üste biner. Google ve
+            ekran okuyucular yalnız buradaki metni okuyabiliyor.
+          </p>
+          <p>
+            <strong>Buton metni</strong> boş bırakılırsa &quot;İncele&quot; yazar. Bağlantı boşsa
+            slayt <code className="font-mono">/urunler</code> sayfasına gider.
+          </p>
         </div>
       </div>
 
@@ -184,18 +205,23 @@ export function SliderClient({ slides }: Props) {
             <li>
               <strong>Önerilen:</strong>{" "}
               <code className="font-mono px-2 py-0.5 rounded bg-paper-50 text-ink-900 border border-paper-200">
-                1040 × 1040 px
+                1600 × 1200 px
               </code>{" "}
-              (Retina için 2x)
+              (4:3, Retina için 2x)
             </li>
             <li>
               <strong>Minimum:</strong>{" "}
               <code className="font-mono px-2 py-0.5 rounded bg-paper-50 text-ink-900 border border-paper-200">
-                520 × 520 px
+                800 × 600 px
               </code>
             </li>
             <li>
-              <strong>Aspect ratio:</strong> 1:1 (kare)
+              <strong>Aspect ratio:</strong> 4:3 — masaüstünde 4:3, mobilde 16:9 olarak
+              ORTADAN kırpılır. Önemli öğeleri ortada tut, kenarlara yaslama.
+            </li>
+            <li>
+              <strong>Mobil görsel artık zorunlu değil:</strong> tek yatay görsel her iki
+              kırılımda da kullanılabiliyor (ayrı dikey görsel hazırlamaya gerek yok).
             </li>
             <li>
               <strong>Format:</strong> WebP (öncelik) veya JPG · Max 500 KB
