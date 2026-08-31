@@ -165,7 +165,9 @@ export function ProcessTimeline() {
             </div>
             <div className="mt-1 text-2xl md:text-3xl font-semibold tabular-nums">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5B800] to-[#FF8A00]">
-                3-5 iş günü
+                {/* 2026-08-31: "3-5" KENDİ adımlarıyla çelişiyordu (üretim 2-3 + kargo 1-3
+                    = 3-6) ve yardım merkezindeki teslimat maddesiyle de uyuşmuyordu. */}
+                3-6 iş günü
               </span>
               <span className="text-base text-paper-100/60 ml-2">
                 · sipariş → kapı

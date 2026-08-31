@@ -32,6 +32,35 @@ const badgeOptions: { value: BadgeKind; label: string }[] = [
 
 const PRICE_MIN = 0;
 
+/**
+ * VİTRİN SIRASI (2026-08-31, Hasan) — varsayılan "En çok satan" sıralamasında bu ürünler
+ * verilen sırayla en başta gelir; kalanlar eskisi gibi `bestseller` bayrağına göre dizilir.
+ *
+ * Neden kodda, `bestsellerRank` alanında değil: o alanı HAFTALIK CİRO SENKRONU yazıyor
+ * (markala-google/src/bestseller-senkron.mjs), yani elle verilen sıra ilk senkronda silinirdi.
+ *
+ * Yalnız VARSAYILAN sıralamayı etkiler — kullanıcı "Fiyat (artan)" gibi bir sıralama
+ * seçerse sabitleme uygulanmaz, yoksa seçtiği sıralama bozulurdu.
+ *
+ * Not: "El İlanı 115gr Çift Yön" tarifine katalogda tam uyan ürün `brosur`
+ * ("Broşür — 115 gr Kuşe Çift Yön Renkli"); `el-ilani` 105 gr TEK yön olduğu için o alınmadı.
+ */
+const VITRIN_SIRASI = [
+  "cin-vinil-branda",
+  "avrupa-vinil-branda",
+  "kirlangic-bayrak-3m",
+  "yelken-bayrak-damla",
+  "makam-bayragi-puskullu",
+  "brosur",
+  "rollup-standart",
+  "klasik-kartvizit",
+  "cepli-dosya",
+  "magnet-promosyon",
+];
+
+/** slug → vitrin sırası; listede olmayan ürün Infinity alır (arkaya düşer). */
+const VITRIN_RANK = new Map(VITRIN_SIRASI.map((slug, i) => [slug, i]));
+
 /** Ürünler API'den (server parent) props ile gelir; filtreleme/sıralama client-side. */
 export function AllProductsClient({
   products,
@@ -147,7 +176,13 @@ export function AllProductsClient({
         list = list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
         break;
       default:
-        list = list.sort((a, b) => (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0));
+        // Önce vitrin sırası (sabitlenmiş ürünler), sonra eski davranış (bestseller bayrağı).
+        list = list.slice().sort((a, b) => {
+          const ra = VITRIN_RANK.get(a.slug) ?? Number.POSITIVE_INFINITY;
+          const rb = VITRIN_RANK.get(b.slug) ?? Number.POSITIVE_INFINITY;
+          if (ra !== rb) return ra - rb;
+          return (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0);
+        });
     }
 
     return list;
