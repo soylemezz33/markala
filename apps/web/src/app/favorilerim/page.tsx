@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Container } from "@markala/ui";
 import { Heart, ArrowRight, ShoppingBag } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
@@ -33,24 +32,24 @@ export default function WishlistPage() {
     };
   }, []);
 
+  // Kendi tam-genişlik hero'su ve Container'ı KALDIRILDI: sayfa artık hesap kabuğunun
+  // (layout.tsx → Container + AccountShell) içinde render ediliyor, ikinci bir Container
+  // çift padding ve iç içe max-width üretiyordu. Başlık hesap sayfalarının diliyle
+  // hizalandı (2026-08-31, Hasan: "Favorilerim'e geldiğimde soldaki menü kayboluyor").
   return (
     <>
-      <div className="bg-paper-100 border-b border-paper-200">
-        <Container className="py-10 md:py-14">
-          <div className="flex items-center gap-3 mb-2">
-            <Heart size={28} weight="fill" className="text-error" />
-            <h1 className="text-3xl md:text-4xl font-semibold text-ink-900">
-              Favorilerim
-            </h1>
-          </div>
-          <p className="text-ink-700 max-w-xl">
-            Beğendiğin ürünleri buraya ekle, sonra kaldığın yerden devam et.
-            Cihazına kayıtlı, hesap açmadan çalışır.
-          </p>
-        </Container>
-      </div>
+      <header className="mb-6">
+        <div className="flex items-center gap-2.5">
+          <Heart size={24} weight="fill" className="text-error" />
+          <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Favorilerim</h1>
+        </div>
+        <p className="mt-1 text-sm text-ink-500 max-w-xl">
+          Beğendiğin ürünleri buraya ekle, sonra kaldığın yerden devam et. Cihazına
+          kayıtlı, hesap açmadan çalışır.
+        </p>
+      </header>
 
-      <Container className="py-12 md:py-16">
+      <div>
         {!mounted ? (
           <div
             role="status"
@@ -98,7 +97,7 @@ export default function WishlistPage() {
             </div>
           </>
         )}
-      </Container>
+      </div>
     </>
   );
 }
