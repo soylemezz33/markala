@@ -1027,3 +1027,31 @@ model ProductPrice {
   @@map("product_prices")
 }
 
+
+// CSP ihlal kaydı — Report-Only fazından enforce'a geçiş kararı için.
+//
+// Neden tabloya yazıyoruz: raporlar önce yalnız `console.warn` ile konteyner loguna
+// yazılıyordu ve HER DEPLOY'DA SİLİNİYORDU. 31 Ağustos'ta "30 günlük" diye bakılan
+// 13 kayıt aslında konteynerin ayakta olduğu 18 DAKİKANIN verisiydi — bu pencereyle
+// "başka ihlal yok" sonucuna varmak mümkün değil. Kalıcı kayıt olmadan enforce
+// kararı sağlıklı verilemez.
+//
+// TEKİLLEŞTİRME: satır başına bir olay DEĞİL, (directive, blockedUri) başına bir
+// satır tutulur ve `count` artar. blockedUri sorgu dizesi atılarak normalize edilir —
+// aksi halde ad.doubleclick.net/ccm/s/collect?auid=... her istekte yeni satır açardı.
+model CspViolation {
+  id                String   @id @default(cuid())
+/// effective-directive (yoksa violated-directive): script-src, connect-src, worker-src...
+  directive         String
+/// Normalize edilmiş kaynak: şema://host/yol (sorgu dizesi atılır) veya blob/inline/eval.
+  blockedUri        String   @map("blocked_uri")
+/// En son hangi sayfada görüldü — örnek olarak tutulur, tekilleştirmeye girmez.
+  sampleDocumentUri String?  @map("sample_document_uri")
+  count             Int      @default(1)
+  firstSeenAt       DateTime @default(now()) @map("first_seen_at")
+  lastSeenAt        DateTime @default(now()) @updatedAt @map("last_seen_at")
+
+  @@unique([directive, blockedUri])
+  @@index([lastSeenAt])
+  @@map("csp_violations")
+}

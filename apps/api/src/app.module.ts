@@ -28,6 +28,7 @@ import { StorageModule } from "./storage/storage.module";
 import { HealthModule } from "./health/health.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
+import { CspModule } from "./csp/csp.module";
 import { BrandsModule } from "./brands/brands.module";
 import { PortfolioModule } from "./portfolio/portfolio.module";
 import { LoyaltyModule } from "./loyalty/loyalty.module";
@@ -70,6 +71,7 @@ import { LifecycleModule } from "./lifecycle/lifecycle.module";
     HealthModule,
     PaymentsModule,
     AnalyticsModule,
+    CspModule,
     BrandsModule,
     PortfolioModule,
     LoyaltyModule,

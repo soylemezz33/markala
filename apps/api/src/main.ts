@@ -84,6 +84,9 @@ async function bootstrap() {
   app.use(rateLimit({ windowMs: 60_000, max: 15, path: "/coupons/validate", method: "POST" }));
   // Ziyaretçi analizi olay toplama — public + yüksek-frekanslı; per-IP spam/flood koruması.
   app.use(rateLimit({ windowMs: 60_000, max: 120, path: "/analytics/collect", method: "POST" }));
+  // CSP raporu: tarayıcı gönderir, kimlik yok. Bozuk/kötü niyetli bir sayfa tabloyu
+  // şişirmesin diye sınırlı — tekilleştirme zaten satır sayısını sabit tutuyor.
+  app.use(rateLimit({ windowMs: 60_000, max: 60, path: "/csp/report", method: "POST" }));
   // Müşteri tasarım dosyası yükleme — public + büyük dosya; per-IP kötüye kullanım koruması.
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 40, path: "/uploads/design", method: "POST" }));
   // Kurumsal başvuru — public + belge yükleme; per-IP spam/kötüye kullanım koruması (10/saat).
@@ -161,7 +164,7 @@ async function bootstrap() {
   // kapanır, HTTP listener durur). Bu olmadan container stop'ta takılıp dangling kalıntı bırakıyordu.
   app.enableShutdownHooks();
   const shutdown = async (signal: string) => {
-    Logger.log(`${signal} alındı — graceful kapanış başlıyor`, "Bootstrap");
+    Logger.log(`${signal} alındı, graceful kapanış başlıyor`, "Bootstrap");
     try {
       await app.close();
     } finally {
