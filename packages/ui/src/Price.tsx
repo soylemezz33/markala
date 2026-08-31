@@ -15,11 +15,23 @@ const sizes = {
   xl: "text-4xl",
 };
 
-// Marka kuralı: tam sayı fiyatlarda ",00" atılır (480 ₺), gerçek kuruş korunur (34,90 ₺).
-const formatter = new Intl.NumberFormat("tr-TR", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-});
+/**
+ * Marka kuralı: tam sayı fiyatlarda ondalık YOK (480 ₺), kuruş varsa HER ZAMAN iki
+ * basamak (34,90 ₺ · 632,40 ₺). Asla tek basamak.
+ *
+ * 2026-08-31 düzeltmesi: eskiden sabit `minimumFractionDigits: 0` kullanılıyordu ve
+ * 632.40 değeri "632,4" olarak çıkıyordu — sepet/ödeme ekranında bu, iki basamak yazan
+ * lib/format.ts çıktılarının ("1.530,00 ₺") yanında bozuk duruyordu. Minimum artık
+ * tutara göre seçiliyor. (Aynı mantık apps/web/src/lib/format.ts içinde de var.)
+ */
+function formatTL(amount: number): string {
+  const kurusVar = !Number.isInteger(amount);
+  return new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: kurusVar ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+const formatter = { format: formatTL };
 
 export function Price({ amount, size = "md", className, showCurrency = true }: PriceProps) {
   const label = showCurrency

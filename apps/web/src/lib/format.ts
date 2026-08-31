@@ -2,10 +2,25 @@
  * Türkçe locale formatları — sayfa boyunca tutarlı kullan.
  */
 
-const tlFormatter = new Intl.NumberFormat("tr-TR", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+/**
+ * TL biçimi — TEK MARKA KURALI (2026-08-31): tam sayıysa ondalık YOK (480 ₺),
+ * kuruş varsa HER ZAMAN iki basamak (34,90 ₺ · 632,40 ₺). Asla tek basamak.
+ *
+ * Neden: eskiden bu dosya her zaman 2 basamak yazıyordu (1.530,00 ₺), packages/ui
+ * içindeki Price bileşeni ise minimumFractionDigits:0 kullanıyordu → 632.40 değeri
+ * "632,4" çıkıyordu. Sepet/ödeme ekranında ikisi yan yana görünüyordu
+ * ("632,4 ₺" ile "1.530,00 ₺"). Kural artık iki yerde de aynı.
+ *
+ * NOT: aynı mantık packages/ui/src/Price.tsx içinde de var — biri değişirse
+ * diğeri de değişmeli (paket web'e bağımlı olamadığı için kopya kaçınılmaz).
+ */
+function tlBicimle(amount: number): string {
+  const kurusVar = !Number.isInteger(amount);
+  return new Intl.NumberFormat("tr-TR", {
+    minimumFractionDigits: kurusVar ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
 
 const dateFormatter = new Intl.DateTimeFormat("tr-TR", {
   day: "numeric",
@@ -20,11 +35,11 @@ const shortDateFormatter = new Intl.DateTimeFormat("tr-TR", {
 });
 
 export function formatPrice(amount: number): string {
-  return tlFormatter.format(amount);
+  return tlBicimle(amount);
 }
 
 export function formatPriceWithSymbol(amount: number): string {
-  return `${tlFormatter.format(amount)} ₺`;
+  return `${tlBicimle(amount)} ₺`;
 }
 
 /**

@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { WhatsappLogo, Phone, X, ChatCircleText } from "@phosphor-icons/react";
 import { track } from "@/lib/analytics";
+
+/**
+ * FAB'ın GÖRÜNMEYECEĞİ yollar (2026-08-31 denetimi).
+ * Sepet ve ödemede tek bir iş var ("Ödemeye Geç"); yüzen sohbet düğmesi hem onunla
+ * yarışıyor hem de ölçümde /odeme'de "Üye Ol" butonunun 252px²'sini kapatıyordu.
+ */
+const GIZLI_YOLLAR = ["/sepet", "/odeme"];
 
 const WHATSAPP_NUMBER = "905057417028"; // mobil hat — sabit hat (0324) WhatsApp'a kayıtlı değil
 const PHONE_NUMBER = "+903244333351"; // arama için sabit hat
@@ -22,6 +30,7 @@ export function FloatingActions() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const pathname = usePathname();
 
   useEffect(() => {
     // 600ms gecikmeli görün, page jank'ı önle
@@ -40,6 +49,10 @@ export function FloatingActions() {
   }, [open]);
 
   if (!mounted) return null;
+  // Satın alma akışında gizle — yukarıdaki GIZLI_YOLLAR açıklamasına bak.
+  if (pathname && GIZLI_YOLLAR.some((y) => pathname === y || pathname.startsWith(y + "/"))) {
+    return null;
+  }
 
   // Mobil/tablette bottom-24: PDP'nin sabit "Sepete Ekle" barı (bottom-0, ~72px) lg altında
   // DAİMA görünür — FAB md'de bottom-6'ya inince bara ve hemen üstündeki dosya yükleme

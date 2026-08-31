@@ -5,15 +5,15 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
-import { ADDRESS, MAPS_LINK, MAPS_EMBED } from "@/lib/company";
+import { ADDRESS, MAPS_LINK } from "@/lib/company";
 
 export const metadata: Metadata = {
-  title: "Hakkımızda — Markala & 324 Ajans",
+  title: "Hakkımızda | Markala & 324 Ajans",
   description:
     "Markala, 324 Ajans çatısı altında matbaa ve reklam ürünlerinde 10+ yıllık tecrübeyi e-ticaret modeline taşıyan butik markadır. Mersin merkezli, Türkiye geneli teslimat.",
   alternates: { canonical: "/hakkimizda" },
   openGraph: {
-    title: "Markala Hakkında — 324 Ajans Çatısı",
+    title: "Markala Hakkında | 324 Ajans Çatısı",
     description:
       "324 Ajans çatısı altında matbaa ve reklam ürünleri e-ticareti. 10+ yıl tecrübe, ücretsiz tasarım, Türkiye geneli kargo.",
     url: "/hakkimizda",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Markala Hakkında — 324 Ajans Çatısı",
+    title: "Markala Hakkında | 324 Ajans Çatısı",
     description: "324 Ajans çatısı altında matbaa ve reklam ürünleri e-ticareti. 10+ yıl tecrübe.",
     images: ["/og-default.png"],
   },
@@ -30,14 +30,14 @@ export const metadata: Metadata = {
 
 const values = [
   { icon: Lightning, title: "Hızlı Üretim", desc: "Çoğu üründe 24-72 saat içinde teslim. Acil işler için özel hat." },
-  { icon: PaintBrush, title: "Ücretsiz Tasarım", desc: "Profesyonel grafik ekibimizle çalışın — sınırsız revize." },
-  { icon: Truck, title: "81 İle Kargo", desc: "DHL anlaşması — Türkiye'nin her noktasına 1-3 iş günü." },
+  { icon: PaintBrush, title: "Ücretsiz Tasarım", desc: "Profesyonel grafik ekibimizle çalışın, sınırsız revize." },
+  { icon: Truck, title: "81 İle Kargo", desc: "DHL anlaşması, Türkiye'nin her noktasına 1-3 iş günü." },
 ];
 
 const stats = [
   { value: "10+", label: "Yıllık ajans tecrübesi" },
   { value: "20+", label: "Ürün kategorisi" },
-  { value: "2-5 iş günü", label: "Üretim + kargo toplam süre" },
+  { value: "3-6 iş günü", label: "Üretim + kargo toplam süre" },
   { value: "0 ₺", label: "Tasarım ücreti" },
 ];
 
@@ -59,7 +59,7 @@ export default function AboutPage() {
             <span className="marker">her detay</span> önemli.
           </h1>
           <p className="mt-6 text-lg md:text-xl text-ink-700 leading-relaxed">
-            Markala, 324 Ajans çatısı altında — matbaa ve reklam ürünleri alanında 10+ yıllık ajans tecrübesini Türkiye geneli e-ticaret modeline taşıyan butik bir marka.
+            Markala, 324 Ajans çatısı altında, matbaa ve reklam ürünleri alanında 10+ yıllık ajans tecrübesini Türkiye geneli e-ticaret modeline taşıyan butik bir marka.
           </p>
         </Container>
       </div>
@@ -90,7 +90,7 @@ export default function AboutPage() {
           </p>
 
           <p>
-            Sadece kartvizit basmıyoruz — sizin için ürettiğimiz her şey markanızın sokağa çıkan yüzü. O yüzden 350 gr mat kuşeden vinil branda afişe, sublime baskılı kupadan lazer kazımalı plakete kadar her ürünü kendi atölyemizde ya da denetlediğimiz çözüm ortaklarımızda üretiyoruz.
+            Sadece kartvizit basmıyoruz, sizin için ürettiğimiz her şey markanızın sokağa çıkan yüzü. O yüzden 350 gr mat kuşeden vinil branda afişe, sublime baskılı kupadan lazer kazımalı plakete kadar her ürünü kendi atölyemizde ya da denetlediğimiz çözüm ortaklarımızda üretiyoruz.
           </p>
         </section>
 
@@ -223,14 +223,25 @@ export default function AboutPage() {
                 doğru adres Menteş Mah. Artık tek kaynak lib/company.ts; harita da sabit
                 koordinat yerine adres sorgusuyla çalışıyor (eski lat/lng eski adresindi).
               */}
-              <iframe
-                title="Markala ofis konumu — Yenişehir, Mersin"
-                src={MAPS_EMBED}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="w-full h-64 md:h-full min-h-[16rem] border-0"
-                allowFullScreen
-              />
+              {/* iframe KALDIRILDI (2026-08-31) — /iletisim ile aynı gerekçe: CSP frame-src
+                  bu kaynağa izin vermiyor (Report-Only olduğu için henüz kırılmamıştı),
+                  üstelik embed kullanıcı etkileşmeden Google'a istek atıyordu. */}
+              <div className="flex h-full min-h-[16rem] flex-col justify-center gap-3 p-6">
+                <address className="not-italic text-ink-700 leading-relaxed">
+                  <span className="block font-semibold text-ink-900">Ofis &amp; Atölye</span>
+                  {ADDRESS.street}
+                  <br />
+                  {ADDRESS.locality} / {ADDRESS.region}
+                </address>
+                <a
+                  href={MAPS_LINK}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center gap-1.5 rounded-md bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-brand-600"
+                >
+                  Yol tarifi al
+                </a>
+              </div>
             </div>
           </div>
         </section>

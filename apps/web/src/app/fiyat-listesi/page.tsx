@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
-  CurrencyCircleDollar,
   ArrowRight,
   Phone,
   WhatsappLogo,
@@ -20,22 +19,24 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 const SITE = "https://markala.com.tr";
 
 export const metadata: Metadata = {
-  title: "Matbaa Fiyat Listesi 2026 — Kartvizit, Broşür, Afiş Fiyatları",
+  // absolute: kok layout'taki `template: "%s · Markala"` ekini bu sayfada bastirir,
+  // aksi halde baslik "... - markala.com.tr · Markala" seklinde ciftlenirdi.
+  title: { absolute: "Online Matbaa Fiyat Listesi 2026 - markala.com.tr" },
   description:
-    "Güncel matbaa başlangıç fiyatları, KDV dahil. Türkiye geneli kargo. 30+ ürün için fiyat tablosu — kartvizit, broşür, afiş ve daha fazlası.",
+    "Güncel matbaa başlangıç fiyatları, KDV dahil. Türkiye geneli kargo. 30+ ürün için fiyat tablosu: kartvizit, broşür, afiş ve daha fazlası.",
   alternates: { canonical: "/fiyat-listesi" },
   openGraph: {
     type: "website",
-    title: "Matbaa Fiyat Listesi 2026 — Markala",
+    title: "Online Matbaa Fiyat Listesi 2026 - markala.com.tr",
     description: "Tüm matbaa ürünleri için güncel başlangıç fiyatları (KDV dahil).",
     url: "/fiyat-listesi",
     images: [
-      { url: "/og-default.png", width: 1200, height: 630, alt: "Markala Matbaa Fiyat Listesi" },
+      { url: "/og-default.png", width: 1200, height: 630, alt: "Markala Online Matbaa Fiyat Listesi" },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Matbaa Fiyat Listesi 2026 — Markala",
+    title: "Online Matbaa Fiyat Listesi 2026 - markala.com.tr",
     description: "Tüm matbaa ürünleri için güncel başlangıç fiyatları (KDV dahil).",
     images: ["/og-default.png"],
   },
@@ -45,6 +46,11 @@ export const metadata: Metadata = {
 // üretiyordu — Googlebot 2 MB'tan sonrasını taramaz (Ahrefs "page size exceeds 2 MB").
 // En ucuz N ürün listelenir; kalanlar "+X ürün daha" satırıyla kategori sayfasına gider.
 const MAX_ROWS_PER_CATEGORY = 20;
+
+// İSG (iş güvenliği) levhaları 10 alt kategoriye yayılıyor ve sayfanın yarısını
+// kaplıyordu. Bunlar en alta, tablo yerine kompakt kart düzenine alınır.
+const ISG_ROWS_PER_CATEGORY = 5;
+const isIsgCategory = (slug: string) => slug.startsWith("is-guvenligi");
 
 export default async function PriceListPage() {
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
@@ -59,12 +65,16 @@ export default async function PriceListPage() {
     }))
     .filter((g) => g.items.length > 0);
 
+  const mainGroups = byCategory.filter((g) => !isIsgCategory(g.cat.slug));
+  const isgGroups = byCategory.filter((g) => isIsgCategory(g.cat.slug));
+  const isgCount = isgGroups.reduce((sum, g) => sum + g.items.length, 0);
+
   // Schema.org PriceSpecification + ItemList
   const priceSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     "@id": `${SITE}/fiyat-listesi#list`,
-    name: "Matbaa Fiyat Listesi 2026",
+    name: "Online Matbaa Fiyat Listesi 2026",
     description: "Markala'nın tüm matbaa ürünleri için başlangıç fiyatları.",
     numberOfItems: products.length,
     // Özet sayfa kalıbı: SADECE ListItem name+url — iç içe Product/Offer BASMA.
@@ -79,11 +89,10 @@ export default async function PriceListPage() {
     })),
   };
 
-  // Toplam ürün, fiyat aralığı — "teklif usulü" (0) ürünleri vitrin aralığına katma,
-  // yoksa "0 ₺'den başlar" gibi bozuk metin çıkar.
+  // Vitrin başlangıç fiyatı — "teklif usulü" (0) ürünleri katma, yoksa
+  // "0 ₺'den başlar" gibi bozuk metin çıkar.
   const allPrices = products.map((p) => getDisplayPrice(p)).filter((v) => v > 0);
   const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : 0;
-  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : 0;
 
   return (
     <>
@@ -103,18 +112,23 @@ export default async function PriceListPage() {
       <div className="bg-paper-100 border-b border-paper-200">
         <Container className="py-12 md:py-16 max-w-3xl">
           <div className="flex items-center gap-2 mb-3">
-            <CurrencyCircleDollar size={20} weight="fill" className="text-brand-700" />
+            <span
+              aria-hidden
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-700 text-[12px] font-bold leading-none text-paper-50"
+            >
+              ₺
+            </span>
             <span className="text-sm font-semibold text-brand-700 uppercase tracking-wider">
               Güncel Fiyat Listesi
             </span>
           </div>
           <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
-            Matbaa Fiyat Listesi 2026
+            Online Matbaa Fiyat Listesi 2026 - markala.com.tr
           </h1>
           <p className="mt-4 text-lg text-ink-700">
             {minPrice > 0 ? (
               <>
-                Markala'nın tüm matbaa ve reklam ürünleri için güncel başlangıç fiyatları —
+                Markala'nın tüm matbaa ve reklam ürünleri için güncel başlangıç fiyatları,
                 <strong className="text-ink-900"> {minPrice.toLocaleString("tr-TR")} ₺'den </strong>
                 başlar, KDV dahil.
               </>
@@ -147,6 +161,38 @@ export default async function PriceListPage() {
       </div>
 
       <Container className="py-10 md:py-14 max-w-5xl">
+        {/* Özel teklif CTA — fiyat listesinin başında */}
+        <section className="mb-10 p-6 md:p-8 bg-ink-900 text-paper-50 rounded-2xl text-center">
+          <Lightning size={24} weight="fill" className="text-brand-400 mx-auto mb-2" />
+          <h2 className="text-xl md:text-2xl font-semibold">Özel teklif ister misin?</h2>
+          <p className="mt-2 text-sm text-paper-100/70 max-w-xl mx-auto">
+            Toplu siparişler, firmanıza özel fiyat ve bu listede göremediğiniz ürünler için
+            WhatsApp'tan yazın ya da arayın — 5 dakikada yanıt.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="https://wa.me/905057417028?text=Merhaba,+matbaa+fiyat+listesinden+toplu+sipariş+için+özel+teklif+almak+istiyorum."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-6 py-3 bg-[#25D366] hover:bg-[#1FB358] text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2"
+            >
+              <WhatsappLogo size={14} weight="fill" /> WhatsApp Teklif
+            </a>
+            <a
+              href="tel:+903244333351"
+              className="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-lg text-sm font-semibold inline-flex items-center gap-2"
+            >
+              <Phone size={14} weight="fill" /> 0324 433 33 51
+            </a>
+            <Link
+              href="/kurumsal/basvuru"
+              className="px-6 py-3 border border-paper-100/30 text-paper-50 rounded-lg text-sm font-semibold hover:bg-white/5 inline-flex items-center gap-2"
+            >
+              Kurumsal Başvuru
+            </Link>
+          </div>
+        </section>
+
         {/* Bilgilendirme */}
         <section className="mb-10 p-5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
           <Info size={20} weight="fill" className="text-amber-700 shrink-0 mt-0.5" />
@@ -167,7 +213,7 @@ export default async function PriceListPage() {
             Kategoriye git ({byCategory.length} kategori, {products.length} ürün)
           </div>
           <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-            {byCategory.map((g) => (
+            {mainGroups.map((g) => (
               <li key={g.cat.slug}>
                 <a
                   href={`#${g.cat.slug}`}
@@ -178,12 +224,23 @@ export default async function PriceListPage() {
                 </a>
               </li>
             ))}
+            {isgGroups.length > 0 && (
+              <li>
+                <a
+                  href="#is-guvenligi"
+                  className="block px-3 py-2 rounded-md text-sm font-medium text-ink-900 hover:bg-paper-100 hover:text-brand-700"
+                >
+                  İş Güvenliği Levhaları{" "}
+                  <span className="text-ink-500 font-normal text-xs">({isgCount})</span>
+                </a>
+              </li>
+            )}
           </ul>
         </nav>
 
         {/* Tablo bölümleri */}
-        <div className="space-y-12">
-          {byCategory.map((g) => (
+        <div className="space-y-10">
+          {mainGroups.map((g) => (
             <section key={g.cat.slug} id={g.cat.slug} className="scroll-mt-24">
               <header className="mb-4 flex items-end justify-between gap-4">
                 <div>
@@ -192,7 +249,7 @@ export default async function PriceListPage() {
                 </div>
                 <Link
                   href={`/kategori/${g.cat.slug}`}
-                  className="hidden sm:inline-flex items-center gap-1 text-sm text-brand-700 hover:text-ink-900 font-medium shrink-0"
+                  className="hidden sm:inline-flex items-center gap-1 py-2 -my-2 px-1 -mx-1 text-sm text-brand-700 hover:text-ink-900 font-medium shrink-0"
                 >
                   Kategori sayfası <ArrowRight size={11} weight="bold" />
                 </Link>
@@ -225,7 +282,7 @@ export default async function PriceListPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-3 text-xs text-ink-700">{p.sizeLabel ?? "—"}</td>
+                        <td className="px-3 py-3 text-xs text-ink-700">{p.sizeLabel ?? "-"}</td>
                         <td className="px-3 py-3 text-xs text-ink-500">{p.productionTime}</td>
                         <td className="px-3 py-3 text-right">
                           <span className="font-semibold text-ink-900 tabular-nums">
@@ -236,9 +293,13 @@ export default async function PriceListPage() {
                           )}
                         </td>
                         <td className="px-3 py-3 text-right">
+                          {/* py-2 -my-2: dokunma hedefi 16px'ten ~32px'e çıkar, satır
+                              yüksekliği DEĞİŞMEZ (WCAG 2.2 AA hedef boyutu ≥24×24).
+                              2026-08-31 denetiminde bu sayfada 253 adet 47×16px bağlantı
+                              sayılmıştı — sitedeki en yoğun küçük-hedef yığılması. */}
                           <Link
                             href={`/urun/${p.slug}`}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-ink-900"
+                            className="inline-flex items-center gap-1 py-2 -my-2 pl-2 -ml-2 text-xs font-medium text-brand-700 hover:text-ink-900"
                           >
                             Detay <ArrowRight size={10} weight="bold" />
                           </Link>
@@ -253,13 +314,69 @@ export default async function PriceListPage() {
                   href={`/kategori/${g.cat.slug}`}
                   className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium text-brand-700 bg-paper-50 border border-paper-200 hover:bg-paper-100 hover:text-ink-900"
                 >
-                  +{g.items.length - MAX_ROWS_PER_CATEGORY} ürün daha — tüm {g.cat.name} fiyatları{" "}
+                  +{g.items.length - MAX_ROWS_PER_CATEGORY} ürün daha, tüm {g.cat.name} fiyatları{" "}
                   <ArrowRight size={11} weight="bold" />
                 </Link>
               )}
             </section>
           ))}
         </div>
+
+        {/* İş güvenliği levhaları — sayfa sonunda, kompakt kart düzeni */}
+        {isgGroups.length > 0 && (
+          <section id="is-guvenligi" className="mt-14 scroll-mt-24">
+            <header className="mb-4">
+              <h2 className="text-2xl font-semibold text-ink-900">İş Güvenliği (İSG) Levhaları</h2>
+              <p className="text-sm text-ink-500 mt-1">
+                {isgGroups.length} alt kategori, {isgCount} ürün — uyarı, yasaklayıcı, emredici,
+                yangın ve trafik levhaları. Fiyatlar en uygun ebattan başlar.
+              </p>
+            </header>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {isgGroups.map((g) => (
+                <div
+                  key={g.cat.slug}
+                  id={g.cat.slug}
+                  className="scroll-mt-24 p-4 bg-paper-50 border border-paper-200 rounded-xl"
+                >
+                  <h3 className="text-sm font-semibold text-ink-900">
+                    <Link href={`/kategori/${g.cat.slug}`} className="hover:text-brand-700">
+                      {g.cat.name}
+                    </Link>
+                  </h3>
+                  <ul className="mt-2.5 space-y-1.5">
+                    {g.items.slice(0, ISG_ROWS_PER_CATEGORY).map((p) => (
+                      <li
+                        key={p.slug}
+                        className="flex items-baseline justify-between gap-2 text-xs"
+                      >
+                        <Link
+                          href={`/urun/${p.slug}`}
+                          className="text-ink-700 hover:text-brand-700 truncate"
+                        >
+                          {p.name}
+                        </Link>
+                        <span className="font-semibold text-ink-900 tabular-nums shrink-0">
+                          {formatPriceDisplay(getDisplayPrice(p))}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href={`/kategori/${g.cat.slug}`}
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-ink-900"
+                  >
+                    {g.items.length > ISG_ROWS_PER_CATEGORY
+                      ? `+${g.items.length - ISG_ROWS_PER_CATEGORY} ürün daha`
+                      : "Tüm ürünler"}{" "}
+                    <ArrowRight size={10} weight="bold" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Fiyatlama mantığı açıklaması */}
         <section className="mt-16 p-6 md:p-8 bg-paper-50 border border-paper-200 rounded-xl">
@@ -293,7 +410,7 @@ export default async function PriceListPage() {
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
                 <strong className="text-ink-900">Tasarım desteği:</strong> Ücretsiz. Hazır dosyanız
-                yoksa grafik ekibimiz tasarlar — fiyata dahildir.
+                yoksa grafik ekibimiz tasarlar, fiyata dahildir.
               </span>
             </li>
             <li className="flex gap-2">
@@ -312,39 +429,6 @@ export default async function PriceListPage() {
               </span>
             </li>
           </ul>
-        </section>
-
-        {/* Final CTA */}
-        <section className="mt-12 p-8 md:p-12 bg-ink-900 text-paper-50 rounded-2xl text-center">
-          <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
-          <h2 className="text-2xl md:text-3xl font-semibold">Özel teklif ister misin?</h2>
-          <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Toplu siparişler ({minPrice.toLocaleString("tr-TR")} ₺ ile{" "}
-            {maxPrice.toLocaleString("tr-TR")} ₺ arası fiyat aralığında) için size özel teklif —
-            WhatsApp veya telefonla 5 dakikada yanıt.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="https://wa.me/905057417028?text=Merhaba,+matbaa+fiyat+listesinden+toplu+sipariş+için+özel+teklif+almak+istiyorum."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3 bg-[#25D366] hover:bg-[#1FB358] text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2"
-            >
-              <WhatsappLogo size={14} weight="fill" /> WhatsApp Teklif
-            </a>
-            <a
-              href="tel:+903244333351"
-              className="px-6 py-3 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-lg text-sm font-semibold inline-flex items-center gap-2"
-            >
-              <Phone size={14} weight="fill" /> 0324 433 33 51
-            </a>
-            <Link
-              href="/kurumsal/basvuru"
-              className="px-6 py-3 border border-paper-100/30 text-paper-50 rounded-lg text-sm font-semibold hover:bg-white/5 inline-flex items-center gap-2"
-            >
-              Kurumsal Başvuru
-            </Link>
-          </div>
         </section>
 
         {/* Yasal not */}

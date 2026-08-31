@@ -231,7 +231,11 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
           {/* İlerleme göstergesi — kullanıcı bir sonraki geçişin NE ZAMAN olacağını görsün
               ("slayt kaydı, kayboldum" hissini önler). Otomatik dönme kapalıyken (mobil,
               hover, az-hareket tercihi) çubuk dolmaz; sadece konum göstergesi olarak kalır. */}
-          <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
+          {/* Noktalar SOLDA (2026-08-31): sağ üstteyken küçük mobil ekranlarda sağ alttaki
+              WhatsApp FAB'ının tam altına düşüyordu — ölçümde "Slayt 2" ve "Slayt 3"
+              düğmelerinin üstü kapanıyordu, yani noktalara basarak slayt geçilemiyordu.
+              FAB sağ sütunda sabit olduğu için çözüm noktaları o sütundan çıkarmak. */}
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 z-20">
             {slides.map((s, i) => (
               // Dokunma hedefi ≥24px (PSI target-size): buton gerçek 24px kutu,
               // görsel çubuk içteki span'da.

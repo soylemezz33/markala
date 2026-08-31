@@ -10,7 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { trackLead } from "@/lib/analytics";
 import { PhoneInput } from "@/components/forms/phone-input";
-import { ADDRESS, MAPS_LINK, MAPS_EMBED } from "@/lib/company";
+import { ADDRESS, MAPS_LINK } from "@/lib/company";
 
 const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
@@ -30,7 +30,7 @@ const channels = [
     icon: Phone,
     label: "Telefon",
     value: "0324 433 33 51",
-    sub: "Hafta içi 09:00 — 18:00",
+    sub: "Hafta içi 09:00-18:00",
     href: "tel:+903244333351",
     accent: "bg-brand-100 text-brand-700",
     cta: "Hemen ara",
@@ -121,7 +121,7 @@ export default function ContactPage() {
               Bize ulaşın
             </h1>
             <p className="mt-4 text-lg text-ink-700">
-              Sipariş, tasarım desteği veya kurumsal teklifler — size en uygun kanaldan yazın.
+              Sipariş, tasarım desteği veya kurumsal teklifler, size en uygun kanaldan yazın.
             </p>
           </div>
         </Container>
@@ -158,7 +158,7 @@ export default function ContactPage() {
           <section id="teklif" className="lg:col-span-7 scroll-mt-24">
             <header className="mb-6">
               <h2 className="text-2xl md:text-3xl font-semibold text-ink-900">Mesaj gönderin</h2>
-              <p className="mt-2 text-ink-700">Formu doldurun — sipariş veya teklif talebi için en geç 24 saatte dönüş yaparız.</p>
+              <p className="mt-2 text-ink-700">Formu doldurun, sipariş veya teklif talebi için en geç 24 saatte dönüş yaparız.</p>
             </header>
 
             {sent ? (
@@ -291,17 +291,38 @@ export default function ContactPage() {
                 </div>
               ))}
 
-              {/* Google Maps embed — resmî işletme kaydı (company.ts MAPS_EMBED tek kaynak,
-                  hakkimizda sayfasıyla aynı desen). Keyless embed: API anahtarı gerekmez. */}
-              <div className="aspect-[4/3] rounded-xl overflow-hidden border border-paper-200">
-                <iframe
-                  title="Markala ofis konumu — Yenişehir, Mersin"
-                  src={MAPS_EMBED}
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="w-full h-full border-0"
-                  allowFullScreen
-                />
+              {/* KONUM — iframe YOK (2026-08-31).
+                  Eskiden Google Maps embed'i vardı. Üç sorunu birden çözmek için kaldırıldı:
+                  1) CSP: canlıda `frame-src` yalnız accounts.google.com / cloudflare /
+                     iyzipay'e izin veriyor. Politika Report-Only olduğu için harita ŞİMDİLİK
+                     çalışıyordu ama konsola sürekli ihlal düşüyordu; enforce'a geçildiği anda
+                     harita kaybolacaktı.
+                  2) Üçüncü taraf çerezi: embed, kullanıcı hiç etkileşmeden Google'a istek atıyordu.
+                  3) Hız: sayfaya gereksiz bir iframe + harita yükü biniyordu.
+                  Yerine adres + yol tarifi bağlantısı. Görsel harita istenirse Static Maps
+                  API anahtarı (veya elle çekilmiş bir ekran görüntüsü) gerekir. */}
+              <div className="rounded-xl border border-paper-200 bg-paper-100 p-5">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-ink-900 text-brand-400">
+                    <MapPin size={20} weight="fill" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-ink-900">Ofis &amp; Atölye</h3>
+                    <address className="mt-1 not-italic text-sm leading-relaxed text-ink-700">
+                      {ADDRESS.street}
+                      <br />
+                      {ADDRESS.locality} / {ADDRESS.region}
+                    </address>
+                    <a
+                      href={MAPS_LINK}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-brand-500 px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2"
+                    >
+                      Yol tarifi al <ArrowRight size={14} weight="bold" />
+                    </a>
+                  </div>
+                </div>
               </div>
 
               {/* B2B CTA */}

@@ -12,10 +12,19 @@ import {
  */
 
 describe("formatPrice", () => {
-  it("tam sayı iki ondalıkla formatlanır", () => {
-    expect(formatPrice(1000)).toMatch(/1\.000,00|1,000\.00/);
-    // Türkçe locale: nokta binlik ayraç, virgül ondalık
-    expect(formatPrice(1000)).toContain("1.000");
+  // MARKA KURALI (2026-08-31): tam sayıda ondalık YOK, kuruş varsa HER ZAMAN iki basamak.
+  // Eskiden her tutar iki ondalıkla yazılıyordu; packages/ui'daki Price ise minimum 0
+  // kullandığı için 632.40 "632,4" çıkıyordu ve sepet ekranında iki biçim yan yana
+  // görünüyordu. Kural iki tarafta da aynı hale getirildi.
+  it("tam sayıda ondalık gösterilmez", () => {
+    expect(formatPrice(1000)).toBe("1.000");
+    expect(formatPrice(480)).toBe("480");
+  });
+
+  it("kuruş varsa DAİMA iki basamak — asla tek", () => {
+    expect(formatPrice(34.9)).toBe("34,90");
+    expect(formatPrice(632.4)).toBe("632,40");
+    expect(formatPrice(34.95)).toBe("34,95");
   });
 
   it("ondalıklı sayı doğru formatlanır", () => {
@@ -25,7 +34,7 @@ describe("formatPrice", () => {
   });
 
   it("sıfır formatlanır", () => {
-    expect(formatPrice(0)).toContain("0,00");
+    expect(formatPrice(0)).toBe("0");
   });
 });
 
