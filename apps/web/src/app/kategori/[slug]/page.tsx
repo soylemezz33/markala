@@ -88,34 +88,24 @@ export const revalidate = 300;
  * Ürün ve blog rotalarında AYNI ŞEY YAPILMADI: oralara sık içerik ekleniyor (blog her
  * sabah otomatik yazıyor), 404 penceresi kabul edilemez.
  */
-export const dynamicParams = false;
-
 export async function generateStaticParams() {
   const cats = await getCategories();
-  // GÜVENLİK AĞI — dynamicParams=false ile BİRLİKTE zorunlu: getCategories() API hatasında
-  // sessizce [] döner (catalog.ts:286). Boş liste + dynamicParams=false = 33 kategori
-  // sayfasının TAMAMI 404. Derleme anındaki tek bir API kesintisi siteyi sessizce
-  // sakatlardı. Bunun yerine derlemeyi PATLAT: hatalı deploy canlıya hiç çıkmasın.
-  if (cats.length === 0) {
-    throw new Error(
-      "generateStaticParams(kategori): kategori listesi BOŞ. API'ye ulaşılamıyor olabilir. " +
-        "dynamicParams=false olduğu için boş listeyle devam etmek tüm /kategori/* sayfalarını " +
-        "404 yapardı; derleme bilerek durduruldu.",
-    );
-  }
   return cats.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const cat = await getCategoryBySlug(params.slug);
-  // BURADA notFound() ÇAĞIRMA (2026-08-31). Eski yorum "notFound() metadata aşamasında
-  // statüyü 404 yapar" diyordu; ÖLÇÜLDÜ, YANLIŞ: konteynere doğrudan sorulduğunda
-  // /kategori/<olmayan> üç istekte de HTTP 200 döndü, gövde ise not-found sayfasıydı
-  // (klasik soft-404). Metadata aşamasındaki notFound() not-found ARAYÜZÜNÜ gösteriyor
-  // ama yanıt statüsünü 404'e çevirmiyor ve sayfa bileşenindeki notFound()'a hiç sıra
-  // gelmiyor. Reklam açısından kritikti: Google'ın "hedef çalışmıyor" denetimi HTTP
-  // durumuna baktığı için bozuk açılış sayfası uyarı vermeden bütçe harcatıyordu.
-  // Statüyü aşağıdaki sayfa bileşeni belirler; burada yalnız zararsız bir metadata döneriz.
+  // SOFT-404 — ÇÖZÜLMEDİ, azaltıldı (2026-08-31). Ölçüm: bu kurulumda (Next 14 +
+  // output:"standalone") olmayan kategori/ürün/blog URL'i HTTP 200 + not-found gövdesi
+  // dönüyor. Denenen ve İŞE YARAMAYAN iki yol:
+  //   1) notFound()'u generateMetadata yerine yalnız sayfa bileşeninde çağırmak → yine 200.
+  //   2) dynamicParams=false → bu rotada İNERT: sayfa `searchParams` (sayfalama) okuduğu
+  //      için rota tamamen dinamik; prerender-manifest'te /kategori sayfası SIFIR ve
+  //      /kategori/[slug] dynamicRoutes'ta da yok. Gate edilecek statik param yok.
+  //      (Çalıştığı yerler /matbaa, /hizmetler, /yardim — onlar searchParams okumuyor.)
+  // Kalan azaltma: noindex. Statü 200 kalır ama Google soft-404'ü İNDEKSLEMEZ.
+  // Google Ads "hedef çalışmıyor" denetimi HTTP durumuna baktığı için REKLAM TARAFI HÂLÂ
+  // AÇIK — gerçek çözüm muhtemelen Next 15 (denetimde güvenlik gerekçesiyle de öneriliyor).
   if (!cat) return { title: "Sayfa bulunamadı", robots: { index: false, follow: false } };
   // SEO sayfalaması: sayfa N'de title'a " — Sayfa N" eki + self-canonical (?page=N dahil).
   const page = parsePage(first(searchParams?.page));
