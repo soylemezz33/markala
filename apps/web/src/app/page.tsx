@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import type { Product } from "@markala/types";
-import { getProducts, getBestsellers, getHeroBanners, getHeaderNav } from "@/lib/catalog";
+import {
+  getProducts,
+  getBestsellers,
+  getHeroBanners,
+  getHeaderNav,
+  getCategories,
+} from "@/lib/catalog";
 import { HeroSplit } from "@/components/home/hero-split";
 import { CategoryTiles } from "@/components/home/category-tiles";
 import { ProductRail } from "@/components/home/product-rail";
@@ -54,8 +60,9 @@ export default async function HomePage() {
   const products = await getProducts();
   // Anasayfa hero slaytları — admin panelinden yönetilen DB (hero_slides) kaynağı.
   const heroBanners = await getHeroBanners();
-  // Hero altı kategori kutuları başlıktaki menünün ilk 6 grubunu kullanır (tek kaynak).
-  const headerNav = await getHeaderNav();
+  // Hero altı kategori kutuları başlıktaki menünün 8 grubunu kullanır (tek kaynak).
+  // Kategoriler yalnız temsili GÖRSEL için gerekiyor (45/45'inde imageUrl dolu).
+  const [headerNav, categories] = await Promise.all([getHeaderNav(), getCategories()]);
   // Çok satılanlar — GERÇEK ciro sırasıyla (getBestsellers: content.bestsellerRank'e göre
   // sıralı döner; rank'i haftalık senkron yazar, 1 = ciro lideri, dolgu ürünler sona).
   // Not: buradaki `products` list=true hafif yanıttır ve content taşımaz — o yüzden ayrı çağrı.
@@ -78,7 +85,7 @@ export default async function HomePage() {
       <HeroSplit products={products} slides={heroBanners} />
       {/* İlk ekranda katalog girişi — mobilde kategori menüsü hamburger arkasında olduğu
           için burası masaüstünden daha kritik. */}
-      <CategoryTiles nav={headerNav} products={products} />
+      <CategoryTiles nav={headerNav} products={products} categories={categories} />
       <PromoBanner location="hero" />
       {/* TrustBadges 2026-08-31'de KALDIRILDI: dört rozetten üçü ("Ücretsiz Tasarım Desteği",
           "2-3 İş Günü Üretim", "81 İle Kargo") artık HeroSplit'in güven satırında, hemen

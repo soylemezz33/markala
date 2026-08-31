@@ -1,23 +1,35 @@
-import Link from "next/link";
 import { Container } from "@markala/ui";
-import type { Product } from "@markala/types";
+import type { Category, Product } from "@markala/types";
 import type { NavCategory } from "@/components/site-header";
+import { CategoryTileLink, type KategoriKutusu } from "@/components/home/category-tile-link";
 
 /**
  * Hero altı kategori kutuları (2026-08-31) — ilk ekranda katalog girişi.
  *
  * Neden: Baymard'ın anasayfa şartı "ürün tiplerinin en az %40'ı temsil edilmeli"; ayrıca
  * MOBİLDE kategori menüsü hamburgerin arkasında olduğu için bu kutular masaüstünden daha
- * kritik. Eskiden ilk ekranda hiç kategori girişi yoktu (CategoryGrid 2026-08-06'da
- * kaldırılmıştı ve zaten sayfanın çok altındaydı).
- *
- * Fiyatlar CANLI katalogdan hesaplanır — grubun kapsadığı kategorilerdeki en düşük
- * gösterim fiyatı. Fiyat bulunamazsa o kutuda fiyat satırı hiç basılmaz (uydurma yok).
+ * kritik. Eskiden ilk ekranda hiç kategori girişi yoktu.
  */
+
 /** 8 = menüdeki grup sayısı. 6'da kesilince "İSG Uyarı Levhaları" ve "Sektörel Ürünler"
  *  dışarıda kalıyordu; oysa GA4'te (60 gün) en çok inilen beş kategori sayfasının İKİSİ
  *  İSG. Masaüstünde 4'lü iki sıra, etiketlere de 6 sütundan daha çok yer bırakıyor. */
 const TILE_LIMIT = 8;
+
+/**
+ * Fiyatın "başlangıç fiyatı" olarak ANLAMLI sayıldığı üst sınır (₺, KDV dahil).
+ *
+ * Neden gerekli: kutudaki fiyat, grubun en ucuz ürünüdür. Ama menü grupları çok farklı
+ * şeyleri topluyor ve bazılarının ucuz girişi hiç yok — "Sektörel Ürünler" (3 ürün:
+ * Amerikan Servis, Kapı Askı Broşür, Çanta; hepsi toplu üretim) 4.725 ₺, "Promosyon &
+ * Hediye" 1.326 ₺ (magnetin 1.000'lik fiyatı) gösteriyordu. Anasayfada bu sayılar
+ * kategoriyi açtırmaz, kaçırır — üstelik katalogda 34 ₺ levha, 105 ₺ makam bayrağı gibi
+ * gerçek giriş fiyatları varken ucuzluk iddiamızın tersini söylüyorlardı.
+ *
+ * Bu bir GÖSTERİM kuralıdır, fiyat kuralı değil: tavanın üstündeki grupta sayı basmak
+ * yerine nötr "Ürünleri incele" yazılır; gerçek fiyatlar kategori sayfasında aynen durur.
+ */
+const FIYAT_CIPA_TAVANI = 1000;
 
 /** Nav grubunun hedeflediği DB kategori slug'ları.
  *  Grup href'i iki biçimde olabilir:
@@ -47,22 +59,39 @@ function enDusukFiyat(products: Product[], slugs: string[]): number {
   return min;
 }
 
+/** Grubun temsili görseli: görseli olan İLK kategori. Hepsi görselsizse null. */
+function temsiliGorsel(categories: Category[], slugs: string[]): string | null {
+  for (const s of slugs) {
+    const c = categories.find((x) => x.slug === s);
+    if (c?.imageUrl) return c.imageUrl;
+  }
+  return null;
+}
+
 export function CategoryTiles({
   nav,
   products,
+  categories,
 }: {
   nav: NavCategory[] | null;
   products: Product[];
+  categories: Category[];
 }) {
   // Menü okunamazsa kutular basılmaz — uydurma kategori listesi üretmektense hiç göstermemek
   // doğru; başlıktaki menü zaten kendi yedeğine (DEFAULT_NAV) düşüyor.
   if (!nav || nav.length === 0) return null;
 
-  const tiles = nav.slice(0, TILE_LIMIT).map((n) => ({
-    label: n.label,
-    href: n.href,
-    fiyat: enDusukFiyat(products, hedefKategoriler(n.href)),
-  }));
+  const tiles: KategoriKutusu[] = nav.slice(0, TILE_LIMIT).map((n) => {
+    const slugs = hedefKategoriler(n.href);
+    const min = enDusukFiyat(products, slugs);
+    return {
+      label: n.label,
+      href: n.href,
+      imageUrl: temsiliGorsel(categories, slugs),
+      fiyat: min > 0 && min <= FIYAT_CIPA_TAVANI ? min : 0,
+      izlemeId: slugs[0] ?? n.label,
+    };
+  });
 
   return (
     <section className="bg-paper-50">
@@ -71,17 +100,7 @@ export function CategoryTiles({
         <ul className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
           {tiles.map((t) => (
             <li key={t.href}>
-              <Link
-                href={t.href}
-                className="flex h-full flex-col justify-between rounded-lg border border-paper-200 bg-paper-100 px-3.5 py-3 transition-all hover:border-ink-300 hover:bg-paper-50 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2"
-              >
-                <span className="text-sm font-semibold leading-snug text-ink-900">{t.label}</span>
-                {t.fiyat > 0 && (
-                  <span className="mt-1.5 text-xs font-semibold text-brand-700 tabular-nums">
-                    {t.fiyat.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} ₺&apos;den
-                  </span>
-                )}
-              </Link>
+              <CategoryTileLink kutu={t} />
             </li>
           ))}
         </ul>
