@@ -41,7 +41,7 @@ function rehberBul(slug: string) {
   if (slug.startsWith("is-guvenligi-")) {
     return {
       href: "/rehber/isg-zorunlu-uyari-levhalari",
-      label: "İSG Uyarı Levhaları Rehberi — Renkler ve Zorunlu İşaretler",
+      label: "İSG Uyarı Levhaları Rehberi - Renkler ve Zorunlu İşaretler",
     };
   }
   return KATEGORI_REHBERI[slug];
@@ -71,23 +71,60 @@ const parsePage = (raw: string): number => {
 // revalidate export'u fetch cache varsayılanı/niyet belgesi olarak bırakıldı.
 export const revalidate = 300;
 
+/**
+ * GERÇEK HTTP 404 (2026-08-31). Ölçüldü: bu kurulumda (Next 14 + output:"standalone" + ISR)
+ * `notFound()` not-found ARAYÜZÜNÜ gösteriyor ama yanıt statüsünü 404 YAPMIYOR — /kategori,
+ * /urun, /blog, /yasal hepsi HTTP 200 dönüyordu. Buna karşılık `dynamicParams = false`
+ * kullanan rotalar (/matbaa, /hizmetler, /yardim) doğru 404 veriyor: o karar router
+ * seviyesinde alınıyor ve notFound()'a hiç ihtiyaç duymuyor. Korelasyon 9 rotada birebir.
+ *
+ * Neden burada güvenli: generateStaticParams `getCategories()` kullanıyor, o da public
+ * /categories ucundan YALNIZ AKTİF kategorileri alıyor. Yani pasife alınan kategori
+ * (ör. lightbox) listede olmaz ve doğrudan 404 döner — Google Ads "hedef çalışmıyor"
+ * denetimi HTTP durumuna baktığı için bozuk açılış sayfası artık sessizce bütçe yakamaz.
+ *
+ * BEDELİ: panelden YENİ kategori eklendiğinde sayfası bir sonraki deploy'a kadar 404 verir.
+ * Kategori nadiren eklenir ve zaten ürün girişi + deploy gerektirir; kabul edildi.
+ * Ürün ve blog rotalarında AYNI ŞEY YAPILMADI: oralara sık içerik ekleniyor (blog her
+ * sabah otomatik yazıyor), 404 penceresi kabul edilemez.
+ */
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const cats = await getCategories();
+  // GÜVENLİK AĞI — dynamicParams=false ile BİRLİKTE zorunlu: getCategories() API hatasında
+  // sessizce [] döner (catalog.ts:286). Boş liste + dynamicParams=false = 33 kategori
+  // sayfasının TAMAMI 404. Derleme anındaki tek bir API kesintisi siteyi sessizce
+  // sakatlardı. Bunun yerine derlemeyi PATLAT: hatalı deploy canlıya hiç çıkmasın.
+  if (cats.length === 0) {
+    throw new Error(
+      "generateStaticParams(kategori): kategori listesi BOŞ. API'ye ulaşılamıyor olabilir. " +
+        "dynamicParams=false olduğu için boş listeyle devam etmek tüm /kategori/* sayfalarını " +
+        "404 yapardı; derleme bilerek durduruldu.",
+    );
+  }
   return cats.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const cat = await getCategoryBySlug(params.slug);
-  // Kategori yok → gerçek HTTP 404 (soft-404 yerine); notFound() metadata aşamasında statüyü 404 yapar.
-  if (!cat) notFound();
+  // BURADA notFound() ÇAĞIRMA (2026-08-31). Eski yorum "notFound() metadata aşamasında
+  // statüyü 404 yapar" diyordu; ÖLÇÜLDÜ, YANLIŞ: konteynere doğrudan sorulduğunda
+  // /kategori/<olmayan> üç istekte de HTTP 200 döndü, gövde ise not-found sayfasıydı
+  // (klasik soft-404). Metadata aşamasındaki notFound() not-found ARAYÜZÜNÜ gösteriyor
+  // ama yanıt statüsünü 404'e çevirmiyor ve sayfa bileşenindeki notFound()'a hiç sıra
+  // gelmiyor. Reklam açısından kritikti: Google'ın "hedef çalışmıyor" denetimi HTTP
+  // durumuna baktığı için bozuk açılış sayfası uyarı vermeden bütçe harcatıyordu.
+  // Statüyü aşağıdaki sayfa bileşeni belirler; burada yalnız zararsız bir metadata döneriz.
+  if (!cat) return { title: "Sayfa bulunamadı", robots: { index: false, follow: false } };
   // SEO sayfalaması: sayfa N'de title'a " — Sayfa N" eki + self-canonical (?page=N dahil).
   const page = parsePage(first(searchParams?.page));
-  const pageSuffix = page > 1 ? ` — Sayfa ${page}` : "";
+  const pageSuffix = page > 1 ? `, Sayfa ${page}` : "";
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
   // Fiyat eki: "115.92 TL'den" gibi ondalıklı görüntü SERP'te itici — tam TL'ye yuvarla,
   // "KDV Dahil" güveni ekle (sitede tüm fiyatlar KDV dahildir).
   const fiyatEki = cat.startingPrice
-    ? ` — ${Math.round(Number(cat.startingPrice))} TL'den (KDV Dahil)`
+    ? ` - ${Math.round(Number(cat.startingPrice))} TL'den (KDV Dahil)`
     : "";
   // "Dekota Baskı" gibi adı zaten "Baskı" ile biten kategoride "Baskı Baskı" üretiliyordu.
   const adBaskiliMi = /bask[ıi]\s*$/i.test(cat.name);

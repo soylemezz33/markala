@@ -47,9 +47,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
-  // Ürün yok/silinmiş → gerçek HTTP 404. generateMetadata gövde stream'inden ÖNCE çözülür;
-  // notFound() burada çağrılınca statü 200 (soft-404) değil gerçek 404 döner (fetch zaten cache'li).
-  if (!product) notFound();
+  // BURADA notFound() ÇAĞIRMA (2026-08-31). Eski yorumun iddiası ("notFound() burada
+  // çağrılınca statü 200 değil gerçek 404 döner") ÖLÇÜMLE ÇÜRÜTÜLDÜ: /urun/<olmayan>
+  // konteynere doğrudan sorulduğunda HTTP 200 + not-found gövdesi dönüyordu.
+  // Statüyü sayfa bileşenindeki notFound() belirler; burada yalnız noindex metadata döner.
+  if (!product) return { title: "Sayfa bulunamadı", robots: { index: false, follow: false } };
   const category = await getCategoryBySlug(product.categorySlug);
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim.
   // Kategori adı yoksa "X —  Baskı" (çift boşluk) yerine sade "X Baskı" fallback'i.
@@ -59,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const TITLE_MAX = 60;
   const fullTitle =
     product.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
-    (category?.name ? `${product.name} — ${category.name} Baskı` : `${product.name} Baskı`);
+    (category?.name ? `${product.name} - ${category.name} Baskı` : `${product.name} Baskı`);
   const seoTitle =
     fullTitle.length <= TITLE_MAX
       ? fullTitle
@@ -164,7 +166,7 @@ function makeTrustBadges(freeThreshold: number, productionTime?: string) {
     {
       icon: MagnifyingGlass,
       label: "Hızlı Tasarım Kontrolü",
-      sub: "baskı öncesi uzman kontrolü — ücretsiz",
+      sub: "baskı öncesi uzman kontrolü, ücretsiz",
       grad: "from-rose-500 to-pink-600",
       tint: "bg-rose-50 border-rose-200",
     },

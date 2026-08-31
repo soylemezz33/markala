@@ -31,7 +31,7 @@ export function SiteFooter() {
           <Link
             href="/"
             className="inline-block bg-paper-50 rounded-xl px-3.5 py-2.5 shadow-sm"
-            aria-label="Markala — ana sayfa"
+            aria-label="Markala, ana sayfa"
           >
             <img
               src="/markala-logo.svg"
@@ -42,7 +42,7 @@ export function SiteFooter() {
             />
           </Link>
           <p className="mt-4 text-sm text-paper-100/70 leading-relaxed">
-            Kartvizitten brandaya tüm baskı işleriniz — 324 Ajans güvencesiyle.
+            Kartvizitten brandaya tüm baskı işleriniz, 324 Ajans güvencesiyle.
           </p>
           <div className="mt-5 flex items-center gap-2">
             <SocialLink href="https://instagram.com/markala.com.tr" label="Instagram"><InstagramLogo size={18} /></SocialLink>
@@ -55,6 +55,11 @@ export function SiteFooter() {
           <FooterLink href="/hakkimizda">Hakkımızda</FooterLink>
           <FooterLink href="/referanslar">Referanslarımız</FooterLink>
           <FooterLink href="/portfolio">Portfolyo</FooterLink>
+          {/* /matbaa ve /hizmetler'e sitenin GERİ KALANINDAN hiç bağlantı yoktu: tek
+              bağlantıları o bölümlerin kendi breadcrumb'larıydı, yani oraya zaten girmiş
+              olmak gerekiyordu. Altlarındaki 19 sayfa (15 şehir/ilçe + 3 hizmet) yalnız
+              sitemap ile keşfediliyordu (2026-08-31 devir notu). */}
+          <FooterLink href="/matbaa">Şehirlere Göre Matbaa</FooterLink>
           <FooterLink href="/iletisim">İletişim</FooterLink>
           <FooterLink href="/iletisim#teklif">Teklif Al</FooterLink>
         </FooterColumn>
@@ -73,6 +78,7 @@ export function SiteFooter() {
         </FooterColumn>
 
         <FooterColumn title="Araçlar & Rehberler">
+          <FooterLink href="/hizmetler">Tüm Hizmetlerimiz</FooterLink>
           <FooterLink href="/hizmetler/tasarim-destegi">Ücretsiz Tasarım Desteği</FooterLink>
           <FooterLink href="/numune-talebi">Ücretsiz Numune Kutusu</FooterLink>
           <FooterLink href="/hizmetler/toplu-baski">Toplu Baskı</FooterLink>
