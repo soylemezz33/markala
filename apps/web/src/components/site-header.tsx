@@ -623,32 +623,27 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
                 />
               </Link>
               <span aria-hidden className="h-5 w-px bg-paper-200 mr-1" />
-              {NAV.map((nav) => {
-                // Panel açılmadığı için sekmenin "aktif" hâli artık bulunulan sayfadan gelir.
-                const isActive = pathname === nav.href || pathname.startsWith(`${nav.href}/`);
-                return (
-                  <Link
-                    key={nav.label}
-                    href={nav.href}
-                    // Sekmeye gelince açık panel kapanır: kullanıcı sekmeye tıklamaya
-                    // giderken panel yolunu kesmesin.
-                    onMouseEnter={scheduleMegaClose}
-                    className={cn(
-                      "relative inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium transition-colors",
-                      isActive ? "text-ink-900" : "text-ink-700 hover:text-ink-900",
-                    )}
-                  >
-                    {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
-                    {nav.label}
-                    {nav.highlight === "new" && (
-                      <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
-                    )}
-                    {isActive && (
-                      <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-brand-500 rounded-full" />
-                    )}
-                  </Link>
-                );
-              })}
+              {/* Kategori sekmeleri — düz bağlantı, açılır menü YOK. "Aktif sekme" göstergesi
+                  bilerek yok: sekme hedefleri `/urunler?kategoriler=...&grup=...` biçiminde
+                  sorgu parametreli, `pathname` ile eşleşmiyor; doğru eşleştirme için
+                  useSearchParams gerekirdi ve header kök layout'ta olduğundan tüm sayfaları
+                  Suspense/CSR'a zorlardı. */}
+              {NAV.map((nav) => (
+                <Link
+                  key={nav.label}
+                  href={nav.href}
+                  // Sekmeye gelince açık panel kapanır: kullanıcı sekmeye tıklamaya
+                  // giderken panel yolunu kesmesin.
+                  onMouseEnter={scheduleMegaClose}
+                  className="inline-flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-ink-700 hover:text-ink-900 transition-colors"
+                >
+                  {nav.highlight === "fire" && <Lightning size={14} weight="fill" className="text-error" />}
+                  {nav.label}
+                  {nav.highlight === "new" && (
+                    <span className="ml-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold text-paper-50 bg-error">YENİ</span>
+                  )}
+                </Link>
+              ))}
             </Container>
 
             <MegaPanel
