@@ -66,7 +66,7 @@ export class PaymentsService implements OnModuleInit {
       return { ok: false, message: "Açık hesap (cari) siparişte iyzico ödemesi yok; cari bakiyeden düzeltilmeli." };
     }
     if (!order.iyzicoPaymentId) {
-      return { ok: false, message: "Siparişte iyzico ödeme kimliği yok — iade otomatik yapılamıyor." };
+      return { ok: false, message: "Siparişte iyzico ödeme kimliği yok, iade otomatik yapılamıyor." };
     }
 
     // (2) Atomik kilit: yarışan ikinci istek buradan geçemez.
@@ -232,6 +232,14 @@ export class PaymentsService implements OnModuleInit {
     });
     if (!order) throw new NotFoundException("Sipariş bulunamadı.");
     if (order.paymentStatus === "basarili") throw new BadRequestException("Bu sipariş zaten ödenmiş.");
+    // İPTAL KONTROLÜ (2026-08-31 denetim bulgusu): koruma yalnız arayüzdeydi. Eski bir ödeme
+    // sekmesi, geri tuşu ya da doğrudan istek ile iptal edilmiş siparişin parası tahsil
+    // edilebiliyordu — sipariş üretime girmeyeceği için iade/chargeback doğuruyor. Üstelik
+    // iptal anında sadakat puanı zaten müşteriye iade edilmiş oluyor (orders.service
+    // loyalty.refundForOrder), yani hem puan iade edilmiş hem para alınmış olurdu.
+    if (order.status === "iptal_edildi") {
+      throw new BadRequestException("İptal edilmiş siparişin ödemesi alınamaz.");
+    }
     // Açık hesap (cari) siparişi kartla ödenmez — tutar cari hesaba borç olarak işlenmiştir; ödeme
     // /hesabim/cari-hesabim üzerinden yapılır. (Çift ödeme/çift tahsilat koruması.)
     if (order.paymentMethod === "cari") {
@@ -309,7 +317,7 @@ export class PaymentsService implements OnModuleInit {
       await this.prisma.order
         .update({ where: { id: orderId }, data: { iyzicoCheckoutToken: res.token } })
         .catch((err: Error) =>
-          this.logger.error(`iyzicoCheckoutToken yazılamadı orderId=${orderId} — callback kaçarsa reconcile ÇALIŞMAZ: ${err.message}`),
+          this.logger.error(`iyzicoCheckoutToken yazılamadı orderId=${orderId}, callback kaçarsa reconcile ÇALIŞMAZ: ${err.message}`),
         );
     }
     return { paymentPageUrl: res.paymentPageUrl, checkoutFormContent: res.checkoutFormContent, token: res.token };
@@ -323,11 +331,15 @@ export class PaymentsService implements OnModuleInit {
   async retryCheckoutForOwner(orderId: string, userId: string, clientIp?: string) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, userId: true, paymentStatus: true },
+      select: { id: true, userId: true, paymentStatus: true, status: true },
     });
     // Varlık/sahiplik sızdırma: yoksa veya kullanıcının değilse aynı "bulunamadı".
     if (!order || order.userId !== userId) throw new NotFoundException("Sipariş bulunamadı.");
     if (order.paymentStatus === "basarili") throw new BadRequestException("Bu sipariş zaten ödenmiş.");
+    // "Siparişlerim"den tekrar dene akışı da iptal edilmiş siparişi ödemeye açıktı.
+    if (order.status === "iptal_edildi") {
+      throw new BadRequestException("İptal edilmiş siparişin ödemesi alınamaz.");
+    }
     const secret = this.config.get<string>("JWT_SECRET") ?? "";
     return this.initCheckout(orderId, paymentNonce(secret, orderId), clientIp);
   }
@@ -631,12 +643,12 @@ export class PaymentsService implements OnModuleInit {
     const order = conversationId
       ? await this.prisma.order.findUnique({
           where: { id: conversationId },
-          select: { id: true, paymentStatus: true, orderNumber: true, total: true },
+          select: { id: true, paymentStatus: true, orderNumber: true, total: true, status: true },
         })
       : result.basketId
         ? await this.prisma.order.findFirst({
             where: { orderNumber: result.basketId },
-            select: { id: true, paymentStatus: true, orderNumber: true, total: true },
+            select: { id: true, paymentStatus: true, orderNumber: true, total: true, status: true },
           })
         : null;
     if (!order) {

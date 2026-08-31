@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import { getLegalPage } from "@/lib/legal";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Shield, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "KVKK Aydınlatma Metni [TASLAK]",
   description:
-    "Markala (markala.com.tr) — 6698 sayılı KVKK kapsamında hazırlanmış aydınlatma metni taslağı. Hukuk müşaviri onayı beklenmektedir.",
+    "Markala (markala.com.tr), 6698 sayılı KVKK kapsamında hazırlanmış aydınlatma metni taslağı. Hukuk müşaviri onayı beklenmektedir.",
   robots: { index: false, follow: false },
 };
 
@@ -33,11 +34,11 @@ export default async function KvkkAydinlatmaPage() {
 
       <article className="prose prose-ink max-w-none legal-content">
         {page ? (
-          // XSS güvenli: içerik build-time statik TypeScript dosyasından gelir
-          // (packages/mock-data/src/legal.ts), kullanıcı girdisi değildir.
-          // Aynı pattern yasal/[slug]/page.tsx'de de kullanılmaktadır.
-          // Dış kaynak ya da DB'den gelen içerik için DOMPurify kullanılmalıdır.
-          <div dangerouslySetInnerHTML={{ __html: page.body }} />
+          // sanitizeHtml ZORUNLU — mesafeli-satis ile aynı gerekçe: eski yorumun aksine
+          // içerik API'den (panelden düzenlenebilir) geliyor, statik dosyadan değil.
+          // Bu rota şu an 308 ile /yasal/kvkk-aydinlatma'ya yönleniyor ama dosya durduğu
+          // sürece aynı riski taşıyor (2026-08-31 denetim bulgusu).
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.body) }} />
         ) : (
           <p className="text-ink-500">İçerik yüklenemedi.</p>
         )}

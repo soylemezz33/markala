@@ -71,9 +71,19 @@ export async function middleware(req: NextRequest) {
   // Access token süresi yakınsa proaktif refresh.
   if (needsRefresh(session.accessToken)) {
     try {
+      // IP iletimi ZORUNLU: bu çağrı admin konteynerinden gidiyor, /auth/refresh ise
+      // 30 istek/dk ile sınırlı (main.ts:75). İletilmezse kova TÜM panel kullanıcıları
+      // için ortak olur ve yoğun saatte herkes 429 yiyip panelden düşer (2026-08-31).
+      const ip =
+        req.headers.get("cf-connecting-ip") ||
+        req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+        null;
       const r = await fetch(`${API_URL}/api/auth/refresh`, {
         method: "POST",
-        headers: { Cookie: `mk_refresh=${encodeURIComponent(session.refreshToken)}` },
+        headers: {
+          Cookie: `mk_refresh=${encodeURIComponent(session.refreshToken)}`,
+          ...(ip ? { "x-forwarded-for": ip } : {}),
+        },
       });
       if (r.ok) {
         const data = (await r.json()) as { accessToken: string };

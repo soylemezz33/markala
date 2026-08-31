@@ -230,6 +230,12 @@ export class MarkalaApiClient {
   categories = {
     list: (includeInactive = false) =>
       this.request<Category[]>("GET", "/categories", undefined, { query: { includeInactive } }),
+    /** Panel listesi — profitMargin DAHİL. Public `list()` marjı ayıklar (ticari sır). */
+    adminList: (includeInactive = false) =>
+      this.request<Category[]>("GET", "/categories/admin-list", undefined, {
+        auth: true,
+        query: { includeInactive },
+      }),
     detail: (slug: string) =>
       this.request<Category & { products: Product[] }>("GET", `/categories/${slug}`),
     create: (data: Partial<Category>) =>

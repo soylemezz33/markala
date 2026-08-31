@@ -11,9 +11,25 @@ import { CreateCategoryDto, UpdateCategoryDto } from "./categories.dto";
 export class CategoriesController {
   constructor(private service: CategoriesService) {}
 
+  /**
+   * HALKA AÇIK liste. `profitMargin` ayıklanır — kategori kâr marjı ticari sırdır ve
+   * storefront'ta hiç kullanılmıyor (2026-08-31 denetim bulgusu). Panelin marj ekranı
+   * aşağıdaki guard'lı "admin-list" ucunu kullanır.
+   */
   @Get()
   @Header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300")
-  list(@Query("includeInactive") includeInactive?: string) {
+  async list(@Query("includeInactive") includeInactive?: string) {
+    const kategoriler = await this.service.findAll(includeInactive === "true");
+    return kategoriler.map(({ profitMargin: _m, ...kalan }) => kalan);
+  }
+
+  /** Panel listesi — marj DAHİL. ":slug" rotasından ÖNCE tanımlanmalı. */
+  @Get("admin-list")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.CATALOG)
+  @ApiBearerAuth()
+  adminList(@Query("includeInactive") includeInactive?: string) {
     return this.service.findAll(includeInactive === "true");
   }
 

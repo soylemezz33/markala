@@ -5,6 +5,42 @@ import { CreateProductDto, UpdateProductDto } from "./products.dto";
 import { SettingsService } from "../settings/settings.service";
 import { areaStartingPrice, type AreaDisplayOption } from "./display-price";
 
+/**
+ * HALKA AÇIK yanıtlardan ticari sırları ayıklar (2026-08-31 denetim bulgusu).
+ *
+ * `GET /products/:slug` ve `GET /products` guard'sızdır; `include: { prices: true }` +
+ * `category: true` yüzünden tedarikçi MALİYETİ (ProductPrice.cost) ve KÂR MARJI
+ * (Product/Category.profitMargin) internete açık dönüyordu. Rakip ürün URL'lerini gezerek
+ * alış fiyatını ve kârı hesaplayabiliyordu.
+ *
+ * NE ÇIKARILIR, NE KALIR — kod okunarak doğrulandı:
+ * - `profitMargin`: storefront'ta HİÇ kullanılmıyor (apps/web'de 0 eşleşme). Panel bunu
+ *   guard'lı `GET /products/admin-list` ve `GET /prices/margin/:productId` uçlarından alır.
+ *   → her zaman çıkarılır.
+ * - `cost`: YALNIZCA m² maliyet motorunda okunuyor (apps/web/src/lib/configurator.ts:515,
+ *   `pricingMode === "area"` dalı). additive/matris ürünlerde istemci `price` sütununu
+ *   kullanır, cost'a hiç bakmaz. → area DIŞINDAKİ ürünlerde çıkarılır.
+ *
+ * area ürünlerde cost KALDIRILAMAZ: fiyat tarayıcıda hesaplanıyor. Onu da kapatmak için
+ * fiyat hesabının sunucuya taşınması gerekir — ayrı ve büyük bir iş.
+ */
+type FiyatSatiri = { cost?: unknown; [k: string]: unknown };
+export function gizliTicariAlanlariAyikla<T extends object>(urun: T): T {
+  const kayit = urun as unknown as Record<string, unknown>;
+  const { profitMargin: _m, ...kalan } = kayit;
+  const out: Record<string, unknown> = { ...kalan };
+
+  const kategori = out.category;
+  if (kategori && typeof kategori === "object" && !Array.isArray(kategori)) {
+    const { profitMargin: _km, ...katKalan } = kategori as Record<string, unknown>;
+    out.category = katKalan;
+  }
+  if (Array.isArray(out.prices) && kayit.pricingMode !== "area") {
+    out.prices = (out.prices as FiyatSatiri[]).map(({ cost: _c, ...satirKalan }) => satirKalan);
+  }
+  return out as unknown as T;
+}
+
 // Türkçe harf katlama (arama için). Müşteri klavyede şapkalı harf yazmıyor:
 // "brosur" yazıp "Broşür"ü bulamamak 2026-08-20'de ölçüldü — "brosur"→0 sonuç,
 // "broşür"→4 sonuç. Postgres `ILIKE`/Prisma `mode:"insensitive"` yalnız BÜYÜK-küçük
@@ -154,10 +190,15 @@ export class ProductsService {
       }
     }
 
-    const result = products.map((p) => ({
-      ...p,
-      displayPrice: p.pricingMode === "area" ? (areaDisplay.get(p.id) ?? null) : (minMap.get(p.id) ?? null),
-    }));
+    // opts.includeInactive YALNIZ guard'lı /products/admin-list'ten geliyor (controller:42-49).
+    // Panel marj ekranı profitMargin'e ORADAN ulaşır; halka açık çağrılarda ayıklanır.
+    const result = products.map((p) => {
+      const temel = opts.includeInactive ? p : gizliTicariAlanlariAyikla(p);
+      return {
+        ...temel,
+        displayPrice: p.pricingMode === "area" ? (areaDisplay.get(p.id) ?? null) : (minMap.get(p.id) ?? null),
+      };
+    });
 
     // `id: { in: [...] }` sırayı KORUMAZ — alaka sıralaması ham SQL'de hesaplandığı için
     // burada geri uygulanmalı, yoksa tüm ranking boşa gider.
@@ -193,7 +234,7 @@ export class ProductsService {
       const positive = priceRows.map((pr) => Number(pr.price)).filter((v) => v > 0);
       displayPrice = positive.length ? Math.min(...positive) : null;
     }
-    return { ...product, displayPrice };
+    return { ...gizliTicariAlanlariAyikla(product), displayPrice };
   }
 
   create(dto: CreateProductDto) {

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Container } from "@markala/ui";
 import { getLegalPage } from "@/lib/legal";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { FileText, ArrowRight, Info } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Mesafeli Satış Sözleşmesi [TASLAK]",
   description:
-    "Markala (markala.com.tr) — Mesafeli Sözleşmeler Yönetmeliği (RG: 27/11/2014) kapsamında hazırlanmış mesafeli satış sözleşmesi taslağı.",
+    "Markala (markala.com.tr), Mesafeli Sözleşmeler Yönetmeliği (RG: 27/11/2014) kapsamında hazırlanmış mesafeli satış sözleşmesi taslağı.",
   robots: { index: false, follow: false },
 };
 
@@ -43,10 +44,12 @@ export default async function MesafeliSatisPage() {
 
       <article className="prose prose-ink max-w-none legal-content">
         {page ? (
-          // XSS güvenli: içerik build-time statik TypeScript dosyasından gelir
-          // (packages/mock-data/src/legal.ts), kullanıcı girdisi değildir.
-          // Dış kaynak ya da DB'den gelen içerik için DOMPurify kullanılmalıdır.
-          <div dangerouslySetInnerHTML={{ __html: page.body }} />
+          // sanitizeHtml ZORUNLU (2026-08-31 denetim bulgusu). Buradaki eski yorum
+          // "içerik build-time statik TS dosyasından gelir" diyordu ve BAYATTI:
+          // getLegalPage artık API'den çekiyor (apps/web/src/lib/legal.ts:35), mock yalnızca
+          // yedek. Yani metin panelden (/yasal) düzenlenebiliyor → temizlenmemiş HTML
+          // depolanmış XSS demekti. Kardeş rota /yasal/[slug] zaten sanitizeHtml kullanıyordu.
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(page.body) }} />
         ) : (
           <p className="text-ink-500">İçerik yüklenemedi.</p>
         )}

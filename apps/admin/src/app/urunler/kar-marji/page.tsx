@@ -15,7 +15,8 @@ export default async function KarMarjiPage() {
     const api = await getAdminApi();
     [products, categories] = await Promise.all([
       api.products.adminList({ take: 5000 }),
-      api.categories.list(true),
+      // adminList: public /categories artık profitMargin döndürmüyor (ticari sır ayıklandı).
+      api.categories.adminList(true),
     ]);
     // Global marj: ürünlerden herhangi birinin marj bilgisinden okunur (tek istek yeter).
     const ilk = (products as Array<{ id?: string }>)[0];

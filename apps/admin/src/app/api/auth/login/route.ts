@@ -5,6 +5,28 @@ export const runtime = "nodejs"; // getSetCookie + fetch; nodejs en güvenli
 
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+/**
+ * Gerçek ziyaretçi IP'sini API'ye taşır (2026-08-31 denetim bulgusu).
+ *
+ * Bu rota bir SUNUCU-TARAFI proxy'dir: aşağıdaki fetch API'ye admin konteynerinden gider.
+ * IP iletilmezse API'nin `req.ip` değeri HER giriş denemesinde aynı (konteyner IP'si) olur ve
+ * `rate-limit.ts:47` kovayı `"/auth/login:<konteyner-ip>"` anahtarıyla tutar — yani kova TÜM
+ * panel kullanıcıları için ORTAK hale gelir. İki sonucu vardı:
+ *   1) Kimliği doğrulanmamış biri dakikada birkaç istekle kovayı sürekli dolu tutup
+ *      super_admin dahil herkesin panele girmesini engelleyebilirdi (429).
+ *   2) Başarısız giriş kayıtlarında saldırganın gerçek IP'si hiç görünmüyordu (adli iz kaybı).
+ *
+ * API tarafında `trust proxy = 1` zaten açık, yani iletilen başlık doğru okunur.
+ * Cloudflare arkasında `cf-connecting-ip` en güvenilir kaynak; yoksa XFF'in İLK kaydına düşülür.
+ */
+function istemciIp(req: NextRequest): string | null {
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim();
+  const xff = req.headers.get("x-forwarded-for");
+  const ilk = xff?.split(",")[0]?.trim();
+  return ilk || null;
+}
+
 function parseRefreshFromSetCookie(setCookies: string[]): string | null {
   for (const c of setCookies) {
     const m = c.match(/(?:^|;\s*)mk_refresh=([^;]+)/);
@@ -27,9 +49,13 @@ export async function POST(req: NextRequest) {
 
   let apiRes: Response;
   try {
+    const ip = istemciIp(req);
     apiRes = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(ip ? { "x-forwarded-for": ip } : {}),
+      },
       body: JSON.stringify({ email, password }),
     });
   } catch {
