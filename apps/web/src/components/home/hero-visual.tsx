@@ -148,9 +148,13 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
     <div
       className={cn(
         "relative overflow-hidden rounded-xl bg-ink-900",
-        // Mobilde geniş-kısa şerit (dikey görsel gerekmez), masaüstünde metin sütunuyla
-        // aynı hizaya oturan daha kare bir panel.
-        "aspect-[16/9] lg:aspect-[4/3]",
+        // TEK oran, her kırılımda aynı (2026-08-31 düzeltme). Eskiden masaüstünde
+        // `lg:aspect-[4/3]` idi; kayıtlı slaytlar 3840×1344 (≈2,86:1) GENİŞ BANNER ve
+        // metinleri görsele gömülü olduğu için `object-cover` görselin ortadaki ~%47'sini
+        // bırakıp iki yandaki yazıyı kesiyordu ("...k, Antetli ... Vinil ... Folyosu").
+        // Sabit oran + `object-contain` → hangi ölçüde görsel yüklenirse yüklensin kırpma
+        // yok ve slayt değişiminde kutu yüksekliği oynamadığı için CLS de üretmiyor.
+        "aspect-[16/9]",
       )}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -181,6 +185,20 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
           !azHareket && "animate-fade-up",
         )}
       >
+        {/* Zemin: aynı görselin bulanık/karartılmış kopyası. `object-contain` görselin
+            oranı kutununkinden farklıysa boşluk bırakır; düz siyah bant yerine görselin
+            kendi rengiyle dolduruyoruz. Aynı src olduğu için EK İNDİRME YOK (tarayıcı
+            tek istek yapar), ekran okuyucudan gizli. */}
+        <Image
+          src={slide.imageUrl}
+          alt=""
+          aria-hidden
+          fill
+          sizes="(min-width:1024px) 42vw, 100vw"
+          // priority YOK: aynı src ön plandaki görselle paylaşıldığı için tek istek iner;
+          // burada da priority verilirse aynı href için ikinci bir <link rel=preload> basılır.
+          className="object-cover scale-110 blur-2xl brightness-[.45]"
+        />
         <Image
           src={slide.imageUrl}
           alt={slide.title}
@@ -188,7 +206,8 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
           sizes="(min-width:1024px) 42vw, 100vw"
           // İlk slayt LCP adayı: preload + fetchpriority=high + eager.
           priority={index === 0}
-          className="object-cover"
+          // contain: banner görselin TAMAMI görünür, hiçbir kenarı kırpılmaz.
+          className="object-contain"
         />
 
         {/* Metin katmanı — başlık/alt başlık GÖRSELE GÖMÜLÜ DEĞİL, gerçek HTML.
