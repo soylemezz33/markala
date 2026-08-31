@@ -548,8 +548,26 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const slug = url.searchParams.get("slug");
   const categoryParam = url.searchParams.get("category");
-  const w = Number(url.searchParams.get("w") ?? "1200") || 1200;
-  const h = Number(url.searchParams.get("h") ?? "1200") || 1200;
+  // İSTENEN çıktı boyutu (yalnız <svg width/height> için) — en/boy oranını buradan alırız.
+  const istenenW = Number(url.searchParams.get("w") ?? "1200") || 1200;
+  const istenenH = Number(url.searchParams.get("h") ?? "1200") || 1200;
+
+  // Şablonun İÇİNDEKİ her ölçü 1200px'lik tuval varsayıyor: logo (48,64), yazı boyutları
+  // 22/18/13/11, illüstrasyon dikdörtgenleri (520x320, 220x480), daire r=180, alt bilgi
+  // ofsetleri h-180 / h-70 / h-36. Bu sayılar viewBox'a doğrudan w/h yazılınca ölçeklenmiyor,
+  // yalnız tuval küçülüyordu. Mega menü kartı 320x240 istediğinde sonuç: 80px'lik "M"
+  // başlığın üstüne biniyor, r=180 daire tuvali tamamen aşıyor ve alt bilgi metinleri
+  // birbirine giriyordu (2026-08-31, Hasan bildirdi: "kabartmalı kartvizit görselinde
+  // bir yanlışlık var" — o üründe gerçek foto yok, bu yedek mockup'a düşüyor).
+  //
+  // Çözüm: iç koordinat uzayı HER ZAMAN 1200 genişlikte kalır, yükseklik istenen en/boy
+  // oranından türer; küçültmeyi viewBox yapar. Böylece 320x240 istendiğinde de düzen
+  // 1200x900'de kurulup orantılı biçimde ölçeklenir, hiçbir öğe çakışmaz.
+  const TASARIM_GENISLIK = 1200;
+  const oran = istenenH / istenenW;
+  const w = TASARIM_GENISLIK;
+  // Aşırı uçlarda (ör. w=1&h=9999) düzenin dağılmaması için oranı makul aralığa çek.
+  const h = Math.round(TASARIM_GENISLIK * Math.min(Math.max(oran, 0.4), 2.5));
   const themeOverride = url.searchParams.get("theme") as ThemeKey | null;
   const variant = Number(url.searchParams.get("v") ?? "1") || 1;
 
@@ -577,6 +595,14 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Bu rota @markala/mock-data'dan besleniyor: orada 19 ürün var, gerçek katalogda 790+.
+  // Yani kabartmali-kartvizit gibi ÇOĞU üründe yukarıdaki find() boş dönüyor ve mockup
+  // ürünü değil jenerik "Markala" kartını basıyordu. Çağıran taraf ürün adını zaten
+  // biliyor (mega menüdeki FeaturedCard'ın `label`'ı) — ?title= ile geçsin.
+  // Yalnız ada güveniyoruz; escapeXml aşağıda uygulanıyor ve uzunluk sınırlanıyor.
+  const titleParam = url.searchParams.get("title");
+  if (titleParam && titleParam.trim()) title = titleParam.trim().slice(0, 60);
+
   const themeKey: ThemeKey = themeOverride && themeOverride in PALETTE
     ? themeOverride
     : (categorySlug ? CATEGORY_THEMES[categorySlug]?.theme ?? "brand" : "brand");
@@ -599,7 +625,7 @@ export async function GET(req: NextRequest) {
   });
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${titleSafe}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${istenenW}" height="${istenenH}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${titleSafe}">
   <defs>
     <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${palette.bg1}"/>

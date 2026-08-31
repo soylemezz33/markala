@@ -847,7 +847,9 @@ function FeaturedCard({
             const t = e.currentTarget;
             if (t.dataset.fb !== "1") {
               t.dataset.fb = "1";
-              t.src = `/api/mockup?slug=${encodeURIComponent(slug)}&theme=${theme}&w=320&h=240`;
+              // title: mockup rotası mock-data'dan besleniyor ve çoğu gerçek ürünü
+              // tanımıyor; adı buradan geçmezsek jenerik "Markala" kartı basıyor.
+              t.src = `/api/mockup?slug=${encodeURIComponent(slug)}&title=${encodeURIComponent(label)}&theme=${theme}&w=320&h=240`;
             }
           }}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
