@@ -39,10 +39,30 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
   const [masaustu, setMasaustu] = useState(false);
   // prefers-reduced-motion: hareket hassasiyeti olan kullanıcıda otomatik geçiş kapanır.
   const [azHareket, setAzHareket] = useState(false);
+  // İLK BOYAMADA ANİMASYON YOK (2026-08-31 LCP teşhisi): `animate-fade-up` opacity:0'dan
+  // başlıyor ve LCP öğesini saran bağlantıya uygulanıyordu. Tarayıcı bir öğeyi GÖRÜNÜR
+  // olana kadar LCP saymaz — görsel 220ms'de inmiş olsa bile animasyon bitene kadar LCP
+  // saati işliyordu (PSI dökümü: LCP'nin %92'si "öğe oluşturma gecikmesi", 2.630 ms).
+  // İlk render'da false → SSR/istemci HTML'i aynı kalır ve LCP öğesi tam opaklıkta boyanır.
+  // Slayt DEĞİŞİMLERİNDE animasyon korunur; geçişi görünür kılan tek şey o.
+  const [animasyonlu, setAnimasyonlu] = useState(false);
 
-  const goTo = useCallback((n: number) => setIndex(((n % count) + count) % count), [count]);
-  const next = useCallback(() => setIndex((i) => (i + 1) % count), [count]);
-  const prev = useCallback(() => setIndex((i) => (i - 1 + count) % count), [count]);
+  // İndeksi değiştiren her yol animasyonu açar — ilk boyama hariç her geçiş yumuşak kalır.
+  const goTo = useCallback(
+    (n: number) => {
+      setAnimasyonlu(true);
+      setIndex(((n % count) + count) % count);
+    },
+    [count],
+  );
+  const next = useCallback(() => {
+    setAnimasyonlu(true);
+    setIndex((i) => (i + 1) % count);
+  }, [count]);
+  const prev = useCallback(() => {
+    setAnimasyonlu(true);
+    setIndex((i) => (i - 1 + count) % count);
+  }, [count]);
 
   useEffect(() => {
     const genis = window.matchMedia("(min-width: 1024px)");
@@ -182,7 +202,7 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
         }}
         className={cn(
           "block h-full w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400",
-          !azHareket && "animate-fade-up",
+          animasyonlu && !azHareket && "animate-fade-up",
         )}
       >
         {/* Zemin: aynı görselin bulanık/karartılmış kopyası. `object-contain` görselin
@@ -197,7 +217,12 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
           sizes="(min-width:1024px) 42vw, 100vw"
           // priority YOK: aynı src ön plandaki görselle paylaşıldığı için tek istek iner;
           // burada da priority verilirse aynı href için ikinci bir <link rel=preload> basılır.
-          className="object-cover scale-110 blur-2xl brightness-[.45]"
+          // MOBİLDE KAPALI (2026-08-31 LCP teşhisi): blur-2xl = 40px Gaussian bulanıklık,
+          // tam genişlikte ve %110 büyütülmüş — düşük segment cihazda rasterleştirmesi
+          // pahalı ve LCP ile AYNI boyama karesinde. `hidden` ile mobilde hiç boyanmaz,
+          // object-contain boşluklarını kapsayıcının `bg-ink-900` zemini doldurur.
+          // Ek indirme zaten yoktu (aynı src) — kazanç tamamen boyama tarafında.
+          className="hidden lg:block object-cover scale-110 blur-2xl brightness-[.45]"
         />
         <Image
           src={slide.imageUrl}

@@ -40,7 +40,9 @@ const CONSENT_COOKIE_VALUE = encodeURIComponent(
 const GLOBAL_MASKS = ['iframe[src*="challenges.cloudflare.com"]'];
 
 const PAGES: Array<{ name: string; path: string; masks?: string[] }> = [
-  { name: "anasayfa", path: "/", masks: ['section[aria-label="Markala öne çıkanlar"]'] },
+  // Hero maskesi ETİKETSİZ seçiciyle (2026-08-31): sarmalayıcı <div>, seçici ise
+  // `section[...]` idi — maske HİÇ eşleşmiyordu, dönen carousel maskesiz yakalanıyordu.
+  { name: "anasayfa", path: "/", masks: ['[aria-label="Markala öne çıkanlar"]'] },
   { name: "kategoriler", path: "/kategoriler" },
   { name: "kategori-kartvizit", path: "/kategori/kartvizit" },
   // İki fiyat modu da kapsansın: additive (kartvizit) + area/m² (branda)
