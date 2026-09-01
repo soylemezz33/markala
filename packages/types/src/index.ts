@@ -172,6 +172,31 @@ export interface PricingPriceRow {
 /** Konfigüratör seçim durumu — groupKey → seçili optionKey. */
 export type ConfiguratorSelections = Record<string, string>;
 
+/**
+ * Yapılandırılmış ürün görseli (AJA-386 çoklu görsel şema kontratı).
+ *
+ * Eski `Product.images: string[]` (yalnız URL) geriye dönük olarak KORUNUR; bu tip
+ * onun üzerine gelen zengin katmandır. Backend hazır olduğunda `coverImage` + `gallery`
+ * doldurulur, yoksa frontend `images`'tan türetir (bkz. `resolveProductImage`).
+ *
+ * - `id`      : Kararlı görsel kimliği. Varyant eşlemesi (`variantImageMap`) ve kural
+ *               motoru (`rules.gorsel`) ARTIK URL değil BU id'yi referans alır.
+ * - `src`     : Optimize edilebilir kaynak (R2/CDN mutlak URL veya `/` ile başlayan yol).
+ * - `alt`     : Benzersiz, anlamlı Türkçe alternatif metin (SEO + erişilebilirlik).
+ * - `width/height` : Gerçek piksel boyutu → `aspect-ratio` ile CLS=0.
+ * - `blurDataURL`  : LQIP placeholder (opsiyonel).
+ * - `type`    : product (stüdyo), detail (yakın çekim), context (kullanım), variant (renk/malzeme).
+ */
+export interface ProductImage {
+  id: string;
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  blurDataURL?: string;
+  type?: "product" | "detail" | "context" | "variant";
+}
+
 export interface Product {
   slug: string;
   name: string;
@@ -185,6 +210,21 @@ export interface Product {
   /** Listeleme sayfasında ürün altında gösterilen ebat etiketi (örn. "85x55 cm") */
   sizeLabel?: string;
   images: string[];
+  /**
+   * AJA-386 çoklu görsel kontratı (opsiyonel, additive — backend doldurunca kullanılır).
+   * `coverImage`: LCP adayı ana görsel. `gallery`: sıralı 4-6 görsel (ProductImage[]).
+   * Yoksa `resolveProductImage` eski `images: string[]`'ten türetir. Böylece backend
+   * bloklanmaz; şema hazır olduğunda tek satır API map'i ile devreye girer.
+   */
+  coverImage?: ProductImage;
+  gallery?: ProductImage[];
+  /**
+   * Varyant kombinasyonu → görsel id eşlemesi. Anahtar: `groupKey:optionKey` (tekil eksen)
+   * veya birden çok ekseni `|` ile birleştirilmiş kanonik kombinasyon anahtarı
+   * (örn. `malzeme:folyo|renk:mat`). Değer: `ProductImage.id`. Kural motoru/konfigüratör
+   * bir seçim yapıldığında bu haritadan görsel id'sini bulup galeriyi senkronlar.
+   */
+  variantImageMap?: Record<string, string>;
   badges?: BadgeKind[];
   /** Faz C — yeni seçenek ekseni listesi */
   options?: PricingOption[];

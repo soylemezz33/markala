@@ -9,6 +9,7 @@ import type { BadgeKind, Product } from "@markala/types";
 import { WishlistButton } from "@/components/product/wishlist-button";
 import { ProductImageFallback } from "@/components/product/product-image-fallback";
 import { getDisplayPrice } from "@/lib/configurator";
+import { resolveProductImage, nextFallbackSrc } from "@/lib/product-image";
 
 const badgeStyles: Record<BadgeKind, { label: string; className: string }> = {
   yeni: { label: "Yeni", className: "bg-ink-900 text-paper-50" },
@@ -34,6 +35,12 @@ interface ProductCardProps {
 export function ProductCard({ product, priority = false }: ProductCardProps) {
   // Detayın açılıştaki fiyatıyla AYNI (tek kaynak: configurator). startingPrice'a güvenme.
   const startingPrice = getDisplayPrice(product);
+  // AJA-386: kapak + hover görseli aynı resolver'dan — görsel yoksa kategoriye uygun
+  // fallback (bug #4) kartta da geçerli, jenerik gri kutu yerine kategori fotosu gelir.
+  const { cover, gallery } = resolveProductImage(product);
+  // Kapak src'si state'te: gerçek foto 404 verirse kategori fallback'e düşer; o da patlarsa
+  // "görsel yok" durumuna geçilir (imgError). next/image src'sini DOM'dan değil state'ten yönetir.
+  const [coverSrc, setCoverSrc] = useState(cover.src);
   const [imgError, setImgError] = useState(false);
 
   /**
@@ -46,7 +53,8 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
    * fareyle girip çıkarken tekrar tekrar indirilmesin.
    * MOBİL: sarmalayıcı `hidden lg:block` → dokunmatikte hiç mount edilmez, ekstra veri yok.
    */
-  const ikinciGorsel = product.images[1];
+  // 2. görsel yalnız GERÇEK ikinci görsel varsa (fallback tek öğe → hover devre dışı).
+  const ikinciGorsel = gallery.length > 1 && !cover.fallback ? gallery[1]!.src : undefined;
   const [ikinciYuklendi, setIkinciYuklendi] = useState(false);
   const [ikinciHata, setIkinciHata] = useState(false);
   const ikinciGoster = Boolean(ikinciGorsel) && !imgError && !ikinciHata;
@@ -67,10 +75,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       onFocus={ikinciGoster ? () => setIkinciYuklendi(true) : undefined}
     >
       <div className="relative aspect-square overflow-hidden bg-paper-100">
-        {product.images[0] && !imgError ? (
+        {!imgError ? (
           <Image
-            src={product.images[0]}
-            alt={product.name}
+            src={coverSrc}
+            alt={cover.alt}
             fill
             sizes="(min-width:1024px) 25vw, (min-width:640px) 33vw, 50vw"
             // priority: yalnız LCP adayı kartlarda (kategori/katalog ilk ekran). next/image
@@ -78,12 +86,23 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
             // varsayılan lazy KORUNUR (ana sayfa railleri etkilenmez — şartname P1).
             priority={priority}
             fetchPriority={priority ? "high" : undefined}
+            placeholder={cover.blurDataURL ? "blur" : undefined}
+            blurDataURL={cover.blurDataURL}
             className={cn(
               "object-cover transition-all duration-500 ease-out group-hover:scale-[1.04]",
               // 2. görsel varsa kapak hover'da soluklaşır (çapraz geçiş).
               ikinciGoster && "lg:group-hover:opacity-0 lg:group-focus-within:opacity-0",
             )}
-            onError={() => setImgError(true)}
+            // Kapak patlarsa: gerçek fotoysa kategori fallback'e düş; fallback zaten
+            // patladıysa "görsel yok" durumuna geç (sonsuz döngü olmadan).
+            onError={() => {
+              const fb = nextFallbackSrc(product);
+              if (!cover.fallback && coverSrc !== fb) {
+                setCoverSrc(fb);
+              } else {
+                setImgError(true);
+              }
+            }}
           />
         ) : (
           <ProductImageFallback name={product.name} />

@@ -13,7 +13,7 @@ const cspReportOnly = [
   "base-uri 'self'",
   "object-src 'none'",
   "form-action 'self'",
-  "img-src 'self' data: blob: https://api.markala.com.tr https://picsum.photos https://*.picsum.photos https://images.unsplash.com https://images.pexels.com https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.tr https://www.googleadservices.com https://www.facebook.com",
+  "img-src 'self' data: blob: https://api.markala.com.tr https://cdn.markala.com.tr https://*.r2.dev https://picsum.photos https://*.picsum.photos https://images.unsplash.com https://images.pexels.com https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.tr https://www.googleadservices.com https://www.facebook.com",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline' https://accounts.google.com",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net",
@@ -90,6 +90,10 @@ const nextConfig = {
     remotePatterns: [
       // Kendi görsel CDN'imiz — ürün/kategori görselleri buradan (Next optimize edebilsin).
       { protocol: "https", hostname: "api.markala.com.tr" },
+      // AJA-386 — R2 ürün görsel deposu. Cloudflare R2 varsayılan public alt alanı (*.r2.dev)
+      // ve custom domain (cdn.markala.com.tr). R2 custom domain kesinleşince buraya eklenir.
+      { protocol: "https", hostname: "*.r2.dev" },
+      { protocol: "https", hostname: "cdn.markala.com.tr" },
       { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "fastly.picsum.photos" },
       { protocol: "https", hostname: "images.unsplash.com" },

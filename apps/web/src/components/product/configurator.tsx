@@ -132,25 +132,42 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       : state.selections;
   }, [state.selections, dimFilter, product.options]);
 
-  // Seçime bağlı galeri görseli (2026-08-29, Hasan): rules.gorsel = N (1-tabanlı görsel
-  // sırası) taşıyan bir seçenek seçilince galeriye "markala:gorsel-sec" olayı gönderilir —
-  // ürün fotoğrafı o seçeneğin görseline döner (örn. yelken bayrakta "Kumaş + Takım" →
-  // takım fotoğrafı). İlk açılışta da çalışır: varsayılan seçenek gorsel taşıyorsa sayfa
-  // doğrudan o görselle açılır. Panelsiz genel mekanizma — rules JSON'una sayı yazmak yeter.
+  // Seçime bağlı galeri görseli (2026-08-29, Hasan; AJA-386'da genişletildi): bir seçenek
+  // seçilince galeriye "markala:gorsel-sec" olayı gönderilir, ana görsel o seçeneğe döner
+  // (örn. yelken bayrakta "Kumaş + Takım" → takım fotoğrafı). İlk açılışta da çalışır.
+  //
+  // İki kaynak, öncelik sırasıyla:
+  //  1. `product.variantImageMap` — AJA-386 kontratı: `groupKey:optionKey` → ProductImage.id.
+  //     Kural motoru ARTIK URL değil image.id döndürür; galeri id'yi index'e çevirir.
+  //  2. Eski `rules.gorsel` — string ise image.id, number ise 1-tabanlı index (geriye dönük).
   const oncekiSecimler = useRef<Record<string, string> | null>(null);
+  const variantImageMap = product.variantImageMap;
   useEffect(() => {
     const onceki = oncekiSecimler.current;
     oncekiSecimler.current = baseSelections;
     for (const [grup, secenek] of Object.entries(baseSelections)) {
       if (onceki && onceki[grup] === secenek) continue; // bu grup değişmedi
+
+      // 1) variantImageMap — tekil eksen anahtarı `groupKey:optionKey`.
+      const mappedId = variantImageMap?.[`${grup}:${secenek}`];
+      if (mappedId) {
+        window.dispatchEvent(new CustomEvent("markala:gorsel-sec", { detail: { imageId: mappedId } }));
+        break;
+      }
+
+      // 2) rules.gorsel — string (image.id) veya number (1-tabanlı index).
       const opt = optionsWithRules.find((o) => o.groupKey === grup && o.optionKey === secenek);
       const gorsel = (opt?.rules as { gorsel?: unknown } | null | undefined)?.gorsel;
+      if (typeof gorsel === "string" && gorsel.length > 0) {
+        window.dispatchEvent(new CustomEvent("markala:gorsel-sec", { detail: { imageId: gorsel } }));
+        break;
+      }
       if (typeof gorsel === "number" && Number.isInteger(gorsel) && gorsel >= 1) {
         window.dispatchEvent(new CustomEvent("markala:gorsel-sec", { detail: { index: gorsel - 1 } }));
         break; // tek geçişte bir görsel yönlendirmesi yeter
       }
     }
-  }, [baseSelections, optionsWithRules]);
+  }, [baseSelections, optionsWithRules, variantImageMap]);
 
   const resolved = useMemo(
     () => resolveRules(optionsWithRules, baseSelections),
