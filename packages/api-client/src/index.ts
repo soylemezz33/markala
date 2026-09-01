@@ -382,6 +382,28 @@ export class MarkalaApiClient {
       ),
     updateNotificationPrefs: (prefs: Record<string, { email: boolean; sms: boolean }>) =>
       this.request<{ ok: boolean }>("PATCH", "/users/me/notification-prefs", prefs, { auth: true }),
+
+    // === Favoriler (hesaba bağlı, cihazlar arası senkron — 2026-09-01) ===
+    // Hepsi GÜNCEL LİSTEYİ döndürür: istemci tek turda senkron kalır, ayrıca list() gerekmez.
+    listFavorites: () =>
+      this.request<string[]>("GET", "/users/me/favorites", undefined, { auth: true }),
+    addFavorite: (slug: string) =>
+      this.request<string[]>(
+        "PUT",
+        `/users/me/favorites/${encodeURIComponent(slug)}`,
+        undefined,
+        { auth: true },
+      ),
+    removeFavorite: (slug: string) =>
+      this.request<string[]>(
+        "DELETE",
+        `/users/me/favorites/${encodeURIComponent(slug)}`,
+        undefined,
+        { auth: true },
+      ),
+    /** Girişte cihazda kalmış eski listeyi hesaba taşır — var olanlar korunur. */
+    mergeFavorites: (slugs: string[]) =>
+      this.request<string[]>("POST", "/users/me/favorites/merge", { slugs }, { auth: true }),
   };
 
   // === Hero slides ===

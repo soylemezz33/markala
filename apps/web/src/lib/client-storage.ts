@@ -5,6 +5,13 @@
 
 const RECENT_KEY = "markala_recent_products";
 const WISHLIST_KEY = "markala_wishlist";
+/**
+ * Yerel favori aynasının SAHİBİ (kullanıcı id'si). Favoriler 2026-09-01'den beri hesapta
+ * tutuluyor; localStorage yalnız ilk boyamada anında liste gösterebilmek için AYNA.
+ * Sahip bilgisi olmadan ortak cihazda A'nın listesi B'nin hesabına taşınabilirdi.
+ * Değer YOK + liste DOLU = bu değişiklikten önceki eski cihaz listesi (bir kez hesaba taşınır).
+ */
+const WISHLIST_OWNER_KEY = "markala_wishlist_owner";
 const MAX_RECENT = 12;
 
 /** Sırada en yeni en başta */
@@ -70,5 +77,43 @@ export function removeFromWishlist(slug: string): void {
   if (typeof window === "undefined") return;
   const list = getWishlist().filter((s) => s !== slug);
   localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event("markala:wishlist-changed"));
+}
+
+/** Sunucudan gelen listeyi aynaya yazar (senkron sonucu). */
+export function setWishlist(list: string[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event("markala:wishlist-changed"));
+}
+
+/**
+ * Slug'ı listeye ALIR ya da ÇIKARIR (toggle DEĞİL — idempotent).
+ * Sunucu çağrısı başarısız olunca iyimser değişikliği geri alırken kullanılır: iki hızlı
+ * tıklama yarışsa bile yanlış yöne "geri alma" yapmaz.
+ */
+export function setWishlistMembership(slug: string, member: boolean): void {
+  if (typeof window === "undefined") return;
+  const list = getWishlist().filter((s) => s !== slug);
+  if (member) list.unshift(slug);
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event("markala:wishlist-changed"));
+}
+
+export function getWishlistOwner(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(WISHLIST_OWNER_KEY);
+}
+
+export function setWishlistOwner(userId: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(WISHLIST_OWNER_KEY, userId);
+}
+
+/** Çıkışta çağrılır — ortak cihazda sonraki kullanıcı öncekinin listesini görmesin/devralmasın. */
+export function clearWishlistLocal(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(WISHLIST_KEY);
+  localStorage.removeItem(WISHLIST_OWNER_KEY);
   window.dispatchEvent(new Event("markala:wishlist-changed"));
 }

@@ -17,8 +17,8 @@ export const metadata: Metadata = {
  * Bu yüzden hesabim/layout.tsx'teki kabuk buraya uygulanmıyordu ve kullanıcı
  * menüden favorilere geçince kenar çubuğu kayboluyordu.
  *
- * AccountShell oturum yoksa yalnız children döndürür; favoriler cihaza kayıtlı ve
- * giriş gerektirmediği için oturumsuz ziyaretçide sayfa eskisi gibi çalışmaya devam eder.
+ * AccountShell oturum yoksa yalnız children döndürür; oturumsuz ziyaretçi sayfanın
+ * kendisindeki giriş/üye ol duvarını görür (2026-09-01: favoriler üyelik gerektiriyor).
  */
 export default function FavorilerimLayout({ children }: { children: React.ReactNode }) {
   return (

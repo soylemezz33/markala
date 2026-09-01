@@ -1394,10 +1394,17 @@ function UserMenuLink({
 }
 
 function WishlistHeaderButton({ mounted }: { mounted: boolean }) {
+  // Favoriler üyelik gerektirir (2026-09-01, Hasan) — bkz. WishlistButton. Oturumsuzken
+  // rozet gösterilmez: çıkış yapmış kullanıcının cihazda kalan eski listesi sayı basıp
+  // tıklayınca giriş duvarına düşürmesin.
+  const user = useAuthStore((s) => s.user);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !user) {
+      setCount(0);
+      return;
+    }
     function load() {
       try {
         const raw = localStorage.getItem("markala_wishlist");
@@ -1414,7 +1421,7 @@ function WishlistHeaderButton({ mounted }: { mounted: boolean }) {
       window.removeEventListener("markala:wishlist-changed", load);
       window.removeEventListener("storage", load);
     };
-  }, [mounted]);
+  }, [mounted, user]);
 
   return (
     <Link

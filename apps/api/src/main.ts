@@ -116,6 +116,11 @@ async function bootstrap() {
   );
   // Müşteri ürün yorumu — giriş yapmış kullanıcı; per-IP spam/flood koruması (10/saat).
   app.use(rateLimit({ windowMs: 60 * 60_000, max: 10, path: "/reviews/public", method: "POST" }));
+  // Favori senkronu (girişte cihaz listesini hesaba taşır) — tek çağrıda 200 slug arar.
+  // Meşru akışta oturum başına BİR kez çağrılır; 20/dk kaba istismarı keser.
+  app.use(
+    rateLimit({ windowMs: 60_000, max: 20, path: "/users/me/favorites/merge", method: "POST" }),
+  );
   // Admin mutation endpoint'leri — JWT+RolesGuard korumalı; per-IP ek savunma (ele geçirilmiş JWT senyaroya karşı).
   // Limitler gerçek admin kullanımına göre GENİŞ — sıkıştırılmış JWT istismarını sınırlar ama
   // meşru yoğun admin kullanımını (örn. ürün-ürün toplu fiyatlama) engellemez.

@@ -47,10 +47,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Gerçek veri — paralel çek (hata olanlar boş döner, export yine üretilir).
-  const [orders, addresses, notificationPrefs] = await Promise.all([
+  const [orders, addresses, notificationPrefs, favorites] = await Promise.all([
     api<unknown[]>("/orders/mine", auth),
     api<unknown[]>("/users/me/addresses", auth),
     api<Record<string, unknown>>("/users/me/notification-prefs", auth),
+    api<string[]>("/users/me/favorites", auth),
   ]);
 
   const exportData = {
@@ -62,10 +63,12 @@ export async function POST(req: NextRequest) {
     addresses: addresses ?? [],
     orders: orders ?? [],
     notificationPreferences: notificationPrefs ?? {},
+    // Favoriler 2026-09-01'den beri hesapta tutuluyor (önceden yalnız tarayıcıdaydı) → export'a dahil.
+    favorites: favorites ?? [],
     notes:
       "Bu dosya 6698 sayılı KVKK m.11/d ve GDPR Madde 20 kapsamında, talep anındaki gerçek hesap " +
-      "verinizle oluşturulmuştur. Favori listesi tarayıcınızda yerel olarak tutulduğundan bu dosyaya " +
-      "dahil değildir. Sipariş ve fatura kayıtları VUK 213 gereği anonimleştirilmiş olarak 10 yıl saklanır.",
+      "verinizle oluşturulmuştur. Favori listeniz hesabınıza kayıtlı ürün adresleri (slug) olarak " +
+      "dahildir. Sipariş ve fatura kayıtları VUK 213 gereği anonimleştirilmiş olarak 10 yıl saklanır.",
   };
 
   const jsonString = JSON.stringify(exportData, null, 2);

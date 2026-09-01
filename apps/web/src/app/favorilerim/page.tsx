@@ -2,18 +2,41 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, ArrowRight, ShoppingBag } from "@phosphor-icons/react";
+import { Heart, ArrowRight, ShoppingBag, SignIn, UserPlus } from "@phosphor-icons/react";
 import type { Product } from "@markala/types";
 import { ProductCard } from "@/components/product-card";
 import { resolveProductSlugs } from "@/lib/resolve-products";
-import { getWishlist } from "@/lib/client-storage";
+import { getWishlist, getWishlistOwner } from "@/lib/client-storage";
+import { WISHLIST_SYNCED_EVENT } from "@/lib/wishlist";
+import { useAuthStore } from "@/lib/auth-store";
 
 export default function WishlistPage() {
+  // Favoriler ÜYELİK GEREKTİRİR (2026-09-01, Hasan) — bkz. WishlistButton.
+  // persist'ten gelen `user` hidrasyonda hazır olur, bootstrap beklenmez.
+  const user = useAuthStore((s) => s.user);
   const [items, setItems] = useState<Product[]>([]);
   const [mounted, setMounted] = useState(false);
+  // Liste sunucudan gelir (WishlistSync). Yeni cihazda ayna boş başlar; ilk senkron bitmeden
+  // "Henüz favori ürünün yok" BASILMAZ — iskelet durur, aksi hâlde dolu liste bir an boş görünür.
+  const [synced, setSynced] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    // Ayna zaten bu kullanıcıya aitse bekletme; tazeleme arka planda sürer.
+    if (getWishlistOwner() === user.id) setSynced(true);
+    function done() {
+      setSynced(true);
+    }
+    window.addEventListener(WISHLIST_SYNCED_EVENT, done);
+    return () => window.removeEventListener(WISHLIST_SYNCED_EVENT, done);
+  }, [user]);
 
   useEffect(() => {
     setMounted(true);
+    if (!user) {
+      setItems([]);
+      return;
+    }
     let cancelled = false;
 
     function load() {
@@ -30,7 +53,7 @@ export default function WishlistPage() {
       cancelled = true;
       window.removeEventListener("markala:wishlist-changed", load);
     };
-  }, []);
+  }, [user]);
 
   // Kendi tam-genişlik hero'su ve Container'ı KALDIRILDI: sayfa artık hesap kabuğunun
   // (layout.tsx → Container + AccountShell) içinde render ediliyor, ikinci bir Container
@@ -44,13 +67,13 @@ export default function WishlistPage() {
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Favorilerim</h1>
         </div>
         <p className="mt-1 text-sm text-ink-500 max-w-xl">
-          Beğendiğin ürünleri buraya ekle, sonra kaldığın yerden devam et. Cihazına
-          kayıtlı, hesap açmadan çalışır.
+          Beğendiğin ürünleri buraya ekle, sonra kaldığın yerden devam et. Liste hesabına
+          kayıtlı — telefonda eklediğin ürün bilgisayarında da görünür.
         </p>
       </header>
 
       <div>
-        {!mounted ? (
+        {!mounted || (user && !synced) ? (
           <div
             role="status"
             aria-busy="true"
@@ -65,6 +88,31 @@ export default function WishlistPage() {
                 <div className="h-3 bg-paper-200 rounded w-1/2" />
               </div>
             ))}
+          </div>
+        ) : !user ? (
+          <div className="py-16 text-center bg-paper-100 rounded-xl border border-paper-200 max-w-xl mx-auto px-6">
+            <Heart size={40} className="mx-auto text-paper-200" weight="fill" />
+            <h2 className="mt-4 text-xl font-semibold text-ink-900">
+              Favoriler için giriş yapın
+            </h2>
+            <p className="mt-2 text-ink-500 max-w-sm mx-auto">
+              Beğendiğin ürünleri favorilerine eklemek ve burada görmek için üye girişi
+              yapman gerekiyor. Üyelik ücretsiz, 30 saniye sürer.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/giris?next=%2Ffavorilerim"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-ink-900 rounded-md text-sm font-semibold"
+              >
+                <SignIn size={14} weight="bold" /> Giriş Yap
+              </Link>
+              <Link
+                href="/kayit?next=%2Ffavorilerim"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md border border-paper-200 bg-paper-50 hover:border-ink-300 hover:bg-paper-100 text-ink-900 text-sm font-semibold"
+              >
+                <UserPlus size={14} weight="bold" /> Üye Ol
+              </Link>
+            </div>
           </div>
         ) : items.length === 0 ? (
           <div className="py-20 text-center bg-paper-100 rounded-xl border border-paper-200 max-w-xl mx-auto">

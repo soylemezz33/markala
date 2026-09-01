@@ -97,6 +97,7 @@ model User {
   passwordResetTokens        PasswordResetToken[]
   notifications              NotificationLog[]
   consentLogs                ConsentLog[]
+  favorites                  Favorite[]
 
   @@index([role])
   @@index([corporateStatus])
@@ -305,6 +306,23 @@ model Address {
   @@map("addresses")
 }
 
+/// Favoriler — HESABA bağlı (2026-09-01, Hasan: "cihazlar arası senkron").
+/// Önceden yalnız tarayıcı localStorage'ındaydı; telefonda eklenen masaüstünde görünmüyordu.
+/// Ürün silinince favori de düşer (onDelete: Cascade) — ölü slug listede kalmaz.
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt])
+  @@map("favorites")
+}
+
 // === Katalog ===
 
 model Category {
@@ -371,6 +389,7 @@ model Product {
   reviews    Review[]
   prices     ProductPrice[]
   options    ProductOption[]
+  favorites  Favorite[]
 
   @@index([categoryId, isActive])
   @@index([bestseller, isActive])

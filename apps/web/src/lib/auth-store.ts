@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import { createMarkalaClient, type ApiError } from "@markala/api-client";
 import type { User } from "@markala/types";
 import { trackLogin, trackSignUp } from "@/lib/analytics";
+import { clearWishlistLocal } from "@/lib/client-storage";
 
 /**
  * GERÇEK auth store — NestJS API'ye bağlı (argon2 + JWT + refresh rotation).
@@ -210,6 +211,9 @@ export const useAuthStore = create<AuthState>()(
           // refresh cookie zaten geçersizse sorun değil — yerel state'i temizle
         }
         await clearMaintenanceBypass();
+        // Favoriler artık hesapta; localStorage yalnız ayna. Ortak cihazda sonraki kullanıcı
+        // öncekinin listesini görmesin (ve girişte kendi hesabına DEVRALMASIN).
+        clearWishlistLocal();
         set({ user: null, accessToken: null });
       },
 

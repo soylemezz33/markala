@@ -16,6 +16,7 @@ import { WhatsAppOlcum } from "@/components/whatsapp-olcum";
 import { FloatingActions } from "@/components/floating-actions";
 import { WebVitals } from "@/components/web-vitals";
 import { AuthBootstrap } from "@/components/auth-bootstrap";
+import { WishlistSync } from "@/components/wishlist-sync";
 import "./globals.css";
 
 const fontSans = DM_Sans({
@@ -133,6 +134,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         <ThemeBody />
         <AuthBootstrap />
+        <WishlistSync />
 
         {/* Site FULL WIDTH — hero/carousel edge-to-edge kaplar; iç içerik genişliğini
             bölümlerin kendi <Container>'ı (max-w-content) sınırlar. */}

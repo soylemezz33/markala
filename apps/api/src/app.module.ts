@@ -38,6 +38,7 @@ import { CartLeadsModule } from "./cart-leads/cart-leads.module";
 import { InternalNotifyModule } from "./internal-notify/internal-notify.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
 import { LifecycleModule } from "./lifecycle/lifecycle.module";
+import { FavoritesModule } from "./favorites/favorites.module";
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { LifecycleModule } from "./lifecycle/lifecycle.module";
     InternalNotifyModule,
     NewsletterModule,
     LifecycleModule,
+    FavoritesModule,
   ],
 })
 export class AppModule {}
