@@ -1,0 +1,112 @@
+{
+  "url": "https://markala.com.tr/matbaa/antalya",
+  "status_code": 200,
+  "content": "<!DOCTYPE html><html lang=\"tr\" class=\"__variable_2b4d3c\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" href=\"/_next/static/media/c9cac29382a46c9d-s.p.woff2\" as=\"font\" crossorigin=\"\" type=\"font/woff2\"/><link rel=\"preload\" href=\"/_next/static/media/d15df05e08ab39f1-s.p.woff2\" as=\"font\" crossorigin=\"\" type=\"font/woff2\"/><link rel=\"preload\" as=\"image\" href=\"/markala-logo.svg\"/><link rel=\"stylesheet\" href=\"/_next/static/css/7bd1c...",
+  "raw_content": "<!DOCTYPE html><html lang=\"tr\" class=\"__variable_2b4d3c\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" href=\"/_next/static/media...",
+  "is_spa": false,
+  "extracted_text": "Antalya'de matbaa & bask\u0131 hizmeti\nAntalya, T\u00fcrkiye'nin turizm ba\u015fkenti. Otel, restoran, marina ve kongre merkezi yo\u011funlu\u011fu nedeniyle matbaa talebi y\u0131l boyunca sezonsal olarak art\u0131p azal\u0131r. Markala olarak Antalya'ya 1-2 i\u015f g\u00fcn\u00fc i\u00e7inde DHL kargo ile ula\u015f\u0131yoruz; sezon ba\u015f\u0131 toplu kampanyal\u0131 paketlerimiz var.\nAntalya'de en \u00e7ok tercih edilen matbaa \u00fcr\u00fcnleri\nAntalya b\u00f6lgesindeki m\u00fc\u015fterilerimizin sipari\u015flerinden derledi\u011fimiz en pop\u00fcler \u00fcr\u00fcnler:\n- Otel anahtar zarf\u0131 ve kart\n- Restoran men\u00fc kart\u0131, masa st...",
+  "publication_date": "2026-07-01",
+  "accessibility_tree": null,
+  "headers": {
+    "Date": "Mon, 17 Aug 2026 08:23:35 GMT",
+    "Content-Type": "text/html; charset=utf-8",
+    "Transfer-Encoding": "chunked",
+    "Connection": "keep-alive",
+    "Server": "cloudflare",
+    "x-xss-protection": "1; mode=block",
+    "x-content-type-options": "nosniff, nosniff",
+    "x-frame-options": "SAMEORIGIN, SAMEORIGIN",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "referrer-policy": "strict-origin-when-cross-origin, strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=(self), payment=(self), interest-cohort=()",
+    "x-dns-prefetch-control": "on",
+    "content-security-policy-report-only": "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data: blob: https://api.markala.com.tr https://picsum.photos https://*.picsum.photos https://images.unsplash.com https://images.pexels.com https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.tr https://www.googleadservices.com https://www.facebook.com; font-src 'self' data:; style-src 'self' 'unsafe-inline' https://accounts.google.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net; connect-src 'self' https://accounts.google.com https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://stats.g.doubleclick.net https://www.facebook.com https://connect.facebook.net; frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com https://www.iyzipay.com https://sandbox-api.iyzipay.com https://api.iyzipay.com; report-uri /api/csp-report",
+    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
+    "x-nextjs-cache": "HIT",
+    "Cache-Control": "s-maxage=300, stale-while-revalidate",
+    "Nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "Report-To": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=05orQf13Jza9lbD4bUf9t%2BHd54Mh3rAqqY9iRlAuc%2F%2BDfEIj9yewhKa1SFoxQ2q0rWS4A1zWUy1CIoiNoqP8Soxo1WMNKdfgDvhH2hsE%2FJxXOEW9DhDMC8NeNU%2Ft%2Bq%2FwJA%3D%3D\"}]}",
+    "cf-cache-status": "DYNAMIC",
+    "Content-Encoding": "zstd",
+    "CF-RAY": "a2c7470e7a7ad204-AMS",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "redirect_chain": [],
+  "console_errors": [],
+  "render_diagnostics": [],
+  "render_engine": null,
+  "render_ms": null,
+  "mode_used": "raw",
+  "error": null,
+  "structured_data": {
+    "block_count": 5,
+    "processed_count": 5,
+    "total_bytes": 5569,
+    "truncated": false,
+    "blocks": [
+      {
+        "index": 1,
+        "size_bytes": 1966,
+        "valid": true,
+        "types": [
+          "ContactPoint",
+          "EntryPoint",
+          "OpeningHoursSpecification",
+          "Organization",
+          "PostalAddress",
+          "SearchAction",
+          "WebSite"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 2,
+        "size_bytes": 1299,
+        "valid": true,
+        "types": [
+          "City",
+          "Country",
+          "GeoCoordinates",
+          "LocalBusiness",
+          "OpeningHoursSpecification",
+          "PostalAddress"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 3,
+        "size_bytes": 368,
+        "valid": true,
+        "types": [
+          "BreadcrumbList",
+          "ListItem"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 4,
+        "size_bytes": 884,
+        "valid": true,
+        "types": [
+          "AggregateOffer",
+          "City",
+          "GeoCoordinates",
+          "LocalBusiness",
+          "Service"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 5,
+        "size_bytes": 1052,
+        "valid": true,
+        "types": [
+          "Answer",
+          "FAQPage",
+          "Question"
+        ],
+        "types_truncated": false
+      }
+    ]
+  }
+}

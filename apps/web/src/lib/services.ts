@@ -26,7 +26,7 @@ export const services: ServiceData[] = [
   {
     slug: "tasarim-destegi",
     title: "Ücretsiz Tasarım Desteği",
-    metaTitle: "Ücretsiz Matbaa Tasarım Desteği — Profesyonel Grafik Ekibi",
+    metaTitle: "Ücretsiz Matbaa Tasarım Desteği | Profesyonel Grafik Ekibi",
     metaDescription:
       "Markala matbaa siparişlerinizde ücretsiz tasarım desteği. Profesyonel grafik tasarımcı ekibimizle kartvizit, broşür, logo ve kurumsal kimlik tasarımı.",
     keywords: [
@@ -40,11 +40,11 @@ export const services: ServiceData[] = [
       "logo tasarım ücretsiz",
     ],
     intro:
-      "Markala'da matbaa siparişi veren herkesin kullanabileceği ücretsiz tasarım desteği — 324 Ajans grafik ekibimizle kartvizitten kurumsal kimliğe kadar her tasarım ihtiyacınız karşılansın. Ekstra ücret yok, sınırsız revize.",
+      "Markala'da matbaa siparişi veren herkesin kullanabileceği ücretsiz tasarım desteği, 324 Ajans grafik ekibimizle kartvizitten kurumsal kimliğe kadar her tasarım ihtiyacınız karşılansın. Ekstra ücret yok, sınırsız revize.",
     benefits: [
       {
         title: "Sıfırdan tasarım",
-        desc: "Hazır dosyanız yoksa biz sıfırdan tasarlarız — sadece briefinizi alın.",
+        desc: "Hazır dosyanız yoksa biz sıfırdan tasarlarız, sadece briefinizi alın.",
       },
       {
         title: "Sınırsız revize",
@@ -64,7 +64,7 @@ export const services: ServiceData[] = [
       },
       {
         title: "Tüm formatlarda dosya",
-        desc: "AI, PDF/X, PNG, JPG — sonradan başka iş için de kullanın.",
+        desc: "AI, PDF/X, PNG, JPG: sonradan başka iş için de kullanın.",
       },
     ],
     process: [
@@ -83,7 +83,7 @@ export const services: ServiceData[] = [
       {
         n: "3",
         title: "Revize",
-        desc: "Onaylayana kadar değişiklik isteyin — sınırsız.",
+        desc: "Onaylayana kadar değişiklik isteyin, sınırsız.",
         duration: "Müşteriye bağlı",
       },
       {
@@ -104,11 +104,11 @@ export const services: ServiceData[] = [
       },
       {
         q: "Logo tasarımı da yapıyor musunuz?",
-        a: "Evet. Sıfırdan logo tasarımı için 324 Ajans'a yönlendiriyoruz — 7-14 iş günü içinde 3 alternatif sunulur. Markala matbaa siparişiyle birlikte sipariş verirseniz %15 indirim.",
+        a: "Evet. Sıfırdan logo tasarımı için 324 Ajans'a yönlendiriyoruz, 7-14 iş günü içinde 3 alternatif sunulur. Markala matbaa siparişiyle birlikte sipariş verirseniz %15 indirim.",
       },
       {
         q: "Tasarım dosyamı sonradan başka matbaada kullanabilir miyim?",
-        a: "Tabii ki. Tüm dosyaları (AI, PDF/X, PNG) size eksiksiz teslim ediyoruz. Telif hakkı sizindir — istediğiniz yerde kullanabilirsiniz.",
+        a: "Tabii ki. Tüm dosyaları (AI, PDF/X, PNG) size eksiksiz teslim ediyoruz. Telif hakkı sizindir, istediğiniz yerde kullanabilirsiniz.",
       },
       {
         q: "Brand guideline / kurumsal kimlik tasarımı yapıyor musunuz?",
@@ -122,7 +122,7 @@ export const services: ServiceData[] = [
   {
     slug: "toplu-baski",
     title: "Toplu Baskı & Kurumsal İndirim",
-    metaTitle: "Toplu Matbaa Siparişi — Avantajlı Fiyat, Açık Fatura, B2B",
+    metaTitle: "Toplu Matbaa Siparişi | Avantajlı Fiyat, Açık Fatura, B2B",
     metaDescription:
       "Toplu matbaa siparişlerinde firmanıza özel avantajlı fiyatlandırma, açık fatura, dedicated müşteri temsilcisi. Kurumsal hesap başvurusu 1-2 iş gününde onaylanır.",
     keywords: [
@@ -156,7 +156,7 @@ export const services: ServiceData[] = [
       },
       {
         title: "Sabit fiyat anlaşması",
-        desc: "Yıllık çerçeve sözleşme — fiyat artışlarından etkilenmezsiniz.",
+        desc: "Yıllık çerçeve sözleşme, fiyat artışlarından etkilenmezsiniz.",
       },
       {
         title: "Tasarım dahil",
@@ -186,7 +186,7 @@ export const services: ServiceData[] = [
         n: "4",
         title: "İlk sipariş",
         desc: "İlk toplu siparişinizde tüm avantajları kullanmaya başlayın.",
-        duration: "—",
+        duration: "-",
       },
     ],
     faqs: [
@@ -208,7 +208,7 @@ export const services: ServiceData[] = [
       },
       {
         q: "Ürün stoklama yapıyor musunuz?",
-        a: "Evet. Kurumsal müşteriler için 6 aylık stok hizmeti vermekteyiz — ayda otomatik teslim. Aylık abonelik modeli mevcut.",
+        a: "Evet. Kurumsal müşteriler için 6 aylık stok hizmeti vermekteyiz, ayda otomatik teslim. Aylık abonelik modeli mevcut.",
       },
     ],
     priceRange: { min: 5000, max: 500000 },

@@ -11,21 +11,21 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 const SITE = "https://markala.com.tr";
 
 export const metadata: Metadata = {
-  title: "Türkiye Geneli Matbaa Hizmeti — 81 İl, Hızlı Üretim",
+  title: "Türkiye Geneli Matbaa Hizmeti | 81 İl, Hızlı Üretim",
   description:
     "Mersin merkezli matbaa atölyemizden Türkiye geneli kartvizit, broşür, afiş, branda, kupa baskı hizmeti. Antalya, Adana, Şanlıurfa, Hatay, Osmaniye, Gaziantep'e 1-2 iş günü kargo. Mersin ve çevresine hızlı kargo/kurye.",
   alternates: { canonical: "/matbaa" },
   openGraph: {
     type: "website",
-    title: "Türkiye Geneli Matbaa — Markala",
+    title: "Türkiye Geneli Matbaa | Markala",
     description:
       "81 ilde matbaa hizmeti. Mersin merkezli atölye, hızlı üretim, DHL Express ile 1-2 iş günü teslim.",
     url: "/matbaa",
-    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Türkiye Geneli Matbaa — Markala" }],
+    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Türkiye Geneli Matbaa - Markala" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Türkiye Geneli Matbaa — Markala",
+    title: "Türkiye Geneli Matbaa | Markala",
     description:
       "81 ilde matbaa hizmeti. Mersin merkezli atölye, hızlı üretim, DHL Express ile 1-2 iş günü teslim.",
     images: ["/og-default.png"],
@@ -115,7 +115,7 @@ export default function MatbaaHubPage() {
             Akdeniz Bölgesi
           </h2>
           <p className="text-ink-700 mb-6 max-w-2xl">
-            Mersin merkezli atölyeye en yakın iller — DHL Express ile 1 iş günü
+            Mersin merkezli atölyeye en yakın iller, DHL Express ile 1 iş günü
             içinde teslim.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -155,7 +155,7 @@ export default function MatbaaHubPage() {
               <p className="mt-3 text-paper-100/70 leading-relaxed">
                 İstanbul, Ankara, İzmir, Bursa, Konya başta olmak üzere
                 Türkiye'nin tüm illerine DHL Express, Aras Kargo ve MNG ile 2-4
-                iş günü içinde teslim ediyoruz. Online sipariş — kargo takip —
+                iş günü içinde teslim ediyoruz. Online sipariş, kargo takip,
                 kapıda imza.
               </p>
             </div>

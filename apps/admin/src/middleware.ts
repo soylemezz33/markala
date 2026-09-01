@@ -3,7 +3,7 @@ import {
   signSession, verifySession, needsRefresh,
   SESSION_COOKIE, SESSION_MAX_AGE, type AdminSession,
 } from "@/lib/admin-session";
-import { permForPath } from "@/lib/route-perms";
+import { permForPath, varsayilanRota } from "@/lib/route-perms";
 
 const PUBLIC_PATHS = ["/giris", "/api/auth/login"];
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -62,8 +62,15 @@ export async function middleware(req: NextRequest) {
         return res;
       }
       if (!session.perms.includes(need)) {
-        // Yetkisi olmayan sayfa → dashboard. ("/" haritada yok = tüm panel rollerine açık.)
-        return NextResponse.redirect(new URL("/", req.url));
+        // Yetkisi olmayan sayfa → rolün girebildiği İLK sayfa.
+        // Eskiden koşulsuz "/" idi; pano artık dashboard.read istediği için panosu
+        // olmayan rol (kargo) sonsuz yönlendirmeye giriyordu. Ayrıca hedef mevcut yola
+        // eşitse hiç yönlendirme yapma — döngüye karşı ikinci emniyet.
+        const hedef = varsayilanRota(session.perms);
+        if (hedef === pathname) {
+          return NextResponse.redirect(new URL("/giris?hata=yetki", req.url));
+        }
+        return NextResponse.redirect(new URL(hedef, req.url));
       }
     }
   }

@@ -24,13 +24,13 @@ const PAGE_PATH = "/rehber/kartvizit-fiyatlari-2026";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Kartvizit Fiyatları 2026 — 1.000 Adet Kartvizit Ne Kadar? (KDV Dahil)",
+    title: "Kartvizit Fiyatları 2026 | 1.000 Adet Kartvizit Ne Kadar? (KDV Dahil)",
     description:
-      "2026 güncel kartvizit fiyatları: selefonlu, laklı, yaldızlı ve sıvama paketlerin 1.000–10.000 adet tiraj tablosu. Tüm fiyatlar KDV dahil — sepette değişmez.",
+      "2026 güncel kartvizit fiyatları: selefonlu, laklı, yaldızlı ve sıvama paketlerin 1.000–10.000 adet tiraj tablosu. Tüm fiyatlar KDV dahil, sepette değişmez.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Kartvizit Fiyatları 2026 — Güncel Tiraj Tablosu (KDV Dahil)",
+      title: "Kartvizit Fiyatları 2026 | Güncel Tiraj Tablosu (KDV Dahil)",
       description:
         "Selefonlu, laklı ve sıvama kartvizit paketlerinin güncel fiyat tablosu. KDV dahil, canlı katalogdan.",
       url: PAGE_PATH,
@@ -67,12 +67,12 @@ export default async function KartvizitFiyatlariPage() {
   // Kategori listesi strict: API blip'inde throw → ISR son başarılı (stale) sayfayı korur.
   const listing = await getProductsByCategory("kartvizit", { strict: true });
   if (listing.length === 0) {
-    throw new Error("rehber/kartvizit: kartvizit kategorisi boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/kartvizit: kartvizit kategorisi boş döndü (API blip?), stale ISR korunur");
   }
   const primarySlug = listing.find((p) => p.slug === "klasik-kartvizit")?.slug ?? listing[0]!.slug;
   const product = await getProductBySlug(primarySlug);
   if (!product || (product.options?.length ?? 0) === 0 || (product.prices?.length ?? 0) === 0) {
-    throw new Error("rehber/kartvizit: ürün fiyat verisi boş (API blip?) — stale ISR korunur");
+    throw new Error("rehber/kartvizit: ürün fiyat verisi boş (API blip?), stale ISR korunur");
   }
 
   const opts = (product.options ?? []) as PricingOption[];
@@ -86,7 +86,7 @@ export default async function KartvizitFiyatlariPage() {
     ? opts.filter((o) => o.groupKey === pricedKey).sort((a, b) => a.optionSort - b.optionSort)
     : [];
   if (adetOpts.length === 0 || paketOpts.length === 0 || !pricedKey) {
-    throw new Error("rehber/kartvizit: beklenen opsiyon grupları yok — stale ISR korunur");
+    throw new Error("rehber/kartvizit: beklenen opsiyon grupları yok, stale ISR korunur");
   }
 
   // Gösterilecek tiraj sütunları: 4'ten fazlaysa ilk iki + son iki (tablo taşmasın).
@@ -104,7 +104,7 @@ export default async function KartvizitFiyatlariPage() {
     .filter((r) => r.totals.some((v) => v > 0))
     .sort((a, b) => (a.totals[0]! > 0 ? a.totals[0]! : Infinity) - (b.totals[0]! > 0 ? b.totals[0]! : Infinity));
   if (rows.length === 0) {
-    throw new Error("rehber/kartvizit: fiyat tablosu boş hesaplandı (API blip?) — stale ISR korunur");
+    throw new Error("rehber/kartvizit: fiyat tablosu boş hesaplandı (API blip?), stale ISR korunur");
   }
 
   const cheapest = rows[0]!;
@@ -127,7 +127,7 @@ export default async function KartvizitFiyatlariPage() {
     },
     {
       q: "Fiyatlara KDV dahil mi?",
-      a: "Evet. Bu sayfadaki ve ürün sayfasındaki tüm fiyatlar KDV dahildir; sepette gördüğün rakam ödediğin rakamdır. Kartvizit fiyatı karşılaştırırken listelenen fiyatın KDV dahil olup olmadığını mutlaka kontrol et — KDV hariç yazılan fiyat sepette artar.",
+      a: "Evet. Bu sayfadaki ve ürün sayfasındaki tüm fiyatlar KDV dahildir; sepette gördüğün rakam ödediğin rakamdır. Kartvizit fiyatı karşılaştırırken listelenen fiyatın KDV dahil olup olmadığını mutlaka kontrol et, KDV hariç yazılan fiyat sepette artar.",
     },
     {
       q: "Selefonlu kartvizit ne demek?",
@@ -159,7 +159,7 @@ export default async function KartvizitFiyatlariPage() {
         ]}
       />
       <ArticleJsonLd
-        title="Kartvizit Fiyatları 2026 — Güncel Tiraj Tablosu (KDV Dahil)"
+        title="Kartvizit Fiyatları 2026 - Güncel Tiraj Tablosu (KDV Dahil)"
         description="Selefonlu, laklı, yaldızlı ve sıvama kartvizit paketlerinin güncel fiyat tablosu ve seçim rehberi."
         url={PAGE_PATH}
         datePublished="2026-07-20"
@@ -184,12 +184,12 @@ export default async function KartvizitFiyatlariPage() {
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.label} kartvizit{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(minStart)}</strong>&apos;den
-            başlıyor — KDV dahil, sepette değişmez. Aşağıdaki tablo {asOf} itibarıyla canlı katalog
+            başlıyor, KDV dahil, sepette değişmez. Aşağıdaki tablo {asOf} itibarıyla canlı katalog
             fiyatlarıdır; ürün sayfasındaki konfigüratörle aynı motordan hesaplanır.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
-              <CheckCircle size={13} weight="fill" /> KDV dahil — sepette değişmez
+              <CheckCircle size={13} weight="fill" /> KDV dahil, sepette değişmez
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <PaintBrush size={13} weight="fill" /> Ücretsiz tasarım desteği
@@ -208,7 +208,7 @@ export default async function KartvizitFiyatlariPage() {
           <div className="text-sm text-amber-900 leading-relaxed">
             <strong>Fiyat karşılaştırırken KDV&apos;ye dikkat:</strong> Online matbaa listelerinde
             fiyatlar çoğu zaman KDV hariç yazılır ve fark sepette ortaya çıkar. Bu sayfadaki tüm
-            fiyatlar KDV dahildir — dürüst karşılaştırma için diğer teklifleri de sepet toplamı
+            fiyatlar KDV dahildir, dürüst karşılaştırma için diğer teklifleri de sepet toplamı
             üzerinden kıyasla.
           </div>
         </section>
@@ -243,7 +243,7 @@ export default async function KartvizitFiyatlariPage() {
                         {v > 0 ? (
                           <span className="font-semibold text-ink-900">{formatPriceWithSymbol(v)}</span>
                         ) : (
-                          <span className="text-ink-500">—</span>
+                          <span className="text-ink-500">-</span>
                         )}
                       </td>
                     ))}
@@ -303,7 +303,7 @@ export default async function KartvizitFiyatlariPage() {
           <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
           <h2 className="text-2xl md:text-3xl font-semibold">Kartvizitini şimdi yapılandır</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Paket ve adedi seç, fiyatı anında gör — {formatPriceWithSymbol(minStart)}&apos;den
+            Paket ve adedi seç, fiyatı anında gör - {formatPriceWithSymbol(minStart)}&apos;den
             başlayan KDV dahil fiyatlarla, üretim {product.productionTime || "2-3 iş günü"}.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

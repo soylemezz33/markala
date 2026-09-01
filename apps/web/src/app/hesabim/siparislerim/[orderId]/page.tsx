@@ -121,7 +121,7 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
               {payError && <p className="mt-2 text-sm text-error">{payError}</p>}
             </div>
             <Button onClick={() => handleRetryPayment(order.id)} disabled={paying}>
-              {paying ? "Yönlendiriliyor…" : `Ödeme Yap — ${Number(order.total).toLocaleString("tr-TR")} ₺`}
+              {paying ? "Yönlendiriliyor…" : `Ödeme Yap - ${Number(order.total).toLocaleString("tr-TR")} ₺`}
             </Button>
           </div>
         </section>

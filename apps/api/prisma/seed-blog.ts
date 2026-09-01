@@ -81,7 +81,7 @@ Bu kuralları uyguladıysanız kartvizitiniz baskıya hazır demektir. Tasarım�
       "Kartvizit gramajı kalınlığı ve his değerini belirler. 300, 350 ve 400 gr arasındaki farkları ve hangi işe hangisinin uygun olduğunu anlattık.",
     seoTitle: "350 gr mı 400 gr mı? Kartvizit Kağıt Gramajı Rehberi | Markala",
     seoDescription:
-      "Kartvizit kağıt gramajı 300, 350, 400 gr farkı nedir? Hangi gramaj hangi iş için uygun? Selefon ve kabartma ile gramaj ilişkisi — matbaa rehberi.",
+      "Kartvizit kağıt gramajı 300, 350, 400 gr farkı nedir? Hangi gramaj hangi iş için uygun? Selefon ve kabartma ile gramaj ilişkisi, matbaa rehberi.",
     tags: ["kartvizit", "kağıt gramajı", "baskı rehberi"],
     content: `Kartvizit sipariş ederken en çok sorulan sorulardan biri: "Kaç gram kağıt seçmeliyim?" Gramaj (gr/m²) kağıdın kalınlığını ve dolayısıyla kartın eldeki his değerini belirler. İşte pratik bir rehber.
 
@@ -118,7 +118,7 @@ Dosya hazırlığı konusunda emin değilseniz [Baskıya Hazır Dosya Nasıl Haz
       "Baskıda renk kayması, pikselli görsel veya kırpılmış yazı istemiyorsanız dosyanızı doğru hazırlamalısınız. Adım adım baskıya hazır dosya rehberi.",
     seoTitle: "Baskıya Hazır Dosya Nasıl Hazırlanır? CMYK & 300 DPI | Markala",
     seoDescription:
-      "Baskıya hazır dosya nasıl hazırlanır? CMYK renk uzayı, 300 DPI çözünürlük, 2 mm taşma payı, güvenli alan ve PDF çıktısı — adım adım matbaa rehberi.",
+      "Baskıya hazır dosya nasıl hazırlanır? CMYK renk uzayı, 300 DPI çözünürlük, 2 mm taşma payı, güvenli alan ve PDF çıktısı, adım adım matbaa rehberi.",
     tags: ["dosya hazırlama", "cmyk", "baskı rehberi"],
     content: `Baskıya giden bir dosyadaki hata, ekranınızda fark edilmese de basılan binlerce üründe ortaya çıkar. Bu rehber, dosyanızı sorunsuz baskıya hazırlamak için gereken her şeyi adım adım anlatır.
 
@@ -157,7 +157,7 @@ Tüm bunlar gözünüzü korkuttuysa endişelenmeyin: dosyanızı bize gönderin
       "Dış mekân reklamında yanlış malzeme, rüzgârda yırtılan ya da soluk bir tabelayla sonuçlanır. Vinil ve mesh brandanın farklarını ve nerede hangisini kullanacağınızı anlattık.",
     seoTitle: "Vinil Branda mı Mesh Branda mı? Dış Mekân Baskı Rehberi | Markala",
     seoDescription:
-      "Vinil branda ve mesh branda farkı nedir? Rüzgârlı cepheler, bina giydirme, açılış ve etkinlikler için doğru branda seçimi — gramaj ve dayanıklılık rehberi.",
+      "Vinil branda ve mesh branda farkı nedir? Rüzgârlı cepheler, bina giydirme, açılış ve etkinlikler için doğru branda seçimi, gramaj ve dayanıklılık rehberi.",
     tags: ["branda", "dış mekan", "baskı rehberi"],
     content: `Bir mağaza açılışı, cephe giydirmesi ya da etkinlik için branda bastıracaksınız. Peki vinil mi, mesh mi? Yanlış seçim, rüzgârda savrulan ya da kısa sürede solan bir tabelayla sonuçlanabilir. İşte pratik karar rehberi.
 
@@ -193,7 +193,7 @@ Vinil brandalarda 280 gr ekonomik işler için, 440 gr ise uzun ömürlü ve dah
       "Ekranda canlı görünen tasarım baskıda neden sönük çıkar? CMYK ile RGB farkını, matbaanın neden CMYK ile bastığını ve Photoshop/Illustrator'da doğru renk ayarını anlattık.",
     seoTitle: "CMYK Nedir? Baskıda Doğru Renk Modeli Rehberi | Markala",
     seoDescription:
-      "CMYK nedir, RGB'den farkı ne? Baskıda neden CMYK kullanılır, Photoshop ve Illustrator'da CMYK ayarı nasıl yapılır, en sık renk hataları — matbaa gözünden renk yönetimi rehberi.",
+      "CMYK nedir, RGB'den farkı ne? Baskıda neden CMYK kullanılır, Photoshop ve Illustrator'da CMYK ayarı nasıl yapılır, en sık renk hataları, matbaa gözünden renk yönetimi rehberi.",
     tags: ["cmyk", "renk yönetimi", "baskı rehberi"],
     content: `Tasarımınız ekranda pırıl pırıl duruyordu ama baskıdan sönük, mavimsi ya da soluk çıktı. Bu, matbaanın en sık karşılaştığı sorundur ve neredeyse her zaman tek bir sebebi vardır: yanlış renk modeli. Bu rehberde CMYK'nın ne olduğunu, RGB'den neden farklı olduğunu ve dosyanızı baskıya doğru renklerle nasıl hazırlayacağınızı adım adım anlatıyoruz.
 
@@ -266,7 +266,7 @@ Renk modeli, baskıya hazır dosyanın yalnızca bir parçasıdır. Çözünürl
       "Kurumsal bir kartvizit, markanızın cebe giren temsilcisidir. Doğru ölçü, taşma payı, güvenli alan, font boyutu, gramaj ve laminasyon seçimini tek rehberde topladık.",
     seoTitle: "Kurumsal Kartvizit Tasarımı: 2024 Rehberi | Markala",
     seoDescription:
-      "Kurumsal kartvizit tasarımı rehberi: 85x55 mm standart ölçü, taşma payı ve güvenli alan, font boyutu, kağıt gramajı ve laminasyon (selefon) seçimi — baskıya hazır kartvizit için.",
+      "Kurumsal kartvizit tasarımı rehberi: 85x55 mm standart ölçü, taşma payı ve güvenli alan, font boyutu, kağıt gramajı ve laminasyon (selefon) seçimi, baskıya hazır kartvizit için.",
     tags: ["kartvizit", "kurumsal", "tasarım", "baskı rehberi"],
     content: `Kurumsal kartvizit, çoğu zaman bir markanın cebe giren tek fiziksel temsilcisidir. Toplantıdan çıkarken bırakılan o küçük karton, e-postadan çok daha uzun süre saklanır. Bu yüzden tasarımı da kurumsal kimliğiniz kadar ciddiye alınmayı hak eder. İşte 2024 için güncel, uçtan uca kartvizit tasarım rehberi.
 
@@ -353,7 +353,7 @@ Tasarımınız hazırsa [Klasik Kartvizit](/urun/klasik-kartvizit) sayfasından 
       "Broşür baskısında katlama türü, kağıt seçimi ve dosya hazırlığı sonucun kalitesini belirler. İkili, üçlü ve akordeon katlamadan minimum siparişe kadar her adımı anlattık.",
     seoTitle: "Broşür Baskısı Nasıl Yapılır? Adım Adım Kılavuz | Markala",
     seoDescription:
-      "Broşür baskısı nasıl yapılır? Katlama türleri (ikili, üçlü, akordeon), dosya hazırlama, kağıt ve gramaj seçimi, minimum sipariş adedi — adım adım broşür baskı rehberi.",
+      "Broşür baskısı nasıl yapılır? Katlama türleri (ikili, üçlü, akordeon), dosya hazırlama, kağıt ve gramaj seçimi, minimum sipariş adedi, adım adım broşür baskı rehberi.",
     tags: ["broşür", "katlama", "baskı rehberi"],
     content: `Broşür, sınırlı bir alana çok şey sığdırmanız gereken zorlu bir baskı ürünüdür. Doğru katlama, doğru kâğıt ve doğru hazırlanmış bir dosya, broşürü profesyonel bir satış aracına dönüştürür; yanlışları ise para ve zaman kaybına. Bu kılavuz, broşür baskısını adım adım anlatır.
 
@@ -400,7 +400,7 @@ Broşürü panellere bölünmüş bir hikâye gibi düşünün. **Kapak paneli**
 Üçlü (rollfold) katlamada içe kıvrılan panel, dıştaki panellerden yaklaşık 2 mm daha dar tasarlanır. Bu küçük fark ihmal edilirse katlama sırasında panel şişer ya da yazılar kıvrımda sıkışır. İyi bir matbaa size hazır bir şablon (die-line) verir; tasarımı bu şablon üzerine kurmak en güvenli yoldur.
 
 ## Selefon ve son işlemler
-Broşürlerde de selefon hem görünümü hem dayanıklılığı artırır. Sık elden geçecek bir broşürde mat ya da parlak selefon, kâğıdın çabuk yıpranmasını önler. Ayrıca yoğun katlama yapılan işlerde selefon, katlama çizgisinde kâğıdın çatlamasını — özellikle koyu zeminlerde beliren beyaz çizgiyi — azaltır.
+Broşürlerde de selefon hem görünümü hem dayanıklılığı artırır. Sık elden geçecek bir broşürde mat ya da parlak selefon, kâğıdın çabuk yıpranmasını önler. Ayrıca yoğun katlama yapılan işlerde selefon, katlama çizgisinde kâğıdın çatlamasını, özellikle koyu zeminlerde beliren beyaz çizgiyi, azaltır.
 
 ## Broşür mü, katalog mu?
 Anlatacaklarınız tek yaprağa sığmıyorsa, çok kırımlı bir broşürü zorlamak yerine dikişli/telli bir katalog düşünün. Genel kural: 6 panele kadar broşür pratik ve ekonomiktir; daha fazla içerik, sayfalı bir katalog formatında daha okunur olur.
@@ -424,7 +424,7 @@ Hazır mısınız? Ölçü, gramaj ve adete göre anlık fiyatı görmek için [
       "Roll-up banner, birkaç saniyede mesajını iletmek zorunda olan bir reklam aracıdır. Standart ölçüleri, doğru çözünürlüğü, görsel hiyerarşiyi ve malzeme seçimini anlattık.",
     seoTitle: "Roll-Up Banner Ölçüleri ve Tasarım Rehberi | Markala",
     seoDescription:
-      "Roll-up banner standart ölçüleri (85x200, 100x200 cm), doğru çözünürlük (neden 150 DPI yeterli), görsel hiyerarşi ve malzeme seçimi — profesyonel roll-up tasarım rehberi.",
+      "Roll-up banner standart ölçüleri (85x200, 100x200 cm), doğru çözünürlük (neden 150 DPI yeterli), görsel hiyerarşi ve malzeme seçimi, profesyonel roll-up tasarım rehberi.",
     tags: ["roll-up", "banner", "tasarım", "baskı rehberi"],
     content: `Roll-up banner; fuar, mağaza girişi, etkinlik ve toplantı sahnelerinin vazgeçilmez reklam aracıdır. Ancak izleyicinin ona ayırdığı süre çoğu zaman birkaç saniyedir. Bu yüzden roll-up tasarımı, "az ile çok anlatma" sanatıdır. İşte ölçüden malzemeye kadar bilmeniz gereken her şey.
 
@@ -526,7 +526,7 @@ Baskıda çevresel etki giderek daha önemli. Online matbaalar siparişleri topl
 - **Şeffaf fiyat, geniş ürün yelpazesi, tutarlı kalite ve kapıya teslim** istiyorsanız: **online matbaa** öne çıkar.
 
 ## İki dünyanın en iyisi
-Aslında bu bir "ya o ya bu" seçimi olmak zorunda değil. [Markala](/) tam da bu iki dünyayı birleştirmek için kuruldu: fiyatı anında ekranda görürsünüz, ürünü konfigüratörde canlı önizlersiniz, gerektiğinde tasarım desteği alırsınız ve iş kapınıza gelir — üstelik gerçek matbaa kalitesiyle. Yani yerel matbaanın güvenini, online matbaanın konforuyla aynı yerde bulursunuz.
+Aslında bu bir "ya o ya bu" seçimi olmak zorunda değil. [Markala](/) tam da bu iki dünyayı birleştirmek için kuruldu: fiyatı anında ekranda görürsünüz, ürünü konfigüratörde canlı önizlersiniz, gerektiğinde tasarım desteği alırsınız ve iş kapınıza gelir, üstelik gerçek matbaa kalitesiyle. Yani yerel matbaanın güvenini, online matbaanın konforuyla aynı yerde bulursunuz.
 
 ## Özet
 Doğru seçim, işinizin niteliğine bağlıdır. Standart ve tekrar eden baskı ihtiyaçlarında online matbaanın şeffaflığı ve tutarlılığı; çok özel ve acil işlerde yerel atölyenin esnekliği öne çıkar.

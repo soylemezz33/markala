@@ -18,17 +18,17 @@ import { GuideFaqSection, asOfLabel } from "../_shared";
 export const revalidate = 3600;
 
 const PAGE_PATH = "/rehber/kanvas-tablo-baski-fiyatlari-2026";
-const BASLIK = "Kanvas Tablo Baskı Fiyatları 2026 — Ebat Seçimi ve Fotoğraf Kalitesi";
+const BASLIK = "Kanvas Tablo Baskı Fiyatları 2026: Ebat Seçimi ve Fotoğraf Kalitesi";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Kanvas Tablo Baskı Fiyatları 2026 — m² Fiyatı ve Ebat Rehberi",
+    title: "Kanvas Tablo Baskı Fiyatları 2026 | m² Fiyatı ve Ebat Rehberi",
     description:
       "Kanvas (tuval) tablo baskı fiyatları 2026: hangi ebat nereye uyar, fotoğrafın kaç piksel olmalı, solvent mi UV mi? Popüler ebat fiyat tablosu, KDV dahil.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Kanvas Tablo Baskı Fiyatları 2026 — Ebat ve Kalite Rehberi",
+      title: "Kanvas Tablo Baskı Fiyatları 2026 | Ebat ve Kalite Rehberi",
       description:
         "Tuval baskıda ebat seçimi, fotoğraf çözünürlüğü ve m² fiyat hesabı.",
       url: PAGE_PATH,
@@ -52,7 +52,7 @@ export default async function KanvasTabloFiyatlariPage() {
     getProductBySlug("duvar-kagidi-baski"),
   ]);
   if (!kanvas || getDisplayPrice(kanvas) <= 0) {
-    throw new Error("rehber/kanvas: ürün fiyatsız/boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/kanvas: ürün fiyatsız/boş döndü (API blip?), stale ISR korunur");
   }
   const m2Ham = kanvas.displayPrice ?? 0;
   const m2 = getDisplayPrice(kanvas);
@@ -70,11 +70,11 @@ export default async function KanvasTabloFiyatlariPage() {
   const faqs = [
     {
       q: "Kanvas tablo baskı m² fiyatı ne kadar?",
-      a: `${asOf} itibarıyla solvent baskıda m² ${formatPriceWithSymbol(m2)} (KDV dahil). Fiyat alan üzerinden hesaplanır: en × boy metre cinsinden çarpılır. Hesaplama minimum 1 m² üzerinden yapılır — 30×40 cm gibi küçük bir tablo da 1 m² fiyatıyla hesaplanır, çünkü baskı hazırlığı ebattan bağımsız sabit maliyettir. Bu yüzden küçük tabloları tek tek değil, birkaçını aynı siparişte toplamak daha avantajlıdır.`,
+      a: `${asOf} itibarıyla solvent baskıda m² ${formatPriceWithSymbol(m2)} (KDV dahil). Fiyat alan üzerinden hesaplanır: en × boy metre cinsinden çarpılır. Hesaplama minimum 1 m² üzerinden yapılır, 30×40 cm gibi küçük bir tablo da 1 m² fiyatıyla hesaplanır, çünkü baskı hazırlığı ebattan bağımsız sabit maliyettir. Bu yüzden küçük tabloları tek tek değil, birkaçını aynı siparişte toplamak daha avantajlıdır.`,
     },
     {
       q: "Fotoğrafım yeterli kalitede mi?",
-      a: "Kanvas dokulu bir yüzeydir ve dokusu ince detayı bir miktar yumuşatır, bu yüzden fotoğraf baskısı kadar yüksek çözünürlük gerekmez. Gerçek boyutunda 100 dpi yeterlidir. Pratik ölçüt: santimetre × 40 = gereken piksel. 70×50 cm bir tablo için yaklaşık 2.800 × 2.000 piksel gerekir — bu, günümüzdeki çoğu telefon fotoğrafının üzerindedir. Aşağıdaki tabloda her ebat için gereken piksel yazılıdır.",
+      a: "Kanvas dokulu bir yüzeydir ve dokusu ince detayı bir miktar yumuşatır, bu yüzden fotoğraf baskısı kadar yüksek çözünürlük gerekmez. Gerçek boyutunda 100 dpi yeterlidir. Pratik ölçüt: santimetre × 40 = gereken piksel. 70×50 cm bir tablo için yaklaşık 2.800 × 2.000 piksel gerekir, bu, günümüzdeki çoğu telefon fotoğrafının üzerindedir. Aşağıdaki tabloda her ebat için gereken piksel yazılıdır.",
     },
     {
       q: "Şase (çıta) dahil mi?",
@@ -82,11 +82,11 @@ export default async function KanvasTabloFiyatlariPage() {
     },
     {
       q: "Solvent baskı mı UV baskı mı?",
-      a: "Solvent baskı ekonomiktir ve çoğu iş için yeterlidir. UV baskı renkleri daha canlı verir ve kokusuzdur — yatak odası, çocuk odası gibi kapalı alanlara asılacak tablolarda ve renk canlılığının öne çıktığı fotoğraflarda tercih edilir. İkisinin de m² fiyatı ürün sayfasında yan yana görünür.",
+      a: "Solvent baskı ekonomiktir ve çoğu iş için yeterlidir. UV baskı renkleri daha canlı verir ve kokusuzdur, yatak odası, çocuk odası gibi kapalı alanlara asılacak tablolarda ve renk canlılığının öne çıktığı fotoğraflarda tercih edilir. İkisinin de m² fiyatı ürün sayfasında yan yana görünür.",
     },
     {
       q: "Hangi ebadı seçmeliyim?",
-      a: "Pratik kural: tablo, asılacağı mobilyanın (kanepe, konsol, yatak başı) genişliğinin yaklaşık üçte ikisi kadar olmalı. 200 cm bir kanepenin üstüne 130-150 cm genişliğinde bir tablo oturur. Tek başına duran boş bir duvarda ise duvar genişliğinin yarısı iyi bir başlangıçtır. Dikey fotoğrafları dikey, manzaraları yatay ebatta bastır — fotoğrafın oranını değiştirmek kenarlardan kesilmesine yol açar.",
+      a: "Pratik kural: tablo, asılacağı mobilyanın (kanepe, konsol, yatak başı) genişliğinin yaklaşık üçte ikisi kadar olmalı. 200 cm bir kanepenin üstüne 130-150 cm genişliğinde bir tablo oturur. Tek başına duran boş bir duvarda ise duvar genişliğinin yarısı iyi bir başlangıçtır. Dikey fotoğrafları dikey, manzaraları yatay ebatta bastır, fotoğrafın oranını değiştirmek kenarlardan kesilmesine yol açar.",
     },
     {
       q: "Tuval mi duvar kağıdı mı?",
@@ -127,7 +127,7 @@ export default async function KanvasTabloFiyatlariPage() {
           <p className="mt-4 text-lg text-ink-700">
             Fotoğrafın tuval kumaşa basılır, dokusu hissedilen mat bir yüzey verir. {asOf}{" "}
             itibarıyla <strong className="text-ink-900">{formatPriceWithSymbol(m2)}/m²</strong>
-            &apos;den başlar — KDV dahil.
+            &apos;den başlar, KDV dahil.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">

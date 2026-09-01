@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
   const html = renderEmail({
     title: "Yeni Teklif Talebi",
     intro: `Talep No: ${escapeHtml(ticketId)}`,
-    preheader: `${escapeHtml(name)} — ${escapeHtml(companyName || sector || "teklif")}`,
+    preheader: `${escapeHtml(name)} - ${escapeHtml(companyName || sector || "teklif")}`,
     bodyHtml: `${rows}
       <div style="margin-top:18px;padding-top:16px;border-top:1px solid #e7e5e4">
         <p style="margin:0 0 6px;color:#78716c;font-size:13px">Not</p>
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     console.error(
-      `[teklif-al] mail gönderilemedi (${ticketId}) — talep LOGLANDI:`,
+      `[teklif-al] mail gönderilemedi (${ticketId}), talep LOGLANDI:`,
       (err as Error).message,
       JSON.stringify({ ticketId, name, email, phone, companyName, sector, products, budget, quantity, message }),
     );

@@ -279,11 +279,11 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
   // CTA "Teklif Al"a düştüğünde sebebi açıkla (buton sessizce değişmesin).
   const ctaReason = useMemo(() => {
     // Yükleme sebebi ürün tipinden bağımsız (area olmayanlarda da olur) → önce o.
-    if (uploadPending) return "Tasarım dosyanız yükleniyor — bitince sepete ekleyebilirsiniz.";
+    if (uploadPending) return "Tasarım dosyanız yükleniyor, bitince sepete ekleyebilirsiniz.";
     if (!isArea || canBuy) return null;
     if (!hasValidSize) return "Fiyat için en ve boy ölçüsünü girin.";
-    if (areaMaxExceeded) return "Bu ölçü tek parça üretim sınırını aşıyor — özel teklif alın.";
-    if (areaMinViolated) return "Girilen ölçü bu ürünün üretim minimumunun altında — ölçüyü büyütün.";
+    if (areaMaxExceeded) return "Bu ölçü tek parça üretim sınırını aşıyor, özel teklif alın.";
+    if (areaMinViolated) return "Girilen ölçü bu ürünün üretim minimumunun altında, ölçüyü büyütün.";
     return null;
   }, [isArea, canBuy, hasValidSize, areaMaxExceeded, areaMinViolated, uploadPending]);
 
@@ -553,14 +553,14 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
             {canBuy && (
               <p className="text-xs text-ink-500 flex items-center gap-1.5">
                 <Truck size={14} weight="fill" className="text-ink-400" />
-                Kargo {shippingInfo.fee}₺ — {shippingInfo.freeThreshold.toLocaleString("tr-TR")}₺ üzeri ücretsiz
+                Kargo {shippingInfo.fee}₺, {shippingInfo.freeThreshold.toLocaleString("tr-TR")}₺ üzeri ücretsiz
               </p>
             )}
 
             <p className="text-[11px] leading-relaxed text-ink-500">
               {canBuy
                 ? "Sipariş sonrası ekibimiz sizinle iletişime geçer; baskı, tasarımınızı onaylamanızın ardından başlar."
-                : "Teklif Al'a tıkla, 24 saat içinde sana dönelim — hiçbir ödeme veya taahhüt yok."}
+                : "Teklif Al'a tıkla, 24 saat içinde sana dönelim, hiçbir ödeme veya taahhüt yok."}
             </p>
           </div>
         </aside>

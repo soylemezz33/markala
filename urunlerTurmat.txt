@@ -1,0 +1,1916 @@
+<div id="content" class="clearfix">
+                          
+
+<!--<div id='inline_content_brosur' style='padding:10px; background:#fff; text-align:center;'>
+  <p><strong style="color:red;font-size:35px">Lütfen Dikkat!.</strong></p>
+  <p style="color:red;font-size:25px">Şuan Türkiye'deki Kağıt Stok Sıkıntısından Ötürü Ekonomik Ebat Broşürler, 128 gr Kuşe Kağıt Bulamadığımız Durumlarda 115 gr Kuşe Kağıda Basılacaktır.</p>
+</div>-->
+
+<style>
+  .download{
+    width:1100px;
+    margin:auto;
+  }
+  .download .container table td {
+    font-size:14px !important;
+  }
+  .download .container h4 {
+    font-size:22px;
+  }
+  ul.tabul{
+    margin: 0px;
+    padding: 0px;
+  }
+  ul.tabul li{
+    box-sizing: border-box;
+    padding-left:5px;
+    padding-right:5px;
+    padding-top:20px;
+    cursor:pointer;
+  }
+  .download .active{
+    border-top:1px solid #4DB06F;
+    border-left:1px solid #4DB06F;
+    border-right:1px solid #4DB06F;
+    border-top-left-radius:12px;
+    border-top-right-radius:12px;
+    height:60px;
+    background-color:#4DB06F;
+  }
+  /*download .active:last-child{
+    background-color:#fca95f;
+    border-top:1px solid #fca95f;
+    border-left:1px solid #fca95f;
+    border-right:1px solid #fca95f;
+  }*/
+  .download .active a{
+    color:#FFF;
+  }
+  .col-lg-8{
+    float:left;
+    width: 61%;
+  }
+  .col-lg-7{
+    float:left;
+    width: 58.33%;
+  }
+  .col-lg-5{
+    float:left;
+    width: 41.67%;
+  }
+  .col-lg-4{
+    float:left;
+    width: 33%;
+  }
+  .col-lg-6{
+    float:left;
+    width: 50%;
+  }
+  .col-lg-12 {
+    width: 100%;
+  }
+  
+  .clear{
+    clear:both;
+  }
+
+  .row {
+    margin-right: -15px;
+    margin-left: -15px;
+}
+.col-lg-1, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-md-1, .col-md-10, .col-md-11, .col-md-12, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-xs-1, .col-xs-10, .col-xs-11, .col-xs-12, .col-xs-2, .col-xs-3, .col-xs-4, .col-xs-5, .col-xs-6, .col-xs-7, .col-xs-8, .col-xs-9 {
+    min-height: 1px;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+.row, .col-lg-12, .col-lg-6, table, tr, td,th{
+  box-sizing: border-box;
+}
+.text-center{
+  text-align:center;
+}
+
+</style>
+<section class="download">
+  <div class="container">
+    <div class="row" style="margin-top:20px;">
+
+      <!--<div class="col-lg-12">
+        <div class="row" style="background-color:red; color:#FFF; border-radius:6px;margin-bottom:15px">
+          <div class="col-lg-12 text-center" style="font-size:30px;">Dünya genelinde hammadde fiyatlarına gelen zamlardan ötürü fiyatlarımızda güncelleme yapmak zorunda kaldık.<br> Bu güncelleme bizim tercihimiz değildir!..</div>
+        </div>
+      </div>-->
+
+      <!--<div class="col-lg-12">
+        <div class="row" style="background-color:red; color:#FFF; border-radius:6px;margin-bottom:15px">
+          <div class="col-lg-12 text-center" style="font-size:30px;">Lütfen Dikkat ! 5.000 ve 10.000 Broşürler Artık 115.gr Olarak Basılacaktır.<br>MNA, AY, GY ürünümüz artık 350 gr Bristol Kağıda Basılacaktır.<br>Z1 ürünümüz artık 1.000 Adet olarak basılacaktır.</div>
+        </div>
+      </div>-->
+
+      <!--<div class="col-lg-12">
+        <div class="row" style="background-color:red; color:#FFF; border-radius:6px;margin-bottom:15px">
+          <div class="col-lg-12 text-center" style="font-size:30px;">MND500, KLD500 olarak 2 adet yeni ürün uygulamaya alınmıştır. 500 Adet Olarak Basılacaktır.</div>
+        </div>
+      </div>-->
+
+      <div class="col-lg-12">
+                <div style="clear:both"></div>
+        <div id="priceList" style="margin-top:0px;">
+                    <div class="col-lg-12">
+            <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Kartvizit</h4></div>
+              <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">Ebat 82x52 mm - 1000 Adet - Çok Renkli</div>
+              <div class="clear"></div>
+            </div>
+          </div>
+          <table width="100%" class="table-bordered">
+            <thead>
+              <tr style="background-color:#000; color:#FFF;">
+                <th width="15%" style="font-size:19px; text-align:right; padding-right:35px;">KOD</th>
+                <th width="10%" class="text-center" style="font-size:19px;">FİYAT</th>
+                <th class="text-center" style="font-size:19px;">ÖZELLİKLER</th>
+                <!--<th width="15%" class="text-center">SELEFON</th>-->
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="4">
+                  <table width="100%" class="table-bordered">
+                    
+                        <tbody><tr><td rowspan="6" width="5%" style="background-color:blue;color:#FFF; font-size:22px;"><p style="-webkit-transform: rotate(-90deg);">EKO</p></td>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">NK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">220 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">250 gr. Bristol Tek Yön Renkli Parlak Selefonlu</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">NKA</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">240 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">250 gr. Bristol Tek Yön Renkli Parlak Selefonlu Arkası Tek Renk Siyah</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">NSK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">200 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">300 gr. Bristol Tek Yön Renkli Arkası Tek Renk Siyah</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">MNA</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">260 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Bristol Tek Yön Renkli Mat Selefonlu Arkası Tek renk Siyah</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">CYP</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">320 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Çift Yön Renkli Parlak Selefonlu</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">CYM</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">310 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Çift Yön Renkli Mat Selefonlu</td>
+                        </tr>
+                        
+                        <tr><td rowspan="10" width="5%" style="background-color:red;color:#FFF; font-size:22px;"><p style="-webkit-transform: rotate(-90deg);">LAK</p></td>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">KL</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">320 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Tek Yön Renkli Mat Selefonlu Kabartma Laklı</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">CYML4</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">400 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">400 gr. Kuşe Çift Yön Renkli Mat Selefonlu Laklı</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">O-COK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">430 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Çift Yön Renkli Mat Selefonlu Kabartma Laklı Oval Kesim</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">S-COK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">500 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Çift Yön Renkli Mat Selefonlu Kabartma Laklı Özel Kesim</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">O-SEK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">650 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">700 gr. Sıvama Mat Selefon Kabartma Laklı Oval Kesim Çift Yön</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">EKO-SEK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">600 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">A.Bristol Sıvama Mat Selefon Kabartma Laklı Oval Kesim Çift Yön, Bitmiş Ebat 82x50</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">S-SEK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">750 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">700 gr. Sıvama Mat Selefon Kabartma Laklı Özel Kesim Çift Yön</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">A-SEK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1000 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">700 gr. Sıvama Mat Selefon Kabartma Laklı Tek Yön Altın Yaldız Özel Kesim Çift Yön</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">AC-SEK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1100 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">700 gr. Sıvama Mat Selefon Kabartma Laklı Çift Yön Altın Yaldız Özel Kesim Çift Yön</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">TANK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">715 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">800 gr. Bristol Sıvama Mat Selefon Kabartma Laklı Özel Kesim Çift Yön</td>
+                        </tr>
+                        
+                        <tr><td rowspan="3" width="5%" style="background-color:#e37321;color:#FFF; font-size:22px;"><p style="-webkit-transform: rotate(-90deg);">VİP</p></td>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">AY</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">600 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Bristol Tek Yön Renkli Mat Selefonlu Altın Yaldızlı Arkası Tek Renk Siyah</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">GY</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">620 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Bristol Tek Yön Renkli Mat Selefonlu Gümüş Yaldızlı Arkası Tek Renk Siyah</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">VIP</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">800 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Çift Yön Renkli Mat Selefonlu Özel Kesim Laklı - Ön Yüz Altın Yaldız</td>
+                        </tr>
+                        
+                        <tr><td rowspan="2" width="5%" style="background-color:#8d3f00;color:#FFF; font-size:22px;"><p style="-webkit-transform: rotate(-90deg);">FAN</p></td>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">FAN</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">450 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">280 gr. Tuale Renkli Tek Yön</td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">F-SEK</td>
+                          <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">780 <i class="fa fa-try"></i></td>
+                          <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">560 gr. Tuale Renkli Çift Yön</td>
+                        </tr>
+                                          </tbody></table>
+                </td>
+                
+              </tr>
+              <tr>
+              
+              </tr>
+            </tbody>
+          </table>
+          <!--<div class="row">
+          <div class="col-lg-12" style="margin-top:15px;">
+            <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="col-lg-8"><h4>Broşür</h4></div>
+              <div class="col-lg-4 text-right"  style="margin-top: 8px; font-size:16px !important;">128 gr. Kuşe Çift Yön Renkli</div>
+              <div class="clear"></div>
+            </div>
+          </div>
+          <div class="col-lg-6" style="padding:0px;">
+            <table width="100%" class="table-bordered">
+                          </table>
+          </div>
+          <div class="col-lg-6" style="padding:0px;">
+            <table width="100%" class="table-bordered">
+                          </table>
+          </div>
+          </div>-->
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+          <div class="row">
+          <div class="col-lg-12" style="margin-top:15px;">
+            <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Broşür</h4></div>
+              <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">115 gr. Kuşe Çift Yön Renkli</div>
+              <div class="clear"></div>
+            </div>
+          </div>
+          <div class="col-lg-6" style="padding:0px;">
+            <table width="100%" class="table-bordered">
+              
+                <tbody><tr><td rowspan="4" width="10%" style="background-color:blue;color:#FFF; font-size:20px;"><p class="text-center">A7</p><p style="-webkit-transform: rotate(-90deg); font-size:12px !important;">9.5x20 cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">1CA7</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">800 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">2CA7</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1100 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">5CA7</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1950 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">5000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">10CA7</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3700 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10000 Adet</td>
+                </tr>
+                
+                <tr><td rowspan="4" width="10%" style="background-color:#fb8615;color:#FFF; font-size:20px;"><p class="text-center">A5</p><p style="-webkit-transform: rotate(-90deg); font-size:12px !important;">14x20 cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">1CA5</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">900 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">2CA5</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1200 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">5CA5</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2100 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">5000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">10CA5</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3900 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">10000 Adet</td>
+                </tr>
+                            </tbody></table>
+          </div>
+          <div class="col-lg-6" style="padding:0px;">
+            <table width="100%" class="table-bordered">
+              
+                <tbody><tr><td rowspan="4" width="10%" style="background-color:red;color:#FFF; font-size:20px;"><p class="text-center">A4</p><p style="-webkit-transform: rotate(-90deg); font-size:12px !important;">20x28 cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">1CA4</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1600 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">2CA4</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2200 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">5CA4</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3950 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">5000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">10CA4</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">7600 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">10000 Adet</td>
+                </tr>
+                
+                <tr><td rowspan="4" width="10%" style="background-color:green;color:#FFF; font-size:20px;"><p class="text-center">A3</p><p style="-webkit-transform: rotate(-90deg); font-size:12px !important;">28x40 cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">1CA3</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3100 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">2CA3</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4300 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">5CA3</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">7800 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">5000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">10CA3</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">14900 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">10000 Adet</td>
+                </tr>
+                            </tbody></table>
+          </div>
+          </div>
+
+          
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+            <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Pro Broşür</h4></div>
+              <div class="col-lg-4 text-right" style="margin-top: 2px; font-size:16px !important;">128 gr. Kuşe Çift Yön Renkli<br>Tam Ebat, Tam Gramaj (Başka Yerde Yok)</div>
+              <div class="clear"></div>
+            </div>
+          </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="2" width="10%" style="background-color:blue;color:#FFF; font-size:20px;"><p class="text-center">A7</p><p style="font-size:12px !important;" class="text-center">10x21 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">PRO1A7</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">PRO2A7</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1250 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                  
+                  <tr><td rowspan="2" width="10%" style="background-color:#fb8615;color:#FFF; font-size:20px;"><p class="text-center">A5</p><p style="font-size:12px !important;" class="text-center">15x21 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">PRO1A5</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1100 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">PRO2A5</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1450 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="2" width="10%" style="background-color:red;color:#FFF; font-size:20px;"><p class="text-center">A4</p><p style="font-size:12px !important;" class="text-center">21x30 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">PRO1A4</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1950 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">PRO2A4</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2600 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                  
+                  <tr><td rowspan="2" width="10%" style="background-color:green;color:#FFF; font-size:20px;"><p class="text-center">A3</p><p style="font-size:12px !important;" class="text-center">30x42 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">PRO1A3</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3800 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">PRO2A3</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+
+          
+          <div class="row">
+          <div class="col-lg-12" style="margin-top:15px;">
+            <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Selefonlu Broşür</h4></div>
+              <div class="col-lg-4 text-right" style="margin-top: 2px; font-size:16px !important;">200 gr. Kuşe Çift Yön Renkli<br>Parlak Selefonlu</div>
+              <div class="clear"></div>
+            </div>
+          </div>
+          <div class="col-lg-6" style="padding:0px;">
+            <table width="100%" class="table-bordered">
+              
+                <tbody><tr><td rowspan="3" width="10%" style="background-color:blue;color:#FFF; font-size:20px;"><p class="text-center">A7</p><p style="font-size:12px !important;" class="text-center">10x21 <br> cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">CBS1</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3300 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">3000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">CBS2</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6300 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">6000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">CBS3</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">12300 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">12000 Adet</td>
+                </tr>
+                
+                <tr><td rowspan="3" width="10%" style="background-color:#fb8615;color:#FFF; font-size:20px;"><p class="text-center">A5</p><p style="font-size:12px !important;" class="text-center">15x21 <br> cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">CBS4</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3200 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">CBS5</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6200 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">CBS6</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">9200 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">6000 Adet</td>
+                </tr>
+                            </tbody></table>
+          </div>
+          <div class="col-lg-6" style="padding:0px;">
+            <table width="100%" class="table-bordered">
+              
+                <tbody><tr><td rowspan="3" width="10%" style="background-color:red;color:#FFF; font-size:20px;"><p class="text-center">A4</p><p style="font-size:12px !important;" class="text-center">21x30 <br> cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">CBS7</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3100 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">CBS8</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6000 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">CBS9</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">11500 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                </tr>
+                
+                <tr><td rowspan="3" width="10%" style="background-color:green;color:#FFF; font-size:20px;"><p class="text-center">A3</p><p style="font-size:12px !important;" class="text-center">30x42 <br> cm</p></td>
+                  <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">CBS10</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6000 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">CBS11</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">11500 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                </tr>
+                
+                <tr>
+                  <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">CBS12</td>
+                  <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">21000 <i class="fa fa-try"></i></td>
+                  <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                </tr>
+                            </tbody></table>
+          </div>
+          </div>
+
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">El ilanı</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">105 gr. Kuşe Tek Yön Renkli</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+
+                
+                  <tbody><tr><td rowspan="4" width="10%" style="background-color:blue;color:#FFF; font-size:20px;"><p class="text-center">A7</p><p style="font-size:12px !important;" class="text-center">9.2x20 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">ELI3</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1850 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">6000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">ELI4</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3600 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">12000 Adet</td>
+                  </tr>
+                  <tr>
+                    <td width="20%" class="text-center" style="height: 35px;background-color:lightblue;color:#FF0000;font-size:17px;">&nbsp;</td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">&nbsp;</td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">&nbsp;</td>
+                  </tr><tr>
+                    <td width="20%" class="text-center" style="height: 35px;background-color:lightblue;color:#FF0000;font-size:17px;">&nbsp;</td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">&nbsp;</td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">&nbsp;</td>
+                  </tr>
+                  <tr><td rowspan="4" width="10%" style="background-color:#fb8615;color:#FFF; font-size:20px;"><p class="text-center">A5</p><p style="font-size:12px !important;" class="text-center">13.8x20 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">ELI5</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">900 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">ELI6</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1800 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">ELI7</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2600 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">6000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:orange;color:#FF0000;font-size:17px;">ELI8</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3400 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">8000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="4" width="10%" style="background-color:red;color:#FFF; font-size:20px;"><p class="text-center">A4</p><p style="font-size:12px !important;" class="text-center">19x27.2 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">ELI9</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1650 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">ELI10</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3100 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">ELI11</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4600 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">6000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">ELI12</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">8000 Adet</td>
+                  </tr>
+                  
+                  <tr><td rowspan="4" width="10%" style="background-color:green;color:#FFF; font-size:20px;"><p class="text-center">A3</p><p style="font-size:12px !important;" class="text-center">27,5x40 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">ELI13</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3100 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">ELI14</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">ELI15</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">9000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">6000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#c7fec5;color:#FF0000;font-size:17px;">ELI16</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">11200 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#c7fec5;color:#000;padding-left:5px;font-size:19px;">8000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Afişler</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">105 gr. Kuşe Tek Yön Renkli</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="3" width="10%" style="background-color:blue;color:#FFF; font-size:20px;"><p class="text-center">34 <br> x <br> 49</p></td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">AF1</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1950 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">250 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">AF2</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2500 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">500 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">AF3</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="3" width="10%" style="background-color:red;color:#FFF; font-size:20px;"><p class="text-center">49 <br> x <br> 69</p></td>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">AF4</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3300 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">250 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">AF5</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3850 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">500 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">AF6</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5200 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Antetli</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">90 gr. 1.Hamur Tek Yön Renkli</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="3" width="10%" style="background-color:blue;color:#FFF; font-size:20px;"><p class="text-center">A5</p><p style="font-size:12px !important;" class="text-center">15x21 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">ANT1</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2100 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">ANT2</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">8000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">ANT3</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5850 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">12000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="3" width="10%" style="background-color:red;color:#FFF; font-size:20px;"><p class="text-center">A4</p><p style="font-size:12px !important;" class="text-center">21x29.7 <br> cm</p></td>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">ANT4</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2000 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">ANT5</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3700 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">4000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">ANT6</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5400 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">6000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Zarf</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">110 gr. 1.Hamur</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr>
+                    <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">Z1 <span style="font-size:12px !important; color:#000">1000 Adet</span></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1750 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">110 gr. 10.5x24cm Diplomat Tek Renk</td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:12px;"> Her <span style="color:red">1000 <br> Adet</span> için</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1075.00 <i class="fa fa-try"></i></td><td rowspan="3" width="10%" style="background-color:red;color:#FFF; font-size:20px;">
+                      <p class="text-center">Z1 için</p>
+                      <p style="font-size:12px !important;" class="text-center"> İlave Renk 400 <i class="fa fa-try"></i></p>
+                      <p style="font-size:12px !important;" class="text-center"> 1000 Tiray 100 <i class="fa fa-try"></i></p>
+                    </td>  
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">Z2 <span style="font-size:12px !important; color:#000">1000 Adet</span></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2375 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">110 gr. 10.5x24cm Diplomat Renkli</td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:12px;"> Her <span style="color:red">1000 <br> Adet</span> için</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1250.00 <i class="fa fa-try"></i></td>  
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:17px;">Z3 <span style="font-size:12px !important; color:#000">500 Adet</span></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3500 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">110 gr. 24x32cm Torba Zarf Renkli</td>
+                    <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:12px;"> Her <span style="color:red">500 <br> Adet</span> için</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1875.00 <i class="fa fa-try"></i></td>  
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Magnet</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">60 Mikron - Renkli - 1000 Adet</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                <thead>
+                  <tr>
+                    <th>KOD</th>
+                    <th>ADET</th>
+                    <th>EBAT</th>
+                    <th>AÇIKLAMA</th>
+                    <th>FİYAT</th>
+                  </tr>
+                </thead>
+                
+                    <tbody><tr>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">MAG1</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000000;font-size:19px;">1000Adet</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">46x68 mm.</td>
+                      <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Parlak Selefonlu Özel Kesimli</td>
+                      <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">750 <i class="fa fa-try"></i></td>
+                    </tr>
+                    
+                    <tr>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">MAG2</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000000;font-size:19px;">1000Adet</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">46x68 mm.</td>
+                      <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Parlak Selefonlu Kenarları Oval Kesimli</td>
+                      <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">650 <i class="fa fa-try"></i></td>
+                    </tr>
+                    
+                    <tr>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">MAG3</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000000;font-size:19px;">1000Adet</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">1 cm. Kare</td>
+                      <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">CM Kare Fiyatıdır</td>
+                      <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">25.00 <i class="fa fa-try"></i></td>
+                    </tr>
+                    
+                    <tr>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">10+MAG1</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000000;font-size:19px;">10000Adet</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">46x68 mm.</td>
+                      <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Parlak Selefonlu Özel Kesimli</td>
+                      <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">730 <i class="fa fa-try"></i></td>
+                    </tr>
+                    
+                    <tr>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">10+MAG2</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000000;font-size:19px;">10000Adet</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">46x68 mm.</td>
+                      <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Parlak Selefonlu Kenarları Oval Kesimli</td>
+                      <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">630 <i class="fa fa-try"></i></td>
+                    </tr>
+                    
+                    <tr>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">10+MAG3</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000000;font-size:19px;">10000Adet</td>
+                      <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">1 cm. Kare</td>
+                      <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">CM Kare Fiyatıdır</td>
+                      <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">23.00 <i class="fa fa-try"></i></td>
+                    </tr>
+                                  </tbody></table>
+            </div>
+          </div>
+
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4>Amerikan Servis</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:15px !important;">Tek Yön Renkli Baskı - 2000 Adet</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" style="" class="table-bordered">
+                <thead>
+                  <tr style="background-color:#000; color:#FFF;">
+                    <th width="10%" style="font-size:19px; text-align:center;">KOD</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">FİYAT</th>
+                    <th class="text-center" style="font-size:19px;">ÖZELLİKLER</th>
+                    <!--<th width="15%" class="text-center">SELEFON</th>-->
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" style="padding:0px">
+                      <table width="100%" class="table-bordered">
+                        
+                            <tbody><tr>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">SRV1</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4000 <i class="fa fa-try"></i></td>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">31x44 cm.</td>
+                              <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Tek Yön Renkli Baskı (90 gr. 1.Hamur)</td>
+                              <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:12px;"> Her <span style="color:red">2000 <br> Adet</span> için</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3000 <i class="fa fa-try"></i></td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">SRV2</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3000 <i class="fa fa-try"></i></td>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">27,5x40 cm.</td>
+                              <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Tek Yön Renkli Baskı (100 gr. Kuşe)</td>
+                              <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:12px;"> Her <span style="color:red">2000 <br> Adet</span> için</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2450 <i class="fa fa-try"></i></td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">SRV3</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5350 <i class="fa fa-try"></i></td>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">34x49 cm.</td>
+                              <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Tek Yön Renkli Baskı (120 gr. 1.Hamur)</td>
+                              <td class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:12px;"> Her <span style="color:red">2000 <br> Adet</span> için</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3125 <i class="fa fa-try"></i></td>
+                            </tr>
+                                                  </tbody></table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4>KAPI ASKI BROŞÜRLERİ</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:15px !important;">Çift Yön Renkli Baskı - 1000 Adet</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" style="" class="table-bordered">
+                <thead>
+                  <tr style="background-color:#000; color:#FFF;">
+                    <th width="10%" style="font-size:19px; text-align:center;">KOD</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">FİYAT</th>
+                    <th class="text-center" style="font-size:19px;">ÖZELLİKLER</th>
+                    <!--<th width="15%" class="text-center">SELEFON</th>-->
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" style="padding:0px">
+                      <table width="100%" class="table-bordered">
+                        
+                            <tbody><tr>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">ASK1</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2800 <i class="fa fa-try"></i></td>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">10,5x24</td>
+                              <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Çift Yön Renkli Baskı Mat Selefon Kabartma Lak 350 gr. Kuşe</td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">ASK2</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">3000 <i class="fa fa-try"></i></td>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">10,5x24</td>
+                              <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Çift Yön Renkli Baskı Mat Selefon Kabartma Lak 700 gr. Bristol</td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#FF0000;font-size:19px;">ASK3</td>
+                              <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4850 <i class="fa fa-try"></i></td>
+                              <td width="10%" class="text-center" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">21x26</td>
+                              <td class="text-left" style="background-color:#f7adad;color:#000;padding-left:5px;font-size:19px;">Çift Yön Renkli Baskı Parlak Selefon 200 gr. Kuşe</td>
+                            </tr>
+                                                  </tbody></table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+
+
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Dosyalar</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 2px; font-size:16px !important;">Kapalı Hali 22.5x31 cm. Renkli - 1000 Adet<br>Fiyatlara kulakçık yapıştırma dahildir
+                .</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" style="" class="table-bordered">
+                <thead>
+                  <tr>
+                    <th>KOD</th>
+                    <th>ADET</th>
+                    <th>AÇIKLAMA</th>
+                    <th>FİYAT</th>
+                  </tr>
+                </thead>
+              
+                  <tbody><tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">MND500</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;"><b>500 Adet</b></td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon - İçi Tek Renk</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5900 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">KLD500</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;"><b>500 Adet</b></td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon Kabartma Lak - İçi Tek Renk</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6400 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">PD</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;">1000Adet</td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Tek Yön Çok Renkli Parlak Selefon</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">8750 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">MND</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;">1000Adet</td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon - İçi Tek Renk</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">9000 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">KLD</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;">1000Adet</td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Tek Yön Çok Renkli Mat Selefon Kabartma Lak - İçi Tek Renk</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">9750 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">CYPD</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;">1000Adet</td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Çift Yön Baskı Parlak Selefonlu</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">11250 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">CYMD</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;">1000Adet</td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">350 gr. Kuşe Çift Yön Baskı Mat Selefonlu</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">11500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">CYML4D</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;">1000Adet</td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">400 gr. Kuşe Çift Yön Renkli Baskı Mat Selefon Laklı</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">15000 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">AVD500</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;"><b>500 Adet</b></td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">300 gr Bristol Tek Yön Arkası Tek Renk Siyah Selefonsuz</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5000 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#FF0000;font-size:19px;">AVD1000</td>
+                    <td width="10%" class="text-center" style="background-color:orange;color:#000000;font-size:19px;">1000Adet</td>
+                    <td class="text-left" style="background-color:orange;color:#000;padding-left:5px;font-size:19px;">300 gr Bristol Tek Yön Arkası Tek Renk Siyah Selefonsuz</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6150 <i class="fa fa-try"></i></td>
+                  </tr>
+                                  <tr>
+                  <td colspan="5">
+                    <p style="color:red;font-weight: 700;">Not : Laklı dosyalarda, lak yoğunluğuna göre ekstra ücret talep edilebilmektedir.</p>
+                    <p style="color:red;font-weight: 700;">Not : Avukat Dosyalarında Dosya Teli Dahil Değildir.</p>
+                    <p style="color:red;font-weight: 700;">Not : Avukat Dosyalarında Selefon istenirse 500 Adet 850 TL, 1000 Adet 1000 TL.</p>
+                  </td>
+                </tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Etiket</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">90 gr. Kuşe Çıkartma - Renkli - 1000 Adet</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" style="" class="table-bordered">
+              
+                  <tbody><tr>
+                    <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">E</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">300 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">53x83 mm.</td>
+                    <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">90 gr. Kuşe Çıkartma Tek Yön Renkli &nbsp;Parlak Selefonlu</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">ES</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">280 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">53x83 mm.</td>
+                    <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">90 gr. Kuşe Çıkartma Tek Yön Renkli  Selefonsuz</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">EO</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">500 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">52x82 mm.</td>
+                    <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">90 gr. Kuşe Çıkartma Tek Yön Renkli  Parlak Selefonlu özel Kesim</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">EOY</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">740 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">52x82 mm.</td>
+                    <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">90 gr. Kuşe Çıkartma Tek Yön Renkli &nbsp;Parlak Selefonlu Altın Yaldız</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">ETM</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2600 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">15.5x25.5 cm.</td>
+                    <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">90 gr. Kuşe Çıkartma Tek Yön Renkli Parlak Selefonlu</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:19px;">ETL</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5100 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">25.5x33 cm.</td>
+                    <td class="text-left" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">90 gr. Kuşe Çıkartma Tek Yön Renkli Parlak Selefonlu</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Makbuz</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">1 Asıl 1 Suret - 54 gr. Kendinden Kopyalı</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                    <tbody><tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">M1</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 20 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10x14 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">20 Cilt Tek Renk Siyah</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1200 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                    <tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">M2</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 30 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10x20 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">30 Cilt Tek Renk Siyah</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1900 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                    <tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">M3</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 10 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">14x20 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10 Cilt Tek Renk Siyah</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">900 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                    <tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">M4</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 10 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">20x29 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10 Cilt Tek Renk Siyah</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                    <tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">MR1</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 20 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10x14 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">20 Cilt Renkli</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1300 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                    <tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">MR2</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 30 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10x20 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">30 Cilt Renkli</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2200 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                    <tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">MR3</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 10 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">14x20 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10 Cilt Renkli</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1200 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                    <tr><td width="10%" class="text-center" style="background-color:lightblue;color:#FF0000;font-size:17px;">MR4</td>
+                    <td width="15%" class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">50'lik 10 Cilt</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">20x29 cm.</td>
+                    <td class="text-center" style="background-color:lightblue;color:#000;padding-left:5px;font-size:19px;">10 Cilt Renkli</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1800 <i class="fa fa-try"></i></td>
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="margin-top:15px;">
+              <div class="row" style="border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Oto Paspas</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 8px; font-size:16px !important;">34x49 cm Tek Renk</div>
+                <div class="clear"></div>
+              </div>
+            </div>
+            <div class="col-lg-12" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr><td rowspan="3" width="10%" style="background-color:#8d3f00;color:#FFF; font-size:20px;"><p style="font-size:12px !important;" class="text-center">85 gr. <br> karft</p></td>
+                    <td width="20%" class="text-center" style="background-color:#ebb78d;color:#FF0000;font-size:17px;">P1</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">1750 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#ebb78d;color:#000;padding-left:5px;font-size:19px;">1000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#ebb78d;color:#FF0000;font-size:17px;">P2</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">2700 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#ebb78d;color:#000;padding-left:5px;font-size:19px;">2000 Adet</td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="20%" class="text-center" style="background-color:#ebb78d;color:#FF0000;font-size:17px;">P3</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4800 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#ebb78d;color:#000;padding-left:5px;font-size:19px;">5000 Adet</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+            <div class="col-lg-6" style="padding:0px;">
+              <table width="100%" class="table-bordered">
+                              </table>
+            </div>
+          </div>  
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+          <!--<div class="row">
+            <div class="col-lg-12" style="padding: 0px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="row">
+                <div class="col-lg-8"><h4>Küp Bloknot</h4></div>
+                <div class="col-lg-4 text-right"  style="margin-top: 2px; font-size:15px !important;">250 Yaprak - 1000 Küp<br>İç yapraklar müşteri tarafından yerleştirilecektir</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                              </table>
+            </div>
+          </div>-->
+
+
+                    <div class="row">
+            <div class="col-lg-12" style="padding:0px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div style="">
+                <div class="col-lg-4"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Küp Bloknot</h4></div>
+                <div class="col-lg-8 text-right" style=" text-align:right; margin-top: 2px; font-size:15px !important;">İç yapraklar müşteri tarafından yerleştirilecektir</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                  <tbody><tr>
+                    <td width="5%" style="background-color:blue;color:#FFF; font-size:22px;">
+                      <p style="-webkit-transform: rotate(-90deg); font-size:15px; top:70px; position: relative;">250LİK</p>
+                    </td>
+                    <td>
+                      <table width="100%" class="table-bordered">
+                        <thead>
+                          <tr style="background-color:#000; color:#FFF;">
+                            <th width="15%" style="font-size:19px; text-align:center;">KOD</th>
+                            <th style="font-size:19px; text-align:center;">AÇIKLAMA</th>
+                            <th style="font-size:19px; text-align:center;">ADET</th>
+                            <th style="font-size:19px; text-align:center;">FİYAT</th>
+                          </tr>
+                        </thead>                          
+                          
+                            <tbody><tr>
+                              <td width="15%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;font-weight:normal">NKKB-250-100</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">100</td>
+                              <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">7200 <i class="fa fa-try"></i></td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="15%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;font-weight:normal">NKKB-250-250</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">250</td>
+                              <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">8750 <i class="fa fa-try"></i></td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="15%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;font-weight:normal">NKKB-250-500</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">500</td>
+                              <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">11250 <i class="fa fa-try"></i></td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="15%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;font-weight:normal">NKKB-250-1000</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.</td>
+                              <td style="background-color:lightblue;font-size:17px;color:#000;text-align:center;font-weight:normal">1000</td>
+                              <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">17500 <i class="fa fa-try"></i></td>
+                            </tr>
+                                                  </tbody></table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="color:red">
+                      Yukarıdaki ürünlerin kutuları Mat Selefonlu olursa 240 TL ilave olur / Mat Selefon - Kabartma Lak olursa 1500 TL ilave olur.
+                    </td>
+                  </tr>
+                  <tr>
+                    <td width="5%" style="background-color:#fb8615;color:#FFF; font-size:22px;">
+                      <p style="-webkit-transform: rotate(-90deg); font-size:15px; top:70px; position: relative;">500LÜK</p>
+                    </td>
+                    <td>
+                      <table width="100%" class="table-bordered">
+                        <thead>
+                          <tr style="background-color:#000; color:#FFF;">
+                            <th width="15%" style="font-size:19px; text-align:center;">KOD</th>
+                            <th style="font-size:19px; text-align:center;">AÇIKLAMA</th>
+                            <th style="font-size:19px; text-align:center;">ADET</th>
+                            <th style="font-size:19px; text-align:center;">FİYAT</th>
+                          </tr>
+                        </thead>  
+                          
+                            <tbody><tr>
+                              <td width="15%" style="background-color:orange;color:#000;font-size:17px;text-align:center;font-weight:500">NKKB-500-100</td>
+                              <td style="background-color:orange;font-size:17px;color:#000;text-align:center;font-weight:normal">Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.</td>
+                              <td style="background-color:orange;font-size:17px;color:#000;text-align:center;font-weight:normal">100</td>
+                              <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">9375 <i class="fa fa-try"></i></td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="15%" style="background-color:orange;color:#000;font-size:17px;text-align:center;font-weight:500">NKKB-500-250</td>
+                              <td style="background-color:orange;font-size:17px;color:#000;text-align:center;font-weight:normal">Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.</td>
+                              <td style="background-color:orange;font-size:17px;color:#000;text-align:center;font-weight:normal">250</td>
+                              <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">13125 <i class="fa fa-try"></i></td>
+                            </tr>
+                            
+                            <tr>
+                              <td width="15%" style="background-color:orange;color:#000;font-size:17px;text-align:center;font-weight:500">NKKB-500-500</td>
+                              <td style="background-color:orange;font-size:17px;color:#000;text-align:center;font-weight:normal">Yapraklar ; 80gr. 1.Hamur, Tek Yön, Tek Renk 78x78 mm.</td>
+                              <td style="background-color:orange;font-size:17px;color:#000;text-align:center;font-weight:normal">500</td>
+                              <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">18125 <i class="fa fa-try"></i></td>
+                            </tr>
+                                                  </tbody></table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="color:red">
+                      Yukarıdaki ürünlerin kutuları Mat Selefonlu olursa 240 TL ilave olur / Mat Selefon - Kabartma Lak olursa 1500 TL ilave olur.
+                    </td>
+                  </tr>
+              </tbody></table>
+            </div>
+          </div>
+
+
+          <div class="row">
+            <div class="col-lg-12" style="padding:0px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div style="">
+                <div class="col-lg-4"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Spiralli Bloknot</h4></div>
+
+                <div class="col-lg-6 text-center" style="margin-top: 2px; font-size:15px !important;">14x20 Ebat Yandan Spiral Ücreti <br> 500 Adet <b>800 TL</b> | 1.000 Adet <b>1600 TL</b></div>
+                <div class="col-lg-2 text-right" style="margin-top: 2px; font-size:15px !important;">50'lik Cilt</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                <tbody><tr>
+                  <td width="5%" style="background-color:blue;color:#FFF; font-size:22px;">
+                    <p style="-webkit-transform: rotate(-90deg); font-size:15px; top:70px; position: relative;">9.4x13.3cm</p>
+                  </td>
+                  <td>
+                    <table width="100%" class="table-bordered">
+                      <thead>
+                        <tr style="background-color:#000; color:#FFF;">
+                          <th width="10%" style="font-size:19px; text-align:center;">KOD</th>
+                          <th width="15%" style="font-size:19px; text-align:center;">KAPAK</th>
+                          <th style="font-size:19px; text-align:center;">İÇ YAPRAKLAR</th>
+                          <th width="15%" class="text-center" style="font-size:19px;">500 Cilt</th>
+                          <th width="15%" class="text-center" style="font-size:19px;">1000 Cilt</th>
+                        </tr>
+                      </thead>
+                      
+                        <tbody><tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B1</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">NK</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">10200 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">17400 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B2</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">CYP</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">10800 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">18000 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B3</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">CYM</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">10800 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">18000 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B4</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">CYML4</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">11520 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">18720 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B5</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">SEK</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">13440 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">20640 <i class="fa fa-try"></i></td>
+                        </tr>
+                                            </tbody></table>                
+                  
+                  </td>
+                </tr>
+                <tr>
+                  <td width="5%" style="background-color:#fb8615;color:#FFF; font-size:22px;">
+                    <p style="-webkit-transform: rotate(-90deg); font-size:15px; top:70px; position: relative;">14x20cm</p>
+                  </td>
+                  <td>
+                    <table width="100%" class="table-bordered">
+                      
+                        <tbody><tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B6</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">NK</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">15000 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">24000 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B7</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">CYP</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">16200 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">25200 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B8</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">CYM</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">16200 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">25200 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B9</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">CYML4</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">17400 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">27000 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B10</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">SEK</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">22800 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">31800 <i class="fa fa-try"></i></td>
+                        </tr>
+                                            </tbody></table>                
+                  
+                  </td>
+                </tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="padding:0px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="row" style="">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Kapaklı Bloknot</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 2px; font-size:15px !important;">Amerikan Cilt - 50'lik Cilt<br>Özel kesim kapak farkı 550 TL. dir..</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                <tbody><tr>
+                  <td width="5%" style="background-color:blue;color:#FFF; font-size:22px;">
+                    <p style="-webkit-transform: rotate(-90deg); font-size:15px;top:70px; position: relative;">9.4x13.3cm</p>
+                  </td>
+                  <td>
+                    <table width="100%" class="table-bordered">
+                      <thead>
+                        <tr style="background-color:#000; color:#FFF;">
+                          <th width="10%" style="font-size:19px; text-align:center;">KOD</th>
+                          <th width="15%" style="font-size:19px; text-align:center;">KAPAK</th>
+                          <th style="font-size:19px; text-align:center;">İÇ YAPRAKLAR</th>
+                          <th width="15%" class="text-center" style="font-size:19px;">500 Cilt</th>
+                          <th width="15%" class="text-center" style="font-size:19px;">1000 Cilt</th>
+                        </tr>
+                      </thead>
+                      
+                        <tbody><tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B16</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">NK</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">12600 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">16800 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B17</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">CYP</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">13800 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">17400 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B18</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">CYM</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">13800 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">17400 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B19</td>
+                          <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">CYML4</td>
+                          <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">14400 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">17640 <i class="fa fa-try"></i></td>
+                        </tr>
+                                            </tbody></table>                
+                  
+                  </td>
+                </tr>
+                <tr>
+                  <td width="5%" style="background-color:#fb8615;color:#FFF; font-size:22px;">
+                    <p style="-webkit-transform: rotate(-90deg); font-size:15px;top:60px; position: relative;">14x20cm</p>
+                  </td>
+                  <td>
+                    <table width="100%" class="table-bordered">
+                      
+                        <tbody><tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B20</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">NK</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">17400 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">24000 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B21</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">CYP</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">18600 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">24000 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B22</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">CYM</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">18600 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">24000 <i class="fa fa-try"></i></td>
+                        </tr>
+                        
+                        <tr>
+                          <td width="10%" style="background-color:orange;color:#000;font-size:17px;text-align:center;">B23</td>
+                          <td width="15%" style="background-color:orange;color:red;font-size:17px;text-align:center;">CYML4</td>
+                          <td class="text-center" style="background-color:orange; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">19800 <i class="fa fa-try"></i></td>
+                          <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">25800 <i class="fa fa-try"></i></td>
+                        </tr>
+                                            </tbody></table>                
+                  
+                  </td>
+                </tr>
+              </tbody></table>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-lg-12" style="padding:0px; margin-bottom:15px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="row" style="">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">Kapaksız Bloknot</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 2px; font-size:15px !important;">50'lik Tutkallı Cilt<br>Alt karton baskısızdır..</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                <thead>
+                  <tr style="background-color:#000; color:#FFF;">
+                    <th width="10%" style="font-size:19px; text-align:center;">KOD</th>
+                    <th width="15%" style="font-size:19px; text-align:center;">EBAT</th>
+                    <th style="font-size:19px; text-align:center;">İÇ YAPRAKLAR</th>
+                    <th width="15%" class="text-center" style="font-size:19px;">500 Cilt</th>
+                    <th width="15%" class="text-center" style="font-size:19px;">1000 Cilt</th>
+                  </tr>
+                </thead>
+                
+                  <tbody><tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B28</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">9.4x13.3cm</td>
+                    <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (9.4x13.3cm)</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">5400 <i class="fa fa-try"></i></td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">7800 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">B29</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">14x20cm</td>
+                    <td class="text-center" style="background-color:lightblue; color:#000;font-size:13px !important;">80 gr. 1.Hamur Tek Renk (14x20cm)</td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">8400 <i class="fa fa-try"></i></td>
+                    <td width="15%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">13800 <i class="fa fa-try"></i></td>
+                  </tr>
+                                </tbody></table>                
+            </div>
+          </div>
+
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+
+
+          <div class="row">
+            <div class="col-lg-12" style="padding: 0px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="row">
+                <div class="col-lg-4"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">NOTLUK</h4></div>
+                <div class="col-lg-8 text-right" style="margin-top: 2px; font-size:15px !important;">7.8 x 14 cm - 70 lik - 1000 Adet<br>İç Yapraklar 110 gr. 1.Hamur Renkli Baskı - Dış 350 gr. Amerikan Bristol Mat Selefon</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                
+                  <tbody><tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:left;">NOTLUK</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">16200 <i class="fa fa-try"></i></td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;">7.8x14cm - İç 110 gr. 1.Hamur Renkli - Dış 350 gr. Amerikan Bristol Mat Selefon</td>
+                  </tr>
+                                </tbody></table>
+            </div>
+          </div>
+
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+
+          <div class="row" style="margin-top:15px">
+            <div class="col-lg-12" style="padding: 0px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="row">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">ÇANTALAR</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 2px; font-size:15px !important;">210 gr. Amerikan Bristol<br>Parlak veya Mat Selefon</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                <thead>
+                  <tr style="background-color:#000; color:#FFF;">
+                    <th width="10%" style="font-size:19px; text-align:center;">KOD</th>
+                    <th width="10%" style="font-size:19px; text-align:center;">EBAT</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">500 Adet</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">1000 Adet</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">İlave Her <br> 1000 Adet</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">Normal Lak</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">Kabartma Lak</th>
+                    <th width="10%" class="text-center" style="font-size:19px;">Özel Desen</th>
+                  </tr>
+                </thead>
+                
+                  <tbody><tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">CNT1</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">25x37x8</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">9850 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">14400 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">11875 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">1250 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">1875 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">2500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">CNT1-KRAFT</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">25x37x8 (200 gr. Tek Renk)</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">6900 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">10200 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">8500 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">0 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">0 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">2500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">CNT2</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">38x23x9</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">10800 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">15600 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">14375 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">1250 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">1875 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">2500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">CNT3</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">17x24x7</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">9000 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">11400 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">8125 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">1000 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">1500 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">2500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">CNT3-KRAFT</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">17x24x7 (200 gr. Tek Renk)</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">6600 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">8400 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">6875 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">0 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">0 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">2500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="10%" style="background-color:lightblue;color:#000;font-size:17px;text-align:center;">CNT4</td>
+                    <td width="10%" style="background-color:lightblue;color:red;font-size:17px;text-align:center;">51x33x13</td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">13800 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">22800 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">19375 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">1600 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">2250 <i class="fa fa-try"></i></td>
+                    <td width="10%" class="text-center" style="background-color:#8a0051; color:#fff;font-size:22px !important;">5000 <i class="fa fa-try"></i></td>
+                  </tr>
+                                  <tr>
+                  <td colspan="8" style="text-align:center">
+                    <img src="/hesap/img/cantaIp.jpg" style="width: 1114px;" alt="">
+                    <br><br>
+                    <span style="color:red; font-size:20px">Çanta dosyaları içerisine İp Kodunu ve Selefon Mat veya Parlak olarak belirtiniz.</span>
+                    <br><br>
+                  </td>
+                </tr>
+              </tbody></table> 
+            </div>
+          </div>
+
+          <div class="col-lg-12">
+            <h4 style="color:#FF0000; margin:0px 0px 0px -15px">Lütfen Dikkat : Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 Arasında Fire Olabilmektedir.</h4>
+          </div>
+
+          <div class="row">
+            <div class="col-lg-12" style="padding: 0px;border-bottom:1px solid #CCC; background-color:#FF0000; color:#FFF;">
+              <div class="row">
+                <div class="col-lg-8"><h4 style="background-color: red;background-image: none;border: none;text-align: left;">ÜRÜN KUTULARI</h4></div>
+                <div class="col-lg-4 text-right" style="margin-top: 2px; font-size:15px !important;">350 Gr Amerikan Bristol Mat Selefonlu<br>Bürüt 1000 Adet (%1-9 arası fire verebilir)</div>
+              </div>
+              <table width="100%" class="table-bordered">
+                <thead>
+                  <tr style="background-color:#000; color:#FFF;">
+                    <th width="10%" style="font-size:19px; text-align:center;">KOD</th>
+                    <th style="font-size:19px; text-align:left;">EBAT</th>
+                    <th width="15%" class="text-center" style="font-size:19px;">FİYAT</th>
+                  </tr>
+                </thead>
+                
+                  <tbody><tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT1</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">17.2x21.4 cm</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4150 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT2</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">16x25.8 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">4500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT3</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">21.4x25.8 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">5500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT4</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">25.8x26.7 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6400 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT5</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">21.4x34.4 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">6700 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT6</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">26.7x34.4 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">8100 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT7</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">26.7x43 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">9850 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT8</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">21.4x60 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">10500 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT9</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">32x43 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">11300 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT10</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">26.7x60 cm</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">12700 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT11</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">32X51.6 CM
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">13200 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT12</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">37x51.6 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">15600 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT13</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">42.8x51.6 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">16800 <i class="fa fa-try"></i></td>
+                  </tr>
+                  
+                  <tr>
+                    <td width="15%" style="background-color:#f7adad;color:#FF0000;font-size:17px;text-align:center;">KT14</td>
+                    <td class="text-center" style="background-color:#f7adad; color:#000;font-size:13px !important;text-align:left">42.8x60 cm
+</td>
+                    <td width="20%" class="text-center" style="background-color:#8a0051; color:#FFF;font-size:22px !important;">19300 <i class="fa fa-try"></i></td>
+                  </tr>
+                                </tbody></table>
+            </div>
+            <div class="col-lg-12">
+              <p style="font-size:14px; font-weight:bold">Kutunuzun taşırmalar dahil en uzun yükseklik ve en uzun genişliğini ölçüp yukarıdaki ölçülerden hangisine girdiğini tespit edip fiyatı bulabilirsiniz.</p>
+              <p style="font-size:14px; font-weight:bold">Not : Fiyatlara, Bıçak, Kesim, Yan yapıştırma dahildir. (Kutunun Dip Yapıştırması Var İse 1000 TL İlave Edilir.) Kutunuza kabartma lak isterseniz 1750 TL ilave edebilirsiniz.</p>
+              <p style="color:red;font-weight:bold;font-size:16px">Yüksek adet ve farklı özellik içeren Kutularınız için müşteri temsilcisinden fiyat ve bilgi alabilirsiniz.</p>
+            </div>
+          </div>
+                  </div>
+      </div>
+  </div>
+</div></section>  					</div>

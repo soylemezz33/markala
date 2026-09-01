@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Query, Headers } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Query, Headers, ForbiddenException } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
-import { Perms, PERM } from "../auth/permissions";
+import { Perms, PERM, roleHasPerm } from "../auth/permissions";
 import {
   CreateOrderDto,
   ListOrdersQueryDto,
@@ -18,13 +18,19 @@ import type { Request } from "express";
 
 
 /*
- * TUTAR GİZLEME KALDIRILDI — 2026-08-24 (Hasan kararı revize edildi).
+ * TUTAR GİZLEME — 2026-09-01'de İZİN TABANLI olarak geri geldi (kargo rolü için).
  *
- * 2026-08-21'de tasarımcı rolü için sipariş yanıtlarından parasal alanlar siliniyordu
- * (stripAmounts). Ama listeye paymentStatus da girdiğinden panel ödenmiş siparişi
- * "Ödeme Bekliyor" gösterdi, tutarlar ₺0/NaN oldu. Asıl kısıt "tasarımcı CİRO görmesin"
- * idi — sipariş bazında fiyat görmesinde sakınca yok. Ciro kısıtı stats tarafında
- * (stats.service summary includeFinance=false) DURUYor; burada tutar silme yok artık.
+ * GEÇMİŞ: 2026-08-21'de tasarımcı için parasal alanlar siliniyordu (stripAmounts).
+ * Silme listesine paymentStatus da girdiğinden panel ödenmiş siparişi "Ödeme Bekliyor"
+ * gösterdi, tutarlar ₺0/NaN oldu → 2026-08-24'te tamamen kaldırıldı.
+ *
+ * BU SEFER FARKI: filtre ROL ADINA değil PERM.ORDERS_AMOUNTS iznine bakıyor ve izni
+ * OLMAYAN role alanları hiç göndermiyor (0/NaN üretmemesi için silinir, sıfırlanmaz).
+ * Tasarımcı ve muhasebe bu izni ALDI → davranışları değişmedi, Ağustos'taki regresyon
+ * tekrarlanmaz. Yalnız yeni "kargo" rolü kısıtlı.
+ *
+ * NEDEN SUNUCUDA: admin panelinde gizlemek yetmez — veri Next RSC payload'ında durur,
+ * devtools açan kullanıcı görür. Güvenlik sınırı burasıdır (bkz. permissions.ts:40).
  */
 @ApiTags("orders")
 @Controller("orders")
@@ -88,36 +94,67 @@ export class OrdersController {
   @Roles("admin", "super_admin")
   @Perms(PERM.ORDERS_READ)
   @ApiBearerAuth()
-  async listAll(@Query() query: ListOrdersQueryDto) {
+  async listAll(
+    @Query() query: ListOrdersQueryDto,
+    @Req() req: Request & { user?: { role?: string } },
+  ) {
     return this.service.listAll({
       status: query.status,
       take: query.take,
       skip: query.skip,
+      role: req.user?.role,
     });
   }
 
+  /**
+   * Sipariş detayı — HEM müşteri (kendi siparişi) HEM panel kullanır.
+   *
+   * 2026-09-01: uçta @Roles/@Perms YOKTU, yani RolesGuard bile konsa etkisizdi
+   * (guard @Roles boşsa herkesi geçirir). Sonuç: rolü "customer" olmayan HER panel
+   * kimliği — hiç izni olmasa bile — sahiplik kontrolü olmadan her siparişin tam
+   * detayını okuyabiliyordu (items[].costTotal, yani TEDARİKÇİ MALİYETİ dahil).
+   * "customer" listede çünkü müşteri kendi siparişini görmeye devam etmeli; sahiplik
+   * kontrolü aşağıdaki userId parametresiyle zaten yapılıyor.
+   */
   @Get(":id")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("customer", "admin", "super_admin")
+  @Perms(PERM.ORDERS_READ)
   @ApiBearerAuth()
   async detail(@Req() req: Request & { user: { sub: string; role: string } }, @Param("id") id: string) {
-    return this.service.findById(id, req.user.role === "customer" ? req.user.sub : undefined);
+    return this.service.findById(
+      id,
+      req.user.role === "customer" ? req.user.sub : undefined,
+      req.user.role,
+    );
   }
 
+  /**
+   * Durum değiştirme. Guard'da EN DAR izin (ORDERS_TRACKING) aranır çünkü @Perms "hepsi"
+   * mantığıyla çalışır, "ya o ya bu" diyemiyoruz — geniş yetkili roller (admin, tasarımcı)
+   * bu izne zaten sahip. Asıl ayrım gövdede: ORDERS_STATUS'u OLMAYAN rol (kargo) yalnız
+   * "kargoya-verildi"ye çekebilir; iptal, geri adım ve diğer geçişler kapalı.
+   */
   @Patch(":id/status")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
-  @Perms(PERM.ORDERS_STATUS)
+  @Perms(PERM.ORDERS_TRACKING)
   @ApiBearerAuth()
   updateStatus(
     @Param("id") id: string,
     @Body() dto: UpdateOrderStatusDto,
-    @Req() req: Request & { user?: { sub?: string } },
+    @Req() req: Request & { user?: { sub?: string; role?: string } },
   ) {
+    if (!roleHasPerm(req.user?.role, PERM.ORDERS_STATUS) && dto.status !== "kargoya-verildi") {
+      throw new ForbiddenException(
+        "Bu rol siparişi yalnızca 'Kargoya Verildi' olarak işaretleyebilir.",
+      );
+    }
     return this.service.updateStatus(
       id,
       dto.status,
       { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
-      { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null },
+      { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null, role: req.user?.role },
     );
   }
 
@@ -149,17 +186,19 @@ export class OrdersController {
   @Patch(":id/tracking")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
-  @Perms(PERM.ORDERS_STATUS)
+  // ORDERS_STATUS'tan ORDERS_TRACKING'e indirildi: kargo rolü takip no yazabilsin ama
+  // sipariş iptali / durum makinesi / mail-önizleme uçlarını KAZANMASIN.
+  @Perms(PERM.ORDERS_TRACKING)
   @ApiBearerAuth()
   updateTracking(
     @Param("id") id: string,
     @Body() dto: UpdateOrderTrackingDto,
-    @Req() req: Request & { user?: { sub?: string } },
+    @Req() req: Request & { user?: { sub?: string; role?: string } },
   ) {
     return this.service.updateTracking(
       id,
       { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
-      { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null },
+      { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null, role: req.user?.role },
     );
   }
 }

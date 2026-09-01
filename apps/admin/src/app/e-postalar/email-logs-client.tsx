@@ -82,7 +82,7 @@ export function EmailLogsClient({ total, rows, loadError }: Props) {
         <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">E-posta Kayıtları</h1>
         <p className="text-ink-500 text-sm mt-1">
           {loadError
-            ? "Kayıtlar yüklenemedi — sayfayı yenileyin."
+            ? "Kayıtlar yüklenemedi, sayfayı yenileyin."
             : `Toplam ${total.toLocaleString("tr-TR")} kayıt · son ${rows.length} gösteriliyor`}
         </p>
       </header>
@@ -197,7 +197,7 @@ export function EmailLogsClient({ total, rows, loadError }: Props) {
 
       <p className="mt-4 text-xs text-ink-500">
         Bu liste gönderim kaydıdır; e-postanın alıcının kutusuna ulaşıp ulaşmadığını (bounce)
-        göstermez. 25.08.2026 öncesi kayıtlarda gerçek konu tutulmuyordu — o satırlarda şablon adı
+        göstermez. 25.08.2026 öncesi kayıtlarda gerçek konu tutulmuyordu, o satırlarda şablon adı
         gösterilir.
       </p>
     </AdminShell>

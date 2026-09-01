@@ -188,7 +188,7 @@ async function main() {
     { key: "general.companyName", group: "general", value: "324 Ajans" },
     { key: "general.taxOffice", group: "general", value: "Yenişehir VD" },
     { key: "general.taxNumber", group: "general", value: "4270601001" },
-    { key: "seo.defaultTitle", group: "seo", value: "Markala — Matbaa & Reklam Ürünleri" },
+    { key: "seo.defaultTitle", group: "seo", value: "Markala, Matbaa & Reklam Ürünleri" },
     { key: "seo.defaultDescription", group: "seo", value: "Online matbaa ve reklam ürünleri." },
   ];
   for (const s of settings) {
@@ -278,7 +278,7 @@ async function main() {
       categorySlug: "rehber",
       tags: ["kartvizit", "tasarım", "rehber", "matbaa"],
       readingTime: 8,
-      seoTitle: "Etkili Kartvizit Tasarımı 2026 — Boyut, Kağıt, Renk Rehberi",
+      seoTitle: "Etkili Kartvizit Tasarımı 2026 | Boyut, Kağıt, Renk Rehberi",
       seoDescription:
         "Profesyonel kartvizit nasıl tasarlanır? Standart boyutlar, kağıt türleri (300-600gr), CMYK renk yönetimi, taşma payı, selefon/UV lak farkı. Markala matbaa rehberi.",
       content: `## Kartvizit Hâlâ Önemli mi?
@@ -296,23 +296,23 @@ Türkiye'de kullanılan başlıca kartvizit boyutları:
 | **Amerikan** | 89 × 51 | Daha geniş, infografik kartlar |
 | **Mini** | 70 × 28 | Etiket / aksesuar kartlar |
 
-Standart boyut dışında üretim mümkün ama maliyet **%30-50** artar — özel ihtiyaç yoksa standartta kalın.
+Standart boyut dışında üretim mümkün ama maliyet **%30-50** artar, özel ihtiyaç yoksa standartta kalın.
 
 ## Kağıt Seçimi: Gramaj ve Doku
 
 **Gramaj**, kağıdın metrekare ağırlığı:
 
-- **300 gr Mat Kuşe** — en çok tercih edilen, hem ekonomik hem dolgun his
-- **350 gr Bristol** — daha sert, kurumsal
-- **400-600 gr Lüks Karton** — premium markalar için
-- **Kraft / Geri Dönüştürülmüş** — sürdürülebilirlik vurgusu
+- **300 gr Mat Kuşe**, en çok tercih edilen, hem ekonomik hem dolgun his
+- **350 gr Bristol**, daha sert, kurumsal
+- **400-600 gr Lüks Karton**, premium markalar için
+- **Kraft / Geri Dönüştürülmüş**, sürdürülebilirlik vurgusu
 
 Doku tercihleri:
 
-- **Selefonlu (Mat/Parlak)** — leke ve çizilmeye dayanıklı
-- **UV Lak** — logo veya isim üzerinde **lokal vurgu**, dramatik etki
-- **Yaldız (Altın/Gümüş)** — kuyumculuk, butik, premium hizmetler
-- **Gofre / Kabartma** — dokunsal hissiyat
+- **Selefonlu (Mat/Parlak)**, leke ve çizilmeye dayanıklı
+- **UV Lak**, logo veya isim üzerinde **lokal vurgu**, dramatik etki
+- **Yaldız (Altın/Gümüş)**, kuyumculuk, butik, premium hizmetler
+- **Gofre / Kabartma**, dokunsal hissiyat
 
 > **İpucu:** Selefonlu kartvizitin üzerine yazı yazmak isteyenler "yazılabilir mat selefon" tercih etmeli. Standart parlak selefonda mürekkep tutmaz.
 
@@ -320,7 +320,7 @@ Doku tercihleri:
 
 Ekran RGB, baskı **CMYK**. Tasarımınızı RGB'de yapıp dönüştürürseniz canlı kırmızılar matlaşır, parlak maviler kararır. Adobe Illustrator/Photoshop'ta dosya açarken "CMYK Color" seçin.
 
-Sık yapılan hata: **#000000 yerine** zengin siyah (Rich Black) kullanın — C:60 M:40 Y:40 K:100. Düz K:100 baskıda donuk gri görünür.
+Sık yapılan hata: **#000000 yerine** zengin siyah (Rich Black) kullanın, C:60 M:40 Y:40 K:100. Düz K:100 baskıda donuk gri görünür.
 
 ## Taşma Payı (Bleed)
 
@@ -328,11 +328,11 @@ Sık yapılan hata: **#000000 yerine** zengin siyah (Rich Black) kullanın — C
 
 ## Dosya Formatı
 
-- **PDF/X-1a** (önerilen) — hazır baskı standardı
-- **AI / EPS** — vektörel düzenlenebilir
-- **TIFF / PDF (300 dpi)** — fotoğraf ağırlıklı tasarımlar
+- **PDF/X-1a** (önerilen), hazır baskı standardı
+- **AI / EPS**, vektörel düzenlenebilir
+- **TIFF / PDF (300 dpi)**, fotoğraf ağırlıklı tasarımlar
 
-JPEG göndermeyin — sıkıştırma kayıpları metni bulanıklaştırır.
+JPEG göndermeyin, sıkıştırma kayıpları metni bulanıklaştırır.
 
 ## Tipografi: Okunabilirlik Önce
 
@@ -350,7 +350,7 @@ JPEG göndermeyin — sıkıştırma kayıpları metni bulanıklaştırır.
 | Etkinlik / fuar | 1.000-2.500 |
 | Kurumsal yıllık ihtiyaç | 2.500-5.000 |
 
-**500'ün altı zaten birim maliyeti bozar** — minimum 1.000 ile başlamak en mantıklı.
+**500'ün altı zaten birim maliyeti bozar**, minimum 1.000 ile başlamak en mantıklı.
 
 ## Markala'da Kartvizit Sipariş Süreci
 
@@ -379,7 +379,7 @@ Sorularınız için [WhatsApp](https://wa.me/905057417028) ya da [yardım merkez
 
 Renk iki farklı yöntemle üretilir: ışık karışımı ve pigment karışımı.
 
-**RGB (Red-Green-Blue)** ışık karışımıdır. Ekranlar — monitör, telefon, tablet — kırmızı, yeşil ve mavi ışığı farklı yoğunluklarda birleştirerek renk üretir. Üç ışık bir araya gelince beyaz oluşur; hiçbiri yokken siyah. Bu yüzden RGB "eklenebilir" (additive) bir renk sistemidir.
+**RGB (Red-Green-Blue)** ışık karışımıdır. Ekranlar, monitör, telefon, tablet, kırmızı, yeşil ve mavi ışığı farklı yoğunluklarda birleştirerek renk üretir. Üç ışık bir araya gelince beyaz oluşur; hiçbiri yokken siyah. Bu yüzden RGB "eklenebilir" (additive) bir renk sistemidir.
 
 **CMYK (Cyan-Magenta-Yellow-Key/Black)** pigment karışımıdır. Matbaa makineleri kağıda dört mürekkep katmanı bırakır: cam göbeği, eflatun, sarı ve siyah. Pigmentler ışığı emer; katmanlar birleşince daha koyu renkler elde edilir. Bu yüzden CMYK "çıkarmalı" (subtractive) bir renk sistemidir.
 
@@ -398,7 +398,7 @@ Dikkat gerektiren renkler:
 Tasarım programları RGB'den CMYK'ya otomatik dönüşüm yapar; ancak sonuç her zaman tahmin edilebilir değildir. Canlı tonlar beklentinin altında çıkabilir. **Doğrusu:** belgeyi baştan CMYK modunda açmak.
 
 ### Hata 2: Düz siyah (K:100) kullanmak
-Sadece K:100 mürekkepten oluşan siyah, geniş alanlarda baskıda donuk gri görünür. Daha derin bir siyah için "zengin siyah" (Rich Black) formülü kullanılır: **C:60 M:40 Y:40 K:100**. Not: bu formülü ince metinlere uygulamayın — harfler kayar.
+Sadece K:100 mürekkepten oluşan siyah, geniş alanlarda baskıda donuk gri görünür. Daha derin bir siyah için "zengin siyah" (Rich Black) formülü kullanılır: **C:60 M:40 Y:40 K:100**. Not: bu formülü ince metinlere uygulamayın, harfler kayar.
 
 ### Hata 3: Pantone renklerini CMYK olarak göndermek
 Pantone (PMS), özel tek bileşenli mürekkepler kullanır. Markanızın logo rengi bir Pantone koduna sahipse ve baskıda tam renk uyumu kritikse, CMYK dönüşümü yeterli olmaz. Bu durumlarda 5+1 renkli (CMYK + Pantone) baskı yaptırın.
@@ -433,8 +433,8 @@ Profil eşleştiğinde yazıcı ve ekran arasındaki renk farkı önemli ölçü
 
 ## Hangi Programda Çalışmalısınız?
 
-- **Adobe Illustrator / InDesign:** Vektörel işler, kurumsal kimlik, broşür — CMYK desteği eksiksiz.
-- **Adobe Photoshop:** Fotoğraf ağırlıklı işler — CMYK modunda çalışabilir.
+- **Adobe Illustrator / InDesign:** Vektörel işler, kurumsal kimlik, broşür, CMYK desteği eksiksiz.
+- **Adobe Photoshop:** Fotoğraf ağırlıklı işler, CMYK modunda çalışabilir.
 - **Canva (ücretsiz):** Yalnızca RGB çıktı verir; profesyonel baskı için yeterli değildir.
 - **Affinity Publisher/Designer:** CMYK desteği var, bütçe dostu bir alternatif.
 
@@ -457,10 +457,10 @@ Logonuz markanızın yüzü; kurumsal kimlik **bütün gardrobu**. Dağınık bi
 
 ## 1. Logo Sistemi (Öncelik 1)
 
-- **Ana logo** (renkli) — pozitif zemin
-- **Beyaz/Tek renk versiyon** — koyu zemin için
+- **Ana logo** (renkli), pozitif zemin
+- **Beyaz/Tek renk versiyon**, koyu zemin için
 - **Yatay + Dikey** varyantlar
-- **İkon-only** — favicon, sosyal medya avatarı için
+- **İkon-only**, favicon, sosyal medya avatarı için
 - **Vektörel formatlar**: AI, EPS, SVG (her zaman dosyada bulunsun)
 - **Raster formatlar**: PNG (transparent), JPG (web)
 
@@ -473,8 +473,8 @@ Logonuz markanızın yüzü; kurumsal kimlik **bütün gardrobu**. Dağınık bi
 
 ## 3. Tipografi Sistemi
 
-- **Başlık fontu** — kurumsal güç ifadesi
-- **Metin fontu** — okunabilirlik
+- **Başlık fontu**, kurumsal güç ifadesi
+- **Metin fontu**, okunabilirlik
 - Genelde 2, en fazla 3 font ailesi
 
 ## 4. Basılı Materyaller
@@ -547,7 +547,7 @@ Forma kâğıttan kesim sırasında 1-2 mm sapma olur. Kritik kenarlarda kullan�
 Aynı dosya farklı makinelerde, farklı sıcaklık/nem koşullarında **%2-3 ton farkı** üretebilir. Pantone bile %100 garanti vermez.
 
 ### 3. Kağıt Kayıpları
-Ofset baskıda ilk birkaç forma "ayar baskı" olarak gider — renk dengeleme. Dijital baskıda bu yok ama yerini **toner farkı** alır.
+Ofset baskıda ilk birkaç forma "ayar baskı" olarak gider, renk dengeleme. Dijital baskıda bu yok ama yerini **toner farkı** alır.
 
 ### 4. Kalite Kontrol Eleme
 Üretim sonrası KKK ekibi defolu (lekeli, kayık, çizik) ürünleri ayıklar. Bu da fire kapsamına girer.
@@ -611,10 +611,10 @@ Standart boyut dışına çıkmak üretim maliyetini %30-50 artırabilir. Özel 
 ## Kağıt Seçenekleri
 
 **Gramaja göre seçim:**
-- **300 gr** — ekonomik, sık dağıtılan kartlar için
-- **350 gr** — kurumsal kullanımın en popüler seçeneği
-- **400 gr** — hukuk bürosu, mimar, üst düzey yönetici gibi prestij gerektiren işler
-- **600 gr** — iki farklı kağıdın yapıştırılmasıyla elde edilen ultra kalın, özel üretim
+- **300 gr**, ekonomik, sık dağıtılan kartlar için
+- **350 gr**, kurumsal kullanımın en popüler seçeneği
+- **400 gr**, hukuk bürosu, mimar, üst düzey yönetici gibi prestij gerektiren işler
+- **600 gr**, iki farklı kağıdın yapıştırılmasıyla elde edilen ultra kalın, özel üretim
 
 **Yüzey kaplama seçenekleri:**
 - **Mat selefon:** parmak izi tutmaz, modern ve sade görünüm
@@ -778,7 +778,7 @@ Ortalama bir izleyici banneri üçte birlik üst bölümüne odaklanır.
 
 **Orta bölüm (%50):** Ürün görseli, temel bilgiler, avantajlar listesi.
 
-**Alt bölüm (%20):** İletişim bilgileri — telefon, web adresi, QR kod. Bu alan stant kasası tarafından kısmen örtülebilir; kritik bilgileri buraya taşımaktan kaçının.
+**Alt bölüm (%20):** İletişim bilgileri, telefon, web adresi, QR kod. Bu alan stant kasası tarafından kısmen örtülebilir; kritik bilgileri buraya taşımaktan kaçının.
 
 **Taşma payı:** Grafiği her kenara 5 mm taşıra tasarlayın.
 
@@ -823,7 +823,7 @@ Geleneksel matbaa modeli onlarca yıldır aynı temele dayanır: müşteri fizik
 
 1. Fiziksel ziyaret ve yüz yüze görüşme
 2. Tasarım dosyasının USB veya e-posta ile iletilmesi
-3. Ön kontrol — dosyanın baskıya uygunluğunun elle incelenmesi
+3. Ön kontrol, dosyanın baskıya uygunluğunun elle incelenmesi
 4. Fiyat teklifi ve baskı onayı
 5. Üretim süreci (birkaç gün ila hafta)
 6. Matbaadan teslim alma veya kargolama
@@ -836,7 +836,7 @@ Online matbaa, siparişin internet üzerinden uçtan uca tamamlandığı dijital
 
 **1. Ürün ve konfigürasyon seçimi:** Web sitesinde adet, kağıt gramajı, selefon türü ve baskı yüzü gibi parametreler seçilir. Fiyat anlık güncellenir.
 
-**2. Dosya yükleme:** Hazır tasarım dosyası (PDF, AI, PSD) sisteme yüklenir. Gelişmiş platformlarda otomatik ön kontrol — CMYK modu, taşma payı, çözünürlük — yazılım tarafından kontrol edilir.
+**2. Dosya yükleme:** Hazır tasarım dosyası (PDF, AI, PSD) sisteme yüklenir. Gelişmiş platformlarda otomatik ön kontrol, CMYK modu, taşma payı, çözünürlük, yazılım tarafından kontrol edilir.
 
 **3. Ödeme:** Kredi kartı, havale ya da kurumsal fatura ile tamamlanır.
 

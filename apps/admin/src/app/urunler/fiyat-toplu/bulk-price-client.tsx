@@ -74,7 +74,7 @@ export function BulkPriceClient({ products, categories }: Props) {
 
   async function applyChanges() {
     if (pricedTargets.length === 0) {
-      toast.error("Kapsamda fiyatı girilmiş ürün yok — toplu zam/indirim mevcut fiyatı çarpar. Önce fiyat girin.");
+      toast.error("Kapsamda fiyatı girilmiş ürün yok, toplu zam/indirim mevcut fiyatı çarpar. Önce fiyat girin.");
       return;
     }
     if (
@@ -101,7 +101,7 @@ export function BulkPriceClient({ products, categories }: Props) {
         round,
       });
       if (res.updated === 0) {
-        toast.error("Güncellenen fiyat satırı yok — kapsam boş olabilir.");
+        toast.error("Güncellenen fiyat satırı yok, kapsam boş olabilir.");
       } else {
         toast.success(`${res.updated} fiyat satırı güncellendi.`);
       }
@@ -335,11 +335,11 @@ export function BulkPriceClient({ products, categories }: Props) {
 
         {/* Sağ: Önizleme */}
         <div className="lg:col-span-2">
-          <Card title={`Önizleme — ${targetProducts.length} ürün etkilenecek`}>
+          <Card title={`Önizleme - ${targetProducts.length} ürün etkilenecek`}>
             {targetProducts.length > 10 && (
               <div className="mb-3 px-3 py-2 rounded-md bg-warning/10 border border-warning/20 text-[12px] text-warning font-semibold flex items-center gap-2">
                 <Warning size={14} className="flex-none" />
-                {targetProducts.length} ürün etkilenecek — aşağıda ilk 10 önizlemesi gösterilmektedir.
+                {targetProducts.length} ürün etkilenecek, aşağıda ilk 10 önizlemesi gösterilmektedir.
               </div>
             )}
             <div className="overflow-x-auto">
@@ -386,7 +386,7 @@ export function BulkPriceClient({ products, categories }: Props) {
                           {p.name}
                         </td>
                         <td colSpan={3} className="px-3 py-2.5 text-right text-[11px] font-medium text-warning">
-                          fiyatsız — etkilenmez
+                          fiyatsız, etkilenmez
                         </td>
                       </tr>
                     ),
@@ -404,7 +404,7 @@ export function BulkPriceClient({ products, categories }: Props) {
           <div className="mt-5 p-5 bg-paper-100 border border-paper-200 rounded-lg text-sm text-ink-700">
             <h3 className="font-semibold text-ink-900 mb-2 flex items-center gap-2">
               <ArrowsClockwise size={16} className="text-brand-700" />
-              İpucu — Toplu Güncelleme Senaryoları
+              İpucu, Toplu Güncelleme Senaryoları
             </h3>
             <ul className="space-y-1.5 text-xs leading-relaxed">
               <li>

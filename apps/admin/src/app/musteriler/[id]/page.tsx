@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
-import { getAdminApi } from "@/lib/api";
+import { getAdminApi, getAdminSession } from "@/lib/api";
 import type { LedgerStatementDto } from "@markala/api-client";
 import { CorporateSettingsForm } from "./corporate-settings-form";
 import { CariPaymentForm } from "./cari-payment-form";
@@ -34,7 +34,7 @@ const PAYMENT_LABEL: Record<string, string> = {
 };
 
 function fmtDate(s?: string | null) {
-  if (!s) return "—";
+  if (!s) return "-";
   return new Date(s).toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
@@ -48,6 +48,11 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
   }
   if (!user) notFound();
 
+  // TUTAR GÖRÜNÜRLÜĞÜ (2026-09-01): API, orders.amounts izni olmayan role (kargo)
+  // kredi limitini, kurumsal iskontoyu ve sipariş tutarlarını GÖNDERMİYOR. Arayüz de
+  // basmamalı — aksi halde eksik veriden "₺ 0" hesaplanıp yanlış bilgi gösterilir.
+  const oturum = await getAdminSession();
+  const showMoney = !oturum?.perms || oturum.perms.includes("orders.amounts");
   const orders = user.orders ?? [];
   const addresses = user.addresses ?? [];
   // Harcama: kartla ödenmiş (basarili) + açık hesaba yazılmış (cari) siparişler. Cari siparişler
@@ -86,19 +91,19 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
           <Card title="İletişim">
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-ink-700"><EnvelopeSimple size={14} /> {user.email}</div>
-              <div className="flex items-center gap-2 text-ink-700"><Phone size={14} /> {user.phone ?? "—"}</div>
+              <div className="flex items-center gap-2 text-ink-700"><Phone size={14} /> {user.phone ?? "-"}</div>
             </div>
           </Card>
 
           {user.accountType === "corporate" && (
             <Card title="Kurumsal Bilgiler">
-              <KV label="Firma" value={user.companyName ?? "—"} />
-              <KV label="Vergi Dairesi" value={user.taxOffice ?? "—"} />
-              <KV label="Vergi No" value={user.taxNumber ?? "—"} />
-              <KV label="Durum" value={user.corporateStatus ?? "—"} />
+              <KV label="Firma" value={user.companyName ?? "-"} />
+              <KV label="Vergi Dairesi" value={user.taxOffice ?? "-"} />
+              <KV label="Vergi No" value={user.taxNumber ?? "-"} />
+              <KV label="Durum" value={user.corporateStatus ?? "-"} />
               {user.corporateStatus !== "approved" && (
                 <p className="mt-2 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2 leading-relaxed">
-                  ⚠️ Durum <strong>&quot;{user.corporateStatus ?? "yok"}&quot;</strong> — onaylı (approved) değil.
+                  ⚠️ Durum <strong>&quot;{user.corporateStatus ?? "yok"}&quot;</strong>, onaylı (approved) değil.
                   Girilen indirim ve cari hesap <strong>siparişlere UYGULANMAZ</strong>. Kurumsal başvuruyu
                   &quot;Kurumsal Başvurular&quot; sayfasından onaylayın.
                 </p>
@@ -112,7 +117,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
             </Card>
           )}
 
-          {user.accountType === "corporate" && ledger && (
+          {showMoney && user.accountType === "corporate" && ledger && (
             <Card title="Cari Hesap (Açık Hesap)">
               <div className="flex items-baseline justify-between">
                 <span className="text-sm text-ink-500">Güncel bakiye (borç)</span>
@@ -143,7 +148,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
 
           <Card title="Özet">
             <KV label="Toplam Sipariş" value={String(orders.length)} />
-            <KV label="Toplam Harcama" value={TRY(totalSpent)} />
+            {showMoney && <KV label="Toplam Harcama" value={TRY(totalSpent)} />}
             <KV label="Son Giriş" value={fmtDate(user.lastLoginAt)} />
           </Card>
         </div>
@@ -165,7 +170,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                       <th className="text-left px-5 py-2.5 font-semibold">Sipariş No</th>
                       <th className="text-left px-5 py-2.5 font-semibold hidden md:table-cell">Tarih</th>
                       <th className="text-left px-5 py-2.5 font-semibold">Durum</th>
-                      <th className="text-right px-5 py-2.5 font-semibold">Tutar</th>
+                      {showMoney && <th className="text-right px-5 py-2.5 font-semibold">Tutar</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-paper-200">
@@ -183,7 +188,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                             ? "Açık Hesap (Cari)"
                             : (PAYMENT_LABEL[toSlug(o.paymentStatus)] ?? o.paymentStatus)}
                         </td>
-                        <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">{TRY(o.total)}</td>
+                        {showMoney && <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">{TRY(o.total)}</td>}
                       </tr>
                     ))}
                   </tbody>
@@ -216,7 +221,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
                     <div className="text-ink-700">{a.fullName}</div>
                     {a.type === "corporate" && a.companyName && (
                       <div className="text-ink-500 text-xs">
-                        {a.companyName} · VD: {a.taxOffice ?? "—"} · VN: {a.taxNumber ?? "—"}
+                        {a.companyName} · VD: {a.taxOffice ?? "-"} · VN: {a.taxNumber ?? "-"}
                       </div>
                     )}
                     <div className="text-ink-600 mt-1">{a.fullAddress}</div>

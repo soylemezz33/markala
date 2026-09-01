@@ -188,7 +188,7 @@ export function ProductDetailClient({ product, categories, pricing, pricingLoadE
                   onChange={(e) => setCategoryId(e.target.value)}
                   className={inputCls}
                 >
-                  <option value="">— Seçiniz —</option>
+                  <option value="">, Seçiniz, </option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -215,10 +215,10 @@ export function ProductDetailClient({ product, categories, pricing, pricingLoadE
           </Card>
 
           {/* Fiyat Yönetimi — Konfigüratör Yapısı */}
-          <Card title="Fiyat Yönetimi — Konfigüratör Yapısı">
+          <Card title="Fiyat Yönetimi - Konfigüratör Yapısı">
             {pricingLoadError && (
               <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
-                ⚠️ Fiyat yönetimi yüklenemedi — mevcut yapı gösterilemiyor. Kaydetmeden önce sayfayı yenileyin; aksi hâlde tüm seçenek yapısı silinebilir.
+                ⚠️ Fiyat yönetimi yüklenemedi, mevcut yapı gösterilemiyor. Kaydetmeden önce sayfayı yenileyin; aksi hâlde tüm seçenek yapısı silinebilir.
               </div>
             )}
             <p className="text-xs text-ink-500 mb-4">
@@ -250,7 +250,7 @@ export function ProductDetailClient({ product, categories, pricing, pricingLoadE
           </Card>
 
           {/* Fiyat Yönetimi — Izgara */}
-          <Card title="Fiyat Yönetimi — Izgara (Maliyet + Satış)">
+          <Card title="Fiyat Yönetimi - Izgara (Maliyet + Satış)">
             {pricingLoadError && (
               <div className="mb-4 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
                 ⚠️ Fiyat ızgarası yüklenemedi. Kaydetmeden önce sayfayı yenileyin.

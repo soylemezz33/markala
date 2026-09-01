@@ -60,7 +60,21 @@ const TOP_LINKS = [
 ];
 
 // === Header navigasyon tipi (Faz 1: admin /menu yönetir, storefront API'den okur) ===
-export type NavFeatured = { slug: string; label: string; theme?: "brand" | "paper" | "ink" };
+export type NavFeatured = {
+  slug: string;
+  label: string;
+  theme?: "brand" | "paper" | "ink";
+  /**
+   * Ürünün GERÇEK ilk görseli (2026-08-31, Hasan bildirdi: "Kabartmalı Kartvizit menüde
+   * görünmüyor"). Öncesinde kart görseli slug'dan TAHMİN ediliyordu:
+   *   uploads/products/${slug}.webp
+   * Varyant bölmesiyle oluşan ürünlerde dosya adı slug ile uyuşmuyor — kabartmali-kartvizit
+   * 6 gerçek görsele sahip ama hepsi `klasik-kartvizit*.webp` adında, tahmin edilen yol 404
+   * dönüp yedek mockup basılıyordu. Bu alan layout.tsx'te sunucuda doldurulur; boşsa
+   * eski tahmin davranışına düşülür (geriye dönük uyum).
+   */
+  image?: string | null;
+};
 export type NavCategory = {
   label: string;
   href: string;
@@ -89,7 +103,6 @@ const DEFAULT_NAV: NavCategory[] = [
           {
             label: "Klasik Kartvizit (21 paket)",
             href: "/urun/klasik-kartvizit",
-            badge: "POPÜLER",
           },
         ],
       },
@@ -118,7 +131,7 @@ const DEFAULT_NAV: NavCategory[] = [
         title: "Broşür",
         items: [
           { label: "Broşür 115 gr Çift Yön", href: "/urun/brosur" },
-          { label: "Pro Broşür 128 gr", href: "/urun/pro-brosur", badge: "YENİ" },
+          { label: "Pro Broşür 128 gr", href: "/urun/pro-brosur" },
           { label: "Selefonlu Broşür 200 gr", href: "/urun/selefonlu-brosur" },
           { label: "Kapı Askı Broşür", href: "/urun/kapi-aski-brosur" },
         ],
@@ -171,7 +184,7 @@ const DEFAULT_NAV: NavCategory[] = [
       {
         title: "Vinil & Branda",
         items: [
-          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr", badge: "POPÜLER" },
+          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr" },
           { label: "Mesh Branda", href: "/urun/mesh-branda" },
           { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
         ],
@@ -292,7 +305,6 @@ const DEFAULT_NAV: NavCategory[] = [
           {
             label: "Uyarı / İkaz Levhaları",
             href: "/kategori/is-guvenligi-uyari-ikaz",
-            badge: "YENİ",
           },
           { label: "Yasaklayıcı Levhalar", href: "/kategori/is-guvenligi-yasaklayici" },
           { label: "Emredici / KKD Levhaları", href: "/kategori/is-guvenligi-emredici-kkd" },
@@ -823,11 +835,15 @@ function FeaturedCard({
   slug,
   label,
   theme = "brand",
+  image,
 }: {
   slug: string;
   label: string;
   theme?: "brand" | "paper" | "ink";
+  image?: string | null;
 }) {
+  // image varsa ürünün GERÇEK görseli; yoksa eski slug tahminine düş (geriye dönük uyum).
+  const kaynak = image || `https://api.markala.com.tr/uploads/products/${slug}.webp?v=3`;
   return (
     <Link
       href={`/urun/${slug}`}
@@ -839,7 +855,7 @@ function FeaturedCard({
         </span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={`https://api.markala.com.tr/uploads/products/${slug}.webp?v=3`}
+          src={kaynak}
           alt={label}
           loading="lazy"
           onError={(e) => {
@@ -1234,7 +1250,7 @@ function MobileNavGroup({ nav, onClose }: { nav: NavCategory; onClose: () => voi
                         <span className="relative block aspect-[4/3] bg-paper-100 overflow-hidden">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={`https://api.markala.com.tr/uploads/products/${f.slug}.webp?v=3`}
+                            src={f.image || `https://api.markala.com.tr/uploads/products/${f.slug}.webp?v=3`}
                             alt={f.label}
                             loading="lazy"
                             onError={(e) => {

@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Markala — Matbaa & Reklam Ürünleri",
+    name: "Markala - Matbaa & Reklam Ürünleri",
     short_name: "Markala",
     description:
       "Kartvizit, broşür, branda, kupa, kaşe ve 20+ matbaa ürünü kategorisi. Türkiye geneli DHL kargo, ücretsiz tasarım desteği.",

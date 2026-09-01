@@ -18,7 +18,7 @@ const initialPrefs: Pref[] = [
   { id: "order_design", label: "Tasarım onay bildirimleri", desc: "Tasarım taslağı hazır olduğunda", email: true, sms: false },
   { id: "delivery", label: "Teslimat günü bildirimi", desc: "DHL kurye yola çıktığında SMS", email: false, sms: true },
   { id: "campaigns", label: "Kampanya ve indirimler", desc: "Aylık kampanyalar, sezonluk fırsatlar", email: true, sms: false },
-  { id: "newsletter", label: "Bülten — sektör haberleri & rehberler", desc: "Aylık matbaa rehberi, blog yazıları", email: false, sms: false },
+  { id: "newsletter", label: "Bülten, sektör haberleri & rehberler", desc: "Aylık matbaa rehberi, blog yazıları", email: false, sms: false },
   { id: "review_reminder", label: "Yorum hatırlatması", desc: "Teslim sonrası 7 gün içinde yorum daveti", email: true, sms: false },
 ];
 

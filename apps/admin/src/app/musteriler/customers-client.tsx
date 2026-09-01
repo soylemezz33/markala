@@ -131,10 +131,10 @@ export function CustomersClient({ customers }: Props) {
                     )}
                   </td>
                   <td className="px-4 py-3 text-center text-ink-700 hidden md:table-cell tabular-nums">
-                    {c.orderCount ?? "—"}
+                    {c.orderCount ?? "-"}
                   </td>
                   <td className="px-4 py-3 text-center text-ink-700 hidden md:table-cell tabular-nums text-xs">
-                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString("tr-TR") : "—"}
+                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString("tr-TR") : "-"}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link

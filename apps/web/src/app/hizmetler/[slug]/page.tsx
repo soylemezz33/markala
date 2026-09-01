@@ -293,7 +293,7 @@ export default async function ServicePage({ params }: Props) {
         <section className="text-center p-10 md:p-14 bg-ink-900 text-paper-50 rounded-2xl">
           <h2 className="text-2xl md:text-4xl font-semibold">{service.title} için hazırız</h2>
           <p className="mt-4 text-paper-100/70 max-w-xl mx-auto">
-            Detaylar için bize ulaşın — WhatsApp en hızlı kanal, ortalama 5 dakikada yanıt
+            Detaylar için bize ulaşın, WhatsApp en hızlı kanal, ortalama 5 dakikada yanıt
             veriyoruz.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">

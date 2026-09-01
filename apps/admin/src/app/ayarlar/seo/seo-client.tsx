@@ -14,7 +14,7 @@ export function SeoClient({ initial }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const [defaultTitle, setDefaultTitle] = useState(
-    String(initial["seo.defaultTitle"] ?? "Markala — Matbaa ve Reklam Ürünleri"),
+    String(initial["seo.defaultTitle"] ?? "Markala, Matbaa ve Reklam Ürünleri"),
   );
   const [titleTemplate, setTitleTemplate] = useState(
     String(initial["seo.titleTemplate"] ?? "%s · Markala"),

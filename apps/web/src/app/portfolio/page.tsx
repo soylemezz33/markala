@@ -6,13 +6,13 @@ import { getPortfolioItems } from "@/lib/portfolio";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Portfolyo — Tamamlanmış İşlerimiz",
+  title: "Portfolyo | Tamamlanmış İşlerimiz",
   description:
     "Markala ile basılan kartvizit, broşür, branda, tabela ve promosyon işlerinden örnekler. Baskı kalitemizi ve çözümlerimizi işlerimizde görün.",
   alternates: { canonical: "/portfolio" },
   openGraph: {
     type: "website",
-    title: "Portfolyo — Markala",
+    title: "Portfolyo | Markala",
     description: "Markala ile basılan kartvizit, broşür, branda ve tabela işlerinden örnekler.",
     url: "/portfolio",
     images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Portfolyo" }],
@@ -31,8 +31,8 @@ export default async function PortfolioPage() {
         <p className="mt-4 text-lg text-ink-700 leading-relaxed">
           {/* Boş durumda "gerçek işlerde görün" vaadi çelişki yaratıyordu — metni içeriğe uydur. */}
           {items.length > 0
-            ? "Kartvizitten brandaya, tabeladan promosyon ürünlerine — Markala ile hayata geçen baskı işlerinden bir seçki. Kalitemizi ekranda değil, gerçek işlerde görün."
-            : "Kartvizitten brandaya, tabeladan promosyon ürünlerine — tamamladığımız işleri müşteri izinleriyle burada yayınlıyoruz."}
+            ? "Kartvizitten brandaya, tabeladan promosyon ürünlerine, Markala ile hayata geçen baskı işlerinden bir seçki. Kalitemizi ekranda değil, gerçek işlerde görün."
+            : "Kartvizitten brandaya, tabeladan promosyon ürünlerine, tamamladığımız işleri müşteri izinleriyle burada yayınlıyoruz."}
         </p>
       </header>
 

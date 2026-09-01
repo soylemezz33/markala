@@ -25,7 +25,7 @@ export default function GlobalError({ error, reset }: Props) {
           Admin panelinde bir hata oluştu
         </h1>
         <p className="mt-3 text-ink-700 text-sm">
-          Hata kaydı sistemimize iletildi. Sayfayı yeniden yüklemeyi deneyin —
+          Hata kaydı sistemimize iletildi. Sayfayı yeniden yüklemeyi deneyin,
           devam ederse sistem yöneticisine bildirin.
         </p>
 

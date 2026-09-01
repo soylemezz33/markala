@@ -44,7 +44,7 @@ function PaymentFailedContent() {
       <h1 className="mt-5 text-3xl md:text-4xl font-semibold text-ink-900">Ödeme tamamlanamadı</h1>
       <p className="mt-3 text-ink-700">
         Ödemen alınamadı ya da işlem iptal edildi. <strong>Kartından herhangi bir tahsilat yapılmadı.</strong>{" "}
-        Siparişin oluşturuldu ve <strong>"Ödeme Bekliyor"</strong> olarak duruyor — dilediğin zaman
+        Siparişin oluşturuldu ve <strong>"Ödeme Bekliyor"</strong> olarak duruyor, dilediğin zaman
         ödemeyi tamamlayabilirsin.
       </p>
 
@@ -98,7 +98,7 @@ function PaymentFailedContent() {
       <p className="mt-8 text-sm text-ink-500">
         {isMember
           ? "Ödemeni hesabındaki sipariş sayfasından dilediğin zaman tamamlayabilirsin."
-          : "Giriş yapmadan sipariş verdiğin için ödeme bağlantısını hesabından açamazsın — WhatsApp'tan yaz, sipariş referansınla ödeme bağlantısını hemen ilet edelim."}
+          : "Giriş yapmadan sipariş verdiğin için ödeme bağlantısını hesabından açamazsın, WhatsApp'tan yaz, sipariş referansınla ödeme bağlantısını hemen ilet edelim."}
       </p>
     </Container>
   );

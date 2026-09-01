@@ -23,13 +23,13 @@ const PAGE_PATH = "/rehber/branda-baski-m2-fiyati-2026";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Branda Baskı m² Fiyatı 2026 — 2×1 m Branda Ne Kadar? (KDV Dahil)",
+    title: "Branda Baskı m² Fiyatı 2026 | 2×1 m Branda Ne Kadar? (KDV Dahil)",
     description:
       "2026 güncel branda afiş m² fiyatları: vinil ve mesh branda için m² hesabının mantığı, 2×1 / 3×2 m örnek hesap tablosu, kenar detayı ve montaj SSS'i. KDV dahil fiyatlar.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Branda Baskı m² Fiyatı 2026 — Örnek Hesap Tablosu (KDV Dahil)",
+      title: "Branda Baskı m² Fiyatı 2026 | Örnek Hesap Tablosu (KDV Dahil)",
       description:
         "Branda afişte m² fiyatı nasıl hesaplanır? Gerçek m² başlangıç fiyatları ve örnek ebat hesapları.",
       url: PAGE_PATH,
@@ -52,7 +52,7 @@ export default async function BrandaM2FiyatiPage() {
   const brandaList = await getProductsByCategory("vinil-branda-afis", { strict: true });
   const withPrice = brandaList.filter((p) => getDisplayPrice(p) > 0);
   if (withPrice.length === 0) {
-    throw new Error("rehber/branda: branda kategorisi fiyatsız/boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/branda: branda kategorisi fiyatsız/boş döndü (API blip?), stale ISR korunur");
   }
   const sorted = [...withPrice].sort((a, b) => getDisplayPrice(a) - getDisplayPrice(b));
   const main = sorted[0]!; // en ekonomik m² fiyatlı branda (tipik: vinil branda)
@@ -95,11 +95,11 @@ export default async function BrandaM2FiyatiPage() {
     },
     {
       q: "1 m²'den küçük branda sipariş edebilir miyim?",
-      a: "Evet, ancak fiyatlama minimum 1 m² üzerinden yapılır — 0,5 m²'lik bir iş de 1 m² fiyatıyla hesaplanır. Küçük ebatlarda üretim ve kenar işçiliği sabit maliyet oluşturduğu için bu taban uygulanır.",
+      a: "Evet, ancak fiyatlama minimum 1 m² üzerinden yapılır, 0,5 m²'lik bir iş de 1 m² fiyatıyla hesaplanır. Küçük ebatlarda üretim ve kenar işçiliği sabit maliyet oluşturduğu için bu taban uygulanır.",
     },
     {
       q: "Kenar detayı ve halka (kuşgözü) nasıl oluyor?",
-      a: "Vinil brandada kenarlar katlamalı, halkalı veya germe + halka kombinasyonuyla hazırlanır; halkalar düzenli aralıklarla yerleştirilir. Branda montaja hazır teslim edilir — halkalardan bağlayarak kolayca asabilirsin. Kenar tercihi sipariş sırasında konfigüratörde seçilir.",
+      a: "Vinil brandada kenarlar katlamalı, halkalı veya germe + halka kombinasyonuyla hazırlanır; halkalar düzenli aralıklarla yerleştirilir. Branda montaja hazır teslim edilir, halkalardan bağlayarak kolayca asabilirsin. Kenar tercihi sipariş sırasında konfigüratörde seçilir.",
     },
     {
       q: "Mesh branda ne zaman tercih edilir?",
@@ -120,7 +120,7 @@ export default async function BrandaM2FiyatiPage() {
         ]}
       />
       <ArticleJsonLd
-        title="Branda Baskı m² Fiyatı 2026 — Örnek Hesap Tablosu (KDV Dahil)"
+        title="Branda Baskı m² Fiyatı 2026 - Örnek Hesap Tablosu (KDV Dahil)"
         description="Branda afişte m² fiyatının hesaplanma mantığı, gerçek m² başlangıç fiyatları ve örnek ebat hesapları."
         url={PAGE_PATH}
         datePublished="2026-07-20"
@@ -145,11 +145,11 @@ export default async function BrandaM2FiyatiPage() {
           <p className="mt-4 text-lg text-ink-700">
             Branda serbest ölçüyle üretilir ve m² üzerinden fiyatlanır: {asOf} itibarıyla en
             ekonomik malzemede <strong className="text-ink-900">{formatPriceWithSymbol(perM2)}/m²</strong>
-            &apos;den başlar — KDV dahil, sepette değişmez.
+            &apos;den başlar, KDV dahil, sepette değişmez.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
-              <CheckCircle size={13} weight="fill" /> KDV dahil — sepette değişmez
+              <CheckCircle size={13} weight="fill" /> KDV dahil, sepette değişmez
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <Ruler size={13} weight="fill" /> cm bazında serbest ölçü
@@ -198,7 +198,7 @@ export default async function BrandaM2FiyatiPage() {
             Örnek hesap tablosu ({asOf} itibarıyla katalog fiyatları)
           </h2>
           <p className="mt-2 text-sm text-ink-500">
-            {main.name} — en ekonomik malzemeyle yaklaşık toplam, KDV dahil.
+            {main.name}: en ekonomik malzemeyle yaklaşık toplam, KDV dahil.
           </p>
           <div className="mt-5 overflow-x-auto">
             <table className="w-full text-sm">
@@ -242,7 +242,7 @@ export default async function BrandaM2FiyatiPage() {
           <div className="text-sm text-amber-900 leading-relaxed">
             <strong>m² fiyatı karşılaştırırken:</strong> piyasada m² fiyatları çoğu zaman KDV hariç
             ve en ince malzeme üzerinden ilan edilir; kenar detayı da ayrıca ücretlendirilebilir.
-            Buradaki fiyatlar KDV dahildir — karşılaştırmayı aynı malzeme ve sepet toplamı üzerinden
+            Buradaki fiyatlar KDV dahildir, karşılaştırmayı aynı malzeme ve sepet toplamı üzerinden
             yapmak en sağlıklısıdır.
           </div>
         </section>
@@ -289,7 +289,7 @@ export default async function BrandaM2FiyatiPage() {
           <section className="mt-14">
             <h2 className="text-2xl font-semibold text-ink-900">m² ile fiyatlanan diğer ürünler</h2>
             <p className="mt-2 text-ink-700 text-sm">
-              Aynı m² mantığı şu ürünlerde de geçerli — ölçünü gir, fiyatı anında gör:
+              Aynı m² mantığı şu ürünlerde de geçerli, ölçünü gir, fiyatı anında gör:
             </p>
             <div className="mt-5 overflow-x-auto">
               <table className="w-full text-sm">
@@ -338,7 +338,7 @@ export default async function BrandaM2FiyatiPage() {
           <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
           <h2 className="text-2xl md:text-3xl font-semibold">Ölçünü gir, branda fiyatını gör</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            En × boy ölçünü santimetre bazında gir; malzeme ve kenar detayını seç — toplam fiyat
+            En × boy ölçünü santimetre bazında gir; malzeme ve kenar detayını seç, toplam fiyat
             anında hesaplanır, KDV dahil.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

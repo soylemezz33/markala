@@ -24,12 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = `/yasal/${page.slug}`;
   return {
     title: page.title,
-    description: `${page.title} — Markala (markala.com.tr) yasal belgesi. Son güncelleme: ${page.lastUpdated}.`,
+    description: `${page.title}, Markala (markala.com.tr) yasal belgesi. Son güncelleme: ${page.lastUpdated}.`,
     alternates: { canonical: url },
     openGraph: {
       type: "article",
       title: `${page.title} · Markala`,
-      description: `${page.title} — yasal sözleşme metni.`,
+      description: `${page.title}, yasal sözleşme metni.`,
       url,
       images: [{ url: "/og-default.png", width: 1200, height: 630, alt: `${page.title} · Markala` }],
     },

@@ -38,7 +38,7 @@ export default function RecentlyViewedPage() {
           <Clock size={24} weight="bold" className="text-brand-700" />
           Önceden Gezdiklerim
         </h2>
-        <p className="mt-1 text-sm text-ink-500">Son incelediğiniz ürünler — kaldığınız yerden devam edin.</p>
+        <p className="mt-1 text-sm text-ink-500">Son incelediğiniz ürünler, kaldığınız yerden devam edin.</p>
       </header>
 
       {items === null ? (

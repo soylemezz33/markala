@@ -143,7 +143,7 @@ export default function RegisterPage() {
               <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} className="mt-0.5" />
               <span>
                 Markala kampanya, indirim ve yeniliklerinden e-posta/SMS ile haberdar olmak istiyorum.{" "}
-                <span className="text-ink-500">(Opsiyonel — istediğin zaman ayarlardan kapatabilirsin.)</span>
+                <span className="text-ink-500">(Opsiyonel, istediğin zaman ayarlardan kapatabilirsin.)</span>
               </span>
             </label>
 
@@ -181,7 +181,7 @@ export default function RegisterPage() {
             İlk siparişine<br /><span className="text-brand-400">%10 indirim.</span>
           </h2>
           <p className="mt-5 text-paper-100/70 leading-relaxed">
-            Üye olduğunda otomatik tanımlanır — sepette <code className="font-mono px-2 py-0.5 rounded bg-brand-500/15 text-brand-400">HOSGELDIN</code> kuponu ile birlikte kullanılabilir.
+            Üye olduğunda otomatik tanımlanır, sepette <code className="font-mono px-2 py-0.5 rounded bg-brand-500/15 text-brand-400">HOSGELDIN</code> kuponu ile birlikte kullanılabilir.
           </p>
 
           <ul className="mt-10 space-y-5">

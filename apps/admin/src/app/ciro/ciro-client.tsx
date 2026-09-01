@@ -71,7 +71,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
         <Kpi label="Kâr" value={TL(toplam.kar)} icon={<ChartPieSlice size={18} />} tone="text-success" big />
         <Kpi
           label="Kâr marjı"
-          value={toplam.marjYuzde === null ? "—" : `%${toplam.marjYuzde.toFixed(1)}`}
+          value={toplam.marjYuzde === null ? "-" : `%${toplam.marjYuzde.toFixed(1)}`}
           icon={<ChartPieSlice size={18} />}
           tone="text-success"
         />
@@ -87,7 +87,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
             </p>
             <p className="mt-0.5 text-ink-600">
               Bu ürünlerin maliyeti sisteme girilmemiş. Maliyet 0 sayılsaydı sayfa size
-              %100 kâr gösterirdi — bilerek hesaplamadık. Aşağıdaki listeden görebilirsiniz.
+              %100 kâr gösterirdi, bilerek hesaplamadık. Aşağıdaki listeden görebilirsiniz.
             </p>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
                         {TL(u.kar ?? 0)}
                       </td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-ink-700">
-                        {u.marjYuzde === null ? "—" : `%${u.marjYuzde.toFixed(1)}`}
+                        {u.marjYuzde === null ? "-" : `%${u.marjYuzde.toFixed(1)}`}
                       </td>
                     </tr>
                   ))}

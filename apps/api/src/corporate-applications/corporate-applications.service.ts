@@ -101,7 +101,7 @@ export class CorporateApplicationsService {
       inviteEmailSent = await this.approveAccount(app);
       if (inviteEmailSent === false) {
         this.logger.warn(
-          `Kurumsal onay ${app.id} (${app.email}): davet/şifre-belirleme maili GÖNDERİLEMEDİ — müşteri giriş yapamaz, daveti yeniden gönderin.`,
+          `Kurumsal onay ${app.id} (${app.email}): davet/şifre-belirleme maili GÖNDERİLEMEDİ, müşteri giriş yapamaz, daveti yeniden gönderin.`,
         );
       }
     } else if (app.userId) {

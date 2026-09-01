@@ -41,7 +41,7 @@ function rehberBul(slug: string) {
   if (slug.startsWith("is-guvenligi-")) {
     return {
       href: "/rehber/isg-zorunlu-uyari-levhalari",
-      label: "İSG Uyarı Levhaları Rehberi — Renkler ve Zorunlu İşaretler",
+      label: "İSG Uyarı Levhaları Rehberi - Renkler ve Zorunlu İşaretler",
     };
   }
   return KATEGORI_REHBERI[slug];
@@ -71,6 +71,23 @@ const parsePage = (raw: string): number => {
 // revalidate export'u fetch cache varsayılanı/niyet belgesi olarak bırakıldı.
 export const revalidate = 300;
 
+/**
+ * GERÇEK HTTP 404 (2026-08-31). Ölçüldü: bu kurulumda (Next 14 + output:"standalone" + ISR)
+ * `notFound()` not-found ARAYÜZÜNÜ gösteriyor ama yanıt statüsünü 404 YAPMIYOR — /kategori,
+ * /urun, /blog, /yasal hepsi HTTP 200 dönüyordu. Buna karşılık `dynamicParams = false`
+ * kullanan rotalar (/matbaa, /hizmetler, /yardim) doğru 404 veriyor: o karar router
+ * seviyesinde alınıyor ve notFound()'a hiç ihtiyaç duymuyor. Korelasyon 9 rotada birebir.
+ *
+ * Neden burada güvenli: generateStaticParams `getCategories()` kullanıyor, o da public
+ * /categories ucundan YALNIZ AKTİF kategorileri alıyor. Yani pasife alınan kategori
+ * (ör. lightbox) listede olmaz ve doğrudan 404 döner — Google Ads "hedef çalışmıyor"
+ * denetimi HTTP durumuna baktığı için bozuk açılış sayfası artık sessizce bütçe yakamaz.
+ *
+ * BEDELİ: panelden YENİ kategori eklendiğinde sayfası bir sonraki deploy'a kadar 404 verir.
+ * Kategori nadiren eklenir ve zaten ürün girişi + deploy gerektirir; kabul edildi.
+ * Ürün ve blog rotalarında AYNI ŞEY YAPILMADI: oralara sık içerik ekleniyor (blog her
+ * sabah otomatik yazıyor), 404 penceresi kabul edilemez.
+ */
 export async function generateStaticParams() {
   const cats = await getCategories();
   return cats.map((c) => ({ slug: c.slug }));
@@ -78,16 +95,26 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const cat = await getCategoryBySlug(params.slug);
-  // Kategori yok → gerçek HTTP 404 (soft-404 yerine); notFound() metadata aşamasında statüyü 404 yapar.
-  if (!cat) notFound();
+  // SOFT-404 — ÇÖZÜLMEDİ, azaltıldı (2026-08-31). Ölçüm: bu kurulumda (Next 14 +
+  // output:"standalone") olmayan kategori/ürün/blog URL'i HTTP 200 + not-found gövdesi
+  // dönüyor. Denenen ve İŞE YARAMAYAN iki yol:
+  //   1) notFound()'u generateMetadata yerine yalnız sayfa bileşeninde çağırmak → yine 200.
+  //   2) dynamicParams=false → bu rotada İNERT: sayfa `searchParams` (sayfalama) okuduğu
+  //      için rota tamamen dinamik; prerender-manifest'te /kategori sayfası SIFIR ve
+  //      /kategori/[slug] dynamicRoutes'ta da yok. Gate edilecek statik param yok.
+  //      (Çalıştığı yerler /matbaa, /hizmetler, /yardim — onlar searchParams okumuyor.)
+  // Kalan azaltma: noindex. Statü 200 kalır ama Google soft-404'ü İNDEKSLEMEZ.
+  // Google Ads "hedef çalışmıyor" denetimi HTTP durumuna baktığı için REKLAM TARAFI HÂLÂ
+  // AÇIK — gerçek çözüm muhtemelen Next 15 (denetimde güvenlik gerekçesiyle de öneriliyor).
+  if (!cat) return { title: "Sayfa bulunamadı", robots: { index: false, follow: false } };
   // SEO sayfalaması: sayfa N'de title'a " — Sayfa N" eki + self-canonical (?page=N dahil).
   const page = parsePage(first(searchParams?.page));
-  const pageSuffix = page > 1 ? ` — Sayfa ${page}` : "";
+  const pageSuffix = page > 1 ? `, Sayfa ${page}` : "";
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim
   // Fiyat eki: "115.92 TL'den" gibi ondalıklı görüntü SERP'te itici — tam TL'ye yuvarla,
   // "KDV Dahil" güveni ekle (sitede tüm fiyatlar KDV dahildir).
   const fiyatEki = cat.startingPrice
-    ? ` — ${Math.round(Number(cat.startingPrice))} TL'den (KDV Dahil)`
+    ? ` - ${Math.round(Number(cat.startingPrice))} TL'den (KDV Dahil)`
     : "";
   // "Dekota Baskı" gibi adı zaten "Baskı" ile biten kategoride "Baskı Baskı" üretiliyordu.
   const adBaskiliMi = /bask[ıi]\s*$/i.test(cat.name);

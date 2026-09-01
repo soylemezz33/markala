@@ -1,0 +1,113 @@
+{
+  "url": "https://markala.com.tr/matbaa/mersin",
+  "status_code": 200,
+  "content": "<!DOCTYPE html><html lang=\"tr\" class=\"__variable_2b4d3c\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" href=\"/_next/static/media/c9cac29382a46c9d-s.p.woff2\" as=\"font\" crossorigin=\"\" type=\"font/woff2\"/><link rel=\"preload\" href=\"/_next/static/media/d15df05e08ab39f1-s.p.woff2\" as=\"font\" crossorigin=\"\" type=\"font/woff2\"/><link rel=\"preload\" as=\"image\" href=\"/markala-logo.svg\"/><link rel=\"stylesheet\" href=\"/_next/static/css/7bd1c...",
+  "raw_content": "<!DOCTYPE html><html lang=\"tr\" class=\"__variable_2b4d3c\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" href=\"/_next/static/media...",
+  "is_spa": false,
+  "extracted_text": "Mersin'de matbaa & bask\u0131 hizmeti\nMersin merkezli matbaa at\u00f6lyemiz, Mersin ve \u00e7evresine kurye/kargo ile 1-2 i\u015f g\u00fcn\u00fc teslimat sa\u011flar. Mersin Liman\u0131, Yeni\u015fehir ticaret b\u00f6lgesi, Tarsus OSB ve Toroslar sanayi siteleri \u00e7evresinde 12.000+ aktif m\u00fc\u015fteriye matbaa hizmeti veriyoruz.\nMersin'de en \u00e7ok tercih edilen matbaa \u00fcr\u00fcnleri\nMersin b\u00f6lgesindeki m\u00fc\u015fterilerimizin sipari\u015flerinden derledi\u011fimiz en pop\u00fcler \u00fcr\u00fcnler:\n- Klasik kartvizit (selefonlu/UV/yald\u0131z)\n- Kurumsal antetli k\u00e2\u011f\u0131t + zarf seti\n- Restoran men\u00fc...",
+  "publication_date": "2026-07-01",
+  "accessibility_tree": null,
+  "headers": {
+    "Date": "Mon, 17 Aug 2026 08:23:27 GMT",
+    "Content-Type": "text/html; charset=utf-8",
+    "Transfer-Encoding": "chunked",
+    "Connection": "keep-alive",
+    "Server": "cloudflare",
+    "x-xss-protection": "1; mode=block",
+    "x-content-type-options": "nosniff, nosniff",
+    "x-frame-options": "SAMEORIGIN, SAMEORIGIN",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "referrer-policy": "strict-origin-when-cross-origin, strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=(self), payment=(self), interest-cohort=()",
+    "x-dns-prefetch-control": "on",
+    "content-security-policy-report-only": "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data: blob: https://api.markala.com.tr https://picsum.photos https://*.picsum.photos https://images.unsplash.com https://images.pexels.com https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.tr https://www.googleadservices.com https://www.facebook.com; font-src 'self' data:; style-src 'self' 'unsafe-inline' https://accounts.google.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net; connect-src 'self' https://accounts.google.com https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://stats.g.doubleclick.net https://www.facebook.com https://connect.facebook.net; frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com https://www.iyzipay.com https://sandbox-api.iyzipay.com https://api.iyzipay.com; report-uri /api/csp-report",
+    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
+    "x-nextjs-cache": "HIT",
+    "Cache-Control": "s-maxage=300, stale-while-revalidate",
+    "Nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "Report-To": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=KHBVKf4au91Z13eSP36zK2dgqdD%2B0Q0iUCt6c4JlI9OLD6txOm8jpjVP0sUTknYXJ5w9oNTP7lWDCUgzXnkhzvwjLqrVbBNxqeeDQCDKIzx34PXi4XjZ795UuMzflu9%2Brw%3D%3D\"}]}",
+    "cf-cache-status": "DYNAMIC",
+    "Content-Encoding": "zstd",
+    "CF-RAY": "a2c746de99b59cd3-AMS",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "redirect_chain": [],
+  "console_errors": [],
+  "render_diagnostics": [],
+  "render_engine": null,
+  "render_ms": null,
+  "mode_used": "raw",
+  "error": null,
+  "structured_data": {
+    "block_count": 5,
+    "processed_count": 5,
+    "total_bytes": 6075,
+    "truncated": false,
+    "blocks": [
+      {
+        "index": 1,
+        "size_bytes": 1966,
+        "valid": true,
+        "types": [
+          "ContactPoint",
+          "EntryPoint",
+          "OpeningHoursSpecification",
+          "Organization",
+          "PostalAddress",
+          "SearchAction",
+          "WebSite"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 2,
+        "size_bytes": 1299,
+        "valid": true,
+        "types": [
+          "City",
+          "Country",
+          "GeoCoordinates",
+          "LocalBusiness",
+          "OpeningHoursSpecification",
+          "PostalAddress"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 3,
+        "size_bytes": 366,
+        "valid": true,
+        "types": [
+          "BreadcrumbList",
+          "ListItem"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 4,
+        "size_bytes": 915,
+        "valid": true,
+        "types": [
+          "AggregateOffer",
+          "City",
+          "GeoCoordinates",
+          "LocalBusiness",
+          "QuantitativeValue",
+          "Service"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 5,
+        "size_bytes": 1529,
+        "valid": true,
+        "types": [
+          "Answer",
+          "FAQPage",
+          "Question"
+        ],
+        "types_truncated": false
+      }
+    ]
+  }
+}

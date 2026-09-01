@@ -124,7 +124,7 @@ export default async function DashboardPage() {
       <header className="mb-6 flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Dashboard</h1>
-          <p className="mt-1 text-ink-500 text-sm">Genel özet — canlı veriler</p>
+          <p className="mt-1 text-ink-500 text-sm">Genel özet, canlı veriler</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
@@ -157,7 +157,7 @@ export default async function DashboardPage() {
               </div>
               {/* Delta/karşılaştırma verisi API'de yok — tıklanabilir kartta ipucu gösterilir */}
               <div className="mt-1 text-[11px] md:text-xs text-ink-400">
-                {"href" in k && k.href ? "Kâr detayını gör →" : "—"}
+                {"href" in k && k.href ? "Kâr detayını gör →" : "-"}
               </div>
             </>
           );

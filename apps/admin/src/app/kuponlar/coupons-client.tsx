@@ -236,7 +236,7 @@ export function CouponsClient({ coupons }: Props) {
                     </td>
                     <td className="px-4 py-3 text-center text-ink-700 hidden lg:table-cell text-xs">
                       {c.validFrom || c.validUntil
-                        ? `${formatDate(c.validFrom) || "—"} – ${formatDate(c.validUntil) || "—"}`
+                        ? `${formatDate(c.validFrom) || "-"} – ${formatDate(c.validUntil) || "-"}`
                         : "Sürekli"}
                     </td>
                     <td className="px-4 py-3 text-center">

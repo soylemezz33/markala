@@ -19,17 +19,17 @@ import { GuideFaqSection, asOfLabel } from "../_shared";
 export const revalidate = 3600;
 
 const PAGE_PATH = "/rehber/folyo-baski-fiyatlari-2026";
-const BASLIK = "Folyo Baskı Fiyatları 2026 — Çeşitleri, Baskes ve One Way Vision";
+const BASLIK = "Folyo Baskı Fiyatları 2026: Çeşitleri, Baskes ve One Way Vision";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Folyo Baskı Fiyatları 2026 — Hangi Folyo, m² Kaç TL?",
+    title: "Folyo Baskı Fiyatları 2026 | Hangi Folyo, m² Kaç TL?",
     description:
       "2026 güncel folyo baskı m² fiyatları: normal, mat, şeffaf, arkası gri, kumlama, laminasyonlu, reflektif ve lümen folyo farkları. Baskes (kontür kesim) ve One Way Vision ne zaman kullanılır? KDV dahil.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Folyo Baskı Fiyatları 2026 — Çeşitleri ve m² Hesabı",
+      title: "Folyo Baskı Fiyatları 2026 | Çeşitleri ve m² Hesabı",
       description:
         "Dokuz folyo türü, baskes kontür kesim ve one way vision arasındaki farklar; canlı m² fiyatlarıyla.",
       url: PAGE_PATH,
@@ -59,7 +59,7 @@ export default async function FolyoBaskiFiyatlariPage() {
   ]);
   // Fiyatsız/boş dönerse THROW — ISR son başarılı sayfayı korur, uydurma fiyat yayınlanmaz.
   if (!folyo || getDisplayPrice(folyo) <= 0) {
-    throw new Error("rehber/folyo: Folyo Çeşitleri fiyatsız/boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/folyo: Folyo Çeşitleri fiyatsız/boş döndü (API blip?), stale ISR korunur");
   }
   const m2Ham = folyo.displayPrice ?? 0;
   const m2 = getDisplayPrice(folyo);
@@ -85,7 +85,7 @@ export default async function FolyoBaskiFiyatlariPage() {
     },
     {
       q: "Baskes folyo ile normal folyo arasındaki fark ne?",
-      a: `Normal folyoda baskı dikdörtgen bir parça hâlinde çıkar; yazının etrafında folyonun kendi zemini kalır. Baskes'te ise baskı yapıldıktan sonra tasarımın konturu boyunca kesilir — logo, yazı ve özel formlar arka fon olmadan tek parça çıkar, cama yapıştırıldığında sadece harfler görünür. Uygulama bandı (transfer tape) ile bütün hâlinde tek seferde yapıştırılır. ${baskesM2 > 0 ? `Baskes m² fiyatı ${formatPriceWithSymbol(baskesM2)}'den başlar.` : ""} 7 cm'den küçük parçalarda ek kesim ücreti uygulanır.`,
+      a: `Normal folyoda baskı dikdörtgen bir parça hâlinde çıkar; yazının etrafında folyonun kendi zemini kalır. Baskes'te ise baskı yapıldıktan sonra tasarımın konturu boyunca kesilir, logo, yazı ve özel formlar arka fon olmadan tek parça çıkar, cama yapıştırıldığında sadece harfler görünür. Uygulama bandı (transfer tape) ile bütün hâlinde tek seferde yapıştırılır. ${baskesM2 > 0 ? `Baskes m² fiyatı ${formatPriceWithSymbol(baskesM2)}'den başlar.` : ""} 7 cm'den küçük parçalarda ek kesim ücreti uygulanır.`,
     },
     {
       q: "One Way Vision nedir, ne zaman kullanılır?",
@@ -93,7 +93,7 @@ export default async function FolyoBaskiFiyatlariPage() {
     },
     {
       q: "Solvent baskı mı UV baskı mı seçmeliyim?",
-      a: "Solvent baskı ekonomiktir ve dış mekana dayanıklıdır; cephe, vitrin ve araç uygulamalarının çoğunda bu yeterlidir. UV baskı kokusuzdur ve renkleri daha canlı verir — kapalı ofis, hastane, okul gibi baskı kokusunun rahatsız edeceği iç mekanlarda tercih edilir. Aynı folyo türünde UV baskının m² fiyatı solventten yüksektir.",
+      a: "Solvent baskı ekonomiktir ve dış mekana dayanıklıdır; cephe, vitrin ve araç uygulamalarının çoğunda bu yeterlidir. UV baskı kokusuzdur ve renkleri daha canlı verir, kapalı ofis, hastane, okul gibi baskı kokusunun rahatsız edeceği iç mekanlarda tercih edilir. Aynı folyo türünde UV baskının m² fiyatı solventten yüksektir.",
     },
     {
       q: "Laminasyon gerekli mi?",
@@ -101,7 +101,7 @@ export default async function FolyoBaskiFiyatlariPage() {
     },
     {
       q: "Folyo cama nasıl uygulanır, montaj dahil mi?",
-      a: "Folyolar uygulama bandıyla, cam sabunlu suyla ıslatılarak yapıştırılır; küçük işleri kendiniz uygulayabilirsiniz. Baskes işlerinde tüm harfler tek bandın üzerinde geldiği için hizalama sorunu yaşamazsınız. Fiyatlar üretim ve kargo içindir, yerinde montaj ayrı bir hizmettir — ihtiyaç varsa sipariş öncesi bize yazın.",
+      a: "Folyolar uygulama bandıyla, cam sabunlu suyla ıslatılarak yapıştırılır; küçük işleri kendiniz uygulayabilirsiniz. Baskes işlerinde tüm harfler tek bandın üzerinde geldiği için hizalama sorunu yaşamazsınız. Fiyatlar üretim ve kargo içindir, yerinde montaj ayrı bir hizmettir, ihtiyaç varsa sipariş öncesi bize yazın.",
     },
     {
       q: "Fiyatlara KDV dahil mi?",
@@ -139,7 +139,7 @@ export default async function FolyoBaskiFiyatlariPage() {
             Folyo serbest ölçüyle üretilir ve m² üzerinden fiyatlanır. {asOf} itibarıyla en
             ekonomik türde{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(m2)}/m²</strong>&apos;den
-            başlar — KDV dahil, sepette değişmez.
+            başlar, KDV dahil, sepette değişmez.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
@@ -182,7 +182,7 @@ export default async function FolyoBaskiFiyatlariPage() {
             Düz folyo mu, baskes (kontür kesim) mi?
           </h2>
           <p className="mt-3 text-sm text-ink-700 max-w-3xl">
-            Bu, folyo siparişinde en sık karıştırılan konu — ve fiyat farkının asıl sebebi.
+            Bu, folyo siparişinde en sık karıştırılan konu ve fiyat farkının asıl sebebi.
           </p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-paper-200 bg-paper-50 p-5">
@@ -196,7 +196,7 @@ export default async function FolyoBaskiFiyatlariPage() {
               </p>
             </div>
             <div className="rounded-lg border border-paper-200 bg-paper-50 p-5">
-              <h3 className="font-semibold text-ink-900">Baskes — baskı + kontür kesim</h3>
+              <h3 className="font-semibold text-ink-900">Baskes: baskı + kontür kesim</h3>
               <p className="mt-2 text-sm text-ink-700">
                 Baskı, tasarımın konturu boyunca kesilir. Logo ve yazılar arka fon olmadan tek
                 parça çıkar; cama yapıştırıldığında sadece harfler görünür.
@@ -211,7 +211,7 @@ export default async function FolyoBaskiFiyatlariPage() {
           <p className="mt-4 flex gap-2 text-xs text-ink-500">
             <Info size={14} weight="fill" className="shrink-0 mt-0.5 text-brand-700" />
             <span>
-              Baskes&apos;te 7 cm&apos;den küçük parçalarda ek kesim ücreti uygulanır — çok sayıda
+              Baskes&apos;te 7 cm&apos;den küçük parçalarda ek kesim ücreti uygulanır, çok sayıda
               minik harf, kesim süresini orantısız uzatır.
             </span>
           </p>
@@ -224,7 +224,7 @@ export default async function FolyoBaskiFiyatlariPage() {
               <div className="flex items-center gap-2">
                 <Eye size={20} weight="fill" className="text-brand-700" />
                 <h2 className="text-xl font-semibold text-ink-900">
-                  One Way Vision — dışarıdan reklam, içeriden manzara
+                  One Way Vision: dışarıdan reklam, içeriden manzara
                 </h2>
               </div>
               <p className="mt-3 text-sm text-ink-700 max-w-3xl">

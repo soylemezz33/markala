@@ -27,19 +27,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = getHelpCategory(kategori);
   if (!category) return {};
   return {
-    title: `${category.title} — Yardım Merkezi`,
+    title: `${category.title} | Yardım Merkezi`,
     description: category.description,
     alternates: { canonical: `/yardim/${category.slug}` },
     openGraph: {
       type: "website",
-      title: `${category.title} — Markala Yardım`,
+      title: `${category.title} | Markala Yardım`,
       description: category.description,
       url: `/yardim/${category.slug}`,
       images: [{ url: "/og-default.png", width: 1200, height: 630, alt: category.title }],
     },
     twitter: {
       card: "summary_large_image",
-      title: `${category.title} — Markala Yardım`,
+      title: `${category.title} | Markala Yardım`,
       description: category.description,
       images: ["/og-default.png"],
     },
@@ -56,7 +56,7 @@ export default async function HelpCategoryPage({ params }: Props) {
   return (
     <>
       <ItemListJsonLd
-        name={`${category.title} — Yardım Makaleleri`}
+        name={`${category.title} - Yardım Makaleleri`}
         url={`/yardim/${category.slug}`}
         items={category.articles.map((a) => ({
           name: a.question,

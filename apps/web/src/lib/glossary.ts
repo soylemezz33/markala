@@ -72,7 +72,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "amerikan-kagit",
     term: "Amerikan (NCR) Kağıt",
-    shortDef: "Kopyalı (karbonsuz) kâğıt — makbuz, fatura ve sevk irsaliyesi için.",
+    shortDef: "Kopyalı (karbonsuz) kâğıt: makbuz, fatura ve sevk irsaliyesi için.",
     longDef:
       "Amerikan kâğıt veya NCR (No Carbon Required), iki veya daha fazla katlı, üst kâğıdın yazıyı alttaki kâğıda otomatik basınçla aktardığı özel bir kâğıt türüdür. Karbon kullanmaz; yüzeyleri kimyasal kaplı olduğu için yazı doğrudan iletilir. Makbuz, fatura, sevk irsaliyesi, sipariş formu, garanti belgesi gibi işlerde kullanılır. 2-3 nüshalı (beyaz/sarı/pembe) standart formatlarda gelir.",
     category: "kagit",
@@ -114,7 +114,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "pantone",
     term: "Pantone (PMS)",
-    shortDef: "Standart renk kodları sistemi — kurumsal renklerin hassas baskısı için.",
+    shortDef: "Standart renk kodları sistemi, kurumsal renklerin hassas baskısı için.",
     longDef:
       "Pantone Matching System (PMS), her rengin numerik bir kodu olan dünya çapında standart renk paletidir. CMYK'nın yetersiz kaldığı kurumsal renklerde (örneğin Coca-Cola kırmızısı) Pantone özel mürekkep olarak kullanılır. \"5+1 renk\" baskı CMYK + 1 Pantone, \"6 renk\" ise CMYK + 2 Pantone demektir. Lüks marka kartviziti, ambalaj ve özel projelerde tercih edilir. CMYK'ya dönüşüm %15-20 sapma yaratabilir.",
     category: "renk",
@@ -156,7 +156,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "dijital-baski",
     term: "Dijital Baskı",
-    shortDef: "Bilgisayardan doğrudan baskı — düşük adetli ve hızlı işler için ideal.",
+    shortDef: "Bilgisayardan doğrudan baskı, düşük adetli ve hızlı işler için ideal.",
     longDef:
       "Dijital baskı, dosyanın doğrudan baskı makinesine gönderildiği plaka gerektirmeyen baskı türüdür. Düşük adetli (1-1.000) işlerde birim maliyeti makul, ön hazırlık süresi çok kısadır. Acil işler, kişiselleştirilmiş baskı (her sayfa farklı), kısa tirajlı kartvizit ve broşürlerde tercih edilir. Renk kalitesi son yıllarda ofset düzeyine yaklaşmıştır.",
     category: "baski",
@@ -188,7 +188,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "selefon",
     term: "Selefon",
-    shortDef: "Kâğıt yüzeye yapıştırılan ince plastik film — koruma + parlaklık/matlık verir.",
+    shortDef: "Kâğıt yüzeye yapıştırılan ince plastik film, koruma + parlaklık/matlık verir.",
     longDef:
       "Selefon (BOPP veya OPP), baskıdan sonra kâğıdın bir veya iki yüzüne uygulanan ince plastik film katmanıdır. Mat ve parlak olmak üzere iki ana türü vardır. Mat selefon premium ve modern bir his verir, parlak selefon renkleri canlandırır. Yırtılmaya, lekelenmeye ve neme karşı korur. Kartvizit, menü, kapaklı broşür gibi sık ele alınan ürünlerde tercih edilir. Mat selefon üzerine yazı yazılabilir, parlak selefon yazılamaz.",
     category: "kaplama",
@@ -260,7 +260,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "kirim",
     term: "Kırım (Bigleme)",
-    shortDef: "Katlanacak hat boyunca kâğıda yapılan ezme — düzgün katlanmayı sağlar.",
+    shortDef: "Katlanacak hat boyunca kâğıda yapılan ezme, düzgün katlanmayı sağlar.",
     longDef:
       "Kırım (creasing/bigleme), katlanacak çizgi boyunca kâğıdın özel bir bıçakla ezilmesidir. Kalın kâğıtlarda (200 gr+) düz katlamak liflerin kırılmasına ve çatlamaya neden olur; kırım bunu önler. Davetiye, broşür, klasör kapakları, kitapçık kapakları için zorunlu işlemdir.",
     category: "kesim",
@@ -282,7 +282,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "dpi",
     term: "DPI (Çözünürlük)",
-    shortDef: "İnç başına nokta sayısı — baskıda 300 dpi minimum, ekranda 72 dpi.",
+    shortDef: "İnç başına nokta sayısı: baskıda 300 dpi minimum, ekranda 72 dpi.",
     longDef:
       "DPI (Dots Per Inch), bir görselin yüzey üzerinde kaç noktayla oluşturulduğunu gösterir. Web/ekran için 72 dpi yeterli iken baskıda 300 dpi minimumdur. 300 dpi altındaki görseller baskıda bulanık ve kareli (pikselli) çıkar. Vektörel grafikler (Adobe Illustrator) DPI'dan bağımsızdır; raster (Photoshop) için bu değer kritiktir.",
     category: "format",
@@ -301,7 +301,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "raster",
     term: "Raster (Bitmap)",
-    shortDef: "Piksellerden oluşan görsel formatı (JPG, PNG, TIFF) — sınırlı ölçeklenir.",
+    shortDef: "Piksellerden oluşan görsel formatı (JPG, PNG, TIFF), sınırlı ölçeklenir.",
     longDef:
       "Raster (bitmap), küçük renk noktaları (piksel) ile oluşturulan görsel formatıdır. JPG, PNG, TIFF, BMP gibi formatları vardır. Belirli bir çözünürlükte üretilir; büyütüldüğünde piksel görünür ve kalite düşer. Fotoğraflar her zaman raster'dır; baskı için 300 dpi'da olmalıdır. Photoshop ana raster düzenleme programıdır.",
     category: "format",
@@ -341,7 +341,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "soft-proof",
     term: "Soft Proof",
-    shortDef: "Ekran üzerinde CMYK simülasyonu — hızlı ama %85 doğrulukta.",
+    shortDef: "Ekran üzerinde CMYK simülasyonu, hızlı ama %85 doğrulukta.",
     longDef:
       "Soft proof, tasarım yazılımında (Photoshop, InDesign) ICC profil kullanılarak ekranda yapılan baskı simülasyonudur. Hızlı ve ücretsizdir. Adobe ürünlerinde \"View → Proof Setup → Working CMYK\" ile aktive edilir. Renk doğruluğu monitör kalibrasyonuna bağlıdır; %85 civarındadır. Kritik işlerde hard proof gereklidir.",
     category: "uretim",
@@ -352,7 +352,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "outline",
     term: "Outline (Yazı Vektörleştirme)",
-    shortDef: "Yazıların yola dönüştürülmesi — font eksikliği probleminden kaçınmak için.",
+    shortDef: "Yazıların yola dönüştürülmesi, font eksikliği probleminden kaçınmak için.",
     longDef:
       "Outline (Convert to Outlines), yazı karakterlerinin vektörel yollara (path) çevrilmesidir. Adobe Illustrator'da \"Type → Create Outlines\" ile yapılır. Matbaaya gönderirken yazıların outline yapılması gerekir; aksi halde matbaada o font yoksa yazı bozulur veya farklı bir fontla yazılır. Outline sonrası yazıyı düzenleyemezsiniz; bu yüzden orijinal dosyayı saklayın.",
     category: "format",
@@ -363,7 +363,7 @@ export const glossary: GlossaryTerm[] = [
   {
     slug: "tipografi",
     term: "Tipografi",
-    shortDef: "Yazı karakterlerinin seçimi ve düzenlenmesi sanatı — okunabilirlik ve marka tonu.",
+    shortDef: "Yazı karakterlerinin seçimi ve düzenlenmesi sanatı, okunabilirlik ve marka tonu.",
     longDef:
       "Tipografi, yazının okunabilir, etkili ve estetik biçimde düzenlenmesidir. Font seçimi, punto, satır aralığı (leading), harf aralığı (kerning/tracking) ve hizalama kararlarını kapsar. Kurumsal kimlikte tutarlı bir font ailesi marka tonunu belirler; kartvizit, broşür ve afişte hiyerarşiyi tipografi taşır. Baskıda serif fontlar uzun metinde, sans-serif fontlar başlık ve etikette tercih edilir. Çok fazla font karışımı (ikiden fazla) tasarımı dağıtır.",
     category: "tasarim",
@@ -376,7 +376,7 @@ export const glossary: GlossaryTerm[] = [
     term: "Görsel Hiyerarşi",
     shortDef: "Tasarımda öğeleri önem sırasına göre düzenleyip okuyucunun dikkatini yönlendirme.",
     longDef:
-      "Görsel hiyerarşi, boyut, renk, kontrast, boşluk ve konumlandırma kullanarak hangi öğenin önce okunacağını belirleyen tasarım ilkesidir. Bir broşürde başlık en büyük, alt başlık orta, gövde metni en küçük olur; göz doğal olarak büyükten küçüğe akar. İyi hiyerarşi mesajı saniyeler içinde iletir; zayıf hiyerarşi okuyucuyu yorar ve dönüşümü düşürür. Beyaz alan (boşluk) da bir hiyerarşi aracıdır — kalabalık tasarım önemi belirsizleştirir.",
+      "Görsel hiyerarşi, boyut, renk, kontrast, boşluk ve konumlandırma kullanarak hangi öğenin önce okunacağını belirleyen tasarım ilkesidir. Bir broşürde başlık en büyük, alt başlık orta, gövde metni en küçük olur; göz doğal olarak büyükten küçüğe akar. İyi hiyerarşi mesajı saniyeler içinde iletir; zayıf hiyerarşi okuyucuyu yorar ve dönüşümü düşürür. Beyaz alan (boşluk) da bir hiyerarşi aracıdır, kalabalık tasarım önemi belirsizleştirir.",
     category: "tasarim",
     examples: ["Afişte 3 kademeli başlık düzeni", "CTA butonunu kontrast renkle öne çıkarma"],
     relatedTerms: ["tipografi"],

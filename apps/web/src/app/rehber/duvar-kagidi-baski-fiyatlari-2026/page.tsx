@@ -19,17 +19,17 @@ import { GuideFaqSection, asOfLabel } from "../_shared";
 export const revalidate = 3600;
 
 const PAGE_PATH = "/rehber/duvar-kagidi-baski-fiyatlari-2026";
-const BASLIK = "Duvar Kağıdı Baskı Fiyatları 2026 — Ölçü Alma ve m² Hesabı";
+const BASLIK = "Duvar Kağıdı Baskı Fiyatları 2026: Ölçü Alma ve m² Hesabı";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Duvar Kağıdı Baskı Fiyatları 2026 — Özel Ölçü m² Fiyatı",
+    title: "Duvar Kağıdı Baskı Fiyatları 2026 | Özel Ölçü m² Fiyatı",
     description:
       "Özel tasarım duvar kağıdı baskı m² fiyatları 2026: duvar ölçüsü nasıl alınır, kaç m² çıkar, solvent mi UV mi, çözünürlük kaç olmalı? Örnek oda hesapları, KDV dahil.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Duvar Kağıdı Baskı Fiyatları 2026 — Ölçü Alma ve m² Hesabı",
+      title: "Duvar Kağıdı Baskı Fiyatları 2026 | Ölçü Alma ve m² Hesabı",
       description:
         "Duvarını ölç, m²'ni bul, fiyatını gör. Solvent/UV farkı ve görsel çözünürlük rehberi.",
       url: PAGE_PATH,
@@ -40,16 +40,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Yaygın duvar senaryoları (cm). Fiyat DAİMA canlı m² fiyatından hesaplanır. */
 const ODALAR = [
-  { en: 250, boy: 250, ad: "Yatak odası — başucu duvarı" },
-  { en: 350, boy: 260, ad: "Salon — TV arkası duvar" },
-  { en: 400, boy: 280, ad: "Kafe / restoran — tek duvar" },
-  { en: 600, boy: 300, ad: "Ofis — resepsiyon arkası" },
+  { en: 250, boy: 250, ad: "Yatak odası, başucu duvarı" },
+  { en: 350, boy: 260, ad: "Salon, TV arkası duvar" },
+  { en: 400, boy: 280, ad: "Kafe / restoran, tek duvar" },
+  { en: 600, boy: 300, ad: "Ofis, resepsiyon arkası" },
 ];
 
 export default async function DuvarKagidiFiyatlariPage() {
   const urun = await getProductBySlug("duvar-kagidi-baski");
   if (!urun || getDisplayPrice(urun) <= 0) {
-    throw new Error("rehber/duvar-kagidi: ürün fiyatsız/boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/duvar-kagidi: ürün fiyatsız/boş döndü (API blip?), stale ISR korunur");
   }
   const m2Ham = urun.displayPrice ?? 0;
   const m2 = getDisplayPrice(urun);
@@ -63,27 +63,27 @@ export default async function DuvarKagidiFiyatlariPage() {
   const faqs = [
     {
       q: "Duvar kağıdı m² fiyatı nasıl hesaplanır?",
-      a: `Duvarın eni × yüksekliği metre cinsinden çarpılır ve m² birim fiyatıyla çarpılır. ${asOf} itibarıyla solvent baskıda m² ${formatPriceWithSymbol(m2)} (KDV dahil). Baskı tek parça değil, genellikle 100-150 cm genişliğinde şeritler hâlinde üretilir ve duvarda yan yana birleştirilir — bu birleştirme fiyata ek maliyet getirmez, m² hesabına dahildir.`,
+      a: `Duvarın eni × yüksekliği metre cinsinden çarpılır ve m² birim fiyatıyla çarpılır. ${asOf} itibarıyla solvent baskıda m² ${formatPriceWithSymbol(m2)} (KDV dahil). Baskı tek parça değil, genellikle 100-150 cm genişliğinde şeritler hâlinde üretilir ve duvarda yan yana birleştirilir, bu birleştirme fiyata ek maliyet getirmez, m² hesabına dahildir.`,
     },
     {
       q: "Duvar ölçüsünü nasıl almalıyım?",
-      a: "Duvarın en geniş noktasından enini, en yüksek noktasından yüksekliğini ölç. Zemin ve tavan çoğu binada tam düz değildir, bu yüzden üç noktadan ölçüp en büyüğünü al. Ölçüne her kenardan 5 cm pay ekle — uygulama sırasında hizalama için bu pay gerekir, fazlası kesilir. Priz, kapı ve pencere boşluklarını ölçüden düşme; baskı tam duvar olarak üretilir, boşluklar yerinde kesilir.",
+      a: "Duvarın en geniş noktasından enini, en yüksek noktasından yüksekliğini ölç. Zemin ve tavan çoğu binada tam düz değildir, bu yüzden üç noktadan ölçüp en büyüğünü al. Ölçüne her kenardan 5 cm pay ekle, uygulama sırasında hizalama için bu pay gerekir, fazlası kesilir. Priz, kapı ve pencere boşluklarını ölçüden düşme; baskı tam duvar olarak üretilir, boşluklar yerinde kesilir.",
     },
     {
       q: "Solvent baskı mı UV baskı mı seçmeliyim?",
-      a: "Ev, yatak odası ve çocuk odası gibi kapalı ve az havalanan alanlarda UV baskı seç — kokusuzdur, uygulamadan hemen sonra odayı kullanabilirsin. Solvent baskının ilk günlerde hafif bir baskı kokusu olur ve havalandırma ister; buna karşılık daha ekonomiktir ve mağaza, kafe, ofis gibi geniş ve havalanan alanlarda tercih edilir.",
+      a: "Ev, yatak odası ve çocuk odası gibi kapalı ve az havalanan alanlarda UV baskı seç, kokusuzdur, uygulamadan hemen sonra odayı kullanabilirsin. Solvent baskının ilk günlerde hafif bir baskı kokusu olur ve havalandırma ister; buna karşılık daha ekonomiktir ve mağaza, kafe, ofis gibi geniş ve havalanan alanlarda tercih edilir.",
     },
     {
       q: "Görselimin çözünürlüğü kaç olmalı?",
-      a: "Duvar kağıdı uzaktan bakılan bir üründür, bu yüzden kartvizit gibi 300 dpi gerekmez. Gerçek boyutunda 72-100 dpi yeterlidir. Pratik ölçüt şudur: 3 metre genişliğinde bir duvar için görselin en az 8.500 piksel genişliğinde olması gerekir. İnternetten indirilen küçük görseller büyütüldüğünde bulanıklaşır — dosyanı gönderdiğinde grafik ekibimiz ücretsiz kontrol edip uygun olup olmadığını söyler.",
+      a: "Duvar kağıdı uzaktan bakılan bir üründür, bu yüzden kartvizit gibi 300 dpi gerekmez. Gerçek boyutunda 72-100 dpi yeterlidir. Pratik ölçüt şudur: 3 metre genişliğinde bir duvar için görselin en az 8.500 piksel genişliğinde olması gerekir. İnternetten indirilen küçük görseller büyütüldüğünde bulanıklaşır, dosyanı gönderdiğinde grafik ekibimiz ücretsiz kontrol edip uygun olup olmadığını söyler.",
     },
     {
       q: "Nasıl uygulanır, yapıştırıcı dahil mi?",
-      a: "Baskı şeritler hâlinde ve yapışkansız gelir; duvara duvar kağıdı tutkalıyla uygulanır. Tutkal ürüne dahil değildir, yapı marketlerden temin edilir. Uygulama duvar kağıdı ustası işidir — özellikle desen birleşimi olan tasarımlarda şeritlerin hizalanması deneyim ister. Küçük ve düz renkli işleri kendiniz yapabilirsiniz.",
+      a: "Baskı şeritler hâlinde ve yapışkansız gelir; duvara duvar kağıdı tutkalıyla uygulanır. Tutkal ürüne dahil değildir, yapı marketlerden temin edilir. Uygulama duvar kağıdı ustası işidir, özellikle desen birleşimi olan tasarımlarda şeritlerin hizalanması deneyim ister. Küçük ve düz renkli işleri kendiniz yapabilirsiniz.",
     },
     {
       q: "Duvarın hazır olması için ne gerekir?",
-      a: "Yüzey düz, kuru ve temiz olmalı. Dökülen boya, kabaran alçı veya nem varsa duvar kağıdı kısa sürede kabarır — önce bunların giderilmesi gerekir. Yeni sıva yapılmışsa en az 3-4 hafta kuruması beklenmelidir. Parlak yağlı boya üzerine doğrudan uygulanmaz, zımparalanması gerekir.",
+      a: "Yüzey düz, kuru ve temiz olmalı. Dökülen boya, kabaran alçı veya nem varsa duvar kağıdı kısa sürede kabarır, önce bunların giderilmesi gerekir. Yeni sıva yapılmışsa en az 3-4 hafta kuruması beklenmelidir. Parlak yağlı boya üzerine doğrudan uygulanmaz, zımparalanması gerekir.",
     },
     {
       q: "Fiyatlara KDV dahil mi?",
@@ -120,7 +120,7 @@ export default async function DuvarKagidiFiyatlariPage() {
           <p className="mt-4 text-lg text-ink-700">
             Duvarının tam ölçüsünde, istediğin görselle üretilir. {asOf} itibarıyla{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(m2)}/m²</strong>&apos;den
-            başlar — KDV dahil, sepette değişmez.
+            başlar, KDV dahil, sepette değişmez.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
@@ -220,14 +220,14 @@ export default async function DuvarKagidiFiyatlariPage() {
           <h2 className="text-2xl font-semibold text-ink-900">Solvent mi UV mi?</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-paper-200 bg-paper-50 p-5">
-              <h3 className="font-semibold text-ink-900">Solvent baskı — ekonomik</h3>
+              <h3 className="font-semibold text-ink-900">Solvent baskı: ekonomik</h3>
               <p className="mt-2 text-sm text-ink-700">
                 Mağaza, kafe, ofis gibi geniş ve havalanan alanlar için. İlk günlerde hafif baskı
                 kokusu olur, havalandırma ister. m² fiyatı daha düşüktür.
               </p>
             </div>
             <div className="rounded-lg border border-paper-200 bg-paper-50 p-5">
-              <h3 className="font-semibold text-ink-900">UV baskı — kokusuz</h3>
+              <h3 className="font-semibold text-ink-900">UV baskı: kokusuz</h3>
               <p className="mt-2 text-sm text-ink-700">
                 Yatak odası, çocuk odası ve az havalanan kapalı alanlar için. Uygulamadan hemen
                 sonra oda kullanılabilir. Renkler bir tık daha canlıdır.
@@ -243,7 +243,7 @@ export default async function DuvarKagidiFiyatlariPage() {
               Görselin yeterli mi? Hızlı kontrol
             </h2>
             <p className="mt-3 text-sm text-ink-700 max-w-3xl">
-              Duvar kağıdı uzaktan bakılır, bu yüzden 300 dpi gerekmez —{" "}
+              Duvar kağıdı uzaktan bakılır, bu yüzden 300 dpi gerekmez,{" "}
               <strong>gerçek boyutunda 72-100 dpi yeterlidir</strong>. Pratik ölçüt:{" "}
               <strong>duvar genişliği (metre) × 2.800 = gereken piksel genişliği.</strong> 3 metrelik
               bir duvar için görselin en az 8.400 piksel geniş olması gerekir.

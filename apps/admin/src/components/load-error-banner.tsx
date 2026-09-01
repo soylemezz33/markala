@@ -9,7 +9,7 @@ import { Warning } from "@phosphor-icons/react/dist/ssr";
  * içeriğin üstünde yüzer şekilde görünür.
  */
 export function LoadErrorBanner({
-  message = "Veriler şu an yüklenemedi. Sayfayı yenileyin — sorun sürerse birazdan tekrar deneyin.",
+  message = "Veriler şu an yüklenemedi. Sayfayı yenileyin, sorun sürerse birazdan tekrar deneyin.",
 }: {
   message?: string;
 }) {

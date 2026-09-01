@@ -8,7 +8,7 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 const SITE = "https://markala.com.tr";
 
 export const metadata: Metadata = {
-  title: "Matbaa Hizmetleri — Tasarım Desteği, Toplu Baskı",
+  title: "Matbaa Hizmetleri | Tasarım Desteği, Toplu Baskı",
   description:
     "Markala matbaa hizmetleri: ücretsiz tasarım desteği, toplu sipariş indirimi ve kurumsal çözümler. Detaylı bilgi.",
   alternates: { canonical: "/hizmetler" },
@@ -51,7 +51,7 @@ export default function HizmetlerHubPage() {
             Hizmetlerimiz
           </p>
           <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
-            Sadece baskı değil — tam matbaa çözümü
+            Sadece baskı değil, tam matbaa çözümü
           </h1>
           <p className="mt-4 text-lg text-ink-700">
             Ücretsiz tasarım desteğinden toplu kurumsal indirime kadar her ihtiyaca özel hizmet. 324

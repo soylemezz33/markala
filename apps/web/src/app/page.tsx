@@ -23,7 +23,7 @@ export const revalidate = 300;
 // başlık + açıklama + açık canonical.
 export const metadata: Metadata = {
   // SERP bütçesi: title ≤60 kr, description ≤160 kr (kelime sınırında biter) — 2026-08-01 SEO denetimi.
-  title: { absolute: "Markala — Online Matbaa: Kartvizit, Broşür & Branda Baskı" },
+  title: { absolute: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı" },
   description:
     "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
   alternates: { canonical: "/" },
@@ -68,10 +68,19 @@ export default async function HomePage() {
   // Not: buradaki `products` list=true hafif yanıttır ve content taşımaz — o yüzden ayrı çağrı.
   const bestsellers = (await getBestsellers(12)).map(slimForCard);
 
-  // Yeni gelenler — "yeni" badge'li ürünler + diğerleri
+  // Yeni gelenler — "yeni" badge'li ürünler + diğerleri.
+  //
+  // GÖRSELİ OLMAYAN ÜRÜN BU RAFA GİRMEZ (2026-09-01, Hasan): "yeni" rozetli 5 ürünün
+  // (duvar kağıdı, kompozit, one way vision, pleksi, UV DTF) görseli henüz yüklenmemişti
+  // ve raf boş kutularla doluyordu — anasayfada en kötü ilk izlenim burası.
+  //
+  // Filtre KALICI ve KENDİ KENDİNİ ÇÖZER: görsel yüklenir yüklenmez ürün kendiliğinden
+  // rafa döner (ISR revalidate 300 sn). Slug listesi yazmadım, çünkü öyle yapsaydım görsel
+  // gelince listeyi elle temizlemek gerekirdi ve unutulurdu.
+  const gorselliUrun = (p: { images?: string[] | null }) => (p.images?.length ?? 0) > 0;
   const newArrivals = [
-    ...products.filter((p) => p.badges?.includes("yeni")),
-    ...products.filter((p) => !p.badges?.includes("yeni") && !p.bestseller),
+    ...products.filter((p) => p.badges?.includes("yeni") && gorselliUrun(p)),
+    ...products.filter((p) => !p.badges?.includes("yeni") && !p.bestseller && gorselliUrun(p)),
   ].slice(0, 12).map(slimForCard);
 
   return (

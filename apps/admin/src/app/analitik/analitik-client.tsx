@@ -24,7 +24,7 @@ interface Props {
 const trNum = (n: number) => n.toLocaleString("tr-TR");
 const trCurrency = (n: number) =>
   `₺ ${n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const msToSec = (ms: number) => (ms > 0 ? `${(ms / 1000).toFixed(1)} sn` : "—");
+const msToSec = (ms: number) => (ms > 0 ? `${(ms / 1000).toFixed(1)} sn` : "-");
 const pct = (n: number) => `%${n.toLocaleString("tr-TR", { maximumFractionDigits: 1 })}`;
 
 /** tone → renk sınıfları (segment kartı ve rozetler) */
@@ -70,7 +70,7 @@ export function AnalyticsClient({ overview, days }: Props) {
           <p className="mt-1 text-ink-500 text-sm">
             {/* Aralık artık TAKVİM gününe hizalı (API: startOfDayInReportTz) — "Bugün"
                 gerçekten bugün 00:00'dan itibaren, kayan 24 saat değil. */}
-            Ziyaretçi davranışı, dönüşüm hunisi ve müşteri segmentleri —{" "}
+            Ziyaretçi davranışı, dönüşüm hunisi ve müşteri segmentleri,{" "}
             {days === 1 ? "bugün (00:00'dan itibaren)" : `son ${days} gün (bugün dahil)`}
           </p>
         </div>
@@ -103,7 +103,7 @@ export function AnalyticsClient({ overview, days }: Props) {
               <span className={k.color}><k.icon size={18} /></span>
             </div>
             <div className="mt-2 text-xl md:text-2xl font-semibold text-ink-900 tabular-nums">
-              {collecting && k.visitor && k.value === "0" ? "—" : k.value}
+              {collecting && k.visitor && k.value === "0" ? "-" : k.value}
             </div>
           </div>
         ))}
@@ -206,7 +206,7 @@ function FunnelChart({ stages }: { stages: AnalyticsOverviewDto["funnel"] }) {
                   <span
                     className={`text-[11px] tabular-nums ${dropPct > 0 ? "text-error" : "text-success"}`}
                   >
-                    {dropPct > 0 ? `▼ %${dropPct}` : "—"}
+                    {dropPct > 0 ? `▼ %${dropPct}` : "-"}
                   </span>
                 )}
               </span>
@@ -423,7 +423,7 @@ function Heatmap({ cells }: { cells: AnalyticsOverviewDto["visitHeatmap"] }) {
                   key={h}
                   className="flex-1 aspect-square rounded-[2px] min-w-[14px]"
                   style={{ background: cellColor(count) }}
-                  title={`${DOW_LABELS[rowIdx]} ${String(h).padStart(2, "0")}:00 — ${trNum(count)} ziyaret`}
+                  title={`${DOW_LABELS[rowIdx]} ${String(h).padStart(2, "0")}:00 - ${trNum(count)} ziyaret`}
                 />
               );
             })}
@@ -604,17 +604,17 @@ function SegmentCustomersTable({ customers }: { customers: AnalyticsSegmentCusto
             {customers.map((c) => (
               <tr key={c.id} className="hover:bg-paper-100/40">
                 <td className="px-3 py-2.5">
-                  <div className="font-medium text-ink-900">{c.fullName || "—"}</div>
+                  <div className="font-medium text-ink-900">{c.fullName || "-"}</div>
                   <div className="text-[11px] text-ink-500 truncate max-w-[180px]">{c.email}</div>
                 </td>
-                <td className="px-3 py-2.5 text-ink-700 text-xs hidden sm:table-cell">{c.phone ?? "—"}</td>
+                <td className="px-3 py-2.5 text-ink-700 text-xs hidden sm:table-cell">{c.phone ?? "-"}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-ink-900">{trNum(c.orderCount)}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums text-ink-900">{trCurrency(c.totalSpent)}</td>
                 <td className="px-3 py-2.5 text-right text-xs text-ink-700">
                   {c.daysSinceLastActivity != null ? (
                     <span title={c.lastActivityAt ?? ""}>{c.daysSinceLastActivity} gün önce</span>
                   ) : (
-                    "—"
+                    "-"
                   )}
                 </td>
               </tr>
@@ -686,7 +686,7 @@ function WinBackPanel({
         <h4 className="font-semibold text-ink-900 text-sm">Win-back Kampanyası</h4>
       </div>
       <p className="text-xs text-ink-700 leading-relaxed mb-3">
-        Bu segment {segment.label.toLowerCase()} durumunda — uzun süredir uykuda.
+        Bu segment {segment.label.toLowerCase()} durumunda, uzun süredir uykuda.
         %10-15 indirim SMS&apos;i / &quot;sizi özledik&quot; e-postası ile geri kazanılabilir.
         {customers.length} müşteri hedeflenebilir.
       </p>

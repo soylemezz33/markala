@@ -37,7 +37,7 @@ describe("MailService", () => {
     const ok = await svc.sendOrderDeliveredEmail("o1");
     expect(ok).toBe(true);
     const arg = sendMail.mock.calls[0][0];
-    expect(arg.subject).toBe("Siparişiniz teslim edildi — Değerlendirmenizi paylaşır mısınız?");
+    expect(arg.subject).toBe("Siparişiniz teslim edildi - Değerlendirmenizi paylaşır mısınız?");
     expect(arg.html).toContain("https://wa.me/905057417028");
     expect(arg.html).toContain("MK-2026-0001"); // orderNumber wa.me metnine gömülü (tireler encode edilmez)
     expect(prisma.notificationLog.create).toHaveBeenCalledWith(

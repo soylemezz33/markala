@@ -59,7 +59,7 @@ export function CartEmailCapture() {
       }
     } catch {
       setState("err");
-      setMsg("Bağlantı hatası — lütfen tekrar dene.");
+      setMsg("Bağlantı hatası, lütfen tekrar dene.");
     }
   }
 

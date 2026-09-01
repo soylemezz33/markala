@@ -87,7 +87,7 @@ export function templateProductCopy(input: ProductCopyInput): ProductCopy {
   const catSuffix = cat ? ` ${cat} kategorisinde` : "";
 
   const shortDescription =
-    `${name} — Markala kalitesiyle${catSuffix} profesyonel baskı. Hızlı üretim, net sonuç.`.slice(
+    `${name}, Markala kalitesiyle${catSuffix} profesyonel baskı. Hızlı üretim, net sonuç.`.slice(
       0,
       150,
     );

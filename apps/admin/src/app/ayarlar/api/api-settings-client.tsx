@@ -349,7 +349,7 @@ function IntegrationForm({ integration, initial }: { integration: Integration; i
         })}
 
         <p className="text-[11px] text-ink-500">
-          Gizli anahtarlar maskeli (••••) gösterilir; değiştirmek istemiyorsanız o alana dokunmayın — eski değer korunur.
+          Gizli anahtarlar maskeli (••••) gösterilir; değiştirmek istemiyorsanız o alana dokunmayın, eski değer korunur.
         </p>
 
         <div className="flex items-center gap-2 pt-3 border-t border-paper-200">

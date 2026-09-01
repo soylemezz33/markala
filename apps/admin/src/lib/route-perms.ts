@@ -15,13 +15,24 @@
  * Haritada OLMAYAN yol (örn. "/" dashboard) tüm panel rollerine açıktır.
  */
 export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]> = [
+  // Pano. En uzun önek kazandığı için bu kayıt YALNIZ tam "/" yoluna uygulanır
+  // (/siparisler gibi yollar kendi kaydına düşer). Kargo rolünde dashboard.read yok →
+  // panoyu ne menüde görür ne de URL'den açabilir; girişte doğrudan Siparişler'e düşer.
+  ["/", "dashboard.read"],
   ["/analitik", "finance.manage"],
   ["/ciro", "finance.manage"],
   ["/siparisler", "orders.read"],
   ["/musteriler", "customers.read"],
-  ["/e-postalar", "customers.read"],
-  ["/iletisim-mesajlari", "customers.read"],
-  ["/teklif-talepleri", "customers.read"],
+  // Kurumsal başvurular /musteriler ALTINDA olduğu için customers.read'e düşüyordu; kargo
+  // rolüne müşteri kartı açılınca vergi levhası + imza sirküleri içeren bu başvuruları da
+  // görecekti. Daha uzun önek kazandığı için bu satır onu ayırır. inbox.read seçildi:
+  // bugün erişebilen roller (tasarımcı, muhasebe) o izne zaten sahip → davranış değişmez.
+  ["/musteriler/kurumsal-basvurular", "inbox.read"],
+  // Gelen kutusu sayfaları 2026-09-01'de customers.read'ten AYRILDI: o izin tek başına
+  // dört sayfayı açıyordu ve kargo rolüne "yalnız Müşteriler görünsün" demek mümkün değildi.
+  ["/e-postalar", "inbox.read"],
+  ["/iletisim-mesajlari", "inbox.read"],
+  ["/teklif-talepleri", "inbox.read"],
   ["/bulten-aboneleri", "settings.manage"],
   ["/urunler", "catalog.manage"],
   ["/urunler/fiyat-toplu", "pricing.manage"],
@@ -41,6 +52,25 @@ export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]>
   ["/ayarlar", "settings.manage"],
   ["/ayarlar/fiyat", "pricing.manage"],
 ] as const;
+
+/**
+ * Rolün girebileceği İLK sayfa — yetkisiz yönlendirmelerin hedefi.
+ *
+ * Neden gerekli: eskiden yetkisiz istek koşulsuz "/" (pano) sayfasına atılıyordu. Pano
+ * artık dashboard.read istiyor; panosu olmayan bir rol (kargo) "/" isteyince yine "/"a
+ * atılırdı → SONSUZ YÖNLENDİRME. Bu yüzden hedef, kullanıcının gerçekten erişebildiği
+ * ilk sayfa olarak hesaplanır.
+ */
+export function varsayilanRota(perms: readonly string[] | undefined | null): string {
+  const p = perms ?? [];
+  const sirali = ["/", "/siparisler", "/musteriler", "/urunler", "/yorumlar", "/ayarlar"];
+  for (const yol of sirali) {
+    const need = permForPath(yol);
+    if (!need || p.includes(need)) return yol;
+  }
+  // Hiçbir sayfaya yetkisi yok — panelde işi yok, girişe döner.
+  return "/giris";
+}
 
 /** Yolun gerektirdiği izin; haritada yoksa null (herkese açık panel sayfası). */
 export function permForPath(pathname: string): string | null {

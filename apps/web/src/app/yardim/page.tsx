@@ -18,9 +18,9 @@ import { CATEGORY_ICONS } from "./_components";
  */
 
 export const metadata: Metadata = {
-  title: "Yardım Merkezi — Sipariş, Dosya Hazırlama, Kargo, İade",
+  title: "Yardım Merkezi | Sipariş, Dosya Hazırlama, Kargo, İade",
   description:
-    "Markala yardım merkezi: sipariş süreci, dosya hazırlama, üyelik, kampanyalar, ödeme ve fatura, kargo ve teslimat, iade, kurumsal hesap — tüm sorularınızın cevabı.",
+    "Markala yardım merkezi: sipariş süreci, dosya hazırlama, üyelik, kampanyalar, ödeme ve fatura, kargo ve teslimat, iade, kurumsal hesap: tüm sorularınızın cevabı.",
   alternates: { canonical: "/yardim" },
   openGraph: {
     type: "website",
@@ -74,7 +74,7 @@ export default function YardimPage() {
             Size nasıl yardımcı olabiliriz?
           </h1>
           <p className="mt-4 text-lg text-ink-700 max-w-xl mx-auto">
-            Sipariş, dosya hazırlama, kargo, iade — her konuda soru odaklı, net cevaplar.
+            Sipariş, dosya hazırlama, kargo, iade: her konuda soru odaklı, net cevaplar.
           </p>
           <div className="mt-6">
             <HelpSearch items={searchItems} />
@@ -120,7 +120,7 @@ export default function YardimPage() {
               <span>
                 <span className="block font-semibold text-ink-900 text-sm">Sıkça Sorulan Sorular</span>
                 <span className="block text-xs text-ink-500 mt-0.5">
-                  En çok sorulan 30+ soru ve kısa cevapları — tek sayfada
+                  En çok sorulan 30+ soru ve kısa cevapları, tek sayfada
                 </span>
               </span>
             </span>

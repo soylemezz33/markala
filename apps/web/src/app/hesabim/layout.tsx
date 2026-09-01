@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
+import { AccountShell } from "@/components/account/account-shell";
 
 /**
  * Hesabım alanı arama motorlarına KAPALI (2026-08-31 denetimi).
@@ -29,5 +30,9 @@ export const metadata: Metadata = {
  * Container yalnız dış çerçeveyi ve okunabilir satır uzunluğunu verir.
  */
 export default function HesabimLayout({ children }: { children: React.ReactNode }) {
-  return <Container className="py-8 md:py-12">{children}</Container>;
+  return (
+    <Container className="py-8 md:py-12">
+      <AccountShell>{children}</AccountShell>
+    </Container>
+  );
 }

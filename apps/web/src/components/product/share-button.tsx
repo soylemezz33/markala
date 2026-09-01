@@ -13,7 +13,7 @@ export function ShareButton({ title }: { title: string }) {
   async function onShare() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (!url) return;
-    const shareData = { title: `${title} — Markala`, text: `${title} — markala.com.tr`, url };
+    const shareData = { title: `${title} | Markala`, text: `${title}, markala.com.tr`, url };
 
     // Web Share API (mobil) → yerel paylaşım menüsü
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {

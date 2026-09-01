@@ -6,6 +6,9 @@ import {
   X,
   CircleNotch,
   ImageSquare,
+  CaretLeft,
+  CaretRight,
+  DotsSixVertical,
 } from "@phosphor-icons/react";
 import { toast } from "./toast";
 
@@ -164,6 +167,25 @@ export function ImageGallery({
 }) {
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Sürükleyerek sıralama (2026-09-01, Hasan): kapak = dizinin İLK elemanı, o yüzden
+  // sıralamayı değiştirmek kapağı değiştirmenin doğal yolu — ayrı "kapak seç" alanı yok.
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  /** i konumundaki görseli j'ye taşır (araya sokar, yer değiştirmez). */
+  function reorder(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= value.length || to >= value.length) return;
+    const next = [...value];
+    const [tasinan] = next.splice(from, 1);
+    if (tasinan === undefined) return;
+    next.splice(to, 0, tasinan);
+    onChange(next);
+  }
+
+  function dragBitti() {
+    setDragIndex(null);
+    setOverIndex(null);
+  }
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
@@ -195,18 +217,56 @@ export function ImageGallery({
       />
       <div className="grid grid-cols-3 gap-2">
         {value.map((img, i) => (
-          <div key={`${img}-${i}`} className="relative group">
+          <div
+            key={img}
+            draggable
+            onDragStart={(e) => {
+              setDragIndex(i);
+              e.dataTransfer.effectAllowed = "move";
+              // Firefox sürüklemeyi ancak veri set edilirse başlatır.
+              e.dataTransfer.setData("text/plain", String(i));
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (overIndex !== i) setOverIndex(i);
+            }}
+            onDragLeave={() => setOverIndex((prev) => (prev === i ? null : prev))}
+            onDrop={(e) => {
+              e.preventDefault();
+              const from = dragIndex ?? Number(e.dataTransfer.getData("text/plain"));
+              if (Number.isInteger(from)) reorder(from, i);
+              dragBitti();
+            }}
+            onDragEnd={dragBitti}
+            className={`relative group cursor-grab active:cursor-grabbing rounded transition-shadow ${
+              dragIndex === i ? "opacity-40" : ""
+            } ${overIndex === i && dragIndex !== i ? "ring-2 ring-brand-500 ring-offset-1" : ""}`}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={resolveImg(img)}
               alt={`Görsel ${i + 1}`}
-              className="aspect-square object-cover rounded border border-paper-200 w-full"
+              draggable={false}
+              className="aspect-square object-cover rounded border border-paper-200 w-full pointer-events-none"
             />
-            {i === 0 && (
+            {i === 0 ? (
               <span className="absolute top-1 left-1 text-[9px] bg-ink-900 text-paper-50 px-1.5 py-0.5 rounded">
                 Kapak
               </span>
+            ) : (
+              <span className="absolute top-1 left-1 text-[9px] bg-ink-900/60 text-paper-50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                {i + 1}
+              </span>
             )}
+
+            {/* Sürükleme tutamağı — kutucuğun sürüklenebilir olduğunu görünür kılar. */}
+            <DotsSixVertical
+              size={14}
+              weight="bold"
+              className="absolute bottom-1 left-1 text-paper-50 drop-shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+            />
+
             <button
               type="button"
               onClick={() => onChange(value.filter((_, idx) => idx !== i))}
@@ -215,6 +275,31 @@ export function ImageGallery({
             >
               <X size={12} weight="bold" />
             </button>
+
+            {/* Dokunmatik + klavye yolu: HTML5 sürükle-bırak telefonda ÇALIŞMAZ, bu yüzden
+                ok düğmeleri şart. Odaklanınca da görünür (klavye erişimi). */}
+            <div className="absolute bottom-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+              <button
+                type="button"
+                onClick={() => reorder(i, i - 1)}
+                disabled={i === 0}
+                className="p-1 rounded bg-ink-900/70 text-paper-50 disabled:opacity-30 hover:bg-ink-900"
+                aria-label={`Görsel ${i + 1}'i öne al`}
+                title="Öne al"
+              >
+                <CaretLeft size={10} weight="bold" />
+              </button>
+              <button
+                type="button"
+                onClick={() => reorder(i, i + 1)}
+                disabled={i === value.length - 1}
+                className="p-1 rounded bg-ink-900/70 text-paper-50 disabled:opacity-30 hover:bg-ink-900"
+                aria-label={`Görsel ${i + 1}'i geri al`}
+                title="Geri al"
+              >
+                <CaretRight size={10} weight="bold" />
+              </button>
+            </div>
           </div>
         ))}
         {value.length < max && (
@@ -235,7 +320,7 @@ export function ImageGallery({
         )}
       </div>
       <p className="mt-2 text-[10px] text-ink-400">
-        İlk görsel kapak olarak kullanılır · JPG/PNG/WEBP · max 5MB
+        Sürükleyerek sıralayın — baştaki görsel kapak olur · JPG/PNG/WEBP · max 5MB
       </p>
     </div>
   );

@@ -16,7 +16,7 @@ export class TurnstileService {
 
     if (!secret) {
       if (!isProd) return true; // dev fail-open
-      this.logger.error("TURNSTILE_SECRET_KEY yok — prod'da captcha fail-closed");
+      this.logger.error("TURNSTILE_SECRET_KEY yok, prod'da captcha fail-closed");
       return false;
     }
     if (!token) return false;

@@ -1,0 +1,123 @@
+=== matbaa_index ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AggregateOffer', 'City', 'Service', 'ServiceChannel', 'UnitPriceSpecification']]
+TEXT_LEN=503
+Hizmet Bölgeleri
+Türkiye geneli matbaa & baskı hizmeti
+Mersin merkezli atölyemizden 81 ilde kartvizit, broşür, afiş, branda, kupa baskı. Komşu illerde 1-2 iş günü, Mersin ve çevresine 1-2 iş günü teslim.
+Akdeniz Bölgesi
+Mersin merkezli atölyeye en yakın iller — DHL Express ile 1 iş günü içinde teslim.
+Mersin Matbaa
+1.916.000 nüfus · Akdeniz
+Mersin merkezli matbaa atölyemiz, Mersin ve çevresine kurye/kargo ile 1-2 iş günü teslimat sağlar. Mersin Limanı, Yenişehir ticaret bölgesi, Tarsus OSB ve To...
+
+=== mersin ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AggregateOffer', 'City', 'GeoCoordinates', 'LocalBusiness', 'QuantitativeValue', 'Service'], ['Answer', 'FAQPage', 'Question']]
+TEXT_LEN=503
+Mersin'de matbaa & baskı hizmeti
+Mersin merkezli matbaa atölyemiz, Mersin ve çevresine kurye/kargo ile 1-2 iş günü teslimat sağlar. Mersin Limanı, Yenişehir ticaret bölgesi, Tarsus OSB ve Toroslar sanayi siteleri çevresinde 12.000+ aktif müşteriye matbaa hizmeti veriyoruz.
+Mersin'de en çok tercih edilen matbaa ürünleri
+Mersin bölgesindeki müşterilerimizin siparişlerinden derlediğimiz en popüler ürünler:
+- Klasik kartvizit (selefonlu/UV/yaldız)
+- Kurumsal antetli kâğıt + zarf seti
+- Restoran menü...
+
+=== gaziantep ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AggregateOffer', 'City', 'GeoCoordinates', 'LocalBusiness', 'Service'], ['Answer', 'FAQPage', 'Question']]
+TEXT_LEN=503
+Gaziantep'de matbaa & baskı hizmeti
+Gaziantep, Güneydoğu'nun ticaret ve sanayi başkenti. Tekstil, makine, gıda (baklava, fıstık) ve mobilya sektörleri yoğun. Mersin'den 1-2 iş günü içinde DHL ile teslim sağlıyoruz; Gaziantep OSB ve sanayi sitelerine özel kurumsal teklif.
+Gaziantep'de en çok tercih edilen matbaa ürünleri
+Gaziantep bölgesindeki müşterilerimizin siparişlerinden derlediğimiz en popüler ürünler:
+- Baklava/fıstık premium ambalaj baskısı
+- Tekstil etiket ve kart
+- Mobilya katalog ve br...
+
+=== antalya ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AggregateOffer', 'City', 'GeoCoordinates', 'LocalBusiness', 'Service'], ['Answer', 'FAQPage', 'Question']]
+TEXT_LEN=503
+Antalya'de matbaa & baskı hizmeti
+Antalya, Türkiye'nin turizm başkenti. Otel, restoran, marina ve kongre merkezi yoğunluğu nedeniyle matbaa talebi yıl boyunca sezonsal olarak artıp azalır. Markala olarak Antalya'ya 1-2 iş günü içinde DHL kargo ile ulaşıyoruz; sezon başı toplu kampanyalı paketlerimiz var.
+Antalya'de en çok tercih edilen matbaa ürünleri
+Antalya bölgesindeki müşterilerimizin siparişlerinden derlediğimiz en popüler ürünler:
+- Otel anahtar zarfı ve kart
+- Restoran menü kartı, masa st...
+
+=== osmaniye ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AggregateOffer', 'City', 'GeoCoordinates', 'LocalBusiness', 'Service'], ['Answer', 'FAQPage', 'Question']]
+TEXT_LEN=503
+Osmaniye'de matbaa & baskı hizmeti
+Osmaniye, Çukurova ve Doğu Akdeniz arasında kavşak konumda. Demir-çelik, tarım ve gıda sektörleri yoğun. Mersin'den 1 iş günü içinde DHL ile teslim sağlıyoruz; OSB içi firmalara özel kurumsal hesap.
+Osmaniye'de en çok tercih edilen matbaa ürünleri
+Osmaniye bölgesindeki müşterilerimizin siparişlerinden derlediğimiz en popüler ürünler:
+- Demir-çelik üretim etiket ve barkod
+- Gıda ambalaj baskısı
+- Yer fıstığı ve tahıl ambalajı
+- Restoran menü ve kart
+Osmaniye'de ...
+
+=== akdeniz ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AdministrativeArea', 'City', 'Service', 'ServiceChannel']]
+TEXT_LEN=503
+Mersin · Akdeniz
+Akdeniz matbaa & baskı hizmeti
+Akdeniz ilçesi Mersin Liman bölgesini ve eski şehir merkezini kapsar. Lojistik firmaları, ihracatçılar, gümrük müşavirleri için kaşe, etiket, faturalama formu ve nakliye broşürlerinde uzmanız.
+1 iş günü kargoHızlı üretimKalite garantili
+Akdeniz'in tüm mahallelerine teslim
+Akdeniz'in başlıca iş ve sanayi bölgelerine kargo ile 1 iş günü içinde teslim ediyoruz.
+Hal Mahallesi
+Nusratiye
+Çay Mahallesi
+Camişerif
+Kazanlı OSB
+Liman Caddesi
+Anadolu Mahallesi...
+
+=== yenisehir ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AdministrativeArea', 'City', 'Service', 'ServiceChannel']]
+TEXT_LEN=503
+Mersin · Yenişehir
+Yenişehir matbaa & baskı hizmeti
+Yenişehir, Mersin'in modern iş ve eğitim merkezi. Mersin Üniversitesi, hastaneler, hukuk büroları ve danışmanlık ofisleri için kurumsal kimlik, antetli kâğıt, dosya ve bloknot ihtiyaçlarına kargo/kurye ile 1-2 iş günü teslim.
+1 iş günü kargoHızlı üretimKalite garantili
+Yenişehir'in tüm mahallelerine teslim
+Yenişehir'in başlıca iş ve sanayi bölgelerine kargo ile 1 iş günü içinde teslim ediyoruz.
+Bahçelievler
+Eğriçam
+Mahmudiye
+Pirireis
+Çiftlikköy...
+
+=== tarsus ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress'], ['BreadcrumbList', 'ListItem'], ['AdministrativeArea', 'City', 'Service', 'ServiceChannel']]
+TEXT_LEN=503
+Mersin · Tarsus
+Tarsus matbaa & baskı hizmeti
+Tarsus, Mersin'in en yoğun ticaret hacmine sahip ilçelerinden. Otomotiv yan sanayi, tekstil, gıda işletmeleri için kartvizit-broşür-magnet-antetli kâğıt taleplerine kargo/kurye ile 1-2 iş günü teslim sağlıyoruz.
+1 iş günü kargoHızlı üretimKalite garantili
+Tarsus'in tüm mahallelerine teslim
+Tarsus'in başlıca iş ve sanayi bölgelerine kargo ile 1 iş günü içinde teslim ediyoruz.
+Cumhuriyet Mahallesi
+Şahin Mahallesi
+Kazanlı
+Yenice OSB
+Gazipaşa Mahallesi
+Y...
+
+=== hakkimizda ===
+status=200 is_spa=False
+structured_data_types: [['ContactPoint', 'EntryPoint', 'OpeningHoursSpecification', 'Organization', 'PostalAddress', 'SearchAction', 'WebSite'], ['City', 'Country', 'GeoCoordinates', 'LocalBusiness', 'OpeningHoursSpecification', 'PostalAddress']]
+TEXT_LEN=503
+Hızlı Üretim
+Çoğu üründe 24-72 saat içinde teslim. Acil işler için özel hat.
+Biz kimiz
+Markala, 324 Ajans çatısı altında — matbaa ve reklam ürünleri alanında 10+ yıllık ajans tecrübesini Türkiye geneli e-ticaret modeline taşıyan butik bir marka.
+Klasik matbaa süreçlerindeki "git-getir, dosya gönder, taslak bekle, revize iste" döngüsünü tamamen ortadan kaldırmak için kuruldu.
+Online konfigüratörümüzle siparişinizi 60 saniyede oluşturun, profesyonel grafik ekibimizden ücretsiz tasarım desteği alın...

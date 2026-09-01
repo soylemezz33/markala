@@ -50,7 +50,7 @@ export function AdminPlaceholder({
                 {table.rows.map((r, i) => (
                   <tr key={i} className="hover:bg-paper-100/40">
                     {table.columns.map((c) => (
-                      <td key={c} className="px-4 py-3 text-ink-700">{r[c] ?? "—"}</td>
+                      <td key={c} className="px-4 py-3 text-ink-700">{r[c] ?? "-"}</td>
                     ))}
                   </tr>
                 ))}

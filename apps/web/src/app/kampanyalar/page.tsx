@@ -72,7 +72,7 @@ export default function KampanyalarPage() {
           <div>
             <h1 className="text-3xl md:text-4xl font-serif text-ink-900">İndirimli Paketler</h1>
             <p className="mt-2 text-ink-700 max-w-2xl">
-              Açılış, esnaf, kurumsal ve etkinlik için hazır kurgulanmış paketler — tek tıkla
+              Açılış, esnaf, kurumsal ve etkinlik için hazır kurgulanmış paketler, tek tıkla
               sepete, tasarım desteği dahil, tek tek almaktan daha ucuz.
             </p>
           </div>
@@ -163,7 +163,7 @@ function EmptyState() {
           Sana özel paket kuruyoruz
         </h2>
         <p className="mt-3 text-ink-700 leading-relaxed">
-          İşine göre ürünleri seçip indirimli tek pakette topluyoruz — tasarım dahil, tek
+          İşine göre ürünleri seçip indirimli tek pakette topluyoruz, tasarım dahil, tek
           teslimde. Ne lazım olduğunu söyle, 24 saat içinde sana özel teklifi hazırlayalım.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -321,7 +321,7 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
                   ) : (
                     <span>{item.productName}</span>
                   )}
-                  {item.note && <span className="text-ink-500 text-xs"> — {item.note}</span>}
+                  {item.note && <span className="text-ink-500 text-xs"> - {item.note}</span>}
                 </span>
               </li>
             ))}
@@ -370,7 +370,7 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
           )}
         </Button>
         <p className="text-xs text-ink-500 text-center mt-2">
-          Hazır paket — anında sepete, çıkışta ödemeye geç
+          Hazır paket, anında sepete, çıkışta ödemeye geç
         </p>
       </div>
     </article>

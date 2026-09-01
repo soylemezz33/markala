@@ -161,7 +161,7 @@ export function ReferanslarClient({ brands }: Props) {
                           className="h-8 w-auto max-w-[80px] object-contain"
                         />
                       ) : (
-                        <span className="text-ink-400 text-xs">—</span>
+                        <span className="text-ink-400 text-xs">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -178,7 +178,7 @@ export function ReferanslarClient({ brands }: Props) {
                           {b.websiteUrl}
                         </a>
                       ) : (
-                        <span className="text-ink-400">—</span>
+                        <span className="text-ink-400">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-center text-ink-700 hidden lg:table-cell">

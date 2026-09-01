@@ -15,7 +15,10 @@ import { openCookieSettings } from "@/components/cookie-consent";
  * "Hizmet Bölgeleri" (7 il local-SEO link bloğu) KALDIRILDI (kullanıcı kararı —
  * footer'ı uzatıyordu; /matbaa/* sayfaları yaşamaya ve sitemap'te kalmaya devam eder).
  */
-export function SiteFooter() {
+/** Footer kategori bloğu için gereken asgari alan — layout.tsx sunucuda doldurur. */
+export type FooterKategori = { slug: string; name: string };
+
+export function SiteFooter({ categories = [] }: { categories?: FooterKategori[] }) {
   return (
     <footer className="bg-[#191722] text-paper-100 mt-16">
       {/* Marka aksan şeridi — amber → cyan gradient */}
@@ -31,7 +34,7 @@ export function SiteFooter() {
           <Link
             href="/"
             className="inline-block bg-paper-50 rounded-xl px-3.5 py-2.5 shadow-sm"
-            aria-label="Markala — ana sayfa"
+            aria-label="Markala, ana sayfa"
           >
             <img
               src="/markala-logo.svg"
@@ -42,7 +45,7 @@ export function SiteFooter() {
             />
           </Link>
           <p className="mt-4 text-sm text-paper-100/70 leading-relaxed">
-            Kartvizitten brandaya tüm baskı işleriniz — 324 Ajans güvencesiyle.
+            Kartvizitten brandaya tüm baskı işleriniz, 324 Ajans güvencesiyle.
           </p>
           <div className="mt-5 flex items-center gap-2">
             <SocialLink href="https://instagram.com/markala.com.tr" label="Instagram"><InstagramLogo size={18} /></SocialLink>
@@ -55,6 +58,11 @@ export function SiteFooter() {
           <FooterLink href="/hakkimizda">Hakkımızda</FooterLink>
           <FooterLink href="/referanslar">Referanslarımız</FooterLink>
           <FooterLink href="/portfolio">Portfolyo</FooterLink>
+          {/* /matbaa ve /hizmetler'e sitenin GERİ KALANINDAN hiç bağlantı yoktu: tek
+              bağlantıları o bölümlerin kendi breadcrumb'larıydı, yani oraya zaten girmiş
+              olmak gerekiyordu. Altlarındaki 19 sayfa (15 şehir/ilçe + 3 hizmet) yalnız
+              sitemap ile keşfediliyordu (2026-08-31 devir notu). */}
+          <FooterLink href="/matbaa">Şehirlere Göre Matbaa</FooterLink>
           <FooterLink href="/iletisim">İletişim</FooterLink>
           <FooterLink href="/iletisim#teklif">Teklif Al</FooterLink>
         </FooterColumn>
@@ -73,6 +81,7 @@ export function SiteFooter() {
         </FooterColumn>
 
         <FooterColumn title="Araçlar & Rehberler">
+          <FooterLink href="/hizmetler">Tüm Hizmetlerimiz</FooterLink>
           <FooterLink href="/hizmetler/tasarim-destegi">Ücretsiz Tasarım Desteği</FooterLink>
           <FooterLink href="/numune-talebi">Ücretsiz Numune Kutusu</FooterLink>
           <FooterLink href="/hizmetler/toplu-baski">Toplu Baskı</FooterLink>
@@ -95,6 +104,39 @@ export function SiteFooter() {
           <FooterLink href="/kvkk-basvuru">KVKK Başvuru Formu</FooterLink>
         </FooterColumn>
       </Container>
+
+      {/*
+        KATEGORİ BLOĞU (2026-09-01) — SEO iç link düzeltmesi.
+        Ölçüm: anasayfada `/kategori/` linki SIFIRDI. Mega menü kategori linkleri yalnız
+        hover'da DOM'a girdiği için sunucu HTML'inde yok; sekme URL'lerinin tamamı da
+        /urunler'e canonical veriyor. Sonuç: 41 kategori sayfası iç link gücünü SADECE
+        /kategoriler hub'ından alıyordu.
+        Bu blok her sayfada sunucudan basılır → her kategori site genelinde iç link kazanır.
+        Mega menüyü SSR'a taşımak yerine buraya konuldu: aynı faydayı verir ama header'ın
+        LCP kritik yoluna dokunmaz (footer ekranın altında).
+        Maliyet: ~41 bağlantı ≈ 3 KB ham / brotli sonrası birkaç yüz bayt.
+      */}
+      {categories.length > 0 && (
+        <div className="border-t border-white/10">
+          <Container className="py-8">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-paper-100/50">
+              Tüm Kategoriler
+            </h2>
+            <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-1.5">
+              {categories.map((c) => (
+                <li key={c.slug}>
+                  <Link
+                    href={`/kategori/${c.slug}`}
+                    className="block py-1 text-[13px] leading-snug text-paper-100/70 hover:text-brand-300 transition-colors"
+                  >
+                    {c.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Container>
+        </div>
+      )}
 
       {/* Güven + ödeme — koyu zeminde beyaz logo çipleri */}
       <div className="border-t border-white/10">

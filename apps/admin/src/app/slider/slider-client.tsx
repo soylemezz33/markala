@@ -162,8 +162,8 @@ export function SliderClient({ slides }: Props) {
             </span>
             <span className="text-ink-500">
               {aktifSayisi >= MAX_AKTIF
-                ? " — tavan doldu. Yenisini yayına almak için önce birini pasifleştirin."
-                : ` — en fazla ${MAX_AKTIF} slayt aynı anda yayında olabilir.`}
+                ? ", tavan doldu. Yenisini yayına almak için önce birini pasifleştirin."
+                : `, en fazla ${MAX_AKTIF} slayt aynı anda yayında olabilir.`}
             </span>
           </p>
         </div>
@@ -184,7 +184,7 @@ export function SliderClient({ slides }: Props) {
         <div className="text-sm text-ink-800 space-y-1">
           <p>
             <strong>Başlık ve alt başlık artık görselin üstüne yazı olarak basılıyor.</strong>{" "}
-            Yani metni görselin İÇİNE gömmeye gerek yok — hatta gömme: üst üste biner. Google ve
+            Yani metni görselin İÇİNE gömmeye gerek yok, hatta gömme: üst üste biner. Google ve
             ekran okuyucular yalnız buradaki metni okuyabiliyor.
           </p>
           <p>
@@ -216,7 +216,7 @@ export function SliderClient({ slides }: Props) {
               </code>
             </li>
             <li>
-              <strong>Aspect ratio:</strong> 4:3 — masaüstünde 4:3, mobilde 16:9 olarak
+              <strong>Aspect ratio:</strong> 4:3, masaüstünde 4:3, mobilde 16:9 olarak
               ORTADAN kırpılır. Önemli öğeleri ortada tut, kenarlara yaslama.
             </li>
             <li>
@@ -303,7 +303,7 @@ export function SliderClient({ slides }: Props) {
                         : "text-ink-500 hover:bg-paper-100"
                     }`}
                     aria-label={s.isActive ? "Pasif yap" : "Aktif yap"}
-                    title={s.isActive ? "Aktif — görünüyor" : "Pasif — gizli"}
+                    title={s.isActive ? "Aktif, görünüyor" : "Pasif, gizli"}
                   >
                     {s.isActive ? <Eye size={18} /> : <EyeSlash size={18} />}
                   </button>

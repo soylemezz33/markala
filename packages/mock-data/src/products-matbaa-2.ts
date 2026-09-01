@@ -57,11 +57,11 @@ function buildMatrix(args: {
 // ============================================================================
 const antetliKagit: ProductWithParams = {
   slug: "antetli-kagit",
-  name: "Antetli Kağıt — 90 gr 1.Hamur",
+  name: "Antetli Kağıt, 90 gr 1.Hamur",
   categorySlug: "antetli-kagit",
   sku: "MK-ANT-90",
   brand: "Markala",
-  shortDescription: "90 gr 1.Hamur Tek Yön Renkli — A5 ve A4 ebat, 2.000-12.000 adet",
+  shortDescription: "90 gr 1.Hamur Tek Yön Renkli: A5 ve A4 ebat, 2.000-12.000 adet",
   description: note(
     "Kurumsal yazışma, fatura üst yazısı, resmi mektup, resmi belge ve yönetim toplantı evrakı için 90 gr 1.Hamur kâğıt üzerine tek yön renkli baskı. A5 (15×21 cm) ve A4 (21×29.7 cm) standart boyutlar; 2.000'den başlayıp 12.000 adete kadar avantajlı kademe. Logonuz, adres ve iletişim bilgileriniz CMYK 300 dpi PDF gönderilen tasarımdan basılır.",
   ),
@@ -73,7 +73,7 @@ const antetliKagit: ProductWithParams = {
   badges: ["cok-satilan"],
   rating: { average: 4.7, count: 64 },
   features: [
-    "90 gr 1.Hamur kâğıt — kurumsal antet için ideal",
+    "90 gr 1.Hamur kâğıt, kurumsal antet için ideal",
     "Tek yön renkli (4+0) baskı",
     "A5 (15×21 cm) ve A4 (21×29.7 cm) standart ebatlar",
     "2.000-12.000 adet kademeli fiyat",
@@ -115,7 +115,7 @@ const antetliKagit: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Antetli Kağıt Baskı — 90 gr 1.Hamur A5/A4, 1.550 TL'den",
+    title: "Antetli Kağıt Baskı | 90 gr 1.Hamur A5/A4, 1.550 TL'den",
     description: "90 gr 1.Hamur antetli kağıt baskı, A5 ve A4 ebatlarda 2.000-12.000 adet. Kurumsal yazışma, fatura üst yazısı için tek yön renkli baskı.",
     keywords: ["antetli kağıt", "antet baskı", "90 gr antetli", "kurumsal antetli", "1.hamur antetli", "fatura kağıdı", "a4 antetli"],
   },
@@ -126,13 +126,13 @@ const antetliKagit: ProductWithParams = {
 // ============================================================================
 const zarfDiplomatTekRenk: ProductWithParams = {
   slug: "zarf-diplomat-tek-renk",
-  name: "Diplomat Zarf — 10.5×24 cm Tek Renk",
+  name: "Diplomat Zarf, 10.5×24 cm Tek Renk",
   categorySlug: "zarf",
   sku: "MK-ZRF-DP-TR",
   brand: "Markala",
-  shortDescription: "110 gr 1.Hamur Diplomat Zarf — Tek Renk Baskı (siyah veya tek pantone)",
+  shortDescription: "110 gr 1.Hamur Diplomat Zarf, Tek Renk Baskı (siyah veya tek pantone)",
   description: note(
-    "Resmi yazışma, fatura, banka dekontu ve günlük kurumsal evrak için 110 gr 1.Hamur kâğıttan üretilen 10.5×24 cm Diplomat zarf, tek renk baskı (siyah veya istediğiniz tek pantone). Avrupa formatı (DL), pencereli veya penceresiz. 1.000 adetten başlayan kademeli fiyat — her ek 1.000 adet için sabit ek ücret avantajı.",
+    "Resmi yazışma, fatura, banka dekontu ve günlük kurumsal evrak için 110 gr 1.Hamur kâğıttan üretilen 10.5×24 cm Diplomat zarf, tek renk baskı (siyah veya istediğiniz tek pantone). Avrupa formatı (DL), pencereli veya penceresiz. 1.000 adetten başlayan kademeli fiyat, her ek 1.000 adet için sabit ek ücret avantajı.",
   ),
   basePrice: 0,
   startingPrice: 1750,
@@ -160,14 +160,14 @@ const zarfDiplomatTekRenk: ProductWithParams = {
     { label: "Üretim Süresi", value: "2-3 iş günü" },
   ],
   faqs: [
-    { q: "Pencereli zarf nasıl sipariş ederim?", a: "Sipariş notuna 'pencereli' yazmanız yeterli — pencere standart sol orta konumda açılır. Özel pencere konumu için tasarımda işaretleme yapın." },
-    { q: "İkinci renk eklenir mi?", a: "Evet — Diplomat Zarf Renkli ürünümüz tam renkli (CMYK) baskı sunar; ek renkli logo için ona yönelin." },
+    { q: "Pencereli zarf nasıl sipariş ederim?", a: "Sipariş notuna 'pencereli' yazmanız yeterli, pencere standart sol orta konumda açılır. Özel pencere konumu için tasarımda işaretleme yapın." },
+    { q: "İkinci renk eklenir mi?", a: "Evet, Diplomat Zarf Renkli ürünümüz tam renkli (CMYK) baskı sunar; ek renkli logo için ona yönelin." },
   ],
   relatedSlugs: ["zarf-diplomat-renkli", "zarf-torba", "antetli-kagit"],
   parameters: [
     buildMatrix({
       label: "Adet",
-      matrixNote: "110 gr 1.Hamur · 10.5×24 cm Diplomat · Tek Renk Baskı — her +1.000 adet için 1.075 TL",
+      matrixNote: "110 gr 1.Hamur · 10.5×24 cm Diplomat · Tek Renk Baskı, her +1.000 adet için 1.075 TL",
       rows: [
         { id: "diplomat-tr", label: "Diplomat Tek Renk", sublabel: "10.5×24 cm · 110 gr", code: "Z1", prices: { "1000": 1750, "2000": 2825, "3000": 3900, "5000": 6050, "10000": 11425 } },
       ],
@@ -181,7 +181,7 @@ const zarfDiplomatTekRenk: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Diplomat Zarf — 10.5×24 cm Tek Renk Baskı, 1.750 TL'den",
+    title: "Diplomat Zarf | 10.5×24 cm Tek Renk Baskı, 1.750 TL'den",
     description: "110 gr 1.Hamur Diplomat zarf 10.5×24 cm tek renk baskı 1.750 TL'den. 1.000-10.000 adet, resmi yazışma, fatura gönderimi için.",
     keywords: ["diplomat zarf", "zarf baskı", "tek renk zarf", "10.5x24 zarf", "kurumsal zarf", "fatura zarfı", "dl zarf"],
   },
@@ -189,11 +189,11 @@ const zarfDiplomatTekRenk: ProductWithParams = {
 
 const zarfDiplomatRenkli: ProductWithParams = {
   slug: "zarf-diplomat-renkli",
-  name: "Diplomat Zarf — 10.5×24 cm Renkli Baskı",
+  name: "Diplomat Zarf, 10.5×24 cm Renkli Baskı",
   categorySlug: "zarf",
   sku: "MK-ZRF-DP-RNK",
   brand: "Markala",
-  shortDescription: "110 gr 1.Hamur Diplomat Zarf — Tam Renkli (CMYK) Baskı",
+  shortDescription: "110 gr 1.Hamur Diplomat Zarf, Tam Renkli (CMYK) Baskı",
   description: note(
     "Logo ve tasarımı tam renkli (CMYK 4+0) basılan 110 gr 1.Hamur 10.5×24 cm Diplomat zarf. Marka kimliğinizi kurumsal yazışmada güçlü gösterir; davetiye, kart, mektup gönderimi için lüks segment. 1.000 adetten başlar, her ek 1.000 adet için 1.250 TL avantajlı.",
   ),
@@ -230,7 +230,7 @@ const zarfDiplomatRenkli: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Adet",
-      matrixNote: "110 gr 1.Hamur · 10.5×24 cm · Tam Renkli — her +1.000 adet için 1.250 TL",
+      matrixNote: "110 gr 1.Hamur · 10.5×24 cm · Tam Renkli, her +1.000 adet için 1.250 TL",
       rows: [
         { id: "diplomat-renkli", label: "Diplomat Renkli", sublabel: "10.5×24 cm · 110 gr · CMYK", code: "Z2", prices: { "1000": 2375, "2000": 3625, "3000": 4875, "5000": 7375, "10000": 13625 } },
       ],
@@ -244,7 +244,7 @@ const zarfDiplomatRenkli: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Diplomat Renkli Zarf — 10.5×24 cm CMYK Baskı, 2.375 TL'den",
+    title: "Diplomat Renkli Zarf | 10.5×24 cm CMYK Baskı, 2.375 TL'den",
     description: "110 gr 1.Hamur 10.5×24 cm Diplomat zarf, tam renkli CMYK baskı. Davetiye, sertifika, lüks kurumsal yazışma için. 1.000-10.000 adet.",
     keywords: ["renkli zarf", "diplomat zarf renkli", "cmyk zarf baskı", "davetiye zarfı", "lüks zarf", "kurumsal zarf"],
   },
@@ -252,11 +252,11 @@ const zarfDiplomatRenkli: ProductWithParams = {
 
 const zarfTorba: ProductWithParams = {
   slug: "zarf-torba",
-  name: "Torba Zarf — 24×32 cm Renkli",
+  name: "Torba Zarf, 24×32 cm Renkli",
   categorySlug: "zarf",
   sku: "MK-ZRF-TRB-2432",
   brand: "Markala",
-  shortDescription: "110 gr 1.Hamur Torba Zarf 24×32 cm — Tam Renkli Baskı",
+  shortDescription: "110 gr 1.Hamur Torba Zarf 24×32 cm, Tam Renkli Baskı",
   description: note(
     "A4 evrak, sözleşme, broşür ve büyük belgelerin gönderilmesi için 110 gr 1.Hamur kâğıttan 24×32 cm torba zarf, tam renkli (CMYK) baskı ile. 500 adetten başlar, her ek 500 adet için 1.875 TL. Ihale dosyası, banka kredi belge takımı, sigorta poliçe seti gibi kalın evrak gönderimi için ideal.",
   ),
@@ -292,7 +292,7 @@ const zarfTorba: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Adet",
-      matrixNote: "110 gr 1.Hamur · 24×32 cm Torba · Tam Renkli — her +500 adet için 1.875 TL",
+      matrixNote: "110 gr 1.Hamur · 24×32 cm Torba · Tam Renkli, her +500 adet için 1.875 TL",
       rows: [
         { id: "torba-renkli", label: "Torba Zarf Renkli", sublabel: "24×32 cm · 110 gr · CMYK", code: "Z3", prices: { "500": 3500, "1000": 5375, "1500": 7250, "2500": 11000, "5000": 20375 } },
       ],
@@ -306,7 +306,7 @@ const zarfTorba: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Torba Zarf — 24×32 cm Renkli, A4 Evrak İçin 3.500 TL'den",
+    title: "Torba Zarf | 24×32 cm Renkli, A4 Evrak İçin 3.500 TL'den",
     description: "110 gr 1.Hamur 24×32 cm torba zarf, tam renkli baskı. İhale, sözleşme, banka belgesi gönderimi için. 500-5.000 adet kademeli fiyat.",
     keywords: ["torba zarf", "24x32 zarf", "a4 zarf", "renkli torba zarf", "ihale zarfı", "büyük zarf baskı"],
   },
@@ -317,13 +317,13 @@ const zarfTorba: ProductWithParams = {
 // ============================================================================
 const magnetPromosyon: ProductWithParams = {
   slug: "magnet-promosyon",
-  name: "Promosyon Magnet — 60 Mikron 46×68 mm",
+  name: "Promosyon Magnet, 60 Mikron 46×68 mm",
   categorySlug: "magnet",
   sku: "MK-MGN-60",
   brand: "Markala",
-  shortDescription: "60 mikron 46×68 mm renkli magnet — buzdolabı tipi promosyon, 1.000-10.000+ adet",
+  shortDescription: "60 mikron 46×68 mm renkli magnet: buzdolabı tipi promosyon, 1.000-10.000+ adet",
   description: note(
-    "Buzdolabı, metal yüzey ve mıknatıs tutan her zemine yapışan 60 mikron renkli baskılı promosyon magneti. 46×68 mm (kartvizit boyutu) — özel kesimli veya kenarları oval kesimli iki seçenek. Eczane, taksi, restoran, mağaza ve kargo şirketlerinin müşteriye verdiği en sık tercih edilen 'kalıcı reklam' ürünüdür. 1.000 adetten başlar, 10.000+ adette birim fiyat avantajı belirgin düşer.",
+    "Buzdolabı, metal yüzey ve mıknatıs tutan her zemine yapışan 60 mikron renkli baskılı promosyon magneti. 46×68 mm (kartvizit boyutu), özel kesimli veya kenarları oval kesimli iki seçenek. Eczane, taksi, restoran, mağaza ve kargo şirketlerinin müşteriye verdiği en sık tercih edilen 'kalıcı reklam' ürünüdür. 1.000 adetten başlar, 10.000+ adette birim fiyat avantajı belirgin düşer.",
   ),
   basePrice: 0,
   startingPrice: 630,
@@ -334,12 +334,12 @@ const magnetPromosyon: ProductWithParams = {
   bestseller: true,
   rating: { average: 4.8, count: 67 },
   features: [
-    "60 mikron magnet — buzdolabı tipi yapışkan",
-    "46×68 mm — kartvizit boyutu",
+    "60 mikron magnet, buzdolabı tipi yapışkan",
+    "46×68 mm, kartvizit boyutu",
     "Özel Kesim veya Oval Kesim seçenekleri",
     "Parlak selefon korumalı renkli baskı",
     "1.000 adetten 10.000+ adete kademeli toptan fiyat",
-    "Bonus: 1 cm kare özel kesim opsiyonu — sipariş notunda belirtin",
+    "Bonus: 1 cm kare özel kesim opsiyonu, sipariş notunda belirtin",
   ],
   useCases: [
     "Eczane, klinik, sağlık merkezi tanıtım",
@@ -356,17 +356,17 @@ const magnetPromosyon: ProductWithParams = {
     { label: "Üretim Süresi", value: "3-4 iş günü" },
   ],
   faqs: [
-    { q: "Araç magneti istiyorum, bu ürün uygun mu?", a: "Hayır. Bu ürün 60 mikron promosyon magnetidir — ince ve hafif. Araç magneti için 0.8 mm kalın magnet gerekir; 'Araç Magneti' kategorimize bakınız." },
+    { q: "Araç magneti istiyorum, bu ürün uygun mu?", a: "Hayır. Bu ürün 60 mikron promosyon magnetidir, ince ve hafif. Araç magneti için 0.8 mm kalın magnet gerekir; 'Araç Magneti' kategorimize bakınız." },
     { q: "1 cm kare özel kesim ne için?", a: "Logo veya küçük marka sembolü için 1 cm² hücre formunda özel kesim hizmeti. Sipariş notunda 'cm kare' yazın, fiyat 1.000 adet için 24 TL/cm² tarifesinden hesaplanır." },
   ],
   relatedSlugs: ["klasik-kartvizit", "etiket", "trodat-printy-4912"],
   parameters: [
     buildMatrix({
       label: "Kesim × Adet",
-      matrixNote: "60 mikron · 46×68 mm · Renkli Parlak Selefon — birim fiyat 10.000+ adette düşer",
+      matrixNote: "60 mikron · 46×68 mm · Renkli Parlak Selefon, birim fiyat 10.000+ adette düşer",
       rows: [
-        { id: "ozel", label: "Özel Kesim", sublabel: "46×68 mm — Parlak Selefon Özel Kesim", code: "MAG1", prices: { "1000": 700, "10000": 6700 } },
-        { id: "oval", label: "Oval Kesim", sublabel: "46×68 mm — Parlak Selefon Oval Kesim", code: "MAG2", prices: { "1000": 630, "10000": 6200 } },
+        { id: "ozel", label: "Özel Kesim", sublabel: "46×68 mm, Parlak Selefon Özel Kesim", code: "MAG1", prices: { "1000": 700, "10000": 6700 } },
+        { id: "oval", label: "Oval Kesim", sublabel: "46×68 mm, Parlak Selefon Oval Kesim", code: "MAG2", prices: { "1000": 630, "10000": 6200 } },
       ],
       cols: [
         { id: "1000", label: "1.000 Adet" },
@@ -377,7 +377,7 @@ const magnetPromosyon: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Promosyon Magnet — 60 Mikron 46×68 mm Renkli, 630 TL'den",
+    title: "Promosyon Magnet | 60 Mikron 46×68 mm Renkli, 630 TL'den",
     description: "60 mikron 46×68 mm buzdolabı tipi renkli promosyon magnet baskı. Özel/oval kesim, parlak selefon, 1.000-10.000+ adet. Eczane, taksi, restoran için.",
     keywords: ["magnet baskı", "promosyon magnet", "buzdolabı magneti", "46x68 magnet", "kartvizit magnet", "eczane magneti", "taksi magneti"],
   },
@@ -388,13 +388,13 @@ const magnetPromosyon: ProductWithParams = {
 // ============================================================================
 const amerikanServis: ProductWithParams = {
   slug: "amerikan-servis",
-  name: "Amerikan Servis — Tek Yön Renkli Baskı",
+  name: "Amerikan Servis - Tek Yön Renkli Baskı",
   categorySlug: "amerikan-servis",
   sku: "MK-SRV",
   brand: "Markala",
-  shortDescription: "Restoran-kafe için tek kullanımlık tray underliner — 90/100/120 gr",
+  shortDescription: "Restoran-kafe için tek kullanımlık tray underliner, 90/100/120 gr",
   description: note(
-    "Restoran ve kafelerin tepsi altına serdiği tek kullanımlık servis altlığı (placemat). 31×44 cm 90 gr 1.Hamur (ekonomik), 27.5×40 cm 100 gr Kuşe (orta segment) ve 34×49 cm 120 gr 1.Hamur (premium) seçenekleri; tek yön renkli (4+0) baskı ile menü, kampanya, marka tanıtımı içerir. 2.000 adetten başlayan kademeli fiyat — her ek 2.000 adet için sabit ek tutar.",
+    "Restoran ve kafelerin tepsi altına serdiği tek kullanımlık servis altlığı (placemat). 31×44 cm 90 gr 1.Hamur (ekonomik), 27.5×40 cm 100 gr Kuşe (orta segment) ve 34×49 cm 120 gr 1.Hamur (premium) seçenekleri; tek yön renkli (4+0) baskı ile menü, kampanya, marka tanıtımı içerir. 2.000 adetten başlayan kademeli fiyat, her ek 2.000 adet için sabit ek tutar.",
   ),
   basePrice: 0,
   startingPrice: 2750,
@@ -430,11 +430,11 @@ const amerikanServis: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Ebat / Gramaj × Adet",
-      matrixNote: "Tek Yön Renkli (4+0) — her +2.000 adet için satıra göre ek ücret",
+      matrixNote: "Tek Yön Renkli (4+0), her +2.000 adet için satıra göre ek ücret",
       rows: [
-        { id: "31x44-90gr", label: "31×44 cm — 90 gr Hamur", sublabel: "Ekonomik · her +2.000: 3.000 TL", code: "SRV1", prices: { "2000": 3250, "4000": 6250, "6000": 9250 } },
-        { id: "27.5x40-100gr", label: "27.5×40 cm — 100 gr Kuşe", sublabel: "Orta segment · her +2.000: 2.450 TL", code: "SRV2", prices: { "2000": 2750, "4000": 5200, "6000": 7650 } },
-        { id: "34x49-120gr", label: "34×49 cm — 120 gr Hamur", sublabel: "Premium · her +2.000: 3.125 TL", code: "SRV3", prices: { "2000": 4250, "4000": 7375, "6000": 10500 } },
+        { id: "31x44-90gr", label: "31×44 cm, 90 gr Hamur", sublabel: "Ekonomik · her +2.000: 3.000 TL", code: "SRV1", prices: { "2000": 3250, "4000": 6250, "6000": 9250 } },
+        { id: "27.5x40-100gr", label: "27.5×40 cm, 100 gr Kuşe", sublabel: "Orta segment · her +2.000: 2.450 TL", code: "SRV2", prices: { "2000": 2750, "4000": 5200, "6000": 7650 } },
+        { id: "34x49-120gr", label: "34×49 cm, 120 gr Hamur", sublabel: "Premium · her +2.000: 3.125 TL", code: "SRV3", prices: { "2000": 4250, "4000": 7375, "6000": 10500 } },
       ],
       cols: [
         { id: "2000", label: "2.000 Adet" },
@@ -446,8 +446,8 @@ const amerikanServis: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Amerikan Servis Baskı — Tek Yön Renkli 3 Ebat, 2.750 TL'den",
-    description: "Restoran-kafe için tek kullanımlık amerikan servis baskı: 31×44 / 27.5×40 / 34×49 cm — 90-100-120 gr seçenekler. 2.000-6.000 adet kademeli.",
+    title: "Amerikan Servis Baskı | Tek Yön Renkli 3 Ebat, 2.750 TL'den",
+    description: "Restoran-kafe için tek kullanımlık amerikan servis baskı: 31×44 / 27.5×40 / 34×49 cm, 90-100-120 gr seçenekler. 2.000-6.000 adet kademeli.",
     keywords: ["amerikan servis", "tray underliner", "restoran servis altı", "kafe servis", "tepsi altı kağıt", "amerikan servis baskı"],
   },
 };
@@ -457,11 +457,11 @@ const amerikanServis: ProductWithParams = {
 // ============================================================================
 const kapiAskiBrosur: ProductWithParams = {
   slug: "kapi-aski-brosur",
-  name: "Kapı Askı Broşür — Çift Yön Renkli Mat Selefon Kabartma Lak",
+  name: "Kapı Askı Broşür - Çift Yön Renkli Mat Selefon Kabartma Lak",
   categorySlug: "kapi-aski-brosur",
   sku: "MK-ASK",
   brand: "Markala",
-  shortDescription: "Otel, mağaza, dağıtım için kapı kolu askı broşür — premium kombinler",
+  shortDescription: "Otel, mağaza, dağıtım için kapı kolu askı broşür, premium kombinler",
   description: note(
     "Otel oda kapı kolu, mağaza vitrin kapı kolu, apartman kapısına asılı dağıtım için 'kapı askı' broşürlerimiz; çift yön renkli baskı + mat selefon + kabartma lak ile premium hissiyat. 350 gr Kuşe, 700 gr Bristol veya 200 gr Kuşe parlak selefon seçenekleri. 1.000 adet sabit paket fiyatı.",
   ),
@@ -502,11 +502,11 @@ const kapiAskiBrosur: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Varyant",
-      matrixNote: "Çift Yön Renkli — 1.000 adet sabit paket",
+      matrixNote: "Çift Yön Renkli, 1.000 adet sabit paket",
       rows: [
-        { id: "ask1", label: "ASK1 — 350 gr Kuşe Mat Selefon Kabartma Lak", sublabel: "10.5 × 24 cm", code: "ASK1", prices: { "1000": 2625 } },
-        { id: "ask2", label: "ASK2 — 700 gr Bristol Mat Selefon Kabartma Lak", sublabel: "10.5 × 24 cm", code: "ASK2", prices: { "1000": 2875 } },
-        { id: "ask3", label: "ASK3 — 200 gr Kuşe Parlak Selefon", sublabel: "21 × 26 cm", code: "ASK3", prices: { "1000": 4700 } },
+        { id: "ask1", label: "ASK1, 350 gr Kuşe Mat Selefon Kabartma Lak", sublabel: "10.5 × 24 cm", code: "ASK1", prices: { "1000": 2625 } },
+        { id: "ask2", label: "ASK2, 700 gr Bristol Mat Selefon Kabartma Lak", sublabel: "10.5 × 24 cm", code: "ASK2", prices: { "1000": 2875 } },
+        { id: "ask3", label: "ASK3, 200 gr Kuşe Parlak Selefon", sublabel: "21 × 26 cm", code: "ASK3", prices: { "1000": 4700 } },
       ],
       cols: [{ id: "1000", label: "1.000 Adet" }],
       defaultRowId: "ask1",
@@ -514,7 +514,7 @@ const kapiAskiBrosur: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Kapı Askı Broşür — Otel/Mağaza Premium Kapı Kolu Broşürü",
+    title: "Kapı Askı Broşür | Otel/Mağaza Premium Kapı Kolu Broşürü",
     description: "Çift yön renkli, mat/parlak selefonlu, kabartma laklı kapı askı broşür. 350 gr Kuşe / 700 gr Bristol / 200 gr Kuşe seçenekleri, 1.000 adet 2.625 TL'den.",
     keywords: ["kapı askı broşür", "kapı kolu broşür", "otel dnd kart", "rahatsız etmeyin kart", "kapı askılı tanıtım"],
   },
@@ -525,11 +525,11 @@ const kapiAskiBrosur: ProductWithParams = {
 // ============================================================================
 const cepliDosya: ProductWithParams = {
   slug: "cepli-dosya",
-  name: "Cepli Dosya — Kapalı Hâli 22.5×31 cm",
+  name: "Cepli Dosya - Kapalı Hâli 22.5×31 cm",
   categorySlug: "cepli-dosya",
   sku: "MK-CD",
   brand: "Markala",
-  shortDescription: "Avukat ve kurumsal teklif için cepli dosya — 7 varyant × 500/1.000 adet",
+  shortDescription: "Avukat ve kurumsal teklif için cepli dosya, 7 varyant × 500/1.000 adet",
   description: note(
     "Avukat dosyası, kurumsal teklif sunumu, ihale dosya kapağı ve marka tanıtım dosyası için kullanılan kapalı hâli 22.5×31 cm cepli dosya. 7 farklı kâğıt-kaplama varyantı (mat/parlak selefon, kabartma lak, çift yön baskı, 400 gr lak, 300 gr Bristol selefonsuz). Kulakçık yapıştırma fiyata dahildir.\n\n**Önemli not:** Avukat dosyalarında dosya teli dahil değildir. Avukat dosyalarında selefon talebi için: 500 adet 850 TL, 1.000 adet 1.000 TL ek ücretle uygulanır.",
   ),
@@ -541,7 +541,7 @@ const cepliDosya: ProductWithParams = {
   badges: ["yeni"],
   rating: { average: 4.6, count: 22 },
   features: [
-    "Kapalı hâli 22.5×31 cm — A4 evrak için cep",
+    "Kapalı hâli 22.5×31 cm, A4 evrak için cep",
     "Kulakçık yapıştırma fiyata dahil",
     "7 varyant: 350-400 gr Kuşe / 300 gr Bristol",
     "Mat selefon, parlak selefon, kabartma lak seçenekleri",
@@ -571,15 +571,15 @@ const cepliDosya: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Varyant × Adet",
-      matrixNote: "22.5×31 cm Kapalı · Renkli · Kulakçık dahil — Avukat dosyaları için selefon ek (500: +850 TL / 1.000: +1.000 TL)",
+      matrixNote: "22.5×31 cm Kapalı · Renkli · Kulakçık dahil, Avukat dosyaları için selefon ek (500: +850 TL / 1.000: +1.000 TL)",
       rows: [
-        { id: "mnd", label: "MND — Mat Selefon İçi Tek Renk", sublabel: "350 gr Kuşe Tek Yön Çok Renkli Mat Selefon", code: "MND", prices: { "500": 5800, "1000": 8500 } },
-        { id: "kld", label: "KLD — Mat Selefon Kabartma Lak", sublabel: "350 gr Kuşe Tek Yön Çok Renkli Mat Selefon Kabartma Lak", code: "KLD", prices: { "500": 6500, "1000": 8900 } },
-        { id: "pd", label: "PD — Parlak Selefon", sublabel: "350 gr Kuşe Tek Yön Çok Renkli Parlak Selefon", code: "PD", prices: { "1000": 8400 } },
-        { id: "cypd", label: "CYPD — Çift Yön Parlak", sublabel: "350 gr Kuşe Çift Yön Baskı Parlak Selefon", code: "CYPD", prices: { "1000": 11300 } },
-        { id: "cymd", label: "CYMD — Çift Yön Mat", sublabel: "350 gr Kuşe Çift Yön Baskı Mat Selefon", code: "CYMD", prices: { "1000": 11500 } },
-        { id: "cyml4d", label: "CYML4D — 400 gr Mat Lak", sublabel: "400 gr Kuşe Çift Yön Renkli Mat Selefon Lak", code: "CYML4D", prices: { "1000": 15000 } },
-        { id: "avd", label: "AVD — Avukat Dosyası Selefonsuz", sublabel: "300 gr Bristol Tek Yön Arkası Tek Renk Siyah Selefonsuz · Tel/selefon ek", code: "AVD", prices: { "500": 5000, "1000": 6150 } },
+        { id: "mnd", label: "MND - Mat Selefon İçi Tek Renk", sublabel: "350 gr Kuşe Tek Yön Çok Renkli Mat Selefon", code: "MND", prices: { "500": 5800, "1000": 8500 } },
+        { id: "kld", label: "KLD - Mat Selefon Kabartma Lak", sublabel: "350 gr Kuşe Tek Yön Çok Renkli Mat Selefon Kabartma Lak", code: "KLD", prices: { "500": 6500, "1000": 8900 } },
+        { id: "pd", label: "PD - Parlak Selefon", sublabel: "350 gr Kuşe Tek Yön Çok Renkli Parlak Selefon", code: "PD", prices: { "1000": 8400 } },
+        { id: "cypd", label: "CYPD - Çift Yön Parlak", sublabel: "350 gr Kuşe Çift Yön Baskı Parlak Selefon", code: "CYPD", prices: { "1000": 11300 } },
+        { id: "cymd", label: "CYMD - Çift Yön Mat", sublabel: "350 gr Kuşe Çift Yön Baskı Mat Selefon", code: "CYMD", prices: { "1000": 11500 } },
+        { id: "cyml4d", label: "CYML4D, 400 gr Mat Lak", sublabel: "400 gr Kuşe Çift Yön Renkli Mat Selefon Lak", code: "CYML4D", prices: { "1000": 15000 } },
+        { id: "avd", label: "AVD - Avukat Dosyası Selefonsuz", sublabel: "300 gr Bristol Tek Yön Arkası Tek Renk Siyah Selefonsuz · Tel/selefon ek", code: "AVD", prices: { "500": 5000, "1000": 6150 } },
       ],
       cols: [
         { id: "500", label: "500 Adet" },
@@ -590,7 +590,7 @@ const cepliDosya: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Cepli Dosya — 22.5×31 cm Kapalı, Avukat & Kurumsal, 5.000 TL'den",
+    title: "Cepli Dosya | 22.5×31 cm Kapalı, Avukat & Kurumsal, 5.000 TL'den",
     description: "Avukat dosyası ve kurumsal teklif için 22.5×31 cm cepli dosya. 7 varyant: mat/parlak selefon, kabartma lak. Kulakçık dahil, 500-1.000 adet.",
     keywords: ["cepli dosya", "avukat dosyası", "kurumsal dosya", "teklif dosyası", "ihale dosyası", "selefonlu dosya"],
   },

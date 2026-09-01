@@ -53,7 +53,7 @@ function statusBadge(status: string): { label: string; className: string } {
     case "iptal-edildi":
       return { label: "İptal Edildi", className: "bg-error/10 text-error" };
     default:
-      return { label: status || "—", className: "bg-paper-200 text-ink-700" };
+      return { label: status || "-", className: "bg-paper-200 text-ink-700" };
   }
 }
 
@@ -74,7 +74,7 @@ function isUnpaid(o: OrderRow): boolean {
 
 /** Tarih + saat (Hasan talebi 2026-08-24) — DB tam timestamp tutuyor, saat de gösterilir. */
 function formatDateTime(iso: string | undefined): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   try {
     return new Date(iso).toLocaleString("tr-TR", {
       day: "2-digit",
@@ -133,7 +133,7 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
           {orders.map((o) => {
             const unpaid = isUnpaid(o);
             const badge = statusBadge(String(o.status ?? ""));
-            const customerName = o.customerName ?? o.user?.fullName ?? o.email ?? "—";
+            const customerName = o.customerName ?? o.user?.fullName ?? o.email ?? "-";
             return (
               <tr key={o.id} className={`hover:bg-paper-100/40 ${unpaid ? "bg-warning/[0.04]" : ""}`}>
                 <td className="px-5 py-3 font-mono text-xs font-semibold text-ink-900">
@@ -226,7 +226,7 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
               <div>
                 <div className="text-xs text-ink-500">Müşteri</div>
                 <div className="font-medium text-ink-900">
-                  {contact.customerName ?? contact.user?.fullName ?? "—"}
+                  {contact.customerName ?? contact.user?.fullName ?? "-"}
                 </div>
               </div>
               <div>
@@ -244,7 +244,7 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
                   </a>
                   <a
                     href={`https://wa.me/${waNumber(contact.phone)}?text=${encodeURIComponent(
-                      `Merhaba, Markala'dan arıyoruz. ${contact.orderNumber ?? ""} numaralı siparişinizin ödemesi tamamlanmamış görünüyor — yardımcı olabilir miyiz?`,
+                      `Merhaba, Markala'dan arıyoruz. ${contact.orderNumber ?? ""} numaralı siparişinizin ödemesi tamamlanmamış görünüyor, yardımcı olabilir miyiz?`,
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"

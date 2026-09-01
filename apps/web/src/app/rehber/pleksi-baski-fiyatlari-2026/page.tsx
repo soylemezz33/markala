@@ -20,17 +20,17 @@ import { GuideFaqSection, asOfLabel } from "../_shared";
 export const revalidate = 3600;
 
 const PAGE_PATH = "/rehber/pleksi-baski-fiyatlari-2026";
-const BASLIK = "Pleksi Baskı Fiyatları 2026 — m² Hesabı ve Kalınlık Seçimi";
+const BASLIK = "Pleksi Baskı Fiyatları 2026: m² Hesabı ve Kalınlık Seçimi";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Pleksi Baskı Fiyatları 2026 — m² Fiyatı, 3 mm ve 5 mm Farkı",
+    title: "Pleksi Baskı Fiyatları 2026 | m² Fiyatı, 3 mm ve 5 mm Farkı",
     description:
       "2026 güncel pleksi (akrilik) UV baskı m² fiyatları: 3 mm mi 5 mm mi, beyaz/siyah/şeffaf hangi işe uygun, CNC kesim ne kadar tutar ve örnek ebat hesap tablosu. KDV dahil.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Pleksi Baskı Fiyatları 2026 — m² Hesabı ve Kalınlık Seçimi",
+      title: "Pleksi Baskı Fiyatları 2026 | m² Hesabı ve Kalınlık Seçimi",
       description:
         "Pleksi UV baskıda m² fiyatı nasıl hesaplanır? 3 mm / 5 mm farkı, renk seçimi, CNC kesim ve örnek hesaplar.",
       url: PAGE_PATH,
@@ -53,7 +53,7 @@ export default async function PleksiBaskiFiyatlariPage() {
   // Ürün yoksa/fiyatsızsa THROW: ISR son başarılı sayfayı korur, uydurma fiyatlı
   // sayfa üretilmez (branda rehberindeki blip-koruma mantığının aynısı).
   if (!pleksi || getDisplayPrice(pleksi) <= 0) {
-    throw new Error("rehber/pleksi: ürün bulunamadı veya fiyatsız döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/pleksi: ürün bulunamadı veya fiyatsız döndü (API blip?), stale ISR korunur");
   }
   const m2Ham = pleksi.displayPrice ?? 0; // KDV dahil ham m² fiyatı (en ince kalınlık)
   const m2 = getDisplayPrice(pleksi);
@@ -76,15 +76,15 @@ export default async function PleksiBaskiFiyatlariPage() {
   const faqs = [
     {
       q: "Pleksi baskı m² fiyatı nasıl hesaplanır?",
-      a: `Pleksi serbest ölçüyle üretilir: en × boy ölçüsünden alan (m²) bulunur ve seçtiğin kalınlığın m² birim fiyatıyla çarpılır. ${asOf} itibarıyla 3 mm pleksi ${formatPriceWithSymbol(m2)}/m² (KDV dahil) fiyattan başlar. Hesaplama minimum 1 m² üzerinden yapılır — 0,2 m²'lik küçük bir isimlik de 1 m² fiyatıyla hesaplanır, çünkü kesim ve tezgâh hazırlığı ebattan bağımsız sabit maliyettir.`,
+      a: `Pleksi serbest ölçüyle üretilir: en × boy ölçüsünden alan (m²) bulunur ve seçtiğin kalınlığın m² birim fiyatıyla çarpılır. ${asOf} itibarıyla 3 mm pleksi ${formatPriceWithSymbol(m2)}/m² (KDV dahil) fiyattan başlar. Hesaplama minimum 1 m² üzerinden yapılır, 0,2 m²'lik küçük bir isimlik de 1 m² fiyatıyla hesaplanır, çünkü kesim ve tezgâh hazırlığı ebattan bağımsız sabit maliyettir.`,
     },
     {
       q: "3 mm mi 5 mm mi seçmeliyim?",
-      a: "3 mm çoğu iç mekan uygulaması için yeterlidir: isimlik, yönlendirme levhası, menü panosu, resepsiyon logosu. Fiyat/performans dengesi en iyi olan kalınlık budur. 5 mm'yi 50 cm'den büyük panolarda, tek noktadan asılacak işlerde veya prestijli görünüm istenen resepsiyon/ödül uygulamalarında tercih et — kalınlık arttıkça levha kendi ağırlığıyla esneme yapmaz ve kenar kalınlığı daha sağlam bir izlenim verir.",
+      a: "3 mm çoğu iç mekan uygulaması için yeterlidir: isimlik, yönlendirme levhası, menü panosu, resepsiyon logosu. Fiyat/performans dengesi en iyi olan kalınlık budur. 5 mm'yi 50 cm'den büyük panolarda, tek noktadan asılacak işlerde veya prestijli görünüm istenen resepsiyon/ödül uygulamalarında tercih et, kalınlık arttıkça levha kendi ağırlığıyla esneme yapmaz ve kenar kalınlığı daha sağlam bir izlenim verir.",
     },
     {
       q: "Beyaz, siyah ve şeffaf pleksi arasındaki fark ne?",
-      a: "Şeffaf pleksi cam görünümündedir; arkasındaki duvar görünür, bu yüzden logo ve yazıların havada duruyor izlenimi verdiği kurumsal resepsiyon uygulamalarında kullanılır. Beyaz pleksi opaktır ve baskı renklerini en canlı gösterir — fotoğraf ve renkli tasarımlar için en doğru zemin budur. Siyah pleksi ise beyaz/açık renk yazılarla yüksek kontrast verir, premium bir görünüm sağlar. Üç renkte de m² fiyatı aynıdır, seçim tamamen görünüme göre yapılır.",
+      a: "Şeffaf pleksi cam görünümündedir; arkasındaki duvar görünür, bu yüzden logo ve yazıların havada duruyor izlenimi verdiği kurumsal resepsiyon uygulamalarında kullanılır. Beyaz pleksi opaktır ve baskı renklerini en canlı gösterir, fotoğraf ve renkli tasarımlar için en doğru zemin budur. Siyah pleksi ise beyaz/açık renk yazılarla yüksek kontrast verir, premium bir görünüm sağlar. Üç renkte de m² fiyatı aynıdır, seçim tamamen görünüme göre yapılır.",
     },
     {
       q: "CNC kesim ne kadar tutar, ne zaman gerekir?",
@@ -92,7 +92,7 @@ export default async function PleksiBaskiFiyatlariPage() {
     },
     {
       q: "Pleksi mi dekota mı kompozit mi?",
-      a: "Pleksi cam görünümlü, parlak ve prestijli bir malzemedir; iç mekanda öne çıkan işlerde kullanılır ve üçü içinde en pahalısıdır. Dekota (foreks) sert PVC köpüktür, hafif ve ekonomiktir — geçici pano, stant ve iç mekan yönlendirmede idealdir. Kompozit iki alüminyum tabaka arasında öz bulunan levhadır; dış mekana en dayanıklı olanıdır, bina cephesi ve kalıcı tabelada tercih edilir. Kısaca: görünüm önemliyse pleksi, bütçe önemliyse dekota, dış mekan dayanımı önemliyse kompozit.",
+      a: "Pleksi cam görünümlü, parlak ve prestijli bir malzemedir; iç mekanda öne çıkan işlerde kullanılır ve üçü içinde en pahalısıdır. Dekota (foreks) sert PVC köpüktür, hafif ve ekonomiktir, geçici pano, stant ve iç mekan yönlendirmede idealdir. Kompozit iki alüminyum tabaka arasında öz bulunan levhadır; dış mekana en dayanıklı olanıdır, bina cephesi ve kalıcı tabelada tercih edilir. Kısaca: görünüm önemliyse pleksi, bütçe önemliyse dekota, dış mekan dayanımı önemliyse kompozit.",
     },
     {
       q: "Pleksi dış mekanda kullanılabilir mi?",
@@ -100,7 +100,7 @@ export default async function PleksiBaskiFiyatlariPage() {
     },
     {
       q: "Fiyatlara KDV dahil mi?",
-      a: "Evet. Bu sayfadaki ve ürün sayfasındaki tüm m² fiyatları KDV dahildir ve sepette değişmez. Teklif karşılaştırırken diğer firmaların fiyatlarının KDV dahil olup olmadığını kontrol etmeni öneririz — sektörde ikisi de kullanılıyor.",
+      a: "Evet. Bu sayfadaki ve ürün sayfasındaki tüm m² fiyatları KDV dahildir ve sepette değişmez. Teklif karşılaştırırken diğer firmaların fiyatlarının KDV dahil olup olmadığını kontrol etmeni öneririz, sektörde ikisi de kullanılıyor.",
     },
   ];
 
@@ -135,11 +135,11 @@ export default async function PleksiBaskiFiyatlariPage() {
             Pleksi (akrilik) levhaya doğrudan UV baskı yapılır ve m² üzerinden fiyatlanır.{" "}
             {asOf} itibarıyla 3 mm pleksi{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(m2)}/m²</strong>&apos;den
-            başlar — KDV dahil, sepette değişmez.
+            başlar, KDV dahil, sepette değişmez.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
-              <CheckCircle size={13} weight="fill" /> KDV dahil — sepette değişmez
+              <CheckCircle size={13} weight="fill" /> KDV dahil, sepette değişmez
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <Ruler size={13} weight="fill" /> cm bazında serbest ölçü
@@ -168,7 +168,7 @@ export default async function PleksiBaskiFiyatlariPage() {
               <span>
                 <strong className="text-ink-900">Kalınlığı seç:</strong> 3 mm ve 5 mm arasında m²
                 birim fiyatı değişir. Renk (beyaz, siyah, şeffaf) fiyatı{" "}
-                <strong className="text-ink-900">değiştirmez</strong> — yalnız görünümü belirler.
+                <strong className="text-ink-900">değiştirmez</strong>, yalnız görünümü belirler.
               </span>
             </li>
             <li className="flex gap-2">
@@ -223,7 +223,7 @@ export default async function PleksiBaskiFiyatlariPage() {
             <Info size={14} weight="fill" className="shrink-0 mt-0.5 text-brand-700" />
             <span>
               Tablodaki tutarlar 3 mm kalınlık ve dikdörtgen kesim içindir. 5 mm veya CNC kesim
-              seçilirse fiyat artar. 1 m²&apos;nin altındaki ebatlar 1 m² üzerinden faturalanır —
+              seçilirse fiyat artar. 1 m²&apos;nin altındaki ebatlar 1 m² üzerinden faturalanır,
               tabloda bu ok işaretiyle gösterilmiştir.
             </span>
           </p>
@@ -234,14 +234,14 @@ export default async function PleksiBaskiFiyatlariPage() {
           <h2 className="text-2xl font-semibold text-ink-900">Hangi kalınlık, hangi renk?</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-paper-200 bg-paper-50 p-5">
-              <h3 className="font-semibold text-ink-900">3 mm — çoğu iş için doğru seçim</h3>
+              <h3 className="font-semibold text-ink-900">3 mm: çoğu iş için doğru seçim</h3>
               <p className="mt-2 text-sm text-ink-700">
                 İsimlik, oda tabelası, yönlendirme levhası, menü panosu ve 50 cm&apos;e kadar
                 panolarda 3 mm yeterlidir. Fiyat/performans dengesi en iyi kalınlık budur.
               </p>
             </div>
             <div className="rounded-lg border border-paper-200 bg-paper-50 p-5">
-              <h3 className="font-semibold text-ink-900">5 mm — büyük ve prestijli işlerde</h3>
+              <h3 className="font-semibold text-ink-900">5 mm: büyük ve prestijli işlerde</h3>
               <p className="mt-2 text-sm text-ink-700">
                 50 cm üzeri panolarda, tek noktadan asılacak işlerde ve resepsiyon/ödül gibi
                 görünümün öne çıktığı uygulamalarda. Esneme yapmaz, kenar kalınlığı sağlam durur.

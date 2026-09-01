@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
   const html = renderEmail({
     title: "Yeni Kurumsal (B2B) Başvuru",
     intro: `Referans: ${escapeHtml(refId)}`,
-    preheader: `${escapeHtml(companyName)} — kurumsal hesap başvurusu`,
+    preheader: `${escapeHtml(companyName)}, kurumsal hesap başvurusu`,
     bodyHtml: emailTable(rows.map(([k, v]) => emailRow(escapeHtml(k), escapeHtml(v))).join("")),
     footnote:
       "Belgeleri ve başvuruyu admin panelinden (Kurumsal Başvurular) değerlendirebilir; bu mesaja yanıtlayarak başvurana dönüş yapabilirsiniz.",

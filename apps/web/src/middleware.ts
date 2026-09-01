@@ -83,7 +83,7 @@ function renderMaintenanceHtml(cfg: PublicConfig): string {
   const title = cfg.maintenance.title.trim() || "Kısa bir aradayız";
   const message =
     cfg.maintenance.message.trim() ||
-    "Sitemizde kısa süreli bir bakım çalışması yapıyoruz. Çok yakında tekrar buradayız — anlayışınız için teşekkürler.";
+    "Sitemizde kısa süreli bir bakım çalışması yapıyoruz. Çok yakında tekrar buradayız, anlayışınız için teşekkürler.";
   const { phone, whatsapp, email } = cfg.contact;
   const waDigits = whatsapp.replace(/\D/g, "");
 

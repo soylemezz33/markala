@@ -155,7 +155,7 @@ export function ProductsClient({ products, categories }: Props) {
             </thead>
             <tbody className="divide-y divide-paper-200">
               {paged.map((p) => {
-                const categoryName = p.category?.name ?? "—";
+                const categoryName = p.category?.name ?? "-";
                 // GERÇEK fiyat = displayPrice (min product_prices). null/0 → henüz fiyatlanmadı.
                 const displayPrice = p.displayPrice ?? null;
                 return (
@@ -171,7 +171,7 @@ export function ProductsClient({ products, categories }: Props) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-ink-500 hidden md:table-cell">{p.sku ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-ink-500 hidden md:table-cell">{p.sku ?? "-"}</td>
                     <td className="px-4 py-3 text-ink-700 hidden lg:table-cell">{categoryName}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums">
                       {displayPrice && displayPrice > 0 ? (

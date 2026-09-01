@@ -111,7 +111,7 @@ export function AreaPricingEditor({ productId, initialPricingMode, initialOption
             onChange={(e) => setAreaMode(e.target.checked)}
             className="h-4 w-4 rounded border-paper-300"
           />
-          m² (area) modu — özel ölçü + malzeme maliyeti
+          m² (area) modu, özel ölçü + malzeme maliyeti
         </label>
         <span className="text-xs text-ink-500 tabular-nums">
           kur {pricing.kur} · marj ×{pricing.marj} · KDV %{Math.round(pricing.kdv * 100)}
@@ -177,7 +177,7 @@ export function AreaPricingEditor({ productId, initialPricingMode, initialOption
 
           {preservedOptions.length > 0 && (
             <p className="mt-3 text-xs text-ink-500">
-              + {new Set(preservedOptions.map((o) => o.groupKey)).size} ekstra grup korunuyor (dikiş/kesim/kuşgözü vb. — kaydederken silinmez).
+              + {new Set(preservedOptions.map((o) => o.groupKey)).size} ekstra grup korunuyor (dikiş/kesim/kuşgözü vb., kaydederken silinmez).
             </p>
           )}
         </>

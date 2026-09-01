@@ -74,7 +74,7 @@ function buildAdminHtml(params: {
 function buildAutoReplyHtml(ad: string, konu: string): string {
   return renderEmail({
     title: 'Mesajınız Alındı',
-    preheader: 'Markala — en kısa sürede size dönüş yapacağız',
+    preheader: 'Markala, en kısa sürede size dönüş yapacağız',
     bodyHtml: `
       <p style="margin:0 0 12px">Merhaba <strong>${esc(ad)}</strong>,</p>
       <p style="margin:0 0 12px">
@@ -161,7 +161,7 @@ export async function POST(req: NextRequest) {
   try {
     await sendMail({
       to: getContactTo(),
-      subject: `[Markala İletişim] ${konuLabel} — ${adTrimmed}`,
+      subject: `[Markala İletişim] ${konuLabel} - ${adTrimmed}`,
       html: buildAdminHtml({
         ad: adTrimmed,
         email: emailTrimmed,
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
   try {
     await sendMail({
       to: emailTrimmed,
-      subject: 'Markala — Mesajınız alındı',
+      subject: 'Markala - Mesajınız alındı',
       html: buildAutoReplyHtml(adTrimmed, konuLabel),
     });
   } catch (err) {

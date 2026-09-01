@@ -25,13 +25,13 @@ const PRODUCT_SLUG = "afis-105gr";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Afiş Baskı Fiyatları 2026 — Ebat × Adet Tablosu (KDV Dahil)",
+    title: "Afiş Baskı Fiyatları 2026 | Ebat × Adet Tablosu (KDV Dahil)",
     description:
-      "2026 güncel afiş bastırma fiyatları: 34×49 ve 49×69 cm ebat, 250–1.000 adet tiraj tablosu. Kuşe kağıda renkli baskı, tüm fiyatlar KDV dahil — sepette değişmez.",
+      "2026 güncel afiş bastırma fiyatları: 34×49 ve 49×69 cm ebat, 250–1.000 adet tiraj tablosu. Kuşe kağıda renkli baskı, tüm fiyatlar KDV dahil, sepette değişmez.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Afiş Baskı Fiyatları 2026 — Ebat × Adet Tablosu (KDV Dahil)",
+      title: "Afiş Baskı Fiyatları 2026 | Ebat × Adet Tablosu (KDV Dahil)",
       description:
         "Afiş bastırma fiyatları ebat ve tiraj kırılımıyla. KDV dahil, canlı katalogdan.",
       url: PAGE_PATH,
@@ -44,7 +44,7 @@ export default async function AfisFiyatlariPage() {
   // Tek ürünlü kategori: fiyat ızgarası ürün detayından. API blip'inde throw → stale ISR korunur.
   const product = await getProductBySlug(PRODUCT_SLUG);
   if (!product || (product.prices?.length ?? 0) === 0) {
-    throw new Error("rehber/afis: ürün/fiyat çekilemedi (API blip?) — stale ISR korunur");
+    throw new Error("rehber/afis: ürün/fiyat çekilemedi (API blip?), stale ISR korunur");
   }
 
   const opts = (product.options ?? []) as PricingOption[];
@@ -59,7 +59,7 @@ export default async function AfisFiyatlariPage() {
     ? opts.filter((o) => o.groupKey === pricedKey).sort((a, b) => a.optionSort - b.optionSort)
     : [];
   if (adetOpts.length === 0 || ebatOpts.length === 0 || !pricedKey) {
-    throw new Error("rehber/afis: beklenen opsiyon grupları yok — stale ISR korunur");
+    throw new Error("rehber/afis: beklenen opsiyon grupları yok, stale ISR korunur");
   }
 
   const rows = ebatOpts
@@ -70,7 +70,7 @@ export default async function AfisFiyatlariPage() {
     }))
     .filter((r) => r.totals.some((v) => v > 0));
   if (rows.length === 0) {
-    throw new Error("rehber/afis: fiyat tablosu boş hesaplandı (API blip?) — stale ISR korunur");
+    throw new Error("rehber/afis: fiyat tablosu boş hesaplandı (API blip?), stale ISR korunur");
   }
 
   const asOf = asOfLabel();
@@ -80,7 +80,7 @@ export default async function AfisFiyatlariPage() {
   const faqs = [
     {
       q: `${firstTier.optionLabel.toLowerCase()} afiş bastırmak ne kadar?`,
-      a: `${asOf} itibarıyla katalog fiyatlarına göre ${firstTier.optionLabel.toLowerCase()} afiş ${formatPriceWithSymbol(minStart)}'den başlıyor (34×49 cm) — KDV dahil, sepette değişmez. Ebat ve adet kırılımı yukarıdaki tabloda.`,
+      a: `${asOf} itibarıyla katalog fiyatlarına göre ${firstTier.optionLabel.toLowerCase()} afiş ${formatPriceWithSymbol(minStart)}'den başlıyor (34×49 cm), KDV dahil, sepette değişmez. Ebat ve adet kırılımı yukarıdaki tabloda.`,
     },
     {
       q: "Hangi afiş ebadını seçmeliyim?",
@@ -88,11 +88,11 @@ export default async function AfisFiyatlariPage() {
     },
     {
       q: '"Tek yön renkli" ne demek?',
-      a: "Baskı yalnızca ön yüze yapılır (afişin arkası boş kalır) — afiş zaten duvara/panoya asıldığı için standart budur. Kağıt 105 gr kuşedir: canlı renk veren, ekonomik afiş kağıdı.",
+      a: "Baskı yalnızca ön yüze yapılır (afişin arkası boş kalır), afiş zaten duvara/panoya asıldığı için standart budur. Kağıt 105 gr kuşedir: canlı renk veren, ekonomik afiş kağıdı.",
     },
     {
       q: "Fiyatlara KDV dahil mi?",
-      a: "Evet, tablodaki ve ürün sayfasındaki tüm fiyatlar KDV dahildir. Afiş fiyatı karşılaştırırken teklifin KDV dahil olup olmadığını kontrol et — hariç verilen fiyat sepette artar.",
+      a: "Evet, tablodaki ve ürün sayfasındaki tüm fiyatlar KDV dahildir. Afiş fiyatı karşılaştırırken teklifin KDV dahil olup olmadığını kontrol et, hariç verilen fiyat sepette artar.",
     },
     {
       q: "Afiş kaç günde teslim edilir?",
@@ -113,7 +113,7 @@ export default async function AfisFiyatlariPage() {
         ]}
       />
       <ArticleJsonLd
-        title="Afiş Baskı Fiyatları 2026 — Ebat × Adet Tablosu (KDV Dahil)"
+        title="Afiş Baskı Fiyatları 2026 - Ebat × Adet Tablosu (KDV Dahil)"
         description="34×49 ve 49×69 cm afiş baskı fiyatları, tiraj kırılımı ve ebat seçim rehberi."
         url={PAGE_PATH}
         datePublished="2026-08-01"
@@ -138,12 +138,12 @@ export default async function AfisFiyatlariPage() {
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.optionLabel.toLowerCase()} afiş{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(minStart)}</strong>&apos;den
-            başlıyor — KDV dahil, sepette değişmez. Tablo {asOf} itibarıyla canlı katalog
+            başlıyor, KDV dahil, sepette değişmez. Tablo {asOf} itibarıyla canlı katalog
             fiyatlarıdır; ebat ve adet kırılımıyla.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
-              <CheckCircle size={13} weight="fill" /> KDV dahil — sepette değişmez
+              <CheckCircle size={13} weight="fill" /> KDV dahil, sepette değişmez
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <PaintBrush size={13} weight="fill" /> Ücretsiz tasarım desteği
@@ -162,14 +162,14 @@ export default async function AfisFiyatlariPage() {
           <div className="text-sm text-amber-900 leading-relaxed">
             <strong>Fiyat karşılaştırırken KDV&apos;ye dikkat:</strong> Afiş fiyatları birçok
             listede KDV hariç yazılır; fark sepette ortaya çıkar. Buradaki tüm fiyatlar KDV
-            dahildir — teklifleri sepet toplamı üzerinden kıyasla.
+            dahildir, teklifleri sepet toplamı üzerinden kıyasla.
           </div>
         </section>
 
         {/* Ebat × adet tablosu */}
         <section>
           <h2 className="text-2xl font-semibold text-ink-900">
-            {product.name} — ebat × adet fiyat tablosu ({asOf})
+            {product.name}, ebat × adet fiyat tablosu ({asOf})
           </h2>
           <p className="mt-2 text-sm text-ink-500">
             Fiyatlar seçilen ebat ve adede göre toplam tutardır, KDV dahildir.
@@ -195,7 +195,7 @@ export default async function AfisFiyatlariPage() {
                         {v > 0 ? (
                           <span className="font-semibold text-ink-900">{formatPriceWithSymbol(v)}</span>
                         ) : (
-                          <span className="text-ink-500">—</span>
+                          <span className="text-ink-500">-</span>
                         )}
                       </td>
                     ))}
@@ -221,7 +221,7 @@ export default async function AfisFiyatlariPage() {
             <Link href="/kategori/vinil-branda-afis" className="font-semibold text-brand-700 underline hover:text-ink-900">
               vinil branda
             </Link>{" "}
-            daha dayanıklıdır — kağıt afiş kapalı/korunaklı alanlar içindir.
+            daha dayanıklıdır, kağıt afiş kapalı/korunaklı alanlar içindir.
           </p>
         </section>
 
@@ -233,7 +233,7 @@ export default async function AfisFiyatlariPage() {
           <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
           <h2 className="text-2xl md:text-3xl font-semibold">Afişini şimdi yapılandır</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Ebat ve adedi seç, fiyatı anında gör — {formatPriceWithSymbol(minStart)}&apos;den
+            Ebat ve adedi seç, fiyatı anında gör - {formatPriceWithSymbol(minStart)}&apos;den
             başlayan KDV dahil fiyatlarla. Tasarım desteği ücretsiz.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

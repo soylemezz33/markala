@@ -56,7 +56,7 @@ export function MarginClient({
       }
       try {
         await marjKaydet({ scope, targetId, margin: v });
-        setMesaj({ ok: true, text: v == null ? "Marj kaldırıldı — üst seviyeye düşecek." : `Marj kaydedildi: ${v} (${yuzde(v)}). Fiyatlar DEĞİŞMEDİ; uygulamak için aşağıdaki adımı kullanın.` });
+        setMesaj({ ok: true, text: v == null ? "Marj kaldırıldı, üst seviyeye düşecek." : `Marj kaydedildi: ${v} (${yuzde(v)}). Fiyatlar DEĞİŞMEDİ; uygulamak için aşağıdaki adımı kullanın.` });
         // Listedeki "(marj x)" etiketleri sunucudan gelir; yenilenmezse eski değer görünür.
         router.refresh();
         if (scope === "product") { try { setBilgi(await marjBilgisi(targetId)); } catch { /* sessiz */ } }
@@ -108,7 +108,7 @@ export function MarginClient({
         <Info size={18} weight="fill" className="flex-none text-[#1565C0] mt-0.5" />
         <p>
           Marjı kaydetmek fiyatları <strong>değiştirmez</strong>. Fiyatlar yalnız
-          &quot;Fiyatları uygula&quot; dediğinizde maliyetten yeniden hesaplanır — öncesinde
+          &quot;Fiyatları uygula&quot; dediğinizde maliyetten yeniden hesaplanır, öncesinde
           neyin değişeceğini önizlersiniz. Maliyet ve satış fiyatını ürün sayfasından elle
           girmeye devam edebilirsiniz.
         </p>
@@ -136,7 +136,7 @@ export function MarginClient({
           <label className="block">
             <span className="text-sm font-medium text-ink-900">{scope === "category" ? "Kategori" : "Ürün"}</span>
             <select value={targetId} onChange={(e) => secimDegisti(e.target.value)} className={`${inputCls} mt-1.5`}>
-              <option value="">— seçin —</option>
+              <option value="">, seçin, </option>
               {scope === "category"
                 ? categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -158,8 +158,8 @@ export function MarginClient({
           {bilgi && (
             <div className="rounded-lg bg-paper-100 p-3 text-xs space-y-1">
               <div className="font-semibold text-ink-900">Mevcut durum</div>
-              <div>Ürün marjı: <strong>{bilgi.productMargin ?? "—"}</strong> · Kategori: <strong>{bilgi.categoryMargin ?? "—"}</strong> · Global: <strong>{bilgi.globalMargin ?? "—"}</strong></div>
-              <div>Etkin marj: <strong>{bilgi.etkin}</strong> ({yuzde(bilgi.etkin)}) — kaynak: <strong>{bilgi.kaynak}</strong></div>
+              <div>Ürün marjı: <strong>{bilgi.productMargin ?? "-"}</strong> · Kategori: <strong>{bilgi.categoryMargin ?? "-"}</strong> · Global: <strong>{bilgi.globalMargin ?? "-"}</strong></div>
+              <div>Etkin marj: <strong>{bilgi.etkin}</strong> ({yuzde(bilgi.etkin)}), kaynak: <strong>{bilgi.kaynak}</strong></div>
               <div>
                 Fiyatlardan hesaplanan gerçek marj:{" "}
                 <strong>{bilgi.gerceklesenOrtalama ?? "maliyet girilmemiş"}</strong>

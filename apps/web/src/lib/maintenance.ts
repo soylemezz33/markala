@@ -21,7 +21,7 @@ const SECRET =
 if (!process.env.MAINTENANCE_BYPASS_SECRET) {
   // eslint-disable-next-line no-console
   console.warn(
-    "[bakım] MAINTENANCE_BYPASS_SECRET ayarlı değil — dev fallback kullanılıyor. Prod'da set edin.",
+    "[bakım] MAINTENANCE_BYPASS_SECRET ayarlı değil, dev fallback kullanılıyor. Prod'da set edin.",
   );
 }
 

@@ -85,8 +85,8 @@ export function ProductTabs({ specifications = [] }: { specifications?: Spec[] }
               <div className="p-5 bg-paper-100 border border-paper-200 rounded-lg">
                 <h3 className="font-semibold text-ink-900 mb-2">📐 Dosya hazırlama önerileri</h3>
                 <ul className="space-y-2 text-sm text-ink-700">
-                  <li>• <strong>3 mm taşma payı</strong> bırakın — kesim hatasını önler</li>
-                  <li>• <strong>CMYK</strong> renk profili kullanın — RGB baskıda renkler değişebilir</li>
+                  <li>• <strong>3 mm taşma payı</strong> bırakın, kesim hatasını önler</li>
+                  <li>• <strong>CMYK</strong> renk profili kullanın, RGB baskıda renkler değişebilir</li>
                   <li>• <strong>300 DPI</strong> minimum çözünürlük</li>
                   <li>• Yazıları <strong>&quot;outline&quot; / &quot;convert to curves&quot;</strong> yapın</li>
                 </ul>
@@ -94,7 +94,7 @@ export function ProductTabs({ specifications = [] }: { specifications?: Spec[] }
               <div className="p-5 bg-brand-50 border border-brand-200 rounded-lg">
                 <h3 className="font-semibold text-ink-900">💡 Tasarımınız yok mu?</h3>
                 <p className="mt-1 text-sm text-ink-700">
-                  Konfigüratörde <strong>&quot;Tasarım desteği istiyorum&quot;</strong> seçeneğini açın —
+                  Konfigüratörde <strong>&quot;Tasarım desteği istiyorum&quot;</strong> seçeneğini açın,
                   profesyonel grafik ekibimiz sizin için hazırlasın.
                 </p>
               </div>

@@ -112,7 +112,7 @@ export function MenuClient({ initial, hasSaved }: { initial: NavCategory[]; hasS
   function handleReset() {
     if (window.confirm("Menü fabrika varsayılanına dönsün mü? (Kaydedene kadar canlıya gitmez)")) {
       setNav(structuredClone(DEFAULT_NAV));
-      toast.success("Varsayılan yüklendi — kaydetmeyi unutmayın.");
+      toast.success("Varsayılan yüklendi, kaydetmeyi unutmayın.");
     }
   }
 
@@ -138,7 +138,7 @@ export function MenuClient({ initial, hasSaved }: { initial: NavCategory[]; hasS
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Header Menü</h1>
           <p className="text-ink-500 text-sm mt-1">
             Üst menü kategorileri, alt gruplar, bağlantılar ve mega-menü öne çıkan ürünleri.
-            {!hasSaved && " (Şu an koddaki varsayılan menü gösteriliyor — kaydedince DB'ye geçer.)"}
+            {!hasSaved && " (Şu an koddaki varsayılan menü gösteriliyor, kaydedince DB'ye geçer.)"}
           </p>
         </div>
         <div className="flex items-center gap-2">

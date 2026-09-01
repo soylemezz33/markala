@@ -59,7 +59,7 @@ export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName,
               Toplam · KDV dahil
             </div>
             <div className="truncate text-lg font-bold tabular-nums text-ink-900">
-              {total > 0 ? formatPriceDisplay(total) : "—"}
+              {total > 0 ? formatPriceDisplay(total) : "-"}
             </div>
           </div>
           <Button onClick={onAddToCart} disabled={justAdded || uploading} className="flex-none">

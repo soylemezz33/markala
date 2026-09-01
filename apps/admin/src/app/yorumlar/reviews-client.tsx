@@ -144,7 +144,7 @@ export function ReviewsClient({ reviews }: Props) {
 
                     {/* Ürün */}
                     <td className="px-4 py-3 text-ink-700 hidden md:table-cell">
-                      {r.product?.name ?? "—"}
+                      {r.product?.name ?? "-"}
                     </td>
 
                     {/* Puan */}

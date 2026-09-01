@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   alternates: { canonical: PAGE_PATH },
   openGraph: {
     type: "website",
-    title: "Ücretsiz Baskı Şablonları — Kartvizit, Broşür, Roll-Up, Afiş",
+    title: "Ücretsiz Baskı Şablonları | Kartvizit, Broşür, Roll-Up, Afiş",
     description:
-      "Profesyonel baskı şablon dosyaları (PDF · AI · EPS). Taşma payı ve kesim kılavuzları hazır — doğru ölçüde tasarla, sorunsuz baskı al.",
+      "Profesyonel baskı şablon dosyaları (PDF · AI · EPS). Taşma payı ve kesim kılavuzları hazır, doğru ölçüde tasarla, sorunsuz baskı al.",
     url: PAGE_PATH,
     images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Ücretsiz Baskı Şablonları" }],
   },
@@ -187,7 +187,7 @@ export default function SablonlarPage() {
           </h1>
           <p className="mt-4 text-lg text-ink-700">
             Tasarımlarınızı doğru ölçülerde hazırlamak için profesyonel şablon dosyaları. Kartvizit,
-            broşür, roll-up ve afiş için taşma payı ve kesim kılavuzları hazır — indir, tasarla,
+            broşür, roll-up ve afiş için taşma payı ve kesim kılavuzları hazır, indir, tasarla,
             sorunsuz baskı al.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
@@ -241,7 +241,7 @@ export default function SablonlarPage() {
           <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
           <h2 className="text-2xl md:text-3xl font-semibold">Hazır şablonunuz mu var?</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Şablonu doldur, dosyanı yükle — üretim 2–3 iş günü, 81 ile kargo. Tasarımın yoksa
+            Şablonu doldur, dosyanı yükle, üretim 2–3 iş günü, 81 ile kargo. Tasarımın yoksa
             ücretsiz tasarım desteğiyle biz hazırlayalım.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

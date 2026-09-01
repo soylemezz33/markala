@@ -25,13 +25,13 @@ const PRODUCT_SLUG = "rollup-standart";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Roll-Up Fiyatları 2026 — 85x200 Banner Ne Kadar? (KDV Dahil)",
+    title: "Roll-Up Fiyatları 2026 | 85x200 Banner Ne Kadar? (KDV Dahil)",
     description:
-      "2026 güncel roll-up banner fiyatları: 85x200 cm standart ölçü, mekanizma + baskı ve adet kırılımıyla tablo. Tüm fiyatlar KDV dahil — sepette değişmez.",
+      "2026 güncel roll-up banner fiyatları: 85x200 cm standart ölçü, mekanizma + baskı ve adet kırılımıyla tablo. Tüm fiyatlar KDV dahil, sepette değişmez.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Roll-Up Fiyatları 2026 — İçerik × Adet Tablosu (KDV Dahil)",
+      title: "Roll-Up Fiyatları 2026 | İçerik × Adet Tablosu (KDV Dahil)",
       description:
         "85x200 roll-up banner fiyatları mekanizma/baskı ve adet kırılımıyla. KDV dahil, canlı katalogdan.",
       url: PAGE_PATH,
@@ -44,7 +44,7 @@ export default async function RollupFiyatlariPage() {
   // Tek ürünlü kategori: fiyat ızgarası ürün detayından. API blip'inde throw → stale ISR korunur.
   const product = await getProductBySlug(PRODUCT_SLUG);
   if (!product || (product.prices?.length ?? 0) === 0) {
-    throw new Error("rehber/rollup: ürün/fiyat çekilemedi (API blip?) — stale ISR korunur");
+    throw new Error("rehber/rollup: ürün/fiyat çekilemedi (API blip?), stale ISR korunur");
   }
 
   const opts = (product.options ?? []) as PricingOption[];
@@ -60,7 +60,7 @@ export default async function RollupFiyatlariPage() {
     ? opts.filter((o) => o.groupKey === pricedKey).sort((a, b) => a.optionSort - b.optionSort)
     : [];
   if (adetOpts.length === 0 || contentOpts.length === 0 || !pricedKey) {
-    throw new Error("rehber/rollup: beklenen opsiyon grupları yok — stale ISR korunur");
+    throw new Error("rehber/rollup: beklenen opsiyon grupları yok, stale ISR korunur");
   }
 
   const ebatKey = opts.find((o) => o.groupKey === "ebat")?.optionKey;
@@ -78,7 +78,7 @@ export default async function RollupFiyatlariPage() {
     }))
     .filter((r) => r.totals.some((v) => v > 0));
   if (rows.length === 0) {
-    throw new Error("rehber/rollup: fiyat tablosu boş hesaplandı (API blip?) — stale ISR korunur");
+    throw new Error("rehber/rollup: fiyat tablosu boş hesaplandı (API blip?), stale ISR korunur");
   }
 
   const asOf = asOfLabel();
@@ -91,7 +91,7 @@ export default async function RollupFiyatlariPage() {
       q: "Baskılı roll-up (tek adet) ne kadar?",
       a:
         singleFull > 0
-          ? `${asOf} itibarıyla katalog fiyatına göre mekanizma + baskı dahil 1 adet 85x200 cm roll-up ${formatPriceWithSymbol(singleFull)} — KDV dahil, sepette değişmez. Adet arttıkça birim fiyat tabloda görülür.`
+          ? `${asOf} itibarıyla katalog fiyatına göre mekanizma + baskı dahil 1 adet 85x200 cm roll-up ${formatPriceWithSymbol(singleFull)}, KDV dahil, sepette değişmez. Adet arttıkça birim fiyat tabloda görülür.`
           : `${asOf} itibarıyla roll-up ${formatPriceWithSymbol(minStart)}'den başlıyor; güncel kırılım yukarıdaki tabloda, KDV dahildir.`,
     },
     {
@@ -100,11 +100,11 @@ export default async function RollupFiyatlariPage() {
     },
     {
       q: '"Sadece mekanizma" ile "mekanizma + baskı" farkı ne?',
-      a: "Sadece mekanizma, elinde hazır basılmış branda/film varsa kasayı yenilemek içindir. Mekanizma + baskı ise tasarımının baskısı dahil, kullanıma hazır komple üründür — ilk kez alacaksan bunu seçmelisin.",
+      a: "Sadece mekanizma, elinde hazır basılmış branda/film varsa kasayı yenilemek içindir. Mekanizma + baskı ise tasarımının baskısı dahil, kullanıma hazır komple üründür, ilk kez alacaksan bunu seçmelisin.",
     },
     {
       q: "Fiyatlara KDV dahil mi?",
-      a: "Evet, tablodaki ve ürün sayfasındaki tüm fiyatlar KDV dahildir. Piyasada roll-up fiyatları çoğunlukla KDV hariç listelenir — karşılaştırırken sepet toplamına bak.",
+      a: "Evet, tablodaki ve ürün sayfasındaki tüm fiyatlar KDV dahildir. Piyasada roll-up fiyatları çoğunlukla KDV hariç listelenir, karşılaştırırken sepet toplamına bak.",
     },
     {
       q: "Roll-up kaç günde teslim edilir?",
@@ -125,7 +125,7 @@ export default async function RollupFiyatlariPage() {
         ]}
       />
       <ArticleJsonLd
-        title="Roll-Up Fiyatları 2026 — İçerik × Adet Tablosu (KDV Dahil)"
+        title="Roll-Up Fiyatları 2026 - İçerik × Adet Tablosu (KDV Dahil)"
         description="85x200 cm roll-up banner fiyatları: mekanizma + baskı seçenekleri ve adet kırılımıyla güncel tablo."
         url={PAGE_PATH}
         datePublished="2026-08-01"
@@ -150,12 +150,12 @@ export default async function RollupFiyatlariPage() {
           <p className="mt-4 text-lg text-ink-700">
             Baskı dahil komple roll-up{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(singleFull > 0 ? singleFull : minStart)}</strong>
-            &apos;den başlıyor — KDV dahil, sepette değişmez. Tablo {asOf} itibarıyla canlı katalog
+            &apos;den başlıyor, KDV dahil, sepette değişmez. Tablo {asOf} itibarıyla canlı katalog
             fiyatlarıdır; içerik ve adet kırılımıyla.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
-              <CheckCircle size={13} weight="fill" /> KDV dahil — sepette değişmez
+              <CheckCircle size={13} weight="fill" /> KDV dahil, sepette değişmez
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <PaintBrush size={13} weight="fill" /> Ücretsiz tasarım desteği
@@ -181,7 +181,7 @@ export default async function RollupFiyatlariPage() {
         {/* İçerik × adet tablosu */}
         <section>
           <h2 className="text-2xl font-semibold text-ink-900">
-            {product.name} — içerik × adet fiyat tablosu ({asOf})
+            {product.name}: içerik × adet fiyat tablosu ({asOf})
           </h2>
           <p className="mt-2 text-sm text-ink-500">
             {product.sizeLabel ? `${product.sizeLabel} · ` : ""}Fiyatlar seçilen içerik ve adede göre
@@ -215,7 +215,7 @@ export default async function RollupFiyatlariPage() {
                         {v > 0 ? (
                           <span className="font-semibold text-ink-900">{formatPriceWithSymbol(v)}</span>
                         ) : (
-                          <span className="text-ink-500">—</span>
+                          <span className="text-ink-500">-</span>
                         )}
                       </td>
                     ))}
@@ -250,7 +250,7 @@ export default async function RollupFiyatlariPage() {
           <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
           <h2 className="text-2xl md:text-3xl font-semibold">Roll-up&apos;ını şimdi yapılandır</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            İçerik ve adedi seç, fiyatı anında gör — KDV dahil fiyatlarla. Tasarım desteği ücretsiz.
+            İçerik ve adedi seç, fiyatı anında gör, KDV dahil fiyatlarla. Tasarım desteği ücretsiz.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link

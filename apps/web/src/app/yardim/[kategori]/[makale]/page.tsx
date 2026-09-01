@@ -34,19 +34,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category, article } = found;
   const url = `/yardim/${category.slug}/${article.slug}`;
   return {
-    title: `${article.question} — ${category.title}`,
+    title: `${article.question} - ${category.title}`,
     description: article.description,
     alternates: { canonical: url },
     openGraph: {
       type: "article",
-      title: `${article.question} — Markala Yardım`,
+      title: `${article.question} | Markala Yardım`,
       description: article.description,
       url,
       images: [{ url: "/og-default.png", width: 1200, height: 630, alt: article.question }],
     },
     twitter: {
       card: "summary_large_image",
-      title: `${article.question} — Markala Yardım`,
+      title: `${article.question} | Markala Yardım`,
       description: article.description,
       images: ["/og-default.png"],
     },
@@ -136,7 +136,7 @@ export default async function HelpArticlePage({ params }: Props) {
             {related.length > 0 && (
               <section className="mt-12">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-ink-500 mb-4">
-                  {category.title} — İlgili Sorular
+                  {category.title}: İlgili Sorular
                 </h3>
                 <div className="bg-paper-50 border border-paper-200 rounded-xl divide-y divide-paper-200">
                   {related.map((a) => (

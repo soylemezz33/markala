@@ -54,8 +54,8 @@ function formatDate(iso: string | null | undefined): string {
 
 function formatDateRange(banner: BannerDto): string {
   if (!banner.startDate && !banner.endDate) return "Sürekli";
-  const start = formatDate(banner.startDate) || "—";
-  const end = formatDate(banner.endDate) || "—";
+  const start = formatDate(banner.startDate) || "-";
+  const end = formatDate(banner.endDate) || "-";
   return `${start} – ${end}`;
 }
 
@@ -227,7 +227,7 @@ export function BannerClient({ banners }: Props) {
                         : b.imageUrl}
                     </td>
                     <td className="px-4 py-3 text-ink-700 hidden lg:table-cell">
-                      {b.ctaLabel ?? <span className="text-ink-400">—</span>}
+                      {b.ctaLabel ?? <span className="text-ink-400">-</span>}
                     </td>
                     <td className="px-4 py-3 text-center text-ink-700 hidden lg:table-cell text-xs">
                       {formatDateRange(b)}

@@ -111,7 +111,7 @@ async function seedProduct(p: AreaProduct) {
     update: { name: p.name, pricingMode: "area", categoryId: cat.id, isActive: true },
     create: {
       slug: p.slug, name: p.name, categoryId: cat.id,
-      shortDescription: `${p.name} — özel ölçü m² baskı`,
+      shortDescription: `${p.name}, özel ölçü m² baskı`,
       description: `${p.name} ürününde malzeme + en×boy + adet seçerek anlık fiyat alın.`,
       basePrice: 0, productionTime: "1-2 iş günü", images: [],
       pricingMode: "area",

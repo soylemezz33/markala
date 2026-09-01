@@ -201,6 +201,13 @@ export interface AreaOptionRules {
   effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
   birim?: "dolar" | "tl";
   maxM2?: number;
+  /**
+   * Bu seçeneğe özel minimum faturalanabilir m² — işletme geneli ayarı (pricing.minM2, 1 m²)
+   * EZER. 2026-09-01: kırlangıç bayrakta tedarikçi 60×150'yi (0,90 m²) gerçek alanı üzerinden
+   * fiyatlıyor; genel 1 m² tabanı uygulanınca en çok satan ölçü %11 pahalılaşıyordu.
+   * Tanımsız bırakılırsa genel ayar geçerlidir — mevcut ürünlerin hiçbiri etkilenmez.
+   */
+  minM2?: number;
 }
 type AreaOption = PricingOption & { rules?: AreaOptionRules | null };
 
@@ -234,6 +241,11 @@ export function computeAreaPrice(
   const alan = (en * boy) / 10000;
   const toplamAlan = Math.max(minM2, alan * adet);
   const cevre = ((en + boy) * 2) / 100;
+  /** Seçenek kendi minM2'sini bildirmişse onu, yoksa işletme genelini uygula. */
+  const alanFor = (rules: AreaOptionRules) =>
+    typeof rules.minM2 === "number" && rules.minM2 >= 0
+      ? Math.max(rules.minM2, alan * adet)
+      : toplamAlan;
 
   const role = new Map<string, "dimension" | "priced">();
   for (const o of opts) if (!role.has(o.groupKey)) role.set(o.groupKey, o.groupRole);
@@ -252,7 +264,7 @@ export function computeAreaPrice(
     switch (rules.effect ?? "perM2") {
       case "perM2":
       case "perM2Add":
-        maliyet += tl * toplamAlan;
+        maliyet += tl * alanFor(rules);
         break;
       case "perPerimeter":
         maliyet += tl * cevre * adet;

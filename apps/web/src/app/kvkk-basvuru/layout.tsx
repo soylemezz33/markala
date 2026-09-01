@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "KVKK Veri Sahibi Başvuru Formu — Markala",
+  title: "KVKK Veri Sahibi Başvuru Formu | Markala",
   description:
     "6698 sayılı Kişisel Verilerin Korunması Kanunu 11. madde kapsamında veri sahibi başvuru formu. Verilerinizin silinmesi, düzeltilmesi, taşınması veya bilgi talebi için.",
   alternates: { canonical: "/kvkk-basvuru" },

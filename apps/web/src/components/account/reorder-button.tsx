@@ -33,7 +33,7 @@ export function ReorderButton({
       const result = await reorderOrder(order);
       if (result.added === 0) {
         // Tüm kalemler atlandı (ürünler satıştan kalkmış olabilir) — boş sepete yönlendirme.
-        setError("Bu siparişteki ürünler şu an tekrar sipariş edilemiyor — ürünler satıştan kalkmış olabilir.");
+        setError("Bu siparişteki ürünler şu an tekrar sipariş edilemiyor, ürünler satıştan kalkmış olabilir.");
         return;
       }
       // Atlanan kalem bildirimi + "fiyatlar güncel" uyarısı /sepet sayfasında gösterilir

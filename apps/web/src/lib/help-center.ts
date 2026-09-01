@@ -60,7 +60,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           "Ürün sayfasından ebat, malzeme ve adet seçin; anlık fiyatı görün. Sepete ekleyip tasarımınızı yükleyin veya ücretsiz tasarım desteği isteyin. iyzico ile güvenli ödeme sonrası üretim başlar, ürünler DHL ile adresinize gönderilir.",
         keywords: ["sipariş verme", "nasıl sipariş veririm", "konfigüratör"],
         sections: [
-          { heading: "1. Ürün ve Konfigürasyon Seçin", body: "Ürün sayfasından paket, ebat ve adet seçin. Sağdaki konfigüratörde fiyat anlık olarak güncellenir — KDV dahil, sürpriz maliyet yoktur." },
+          { heading: "1. Ürün ve Konfigürasyon Seçin", body: "Ürün sayfasından paket, ebat ve adet seçin. Sağdaki konfigüratörde fiyat anlık olarak güncellenir: KDV dahil, sürpriz maliyet yoktur." },
           { heading: "2. Sepete Ekleyin", body: "Farklı ürünleri aynı sepette birleştirebilirsiniz. Sepet sağda panel olarak açılır; 1.500 TL üzeri siparişlerde kargo ücretsizdir." },
           { heading: "3. Tasarım Yükleyin veya Destek İsteyin", body: "Hazır tasarımınız varsa CMYK PDF olarak yükleyin. Yoksa 'Tasarım desteği' seçeneğiyle ücretsiz şablon uyarlaması veya 89 TL'den başlayan özel tasarım hizmeti alabilirsiniz." },
           { heading: "4. Adres ve Ödeme", body: "Teslimat adresinizi seçin veya ekleyin, iyzico altyapısıyla 3D Secure ödeme yapın. Kart bilgileriniz Markala'ya ulaşmaz." },
@@ -121,7 +121,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         slug: "baskiya-hazir-dosya-nasil-hazirlanir",
         question: "Baskıya hazır dosya nasıl hazırlanır?",
         description:
-          "CMYK renk uzayı, 300 dpi çözünürlük, 2 mm taşma payı, PDF formatı — baskıya hazır dosya rehberi.",
+          "CMYK renk uzayı, 300 dpi çözünürlük, 2 mm taşma payı, PDF formatı: baskıya hazır dosya rehberi.",
         shortAnswer:
           "Dosyanızı CMYK renk profilinde, 300 dpi çözünürlükte ve her kenardan 2 mm taşma payı bırakarak hazırlayın. En güvenli format 'Press Quality' veya PDF/X-1a preset'iyle dışa aktarılmış PDF'dir; fontları outline'a çevirmeyi unutmayın.",
         keywords: ["cmyk", "dpi", "taşma payı", "bleed", "dosya hazırlama", "pdf"],
@@ -138,7 +138,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         question: "Hangi dosya formatları kabul ediliyor?",
         description: "Kabul edilen baskı dosyası formatları: PDF (öncelikli), AI, PSD ve dikkat edilecekler.",
         shortAnswer:
-          "En güvenli format PDF'dir — Adobe programlarından 'Press Quality' veya 'PDF/X-1a' preset'iyle dışa aktarın. AI ve PSD dosyaları da kabul edilir; fontları outline'a çevirmeniz ve görselleri dosyaya gömmeniz gerekir.",
+          "En güvenli format PDF'dir, Adobe programlarından 'Press Quality' veya 'PDF/X-1a' preset'iyle dışa aktarın. AI ve PSD dosyaları da kabul edilir; fontları outline'a çevirmeniz ve görselleri dosyaya gömmeniz gerekir.",
         keywords: ["pdf", "ai", "psd", "format", "dosya türü"],
         sections: [
           { heading: "PDF (Öncelikli)", body: "Baskı için endüstri standardı. 'Press Quality' veya 'PDF/X-1a' preset'i renkleri ve fontları doğru gömer. Canva gibi araçlardan da 'PDF - Baskı' seçeneğiyle dışa aktarabilirsiniz." },
@@ -148,7 +148,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
       },
       {
         slug: "tasarim-destegi-nasil-calisir",
-        question: "Tasarımım yok — tasarım desteği nasıl çalışır?",
+        question: "Tasarımım yok, tasarım desteği nasıl çalışır?",
         description: "Ücretsiz şablon uyarlama ve 89 TL'den başlayan özel tasarım hizmeti; 324 Ajans iş birliği.",
         shortAnswer:
           "Sipariş sırasında 'Tasarım desteği istiyorum' seçeneğini işaretleyin: sektörünüze uygun şablon, logonuz ve metinlerinizle 24 saat içinde ücretsiz uyarlanır. Sıfırdan özel tasarım için 89 TL'den başlayan paketler, kapsamlı kurumsal kimlik işleri için 324 Ajans iş birliğimiz vardır.",
@@ -164,12 +164,12 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         question: "Tasarım onay süreci nasıl işler?",
         description: "Baskı öncesi tasarım onayı: taslak gönderimi, revizyon ve onay sonrası üretim.",
         shortAnswer:
-          "Tasarım desteği aldıysanız 24 saat içinde taslak(lar) e-postanıza gelir. Onay vermeden üretim başlamaz; revizyon talep edebilirsiniz. Onayınızla birlikte dosya üretime alınır — onay sonrası içerik değişikliği yapılamaz.",
+          "Tasarım desteği aldıysanız 24 saat içinde taslak(lar) e-postanıza gelir. Onay vermeden üretim başlamaz; revizyon talep edebilirsiniz. Onayınızla birlikte dosya üretime alınır, onay sonrası içerik değişikliği yapılamaz.",
         keywords: ["onay", "taslak", "revize", "baskı onayı"],
         sections: [
           { heading: "Taslak Gönderimi", body: "Tasarım ekibimiz hazırladığı çalışmayı (şablon uyarlamasında 1, özel tasarımda 2 alternatif) 24 saat içinde e-postanıza gönderir." },
           { heading: "Revizyon", body: "Beğenmediğiniz noktaları belirtin; düzeltilmiş taslak tekrar gönderilir. Özel tasarım paketlerinde sınırsız revizyon hakkınız vardır." },
-          { heading: "Onay ve Sonrası", body: "Onayınız yazılı olarak (e-posta/WhatsApp) alınır ve üretim başlar. Onayladığınız taslaktaki yazım hataları dahil tüm içerik sorumluluğu onayla birlikte kesinleşir — bu yüzden metinleri son kez kontrol edin." },
+          { heading: "Onay ve Sonrası", body: "Onayınız yazılı olarak (e-posta/WhatsApp) alınır ve üretim başlar. Onayladığınız taslaktaki yazım hataları dahil tüm içerik sorumluluğu onayla birlikte kesinleşir, bu yüzden metinleri son kez kontrol edin." },
           { heading: "Kendi Dosyanızı Yüklediyseniz", body: "Baskı öncesi ekibimiz dosyanızı teknik açıdan (çözünürlük, renk uzayı, taşma payı) kontrol eder. Sorun varsa üretime almadan size dönülür." },
         ],
       },
@@ -191,7 +191,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           "Sağ üstteki 'Giriş' menüsünden veya /kayit sayfasından ad, e-posta ve şifrenizle 1 dakikada üye olabilirsiniz. E-postanıza gelen doğrulama bağlantısına tıkladığınızda hesabınız aktifleşir.",
         keywords: ["üyelik", "kayıt", "hesap açma", "üye ol"],
         sections: [
-          { heading: "Kayıt Adımları", body: "Kayıt sayfasında ad-soyad, e-posta ve şifrenizi girin. E-postanıza gelen doğrulama bağlantısına tıklayın — hesabınız kullanıma hazır." },
+          { heading: "Kayıt Adımları", body: "Kayıt sayfasında ad-soyad, e-posta ve şifrenizi girin. E-postanıza gelen doğrulama bağlantısına tıklayın, hesabınız kullanıma hazır." },
           { heading: "Üyelik Avantajları", body: "Sipariş takibi, kayıtlı adresler, fatura arşivi, tek tıkla tekrar sipariş, favori listesi ve üyelere özel HOSGELDIN indirim kuponu. Yakında devreye girecek puan programıyla her siparişte puan kazanacaksınız." },
           { heading: "Kurumsal Üyelik", body: "Firmalar için cari hesap, vadeli fatura ve özel fiyat anlaşması sunan kurumsal hesap sistemimiz vardır. Detaylar Kurumsal Hesap kategorisinde." },
         ],
@@ -265,7 +265,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           "HOSGELDIN kuponu yalnız üye girişi yapmış ve daha önce sipariş vermemiş müşteriler içindir. Misafir olarak kullanılamaz; ilk siparişinizde sepette uygulayabilirsiniz.",
         keywords: ["hoşgeldin", "ilk sipariş indirimi", "yeni üye kuponu"],
         sections: [
-          { heading: "Koşullar", body: "Kupon üyelere özeldir ve yalnız ilk siparişte geçerlidir. Üye girişi yapmadan (misafir) kullanılamaz — bu kural kuponun kötüye kullanımını engellemek içindir." },
+          { heading: "Koşullar", body: "Kupon üyelere özeldir ve yalnız ilk siparişte geçerlidir. Üye girişi yapmadan (misafir) kullanılamaz, bu kural kuponun kötüye kullanımını engellemek içindir." },
           { heading: "Nasıl Kullanılır?", body: "Üye olun veya giriş yapın, ürünlerinizi sepete ekleyin. Sepette HOSGELDIN bandı görünüyorsa tek tıkla, görünmüyorsa kupon alanına yazarak uygulayın." },
         ],
       },
@@ -277,7 +277,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           "En yaygın nedenler: kuponun süresi dolmuş, minimum sepet tutarı karşılanmamış, kupon üyelere özel (girişsiz kullanılamaz) veya daha önce kullanılmış olması. Sepetteki hata mesajı nedeni belirtir; çözülemezse WhatsApp'tan yazın.",
         keywords: ["kupon hatası", "kupon geçersiz", "kod çalışmıyor"],
         sections: [
-          { heading: "Yaygın Nedenler", body: "1) Kuponun geçerlilik süresi dolmuş 2) Minimum sepet tutarı karşılanmamış 3) Kupon üyelere özel — giriş yapmanız gerekir (HOSGELDIN gibi) 4) Kupon daha önce kullanılmış 5) Kod yanlış yazılmış (büyük/küçük harf ve Türkçe karakter kontrolü yapın)." },
+          { heading: "Yaygın Nedenler", body: "1) Kuponun geçerlilik süresi dolmuş 2) Minimum sepet tutarı karşılanmamış 3) Kupon üyelere özel, giriş yapmanız gerekir (HOSGELDIN gibi) 4) Kupon daha önce kullanılmış 5) Kod yanlış yazılmış (büyük/küçük harf ve Türkçe karakter kontrolü yapın)." },
           { heading: "Hata Mesajını Okuyun", body: "Sepette kupon uygulandığında sistem gerçek zamanlı doğrulama yapar ve geçersizse nedenini belirten mesaj gösterir." },
           { heading: "Sorun Devam Ediyorsa", body: "Kuponun görselini/kodunu WhatsApp destek hattımıza iletin; ekibimiz kupon durumunu kontrol edip yardımcı olur." },
         ],
@@ -350,7 +350,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         keywords: ["güvenlik", "3d secure", "kart güvenliği", "ssl"],
         sections: [
           { heading: "Kart Bilgileriniz Bizde Tutulmaz", body: "Ödeme formu iyzico'nun güvenli altyapısında çalışır; kart numaranız Markala'ya iletilmez ve sistemlerimizde saklanmaz." },
-          { heading: "3D Secure Zorunlu", body: "Tüm ödemelerde bankanızın SMS/uygulama doğrulaması (3D Secure) zorunludur — kartınız siz onaylamadan kullanılamaz." },
+          { heading: "3D Secure Zorunlu", body: "Tüm ödemelerde bankanızın SMS/uygulama doğrulaması (3D Secure) zorunludur, kartınız siz onaylamadan kullanılamaz." },
         ],
       },
     ],
@@ -406,10 +406,10 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         question: "Kargom hasarlı geldi, ne yapmalıyım?",
         description: "Hasarlı teslimat süreci: kurye tutanağı, 7 gün içinde fotoğraflı bildirim, ücretsiz yenileme.",
         shortAnswer:
-          "Pakette belirgin hasar varsa teslim sırasında kuryeye 'hasarlı teslim alındı' tutanağı tutturun. 7 gün içinde ürün ve paket fotoğraflarıyla merhaba@markala.com.tr adresine veya WhatsApp'a bildirin — hasar onaylanırsa ürününüz ücretsiz yenilenir.",
+          "Pakette belirgin hasar varsa teslim sırasında kuryeye 'hasarlı teslim alındı' tutanağı tutturun. 7 gün içinde ürün ve paket fotoğraflarıyla merhaba@markala.com.tr adresine veya WhatsApp'a bildirin, hasar onaylanırsa ürününüz ücretsiz yenilenir.",
         keywords: ["hasar", "kırık", "ezik", "hasarlı paket"],
         sections: [
-          { heading: "Teslim Anında", body: "Paketi kurye yanındayken kontrol etmenizi öneririz. Belirgin ezilme/ıslanma varsa tutanak tutturun — bu, sürecin en hızlı ilerlemesini sağlar." },
+          { heading: "Teslim Anında", body: "Paketi kurye yanındayken kontrol etmenizi öneririz. Belirgin ezilme/ıslanma varsa tutanak tutturun: bu, sürecin en hızlı ilerlemesini sağlar." },
           { heading: "7 Gün İçinde Bildirim", body: "Hasarı fark ettiğinizde ürünün ve paketin fotoğraflarını çekip 7 gün içinde bize iletin. Müşteri hizmetleri 24 saat içinde değerlendirir." },
           { heading: "Çözüm", body: "Kargo kaynaklı hasar onaylanırsa ürününüz ücretsiz olarak yeniden üretilir ve gönderilir; dilerseniz ücret iadesi de seçilebilir." },
         ],
@@ -447,7 +447,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         sections: [
           { heading: "Fire Nedir?", body: "Baskı makineleri kalibrasyon ve kesim süreçlerinde küçük sapmalar üretir: sipariş ettiğinizden %1-5 az/fazla adet, ekran-baskı arasında hafif renk tonu farkı veya milimetrik ölçü farkı normaldir." },
           { heading: "Neden Kabul Edilmiş Sayılır?", body: "Bu tolerans matbaa sektörünün teknik gerçeğidir ve satış sözleşmesi şartlarındandır; dünya genelinde de aynı aralık uygulanır." },
-          { heading: "Tolerans Dışı Durumlar", body: "%5'i aşan eksik adet, belirgin renk sapması veya ölçü hatası üretim hatası sayılır ve ücretsiz yenileme kapsamındadır — fotoğraflı bildirim yapmanız yeterli." },
+          { heading: "Tolerans Dışı Durumlar", body: "%5'i aşan eksik adet, belirgin renk sapması veya ölçü hatası üretim hatası sayılır ve ücretsiz yenileme kapsamındadır, fotoğraflı bildirim yapmanız yeterli." },
         ],
       },
       {
@@ -481,7 +481,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
           "Kurumsal hesap, düzenli baskı ihtiyacı olan firmalara özel gelişmiş üyeliktir: %5-15 özel fiyat anlaşması, 30/60/90 gün vadeli açık fatura, ay sonu tek konsolide fatura, adanmış müşteri yöneticisi ve öncelikli üretim hattı sunar.",
         keywords: ["kurumsal", "b2b", "firma hesabı", "toplu alım"],
         sections: [
-          { heading: "Kimler İçin?", body: "Restoranlar, oteller, klinikler, eczaneler, oto galerileri, eğitim kurumları, belediyeler ve KOBİ'ler — aylık düzenli sipariş veren her firma kurumsal hesap için uygundur." },
+          { heading: "Kimler İçin?", body: "Restoranlar, oteller, klinikler, eczaneler, oto galerileri, eğitim kurumları, belediyeler ve KOBİ'ler, aylık düzenli sipariş veren her firma kurumsal hesap için uygundur." },
           { heading: "Avantajlar", body: "1) %5-15 arası özel fiyat anlaşması 2) 30/60/90 gün vadeli fatura 3) Ay sonu konsolide tek fatura 4) Adanmış müşteri yöneticisi 5) Öncelikli üretim 6) Sipariş öncesi proof onay süreci 7) Panelden cari hesap takibi." },
         ],
       },
@@ -534,7 +534,7 @@ export const POPULAR_HELP: Array<{ q: string; href: string }> = [
   { q: "Teslimat süresi ne kadar?", href: "/yardim/kargo-ve-teslimat/teslimat-suresi-ne-kadar" },
   { q: "Kargo ücreti ne kadar?", href: "/yardim/kargo-ve-teslimat/kargo-ucreti-ne-kadar" },
   { q: "Üretim toleransı (%1-5 fire) nedir?", href: "/yardim/iade-ve-iptal/uretim-toleransi-nedir" },
-  { q: "Tasarımım yok — tasarım desteği nasıl çalışır?", href: "/yardim/tasarim-ve-dosya/tasarim-destegi-nasil-calisir" },
+  { q: "Tasarımım yok, tasarım desteği nasıl çalışır?", href: "/yardim/tasarim-ve-dosya/tasarim-destegi-nasil-calisir" },
   { q: "Siparişimi nasıl iptal edebilirim?", href: "/yardim/siparis-sureci/siparisimi-nasil-iptal-edebilirim" },
   { q: "Kurumsal hesap nedir, avantajları neler?", href: "/yardim/kurumsal-hesap/kurumsal-hesap-nedir-avantajlari-neler" },
   { q: "İndirim kuponu nasıl kullanılır?", href: "/yardim/kampanyalar-ve-kuponlar/indirim-kuponu-nasil-kullanilir" },

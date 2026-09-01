@@ -7,20 +7,20 @@ import { getProducts, getCategories } from "@/lib/catalog";
 import { formatPriceDisplay } from "@/lib/format";
 
 export const metadata: Metadata = {
-  title: "Tüm Kategoriler — Matbaa & Reklam Ürünleri",
+  title: "Tüm Kategoriler | Matbaa & Reklam Ürünleri",
   description:
     "Markala kataloğundaki 20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket, antetli kağıt, zarf, magnet, çanta. Her kategoride detaylı ürün seçenekleri.",
   alternates: { canonical: "/kategoriler" },
   openGraph: {
     type: "website",
-    title: "Tüm Matbaa & Reklam Ürün Kategorileri — Markala",
+    title: "Tüm Matbaa & Reklam Ürün Kategorileri | Markala",
     description: "20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket ve daha fazlası.",
     url: "/kategoriler",
     images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Kategoriler" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tüm Matbaa & Reklam Ürün Kategorileri — Markala",
+    title: "Tüm Matbaa & Reklam Ürün Kategorileri | Markala",
     description: "20+ kategori: kartvizit, broşür, afiş, branda, kupa, etiket ve daha fazlası.",
     images: ["/og-default.png"],
   },
@@ -47,7 +47,7 @@ export default async function CategoriesPage() {
             Tüm matbaa & reklam ürün kategorileri
           </h1>
           <p className="mt-4 text-lg text-ink-700">
-            Kartvizitten branda afişe, kupadan etiket çıkartmaya — 20'den fazla
+            Kartvizitten branda afişe, kupadan etiket çıkartmaya: 20'den fazla
             kategori. Her birinde paket, ebat ve adet seçenekleri.
           </p>
         </Container>

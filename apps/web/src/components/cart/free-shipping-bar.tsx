@@ -42,7 +42,7 @@ export function FreeShippingBar({
       <div
         className={`flex items-center gap-2 p-2.5 bg-success/10 border border-success/30 rounded-md text-xs font-medium text-success ${className ?? ""}`}
       >
-        <Truck size={14} className="flex-none" /> 🎉 Kargon ücretsiz — teslimat bizden!
+        <Truck size={14} className="flex-none" /> 🎉 Kargon ücretsiz, teslimat bizden!
       </div>
     );
   }

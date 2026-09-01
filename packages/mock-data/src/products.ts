@@ -40,7 +40,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "vinil-branda-440gr",
-    name: "Vinil Branda Afiş — 440 gr",
+    name: "Vinil Branda Afiş, 440 gr",
     categorySlug: "vinil-branda-afis",
     sku: "MK-BRD-440-001",
     brand: "Markala",
@@ -56,8 +56,8 @@ const legacyRaw: ProductWithParams[] = [
     bestseller: true,
     rating: { average: 4.7, count: 189 },
     features: [
-      "440 gr PVC branda — Türkiye iklimine dayanıklı",
-      "UV korumalı solvent baskı — 24 ay solma garantisi",
+      "440 gr PVC branda, Türkiye iklimine dayanıklı",
+      "UV korumalı solvent baskı, 24 ay solma garantisi",
       "Mat veya parlak yüzey seçeneği",
       "Halkalı, katlamalı veya germe + halka teslim",
       "1 m²'den küçük işlerde otomatik dikiş + kopça",
@@ -114,7 +114,7 @@ const legacyRaw: ProductWithParams[] = [
       },
     ],
     seo: {
-      title: "Vinil Branda Afiş Baskı — 440 gr Dış Mekan, m² 138 TL",
+      title: "Vinil Branda Afiş Baskı | 440 gr Dış Mekan, m² 138 TL",
       description: "440 gr PVC branda üzerine UV dayanıklı solvent baskı, m² 138 TL'den. İstediğiniz ebatta, halkalı veya katlamalı teslim. Mağaza, açılış, inşaat ve fuar için.",
       keywords: ["branda baskı", "vinil branda", "afiş baskı", "440 gr branda", "açılış pankartı", "iskele brandası", "outdoor afiş", "branda fiyatları"],
     },
@@ -135,10 +135,10 @@ const legacyRaw: ProductWithParams[] = [
     images: [prodImg("mesh-branda", 1), prodImg("mesh-branda", 2)],
     rating: { average: 4.6, count: 47 },
     features: [
-      "270 gr mesh kumaş — %60 rüzgâr geçirgenliği",
-      "UV dayanıklı solvent baskı — dış mekan yıllık",
+      "270 gr mesh kumaş, %60 rüzgâr geçirgenliği",
+      "UV dayanıklı solvent baskı, dış mekan yıllık",
       "Yüksek katlı bina ve iskele için güvenli",
-      "Hızlı kuruma — yağmur sonrası saatler içinde",
+      "Hızlı kuruma, yağmur sonrası saatler içinde",
       "Katlama + halka teslim opsiyonu",
     ],
     useCases: [
@@ -157,7 +157,7 @@ const legacyRaw: ProductWithParams[] = [
     ],
     faqs: [
       { q: "Mesh branda nerede kullanılmalıdır?", a: "Rüzgâr yükü taşıyamayacak yüksek katlı binalarda, iskelelerde ve sürekli açık alanlarda. Klasik vinil branda rüzgârla birlikte yırtılma veya bağlantı noktasını koparma riski taşıdığından bu noktalarda mesh tercih edilmelidir." },
-      { q: "Görsel netliği klasik brandadan az mı?", a: "Çok küçük bir farkla evet — gözenekler nedeniyle ince yazılar yakından bakıldığında belirgin görünebilir. Ancak 5+ metre uzaklıktan algılama farkı sıfırlanır; bu yüzden uzaktan okunan reklamlarda ideal." },
+      { q: "Görsel netliği klasik brandadan az mı?", a: "Çok küçük bir farkla evet, gözenekler nedeniyle ince yazılar yakından bakıldığında belirgin görünebilir. Ancak 5+ metre uzaklıktan algılama farkı sıfırlanır; bu yüzden uzaktan okunan reklamlarda ideal." },
     ],
     relatedSlugs: ["vinil-branda-440gr", "yelken-bayrak-damla"],
     parameters: [
@@ -179,7 +179,7 @@ const legacyRaw: ProductWithParams[] = [
       },
     ],
     seo: {
-      title: "Mesh Branda Baskı — Gözenekli, Rüzgâr Geçirgen 270 gr",
+      title: "Mesh Branda Baskı | Gözenekli, Rüzgâr Geçirgen 270 gr",
       description: "270 gr gözenekli mesh branda üzerine UV dayanıklı baskı, m² 175 TL'den. Yüksek bina cephesi, iskele ve fuar için %60 rüzgâr geçirgenliği.",
       keywords: ["mesh branda", "gözenekli branda", "iskele brandası", "cephe giydirme", "rüzgar geçirgen branda", "bina giydirme afişi"],
     },
@@ -190,7 +190,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "rollup-standart",
-    name: "Standart Roll-Up — 85 x 200 cm",
+    name: "Standart Roll-Up, 85 x 200 cm",
     categorySlug: "rollup",
     sku: "MK-RLP-STD-001",
     brand: "Markala",
@@ -254,7 +254,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 0, quantityPresets: [1, 2, 5, 10] },
     ],
     seo: {
-      title: "Roll-Up Stand Baskı — 85x200 cm Alüminyum Gövde, 480 TL",
+      title: "Roll-Up Stand Baskı | 85x200 cm Alüminyum Gövde, 480 TL",
       description: "Alüminyum gövdeli, taşıma çantalı roll-up stand 480 TL'den. 60x160, 85x200, 100x200, 120x200 cm ebatlar. 2 iş günü üretim, fuar ve mağazalar için.",
       keywords: ["roll up", "rollup baskı", "rollup stand", "85x200 rollup", "fuar standı", "alüminyum rollup", "mağaza standı", "rollup fiyatları"],
     },
@@ -269,9 +269,9 @@ const legacyRaw: ProductWithParams[] = [
     categorySlug: "yelken-bayrak",
     sku: "MK-YLK-DML-001",
     brand: "Markala",
-    shortDescription: "Damla form, çapraz kesim — 75 x 300 cm standart",
+    shortDescription: "Damla form, çapraz kesim, 75 x 300 cm standart",
     description:
-      "Açık alan etkinliklerinde, mağaza önlerinde ve sahil-kamp alanlarında dikkat çekmek için tasarlanmış damla form yelken bayraklarımız; 110 gram polyester saten kumaş üzerine sublime baskı tekniğiyle üretilir — yıkamada solmaz, UV ışınlarına 18+ ay dayanıklıdır. Standart 75x300 cm ya da 60x240 / 90x350 cm ebatlarında, tek veya çift yüz baskı opsiyonuyla; toprağa kazıklı, beton üstü kare taban veya araç tabanı seçenekleriyle birlikte komple set olarak teslim edilir.",
+      "Açık alan etkinliklerinde, mağaza önlerinde ve sahil-kamp alanlarında dikkat çekmek için tasarlanmış damla form yelken bayraklarımız; 110 gram polyester saten kumaş üzerine sublime baskı tekniğiyle üretilir, yıkamada solmaz, UV ışınlarına 18+ ay dayanıklıdır. Standart 75x300 cm ya da 60x240 / 90x350 cm ebatlarında, tek veya çift yüz baskı opsiyonuyla; toprağa kazıklı, beton üstü kare taban veya araç tabanı seçenekleriyle birlikte komple set olarak teslim edilir.",
     basePrice: 320,
     startingPrice: 320,
     sizeLabel: "75 x 300 cm",
@@ -282,7 +282,7 @@ const legacyRaw: ProductWithParams[] = [
     rating: { average: 4.8, count: 92 },
     features: [
       "110 gr polyester saten kumaş",
-      "Sublime baskı — yıkamada solmaz",
+      "Sublime baskı, yıkamada solmaz",
       "UV dayanımı 18+ ay",
       "60x240 / 75x300 / 90x350 cm ebat seçenekleri",
       "Tek veya çift yüz baskı",
@@ -299,7 +299,7 @@ const legacyRaw: ProductWithParams[] = [
       { label: "Standart Ebat", value: "75 x 300 cm" },
       { label: "Alternatif", value: "60x240 / 90x350 cm" },
       { label: "Kumaş", value: "110 gr polyester saten" },
-      { label: "Baskı", value: "Sublime — yıkamada solmaz" },
+      { label: "Baskı", value: "Sublime, yıkamada solmaz" },
       { label: "Taban Seçenekleri", value: "Kazık (toprak) / Kare (beton) / Araba tabanı" },
       { label: "Üretim Süresi", value: "3-4 iş günü" },
     ],
@@ -335,7 +335,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 0, quantityPresets: [1, 2, 5, 10] },
     ],
     seo: {
-      title: "Damla Yelken Bayrak Baskı — 75x300 cm Set, Tek/Çift Yüz",
+      title: "Damla Yelken Bayrak Baskı | 75x300 cm Set, Tek/Çift Yüz",
       description: "110 gr polyester saten damla yelken bayrak 320 TL'den. 60x240, 75x300, 90x350 cm ebatlar; kazık, kare taban, araba tabanı opsiyonlu komple set.",
       keywords: ["yelken bayrak", "damla bayrak", "açık hava bayrak", "mağaza bayrağı", "etkinlik bayrağı", "yelken bayrak fiyat"],
     },
@@ -363,7 +363,7 @@ const legacyRaw: ProductWithParams[] = [
     rating: { average: 4.9, count: 312 },
     features: [
       "AA kalite 330 ml beyaz porselen",
-      "Sublimasyon baskı — yıkamada solmaz",
+      "Sublimasyon baskı, yıkamada solmaz",
       "Bulaşık makinası uyumlu",
       "Fotoğraf, logo, çoklu yüz tasarımı uygulanabilir",
       "1 adetten 250+ adete kadar esnek sipariş",
@@ -392,8 +392,8 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 45, quantityPresets: [1, 6, 12, 24, 50] },
     ],
     seo: {
-      title: "Beyaz Kupa Baskı — 330 ml Sublimasyon, Kişiye Özel 45 TL",
-      description: "AA kalite 330 ml beyaz porselen kupaya sublimasyon baskı 45 TL'den. Fotoğraf, logo, kurumsal tasarım — bulaşık makinası uyumlu, 2-3 iş günü üretim.",
+      title: "Beyaz Kupa Baskı | 330 ml Sublimasyon, Kişiye Özel 45 TL",
+      description: "AA kalite 330 ml beyaz porselen kupaya sublimasyon baskı 45 TL'den. Fotoğraf, logo, kurumsal tasarım: bulaşık makinası uyumlu, 2-3 iş günü üretim.",
       keywords: ["kupa baskı", "kişiye özel kupa", "fotoğraflı kupa", "promosyon kupa", "kurumsal kupa", "logolu kupa", "sublimasyon kupa"],
     },
   },
@@ -403,7 +403,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "kirlangic-bayrak-3m",
-    name: "Kırlangıç Bayrak — 3m İpli Set",
+    name: "Kırlangıç Bayrak, 3m İpli Set",
     categorySlug: "kirlangic-bayrak",
     sku: "MK-KRL-3M-001",
     brand: "Markala",
@@ -418,7 +418,7 @@ const legacyRaw: ProductWithParams[] = [
     badges: ["hizli-sevkiyat"],
     rating: { average: 4.6, count: 78 },
     features: [
-      "110 gr polyester saten — yıkanabilir",
+      "110 gr polyester saten, yıkanabilir",
       "20x30 cm üçgen form, 3 m ipte 15 adet",
       "Hazır 5 renk karışık set veya özel logolu baskı",
       "Düğün, açılış, etkinlik için ideal",
@@ -435,7 +435,7 @@ const legacyRaw: ProductWithParams[] = [
       { label: "Üçgen Ebat", value: "20 x 30 cm" },
       { label: "İp Uzunluğu", value: "3 m (15 adet bayrak)" },
       { label: "Kumaş", value: "110 gr polyester saten" },
-      { label: "Baskı", value: "Sublime — solmaz" },
+      { label: "Baskı", value: "Sublime, solmaz" },
       { label: "Üretim Süresi", value: "2-3 iş günü (hazır karışık 1 iş günü)" },
     ],
     faqs: [
@@ -454,8 +454,8 @@ const legacyRaw: ProductWithParams[] = [
       { id: "metre", label: "Toplam Metre", kind: "quantity", required: true, unitPrice: 60, quantityPresets: [3, 6, 12, 25] },
     ],
     seo: {
-      title: "Kırlangıç Bayrak Baskı — 3m İpli Set, Düğün ve Açılış İçin",
-      description: "20x30 cm üçgen kırlangıç bayrak, 3 m ipe dizili 15 adet — 180 TL'den. Karışık 5 renk veya özel logolu, düğün, açılış, mağaza süslemesi için.",
+      title: "Kırlangıç Bayrak Baskı | 3m İpli Set, Düğün ve Açılış İçin",
+      description: "20x30 cm üçgen kırlangıç bayrak, 3 m ipe dizili 15 adet, 180 TL'den. Karışık 5 renk veya özel logolu, düğün, açılış, mağaza süslemesi için.",
       keywords: ["kırlangıç bayrak", "üçgen bayrak", "düğün bayrağı", "açılış süsü", "renkli bayrak", "cadde süslemesi"],
     },
   },
@@ -480,7 +480,7 @@ const legacyRaw: ProductWithParams[] = [
     rating: { average: 4.7, count: 41 },
     features: [
       "15x22 cm standart ebat saten kumaş",
-      "Sublime baskı — kalıcı, solmaz",
+      "Sublime baskı, kalıcı, solmaz",
       "Parlatılmış krom direk + cilalı ahşap taban",
       "Tek veya çift yüz baskı seçeneği",
       "Toplantı, fuar, resepsiyon için ideal",
@@ -515,7 +515,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 150, quantityPresets: [1, 5, 10, 25] },
     ],
     seo: {
-      title: "Masa Bayrağı — 15x22 cm Krom Direkli Saten, 150 TL",
+      title: "Masa Bayrağı | 15x22 cm Krom Direkli Saten, 150 TL",
       description: "15x22 cm saten kumaş masa bayrağı, krom direk + cilalı ahşap taban dahil. Tek/çift yüz baskı, toplantı ve makam için kurumsal kalite.",
       keywords: ["masa bayrağı", "krom direkli masa bayrağı", "kurumsal masa bayrağı", "toplantı bayrağı", "makam bayrağı küçük", "ofis bayrağı"],
     },
@@ -578,7 +578,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 850, quantityPresets: [1, 2, 5] },
     ],
     seo: {
-      title: "Makam Bayrağı — Püsküllü 100x150 cm, Krom Direk + Üçayak",
+      title: "Makam Bayrağı | Püsküllü 100x150 cm, Krom Direk + Üçayak",
       description: "100x150 cm saten makam bayrağı, sırma püsküllü, 2.2 m krom direk + cilalı üçayak taban dahil. Valilik, belediye, kurumsal makam için 850 TL'den.",
       keywords: ["makam bayrağı", "püsküllü bayrak", "krom direkli bayrak", "kurumsal bayrak", "resmi bayrak", "valilik bayrağı"],
     },
@@ -589,7 +589,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "arac-magneti-30x40",
-    name: "Araç Magneti — 30 x 40 cm",
+    name: "Araç Magneti, 30 x 40 cm",
     categorySlug: "arac-magneti",
     sku: "MK-MGN-3040-001",
     brand: "Markala",
@@ -604,7 +604,7 @@ const legacyRaw: ProductWithParams[] = [
     badges: ["hizli-sevkiyat"],
     rating: { average: 4.6, count: 62 },
     features: [
-      "0,8 mm magnet — boyaya zarar vermez",
+      "0,8 mm magnet, boyaya zarar vermez",
       "UV dayanıklı baskı + koruyucu laminasyon",
       "20x30 / 30x40 / 40x60 cm ebatlar",
       "Çıkarılıp tekrar kullanılabilir",
@@ -640,8 +640,8 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 0, quantityPresets: [1, 2, 4, 10] },
     ],
     seo: {
-      title: "Araç Magneti Baskı — 30x40 cm Çıkarılabilir, 220 TL",
-      description: "0,8 mm araç magnet üzerine UV dayanıklı baskı 220 TL'den. 20x30, 30x40, 40x60 cm — boyaya zarar vermez, çıkarılıp tekrar kullanılabilir.",
+      title: "Araç Magneti Baskı | 30x40 cm Çıkarılabilir, 220 TL",
+      description: "0,8 mm araç magnet üzerine UV dayanıklı baskı 220 TL'den. 20x30, 30x40, 40x60 cm: boyaya zarar vermez, çıkarılıp tekrar kullanılabilir.",
       keywords: ["araç magneti", "araba magneti", "çıkarılabilir reklam", "araç giydirme magnet", "servis aracı reklam", "kurye magneti"],
     },
   },
@@ -709,7 +709,7 @@ const legacyRaw: ProductWithParams[] = [
       },
     ],
     seo: {
-      title: "Araç Sticker — Yan Cam Folyo Baskı, CNC Lazer Kesim",
+      title: "Araç Sticker | Yan Cam Folyo Baskı, CNC Lazer Kesim",
       description: "Araç yan cam ve kaporta için UV dayanıklı yapışkanlı folyo, CNC lazer kesim. Matrix, transparan ve metalik seçenek; tam araç giydirme.",
       keywords: ["araç sticker", "araç giydirme", "yan cam sticker", "kaporta folyo", "araba reklam sticker", "araç folyo baskı"],
     },
@@ -723,7 +723,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "cam-folyosu-kesimli",
-    name: "Cam Vitrin Folyosu — Kesimli",
+    name: "Cam Vitrin Folyosu - Kesimli",
     categorySlug: "folyo",
     sku: "MK-FLY-CAM-001",
     brand: "Markala",
@@ -781,7 +781,7 @@ const legacyRaw: ProductWithParams[] = [
       },
     ],
     seo: {
-      title: "Cam Vitrin Folyosu — Kesimli Yapışkanlı Folyo, m² 125 TL",
+      title: "Cam Vitrin Folyosu | Kesimli Yapışkanlı Folyo, m² 125 TL",
       description: "Mağaza vitrinleri için 5 yıl dayanıklı yapışkanlı folyo + CNC kesim, m² 125 TL'den. Siyah, beyaz, metalik renk. Uygulama bandı dahil seçeneği var.",
       keywords: ["cam folyosu", "vitrin folyo", "kesimli folyo", "mağaza folyo", "kapı yazısı", "yapışkan folyo", "CNC kesim folyo"],
     },
@@ -792,13 +792,13 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "guvenlik-levhasi-sigorta",
-    name: "İSG Güvenlik Levhası — Standart",
+    name: "İSG Güvenlik Levhası - Standart",
     categorySlug: "guvenlik-uyari-levhalari",
     sku: "MK-LVH-ISG-001",
     brand: "Markala",
     shortDescription: "ISO 7010 uyumlu A4 plastik levha",
     description:
-      "İş Sağlığı ve Güvenliği (İSG) yönetmelikleri ile ISO 7010 standardına uygun olarak üretilen A4 (21x30 cm) güvenlik uyarı levhalarımız; 1,5 mm beyaz PVC plaka üzerine UV korumalı baskı tekniğiyle hazırlanır. Sarı üçgen uyarı, kırmızı yuvarlak yasak, mavi yuvarlak zorunlu sembol türlerinden seçim yapabilir veya tamamen özel sembol/metin tasarlatabilirsiniz. Üretim tesisleri, depolar, iş merkezleri, hastane, otel, okul ve kamu kuruluşlarının zorunlu tabela ihtiyaçları için ideal — düşük adetli (1 adet) siparişler bile kabul edilir, 1-2 iş günü içinde teslim edilir.",
+      "İş Sağlığı ve Güvenliği (İSG) yönetmelikleri ile ISO 7010 standardına uygun olarak üretilen A4 (21x30 cm) güvenlik uyarı levhalarımız; 1,5 mm beyaz PVC plaka üzerine UV korumalı baskı tekniğiyle hazırlanır. Sarı üçgen uyarı, kırmızı yuvarlak yasak, mavi yuvarlak zorunlu sembol türlerinden seçim yapabilir veya tamamen özel sembol/metin tasarlatabilirsiniz. Üretim tesisleri, depolar, iş merkezleri, hastane, otel, okul ve kamu kuruluşlarının zorunlu tabela ihtiyaçları için ideal, düşük adetli (1 adet) siparişler bile kabul edilir, 1-2 iş günü içinde teslim edilir.",
     basePrice: 65,
     startingPrice: 65,
     sizeLabel: "A4 (21 x 30 cm)",
@@ -847,8 +847,8 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 65, quantityPresets: [1, 5, 10, 25, 50] },
     ],
     seo: {
-      title: "İSG Güvenlik Levhası — ISO 7010 Uyumlu A4 PVC, 65 TL",
-      description: "ISO 7010 standardında A4 PVC iş güvenliği uyarı levhası 65 TL'den. Uyarı, yasak, zorunlu sembol veya özel tasarım — 1 adetten itibaren.",
+      title: "İSG Güvenlik Levhası | ISO 7010 Uyumlu A4 PVC, 65 TL",
+      description: "ISO 7010 standardında A4 PVC iş güvenliği uyarı levhası 65 TL'den. Uyarı, yasak, zorunlu sembol veya özel tasarım, 1 adetten itibaren.",
       keywords: ["iş güvenliği levhası", "isg levhası", "iso 7010", "uyarı levhası", "yasak levhası", "güvenlik tabelası", "pvc levha"],
     },
   },
@@ -858,7 +858,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "kristal-plaket",
-    name: "Kristal Plaket — Lazer Kazıma",
+    name: "Kristal Plaket - Lazer Kazıma",
     categorySlug: "plaket",
     sku: "MK-PLK-KRS-001",
     brand: "Markala",
@@ -873,7 +873,7 @@ const legacyRaw: ProductWithParams[] = [
     badges: ["yeni"],
     rating: { average: 4.9, count: 27 },
     features: [
-      "Optik kristal blok — yüksek şeffaflık",
+      "Optik kristal blok, yüksek şeffaflık",
       "CO2 lazer ile derin kazıma",
       "15 / 20 / 25 cm boy seçenekleri",
       "Cilalı doğal ahşap taban dahil",
@@ -911,8 +911,8 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 280, quantityPresets: [1, 5, 10, 25] },
     ],
     seo: {
-      title: "Kristal Plaket — Lazer Kazıma + Ahşap Taban, 280 TL",
-      description: "Optik kristal plaket, CO2 lazer ile kişiye özel kazıma, cilalı ahşap taban + lüks ambalaj dahil. 15/20/25 cm — kurumsal ödül ve teşekkür için.",
+      title: "Kristal Plaket | Lazer Kazıma + Ahşap Taban, 280 TL",
+      description: "Optik kristal plaket, CO2 lazer ile kişiye özel kazıma, cilalı ahşap taban + lüks ambalaj dahil. 15/20/25 cm, kurumsal ödül ve teşekkür için.",
       keywords: ["kristal plaket", "lazer kazıma plaket", "ödül plaketi", "teşekkür plaketi", "kurumsal plaket", "cam plaket"],
     },
   },
@@ -922,7 +922,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "madalya-7cm-kurdela",
-    name: "Madalya — 7cm Kurdela Dahil",
+    name: "Madalya, 7cm Kurdela Dahil",
     categorySlug: "madalya",
     sku: "MK-MDL-7CM-001",
     brand: "Markala",
@@ -936,7 +936,7 @@ const legacyRaw: ProductWithParams[] = [
     images: [prodImg("madalya-7cm-kurdela", 1)],
     rating: { average: 4.7, count: 84 },
     features: [
-      "7 cm metal madalya — altın, gümüş, bronz",
+      "7 cm metal madalya, altın, gümüş, bronz",
       "Ön yüz özel logo / sembol",
       "Arka yüz tarih, başarı, etkinlik bilgisi",
       "Renkli geniş kurdela dahil",
@@ -972,8 +972,8 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 25, quantityPresets: [10, 25, 50, 100, 250] },
     ],
     seo: {
-      title: "Madalya — 7 cm Metal Kurdela Dahil, Spor Turnuvası İçin",
-      description: "7 cm metal madalya, altın/gümüş/bronz kaplama + renkli kurdela dahil 25 TL'den. Özel logo, tarih, etkinlik bilgisi — okul ve spor turnuvalarına özel.",
+      title: "Madalya | 7 cm Metal Kurdela Dahil, Spor Turnuvası İçin",
+      description: "7 cm metal madalya, altın/gümüş/bronz kaplama + renkli kurdela dahil 25 TL'den. Özel logo, tarih, etkinlik bilgisi, okul ve spor turnuvalarına özel.",
       keywords: ["madalya", "spor madalyası", "turnuva madalyası", "altın madalya", "okul madalyası", "kurdelalı madalya", "ödül madalyası"],
     },
   },
@@ -983,7 +983,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "dekota-baski-5mm",
-    name: "Dekota Baskı — 5 mm",
+    name: "Dekota Baskı, 5 mm",
     categorySlug: "dekota-baski",
     sku: "MK-DKT-5MM-001",
     brand: "Markala",
@@ -997,8 +997,8 @@ const legacyRaw: ProductWithParams[] = [
     images: [prodImg("dekota-baski-5mm", 1)],
     rating: { average: 4.6, count: 31 },
     features: [
-      "5 mm beyaz dekota plaka — hafif, dayanıklı",
-      "UV baskı — solvent ve yıpranmaya dayanıklı",
+      "5 mm beyaz dekota plaka, hafif, dayanıklı",
+      "UV baskı, solvent ve yıpranmaya dayanıklı",
       "Düz kesim veya özel form CNC lazer kesim",
       "30-305 cm ebat aralığında özel üretim",
       "Askılık ve çift ayaklı stand ekstraları",
@@ -1040,7 +1040,7 @@ const legacyRaw: ProductWithParams[] = [
       },
     ],
     seo: {
-      title: "Dekota Baskı — 5 mm UV Baskı, m² 345 TL",
+      title: "Dekota Baskı | 5 mm UV Baskı, m² 345 TL",
       description: "5 mm beyaz dekota plaka üzerine UV baskı, m² 345 TL'den. Düz veya CNC özel form kesim. Tabela, sergi, vitrin için hafif ve dayanıklı çözüm.",
       keywords: ["dekota baskı", "dekota tabela", "5 mm dekota", "uv baskı", "pvc tabela", "vitrin tabela", "fuar standı"],
     },
@@ -1095,7 +1095,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 140, quantityPresets: [1, 5, 10, 25] },
     ],
     seo: {
-      title: "Fosforlu Acil Çıkış Folyosu — A4 Karanlıkta Parlayan",
+      title: "Fosforlu Acil Çıkış Folyosu | A4 Karanlıkta Parlayan",
       description: "Yangın yönetmeliği uyumlu A4 fosforlu acil çıkış folyosu 140 TL. 30 dk UV depoladıktan sonra 6 saat karanlıkta parlama. Mağaza, otel, hastane için.",
       keywords: ["fosforlu folyo", "acil çıkış levhası", "karanlıkta parlayan folyo", "yangın levhası", "iso 7010 levha", "isg fosforlu"],
     },
@@ -1106,7 +1106,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "lightbox-led-100cm",
-    name: "Lightbox LED Tabela — 100x70 cm",
+    name: "Lightbox LED Tabela, 100x70 cm",
     categorySlug: "lightbox",
     sku: "MK-LGT-100-001",
     brand: "Markala",
@@ -1120,7 +1120,7 @@ const legacyRaw: ProductWithParams[] = [
     images: [prodImg("lightbox-led-100cm", 1)],
     rating: { average: 4.9, count: 14 },
     features: [
-      "Alüminyum çerçeve — anodize, pas tutmaz",
+      "Alüminyum çerçeve, anodize, pas tutmaz",
       "Çift taraflı 5050 SMD beyaz LED",
       "Pleksi yüzey üzerine UV baskı",
       "60x40 / 100x70 / 150x100 cm ebat seçenekleri",
@@ -1159,7 +1159,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 0, quantityPresets: [1, 2, 5] },
     ],
     seo: {
-      title: "Lightbox LED Tabela — 100x70 cm Alüminyum Çerçeve, 1.850 TL",
+      title: "Lightbox LED Tabela | 100x70 cm Alüminyum Çerçeve, 1.850 TL",
       description: "Alüminyum çerçeveli, 5050 SMD LED arkadan aydınlatmalı lightbox tabela. 60x40 / 100x70 / 150x100 cm ebatlar; mağaza, restoran, AVM için profesyonel.",
       keywords: ["lightbox tabela", "ışıklı tabela", "led tabela", "vitrin tabela", "alüminyum tabela", "mağaza tabelası", "restoran tabelası"],
     },
@@ -1170,7 +1170,7 @@ const legacyRaw: ProductWithParams[] = [
   // ========================================================================
   {
     slug: "plastik-duba-baskili",
-    name: "Plastik Reklam Dubası — Baskılı",
+    name: "Plastik Reklam Dubası - Baskılı",
     categorySlug: "plastik-reklam-dubasi",
     sku: "MK-DUB-PL-001",
     brand: "Markala",
@@ -1188,7 +1188,7 @@ const legacyRaw: ProductWithParams[] = [
       "İçi su veya kum doldurulabilir",
       "4 yön baskı (logo, uyarı, ok, mesaj)",
       "UV dayanıklı yapışkanlı folyo baskı",
-      "Yığınlanabilir tasarım — depolama kolay",
+      "Yığınlanabilir tasarım, depolama kolay",
     ],
     useCases: [
       "Mağaza önü kampanya ve uyarı",
@@ -1221,7 +1221,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 320, quantityPresets: [1, 5, 10, 25] },
     ],
     seo: {
-      title: "Plastik Reklam Dubası — Baskılı 75 cm, 320 TL",
+      title: "Plastik Reklam Dubası | Baskılı 75 cm, 320 TL",
       description: "75 cm baskılı plastik reklam dubası, içine su/kum doldurulabilir, 4 yön UV folyo baskı. Kırmızı, sarı, yeşil. Mağaza önü, otopark, şantiye için.",
       keywords: ["reklam dubası", "plastik duba", "baskılı duba", "trafik dubası", "uyarı dubası", "açılış dubası"],
     },
@@ -1236,7 +1236,7 @@ const legacyRaw: ProductWithParams[] = [
     categorySlug: "kase",
     sku: "MK-KSE-TRD-4912",
     brand: "Trodat",
-    shortDescription: "47 x 18 mm dikdörtgen otomatik kaşe — 24 saatte teslim",
+    shortDescription: "47 x 18 mm dikdörtgen otomatik kaşe, 24 saatte teslim",
     description:
       "Avusturya menşeili dünyanın 1 numaralı kaşe markası Trodat'ın en çok tercih edilen modeli olan Printy 4912; 47x18 mm baskı alanı içeren, 5 satıra kadar yazı sığdırılabilen otomatik kaşedir. Mavi, siyah veya kırmızı mürekkep haznesi ve yedek mürekkep paketi dahil teslim edilir. Şirket kaşesi, fatura kaşesi, mali müşavir tarihli kaşesi, eczane reçete kaşesi, doktor diploma kaşesi gibi günlük kullanımlarda 10.000+ baskı kapasitesi sunar. Sipariş onayından sonra 24 saat içinde üretilip aynı gün/ertesi gün kargolanır.",
     basePrice: 220,
@@ -1248,7 +1248,7 @@ const legacyRaw: ProductWithParams[] = [
     bestseller: true,
     rating: { average: 4.9, count: 488 },
     features: [
-      "Trodat Avusturya orijinal — 1 yıl garanti",
+      "Trodat Avusturya orijinal, 1 yıl garanti",
       "47 x 18 mm baskı alanı, 5 satır yazı",
       "Mavi / siyah / kırmızı mürekkep + yedek paket",
       "10.000+ baskı kapasitesi",
@@ -1273,7 +1273,7 @@ const legacyRaw: ProductWithParams[] = [
     faqs: [
       { q: "Kaşe içeriğini nasıl iletmeliyim?", a: "Sipariş sırasında \"Kaşe metni\" alanına 5 satır yazıyı düz metin olarak girin. Logo veya özel yazı tipi (Times, Arial, Courier) talebi varsa not alanına ekleyin. Tasarım hazır şablonlarımıza göre 1 saat içinde dijital önizleme gönderilir; onayınız sonrası baskıya geçer." },
       { q: "Mürekkep bittiğinde ne yapacağım?", a: "Yedek mürekkep paketi standart sipariş ile birlikte gönderilir; pad açılır, mürekkep dökülür, kapatılır. Yedek mürekkep ek olarak 35 TL'den ayrı sipariş edilebilir; 1 yedek paket ortalama 5.000 baskı yapar." },
-      { q: "Trodat dışında alternatif var mı?", a: "Evet — Shiny ve Colop markaları da satıyoruz. Shiny daha ekonomik (180 TL'den), Trodat Avusturya kalite/garantisi nedeniyle en çok tercih edilen marka. Colop premium segment, fiyatı 280 TL'den başlar." },
+      { q: "Trodat dışında alternatif var mı?", a: "Evet, Shiny ve Colop markaları da satıyoruz. Shiny daha ekonomik (180 TL'den), Trodat Avusturya kalite/garantisi nedeniyle en çok tercih edilen marka. Colop premium segment, fiyatı 280 TL'den başlar." },
     ],
     relatedSlugs: ["klasik-kartvizit", "guvenlik-levhasi-sigorta"],
     parameters: [
@@ -1288,7 +1288,7 @@ const legacyRaw: ProductWithParams[] = [
       { id: "adet", label: "Adet", kind: "quantity", required: true, unitPrice: 220, quantityPresets: [1, 2, 5, 10] },
     ],
     seo: {
-      title: "Trodat 4912 Kaşe — Orijinal Avusturya, 24 Saatte Teslim, 220 TL",
+      title: "Trodat 4912 Kaşe | Orijinal Avusturya, 24 Saatte Teslim, 220 TL",
       description: "Trodat Printy 4912 dikdörtgen otomatik kaşe, 47x18 mm, 5 satır. Mavi/siyah/kırmızı mürekkep + yedek dahil. 24 saatte üretim, Türkiye geneli kargo.",
       keywords: ["trodat kaşe", "printy 4912", "otomatik kaşe", "şirket kaşesi", "kaşe yaptırma", "ucuz kaşe", "online kaşe", "trodat 4912 fiyat"],
     },

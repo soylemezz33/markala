@@ -280,7 +280,7 @@ export function CategoriesClient({ categories }: Props) {
                   className={inputCls}
                 />
               </Field>
-              <Field label="Slug (URL — yalnız küçük harf, rakam, tire)" required>
+              <Field label="Slug (URL, yalnız küçük harf, rakam, tire)" required>
                 <input
                   required
                   value={form.slug}
@@ -336,7 +336,7 @@ export function CategoriesClient({ categories }: Props) {
                     className={inputCls}
                   />
                 </Field>
-                <Field label="Vurgu Rengi (#RRGGBB — opsiyonel)">
+                <Field label="Vurgu Rengi (#RRGGBB, opsiyonel)">
                   <input
                     value={form.accentColor}
                     onChange={(e) => setField("accentColor", e.target.value)}

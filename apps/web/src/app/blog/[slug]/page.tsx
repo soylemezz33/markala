@@ -47,7 +47,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await getBlogPostBySlug(params.slug);
-  if (!post) return { title: "Yazı bulunamadı" };
+  // noindex: bu kurulumda notFound() statüyü 404 yapmadığı için sayfa HTTP 200 dönüyor
+  // (soft-404). En azından Google'ın indekslemesini engelle (2026-08-31).
+  // dynamicParams=false BURADA KULLANILAMAZ: blog otomasyonu her sabah yeni yazı ekliyor,
+  // o yazılar bir sonraki deploy'a kadar 404 verirdi.
+  if (!post) return { title: "Yazı bulunamadı", robots: { index: false, follow: false } };
 
   return {
     // İçerik title'ı DB'den "| Markala" ekiyle gelebilir; layout şablonu zaten marka eki

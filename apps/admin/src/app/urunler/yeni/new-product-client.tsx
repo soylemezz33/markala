@@ -129,7 +129,7 @@ export function NewProductClient({ categories }: Props) {
                   className={inputCls}
                 />
               </Field>
-              <Field label="Slug * (URL — yalnız küçük harf, rakam, tire)">
+              <Field label="Slug * (URL, yalnız küçük harf, rakam, tire)">
                 <input
                   required
                   value={slug}
@@ -166,7 +166,7 @@ export function NewProductClient({ categories }: Props) {
                     onChange={(e) => setCategoryId(e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">— Seçiniz —</option>
+                    <option value="">, Seçiniz, </option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -193,7 +193,7 @@ export function NewProductClient({ categories }: Props) {
                     className={inputCls + " tabular-nums"}
                   />
                 </Field>
-                <Field label="Başlangıç Fiyatı (TL) — opsiyonel">
+                <Field label="Başlangıç Fiyatı (TL), opsiyonel">
                   <input
                     type="number"
                     min={0}

@@ -8,20 +8,20 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { BreadcrumbJsonLd, ItemListJsonLd } from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
-  title: "Markala Blog — Matbaa, Tasarım & Marka Rehberleri",
+  title: "Markala Blog | Matbaa, Tasarım & Marka Rehberleri",
   description:
     "Kartvizit tasarımdan kurumsal kimliğe, baskı tekniklerinden CMYK-RGB renk yönetimine kadar matbaa & reklam sektörünün rehber içerikleri.",
   alternates: { canonical: "/blog" },
   openGraph: {
     type: "website",
-    title: "Markala Blog — Matbaa & Tasarım Rehberleri",
+    title: "Markala Blog | Matbaa & Tasarım Rehberleri",
     description: "Profesyonel matbaa içerikleri, tasarım ipuçları ve sektör analizleri.",
     url: "/blog",
     images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala Blog" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Markala Blog — Matbaa & Tasarım Rehberleri",
+    title: "Markala Blog | Matbaa & Tasarım Rehberleri",
     description: "Profesyonel matbaa içerikleri, tasarım ipuçları ve sektör analizleri.",
     images: ["/og-default.png"],
   },
@@ -62,7 +62,7 @@ export default async function BlogPage() {
             Matbaa, tasarım, marka stratejisi
           </h1>
           <p className="mt-4 text-lg text-ink-700 max-w-xl mx-auto">
-            324 Ajans deneyiminden uzman içerikler — sektörü doğru anlayın, doğru kararlar alın.
+            324 Ajans deneyiminden uzman içerikler, sektörü doğru anlayın, doğru kararlar alın.
           </p>
         </Container>
       </div>

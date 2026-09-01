@@ -156,7 +156,7 @@ const MERSIN_DISTRICTS: District[] = [
     ],
     sameDayDelivery: false,
     intro:
-      "Silifke, antik Akdeniz şehri — turizm ve narenciye odaklı. Otel, restoran, müze ve seyahat acentaları için broşür, harita, ticket ve giriş kartı üretiyoruz.",
+      "Silifke, antik Akdeniz şehri, turizm ve narenciye odaklı. Otel, restoran, müze ve seyahat acentaları için broşür, harita, ticket ve giriş kartı üretiyoruz.",
   },
   {
     slug: "anamur",
@@ -170,7 +170,7 @@ const MERSIN_DISTRICTS: District[] = [
     ],
     sameDayDelivery: false,
     intro:
-      "Anamur, Türkiye'nin en güney ucu — muz ve fıstık üretimiyle bilinir. Tarımsal ihracat ambalajı, etiket ve B2B promosyon ürünlerine kargo ile 1-2 gün teslim.",
+      "Anamur, Türkiye'nin en güney ucu, muz ve fıstık üretimiyle bilinir. Tarımsal ihracat ambalajı, etiket ve B2B promosyon ürünlerine kargo ile 1-2 gün teslim.",
   },
 ];
 
@@ -216,7 +216,7 @@ export const cities: CityData[] = [
       },
       {
         q: "Mersin'de matbaa ücreti rakiplerden farklı mı?",
-        a: "Atölyemizin Mersin'de olması nedeniyle aracı, depo veya nakliye masrafı yok — kıyaslandığında %15-25 daha uygun fiyat veriyoruz. Online konfigüratörden ürün seçip anında fiyat görebilirsiniz.",
+        a: "Atölyemizin Mersin'de olması nedeniyle aracı, depo veya nakliye masrafı yok, kıyaslandığında %15-25 daha uygun fiyat veriyoruz. Online konfigüratörden ürün seçip anında fiyat görebilirsiniz.",
       },
       {
         q: "Tarsus, Yenişehir, Toroslar, Mezitli'ye teslim ediyor musunuz?",
@@ -228,7 +228,7 @@ export const cities: CityData[] = [
       },
       {
         q: "Mersin'deki ofisinizi ziyaret edebilir miyim?",
-        a: "Evet — randevu ile Yenişehir'deki atölye ve showroom'umuza gelebilirsiniz. Numune kâğıtları, baskı türleri ve renk kataloglarını yerinde görebilirsiniz.",
+        a: "Evet, randevu ile Yenişehir'deki atölye ve showroom'umuza gelebilirsiniz. Numune kâğıtları, baskı türleri ve renk kataloglarını yerinde görebilirsiniz.",
       },
     ],
     // 2026-08-24: eski değer (36.812061, 34.641482) Çiftlikköy'deki eski ofisti;
@@ -387,7 +387,7 @@ export const cities: CityData[] = [
       },
       {
         q: "İskenderun limanı için lojistik evrak baskısı yapar mısınız?",
-        a: "Evet — CMR, sevk irsaliyesi, etiket, konteyner numarası ve gümrük formları için 1-2 iş günü içinde teslim ediyoruz.",
+        a: "Evet, CMR, sevk irsaliyesi, etiket, konteyner numarası ve gümrük formları için 1-2 iş günü içinde teslim ediyoruz.",
       },
     ],
     geo: { lat: 36.402150, lng: 36.349534 },

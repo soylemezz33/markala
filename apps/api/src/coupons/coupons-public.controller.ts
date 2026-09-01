@@ -14,7 +14,7 @@ export class CouponsPublicController {
   constructor(private service: CouponsService) {}
 
   @Post("validate")
-  @ApiOperation({ summary: "Kupon doğrula (public) — geçerlilik + gerçek indirim tutarı" })
+  @ApiOperation({ summary: "Kupon doğrula (public), geçerlilik + gerçek indirim tutarı" })
   validate(@Body() dto: ValidateCouponDto) {
     return this.service.validate(dto.code, dto.subtotal, { email: dto.email });
   }

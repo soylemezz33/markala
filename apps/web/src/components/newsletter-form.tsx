@@ -46,7 +46,7 @@ export function NewsletterForm({ source = "blog" }: { source?: string }) {
       }
     } catch {
       setState("err");
-      setMsg("Bağlantı hatası — lütfen tekrar deneyin.");
+      setMsg("Bağlantı hatası, lütfen tekrar deneyin.");
     }
   }
 

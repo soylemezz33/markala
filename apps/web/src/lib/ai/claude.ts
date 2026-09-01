@@ -56,7 +56,7 @@ export interface ClaudeRequest {
 /** ANTHROPIC_API_KEY yokken atılır — çağıran fallback'e düşmeli. */
 export class AiNotConfiguredError extends Error {
   constructor() {
-    super("ANTHROPIC_API_KEY tanımlı değil — AI çağrısı atlandı.");
+    super("ANTHROPIC_API_KEY tanımlı değil, AI çağrısı atlandı.");
     this.name = "AiNotConfiguredError";
   }
 }

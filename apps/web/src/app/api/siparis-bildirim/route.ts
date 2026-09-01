@@ -65,13 +65,13 @@ export async function POST(req: NextRequest) {
 
   const itemLines = items.map(
     (i) =>
-      `• ${i.name ?? "-"} — ${i.summary ?? ""} ×${i.quantity ?? 1} = ${tl(i.lineTotal)}` +
+      `• ${i.name ?? "-"} - ${i.summary ?? ""} ×${i.quantity ?? 1} = ${tl(i.lineTotal)}` +
       (i.needsDesign ? " (tasarım desteği)" : "") +
       (i.uploadedFileName ? ` (dosya: ${i.uploadedFileName})` : ""),
   );
 
   const text = [
-    `Yeni web siparişi — ${orderNumber ?? "-"}`,
+    `Yeni web siparişi - ${orderNumber ?? "-"}`,
     `Kanal: ${channel === "phone" ? "Telefon" : "WhatsApp"}`,
     "",
     ...itemLines,
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
     <h2 style="margin:0 0 4px">Yeni web siparişi</h2>
     <p style="color:#999;font-size:12px;margin:0 0 12px">No: ${escapeHtml(orderNumber ?? "-")} · Kanal: ${escapeHtml(channel === "phone" ? "Telefon" : "WhatsApp")}</p>
     <ul style="font-size:14px;padding-left:18px;margin:0 0 12px">
-      ${items.map((i) => `<li>${escapeHtml(i.name ?? "-")} — ${escapeHtml(i.summary ?? "")} ×${i.quantity ?? 1} = <b>${tl(i.lineTotal)}</b>${i.needsDesign ? " <em>(tasarım desteği)</em>" : ""}${i.uploadedFileName ? ` <em>(dosya: ${escapeHtml(i.uploadedFileName)})</em>` : ""}</li>`).join("")}
+      ${items.map((i) => `<li>${escapeHtml(i.name ?? "-")} - ${escapeHtml(i.summary ?? "")} ×${i.quantity ?? 1} = <b>${tl(i.lineTotal)}</b>${i.needsDesign ? " <em>(tasarım desteği)</em>" : ""}${i.uploadedFileName ? ` <em>(dosya: ${escapeHtml(i.uploadedFileName)})</em>` : ""}</li>`).join("")}
     </ul>
     <table style="border-collapse:collapse;font-size:14px;margin-bottom:12px">
       <tr><td style="padding:2px 8px;color:#666">Ara toplam</td><td style="padding:2px 8px">${tl(subtotal)}</td></tr>
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
   try {
     await sendMail({
       to: getContactTo(),
-      subject: `Yeni web siparişi: ${orderNumber ?? "-"} — ${tl(total)}`,
+      subject: `Yeni web siparişi: ${orderNumber ?? "-"} - ${tl(total)}`,
       text,
       html,
       replyTo: email && email.includes("@") ? email : undefined,

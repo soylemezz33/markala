@@ -9,6 +9,7 @@ const ROLE_LABEL: Record<string, string> = {
   super_admin: "Süper Admin",
   admin: "Admin",
   tasarimci: "Grafik Tasarım",
+  kargo: "Kargo",
   muhasebe: "Muhasebe",
   customer: "Yetkisiz (müşteri)",
 };
@@ -17,6 +18,7 @@ const ROLE_DESC: Record<string, string> = {
   super_admin: "Her şeye erişir; yetki atayabilir.",
   admin: "Her şeye erişir; yetki atayamaz.",
   tasarimci: "Sipariş içeriği (fiyat/ödeme durumu dahil), müşteri iletişimi, görsel/slider/banner, yorumlar. Ciroyu (dashboard finans kutuları) GÖRMEZ.",
+  kargo: "Sadece kargo işi: siparişin ne olduğunu, alıcının adı/adresi/telefonu/e-postasını ve yüklenen tasarım dosyasını görür; takip numarası girer ve siparişi \"Kargoya Verildi\" yapar. TUTAR, MALİYET, ÖDEME ve FATURA GÖRMEZ; sipariş iptal EDEMEZ.",
   muhasebe: "Para akışı, fatura/Paraşüt, cari, fiyat güncelleme. Görsel/içerik menüleri kapalı.",
   customer: "Panel erişimi kaldırılır.",
 };
@@ -123,7 +125,7 @@ export function PanelUsersClient({ users, roles }: { users: U[]; roles: string[]
         <p className="mt-2 flex items-start gap-1.5 text-xs text-ink-500">
           <Info size={14} className="flex-none mt-0.5" />
           Şifreyi siz belirlersiniz; kişi ilk girişte kullanır. Şifre bir daha
-          görüntülenemez — kaydedip kişiye güvenli bir kanaldan iletin. E-posta zaten
+          görüntülenemez, kaydedip kişiye güvenli bir kanaldan iletin. E-posta zaten
           kayıtlıysa yeni hesap açılmaz: kişi müşteriyse şifresine dokunulmadan yetkisi
           yükseltilir, zaten yetkiliyse aşağıdaki listeden değiştirmeniz istenir.
         </p>
@@ -180,7 +182,7 @@ export function PanelUsersClient({ users, roles }: { users: U[]; roles: string[]
 
       <p className="mt-4 text-xs text-ink-500 leading-relaxed">
         Yetki değişiklikleri denetim kaydına yazılır (kim, kimi, önce→sonra, IP). Son süper
-        admin&apos;in yetkisi kaldırılamaz — panel sahipsiz kalmasın diye.
+        admin&apos;in yetkisi kaldırılamaz, panel sahipsiz kalmasın diye.
       </p>
     </AdminShell>
   );

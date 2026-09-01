@@ -29,7 +29,7 @@ const FALLBACK: HeroBannerData[] = [
     id: "fb-tasarim",
     imageUrl: "/hero/hero-tasarim-destegi.jpg",
     ctaHref: "/iletisim",
-    title: "Tasarımcın yoksa biz hallederiz — ücretsiz tasarım desteği",
+    title: "Tasarımcın yoksa biz hallederiz, ücretsiz tasarım desteği",
   },
   {
     id: "fb-kampanya",
@@ -138,7 +138,7 @@ export function PremiumHeroSlider({ slides }: { slides?: HeroBannerData[] }) {
     >
       {/* SEO — görünmez ana başlık (slider saf görsel olduğundan) */}
       <h1 className="sr-only">
-        Markala — Online Matbaa: Kartvizit, broşür, afiş, branda, tabela ve tüm baskı ürünleri
+        Markala, Online Matbaa: Kartvizit, broşür, afiş, branda, tabela ve tüm baskı ürünleri
       </h1>
 
       {/* Görsel slider alanı TAM kaplar (edge-to-edge). key={index} → fade animasyonu. */}

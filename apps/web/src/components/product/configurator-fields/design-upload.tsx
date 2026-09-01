@@ -70,7 +70,7 @@ export function DesignUpload() {
         <span className="text-sm font-medium text-ink-900">
           Tasarım desteği istiyorum
           <span className="block text-xs text-ink-500 font-normal mt-0.5">
-            Profesyonel grafik ekibimiz sizin için hazırlasın — ücretsiz.
+            Profesyonel grafik ekibimiz sizin için hazırlasın, ücretsiz.
           </span>
         </span>
         <button

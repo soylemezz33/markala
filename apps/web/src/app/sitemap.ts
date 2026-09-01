@@ -54,7 +54,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // API blip'inde ürün listesi boş dönerse sitemap ÜRÜNSÜZ üretilip yayınlanır ve yüzlerce
   // ürün URL'si indeksten düşebilir. Throw → route hata verir, eski (stale) sitemap ayakta kalır.
   if (products.length === 0) {
-    throw new Error("sitemap: ürün listesi boş döndü — ürünsüz sitemap yayınlanmaz, eski sürüm korunur");
+    throw new Error("sitemap: ürün listesi boş döndü, ürünsüz sitemap yayınlanmaz, eski sürüm korunur");
   }
 
   // Statik/city/service/help gibi girdilerde lastModified BİLEREK yok: her üretimde

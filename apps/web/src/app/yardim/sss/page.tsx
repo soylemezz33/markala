@@ -53,13 +53,13 @@ async function sssGetir(): Promise<Faq[]> {
 }
 
 export const metadata: Metadata = {
-  title: "Sıkça Sorulan Sorular — Baskı, Kargo, Ödeme ve İade",
+  title: "Sıkça Sorulan Sorular | Baskı, Kargo, Ödeme ve İade",
   description:
     "Online matbaa hakkında merak edilenler: dosya formatı, üretim ve kargo süreleri, KDV dahil fiyatlar, ödeme güvenliği, kişiye özel üründe iade koşulları.",
   alternates: { canonical: "/yardim/sss" },
   openGraph: {
     type: "article",
-    title: "Sıkça Sorulan Sorular — Markala Yardım",
+    title: "Sıkça Sorulan Sorular | Markala Yardım",
     description:
       "Tasarım, ürün, kargo, ödeme ve iade hakkında en çok sorulan sorular ve net cevapları.",
     url: "/yardim/sss",
@@ -114,7 +114,7 @@ export default async function SssPage() {
             Sıkça Sorulan Sorular
           </h1>
           <p className="text-ink-600 leading-relaxed mb-10">
-            Tasarım dosyasından kargo takibine, ödemeden iade koşullarına — en çok sorulan
+            Tasarım dosyasından kargo takibine, ödemeden iade koşullarına: en çok sorulan
             sorular ve net cevapları. Aradığınızı bulamazsanız{" "}
             <Link href="/iletisim" className="text-brand-700 hover:text-brand-900 font-medium">
               bize ulaşın
@@ -124,7 +124,7 @@ export default async function SssPage() {
 
           {sss.length === 0 && (
             <p className="text-ink-500 text-sm bg-paper-100 border border-paper-200 rounded-lg px-4 py-3">
-              Sorular şu anda yüklenemiyor — birkaç dakika içinde tekrar deneyin veya{" "}
+              Sorular şu anda yüklenemiyor, birkaç dakika içinde tekrar deneyin veya{" "}
               <Link href="/iletisim" className="text-brand-700 font-medium">
                 bize ulaşın
               </Link>

@@ -30,13 +30,13 @@ const ISG_PREFIX = "is-guvenligi-";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "İSG Uyarı Levhaları — Renk Anlamları ve Zorunlu İşaretler",
+    title: "İSG Uyarı Levhaları | Renk Anlamları ve Zorunlu İşaretler",
     description:
       "Zorunluluk (emredici) işaretleri mavi, uyarı sarı, yasak kırmızı, acil çıkış yeşildir. İşyeri tipine göre zorunlu İSG levhası kontrol listeleri ve güncel fiyatlar.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "İSG Uyarı Levhaları Rehberi — İşyeri Tipine Göre Kontrol Listesi",
+      title: "İSG Uyarı Levhaları Rehberi | İşyeri Tipine Göre Kontrol Listesi",
       description:
         "Yasak, uyarı, emredici ve acil çıkış levhaları: renk anlamları, işyeri tipine göre kontrol listeleri ve güncel fiyatlar.",
       url: PAGE_PATH,
@@ -155,7 +155,7 @@ export default async function IsgLevhaRehberiPage() {
   const isgCats = categories.filter((c) => c.slug.startsWith(ISG_PREFIX));
   // Katalog boş/blip → throw: ISR son başarılı (stale) sayfayı korur, hub asla boş yayınlanmaz.
   if (isgCats.length === 0) {
-    throw new Error("rehber/isg: İSG kategorileri boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/isg: İSG kategorileri boş döndü (API blip?), stale ISR korunur");
   }
 
   const bySlug = new Map(isgCats.map((c) => [c.slug, c]));
@@ -204,7 +204,7 @@ export default async function IsgLevhaRehberiPage() {
     },
     {
       q: "Toplu alımda indirim var mı?",
-      a: `Evet. Levha ürünlerinde adet arttıkça otomatik hacim indirimi uygulanır — 10 adetten başlar, ${DISCOUNT_QTYS[DISCOUNT_QTYS.length - 1]} adet ve üzerinde %${maxDiscount}'e ulaşır. İndirim sepette kendiliğinden hesaplanır; daha büyük projeler için teklif sayfasından kurumsal fiyat isteyebilirsin.`,
+      a: `Evet. Levha ürünlerinde adet arttıkça otomatik hacim indirimi uygulanır, 10 adetten başlar, ${DISCOUNT_QTYS[DISCOUNT_QTYS.length - 1]} adet ve üzerinde %${maxDiscount}'e ulaşır. İndirim sepette kendiliğinden hesaplanır; daha büyük projeler için teklif sayfasından kurumsal fiyat isteyebilirsin.`,
     },
     {
       q: "Fiyatlara KDV dahil mi?",
@@ -224,7 +224,7 @@ export default async function IsgLevhaRehberiPage() {
         ]}
       />
       <ArticleJsonLd
-        title="İSG Uyarı Levhaları Rehberi — İşyeri Tipine Göre Kontrol Listesi"
+        title="İSG Uyarı Levhaları Rehberi - İşyeri Tipine Göre Kontrol Listesi"
         description="Yasaklayıcı, uyarı, emredici ve acil çıkış işaretlerinin anlamları; şantiye, fabrika, depo ve ofis için tipik levha kontrol listeleri."
         url={PAGE_PATH}
         datePublished="2026-07-20"
@@ -249,7 +249,7 @@ export default async function IsgLevhaRehberiPage() {
           <p className="mt-4 text-lg text-ink-700">
             &quot;Sağlık ve Güvenlik İşaretleri Yönetmeliği&quot; işvereni, risk değerlendirmesine
             göre gerekli güvenlik işaretlerini bulundurmakla yükümlü kılar. Bu rehberde işaret
-            sınıflarını, renk anlamlarını ve işyeri tipine göre tipik kontrol listelerini bulursun —
+            sınıflarını, renk anlamlarını ve işyeri tipine göre tipik kontrol listelerini bulursun,
             katalogda <strong className="text-ink-900">{totalCount.toLocaleString("tr-TR")} levha çeşidi</strong>
             {minStart > 0 && (
               <>
@@ -261,7 +261,7 @@ export default async function IsgLevhaRehberiPage() {
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
-              <CheckCircle size={13} weight="fill" /> KDV dahil — sepette değişmez
+              <CheckCircle size={13} weight="fill" /> KDV dahil, sepette değişmez
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <Percent size={13} weight="fill" /> %{maxDiscount}&apos;e varan hacim indirimi
@@ -291,7 +291,7 @@ export default async function IsgLevhaRehberiPage() {
             İşaret sınıfları ve renk anlamları
           </h2>
           <p className="mt-2 text-ink-700">
-            Yönetmelikteki sınıflandırma biçim ve renk kodlarına dayanır — levhanın rengi, mesajın
+            Yönetmelikteki sınıflandırma biçim ve renk kodlarına dayanır, levhanın rengi, mesajın
             türünü tek bakışta anlatır:
           </p>
           <div className="mt-5 overflow-x-auto">
@@ -356,7 +356,7 @@ export default async function IsgLevhaRehberiPage() {
             Toplu alımda otomatik hacim indirimi
           </h2>
           <p className="text-sm text-ink-700 mb-4">
-            Levha ürünlerinde adet arttıkça indirim sepette kendiliğinden uygulanır — işyerinin tüm
+            Levha ürünlerinde adet arttıkça indirim sepette kendiliğinden uygulanır, işyerinin tüm
             levha ihtiyacını tek siparişte toplamak her zaman daha ekonomiktir:
           </p>
           <div className="overflow-x-auto">
@@ -417,7 +417,7 @@ export default async function IsgLevhaRehberiPage() {
             İşyerinin levha listesini birlikte çıkaralım
           </h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Şantiye, fabrika veya deponun tüm levha ihtiyacı için toplu teklif iste — hacim
+            Şantiye, fabrika veya deponun tüm levha ihtiyacı için toplu teklif iste, hacim
             indirimi ve kurumsal cari hesap avantajıyla, 24 saatte dönüş.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

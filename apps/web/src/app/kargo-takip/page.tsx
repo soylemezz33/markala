@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Container, Button } from "@markala/ui";
 import { Truck, MagnifyingGlass, Package, Receipt, EnvelopeSimple } from "@phosphor-icons/react";
@@ -46,7 +46,10 @@ export default function TrackingPage() {
   // (DHL Unified API proxy'miz). Gönderiler Viniltürk'ün DHL hesabından çıktığı için
   // takip numarası veritabanımızda her zaman yok — müşteri DHL mailindeki numarayı
   // buraya yazıp durumu bizim sayfamızda görebilsin diye ikinci sekme var.
-  const [tab, setTab] = useState<"siparis" | "takipno">("siparis");
+  // Varsayılan sekme "takipno" (2026-08-31, Hasan): siparişlerin 28'inden yalnız 1'inde
+  // trackingNumber girili olduğu için "Sipariş No ile" yolu pratikte takip numarası
+  // döndürmüyor; kullanıcıyı çalışan yolla karşılamak daha doğru.
+  const [tab, setTab] = useState<"siparis" | "takipno">("takipno");
   const [orderNumber, setOrderNumber] = useState("");
   const [email, setEmail] = useState("");
   const [result, setResult] = useState<TrackResult | null>(null);
@@ -58,6 +61,18 @@ export default function TrackingPage() {
   /** fallback=true → hata DHL servis kaynaklı; DHL'in kendi sayfasına yönlendir. */
   const [dhlError, setDhlError] = useState<{ text: string; fallback: boolean } | null>(null);
   const [dhlLoading, setDhlLoading] = useState(false);
+
+  /** Sonuç kutusu — sorgu bitince buraya kaydırılır (sonuç formun altında doğuyor). */
+  const sonucRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!dhlResult && !result) return;
+    // prefers-reduced-motion'a saygı: hareket istemeyene ani konumlanma.
+    const azHareket = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    sonucRef.current?.scrollIntoView({
+      behavior: azHareket ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [dhlResult, result]);
 
   async function onDhlSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,20 +140,28 @@ export default function TrackingPage() {
 
   return (
     <>
+      {/* Başlık ŞERİDİ — eskiden dev bir hero'ydu (py-12/16, 64px ikon, 5xl başlık, iki
+          satırlık açıklama). Bu sayfaya gelen kullanıcının tek işi var: numarayı yazıp
+          sonucu görmek. Hero ekranın yarısını yiyip formu ve sonucu aşağı ittiği için
+          "sorgu yaptım, sonuç geldi mi?" hissi oluşuyordu (2026-08-31, Hasan).
+          Tek satıra indirildi; ikon başlığın yanına alındı, açıklama kısaltıldı. */}
       <div className="bg-paper-100 border-b border-paper-200">
-        <Container className="py-12 md:py-16 max-w-3xl text-center">
-          <div className="w-16 h-16 mx-auto rounded-full bg-brand-100 grid place-items-center text-brand-700 mb-4">
-            <Truck size={28} weight="regular" />
+        <Container className="py-6 md:py-8 max-w-3xl">
+          <div className="flex items-center gap-3">
+            <span className="w-11 h-11 flex-none rounded-full bg-brand-100 grid place-items-center text-brand-700">
+              <Truck size={22} weight="regular" />
+            </span>
+            <div className="min-w-0">
+              <h1 className="text-2xl md:text-3xl font-semibold text-ink-900 leading-tight">Kargo Takip</h1>
+              <p className="text-sm text-ink-700">
+                DHL takip numaranızla gönderinizin anlık konumunu görün.
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">DHL ile takip</p>
-          <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">Kargo Takip</h1>
-          <p className="mt-4 text-lg text-ink-700 max-w-xl mx-auto">
-            Sipariş numaranızla siparişinizin aşamasını, DHL takip numaranızla gönderinizin anlık konumunu sorgulayın.
-          </p>
         </Container>
       </div>
 
-      <Container className="py-12 md:py-16 max-w-3xl">
+      <Container className="py-6 md:py-8 max-w-3xl">
         {/* Sorgu yolu seçimi */}
         <div className="grid grid-cols-2 gap-2 mb-4" role="tablist" aria-label="Sorgu türü">
           <button
@@ -213,7 +236,10 @@ export default function TrackingPage() {
             </form>
 
             {dhlResult && (
-              <div className="mt-12 space-y-6">
+              // ref + aria-live: sonuç formun ALTINDA doğuyor ve uzun sayfada gözden
+              // kaçıyordu ("sorgu yaptım, geldi mi?"). Sonuç gelince oraya kaydırılır ve
+              // ekran okuyucuya duyurulur. mt-12 → mt-6: forma yakın dursun.
+              <div ref={sonucRef} aria-live="polite" className="mt-6 space-y-6 scroll-mt-24">
                 <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <div className="text-xs text-ink-500 uppercase tracking-wider font-semibold">DHL Takip No</div>
@@ -260,7 +286,7 @@ export default function TrackingPage() {
 
         {tab === "siparis" && (
         <form onSubmit={onSubmit} className="bg-paper-50 border border-paper-200 rounded-xl p-6 md:p-8 space-y-4 shadow-sm">
-          <Field label="Sipariş Numarası" hint="MK-XXXX-XXXX formatında — sipariş onay mailinizde">
+          <Field label="Sipariş Numarası" hint="MK-XXXX-XXXX formatında, sipariş onay mailinizde">
             <input value={orderNumber} onChange={(e) => setOrderNumber(e.target.value.toUpperCase())} placeholder="MK-..." className={`${inputClass} font-mono`} required />
           </Field>
           <Field label="E-posta Adresi" hint="Sipariş verirken kullandığınız e-posta">
@@ -280,7 +306,7 @@ export default function TrackingPage() {
         )}
 
         {tab === "siparis" && result && (
-          <div className="mt-12 space-y-6">
+          <div ref={sonucRef} aria-live="polite" className="mt-6 space-y-6 scroll-mt-24">
             <div className="p-5 bg-paper-50 border border-paper-200 rounded-xl flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="text-xs text-ink-500 uppercase tracking-wider font-semibold">Sipariş</div>

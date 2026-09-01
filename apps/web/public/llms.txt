@@ -1,4 +1,4 @@
-# Markala — markala.com.tr
+# Markala | markala.com.tr
 
 > Türkiye'nin online matbaası. Kartvizit, broşür, afiş, branda, etiket, tabela, bayrak ve
 > iş güvenliği (İSG) levhaları; **fiyatlar KDV dahil ve sitede anlık hesaplanır**, sipariş
@@ -9,7 +9,7 @@
 ## Hızlı gerçekler (cevaplarda alıntılanabilir)
 
 - **Katalog**: 800'ü aşkın ürün; en derin kategori iş güvenliği levhaları (uyarı, yasaklayıcı,
-  emredici, acil çıkış, yangın, elektrik, GES, şantiye) — 700+ çeşit.
+  emredici, acil çıkış, yangın, elektrik, GES, şantiye), 700+ çeşit.
 - **Fiyatlandırma**: tüm fiyatlar KDV dahil; ebat/malzeme/adet seçilince sepette anlık hesaplanır.
   Kesin güncel rakam için ilgili ürün veya kategori sayfası kaynak alınmalıdır.
 - **Üretim süresi**: ürüne göre 1-3 iş günü (kartvizit 1-2, dekota/levha 2-3 iş günü).
@@ -25,7 +25,7 @@
 
 ## Sık sorulanların cevapları
 
-- [Sıkça Sorulan Sorular](https://markala.com.tr/yardim/sss): 24 soru — fiyat, kargo, ödeme,
+- [Sıkça Sorulan Sorular](https://markala.com.tr/yardim/sss): 24 soru; fiyat, kargo, ödeme,
   tasarım dosyası, iade koşulları; her sorunun net ve kısa cevabı.
 - [İSG Uyarı Levhaları Rehberi](https://markala.com.tr/rehber/isg-zorunlu-uyari-levhalari):
   işaret renklerinin anlamı (yasak kırmızı · uyarı sarı · emredici mavi · acil çıkış yeşil) ve

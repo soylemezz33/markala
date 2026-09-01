@@ -14,7 +14,7 @@ export class HealthController {
 
   /** Shallow: API process ayakta mı? Bağımlılık testi yok. Load-balancer için. */
   @Get()
-  @ApiOperation({ summary: "Shallow health check — bağımlılık testi yok" })
+  @ApiOperation({ summary: "Shallow health check, bağımlılık testi yok" })
   shallow() {
     return {
       status: "ok",
@@ -27,7 +27,7 @@ export class HealthController {
 
   /** Deep: DB + Redis bağlantısı test edilir. UptimeRobot / monitoring için. */
   @Get("deep")
-  @ApiOperation({ summary: "Deep health check — DB + Redis ping" })
+  @ApiOperation({ summary: "Deep health check, DB + Redis ping" })
   async deep() {
     const [db, redis] = await Promise.all([this.checkDb(), this.checkRedis()]);
 

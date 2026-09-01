@@ -1,0 +1,12 @@
+Renk Uzayı: CMYK kullanın
+Web tasarımı RGB ile yapılır ama matbaa baskısı CMYK ile yapılır. RGB dosyası gönderirseniz baskıda renkler %15-30 arasında farklı çıkar. Adobe Illustrator/Photoshop'tan 'CMYK Mode' seçin.
+Çözünürlük: 300 dpi
+Baskıda kullanılacak görseller 300 dpi olmalı. 72 dpi (web standardı) baskıda pikselli çıkar. Vektörel (SVG, AI, EPS) dosyalar zaten ölçeklenebilir, dpi sınırlaması yoktur.
+Taşma Payı: 2 mm
+Kart kenarına kadar uzanan tasarımlarda kesim sırasında beyaz şerit oluşmaması için tasarımı her kenardan 2 mm fazla uzatın. Önemli yazıları ise kenardan 3 mm içeride tutun.
+Format: PDF (öncelik), AI, PSD
+PDF en güvenli format. Adobe ortamından 'Press Quality' veya 'PDF/X-1a' preset'i ile dışa aktarın. AI ve PSD de kabul edilir; ancak fontları outline'layın (Type > Create Outlines).
+Renkleri Pantone ile mi yoksa CMYK mi?
+Tek renk lojistik, ofis baskı: Pantone (PMS) referansı önerilir. Tam renkli (4+4) baskı: CMYK yeterli. Pantone, baskıda renk tutarlılığı için her baskıda aynı pigment karışımı sağlar.
+Yaygın Hatalar
+1) RGB kaydetmek 2) Düşük çözünürlük (72 dpi) 3) Taşma payı bırakmamak 4) Font outline yapmamak (font yoksa baskıda farklı font ile basılır) 5) İçe gömülmemiş görseller (link olarak kalmış)

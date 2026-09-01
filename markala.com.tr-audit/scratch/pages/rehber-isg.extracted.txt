@@ -1,0 +1,26 @@
+Şantiye
+Sürekli değişen tehlike kaynakları nedeniyle en yoğun işaretleme gereken işyeri tipi. Tipik kontrol listesi:
+"Sağlık ve Güvenlik İşaretleri Yönetmeliği" işvereni, risk değerlendirmesine göre gerekli güvenlik işaretlerini bulundurmakla yükümlü kılar. Bu rehberde işaret sınıflarını, renk anlamlarını ve işyeri tipine göre tipik kontrol listelerini bulursun — katalogda 827 levha çeşidi, 34,90 ₺'den başlayan KDV dahil fiyatlarla.
+Yönetmelikteki sınıflandırma biçim ve renk kodlarına dayanır — levhanın rengi, mesajın türünü tek bakışta anlatır:
+| Sınıf | Biçim ve renk | Anlamı | Örnekler | 
+|---|---|---|---|
+| Yasaklayıcı işaretler | Beyaz zemin üzerinde kırmızı daire ve çapraz bant, siyah piktogram | Tehlikeye yol açabilecek davranışı yasaklar | Sigara içilmez, yetkisiz giremez, ateşle yaklaşma | 
+| Uyarı işaretleri | Sarı zemin, siyah kenarlı üçgen, siyah piktogram | Bir tehlike kaynağına karşı dikkat çağrısı yapar | Dikkat elektrik tehlikesi, düşme tehlikesi, sıcak yüzey | 
+| Emredici işaretler | Mavi daire içinde beyaz piktogram | Belirli bir davranışı zorunlu kılar (özellikle KKD kullanımı) | Baret tak, iş ayakkabısı giy, kulak koruyucu kullan | 
+| Acil çıkış ve ilk yardım işaretleri | Yeşil dikdörtgen veya kare, beyaz piktogram | Kaçış yollarını, çıkışları, toplanma alanını ve ilk yardım noktalarını gösterir | Acil çıkış, toplanma alanı, ilk yardım dolabı | 
+| Yangınla mücadele işaretleri | Kırmızı dikdörtgen veya kare, beyaz piktogram | Yangın ekipmanının yerini ve türünü gösterir | Yangın söndürücü, yangın hortumu, yangın alarm butonu | 
+Makine parkuru, kimyasal ve gürültü kaynakları işaretlemenin merkezindedir. Tipik kontrol listesi:
+Araç-yaya ayrımı ve istifleme güvenliği öne çıkar. Tipik kontrol listesi:
+Düşük riskli görünse de acil durum işaretlemesi her işyerinde gereklidir. Tipik kontrol listesi:
+Levha ürünlerinde adet arttıkça indirim sepette kendiliğinden uygulanır — işyerinin tüm levha ihtiyacını tek siparişte toplamak her zaman daha ekonomiktir:
+| Sipariş adedi | İndirim oranı | 
+|---|---|
+| 10 – 24 adet | %8 | 
+| 25 – 49 adet | %15 | 
+| 50 – 99 adet | %22 | 
+| 100 – 249 adet | %28 | 
+| 250+ adet | %35 | 
+Şantiye, fabrika veya deponun tüm levha ihtiyacı için toplu teklif iste — hacim indirimi ve kurumsal cari hesap avantajıyla, 24 saatte dönüş.
+Bu sayfadaki mevzuat bilgisi genel bilgilendirme düzeyindedir; işaret yükümlülükleri işyerinizin risk değerlendirmesine göre değişir. Fiyat ve ürün bilgileri canlı katalogdan otomatik güncellenir.
+Hoş geldin kuponu
+Kupon kodu: HOSGELDIN — sepette uygulanır, tek kullanım.

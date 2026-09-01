@@ -222,7 +222,7 @@ function RulesEditor({ rules, ownGroupKey, groups, onChange }: RulesEditorProps)
             onChange={(e) => updateForcesGroup(e.target.value)}
             className={selectCls}
           >
-            <option value="">— Grup seç —</option>
+            <option value="">, Grup seç, </option>
             {otherGroups.map((og) => (
               <option key={og.groupKey} value={og.groupKey}>
                 {og.groupLabel || og.groupKey}
@@ -235,7 +235,7 @@ function RulesEditor({ rules, ownGroupKey, groups, onChange }: RulesEditorProps)
               onChange={(e) => updateForcesOptionKey(e.target.value)}
               className={selectCls}
             >
-              <option value="">— Seçenek —</option>
+              <option value="">, Seçenek, </option>
               {forcesTargetGroup.options.map((fo) => (
                 <option key={fo.optionKey} value={fo.optionKey}>
                   {fo.optionLabel || fo.optionKey}

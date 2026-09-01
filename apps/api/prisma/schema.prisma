@@ -30,6 +30,8 @@ enum UserRole {
   /// Panel grupları (2026-08-21) — izinler kodda ROLE_PERMISSIONS'ta tanımlı.
   tasarimci
   muhasebe
+  /// Kargo operasyonu (2026-09-01): siparişi görür, takip no girer; tutar/maliyet görmez.
+  kargo
 }
 
 enum CorporateStatus {

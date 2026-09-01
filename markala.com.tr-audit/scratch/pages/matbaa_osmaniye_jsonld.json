@@ -1,0 +1,322 @@
+{
+  "block_count": 5,
+  "processed_count": 5,
+  "total_bytes": 4813,
+  "truncated": false,
+  "blocks": [
+    {
+      "index": 1,
+      "size_bytes": 1966,
+      "valid": true,
+      "types": [
+        "ContactPoint",
+        "EntryPoint",
+        "OpeningHoursSpecification",
+        "Organization",
+        "PostalAddress",
+        "SearchAction",
+        "WebSite"
+      ],
+      "types_truncated": false,
+      "data": {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://markala.com.tr/#organization",
+            "name": "Markala",
+            "legalName": "324 Ajans · Markala",
+            "alternateName": [
+              "Markala Matbaa",
+              "markala.com.tr"
+            ],
+            "url": "https://markala.com.tr",
+            "logo": "https://markala.com.tr/og-default.png",
+            "description": "Markala, 324 Ajans çatısı altında matbaa ve reklam ürünleri e-ticareti yapan butik markadır.",
+            "foundingDate": "2024-01-01",
+            "parentOrganization": {
+              "@type": "Organization",
+              "name": "324 Ajans",
+              "url": "https://324ajans.com"
+            },
+            "sameAs": [
+              "https://www.instagram.com/markala.com.tr",
+              "https://www.linkedin.com/company/324ajans",
+              "https://324ajans.com"
+            ],
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61",
+              "addressCountry": "TR",
+              "addressRegion": "Mersin",
+              "addressLocality": "Yenişehir",
+              "postalCode": "33060"
+            },
+            "contactPoint": [
+              {
+                "@type": "ContactPoint",
+                "contactType": "customer service",
+                "email": "merhaba@markala.com.tr",
+                "telephone": "+90-324-433-3351",
+                "areaServed": "TR",
+                "availableLanguage": [
+                  "Turkish"
+                ],
+                "hoursAvailable": {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday"
+                  ],
+                  "opens": "09:00",
+                  "closes": "18:00"
+                }
+              },
+              {
+                "@type": "ContactPoint",
+                "contactType": "sales",
+                "email": "kurumsal@markala.com.tr",
+                "telephone": "+90-324-433-3351",
+                "areaServed": "TR",
+                "availableLanguage": [
+                  "Turkish"
+                ]
+              }
+            ],
+            "knowsAbout": [
+              "Matbaa",
+              "Kartvizit Baskı",
+              "Broşür Baskı",
+              "Afiş Baskı",
+              "Branda Baskı",
+              "Kupa Baskı",
+              "Etiket Baskı",
+              "Antetli Kağıt",
+              "Kurumsal Kimlik",
+              "Reklam Ürünleri"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://markala.com.tr/#website",
+            "url": "https://markala.com.tr",
+            "name": "Markala — Matbaa & Reklam Ürünleri",
+            "publisher": {
+              "@id": "https://markala.com.tr/#organization"
+            },
+            "inLanguage": "tr-TR",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://markala.com.tr/urunler?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "size_bytes": 1299,
+      "valid": true,
+      "types": [
+        "City",
+        "Country",
+        "GeoCoordinates",
+        "LocalBusiness",
+        "OpeningHoursSpecification",
+        "PostalAddress"
+      ],
+      "types_truncated": false,
+      "data": {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "@id": "https://markala.com.tr/#localbusiness",
+        "name": "Markala — Matbaa & Reklam Ürünleri",
+        "image": "https://markala.com.tr/og-default.png",
+        "url": "https://markala.com.tr",
+        "telephone": "+90-324-433-3351",
+        "email": "merhaba@markala.com.tr",
+        "priceRange": "₺₺",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Çiftlikköy Mah. 32182 Sk. Astoria One No:13 İç Kapı No:61",
+          "addressLocality": "Yenişehir",
+          "addressRegion": "Mersin",
+          "postalCode": "33060",
+          "addressCountry": "TR"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 36.812061,
+          "longitude": 34.641482
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": [
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday"
+            ],
+            "opens": "09:00",
+            "closes": "18:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": "Saturday",
+            "opens": "09:00",
+            "closes": "17:00"
+          }
+        ],
+        "areaServed": [
+          {
+            "@type": "Country",
+            "name": "Türkiye"
+          },
+          {
+            "@type": "City",
+            "name": "Mersin"
+          },
+          {
+            "@type": "City",
+            "name": "Adana"
+          },
+          {
+            "@type": "City",
+            "name": "İstanbul"
+          },
+          {
+            "@type": "City",
+            "name": "Ankara"
+          },
+          {
+            "@type": "City",
+            "name": "İzmir"
+          }
+        ],
+        "paymentAccepted": [
+          "Kredi Kartı",
+          "Banka Kartı",
+          "Havale/EFT"
+        ],
+        "currenciesAccepted": "TRY",
+        "sameAs": [
+          "https://www.instagram.com/markala.com.tr",
+          "https://www.linkedin.com/company/324ajans",
+          "https://324ajans.com"
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "size_bytes": 370,
+      "valid": true,
+      "types": [
+        "BreadcrumbList",
+        "ListItem"
+      ],
+      "types_truncated": false,
+      "data": {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Anasayfa",
+            "item": "https://markala.com.tr/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Matbaa Hizmetleri",
+            "item": "https://markala.com.tr/matbaa"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "Osmaniye Matbaa",
+            "item": "https://markala.com.tr/matbaa/osmaniye"
+          }
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "size_bytes": 816,
+      "valid": true,
+      "types": [
+        "AggregateOffer",
+        "City",
+        "GeoCoordinates",
+        "LocalBusiness",
+        "Service"
+      ],
+      "types_truncated": false,
+      "data": {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "@id": "https://markala.com.tr/matbaa/osmaniye#service",
+        "serviceType": "Osmaniye Matbaa ve Baskı Hizmeti",
+        "name": "Osmaniye Matbaa — Markala",
+        "description": "Osmaniye, Çukurova ve Doğu Akdeniz arasında kavşak konumda. Demir-çelik, tarım ve gıda sektörleri yoğun. Mersin'den 1 iş günü içinde DHL ile teslim sağlıyoruz; OSB içi firmalara özel kurumsal hesap.",
+        "provider": {
+          "@type": "LocalBusiness",
+          "@id": "https://markala.com.tr/#localbusiness",
+          "name": "Markala — Matbaa & Reklam Ürünleri",
+          "telephone": "+90-324-433-3351"
+        },
+        "areaServed": {
+          "@type": "City",
+          "name": "Osmaniye",
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 37.069569,
+            "longitude": 36.247221
+          }
+        },
+        "offers": {
+          "@type": "AggregateOffer",
+          "priceCurrency": "TRY",
+          "lowPrice": 89,
+          "highPrice": 8500,
+          "offerCount": 32
+        }
+      }
+    },
+    {
+      "index": 5,
+      "size_bytes": 362,
+      "valid": true,
+      "types": [
+        "Answer",
+        "FAQPage",
+        "Question"
+      ],
+      "types_truncated": false,
+      "data": {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "@id": "https://markala.com.tr/matbaa/osmaniye#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Osmaniye'ye teslimat süresi nedir?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Mersin atölyemizden DHL ile Osmaniye'ye 1 iş günü içinde teslim. Sabah verilen sipariş ertesi gün öğle saatlerinde elinizde."
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

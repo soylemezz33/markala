@@ -18,17 +18,17 @@ import { GuideFaqSection, asOfLabel } from "../_shared";
 export const revalidate = 3600;
 
 const PAGE_PATH = "/rehber/uv-dtf-baski-fiyatlari-2026";
-const BASLIK = "UV DTF Baskı Fiyatları 2026 — Nedir, Nereye Yapışır, m² Kaç TL?";
+const BASLIK = "UV DTF Baskı Fiyatları 2026: Nedir, Nereye Yapışır, m² Kaç TL?";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "UV DTF Baskı Fiyatları 2026 — Nedir ve m² Fiyatı Ne Kadar?",
+    title: "UV DTF Baskı Fiyatları 2026 | Nedir ve m² Fiyatı Ne Kadar?",
     description:
       "UV DTF transfer sticker nedir, cam-metal-ahşap-plastik hangi yüzeye yapışır, folyodan farkı nedir? 2026 güncel m² fiyatları ve metraja göre kademeli fiyatlandırma. KDV dahil.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "UV DTF Baskı Fiyatları 2026 — Nedir, m² Kaç TL?",
+      title: "UV DTF Baskı Fiyatları 2026 | Nedir, m² Kaç TL?",
       description:
         "UV DTF transfer sticker: uygulama yüzeyleri, folyodan farkı, metraja göre kademeli m² fiyatları.",
       url: PAGE_PATH,
@@ -43,7 +43,7 @@ export default async function UvDtfFiyatlariPage() {
     getProductBySlug("folyo-cesitleri"),
   ]);
   if (!dtf || getDisplayPrice(dtf) <= 0) {
-    throw new Error("rehber/uv-dtf: ürün fiyatsız/boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/uv-dtf: ürün fiyatsız/boş döndü (API blip?), stale ISR korunur");
   }
   const m2Ham = dtf.displayPrice ?? 0;
   const m2 = getDisplayPrice(dtf);
@@ -63,19 +63,19 @@ export default async function UvDtfFiyatlariPage() {
   const faqs = [
     {
       q: "UV DTF baskı nedir?",
-      a: "UV DTF (Direct to Film), baskının doğrudan yüzeye değil özel bir transfer filmin üzerine yapıldığı tekniktir. Baskı UV mürekkeple film üzerine basılır, üzerine yapıştırıcı katman eklenir ve ikinci bir film ile kapatılır. Uygulama sırasında üst film kaldırılır, tasarım yüzeye yapışır. Isı, pres veya özel makine gerektirmez — elle uygulanır.",
+      a: "UV DTF (Direct to Film), baskının doğrudan yüzeye değil özel bir transfer filmin üzerine yapıldığı tekniktir. Baskı UV mürekkeple film üzerine basılır, üzerine yapıştırıcı katman eklenir ve ikinci bir film ile kapatılır. Uygulama sırasında üst film kaldırılır, tasarım yüzeye yapışır. Isı, pres veya özel makine gerektirmez, elle uygulanır.",
     },
     {
       q: "Hangi yüzeylere yapışır?",
-      a: "Cam, metal, ahşap, sert plastik, seramik, deri ve boyalı yüzeylerin çoğuna yapışır. Düz veya hafif kavisli yüzeylerde sorunsuz çalışır. Kumaş ve esnek yüzeyler için uygun değildir — orada tekstil DTF kullanılır. Çok pürüzlü, tozlu veya yağlı yüzeylerde tutunma zayıflar; uygulama öncesi yüzeyin temiz ve kuru olması gerekir.",
+      a: "Cam, metal, ahşap, sert plastik, seramik, deri ve boyalı yüzeylerin çoğuna yapışır. Düz veya hafif kavisli yüzeylerde sorunsuz çalışır. Kumaş ve esnek yüzeyler için uygun değildir, orada tekstil DTF kullanılır. Çok pürüzlü, tozlu veya yağlı yüzeylerde tutunma zayıflar; uygulama öncesi yüzeyin temiz ve kuru olması gerekir.",
     },
     {
       q: "Folyodan farkı ne, hangisini seçmeliyim?",
-      a: `Folyo tek katmanlı yapışkanlı bir malzemedir ve kesim gerektirir; çok parçalı tasarımlarda her parçanın ayrı hizalanması gerekir. UV DTF'te tasarım tek transfer üzerinde bütün hâlinde gelir, kesim yoktur ve mürekkep kabartma dokusu verir — dokununca hissedilir. Küçük, detaylı ve çok renkli işlerde UV DTF daha pratik; geniş alan giydirmelerinde folyo daha ekonomiktir.${folyoM2 > 0 ? ` Karşılaştırma için: folyo ${formatPriceWithSymbol(folyoM2)}/m², UV DTF ${formatPriceWithSymbol(m2)}/m²'den başlar.` : ""}`,
+      a: `Folyo tek katmanlı yapışkanlı bir malzemedir ve kesim gerektirir; çok parçalı tasarımlarda her parçanın ayrı hizalanması gerekir. UV DTF'te tasarım tek transfer üzerinde bütün hâlinde gelir, kesim yoktur ve mürekkep kabartma dokusu verir, dokununca hissedilir. Küçük, detaylı ve çok renkli işlerde UV DTF daha pratik; geniş alan giydirmelerinde folyo daha ekonomiktir.${folyoM2 > 0 ? ` Karşılaştırma için: folyo ${formatPriceWithSymbol(folyoM2)}/m², UV DTF ${formatPriceWithSymbol(m2)}/m²'den başlar.` : ""}`,
     },
     {
       q: "Neden metraja göre fiyat değişiyor?",
-      a: `UV DTF'te makine hazırlığı ve film sarfiyatı işin başında sabit bir maliyet oluşturur; toplam metraj arttıkça bu maliyet daha çok alana yayılır ve birim fiyat düşer. Bu yüzden fiyat 0-2 m, 2-5 m, 5-20 m ve 20 m üzeri olmak üzere dört kademede tutulur. ${asOf} itibarıyla en yüksek kademe ile en düşük kademe arasında m² başına belirgin fark vardır — çok sayıda küçük sticker'ı tek siparişte toplamak bu yüzden avantajlıdır.`,
+      a: `UV DTF'te makine hazırlığı ve film sarfiyatı işin başında sabit bir maliyet oluşturur; toplam metraj arttıkça bu maliyet daha çok alana yayılır ve birim fiyat düşer. Bu yüzden fiyat 0-2 m, 2-5 m, 5-20 m ve 20 m üzeri olmak üzere dört kademede tutulur. ${asOf} itibarıyla en yüksek kademe ile en düşük kademe arasında m² başına belirgin fark vardır, çok sayıda küçük sticker'ı tek siparişte toplamak bu yüzden avantajlıdır.`,
     },
     {
       q: "Ne kadar dayanır?",
@@ -121,7 +121,7 @@ export default async function UvDtfFiyatlariPage() {
             Baskı transfer filme yapılır, cam-metal-ahşap fark etmeden neredeyse her yüzeye elle
             uygulanır. {asOf} itibarıyla{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(m2)}/m²</strong>&apos;den
-            başlar — KDV dahil.
+            başlar, KDV dahil.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
@@ -159,7 +159,7 @@ export default async function UvDtfFiyatlariPage() {
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
                 <strong className="text-ink-900">Üst film kaldırılır:</strong> tasarım yüzeyde
-                kalır. Çok parçalı işlerde bile hizalama sorunu olmaz — hepsi tek transferde gelir.
+                kalır. Çok parçalı işlerde bile hizalama sorunu olmaz, hepsi tek transferde gelir.
               </span>
             </li>
           </ol>

@@ -258,7 +258,7 @@ export function PricingGridEditor({ productId, options, initialPrices, siblingCo
     return (
       <div className="space-y-4">
         <p className="text-xs text-ink-500">
-          Bu ürünün seçenek grubu yok — tek satış fiyatı giriniz.
+          Bu ürünün seçenek grubu yok, tek satış fiyatı giriniz.
         </p>
         <div className="flex items-end gap-4 flex-wrap">
           <label className="block">
@@ -305,7 +305,7 @@ export function PricingGridEditor({ productId, options, initialPrices, siblingCo
     <div className="space-y-6">
       {adetIsMultiplier && (
         <p className="text-xs text-ink-500 bg-paper-100/60 border border-paper-200 rounded px-3 py-2">
-          <strong>Adet</strong> grubu çarpan olarak uygulanır — fiyat ızgarasına dahil değildir.
+          <strong>Adet</strong> grubu çarpan olarak uygulanır, fiyat ızgarasına dahil değildir.
         </p>
       )}
 
@@ -368,7 +368,7 @@ export function PricingGridEditor({ productId, options, initialPrices, siblingCo
                                   step="0.01"
                                   value={c.price}
                                   onChange={(e) => setCell(key, "price", e.target.value)}
-                                  placeholder="—"
+                                  placeholder="-"
                                   title="Satış fiyatı"
                                   className={inputCls + " w-20"}
                                 />
@@ -396,7 +396,7 @@ export function PricingGridEditor({ productId, options, initialPrices, siblingCo
                                   step="0.01"
                                   value={c.price}
                                   onChange={(e) => setCell(key, "price", e.target.value)}
-                                  placeholder="—"
+                                  placeholder="-"
                                   title="Satış fiyatı"
                                   className={inputCls + " w-20"}
                                 />

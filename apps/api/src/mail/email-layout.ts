@@ -55,7 +55,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;c
         </p>
       </td></tr>
     </table>
-    <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a8a29e;margin:16px 0 0">Bu işlemsel bir iletidir; Markala — 324 Ajans BT tarafından gönderilmiştir.</p>
+    <p style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#a8a29e;margin:16px 0 0">Bu işlemsel bir iletidir; Markala, 324 Ajans BT tarafından gönderilmiştir.</p>
   </td></tr>
 </table>
 </body>

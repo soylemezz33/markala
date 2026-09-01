@@ -24,7 +24,7 @@ export async function createPanelUser(
     return {
       ok: true,
       message: promoted
-        ? `${r.email} zaten kayıtlıydı — şifresine dokunulmadan yetkisi verildi (${r.role}).`
+        ? `${r.email} zaten kayıtlıydı, şifresine dokunulmadan yetkisi verildi (${r.role}).`
         : `${r.email} oluşturuldu (${r.role}).`,
     };
   } catch (e) {

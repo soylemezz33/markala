@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: { absolute: "Referanslarımız | Markala Online Matbaa" },
   description:
-    "Restoran, butik, kuyumcu, emlak, eczane ve daha fazlası — Markala Türkiye'nin 81 iline kurumsal matbaa ve reklam ürünleri üretiyor. Markanız da referanslarımız arasına katılsın.",
+    "Restoran, butik, kuyumcu, emlak, eczane ve daha fazlası, Markala Türkiye'nin 81 iline kurumsal matbaa ve reklam ürünleri üretiyor. Markanız da referanslarımız arasına katılsın.",
   alternates: { canonical: "/referanslar" },
   openGraph: {
     type: "website",

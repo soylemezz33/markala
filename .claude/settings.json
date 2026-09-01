@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(claude mcp list)",
+      "PowerShell($c = Get-Content \"$env:USERPROFILE\\\\.claude.json\" -Raw | ConvertFrom-Json; \"== root mcpServers ==\"; $c.mcpServers.PSObject.Properties.Name; \"== per-project mcp ==\"; $c.projects.PSObject.Properties | ForEach-Object { $n=$_.Name; $s=$_.Value.mcpServers; if \\($s\\) { \"$n -> \" + \\($s.PSObject.Properties.Name -join ', '\\) } })",
+      "PowerShell($c = Get-Content \"$env:USERPROFILE\\\\.claude.json\" -Raw | ConvertFrom-Json; \"== top-level keys ==\"; $c.PSObject.Properties.Name | Where-Object { $_ -match 'mcp|oauth|connector|account|organization|scope|team' }; \"== oauthAccount ==\"; $c.oauthAccount | ConvertTo-Json -Depth 3)"
+    ]
+  }
+}

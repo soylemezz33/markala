@@ -1,12 +1,30 @@
 {
-  "_aciklama": "İSG levha ürünleri için content alanı (specifications/features/useCases/faqs). API'ye scripts/isg-icerik/uygula.mjs ile uygulanır. Teknik özellikler ürünün GERÇEK option verisinden (ebat/malzeme/baskı) türetildi — uydurma değer yok. Kullanım alanı ve SSS her levhanın kendi tehlike bağlamına göre yazıldı.",
+  "_aciklama": "İSG levha ürünleri için content alanı (specifications/features/useCases/faqs). API'ye scripts/isg-icerik/uygula.mjs ile uygulanır. Teknik özellikler ürünün GERÇEK option verisinden (ebat/malzeme/baskı) türetildi, uydurma değer yok. Kullanım alanı ve SSS her levhanın kendi tehlike bağlamına göre yazıldı.",
   "_ortakSpecs": [
-    { "label": "Ebat seçenekleri", "value": "25×35, 35×50, 50×70, 70×100 cm" },
-    { "label": "Malzeme seçenekleri", "value": "Yapışkanlı etiket (sticker), 0,50 mm PVC levha, 3 mm dekota/foreks, 0,50 mm galvaniz sac" },
-    { "label": "Baskı tipi", "value": "UV baskı, reflektif folyo veya fosforlu lümen folyo" },
-    { "label": "Adet", "value": "1 adetten 100 adede kadar; toplu alımda kademeli indirim" },
-    { "label": "Kullanım yeri", "value": "İç ve dış mekân (dış mekân için PVC, dekota veya galvaniz sac önerilir)" },
-    { "label": "Montaj", "value": "Sticker kendinden yapışkanlı; levha tiplerinde köşe delikli montaj talep edilebilir" }
+    {
+      "label": "Ebat seçenekleri",
+      "value": "25×35, 35×50, 50×70, 70×100 cm"
+    },
+    {
+      "label": "Malzeme seçenekleri",
+      "value": "Yapışkanlı etiket (sticker), 0,50 mm PVC levha, 3 mm dekota/foreks, 0,50 mm galvaniz sac"
+    },
+    {
+      "label": "Baskı tipi",
+      "value": "UV baskı, reflektif folyo veya fosforlu lümen folyo"
+    },
+    {
+      "label": "Adet",
+      "value": "1 adetten 100 adede kadar; toplu alımda kademeli indirim"
+    },
+    {
+      "label": "Kullanım yeri",
+      "value": "İç ve dış mekân (dış mekân için PVC, dekota veya galvaniz sac önerilir)"
+    },
+    {
+      "label": "Montaj",
+      "value": "Sticker kendinden yapışkanlı; levha tiplerinde köşe delikli montaj talep edilebilir"
+    }
   ],
   "urunler": [
     {
@@ -42,7 +60,7 @@
     },
     {
       "slug": "dikkat-380v-olum-tehlikesi-levhasi",
-      "sinif": "Uyarı / İkaz — Elektrik",
+      "sinif": "Uyarı / İkaz, Elektrik",
       "features": [
         "380V yüksek gerilim uyarısı için sarı zemin + siyah üçgen kodu",
         "Pano yüzeyine doğrudan yapıştırma için sticker seçeneği",
@@ -129,7 +147,7 @@
         },
         {
           "question": "Bu levha yeterli mi, başka işaret gerekir mi?",
-          "answer": "Sıcak yüzey uyarısı tehlikeyi bildirir. Alanda eldiven/koruyucu ekipman zorunluysa ayrıca mavi daireli emredici işaret (ör. 'Koruyucu eldiven kullan') asılmalıdır — uyarı işareti zorunluluk bildirmez."
+          "answer": "Sıcak yüzey uyarısı tehlikeyi bildirir. Alanda eldiven/koruyucu ekipman zorunluysa ayrıca mavi daireli emredici işaret (ör. 'Koruyucu eldiven kullan') asılmalıdır, uyarı işareti zorunluluk bildirmez."
         }
       ]
     },
@@ -197,7 +215,7 @@
     },
     {
       "slug": "elektrik-pano-kapaklarini-kapali-tut-levhasi",
-      "sinif": "Uyarı / İkaz — Elektrik",
+      "sinif": "Uyarı / İkaz, Elektrik",
       "features": [
         "Pano güvenliği uyarısı; elektrik tehlikesi renk-biçim koduyla uyumlu",
         "Pano sac yüzeyine doğrudan uygulama için sticker seçeneği",
@@ -222,7 +240,7 @@
         },
         {
           "question": "Panonun içine mi dışına mı yapıştırılır?",
-          "answer": "Kapağın dış yüzeyine, göz hizasına uygulanır — hatırlatmanın kapak kapatılmadan önce görülmesi gerekir. Pano içine yapıştırılan etiket amacına ulaşmaz."
+          "answer": "Kapağın dış yüzeyine, göz hizasına uygulanır, hatırlatmanın kapak kapatılmadan önce görülmesi gerekir. Pano içine yapıştırılan etiket amacına ulaşmaz."
         }
       ]
     },
@@ -245,7 +263,7 @@
       "faqs": [
         {
           "question": "Emredici işaret neden mavi?",
-          "answer": "Mavi daire içinde beyaz piktogram, yönetmelikte belirli bir davranışın zorunlu kılındığını gösteren emredici işaret kodudur — özellikle kişisel koruyucu donanım (KKD) kullanımı için kullanılır. Sarı üçgen (uyarı) veya kırmızı daire (yasak) bu işlevi karşılamaz."
+          "answer": "Mavi daire içinde beyaz piktogram, yönetmelikte belirli bir davranışın zorunlu kılındığını gösteren emredici işaret kodudur, özellikle kişisel koruyucu donanım (KKD) kullanımı için kullanılır. Sarı üçgen (uyarı) veya kırmızı daire (yasak) bu işlevi karşılamaz."
         },
         {
           "question": "Levha nereye asılmalı?",

@@ -1,0 +1,12 @@
+DHL Anlaşmamız
+Markala olarak Türkiye geneli kargolarımızı DHL ile yapıyoruz. 81 il + 970+ ilçeye 1-3 iş günü içinde teslimat.
+Kargo Süreleri
+İstanbul-Ankara-İzmir-Bursa-Mersin gibi büyük şehirler 24-48 saat. Doğu Anadolu illeri 2-3 iş günü. Adalar ve uzak köyler 3-5 iş günü.
+Kargo Ücretleri
+1.500 TL ve üzeri tüm siparişler için kargo ücretsizdir. Altındaki siparişlerde 79 TL standart kargo ücreti uygulanır. Hızlı kargo (1 iş günü) +89 TL ile mümkün (sipariş notunda belirtilmeli).
+Sipariş Takibi
+Kargoya verildikten sonra DHL takip kodu e-postanıza gönderilir. Aynı zamanda sitedeki '/kargo-takip' sayfasından sipariş numaranız ve e-postanızla sorgulayabilirsiniz.
+Teslim Alma
+Kapıda DHL kuryesi tarafından imza karşılığı teslim edilir. Adreste yoksanız komşuya bırakılmaz; bir sonraki iş günü tekrar denenir veya en yakın DHL şubesine bırakılır.
+Hasar Durumunda
+Teslim sırasında pakette belirgin bir hasar varsa kuryeye 'Hasarlı teslim alındı' tutanağı tutturun. 7 gün içinde fotoğraflı bildirim ile iade/değişim talep edebilirsiniz.

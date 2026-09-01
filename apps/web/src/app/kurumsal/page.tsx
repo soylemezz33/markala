@@ -160,7 +160,7 @@ const references = [
 const faqs = [
   {
     q: "Minimum sipariş adeti nedir?",
-    a: "Kurumsal fiyatlandırma için minimum 500 adet önerilir. Daha küçük adetler için standart fiyatlarımız geçerlidir — sitemizden sipariş verebilirsiniz.",
+    a: "Kurumsal fiyatlandırma için minimum 500 adet önerilir. Daha küçük adetler için standart fiyatlarımız geçerlidir, sitemizden sipariş verebilirsiniz.",
   },
   {
     q: "Fatura kesiyor musunuz?",
@@ -394,7 +394,7 @@ export default function KurumsalPage() {
             Kurumsal Teklifinizi Alın
           </h2>
           <p className="text-ink-500 text-lg mb-10 leading-relaxed">
-            Ürün, adet ve teslimat tarihinizi bildirin — size özel fiyat ve üretim planı 30 dakika içinde hazırlayalım.
+            Ürün, adet ve teslimat tarihinizi bildirin, size özel fiyat ve üretim planı 30 dakika içinde hazırlayalım.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a

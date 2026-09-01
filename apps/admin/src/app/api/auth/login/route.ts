@@ -73,7 +73,10 @@ export async function POST(req: NextRequest) {
   }
 
   // 2026-08-21: panel grupları eklendi (tasarimci, muhasebe). Müşteri rolü hâlâ giremez.
-  const PANEL_ROLES = ["admin", "super_admin", "tasarimci", "muhasebe"];
+  // 2026-09-01: kargo eklendi. ⚠️ Bu liste apps/api/src/auth/permissions.ts PANEL_ROLES'ün
+  // ELLE tutulan ikinci kopyasıdır — yeni rol eklerken İKİSİ birden güncellenmeli, yoksa
+  // rol API'de doğru tanımlı olsa bile kullanıcı panele hiç giremez (403).
+  const PANEL_ROLES = ["admin", "super_admin", "tasarimci", "muhasebe", "kargo"];
   if (!PANEL_ROLES.includes(data.user.role)) {
     return NextResponse.json({ error: "Bu hesabın yönetim paneline erişim yetkisi yok." }, { status: 403 });
   }

@@ -360,7 +360,7 @@ function DetailRow({
         {label}
       </span>
       <span className={`text-sm text-ink-900 text-right break-words ${mono ? "font-mono" : ""}`}>
-        {value || "—"}
+        {value || "-"}
       </span>
     </div>
   );

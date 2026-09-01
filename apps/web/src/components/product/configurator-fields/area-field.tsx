@@ -43,16 +43,31 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const boyN = Number(boy) || 0;
   const adetN = Math.max(1, Number(adet) || 1);
   const alan = (enN * boyN) / 10000;
-  // Fiyat PARÇA BAŞINA min uygular (her parça max(minM2, alan), sonra × adet) — configurator.ts
-  // + server ile aynı. Gösterim de aynı formülü kullanmalı; eski toplam-alan formülü çok adet +
-  // küçük parçada gösterilen alan ≠ ödenen alan yapıyordu.
-  const toplamAlan = Math.max(minM2, alan) * adetN;
-  const minApplied = alan > 0 && alan < minM2;
 
-  // Seçili malzemenin maxM2 sınırı (tek parça) — aşılırsa uyarı.
-  const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number; maxEn?: number; minEn?: number; minBoy?: number } | null }>).find(
+  // Seçili malzemenin kuralları (maxM2 sınırı, minM2 tabanı, en/boy limitleri).
+  const matOpt = ((product.options ?? []) as Array<{ groupKey: string; optionKey: string; rules?: { maxM2?: number; maxEn?: number; minEn?: number; minBoy?: number; minM2?: number } | null }>).find(
     (o) => o.groupKey === "malzeme" && o.optionKey === sel.malzeme,
   );
+
+  // Malzeme kendi minM2'sini bildirmişse işletme genelini EZER — configurator.ts alanFor()
+  // ile aynı öncelik. Aksi halde ekran "min 1 m²" derken fiyat 0,90'dan hesaplanır (kırlangıç
+  // bayrak, 2026-09-01).
+  const matMinM2 = matOpt?.rules?.minM2;
+  const etkinMinM2 = typeof matMinM2 === "number" && matMinM2 >= 0 ? matMinM2 : minM2;
+
+  // Minimum TOPLAM alana uygulanır: max(minM2, alan × adet) — configurator.ts computeAreaPrice
+  // ve api/orders/pricing.ts ile BİREBİR aynı formül.
+  //
+  // 2026-09-01 DÜZELTME: burada eskiden `max(minM2, alan) * adet` (parça başına min) vardı,
+  // fiyat motoru ise toplam alana uyguluyordu. 0,5 m²'lik üründen 2 adet alındığında ekran
+  // "2 m²" yazıp fiyat 1 m² üzerinden çıkıyordu — gösterilen alan ödenen alanı tutmuyordu.
+  // Doğru olan motordur (Hasan kuralı: "1 m²'yi geçtiyse min hiç uygulanmasın, ölçüye göre
+  // fiyat"); bu yüzden EKRAN motora hizalandı, fiyatta değişiklik YOK.
+  const toplamAlan = Math.max(etkinMinM2, alan * adetN);
+  const minApplied = alan > 0 && alan * adetN < etkinMinM2;
+  // Rozet/açıklama metni — eskiden "1 m²" sabit yazıyordu; malzemeye özel taban devreye
+  // girince yanlış rakam gösteriyordu (0,90 m² tabanında "min 1 m²" demek gibi).
+  const minMetni = etkinMinM2.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
   const maxM2 = matOpt?.rules?.maxM2;
   const maxExceeded = typeof maxM2 === "number" && maxM2 > 0 && alan > maxM2;
 
@@ -176,7 +191,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
           </strong>
           {minApplied && (
             <span className="ml-2 rounded bg-paper-200 px-1.5 py-0.5 text-[11px] font-medium text-ink-700">
-              parça başına min 1 m²
+              en az {minMetni} m²
             </span>
           )}
         </p>
@@ -184,7 +199,9 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
 
       {minApplied && (
         <p className="text-[11px] text-ink-500">
-          Üretim minimumu parça başına 1 m² olduğundan, daha küçük işler parça başına 1 m² üzerinden fiyatlanır.
+          Üretim minimumu {minMetni} m² olduğundan, toplamı bunun altında kalan işler{" "}
+          {minMetni} m² üzerinden fiyatlanır. Adet artırdığınızda toplam bu sınırı geçerse
+          minimum uygulanmaz, gerçek ölçüye göre fiyatlanır.
         </p>
       )}
 
@@ -202,7 +219,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
             : enTooSmall
               ? `en (genişlik) en az ${minEn} cm`
               : `boy (uzunluk) en az ${minBoy} cm`}{" "}
-          olmalıdır — daha küçüğü üretilemiyor.
+          olmalıdır, daha küçüğü üretilemiyor.
         </p>
       )}
 

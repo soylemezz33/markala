@@ -89,7 +89,7 @@ const klasikKartvizit: ProductWithParams = {
   categorySlug: "kartvizit",
   sku: "MK-KRT-CLS",
   brand: "Markala",
-  shortDescription: "Tek ebat 82×52 mm — EKO, LAK ve VIP serileri · Min. 1.000 adet",
+  shortDescription: "Tek ebat 82×52 mm: EKO, LAK ve VIP serileri · Min. 1.000 adet",
   description: note(
     "Profesyonel iş hayatında ilk izlenimin yarısını oluşturan kartvizitleriniz, Markala'nın 21 farklı paket varyantından (EKO / LAK / VIP) seçtiğiniz konfigürasyonla tek ebat 82×52 mm boyutunda üretilir. Kâğıt gramajı 250 gr Bristol'den 800 gr sıvama bristole; kaplama mat/parlak selefondan kabartma laklı altın yaldıza, kesim düz formdan oval/özel forma kadar uzanır. Minimum sipariş 1.000 adet, devamı 2.000-3.000-5.000-10.000 adet kademelerinde uygulanır. Tasarım dosyanız CMYK 300 dpi PDF olarak gönderilmeli, kenarda 2 mm taşma payı bırakılmalıdır. Üretim 1-2 iş günü, DHL kargo 81 ile 1-3 iş günü.",
   ),
@@ -102,12 +102,12 @@ const klasikKartvizit: ProductWithParams = {
   bestseller: true,
   rating: { average: 4.8, count: 247 },
   features: [
-    "Tek standart ebat: 82 × 52 mm — kart cüzdanına tam uyum",
+    "Tek standart ebat: 82 × 52 mm, kart cüzdanına tam uyum",
     "21 paket varyantı: EKO (6) / LAK (10) / VIP (3)",
     "250-800 gr aralığında Bristol/Kuşe/Sıvama kâğıt seçenekleri",
     "Mat & parlak selefon, kabartma lak, altın/gümüş yaldız ekstraları",
     "Düz, oval ve özel form kesim",
-    "Minimum 1.000 adet — toplu sipariş kademeleri",
+    "Minimum 1.000 adet, toplu sipariş kademeleri",
     "1-2 iş günü üretim, 81 ile DHL kargo",
   ],
   useCases: [
@@ -118,9 +118,9 @@ const klasikKartvizit: ProductWithParams = {
   ],
   specifications: [
     { label: "Standart Ebat", value: "82 × 52 mm" },
-    { label: "Baskı", value: "Çift Yön Renkli (4+4) — paket bazlı varyasyonlar" },
+    { label: "Baskı", value: "Çift Yön Renkli (4+4), paket bazlı varyasyonlar" },
     { label: "Renk Sistemi", value: "CMYK 300 dpi" },
-    { label: "Tasarım Dosyası", value: "PDF / AI / PSD — taşma payı 2 mm" },
+    { label: "Tasarım Dosyası", value: "PDF / AI / PSD, taşma payı 2 mm" },
     { label: "Üretim Süresi", value: "1-2 iş günü" },
     { label: "Kargo", value: "DHL Türkiye geneli, 1-3 iş günü" },
   ],
@@ -133,30 +133,30 @@ const klasikKartvizit: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Paket × Adet",
-      matrixNote: "Tek ebat 82 × 52 mm — Çift Yön Renkli. Tabloda paketinizi ve adedi seçin.",
+      matrixNote: "Tek ebat 82 × 52 mm, Çift Yön Renkli. Tabloda paketinizi ve adedi seçin.",
       rows: [
         // EKO
-        { id: "nk", code: "NK", group: "EKO", label: "NK — Ekonomik", sublabel: "250 gr Bristol · Tek Yön Renkli · Parlak Selefonlu", prices: adet1kPrices(210) },
-        { id: "nka", code: "NKA", group: "EKO", label: "NKA — Eko + Arka Siyah", sublabel: "250 gr Bristol · Tek Yön Renkli · Parlak Selefonlu · Arkası Tek Renk Siyah", prices: adet1kPrices(220) },
-        { id: "nsk", code: "NSK", group: "EKO", label: "NSK — 300 gr Bristol", sublabel: "300 gr Bristol · Tek Yön Renkli · Arkası Tek Renk Siyah", prices: adet1kPrices(200) },
-        { id: "mna", code: "MNA", group: "EKO", label: "MNA — Mat Selefon", sublabel: "350 gr Bristol · Tek Yön Renkli · Mat Selefonlu · Arkası Tek Renk Siyah", prices: adet1kPrices(240) },
-        { id: "cyp", code: "CYP", group: "EKO", label: "CYP — Çift Yön Parlak Selefon", sublabel: "350 gr Kuşe · Çift Yön Renkli · Parlak Selefonlu", prices: adet1kPrices(290), badges: { "1000": "EN ÇOK" } },
-        { id: "cym", code: "CYM", group: "EKO", label: "CYM — Çift Yön Mat Selefon", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefonlu", prices: adet1kPrices(300) },
+        { id: "nk", code: "NK", group: "EKO", label: "NK - Ekonomik", sublabel: "250 gr Bristol · Tek Yön Renkli · Parlak Selefonlu", prices: adet1kPrices(210) },
+        { id: "nka", code: "NKA", group: "EKO", label: "NKA - Eko + Arka Siyah", sublabel: "250 gr Bristol · Tek Yön Renkli · Parlak Selefonlu · Arkası Tek Renk Siyah", prices: adet1kPrices(220) },
+        { id: "nsk", code: "NSK", group: "EKO", label: "NSK, 300 gr Bristol", sublabel: "300 gr Bristol · Tek Yön Renkli · Arkası Tek Renk Siyah", prices: adet1kPrices(200) },
+        { id: "mna", code: "MNA", group: "EKO", label: "MNA - Mat Selefon", sublabel: "350 gr Bristol · Tek Yön Renkli · Mat Selefonlu · Arkası Tek Renk Siyah", prices: adet1kPrices(240) },
+        { id: "cyp", code: "CYP", group: "EKO", label: "CYP - Çift Yön Parlak Selefon", sublabel: "350 gr Kuşe · Çift Yön Renkli · Parlak Selefonlu", prices: adet1kPrices(290), badges: { "1000": "EN ÇOK" } },
+        { id: "cym", code: "CYM", group: "EKO", label: "CYM - Çift Yön Mat Selefon", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefonlu", prices: adet1kPrices(300) },
         // LAK
-        { id: "kl", code: "KL", group: "LAK", label: "KL — Kabartma Lak (Tek Yön)", sublabel: "350 gr Kuşe · Tek Yön Renkli · Mat Selefon · Kabartma Lak", prices: adet1kPrices(290) },
-        { id: "cyml4", code: "CYML4", group: "LAK", label: "CYML4 — Çift Yön Lak 400 gr", sublabel: "400 gr Kuşe · Çift Yön Renkli · Mat Selefon · Lak", prices: adet1kPrices(400) },
-        { id: "o-cok", code: "O-COK", group: "LAK", label: "O-COK — Oval Kesim + Kabartma Lak", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefon · Kabartma Lak · Oval Kesim", prices: adet1kPrices(420) },
-        { id: "s-cok", code: "S-COK", group: "LAK", label: "S-COK — Özel Kesim + Kabartma Lak", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefon · Kabartma Lak · Özel Kesim", prices: adet1kPrices(500) },
-        { id: "o-sek", code: "O-SEK", group: "LAK", label: "O-SEK — Sıvama Oval Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Oval Kesim · Çift Yön", prices: adet1kPrices(640) },
-        { id: "eko-sek", code: "EKO-SEK", group: "LAK", label: "EKO-SEK — Eko Sıvama Oval (82×50)", sublabel: "A.Bristol Sıvama · Mat Selefon · Kabartma Lak · Oval Kesim · Çift Yön (Bitmiş 82×50 mm)", prices: adet1kPrices(580) },
-        { id: "s-sek", code: "S-SEK", group: "LAK", label: "S-SEK — Sıvama Özel Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Özel Kesim · Çift Yön", prices: adet1kPrices(740) },
-        { id: "a-sek", code: "A-SEK", group: "LAK", label: "A-SEK — Tek Yön Altın Yaldız + Özel Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Tek Yön Altın Yaldız · Özel Kesim", prices: adet1kPrices(950) },
-        { id: "ac-sek", code: "AC-SEK", group: "LAK", label: "AC-SEK — Çift Yön Altın Yaldız + Özel Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Çift Yön Altın Yaldız · Özel Kesim", prices: adet1kPrices(1100) },
-        { id: "tank", code: "TANK", group: "LAK", label: "TANK — 800 gr Sıvama Özel Kesim", sublabel: "800 gr Bristol Sıvama · Mat Selefon · Kabartma Lak · Özel Kesim · Çift Yön", prices: adet1kPrices(700) },
+        { id: "kl", code: "KL", group: "LAK", label: "KL - Kabartma Lak (Tek Yön)", sublabel: "350 gr Kuşe · Tek Yön Renkli · Mat Selefon · Kabartma Lak", prices: adet1kPrices(290) },
+        { id: "cyml4", code: "CYML4", group: "LAK", label: "CYML4 - Çift Yön Lak 400 gr", sublabel: "400 gr Kuşe · Çift Yön Renkli · Mat Selefon · Lak", prices: adet1kPrices(400) },
+        { id: "o-cok", code: "O-COK", group: "LAK", label: "O-COK - Oval Kesim + Kabartma Lak", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefon · Kabartma Lak · Oval Kesim", prices: adet1kPrices(420) },
+        { id: "s-cok", code: "S-COK", group: "LAK", label: "S-COK - Özel Kesim + Kabartma Lak", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefon · Kabartma Lak · Özel Kesim", prices: adet1kPrices(500) },
+        { id: "o-sek", code: "O-SEK", group: "LAK", label: "O-SEK - Sıvama Oval Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Oval Kesim · Çift Yön", prices: adet1kPrices(640) },
+        { id: "eko-sek", code: "EKO-SEK", group: "LAK", label: "EKO-SEK - Eko Sıvama Oval (82×50)", sublabel: "A.Bristol Sıvama · Mat Selefon · Kabartma Lak · Oval Kesim · Çift Yön (Bitmiş 82×50 mm)", prices: adet1kPrices(580) },
+        { id: "s-sek", code: "S-SEK", group: "LAK", label: "S-SEK - Sıvama Özel Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Özel Kesim · Çift Yön", prices: adet1kPrices(740) },
+        { id: "a-sek", code: "A-SEK", group: "LAK", label: "A-SEK - Tek Yön Altın Yaldız + Özel Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Tek Yön Altın Yaldız · Özel Kesim", prices: adet1kPrices(950) },
+        { id: "ac-sek", code: "AC-SEK", group: "LAK", label: "AC-SEK - Çift Yön Altın Yaldız + Özel Kesim", sublabel: "700 gr Sıvama · Mat Selefon · Kabartma Lak · Çift Yön Altın Yaldız · Özel Kesim", prices: adet1kPrices(1100) },
+        { id: "tank", code: "TANK", group: "LAK", label: "TANK, 800 gr Sıvama Özel Kesim", sublabel: "800 gr Bristol Sıvama · Mat Selefon · Kabartma Lak · Özel Kesim · Çift Yön", prices: adet1kPrices(700) },
         // VIP
-        { id: "ay", code: "AY", group: "VIP", label: "AY — Altın Yaldızlı + Arka Siyah", sublabel: "350 gr Bristol · Tek Yön Renkli · Mat Selefon · Altın Yaldızlı · Arka Tek Renk Siyah", prices: adet1kPrices(520) },
-        { id: "gy", code: "GY", group: "VIP", label: "GY — Gümüş Yaldızlı + Arka Siyah", sublabel: "350 gr Bristol · Tek Yön Renkli · Mat Selefon · Gümüş Yaldızlı · Arka Tek Renk Siyah", prices: adet1kPrices(560) },
-        { id: "vip", code: "VIP", group: "VIP", label: "VIP — Çift Yön Özel Kesim Altın Yaldız", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefon · Özel Kesim · Lak · Ön Yüz Altın Yaldız", prices: adet1kPrices(780) },
+        { id: "ay", code: "AY", group: "VIP", label: "AY - Altın Yaldızlı + Arka Siyah", sublabel: "350 gr Bristol · Tek Yön Renkli · Mat Selefon · Altın Yaldızlı · Arka Tek Renk Siyah", prices: adet1kPrices(520) },
+        { id: "gy", code: "GY", group: "VIP", label: "GY - Gümüş Yaldızlı + Arka Siyah", sublabel: "350 gr Bristol · Tek Yön Renkli · Mat Selefon · Gümüş Yaldızlı · Arka Tek Renk Siyah", prices: adet1kPrices(560) },
+        { id: "vip", code: "VIP", group: "VIP", label: "VIP - Çift Yön Özel Kesim Altın Yaldız", sublabel: "350 gr Kuşe · Çift Yön Renkli · Mat Selefon · Özel Kesim · Lak · Ön Yüz Altın Yaldız", prices: adet1kPrices(780) },
       ],
       cols: ADET_1K_KATLARI,
       defaultRowId: "cyp",
@@ -164,7 +164,7 @@ const klasikKartvizit: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Kartvizit Baskı 82×52 mm — EKO/LAK/VIP, 1.000 Adet 200 TL'den",
+    title: "Kartvizit Baskı 82×52 mm | EKO/LAK/VIP, 1.000 Adet 200 TL'den",
     description: "Tek ebat 82×52 mm kartvizit baskı 21 paket varyantı (EKO/LAK/VIP), min 1.000 adet 200 TL'den. Mat/parlak selefon, kabartma lak, altın yaldız, özel kesim. 1-2 iş günü üretim.",
     keywords: ["kartvizit baskı", "kartvizit basım", "82x52 kartvizit", "altın yaldız kartvizit", "kabartma lak kartvizit", "vip kartvizit", "online kartvizit baskı", "kartvizit fiyatları"],
   },
@@ -175,11 +175,11 @@ const klasikKartvizit: ProductWithParams = {
 // ============================================================================
 const brosur: ProductWithParams = {
   slug: "brosur",
-  name: "Broşür — 115 gr Kuşe Çift Yön Renkli",
+  name: "Broşür, 115 gr Kuşe Çift Yön Renkli",
   categorySlug: "brosur",
   sku: "MK-BRS-115",
   brand: "Markala",
-  shortDescription: "115 gr Kuşe Çift Yön Renkli — A7/A5/A4/A3 ebatlar, 1.000-10.000 adet",
+  shortDescription: "115 gr Kuşe Çift Yön Renkli: A7/A5/A4/A3 ebatlar, 1.000-10.000 adet",
   description: note(
     "Restoran menüsü, klinik tanıtımı, emlak portföyü, eğitim kurumu duyurusu ve kampanya broşürü için en yaygın tercih edilen 115 gr Kuşe çift yön renkli baskı. A7 (9.5×20 cm), A5 (14×20 cm), A4 (20×28 cm) ve A3 (28×40 cm) ebat seçenekleri; 1.000-10.000 adet aralığında kademeli fiyat. Tasarım hazır değilse ücretsiz şablon desteği. Otomatik katlama (Z/C) ek sipariş notu ile uygulanır.",
   ),
@@ -192,7 +192,7 @@ const brosur: ProductWithParams = {
   bestseller: true,
   rating: { average: 4.8, count: 134 },
   features: [
-    "115 gr Kuşe — orta gramaj, ekonomik ve dayanıklı",
+    "115 gr Kuşe, orta gramaj, ekonomik ve dayanıklı",
     "Çift yön renkli (4+4) baskı",
     "A7 / A5 / A4 / A3 ebat seçenekleri",
     "1.000 / 2.000 / 5.000 / 10.000 adet kademeleri",
@@ -214,13 +214,13 @@ const brosur: ProductWithParams = {
   ],
   faqs: [
     { q: "Hangi ebatı seçmeliyim?", a: "A7 küçük el ilanı/menü kartı; A5 standart broşür/menü; A4 katlamalı tanıtım broşürü; A3 büyük afiş benzeri açık ekranlı broşür için uygundur." },
-    { q: "Katlama yapılır mı?", a: "Evet — A4 ve A5 ebatlarda Z, C veya çapraz katlama sipariş notunda belirtilirse uygulanır. Otomatik makineyle kıvrılmadan yapılır." },
+    { q: "Katlama yapılır mı?", a: "Evet, A4 ve A5 ebatlarda Z, C veya çapraz katlama sipariş notunda belirtilirse uygulanır. Otomatik makineyle kıvrılmadan yapılır." },
   ],
   relatedSlugs: ["pro-brosur", "selefonlu-brosur", "el-ilani", "afis-105gr"],
   parameters: [
     buildMatrix({
       label: "Ebat × Adet",
-      matrixNote: "115 gr Kuşe · Çift Yön Renkli — sol sütundan ebat, üst satırdan adet seçin.",
+      matrixNote: "115 gr Kuşe · Çift Yön Renkli, sol sütundan ebat, üst satırdan adet seçin.",
       rows: [
         { id: "a7", label: "A7", sublabel: "9.5 × 20 cm", prices: { "1000": 700, "2000": 950, "5000": 2000, "10000": 3800 } },
         { id: "a5", label: "A5", sublabel: "14 × 20 cm", prices: { "1000": 800, "2000": 1050, "5000": 2200, "10000": 4000 } },
@@ -238,7 +238,7 @@ const brosur: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Broşür Baskı — 115 gr Kuşe Çift Yön A7/A5/A4/A3, 700 TL'den",
+    title: "Broşür Baskı | 115 gr Kuşe Çift Yön A7/A5/A4/A3, 700 TL'den",
     description: "115 gr Kuşe çift yön renkli broşür baskı, A7-A5-A4-A3 ebat seçenekleri, 1.000-10.000 adet kademeli fiyat. 1-2 iş günü üretim, Türkiye geneli kargo.",
     keywords: ["broşür baskı", "115 gr broşür", "kuşe broşür", "çift yön broşür", "a4 broşür", "a5 broşür", "tanıtım broşürü", "menü baskı"],
   },
@@ -249,11 +249,11 @@ const brosur: ProductWithParams = {
 // ============================================================================
 const proBrosur: ProductWithParams = {
   slug: "pro-brosur",
-  name: "Pro Broşür — 128 gr Kuşe Tam Ebat Tam Gramaj",
+  name: "Pro Broşür, 128 gr Kuşe Tam Ebat Tam Gramaj",
   categorySlug: "brosur",
   sku: "MK-BRS-PRO-128",
   brand: "Markala",
-  shortDescription: "128 gr Kuşe Çift Yön — Tam Ebat & Tam Gramaj garantili (yalnızca markala.com.tr)",
+  shortDescription: "128 gr Kuşe Çift Yön, Tam Ebat & Tam Gramaj garantili (yalnızca markala.com.tr)",
   description: note(
     "Pro Broşür serimiz, sektörde sıkça karşılaşılan 'tasarruf adı altında küçültülmüş ebat ve düşük gramaj' uygulamasının tam tersi: ürün açıklamasında ne yazıyorsa o teslim edilir. Tam ebat, tam 128 gr Kuşe gramaj, çift yön renkli baskı; A7 (10×21 cm), A5 (15×21 cm), A4 (21×30 cm), A3 (30×42 cm) ebatlarında 1.000 ve 2.000 adet kademelerinde sunulur. Bu garanti yalnızca markala.com.tr üzerinden verilen siparişler için geçerlidir.",
   ),
@@ -266,11 +266,11 @@ const proBrosur: ProductWithParams = {
   bestseller: true,
   rating: { average: 4.9, count: 56 },
   features: [
-    "128 gr Kuşe — 115 gr'a göre %11 daha kalın, premium hissiyat",
+    "128 gr Kuşe, 115 gr'a göre %11 daha kalın, premium hissiyat",
     "Tam ebat garantisi: A7=10×21, A5=15×21, A4=21×30, A3=30×42 cm",
     "Tam gramaj garantisi: 128 gr ölçüm sertifikalı",
     "Çift yön renkli (4+4) baskı",
-    "Sadece markala.com.tr — başka yerde yok",
+    "Sadece markala.com.tr, başka yerde yok",
   ],
   useCases: [
     "Premium hissiyat isteyen marka tanıtımı",
@@ -293,7 +293,7 @@ const proBrosur: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Ebat × Adet",
-      matrixNote: "128 gr Kuşe · Çift Yön · Tam Ebat — Sadece markala.com.tr garantisi.",
+      matrixNote: "128 gr Kuşe · Çift Yön · Tam Ebat, Sadece markala.com.tr garantisi.",
       rows: [
         { id: "a7", label: "A7", sublabel: "10 × 21 cm", prices: { "1000": 900, "2000": 1200 } },
         { id: "a5", label: "A5", sublabel: "15 × 21 cm", prices: { "1000": 1100, "2000": 1350 } },
@@ -309,8 +309,8 @@ const proBrosur: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Pro Broşür — 128 gr Kuşe Tam Ebat Tam Gramaj | Sadece markala.com.tr",
-    description: "128 gr Kuşe Pro Broşür — tam ebat, tam gramaj garantili. A7-A5-A4-A3, 1.000/2.000 adet. Premium tanıtım için, başka yerde bulunmaz. 900 TL'den.",
+    title: "Pro Broşür | 128 gr Kuşe Tam Ebat Tam Gramaj | Sadece markala.com.tr",
+    description: "128 gr Kuşe Pro Broşür: tam ebat, tam gramaj garantili. A7-A5-A4-A3, 1.000/2.000 adet. Premium tanıtım için, başka yerde bulunmaz. 900 TL'den.",
     keywords: ["pro broşür", "128 gr broşür", "tam ebat broşür", "premium broşür", "kuşe broşür baskı", "kalın broşür"],
   },
 };
@@ -320,11 +320,11 @@ const proBrosur: ProductWithParams = {
 // ============================================================================
 const selefonluBrosur: ProductWithParams = {
   slug: "selefonlu-brosur",
-  name: "Selefonlu Broşür — 200 gr Kuşe Parlak Selefon",
+  name: "Selefonlu Broşür, 200 gr Kuşe Parlak Selefon",
   categorySlug: "brosur",
   sku: "MK-BRS-SLF-200",
   brand: "Markala",
-  shortDescription: "200 gr Kuşe Çift Yön Renkli Parlak Selefonlu — yıkanabilir, dayanıklı",
+  shortDescription: "200 gr Kuşe Çift Yön Renkli Parlak Selefonlu: yıkanabilir, dayanıklı",
   description: note(
     "Yağ, sıvı ve sürekli kullanıma karşı dayanıklı 200 gr Kuşe çift yön renkli baskı + parlak selefon kombinasyonu. Restoran-kafe menüsü, terapi-spa hizmet listesi, oto servis hizmet kataloğu, otel oda dosyası ve uzun ömürlü kullanılması beklenen tüm tanıtım dökümanları için ideal. Selefon kaplaması parmak izi tutmaz, parlak ve canlı renk verir.",
   ),
@@ -336,9 +336,9 @@ const selefonluBrosur: ProductWithParams = {
   badges: ["cok-satilan"],
   rating: { average: 4.8, count: 87 },
   features: [
-    "200 gr Kuşe — kalın ve dayanıklı",
+    "200 gr Kuşe, kalın ve dayanıklı",
     "Çift yön renkli (4+4) baskı",
-    "Parlak selefon kaplama — yıkanabilir, parmak izi tutmaz",
+    "Parlak selefon kaplama, yıkanabilir, parmak izi tutmaz",
     "A7 / A5 / A4 / A3 ebat seçenekleri",
     "Yüksek adetlerde ekstra avantajlı fiyat",
   ],
@@ -384,7 +384,7 @@ const selefonluBrosur: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Selefonlu Broşür Baskı — 200 gr Kuşe Parlak Selefon Yıkanabilir",
+    title: "Selefonlu Broşür Baskı | 200 gr Kuşe Parlak Selefon Yıkanabilir",
     description: "200 gr Kuşe çift yön renkli parlak selefonlu broşür baskı. Restoran menüsü, otel direktif, spa hizmet listesi için yıkanabilir, dayanıklı.",
     keywords: ["selefonlu broşür", "menü baskı", "yıkanabilir broşür", "200 gr broşür", "parlak selefon broşür", "restoran menü baskı"],
   },
@@ -395,11 +395,11 @@ const selefonluBrosur: ProductWithParams = {
 // ============================================================================
 const elIlani: ProductWithParams = {
   slug: "el-ilani",
-  name: "El İlanı — 105 gr Kuşe Tek Yön Renkli",
+  name: "El İlanı, 105 gr Kuşe Tek Yön Renkli",
   categorySlug: "el-ilani",
   sku: "MK-ELI-105",
   brand: "Markala",
-  shortDescription: "105 gr Kuşe Tek Yön Renkli — A7/A5/A4/A3, 2.000-12.000 adet",
+  shortDescription: "105 gr Kuşe Tek Yön Renkli: A7/A5/A4/A3, 2.000-12.000 adet",
   description: note(
     "Açılış, kampanya, indirim, açık hava etkinliği, seçim, açılış tanıtımı için en hızlı ve ekonomik dağıtım malzemesi olan tek yön renkli el ilanı; 105 gr Kuşe kâğıt üzerine 4+0 baskı tekniğiyle üretilir. A7'den A3'e kadar 4 ebat, 2.000'den başlayan adet kademeleri. Yüksek adetlerde m² fiyatı dramatik düşer.",
   ),
@@ -412,7 +412,7 @@ const elIlani: ProductWithParams = {
   bestseller: true,
   rating: { average: 4.7, count: 92 },
   features: [
-    "105 gr Kuşe — el broşürü için ideal gramaj",
+    "105 gr Kuşe, el broşürü için ideal gramaj",
     "Tek yön renkli (4+0) baskı",
     "A7 / A5 / A4 / A3 ebat seçenekleri",
     "Min 2.000 adet, 12.000'e kadar avantajlı kademeler",
@@ -458,7 +458,7 @@ const elIlani: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "El İlanı Baskı — 105 gr Kuşe Tek Yön A7/A5/A4/A3, 900 TL'den",
+    title: "El İlanı Baskı | 105 gr Kuşe Tek Yön A7/A5/A4/A3, 900 TL'den",
     description: "105 gr Kuşe tek yön renkli el ilanı baskı, 2.000-12.000 adet. Açılış, kampanya, sokak dağıtımı için ekonomik. 1-2 iş günü üretim.",
     keywords: ["el ilanı baskı", "el broşürü", "105 gr el ilanı", "kampanya el ilanı", "açılış broşürü", "sokak dağıtım broşürü"],
   },
@@ -469,11 +469,11 @@ const elIlani: ProductWithParams = {
 // ============================================================================
 const afis105gr: ProductWithParams = {
   slug: "afis-105gr",
-  name: "Afiş — 105 gr Kuşe Tek Yön Renkli",
+  name: "Afiş, 105 gr Kuşe Tek Yön Renkli",
   categorySlug: "afis",
   sku: "MK-AFS-105",
   brand: "Markala",
-  shortDescription: "105 gr Kuşe Tek Yön Renkli afiş — 34×49 ve 49×69 cm",
+  shortDescription: "105 gr Kuşe Tek Yön Renkli afiş, 34×49 ve 49×69 cm",
   description: note(
     "Konser, festival, etkinlik, sergi, mağaza vitrin tanıtımı için 105 gr Kuşe kâğıt üzerine tek yön renkli baskı. 34×49 cm (orta boy) ve 49×69 cm (büyük boy) ebatlarda, 250-1.000 adet aralığında. Hızlı üretim, vitrin teyzı için A2-A1 alternatifi. Kalın gramaj branda afişi için 'Vinil Branda Afiş' kategorimize bakınız.",
   ),
@@ -485,7 +485,7 @@ const afis105gr: ProductWithParams = {
   badges: ["yeni"],
   rating: { average: 4.7, count: 31 },
   features: [
-    "105 gr Kuşe — afiş için orta gramaj",
+    "105 gr Kuşe, afiş için orta gramaj",
     "Tek yön renkli (4+0) baskı",
     "34×49 cm ve 49×69 cm ebatlar",
     "250 / 500 / 1.000 adet kademeleri",
@@ -512,7 +512,7 @@ const afis105gr: ProductWithParams = {
   parameters: [
     buildMatrix({
       label: "Ebat × Adet",
-      matrixNote: "105 gr Kuşe · Tek Yön Renkli — etkinlik ve vitrin için",
+      matrixNote: "105 gr Kuşe · Tek Yön Renkli, etkinlik ve vitrin için",
       rows: [
         { id: "34x49", label: "34 × 49 cm", sublabel: "Orta boy", prices: { "250": 1750, "500": 2250, "1000": 2950 } },
         { id: "49x69", label: "49 × 69 cm", sublabel: "Büyük boy", prices: { "250": 2700, "500": 3000, "1000": 4150 } },
@@ -527,7 +527,7 @@ const afis105gr: ProductWithParams = {
     }),
   ],
   seo: {
-    title: "Afiş Baskı — 105 gr Kuşe Tek Yön 34×49 / 49×69 cm, 1.750 TL'den",
+    title: "Afiş Baskı | 105 gr Kuşe Tek Yön 34×49 / 49×69 cm, 1.750 TL'den",
     description: "105 gr Kuşe tek yön renkli kâğıt afiş baskı, 34×49 cm ve 49×69 cm ebatlarda 250-1.000 adet. Etkinlik, konser, vitrin için ekonomik çözüm.",
     keywords: ["afiş baskı", "kağıt afiş", "etkinlik afişi", "konser afişi", "kuşe afiş", "vitrin afişi", "105 gr afiş"],
   },

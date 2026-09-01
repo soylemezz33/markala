@@ -181,7 +181,7 @@ export default function KvkkBasvuruPage() {
         <Container className="py-12 md:py-16">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success/10 text-success text-xs font-semibold uppercase tracking-wider mb-4">
-              <ShieldCheck size={14} weight="fill" /> KVKK 6698 — Madde 11
+              <ShieldCheck size={14} weight="fill" /> KVKK 6698, Madde 11
             </div>
             <h1 className="text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
               KVKK Veri Sahibi Başvuru Formu

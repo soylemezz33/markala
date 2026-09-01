@@ -83,7 +83,7 @@ export default function PasswordChangePage() {
           </Button>
           {saved && (
             <span className="inline-flex items-center gap-1.5 text-sm text-success font-medium">
-              <CheckCircle size={16} weight="fill" /> Şifreniz güncellendi — yeni şifreyle giriş yapın
+              <CheckCircle size={16} weight="fill" /> Şifreniz güncellendi, yeni şifreyle giriş yapın
             </span>
           )}
         </div>
@@ -98,7 +98,7 @@ export default function PasswordChangePage() {
           <li>Şifreniz en az 8 karakter, büyük harf ve rakam içermeli</li>
           <li>Doğum tarihi, telefon numarası gibi tahmin edilebilir bilgileri kullanmayın</li>
           <li>Aynı şifreyi birden fazla sitede kullanmayın</li>
-          <li>2FA (iki faktörlü doğrulama) yakında eklenecek — tercihen şifre yönetici uygulaması kullanın</li>
+          <li>2FA (iki faktörlü doğrulama) yakında eklenecek, tercihen şifre yönetici uygulaması kullanın</li>
         </ul>
       </div>
     </div>

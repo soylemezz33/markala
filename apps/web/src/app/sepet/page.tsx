@@ -161,7 +161,7 @@ export default function CartPage() {
               Önceki siparişindeki ürünler sepetine eklendi.
             </p>
             <p className="mt-1">
-              Fiyatlar güncel fiyattan hesaplanır — eski sipariş tutarından farklı olabilir.
+              Fiyatlar güncel fiyattan hesaplanır, eski sipariş tutarından farklı olabilir.
             </p>
             {reorderNotice.skipped.length > 0 && (
               <p className="mt-1 text-warning">
@@ -338,7 +338,7 @@ export default function CartPage() {
                 ))}
               {appliedCode === "HOSGELDIN" && (
                 <div className="p-3 bg-success/10 border border-success/30 rounded-xl text-xs font-medium text-success">
-                  ✓ HOSGELDIN uygulandı — ilk siparişine %10 indirim sepetinde.
+                  ✓ HOSGELDIN uygulandı, ilk siparişine %10 indirim sepetinde.
                 </div>
               )}
 

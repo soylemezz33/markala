@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
+import { useServerPerms } from "@/components/perms-provider";
 import {
   ArrowLeft,
   Package,
@@ -109,6 +110,8 @@ export interface OrderDetailProps {
   shippingAddress?: {
     fullName?: string;
     fullAddress?: string;
+    /** İlçe — kargo için ZORUNLU; tipte eksik olduğu için ekranlara hiç basılmıyordu (2026-09-01). */
+    district?: string;
     city?: string;
     zipCode?: string;
     phone?: string;
@@ -127,6 +130,19 @@ function formatDate(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+/**
+ * Tasarım dosyası indirme yolu (2026-09-01). Dosyalar artık public DEĞİL; API'de
+ * auth+ORDERS_READ korumalı uçtan geliyor ve düz <a href> Authorization gönderemiyor.
+ * Bu yüzden link admin'in kendi BFF rotasından geçer (çerezle kimliklenir).
+ * URL'nin son parçası (uuid.uzantı) anahtardır — hem eski hem yeni kayıt için aynı.
+ */
+function tasarimIndirmeYolu(url: string | null | undefined): string | undefined {
+  const key = String(url ?? "").split("?")[0]?.split("/").pop();
+  return key && /^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key)
+    ? `/api/tasarim-dosya/${key}`
+    : undefined;
 }
 
 const TL = (v: unknown) => "₺ " + Number(v ?? 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
@@ -186,9 +202,24 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const [trackEditing, setTrackEditing] = useState(false);
   const [trackMsg, setTrackMsg] = useState<string | null>(null);
 
+  // TUTAR GORUNURLUGU (2026-09-01, kargo rolu): bu sayfada hic izin kontrolu YOKTU,
+  // tutarlar/odeme/fatura herkese aciktı. "orders.amounts" iznine baglandi -> tasarimci ve
+  // muhasebe bu izne sahip oldugu icin BUGUNKU davranis aynen korunur, yalniz kargo gormez.
+  // API de ayni izne gore alanlari yanittan siliyor (orders.service parasalAlanlariAyikla);
+  // burasi ikincil savunma + NaN basmasini onleyen gorsel katman.
+  const perms = useServerPerms();
+  const showMoney = !perms || perms.includes("orders.amounts");
+  // Tam durum makinesi (iptal + geri adim) yalnizca ORDERS_STATUS'u olanlarda. Kargo rolunde
+  // yok: API zaten 403 doner ama butonu gostermek kullaniciyi hataya surukler.
+  const canFullStatus = !perms || perms.includes("orders.status");
+
+
   // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
   const payStatus = String(order.paymentStatus ?? "beklemede");
-  const canRefund = payStatus === "basarili" && order.paymentMethod !== "cari";
+  // showMoney sarti: iade onay penceresi tutari METIN olarak yaziyor (window.confirm),
+  // yani buton gorunur kalirsa tutar gizlemenin etrafindan dolasilir. API zaten FINANCE
+  // istiyor (403) ama sizinti butona basmadan ONCE oluyordu.
+  const canRefund = showMoney && payStatus === "basarili" && order.paymentMethod !== "cari";
   const alreadyRefunded = payStatus === "iade-edildi" || payStatus === "iade_edildi";
 
   const handleRefund = () => {
@@ -269,7 +300,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       const ok = window.confirm(
         `Sipariş İPTAL EDİLECEK.\n\n` +
           `• Müşteriye iptal e-postası GİDECEK.\n` +
-          `• Bu işlem GERİ ALINAMAZ — iptal edilen sipariş yeniden açılamaz.\n\n` +
+          `• Bu işlem GERİ ALINAMAZ, iptal edilen sipariş yeniden açılamaz.\n\n` +
           `Devam edilsin mi?`,
       );
       if (!ok) return;
@@ -308,7 +339,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
             const res = await updateOrderStatus(order.id, "iptal-edildi");
             if (!res.ok) {
               setCurrentStatus(prev);
-              setStatusError(`İade yapıldı ama iptal işaretlenemedi: ${res.error} — durumu elle iptal edin.`);
+              setStatusError(`İade yapıldı ama iptal işaretlenemedi: ${res.error}, durumu elle iptal edin.`);
             }
           });
           return;
@@ -364,11 +395,15 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
     });
   };
 
-  const customer = order.customerName ?? order.email ?? "—";
+  const customer = order.customerName ?? order.email ?? "-";
   const currentStatusIndex = STATUSES.findIndex((s) => s.id === currentStatus);
   const isCancelled = currentStatus === "iptal-edildi";
 
   const a = order.shippingAddress;
+
+  // "İlçe / İl" satırı. İlçesiz gönderi kargoya verilemez, bu yüzden tüm çıktılarda
+  // birlikte basılır. Eski kayıtlarda ilçe boş olabilir → filter ile tek başına il kalır.
+  const ilceIl = [a?.district, a?.city].filter(Boolean).join(" / ");
 
   // Sevkiyat/paketleme etiketi
   const printLabel = () =>
@@ -378,7 +413,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       <div class="box"><div class="muted">Alıcı</div>
         <div style="font-size:15px;font-weight:700">${esc(a?.fullName ?? customer)}</div>
         <div>${esc(a?.fullAddress ?? "")}</div>
-        <div>${esc(a?.city ?? "")} ${esc(a?.zipCode ?? "")}</div>
+        <div>${esc(ilceIl)} ${esc(a?.zipCode ?? "")}</div>
         <div>${esc(a?.phone ?? "")}</div></div>
       <div class="box"><div class="muted">İçerik</div>
         ${order.items.map((i) => `<div>• ${esc(i.productName)}${i.quantity != null ? " × " + esc(i.quantity) : ""}</div>`).join("")}</div>`);
@@ -396,7 +431,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       <div class="row"><div><div class="brand">Markala</div><div class="muted">324 Ajans BT · markala.com.tr</div></div>
       <div style="text-align:right"><h1>PROFORMA FATURA</h1><div class="muted">No: ${esc(order.orderNumber)}<br>${esc(formatDate(order.createdAt))}</div></div></div>
       <div class="box"><div class="muted">Müşteri</div><div style="font-weight:700">${esc(a?.fullName ?? customer)}</div>
-        <div>${esc(order.email ?? "")}</div><div>${esc(a?.fullAddress ?? "")} ${esc(a?.city ?? "")}</div></div>
+        <div>${esc(order.email ?? "")}</div><div>${esc(a?.fullAddress ?? "")} ${esc(ilceIl)}</div></div>
       <table><thead><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Birim</th><th class="r">Tutar</th></tr></thead><tbody>${rows}</tbody></table>
       <div class="box" style="margin-left:auto;max-width:300px">
         <div class="row"><span class="muted">Ara Toplam</span><span>${TL(order.subtotal)}</span></div>
@@ -411,11 +446,11 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const printCargo = () =>
     openPrint(`Kargo ${order.orderNumber}`, `
       <div class="row"><div class="brand">Markala</div><div class="muted">${esc(trackCarrier || "Kargo")}</div></div>
-      <div class="box"><div class="muted">Takip No</div><div class="big">${esc(trackNo || "—")}</div></div>
+      <div class="box"><div class="muted">Takip No</div><div class="big">${esc(trackNo || "-")}</div></div>
       <div class="row" style="gap:12px">
         <div class="box" style="flex:1"><div class="muted">Gönderen</div><div style="font-weight:700">Markala · 324 Ajans</div><div>Yenişehir / Mersin</div><div>0324 433 33 51</div></div>
         <div class="box" style="flex:1"><div class="muted">Alıcı</div><div style="font-weight:700">${esc(a?.fullName ?? customer)}</div>
-          <div>${esc(a?.fullAddress ?? "")}</div><div>${esc(a?.city ?? "")} ${esc(a?.zipCode ?? "")}</div><div>${esc(a?.phone ?? "")}</div></div></div>
+          <div>${esc(a?.fullAddress ?? "")}</div><div>${esc(ilceIl)} ${esc(a?.zipCode ?? "")}</div><div>${esc(a?.phone ?? "")}</div></div></div>
       <div class="box"><div class="muted">Sipariş No</div><div style="font-weight:700;font-family:ui-monospace,monospace">${esc(order.orderNumber)}</div></div>`);
 
   return (
@@ -438,9 +473,11 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
           <button onClick={printLabel} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
             <Printer size={14} /> Etiket Yazdır
           </button>
-          <button onClick={printInvoice} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
-            <FileText size={14} /> Fatura Kes
-          </button>
+          {showMoney && (
+            <button onClick={printInvoice} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
+              <FileText size={14} /> Fatura Kes
+            </button>
+          )}
         </div>
       </div>
 
@@ -478,7 +515,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                                 <span className="font-medium text-ink-700">
                                   {d.group}: {d.label}
                                 </span>{" "}
-                                — {d.detail}
+ - {d.detail}
                               </li>
                             ))}
                         </ul>
@@ -501,7 +538,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                       )}
                       {/* Tasarım dosyası gösterimi ayrı "Tasarım Dosyaları" bölümünde (aşağıda). */}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right" hidden={!showMoney}>
                       <div className="font-semibold text-ink-900 tabular-nums">
                         ₺ {Number(item.lineTotal ?? item.unitPrice ?? 0).toLocaleString("tr-TR")}
                       </div>
@@ -521,7 +558,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 ))
               )}
             </div>
-            <div className="mt-4 pt-4 border-t border-paper-200 space-y-1.5 text-sm">
+            <div className="mt-4 pt-4 border-t border-paper-200 space-y-1.5 text-sm" hidden={!showMoney}>
               <RowKV label="Ara Toplam" value={`₺ ${Number(order.subtotal ?? 0).toLocaleString("tr-TR")}`} />
               <RowKV label="Kargo" value={`₺ ${Number(order.shippingFee ?? 0).toLocaleString("tr-TR")}`} />
               {Number(order.discount ?? 0) > 0 && (
@@ -559,17 +596,17 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                           </div>
                         ) : item.needsDesignSupport ? (
                           <div className="mt-0.5 text-xs text-brand-700">
-                            Tasarım desteği istendi — grafik ekibi hazırlayacak
+                            Tasarım desteği istendi, grafik ekibi hazırlayacak
                           </div>
                         ) : (
                           <div className="mt-0.5 text-xs text-warning">
-                            Dosya yüklenmedi — müşteriden iste{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
+                            Dosya yüklenmedi, müşteriden iste{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
                           </div>
                         )}
                       </div>
-                      {hasFile && (
+                      {hasFile && tasarimIndirmeYolu(item.uploadedFileUrl) && (
                         <a
-                          href={item.uploadedFileUrl ?? undefined}
+                          href={tasarimIndirmeYolu(item.uploadedFileUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           download
@@ -591,12 +628,15 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 <XCircle size={14} weight="fill" /> Bu sipariş iptal edildi.
               </p>
             )}
+            {/* Kargo rolu (canFullStatus=false) yalnizca "Kargoda"yi gorur; diger gecisler
+                API'de de 403 doner, butonu gostermek kullaniciyi hataya surukler. Mevcut
+                durum bilgi amacli gorunur kalir ama tiklanamaz. */}
             <div className="flex flex-wrap gap-2 mb-4">
-              {STATUSES.map((s) => (
+              {STATUSES.filter((s) => canFullStatus || s.id === "kargoya-verildi" || s.id === currentStatus).map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleStatusChange(s.id)}
-                  disabled={isPending || isCancelled}
+                  disabled={isPending || isCancelled || (!canFullStatus && s.id !== "kargoya-verildi")}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all disabled:opacity-60 ${
                     currentStatus === s.id
                       ? "bg-ink-900 text-paper-50 border-ink-900"
@@ -608,7 +648,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
               ))}
             </div>
 
-            {!isCancelled && (
+            {!isCancelled && canFullStatus && (
               <div className="mb-4">
                 <button
                   onClick={() => handleStatusChange("iptal-edildi")}
@@ -760,10 +800,10 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 <MapPin size={12} className="flex-none mt-0.5 text-ink-500" />
                 <span>
                   {order.shippingAddress.fullAddress}
-                  {order.shippingAddress.city && (
+                  {ilceIl && (
                     <>
                       <br />
-                      {order.shippingAddress.city}
+                      {ilceIl}
                       {order.shippingAddress.zipCode && ` · ${order.shippingAddress.zipCode}`}
                     </>
                   )}
@@ -775,7 +815,11 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
           {/* Kargo kartı: takip numarası VARSA ya da sipariş kargolanmış/teslim edilmişse
               görünür. İkinci koşul olmadan, takip numarası girilmemiş kargolu siparişlerde
               kart hiç çıkmıyordu → numarayı sonradan eklemenin yolu yoktu (2026-08-29). */}
-          {(trackNo || currentStatus === "kargoya-verildi" || currentStatus === "teslim-edildi") && (
+          {/* Kargo rolu icin ek dal: tutar goremeyen (yani kargo) kullanici siparis daha
+              "uretimde" iken de takip no girebilmeli — eskiden kart yalnizca numara VARSA
+              ya da durum kargoda/teslim ise cikiyordu, dolayisiyla numarayi girmenin tek
+              yolu durumu degistirmekti (bu da musteriye mail atiyor). */}
+          {(trackNo || !showMoney || currentStatus === "kargoya-verildi" || currentStatus === "teslim-edildi") && (
             <Card title="Kargo">
               {trackEditing || !trackNo ? (
                 <div className="space-y-2">
@@ -814,7 +858,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                     />
                   </label>
                   <p className="text-[11px] text-ink-500 leading-snug">
-                    Buradan kaydetmek müşteriye e-posta <strong>göndermez</strong> — yalnız kaydı düzeltir.
+                    Buradan kaydetmek müşteriye e-posta <strong>göndermez</strong>, yalnız kaydı düzeltir.
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -863,22 +907,26 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
             </Card>
           )}
 
-          <Card title="Ödeme">
-            <div className="mt-1 text-xs">
-              {(() => {
-                const ps = String(order.paymentStatus ?? "beklemede");
-                const p = PAYMENT_LABELS[ps] ?? { label: ps, color: "bg-paper-200 text-ink-700" };
-                return (
-                  <span className={`inline-block px-2 py-0.5 rounded-full font-semibold ${p.color}`}>
-                    {p.label}
-                  </span>
-                );
-              })()}
-            </div>
-            <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
-              ₺ {Number(order.total).toLocaleString("tr-TR")}
-            </div>
-          </Card>
+          {/* Ödeme kartının TAMAMI izne bağlı: tutarın yanında ödeme DURUMU da
+              gizlenmeli ("Ödeme Bekliyor" rozeti de yasak kapsamında). */}
+          {showMoney && (
+            <Card title="Ödeme">
+              <div className="mt-1 text-xs">
+                {(() => {
+                  const ps = String(order.paymentStatus ?? "beklemede");
+                  const p = PAYMENT_LABELS[ps] ?? { label: ps, color: "bg-paper-200 text-ink-700" };
+                  return (
+                    <span className={`inline-block px-2 py-0.5 rounded-full font-semibold ${p.color}`}>
+                      {p.label}
+                    </span>
+                  );
+                })()}
+              </div>
+              <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
+                ₺ {Number(order.total).toLocaleString("tr-TR")}
+              </div>
+            </Card>
+          )}
         </div>
       </div>
 

@@ -1,0 +1,20 @@
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm.
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm.
+node:fs:1220
+  return binding.rmSync(getValidatedPath(path), opts.maxRetries, opts.recursive, opts.retryDelay);
+                 ^
+
+Error: EPERM, Permission denied: \\?\C:\Users\ADMINI~1\AppData\Local\Temp\lighthouse.89290005 '\\?\C:\Users\ADMINI~1\AppData\Local\Temp\lighthouse.89290005'
+    at rmSync (node:fs:1220:18)
+    at Launcher.destroyTmp (file:///C:/Users/Administrator/AppData/Local/npm-cache/_npx/0f94ee7615faf582/node_modules/chrome-launcher/dist/chrome-launcher.js:367:9)
+    at Launcher.kill (file:///C:/Users/Administrator/AppData/Local/npm-cache/_npx/0f94ee7615faf582/node_modules/chrome-launcher/dist/chrome-launcher.js:349:14)
+    at Object.kill (file:///C:/Users/Administrator/AppData/Local/npm-cache/_npx/0f94ee7615faf582/node_modules/chrome-launcher/dist/chrome-launcher.js:39:18)
+    at runLighthouse (file:///C:/Users/Administrator/AppData/Local/npm-cache/_npx/0f94ee7615faf582/node_modules/lighthouse/cli/run.js:235:21)
+    at async file:///C:/Users/Administrator/AppData/Local/npm-cache/_npx/0f94ee7615faf582/node_modules/lighthouse/cli/index.js:10:1 {
+  errno: 1,
+  code: 'EPERM',
+  path: '\\\\?\\C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\lighthouse.89290005',
+  syscall: 'rm'
+}
+
+Node.js v24.13.1

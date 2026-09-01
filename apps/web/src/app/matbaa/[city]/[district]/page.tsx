@@ -45,8 +45,8 @@ export function generateMetadata({ params }: Props): Metadata {
   // CTR düzeni (2026-08-20): şehir sayfalarıyla aynı gerekçe — "Fiyatları" + teslim vaadi
   // başlıkta, ansiklopedik intro yerine eylem çağrılı açıklama.
   const teslim = district.sameDayDelivery ? "Aynı Gün Motor Kurye" : "1 Günde Kapında";
-  const title = `${district.name} ${city.name} Matbaa & Baskı Fiyatları — ${teslim}`;
-  const description = `${district.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün — ${
+  const title = `${district.name} ${city.name} Matbaa & Baskı Fiyatları - ${teslim}`;
+  const description = `${district.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün - ${
     district.sameDayDelivery ? "aynı gün motor kurye ile teslim" : "1 iş gününde kapınızda"
   }.`;
 
@@ -56,7 +56,7 @@ export function generateMetadata({ params }: Props): Metadata {
     alternates: { canonical: `/matbaa/${city.slug}/${district.slug}` },
     openGraph: {
       type: "website",
-      title: `${district.name} ${city.name} Matbaa & Baskı Fiyatları — Markala`,
+      title: `${district.name} ${city.name} Matbaa & Baskı Fiyatları | Markala`,
       description,
       url: `/matbaa/${city.slug}/${district.slug}`,
       images: [
@@ -64,7 +64,7 @@ export function generateMetadata({ params }: Props): Metadata {
           url: "/og-default.png",
           width: 1200,
           height: 630,
-          alt: `${district.name} ${city.name} Matbaa — Markala`,
+          alt: `${district.name} ${city.name} Matbaa - Markala`,
         },
       ],
     },
@@ -103,7 +103,7 @@ export default async function DistrictLandingPage({ params }: Props) {
             "@type": "Service",
             "@id": `${SITE}/matbaa/${city.slug}/${district.slug}#service`,
             serviceType: `${district.name} Matbaa Hizmeti`,
-            name: `${district.name} ${city.name} Matbaa — Markala`,
+            name: `${district.name} ${city.name} Matbaa - Markala`,
             description: district.intro,
             provider: { "@id": `${SITE}/#localbusiness` },
             areaServed: {

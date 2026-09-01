@@ -43,11 +43,11 @@ export class ParasutService implements OnModuleInit {
     const missing = required.filter((k) => !this.cfg(k));
     if (missing.length > 0) {
       this.logger.warn(
-        `[Paraşüt] YAPILANDIRMA EKSİK — ${missing.join(", ")} env var(lar) tanımlı değil. ` +
+        `[Paraşüt] YAPILANDIRMA EKSİK - ${missing.join(", ")} env var(lar) tanımlı değil. ` +
           "Paraşüt e-fatura entegrasyonu devre dışı (sipariş akışı etkilenmez).",
       );
     } else {
-      this.logger.log("[Paraşüt] Tüm zorunlu env var mevcut — entegrasyon etkin.");
+      this.logger.log("[Paraşüt] Tüm zorunlu env var mevcut, entegrasyon etkin.");
     }
   }
 
@@ -105,7 +105,7 @@ export class ParasutService implements OnModuleInit {
     } catch (err) {
       const e = err as Error;
       if (e.name === "AbortError") {
-        this.logger.error(`Paraşüt OAuth timeout (>${PARASUT_FETCH_TIMEOUT_MS}ms) — bağlantı zaman aşımı`);
+        this.logger.error(`Paraşüt OAuth timeout (>${PARASUT_FETCH_TIMEOUT_MS}ms), bağlantı zaman aşımı`);
         throw new Error(`Paraşüt OAuth timeout`);
       }
       throw err;
@@ -273,7 +273,7 @@ export class ParasutService implements OnModuleInit {
             quantity: it.quantity,
             unit_price: netUnit,
             vat_rate: vatRate,
-            description: `${it.productName} — ${it.configurationSummary}`.slice(0, 250),
+            description: `${it.productName} - ${it.configurationSummary}`.slice(0, 250),
             ...(discountPct > 0 ? { discount_type: "percentage", discount_value: discountPct } : {}),
           },
           relationships: {

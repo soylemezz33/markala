@@ -45,7 +45,7 @@ export const heroSlides: HeroSlide[] = [
     title: "Tasarımı ücretsiz bizden olsun",
     highlightWord: "ücretsiz",
     description:
-      "Logo, kartvizit, broşür… Profesyonel grafik ekibimiz sizin için hazırlar. Siz sadece onaylayın — sınırsız revize, ek ücret yok.",
+      "Logo, kartvizit, broşür… Profesyonel grafik ekibimiz sizin için hazırlar. Siz sadece onaylayın, sınırsız revize, ek ücret yok.",
     ctaLabel: "Ücretsiz Tasarım İste",
     ctaHref: "/hizmetler/tasarim-destegi",
     secondaryCtaLabel: "WhatsApp'tan yaz",

@@ -26,8 +26,8 @@ export default function GlobalError({ error, reset }: Props) {
         Beklenmeyen bir hata oluştu
       </h1>
       <p className="mt-4 text-ink-700 max-w-lg mx-auto">
-        Sistemimizde geçici bir aksaklık var. Sayfayı yeniden yüklemeyi deneyin
-        — devam ederse bize bildirin, hemen ilgilenelim.
+        Sistemimizde geçici bir aksaklık var. Sayfayı yeniden yüklemeyi deneyin,
+        devam ederse bize bildirin, hemen ilgilenelim.
       </p>
 
       {error.digest && (

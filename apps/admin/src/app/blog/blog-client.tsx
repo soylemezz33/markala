@@ -255,7 +255,7 @@ export function BlogClient({ posts, categories }: Props) {
                       <span className="block text-[11px] text-ink-500 font-mono">{p.slug}</span>
                     </td>
                     <td className="px-4 py-3 text-ink-700 hidden md:table-cell">
-                      {p.category?.name ?? "—"}
+                      {p.category?.name ?? "-"}
                     </td>
                     <td className="px-4 py-3 text-ink-700 hidden lg:table-cell">{p.authorName}</td>
                     <td className="px-4 py-3 text-center">
@@ -407,7 +407,7 @@ export function BlogClient({ posts, categories }: Props) {
                   onChange={(e) => setField("categoryId", e.target.value)}
                   className="w-full px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm text-ink-900 outline-none focus:border-brand-500"
                 >
-                  <option value="">— Kategori yok —</option>
+                  <option value="">, Kategori yok, </option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}

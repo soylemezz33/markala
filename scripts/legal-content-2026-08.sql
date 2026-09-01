@@ -1,4 +1,4 @@
--- Yasal sayfa içerikleri — 2026-08-08 (kısa, markaya uyarlanmış şablonlar).
+-- Yasal sayfa içerikleri, 2026-08-08 (kısa, markaya uyarlanmış şablonlar).
 -- ⚠ Hukuki not: Bu metinler standart e-ticaret şablonlarından uyarlandı; yayına almadan
 -- önce hukuk müşaviri kontrolü önerilir. Kaynak dosya: scripts/legal-content-2026-08.sql
 -- Uygulama: psql -f (staging: staging-legal-seed workflow; prod: canlıya alma sırasında).
@@ -28,7 +28,7 @@ UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
 <p>Sitemiz zorunlu, analitik ve pazarlama çerezleri kullanır. Zorunlu çerezler dışındakiler yalnızca onayınızla çalışır; tercihlerinizi dilediğiniz an sayfa altındaki <strong>"Çerez Tercihlerim"</strong> bağlantısından değiştirebilirsiniz. Ayrıntı: <a href="/yasal/cerez">Çerez Politikası</a>.</p>
 
 <h2>4. Verileriniz Kimlerle Paylaşılır?</h2>
-<p>Verileriniz satılmaz. Yalnızca hizmetin gerektirdiği ölçüde şu taraflarla paylaşılır: ödeme kuruluşu (iyzico — kart bilgileriniz bizde saklanmaz), kargo firmaları (teslimat için ad-adres-telefon), muhasebe/ön muhasebe yazılımı (yasal fatura yükümlülüğü) ve barındırma altyapımız. Analitik araçları yalnızca çerez onayınız varsa çalışır.</p>
+<p>Verileriniz satılmaz. Yalnızca hizmetin gerektirdiği ölçüde şu taraflarla paylaşılır: ödeme kuruluşu (iyzico; kart bilgileriniz bizde saklanmaz), kargo firmaları (teslimat için ad-adres-telefon), muhasebe/ön muhasebe yazılımı (yasal fatura yükümlülüğü) ve barındırma altyapımız. Analitik araçları yalnızca çerez onayınız varsa çalışır.</p>
 
 <h2>5. Güvenlik ve Saklama</h2>
 <p>Tüm bağlantılar SSL ile şifrelenir; verilere erişim yetki bazlıdır. Verileriniz, ilgili yasal saklama süreleri (ör. fatura kayıtlarında 10 yıl) boyunca ve üyeliğiniz devam ettiği sürece saklanır, süre sonunda silinir veya anonimleştirilir.</p>
@@ -44,7 +44,7 @@ UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
 <p>Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") m.10 uyarınca, markala.com.tr kullanıcılarını kişisel verilerinin işlenmesi hakkında bilgilendirmek için hazırlanmıştır.</p>
 
 <h2>1. Veri Sorumlusu</h2>
-<p><strong>324 Ajans Bilgi Teknolojileri Reklam Pazarlama</strong> — Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin ("Markala").</p>
+<p><strong>324 Ajans Bilgi Teknolojileri Reklam Pazarlama</strong>, Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin ("Markala").</p>
 
 <h2>2. İşlenen Kişisel Veriler</h2>
 <ul>
@@ -82,37 +82,37 @@ UPDATE legal_pages SET version = 'v1.1', updated_at = now(), content = $mk$
 $mk$ WHERE slug = 'kvkk';
 
 UPDATE legal_pages SET version = 'v1.2', updated_at = now(), content = $mk$
-<h2>Madde 1 — Taraflar</h2>
-<p><strong>SATICI:</strong> 324 Ajans Bilgi Teknolojileri Reklam Pazarlama (Markala / markala.com.tr) — Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin · Tel: 0324 433 33 51 · E-posta: merhaba@markala.com.tr</p>
+<h2>Madde 1: Taraflar</h2>
+<p><strong>SATICI:</strong> 324 Ajans Bilgi Teknolojileri Reklam Pazarlama (Markala / markala.com.tr), Menteş Mah. 100. Yıl Cumhuriyet Cad. No:59/A Yenişehir / Mersin · Tel: 0324 433 33 51 · E-posta: merhaba@markala.com.tr</p>
 <p><strong>ALICI:</strong> Sipariş formunda ad-soyad/unvan, adres ve iletişim bilgileri yer alan gerçek veya tüzel kişi.</p>
 
-<h2>Madde 2 — Konu</h2>
+<h2>Madde 2: Konu</h2>
 <p>İşbu sözleşme, ALICI'nın markala.com.tr üzerinden elektronik ortamda sipariş verdiği, nitelikleri ve satış fiyatı sipariş özetinde belirtilen ürünlerin satışı ve teslimi ile ilgili olarak 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümleri gereğince tarafların hak ve yükümlülüklerini düzenler.</p>
 
-<h2>Madde 3 — Ürün ve Fiyat</h2>
+<h2>Madde 3: Ürün ve Fiyat</h2>
 <p>Ürünün türü, miktarı, ebadı, seçilen baskı/konfigürasyon özellikleri ve tüm vergiler dâhil satış fiyatı, sipariş sayfasında ve ALICI'ya iletilen sipariş onayında belirtildiği gibidir. İlan edilen fiyatlar güncelleme yapılana kadar geçerlidir.</p>
 
-<h2>Madde 4 — Ödeme</h2>
+<h2>Madde 4: Ödeme</h2>
 <p>Ödeme, iyzico güvenli ödeme altyapısı üzerinden kredi/banka kartı ile (3D Secure doğrulamalı) yapılır. Kart bilgileri SATICI tarafından saklanmaz. Taksit imkânları ödeme sayfasında gösterilir.</p>
 
-<h2>Madde 5 — Tasarım Onayı ve Üretim</h2>
+<h2>Madde 5: Tasarım Onayı ve Üretim</h2>
 <p>Baskı ürünleri kişiye özel üretilir. Üretim, ALICI'nın tasarımı (kendi yüklediği dosya veya SATICI'nın hazırladığı tasarım) <strong>onaylamasından sonra</strong> başlar. Onaylanan tasarımdaki yazım hatası vb. içerik sorumluluğu ALICI'ya aittir. Ürün sayfasında belirtilen üretim süreleri, tasarım onayını izleyen iş günleri için geçerlidir.</p>
 
-<h2>Madde 6 — Teslimat</h2>
+<h2>Madde 6: Teslimat</h2>
 <p>Ürünler, üretimin tamamlanmasının ardından anlaşmalı kargo firmalarıyla ALICI'nın bildirdiği adrese gönderilir. Yasal azami teslim süresi 30 gündür. Kargo ücreti ve ücretsiz kargo eşiği sipariş özetinde gösterilir. Teslimde hasarlı paket için kargo görevlisine tutanak tutturulmalıdır.</p>
 
-<h2>Madde 7 — Üretim Koşulları</h2>
+<h2>Madde 7: Üretim Koşulları</h2>
 <p><strong>7.A Üretim toleransı (fire):</strong> Matbaa üretim teknolojisi gereği siparişlerin renk, adet ve ölçülerinde <strong>%1 ilâ %5 arasında fire (sapma)</strong> olabilir. Bu sektör standardı tolerans, siparişin onaylanmasıyla ALICI tarafından kabul edilmiş sayılır ve bu aralıktaki sapmalar ayıp olarak değerlendirilmez.</p>
 <p><strong>7.B Renk:</strong> Ekranda görülen renkler ile baskı renkleri arasında, ekran kalibrasyonu ve baskı tekniğinden kaynaklı makul ton farkları oluşabilir.</p>
 <p><strong>7.C Dosya kalitesi ve yapay zekâ ile üretilen görseller:</strong> Baskı kalitesi, ALICI'nın ilettiği dosyanın teknik kalitesiyle sınırlıdır. Yapay zekâ araçlarıyla üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda <strong>bulanıklık, metin kayıpları ve bozulmalar</strong> oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından SATICI (markala.com.tr) sorumlu değildir. Baskıya uygun format: vektörel PDF/AI (yazılar convert edilmiş) veya en az 300 DPI çözünürlükte CMYK dosyadır. ALICI dilerse görselini iletebilir; SATICI'nın grafik ekibi görsele istinaden <strong>vektörel çizimi ücretsiz hazırlayıp ALICI'nın onayına sunar</strong>. Üretim, Madde 5 uyarınca ALICI'nın tasarım onayından sonra başlar; onaylanan tasarım üzerinden üretilen üründe bu husus iade/değişim talebine konu edilemez.</p>
 
-<h2>Madde 8 — Cayma Hakkı</h2>
+<h2>Madde 8: Cayma Hakkı</h2>
 <p>Mesafeli Sözleşmeler Yönetmeliği m.15/1-c uyarınca, <strong>ALICI'nın istekleri doğrultusunda ya da kişisel ihtiyaçları için özel olarak üretilen ürünlerde cayma hakkı kullanılamaz.</strong> Markala'da satılan baskı ürünleri ALICI'nın tasarımına/konfigürasyonuna göre kişiye özel üretildiğinden bu kapsamdadır. Bu istisna, ayıplı ürün hâlindeki yasal hakları ortadan kaldırmaz: baskı hatası SATICI'dan kaynaklanıyorsa ürün <strong>ücretsiz yeniden basılır</strong>. Ayrıntı: <a href="/yasal/iade">İade &amp; İptal Politikası</a>.</p>
 
-<h2>Madde 9 — Uyuşmazlık</h2>
+<h2>Madde 9: Uyuşmazlık</h2>
 <p>İşbu sözleşmeden doğan uyuşmazlıklarda, Ticaret Bakanlığı'nca ilan edilen parasal sınırlar dâhilinde ALICI'nın veya SATICI'nın yerleşim yerindeki Tüketici Hakem Heyetleri ile Tüketici Mahkemeleri yetkilidir.</p>
 
-<h2>Madde 10 — Yürürlük</h2>
+<h2>Madde 10: Yürürlük</h2>
 <p>ALICI, sipariş vermeden önce işbu sözleşmeyi ve <a href="/yasal/on-bilgilendirme">Ön Bilgilendirme Formu</a>'nu okuduğunu ve kabul ettiğini beyan eder. Sözleşme, siparişin elektronik ortamda onaylandığı anda kurulur.</p>
 $mk$ WHERE slug = 'mesafeli-satis';
 

@@ -793,7 +793,7 @@ export default function CheckoutPage() {
               </div>
               {user ? (
                 <p className="mt-3 text-xs text-ink-500">
-                  <strong className="text-ink-900">{user.email}</strong> olarak giriş yaptınız —
+                  <strong className="text-ink-900">{user.email}</strong> olarak giriş yaptınız,
                   siparişiniz hesabınıza bağlanacak.
                 </p>
               ) : (
@@ -1131,7 +1131,7 @@ export default function CheckoutPage() {
                         <Wallet size={18} weight="fill" />{" "}
                         {processing
                           ? "Sipariş oluşturuluyor…"
-                          : `Açık Hesaba Yaz — ${total.toLocaleString("tr-TR")} ₺`}
+                          : `Açık Hesaba Yaz - ${total.toLocaleString("tr-TR")} ₺`}
                       </Button>
                       <div className="flex items-center justify-center gap-1.5 text-xs text-ink-500">
                         <Buildings size={14} /> Kurumsal açık hesap · Online ödeme yapılmaz · Vade
@@ -1149,7 +1149,7 @@ export default function CheckoutPage() {
                         <Lock size={18} weight="fill" />{" "}
                         {processing
                           ? "Yönlendiriliyor…"
-                          : `Kartla Güvenli Öde — ${total.toLocaleString("tr-TR")} ₺`}
+                          : `Kartla Güvenli Öde - ${total.toLocaleString("tr-TR")} ₺`}
                       </Button>
                       <div className="flex items-center justify-center gap-1.5 rounded-md border border-success/20 bg-success/[0.06] px-3 py-2 text-xs text-ink-600">
                         <ShieldCheck size={14} weight="fill" className="flex-none text-success" />

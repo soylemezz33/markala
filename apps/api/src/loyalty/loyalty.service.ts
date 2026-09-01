@@ -198,8 +198,8 @@ export class LoyaltyService {
             balanceAfter: newBalance,
             description:
               net >= 0
-                ? `Sipariş iptali — puan iadesi (+${applied})`
-                : `Sipariş iptali — kazanım geri alındı (${applied})`,
+                ? `Sipariş iptali, puan iadesi (+${applied})`
+                : `Sipariş iptali, kazanım geri alındı (${applied})`,
           },
         });
       });

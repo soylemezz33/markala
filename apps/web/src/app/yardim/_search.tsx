@@ -71,7 +71,7 @@ export function HelpSearch({ items }: { items: SearchItem[] }) {
           ))}
           {showEmpty && (
             <div className="px-4 py-3 text-sm text-ink-500">
-              Sonuç bulunamadı —{" "}
+              Sonuç bulunamadı,{" "}
               <Link href="/iletisim" className="text-brand-700 font-medium hover:underline">
                 bize sorun
               </Link>

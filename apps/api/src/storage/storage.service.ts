@@ -67,6 +67,19 @@ const DESIGN_MAX_BYTES = 50 * 1024 * 1024;
  */
 const CORP_DOC_ALLOWED_EXT = new Set(["pdf", "jpg", "jpeg", "png", "webp", "tif", "tiff"]);
 const CORP_DOC_MAX_BYTES = 15 * 1024 * 1024;
+/** Tasarım dosyalarının saklandığı alt dizin — main.ts /uploads/secure'ü statikten 404'ler. */
+const DESIGN_SUBDIR = "secure/tasarim";
+
+/** İndirme yanıtının Content-Type'ı. Vendor formatlar octet-stream'e düşer (tarayıcı indirir). */
+const DESIGN_MIME: Record<string, string> = {
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+};
+
 const CORP_DOC_MIME: Record<string, string> = {
   pdf: "application/pdf",
   jpg: "image/jpeg",
@@ -196,11 +209,21 @@ export class StorageService {
       throw new BadRequestException("Tasarım dosyası en fazla 50MB olabilir.");
     }
 
+    // 2026-09-01 GÜVENLİK: müşteri tasarım dosyaları ARTIK PUBLIC DEĞİL.
+    // Eskiden uploads/<uuid>.<ext> altına yazılıp statik serve ediliyordu (365 gün
+    // immutable cache) — URL'yi bilen HERKES müşterinin baskı dosyasını indirebiliyordu.
+    // Artık kurumsal belge deseniyle aynı: secure/ altında saklanır (main.ts /uploads/secure'ü
+    // 404'ler) ve yalnız auth+ORDERS_READ korumalı GET /uploads/design/:key ile servis edilir.
+    // R2 sürücüsünde de LOCAL kalır — public bucket'a yazmak sızıntının ta kendisiydi.
     const key = `${randomUUID()}.${ext}`;
-    const file: UploadInput = { buffer: input.buffer, mimetype: input.mimetype };
-    const { url } = await (this.driver === "r2" ? this.putR2(key, file) : this.putLocal(key, file));
+    await mkdir(join(this.uploadDir, DESIGN_SUBDIR), { recursive: true });
+    await writeFile(join(this.uploadDir, DESIGN_SUBDIR, key), input.buffer);
+    const base = (
+      this.config.get<string>("API_PUBLIC_URL") ??
+      `http://localhost:${this.config.get<string>("PORT") ?? "4000"}`
+    ).replace(/\/$/, "");
     return {
-      url,
+      url: `${base}/uploads/design/${key}`,
       key,
       fileName: sanitizeFileName(input.originalName),
       fileSize: input.buffer.length,
@@ -247,6 +270,31 @@ export class StorageService {
       return { buffer, mimetype: CORP_DOC_MIME[ext] ?? "application/octet-stream" };
     } catch {
       throw new NotFoundException("Belge bulunamadı.");
+    }
+  }
+
+  /**
+   * Korumalı tasarım dosyasını okur. Yalnız auth+ORDERS_READ olan uç çağırır.
+   * key SIKI doğrulanır: path traversal (../) ve alt dizin geçişi imkansız.
+   */
+  async getDesign(key: string): Promise<SecureFile> {
+    if (!/^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key)) {
+      throw new NotFoundException("Dosya bulunamadı.");
+    }
+    const ext = (key.split(".").pop() ?? "").toLowerCase();
+    const mimetype = DESIGN_MIME[ext] ?? "application/octet-stream";
+    try {
+      return { buffer: await readFile(join(this.uploadDir, DESIGN_SUBDIR, key)), mimetype };
+    } catch {
+      // GERİYE DÖNÜK: 2026-09-01 öncesi yüklenen dosyalar hâlâ public uploads/ kökünde.
+      // Taşıma betiği çalışana kadar panel onları indirebilsin diye buradan da okunur.
+      // Bu dal auth+ORDERS_READ arkasında ve key uuid.uzantı deseniyle sınırlı; kök dizinde
+      // yalnız zaten public olan ürün görselleri var. Taşıma bitince kaldırılabilir.
+      try {
+        return { buffer: await readFile(join(this.uploadDir, key)), mimetype };
+      } catch {
+        throw new NotFoundException("Dosya bulunamadı.");
+      }
     }
   }
 

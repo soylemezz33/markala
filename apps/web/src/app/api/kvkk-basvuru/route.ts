@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
   const typeLabel = REQUEST_TYPE_LABELS[requestType] ?? requestType;
   const text = [
     `Yeni KVKK m.11 veri sahibi başvurusu (${ticketId})`,
-    `Yasal yanıt vadesi: ${dueDate} (KVKK m.13 — 30 gün)`,
+    `Yasal yanıt vadesi: ${dueDate} (KVKK m.13, 30 gün)`,
     "",
     `Ad Soyad: ${fullName}`,
     `E-posta: ${email}`,
@@ -195,7 +195,7 @@ export async function POST(req: NextRequest) {
   const html = `<div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;color:#1a1a1a">
     <h2 style="margin:0 0 4px">Yeni KVKK veri sahibi başvurusu</h2>
     <p style="color:#999;font-size:12px;margin:0 0 4px">Başvuru No: ${escapeHtml(ticketId)}</p>
-    <p style="color:#b00;font-size:13px;margin:0 0 16px"><strong>Yasal yanıt vadesi: ${escapeHtml(dueDate)}</strong> (KVKK m.13 — 30 gün)</p>
+    <p style="color:#b00;font-size:13px;margin:0 0 16px"><strong>Yasal yanıt vadesi: ${escapeHtml(dueDate)}</strong> (KVKK m.13, 30 gün)</p>
     <table style="border-collapse:collapse;font-size:14px;width:100%">
       <tr><td style="padding:4px 8px;color:#666;white-space:nowrap;vertical-align:top">Ad Soyad</td><td style="padding:4px 8px;font-weight:600">${escapeHtml(fullName)}</td></tr>
       <tr><td style="padding:4px 8px;color:#666;vertical-align:top">E-posta</td><td style="padding:4px 8px"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
   try {
     await sendMail({
       to: process.env.KVKK_TO || getContactTo(),
-      subject: `[KVKK] ${typeLabel} — ${ticketId} (vade ${dueDate})`,
+      subject: `[KVKK] ${typeLabel} - ${ticketId} (vade ${dueDate})`,
       text,
       html,
       replyTo: email,
@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
       dueDate,
       degraded: true,
       message:
-        "Başvurun alındı ve kayıt altına alındı (KVKK m.13 — 30 gün içinde yanıt). Dilersen doğrudan kvkk@markala.com.tr adresine de yazabilirsin.",
+        "Başvurun alındı ve kayıt altına alındı (KVKK m.13, 30 gün içinde yanıt). Dilersen doğrudan kvkk@markala.com.tr adresine de yazabilirsin.",
     });
   }
 

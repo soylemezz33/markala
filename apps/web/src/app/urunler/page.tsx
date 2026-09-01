@@ -51,19 +51,19 @@ export async function generateMetadata({
       if (page > Math.max(1, Math.ceil(listLength / URUNLER_PAGE_SIZE))) notFound();
     }
   }
-  const suffix = page > 1 ? ` — Sayfa ${page}` : "";
+  const suffix = page > 1 ? ` - Sayfa ${page}` : "";
   const canonical = page > 1 ? `/urunler?page=${page}` : "/urunler";
   return {
-    title: `Tüm Ürünler — 30+ Matbaa & Reklam Ürünü Kategorisi${suffix}`,
+    title: `Tüm Ürünler | 30+ Matbaa & Reklam Ürünü Kategorisi${suffix}`,
     description:
-      "Matbaa baskıdan büyük format reklam ürünlerine — tüm Markala kataloğu tek ekranda. Kartvizit, broşür, branda, tabela ve daha fazlası. Tasarım desteği her siparişte ücretsiz.",
+      "Matbaa baskıdan büyük format reklam ürünlerine: tüm Markala kataloğu tek ekranda. Kartvizit, broşür, branda, tabela ve daha fazlası. Tasarım desteği her siparişte ücretsiz.",
     alternates: { canonical },
     openGraph: {
       type: "website",
-      title: `Tüm Ürünler — Markala Kataloğu${suffix}`,
+      title: `Tüm Ürünler | Markala Kataloğu${suffix}`,
       description: "30+ matbaa ve reklam ürünü kategorisi. Tasarım desteği her siparişte ücretsiz.",
       url: canonical,
-      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala — Tüm Ürünler" }],
+      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Markala - Tüm Ürünler" }],
     },
   };
 }
@@ -127,7 +127,7 @@ export default async function AllProductsPage({
     <>
       <ProductItemListJsonLd
         products={products}
-        name="Markala — Tüm Matbaa & Reklam Ürünleri"
+        name="Markala - Tüm Matbaa & Reklam Ürünleri"
         url="/urunler"
       />
       <AllProductsClient products={products} categories={categories} initialGroup={initialGroup} />

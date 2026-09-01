@@ -37,7 +37,18 @@ const TRADE_REGISTRY = "Mersin Ticaret Sicil 66377";
 // KEP adresi ETBİS kaydından teyitli (2026-08-17). NOT: kayıt hs03 sunucusunda —
 // koddaki eski tahmin hs01 idi, resmi kayıtla değiştirildi.
 const KEP = "324ajans@hs03.kep.tr";
-const VERBIS_NO = "[BAŞVURU BEKLEMEDE — VERBİS kaydı sonrası eklenecek]";
+/**
+ * VERBİS (KVKK Veri Sorumluları Sicili) — 2026-09-01, Hasan teyidi: BAŞVURU SÜRECİ DEVAM EDİYOR.
+ *
+ * Eskiden metin "VERBİS'e kayıtlı veri sorumlusudur" diyor, numara yerine
+ * "[BAŞVURU BEKLEMEDE...]" basıyordu: kendi içinde çelişen ve gerçeğe aykırı bir beyandı.
+ * Kayıt tamamlanınca AŞAĞIDAKİ iki sabiti güncellemek yeterli (metin kendini toplar).
+ *
+ * ⚠️ VERBİS, ETBİS'ten AYRI bir sicildir. ETBİS (Ticaret Bakanlığı e-ticaret sicili)
+ * kaydımız TAMAMLANDI ve kullanim-kosullari sayfasında doğrulama linkiyle belirtiliyor.
+ */
+const VERBIS_KAYITLI = false;
+const VERBIS_NO = "";
 // ETBİS kaydı tamamlandı (17.08.2026). ETBİS tekil bir "kayıt numarası" yayınlamaz;
 // doğrulama, Ticaret Bakanlığı'nın site sorgulama bağlantısı üzerinden yapılır.
 const ETBIS_DOGRULAMA_URL =
@@ -53,7 +64,7 @@ export const legalPages: Record<string, LegalPage> = {
   kvkk: {
     slug: "kvkk",
     title: "KVKK Aydınlatma Metni",
-    lastUpdated: "2026-06-16",
+    lastUpdated: "2026-09-01",
     body: `
       <h2>1. Veri Sorumlusunun Kimliği</h2>
       <p>
@@ -68,9 +79,13 @@ export const legalPages: Record<string, LegalPage> = {
         sorumluluğu Şirket'e aittir.
       </p>
       <p>
-        <strong>VERBİS Kaydı:</strong> ${COMPANY}, Kişisel Verileri Koruma Kurulu nezdinde
-        tutulan Veri Sorumluları Sicil Bilgi Sistemi'ne (VERBİS) kayıtlı veri sorumlusudur.
-        VERBİS kayıt numarası: <strong>${VERBIS_NO}</strong>.
+        <strong>VERBİS Kaydı:</strong> ${COMPANY}'nin Kişisel Verileri Koruma Kurulu
+        nezdinde tutulan Veri Sorumluları Sicil Bilgi Sistemi'ne (VERBİS)
+        ${VERBIS_KAYITLI
+          ? `kaydı tamamlanmıştır. VERBİS kayıt numarası: <strong>${VERBIS_NO}</strong>.`
+          : `başvuru süreci devam etmektedir; kayıt tamamlandığında sicil numarası bu
+             metinde yayımlanacaktır. Kaydın tamamlanmamış olması, aşağıda sayılan
+             KVKK haklarınızı ve bu haklara ilişkin yükümlülüklerimizi etkilemez.`}
       </p>
 
       <h2>2. İşlenen Kişisel Veri Kategorileri</h2>
@@ -113,16 +128,16 @@ export const legalPages: Record<string, LegalPage> = {
         Her biri ile Veri İşleyen Sözleşmesi (DPA) / Standart Sözleşme Maddeleri (SCC) kapsamında çalışılmaktadır:
       </p>
       <ul>
-        <li><strong>Cloudflare R2</strong> (ABD/AB) — dosya depolama; Cloudflare DPA ve SCC imzalı</li>
-        <li><strong>Google Analytics 4</strong> (ABD) — anonimleştirilmiş trafik analizi; Google Consent Mode v2 ile IP kısaltması zorunlu</li>
-        <li><strong>Microsoft Clarity</strong> (ABD/AB) — oturum kaydı ve ısı haritası; yalnızca kullanıcı "kişiselleştirme" çerezi onayını verirse yüklenir</li>
-        <li><strong>Meta Pixel</strong> (ABD) — pazarlama; yalnızca kullanıcı "pazarlama" çerezi onayını verirse aktif</li>
-        <li><strong>SendGrid (Twilio Inc.)</strong> (ABD) — transactional e-posta; Twilio DPA ve SCC imzalı</li>
+        <li><strong>Cloudflare R2</strong> (ABD/AB), dosya depolama; Cloudflare DPA ve SCC imzalı</li>
+        <li><strong>Google Analytics 4</strong> (ABD), anonimleştirilmiş trafik analizi; Google Consent Mode v2 ile IP kısaltması zorunlu</li>
+        <li><strong>Microsoft Clarity</strong> (ABD/AB), oturum kaydı ve ısı haritası; yalnızca kullanıcı "kişiselleştirme" çerezi onayını verirse yüklenir</li>
+        <li><strong>Meta Pixel</strong> (ABD), pazarlama; yalnızca kullanıcı "pazarlama" çerezi onayını verirse aktif</li>
+        <li><strong>SendGrid (Twilio Inc.)</strong> (ABD), transactional e-posta; Twilio DPA ve SCC imzalı</li>
       </ul>
       <p>
         Tüm aktarımlar <strong>standart sözleşme şartları (SCC)</strong> veya
         <strong>yeterli koruma kararı</strong> çerçevesinde, KVKK m.9 hükümleri uyarınca yapılır.
-        Aktarım güvenceleri hakkında bilgi talep edebilirsiniz (bkz. Bölüm 8 — Başvuru Yöntemi).
+        Aktarım güvenceleri hakkında bilgi talep edebilirsiniz (bkz. Bölüm 8, Başvuru Yöntemi).
       </p>
 
       <h2>5. Kişisel Verilerin Toplanma Yöntemi ve Hukuki Sebebi</h2>
@@ -136,7 +151,7 @@ export const legalPages: Record<string, LegalPage> = {
         <li>Sözleşmenin kurulması ve ifası (KVKK m.5/2-c)</li>
         <li>Hukuki yükümlülüğün yerine getirilmesi (KVKK m.5/2-ç)</li>
         <li>Meşru menfaat (KVKK m.5/2-f)</li>
-        <li>Açık rıza (pazarlama amaçlı işlemeler için — KVKK m.5/1)</li>
+        <li>Açık rıza (pazarlama amaçlı işlemeler için, KVKK m.5/1)</li>
       </ul>
 
       <h2>6. Veri Saklama Süreleri</h2>
@@ -165,7 +180,7 @@ export const legalPages: Record<string, LegalPage> = {
       <h2>8. Başvuru Yöntemi</h2>
       <p>KVKK kapsamındaki haklarınızı kullanmak için aşağıdaki yollarla başvurabilirsiniz:</p>
       <ul>
-        <li><strong>Online Form (Önerilen):</strong> <a href="/kvkk-basvuru">markala.com.tr/kvkk-basvuru</a> — Kimlik doğrulamalı dijital başvuru kanalı</li>
+        <li><strong>Online Form (Önerilen):</strong> <a href="/kvkk-basvuru">markala.com.tr/kvkk-basvuru</a>, Kimlik doğrulamalı dijital başvuru kanalı</li>
         <li><strong>E-posta:</strong> <a href="mailto:${EMAIL}">${EMAIL}</a> (Konu: KVKK Başvuru)</li>
         <li><strong>Yazılı başvuru:</strong> ${COMPANY}, ${ADDRESS}</li>
         <li><strong>KEP:</strong> ${KEP}</li>
@@ -302,9 +317,9 @@ export const legalPages: Record<string, LegalPage> = {
         aşağıdaki tolerans aralıkları kabul edilir:
       </p>
       <ul>
-        <li><strong>Adet toleransı: %1-5 fire</strong> — sipariş edilen miktar üzerinde eksik veya fazla teslimat yapılabilir.</li>
-        <li><strong>Renk toleransı: %2-3</strong> — ekran (RGB) ile baskı (CMYK) arasında doğal sapma; Pantone garantili işlerde %0 hedeflenir.</li>
-        <li><strong>Kesim toleransı: ±2 mm</strong> — kesim aşamasında oluşabilir.</li>
+        <li><strong>Adet toleransı: %1-5 fire</strong>, sipariş edilen miktar üzerinde eksik veya fazla teslimat yapılabilir.</li>
+        <li><strong>Renk toleransı: %2-3</strong>, ekran (RGB) ile baskı (CMYK) arasında doğal sapma; Pantone garantili işlerde %0 hedeflenir.</li>
+        <li><strong>Kesim toleransı: ±2 mm</strong>, kesim aşamasında oluşabilir.</li>
       </ul>
       <p>
         Bu toleranslar sektörel standart olup sipariş onayında <strong>otomatik kabul edilmiş sayılır</strong>.
@@ -417,7 +432,7 @@ export const legalPages: Record<string, LegalPage> = {
         eklenir. Bu bilgi <strong>yalnızca kendi siparişimizin hangi kanaldan geldiğini
         ölçmek</strong> için kullanılır; tek başına kimliğinizi tanımlamaz ve
         <strong>üçüncü taraflara aktarılmaz</strong>. Reklam platformlarına veri aktarımı
-        (Meta, Google) yalnızca <strong>pazarlama çerezi onayı verdiyseniz</strong> yapılır —
+        (Meta, Google) yalnızca <strong>pazarlama çerezi onayı verdiyseniz</strong> yapılır,
         bu onayı vermemeniz hâlinde hiçbir veri dışarı çıkmaz.
       </p>
 
@@ -521,7 +536,7 @@ export const legalPages: Record<string, LegalPage> = {
         <li>Argon2 ile şifre hash'lenmesi</li>
         <li>Rate limiting ve DDoS koruması</li>
         <li>Düzenli güvenlik denetimleri</li>
-        <li>İki faktörlü kimlik doğrulama (2FA — admin paneli için zorunlu)</li>
+        <li>İki faktörlü kimlik doğrulama (2FA, admin paneli için zorunlu)</li>
         <li>3D Secure ödeme zorunluluğu</li>
       </ul>
 
@@ -651,7 +666,7 @@ export const legalPages: Record<string, LegalPage> = {
   "on-bilgilendirme": {
     slug: "on-bilgilendirme",
     title: "Ön Bilgilendirme Formu",
-    lastUpdated: "2026-06-16",
+    lastUpdated: "2026-09-01",
     body: `
       <p>
         Mesafeli Sözleşmeler Yönetmeliği'nin 5. maddesi gereğince, sipariş onayından
@@ -675,7 +690,7 @@ export const legalPages: Record<string, LegalPage> = {
         sipariş onayı sırasında detaylı şekilde gösterilir.
       </p>
       <div class="legal-callout">
-        ⚠ <strong>Üretim Toleransı:</strong> Lütfen Dikkat — Siparişlerinizin Renk, Adet ve Ölçülerinde
+        ⚠ <strong>Üretim Toleransı:</strong> Lütfen Dikkat, Siparişlerinizin Renk, Adet ve Ölçülerinde
         <strong>%1 ila %5 arasında fire</strong> olabilmektedir. Bu sektör standardı tolerans aralığı
         siparişin sözleşme şartlarındandır; iade/değişime konu edilemez (bkz. Mesafeli Satış Sözleşmesi Madde 7.A).
       </div>
@@ -699,9 +714,16 @@ export const legalPages: Record<string, LegalPage> = {
 
       <h2>5. Cayma Hakkı</h2>
       <p>
-        ${BRAND} bünyesindeki ürünlerin tamamı kişiye/firmaya özel üretildiğinden,
-        Mesafeli Sözleşmeler Yönetmeliği'nin 15/1-ç maddesi gereğince
+        ${BRAND} bünyesindeki ürünlerin tamamı ALICI'nın tasarımı/konfigürasyonu
+        doğrultusunda kişiye veya firmaya özel üretildiğinden, Mesafeli Sözleşmeler
+        Yönetmeliği'nin <strong>15/1-b</strong> maddesi ("tüketicinin istekleri veya
+        kişisel ihtiyaçları doğrultusunda hazırlanan mallar") gereğince
         <strong>cayma hakkı kullanılamaz</strong>.
+      </p>
+      <p>
+        Bu istisna <strong>ayıplı mal haklarını ortadan kaldırmaz</strong>: üretim/baskı
+        hatası veya teslimat hasarı halinde 6502 sayılı Kanun'dan doğan seçimlik
+        haklarınız (ücretsiz yenileme, bedel iadesi vb.) aynen geçerlidir.
       </p>
       <p>
         Üretim hatası, baskı hatası veya teslimat hasarı halinde
@@ -724,7 +746,7 @@ export const legalPages: Record<string, LegalPage> = {
   iade: {
     slug: "iade",
     title: "İade ve Değişim Politikası",
-    lastUpdated: "2026-06-16",
+    lastUpdated: "2026-09-01",
     body: `
       <p>
         ${BRAND} ${COMPANY} bünyesinde yönetilmekte olup tüm iade ve değişim süreçleri
@@ -734,10 +756,19 @@ export const legalPages: Record<string, LegalPage> = {
 
       <h2>1. Kişiye Özel Üretim ve Cayma Hakkı</h2>
       <div class="legal-callout">
-        ⚠ <strong>Önemli:</strong> ${BRAND} ürünlerinin tamamı kişiye/firmaya özel
-        üretildiğinden Mesafeli Sözleşmeler Yönetmeliği'nin 15/1-ç maddesi gereğince
-        cayma hakkı kullanılamaz. Bu durum siparişten önce ön bilgilendirme formunda
-        açıkça belirtilir.
+        ⚠ <strong>Önemli:</strong> ${BRAND} ürünlerinin tamamı ALICI'nın tasarımı ve
+        seçtiği ölçü/malzeme doğrultusunda özel üretildiğinden, Mesafeli Sözleşmeler
+        Yönetmeliği'nin <strong>15/1-b</strong> maddesi ("tüketicinin istekleri veya
+        kişisel ihtiyaçları doğrultusunda hazırlanan mallar") gereğince cayma hakkı
+        kullanılamaz. Bu durum siparişten önce ön bilgilendirme formunda açıkça belirtilir.
+      </div>
+      <p>
+        <strong>Cayma hakkının bulunmaması, ayıplı mal haklarınızı ETKİLEMEZ.</strong>
+        Ürün ayıplı (hatalı/eksik) teslim edilmişse 6502 sayılı Tüketicinin Korunması
+        Hakkında Kanun'un 11. maddesindeki seçimlik haklar saklıdır; bu haklar için
+        yasal zamanaşımı süresi <strong>teslim tarihinden itibaren 2 yıldır</strong>.
+        Aşağıdaki 7 günlük bildirim süresi, sürecin hızlı çözülmesi için istenen bir
+        <em>iyi niyet süresidir</em>; bu süreyi geçirmeniz yasal haklarınızı düşürmez.
       </div>
 
       <h2>2. Üretim/Baskı Hatası Durumunda</h2>
@@ -753,7 +784,7 @@ export const legalPages: Record<string, LegalPage> = {
         <strong>Bu durumlarda ürün ücretsiz olarak yenilenir veya tutar iade edilir.</strong>
       </p>
 
-      <h2>2.A Üretim Toleransı (Fire) — Önemli</h2>
+      <h2>2.A Üretim Toleransı (Fire), Önemli</h2>
       <div class="legal-callout">
         ⚠ <strong>Lütfen Dikkat: Siparişlerinizin Renk, Adet ve Ölçülerinde %1 ila %5 arasında fire olabilmektedir.</strong>
       </div>
@@ -779,7 +810,7 @@ export const legalPages: Record<string, LegalPage> = {
 
       <h2>4. İade/Değişim Süreci</h2>
 
-      <h3>Adım 1 — Bildirim</h3>
+      <h3>Adım 1, Bildirim</h3>
       <p>
         Ürünü teslim aldığınız tarihten itibaren <strong>7 gün içinde</strong> aşağıdaki
         bilgilerle birlikte ${EMAIL} adresine bildirim yapın:
@@ -791,13 +822,13 @@ export const legalPages: Record<string, LegalPage> = {
         <li>İletişim bilgileriniz</li>
       </ul>
 
-      <h3>Adım 2 — İnceleme</h3>
+      <h3>Adım 2, İnceleme</h3>
       <p>
         Müşteri hizmetlerimiz <strong>2 iş günü içinde</strong> talebinizi inceler ve
         sonucu size bildirir. Gerekirse ek bilgi/fotoğraf talep edilebilir.
       </p>
 
-      <h3>Adım 3 — Çözüm</h3>
+      <h3>Adım 3, Çözüm</h3>
       <p>İncelemede haklı bulunan talepler için iki seçenek sunulur:</p>
       <ul>
         <li><strong>Yeniden üretim:</strong> Ürün ücretsiz olarak yenilenir, kargo masrafı SATICI'ya aittir</li>
@@ -824,9 +855,21 @@ export const legalPages: Record<string, LegalPage> = {
       </p>
 
       <h2>7. İade Kargo Ücreti</h2>
+      <div class="legal-callout">
+        <strong>Mevzuat değişikliği (yürürlük: 01.01.2026).</strong> 24 Mayıs 2025 tarihli
+        ve 32909 sayılı Resmî Gazete'de yayımlanan değişiklik uyarınca, cayma hakkının
+        kullanıldığı hallerde tüketici, SATICI'nın bildirdiği taşıyıcı ile iade ettiği
+        sürece <strong>iade masraflarından sorumlu tutulamaz</strong>.
+      </div>
       <ul>
-        <li>SATICI hatası: Kargo SATICI tarafından karşılanır</li>
-        <li>ALICI hatası (üretim öncesi iptal vb): Kargo ALICI tarafından karşılanır</li>
+        <li><strong>Üretim/baskı hatası veya teslimat hasarı:</strong> iade ve yeniden
+            gönderim kargo bedelinin tamamı SATICI'ya aittir.</li>
+        <li><strong>Cayma hakkının kullanılabildiği hallerde:</strong> iade kargosu
+            SATICI'nın bildirdiği taşıyıcı ile yapıldığında masraf SATICI'ya aittir.
+            (Ürünlerimizin büyük bölümü kişiye özel üretim olduğundan cayma hakkı
+            kapsamı dışındadır — bkz. madde 1.)</li>
+        <li><strong>Üretime alınmamış siparişin ALICI talebiyle iptali:</strong> henüz
+            gönderim yapılmadığı için kargo bedeli doğmaz; tahsil edilen tutar iade edilir.</li>
       </ul>
 
       <h2>8. Para İadesi Süresi</h2>
@@ -842,7 +885,30 @@ export const legalPages: Record<string, LegalPage> = {
         sürebilir. Bu süre Şirket'in sorumluluğu dışındadır.
       </p>
 
-      <h2>9. İletişim</h2>
+      <h2>9. Uyuşmazlık Çözüm Yolları</h2>
+      <p>
+        Talebiniz tarafımızca çözülemezse, 6502 sayılı Kanun kapsamında aşağıdaki
+        yollara başvurabilirsiniz (2026 yılı için geçerli parasal sınır):
+      </p>
+      <ul>
+        <li>
+          <strong>186.000 TL'nin altındaki uyuşmazlıklar:</strong> İkametgâhınızın veya
+          işlemin yapıldığı yerin <strong>Tüketici Hakem Heyeti</strong>'ne başvurulması
+          zorunludur. Başvuru ücretsizdir ve
+          <a href="https://tuketicisikayeti.ticaret.gov.tr" target="_blank" rel="noopener noreferrer">e-Devlet / TÜBİS</a>
+          üzerinden yapılabilir.
+        </li>
+        <li>
+          <strong>186.000 TL ve üzeri uyuşmazlıklar:</strong> <strong>Tüketici Mahkemesi</strong>
+          görevlidir. Dava açmadan önce <strong>arabuluculuğa başvurulması dava şartıdır</strong>.
+        </li>
+      </ul>
+      <p>
+        <em>Parasal sınır her yıl yeniden değerleme oranına göre güncellenir; başvuru
+        öncesinde güncel tutarı Ticaret Bakanlığı'ndan teyit ediniz.</em>
+      </p>
+
+      <h2>10. İletişim</h2>
       <p>
         Tüm iade/değişim talepleriniz için: <a href="mailto:${EMAIL}">${EMAIL}</a> |
         ${PHONE} | <a href="https://wa.me/903244333351">WhatsApp</a>

@@ -26,13 +26,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     // GSC (2026-08-20): sorgu ailesi "1000 adet (a5) broşür fiyatı" / "a4 el ilanı fiyatları"
     // biçiminde geliyor — başlık tiraj sayısını açıkça söylesin.
-    title: "Broşür ve El İlanı Fiyatları 2026 — 1.000 Adet Ne Kadar?",
+    title: "Broşür ve El İlanı Fiyatları 2026 | 1.000 Adet Ne Kadar?",
     description:
-      "2026 güncel broşür ve el ilanı baskı fiyatları: A7'den A3'e ebat, 1.000–10.000 adet tiraj tablosu ve kağıt seçim rehberi. Tüm fiyatlar KDV dahil — sepette değişmez.",
+      "2026 güncel broşür ve el ilanı baskı fiyatları: A7'den A3'e ebat, 1.000–10.000 adet tiraj tablosu ve kağıt seçim rehberi. Tüm fiyatlar KDV dahil, sepette değişmez.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",
-      title: "Broşür Baskı Fiyatları 2026 — Ebat × Tiraj Tablosu (KDV Dahil)",
+      title: "Broşür Baskı Fiyatları 2026 | Ebat × Tiraj Tablosu (KDV Dahil)",
       description:
         "A5 ve A4 broşür/el ilanı fiyatları ebat ve tiraj kırılımıyla. KDV dahil, canlı katalogdan.",
       url: PAGE_PATH,
@@ -45,7 +45,7 @@ export default async function BrosurFiyatlariPage() {
   // Kategori listesi strict: API blip'inde throw → ISR stale sayfayı korur.
   const listing = await getProductsByCategory("brosur", { strict: true });
   if (listing.length === 0) {
-    throw new Error("rehber/brosur: broşür kategorisi boş döndü (API blip?) — stale ISR korunur");
+    throw new Error("rehber/brosur: broşür kategorisi boş döndü (API blip?), stale ISR korunur");
   }
   // Tam fiyat ızgarası (options+prices) detay endpoint'inde — her ürünü tam çek.
   const details = (await Promise.all(listing.map((p) => getProductBySlug(p.slug)))).filter(
@@ -57,7 +57,7 @@ export default async function BrosurFiyatlariPage() {
       (p.options ?? []).some((o) => o.groupKey === "adet" && o.groupRole === "dimension"),
   );
   if (gridCandidates.length === 0) {
-    throw new Error("rehber/brosur: fiyat ızgaralı broşür ürünü bulunamadı (API blip?) — stale ISR korunur");
+    throw new Error("rehber/brosur: fiyat ızgaralı broşür ürünü bulunamadı (API blip?), stale ISR korunur");
   }
   // Ana tablo: en ekonomik başlangıç fiyatlı ürünün ebat × tiraj ızgarası.
   const matrix = gridCandidates.reduce((a, b) => (getDisplayPrice(a) <= getDisplayPrice(b) ? a : b));
@@ -73,7 +73,7 @@ export default async function BrosurFiyatlariPage() {
     ? opts.filter((o) => o.groupKey === pricedKey).sort((a, b) => a.optionSort - b.optionSort)
     : [];
   if (adetOpts.length === 0 || ebatOpts.length === 0 || !pricedKey) {
-    throw new Error("rehber/brosur: beklenen opsiyon grupları yok — stale ISR korunur");
+    throw new Error("rehber/brosur: beklenen opsiyon grupları yok, stale ISR korunur");
   }
 
   const tiers = adetOpts.map((o) => ({ key: o.optionKey, label: o.optionLabel, qty: Number(o.optionKey) }));
@@ -88,7 +88,7 @@ export default async function BrosurFiyatlariPage() {
     }))
     .filter((r) => r.totals.some((v) => v > 0));
   if (rows.length === 0) {
-    throw new Error("rehber/brosur: fiyat tablosu boş hesaplandı (API blip?) — stale ISR korunur");
+    throw new Error("rehber/brosur: fiyat tablosu boş hesaplandı (API blip?), stale ISR korunur");
   }
 
   const firstTier = shownTiers[0]!;
@@ -105,7 +105,7 @@ export default async function BrosurFiyatlariPage() {
       q: `${firstTier.label.toLowerCase()} A5 el ilanı ne kadar?`,
       a:
         a5Row && a5Row.totals[0]! > 0
-          ? `${asOf} itibarıyla katalog fiyatlarına göre ${firstTier.label.toLowerCase()} A5 broşür (${matrix.name}) ${formatPriceWithSymbol(a5Row.totals[0]!)} — KDV dahil, sepette değişmez.`
+          ? `${asOf} itibarıyla katalog fiyatlarına göre ${firstTier.label.toLowerCase()} A5 broşür (${matrix.name}) ${formatPriceWithSymbol(a5Row.totals[0]!)}, KDV dahil, sepette değişmez.`
           : `${asOf} itibarıyla broşür baskısı ${formatPriceWithSymbol(minStart)}'den başlıyor; ebat bazlı güncel fiyatlar yukarıdaki tabloda, KDV dahildir.`,
     },
     {
@@ -118,7 +118,7 @@ export default async function BrosurFiyatlariPage() {
     },
     {
       q: "Fiyatlara KDV dahil mi?",
-      a: "Evet, tablodaki ve ürün sayfalarındaki tüm fiyatlar KDV dahildir. Broşür fiyatı karşılaştırırken tekliflerin KDV dahil olup olmadığını kontrol et — KDV hariç listelenen fiyat sepette artar.",
+      a: "Evet, tablodaki ve ürün sayfalarındaki tüm fiyatlar KDV dahildir. Broşür fiyatı karşılaştırırken tekliflerin KDV dahil olup olmadığını kontrol et, KDV hariç listelenen fiyat sepette artar.",
     },
     {
       q: "Kağıt gramajı fiyatı nasıl etkiler?",
@@ -139,7 +139,7 @@ export default async function BrosurFiyatlariPage() {
         ]}
       />
       <ArticleJsonLd
-        title="Broşür Baskı Fiyatları 2026 — Ebat × Tiraj Tablosu (KDV Dahil)"
+        title="Broşür Baskı Fiyatları 2026 - Ebat × Tiraj Tablosu (KDV Dahil)"
         description="A7'den A3'e broşür ve el ilanı baskı fiyatları, tiraj kırılımı ve kağıt seçim rehberi."
         url={PAGE_PATH}
         datePublished="2026-07-20"
@@ -164,12 +164,12 @@ export default async function BrosurFiyatlariPage() {
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.label.toLowerCase()} broşür{" "}
             <strong className="text-ink-900">{formatPriceWithSymbol(minStart)}</strong>&apos;den
-            başlıyor — KDV dahil, sepette değişmez. Tablo {asOf} itibarıyla canlı katalog
+            başlıyor, KDV dahil, sepette değişmez. Tablo {asOf} itibarıyla canlı katalog
             fiyatlarıdır; ebat ve tiraj kırılımıyla.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-success/15 text-success rounded-full font-medium">
-              <CheckCircle size={13} weight="fill" /> KDV dahil — sepette değişmez
+              <CheckCircle size={13} weight="fill" /> KDV dahil, sepette değişmez
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <PaintBrush size={13} weight="fill" /> Ücretsiz tasarım desteği
@@ -188,14 +188,14 @@ export default async function BrosurFiyatlariPage() {
           <div className="text-sm text-amber-900 leading-relaxed">
             <strong>Fiyat karşılaştırırken KDV&apos;ye dikkat:</strong> Broşür fiyatları birçok
             listede KDV hariç yazılır; fark sepette ortaya çıkar. Buradaki tüm fiyatlar KDV
-            dahildir — teklifleri sepet toplamı üzerinden kıyaslamak en dürüst yöntemdir.
+            dahildir, teklifleri sepet toplamı üzerinden kıyaslamak en dürüst yöntemdir.
           </div>
         </section>
 
         {/* Ebat × tiraj tablosu */}
         <section>
           <h2 className="text-2xl font-semibold text-ink-900">
-            {matrix.name} — ebat × tiraj fiyat tablosu ({asOf})
+            {matrix.name}: ebat × tiraj fiyat tablosu ({asOf})
           </h2>
           <p className="mt-2 text-sm text-ink-500">
             {matrix.sizeLabel ? `${matrix.sizeLabel} · ` : ""}Fiyatlar seçilen ebat ve tiraja göre
@@ -229,7 +229,7 @@ export default async function BrosurFiyatlariPage() {
                         {v > 0 ? (
                           <span className="font-semibold text-ink-900">{formatPriceWithSymbol(v)}</span>
                         ) : (
-                          <span className="text-ink-500">—</span>
+                          <span className="text-ink-500">-</span>
                         )}
                       </td>
                     ))}
@@ -248,7 +248,7 @@ export default async function BrosurFiyatlariPage() {
         <section className="mt-14">
           <h2 className="text-2xl font-semibold text-ink-900">Kağıt ve işleme göre broşür seçenekleri</h2>
           <p className="mt-2 text-ink-700">
-            Katalogda farklı kağıt gramajı ve yüzey işlemiyle birden fazla broşür ürünü var — bütçene
+            Katalogda farklı kağıt gramajı ve yüzey işlemiyle birden fazla broşür ürünü var, bütçene
             ve kullanım amacına göre seç:
           </p>
           <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -292,7 +292,7 @@ export default async function BrosurFiyatlariPage() {
           <Lightning size={28} weight="fill" className="text-brand-400 mx-auto mb-3" />
           <h2 className="text-2xl md:text-3xl font-semibold">Broşürünü şimdi yapılandır</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
-            Ebat ve tirajı seç, fiyatı anında gör — {formatPriceWithSymbol(minStart)}&apos;den
+            Ebat ve tirajı seç, fiyatı anında gör - {formatPriceWithSymbol(minStart)}&apos;den
             başlayan KDV dahil fiyatlarla. Tasarım desteği ücretsiz.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">

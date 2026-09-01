@@ -279,7 +279,7 @@ export default function KurumsalBasvuruPage() {
           <legend className="text-sm font-semibold text-ink-900 mb-2">
             Belgeler{" "}
             <span className="font-normal text-ink-500">
-              (opsiyonel — yüklerseniz onay hızlanır)
+              (opsiyonel, yüklerseniz onay hızlanır)
             </span>
           </legend>
           <div className="rounded-lg bg-paper-100 border border-paper-200 p-4 flex items-start gap-3">

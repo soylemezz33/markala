@@ -12,7 +12,7 @@ export function CtaBanner() {
             İlk siparişine <span className="marker">%10 indirim</span> seni bekliyor.
           </h2>
           <p className="mt-3 text-ink-700">
-            Kupon kodu: <code className="font-mono px-2 py-0.5 rounded bg-paper-100 text-brand-700 border border-paper-200">HOSGELDIN</code> — sepette uygulanır, tek kullanım.
+            Kupon kodu: <code className="font-mono px-2 py-0.5 rounded bg-paper-100 text-brand-700 border border-paper-200">HOSGELDIN</code>, sepette uygulanır, tek kullanım.
           </p>
         </div>
         <div className="md:col-span-4 flex md:justify-end">

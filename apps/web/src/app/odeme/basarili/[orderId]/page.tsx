@@ -128,7 +128,7 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
           {isCari
             ? "Siparişin alındı, teşekkürler! 🎉"
             : paymentConfirmed === false
-              ? "Siparişin alındı — ödeme doğrulanıyor"
+              ? "Siparişin alındı, ödeme doğrulanıyor"
               : "Ödemen alındı, teşekkürler! 🎉"}
         </h1>
         <p className="mt-3 text-lg text-ink-700">
@@ -173,7 +173,7 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
             Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda
             bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite
             sorunlarından markala.com.tr sorumlu değildir. Dosyanızın baskıya uygunluğunu ekibimiz
-            kontrol eder — gerekirse grafik ekibimiz görselinize istinaden{" "}
+            kontrol eder, gerekirse grafik ekibimiz görselinize istinaden{" "}
             <strong className="text-ink-900">vektörel çizimi ücretsiz hazırlayıp onayınıza sunar</strong>.
             Üretim, tasarım onayınızdan sonra başlar.
           </p>

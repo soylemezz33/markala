@@ -140,7 +140,7 @@ export class DhlService {
    */
   async trackShipment(trackingNumber: string): Promise<DhlTrackingResult | null> {
     if (!this.apiKey) {
-      throw new Error("DHL_API_KEY tanımlı değil — takip sorgusu yapılamaz");
+      throw new Error("DHL_API_KEY tanımlı değil, takip sorgusu yapılamaz");
     }
 
     const no = trackingNumber.trim();

@@ -1,0 +1,100 @@
+{
+  "url": "https://markala.com.tr/matbaa/mersin/yenisehir",
+  "status_code": 200,
+  "content": "<!DOCTYPE html><html lang=\"tr\" class=\"__variable_2b4d3c\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" href=\"/_next/static/media/c9cac29382a46c9d-s.p.woff2\" as=\"font\" crossorigin=\"\" type=\"font/woff2\"/><link rel=\"preload\" href=\"/_next/static/media/d15df05e08ab39f1-s.p.woff2\" as=\"font\" crossorigin=\"\" type=\"font/woff2\"/><link rel=\"preload\" as=\"image\" href=\"/markala-logo.svg\"/><link rel=\"stylesheet\" href=\"/_next/static/css/7bd1c...",
+  "raw_content": "<!DOCTYPE html><html lang=\"tr\" class=\"__variable_2b4d3c\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"preload\" href=\"/_next/static/media...",
+  "is_spa": false,
+  "extracted_text": "Mersin \u00b7 Yeni\u015fehir\nYeni\u015fehir matbaa & bask\u0131 hizmeti\nYeni\u015fehir, Mersin'in modern i\u015f ve e\u011fitim merkezi. Mersin \u00dcniversitesi, hastaneler, hukuk b\u00fcrolar\u0131 ve dan\u0131\u015fmanl\u0131k ofisleri i\u00e7in kurumsal kimlik, antetli k\u00e2\u011f\u0131t, dosya ve bloknot ihtiya\u00e7lar\u0131na kargo/kurye ile 1-2 i\u015f g\u00fcn\u00fc teslim.\n1 i\u015f g\u00fcn\u00fc kargoH\u0131zl\u0131 \u00fcretimKalite garantili\nYeni\u015fehir'in t\u00fcm mahallelerine teslim\nYeni\u015fehir'in ba\u015fl\u0131ca i\u015f ve sanayi b\u00f6lgelerine kargo ile 1 i\u015f g\u00fcn\u00fc i\u00e7inde teslim ediyoruz.\nBah\u00e7elievler\nE\u011fri\u00e7am\nMahmudiye\nPirireis\n\u00c7iftlikk\u00f6y...",
+  "publication_date": "2026-07-01",
+  "accessibility_tree": null,
+  "headers": {
+    "Date": "Mon, 17 Aug 2026 08:24:09 GMT",
+    "Content-Type": "text/html; charset=utf-8",
+    "Transfer-Encoding": "chunked",
+    "Connection": "keep-alive",
+    "Server": "cloudflare",
+    "x-xss-protection": "1; mode=block",
+    "x-content-type-options": "nosniff, nosniff",
+    "x-frame-options": "SAMEORIGIN, SAMEORIGIN",
+    "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+    "referrer-policy": "strict-origin-when-cross-origin, strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=(self), payment=(self), interest-cohort=()",
+    "x-dns-prefetch-control": "on",
+    "content-security-policy-report-only": "default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; img-src 'self' data: blob: https://api.markala.com.tr https://picsum.photos https://*.picsum.photos https://images.unsplash.com https://images.pexels.com https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.com.tr https://www.googleadservices.com https://www.facebook.com; font-src 'self' data:; style-src 'self' 'unsafe-inline' https://accounts.google.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://challenges.cloudflare.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://connect.facebook.net; connect-src 'self' https://accounts.google.com https://api.markala.com.tr https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://*.ingest.sentry.io https://*.ingest.de.sentry.io https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://stats.g.doubleclick.net https://www.facebook.com https://connect.facebook.net; frame-src 'self' https://accounts.google.com https://challenges.cloudflare.com https://www.iyzipay.com https://sandbox-api.iyzipay.com https://api.iyzipay.com; report-uri /api/csp-report",
+    "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
+    "x-nextjs-cache": "HIT",
+    "Cache-Control": "s-maxage=300, stale-while-revalidate",
+    "Nel": "{\"report_to\":\"cf-nel\",\"success_fraction\":0.0,\"max_age\":604800}",
+    "Report-To": "{\"group\":\"cf-nel\",\"max_age\":604800,\"endpoints\":[{\"url\":\"https://a.nel.cloudflare.com/report/v4?s=0tF%2BxCFVuhMqM9us911bFssxreiKQTLks9tKJeEhIekye1zUyEYvgrYwwUdJr9eyOJuQ3g4gPAfVEKMPilWs1%2BhSfz4ANyxSSbPNexDwo6ZQ%2B4iEhI7naz5oFZRlsSqWEw%3D%3D\"}]}",
+    "cf-cache-status": "DYNAMIC",
+    "Content-Encoding": "zstd",
+    "CF-RAY": "a2c747e5bb54d4d1-AMS",
+    "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "redirect_chain": [],
+  "console_errors": [],
+  "render_diagnostics": [],
+  "render_engine": null,
+  "render_ms": null,
+  "mode_used": "raw",
+  "error": null,
+  "structured_data": {
+    "block_count": 4,
+    "processed_count": 4,
+    "total_bytes": 4512,
+    "truncated": false,
+    "blocks": [
+      {
+        "index": 1,
+        "size_bytes": 1966,
+        "valid": true,
+        "types": [
+          "ContactPoint",
+          "EntryPoint",
+          "OpeningHoursSpecification",
+          "Organization",
+          "PostalAddress",
+          "SearchAction",
+          "WebSite"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 2,
+        "size_bytes": 1299,
+        "valid": true,
+        "types": [
+          "City",
+          "Country",
+          "GeoCoordinates",
+          "LocalBusiness",
+          "OpeningHoursSpecification",
+          "PostalAddress"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 3,
+        "size_bytes": 476,
+        "valid": true,
+        "types": [
+          "BreadcrumbList",
+          "ListItem"
+        ],
+        "types_truncated": false
+      },
+      {
+        "index": 4,
+        "size_bytes": 771,
+        "valid": true,
+        "types": [
+          "AdministrativeArea",
+          "City",
+          "Service",
+          "ServiceChannel"
+        ],
+        "types_truncated": false
+      }
+    ]
+  }
+}

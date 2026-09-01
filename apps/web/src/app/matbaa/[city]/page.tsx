@@ -59,7 +59,7 @@ export function generateMetadata({ params }: Props): Metadata {
       : min === max
         ? `${min} iş gününde`
         : `${min}-${max} iş gününde`;
-  const title = `${city.name} Matbaa & Baskı Fiyatları — ${teslim}`;
+  const title = `${city.name} Matbaa & Baskı Fiyatları - ${teslim}`;
 
   const description = `${city.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün, siparişiniz ${teslimCumle} DHL ile kapınızda.`;
 
@@ -69,7 +69,7 @@ export function generateMetadata({ params }: Props): Metadata {
     alternates: { canonical: `/matbaa/${city.slug}` },
     openGraph: {
       type: "website",
-      title: `${city.name} Matbaa & Baskı Fiyatları — Markala`,
+      title: `${city.name} Matbaa & Baskı Fiyatları | Markala`,
       description,
       url: `/matbaa/${city.slug}`,
       images: [
@@ -77,7 +77,7 @@ export function generateMetadata({ params }: Props): Metadata {
           url: "/og-default.png",
           width: 1200,
           height: 630,
-          alt: `${city.name} Matbaa & Baskı — Markala`,
+          alt: `${city.name} Matbaa & Baskı - Markala`,
         },
       ],
     },
@@ -113,12 +113,12 @@ export default async function CityLandingPage({ params }: Props) {
             "@type": "Service",
             "@id": `${SITE}/matbaa/${city.slug}#service`,
             serviceType: `${city.name} Matbaa ve Baskı Hizmeti`,
-            name: `${city.name} Matbaa — Markala`,
+            name: `${city.name} Matbaa - Markala`,
             description: city.intro,
             provider: {
               "@type": "LocalBusiness",
               "@id": `${SITE}/#localbusiness`,
-              name: "Markala — Matbaa & Reklam Ürünleri",
+              name: "Markala - Matbaa & Reklam Ürünleri",
               telephone: "+90-324-433-3351",
             },
             areaServed: {
@@ -394,8 +394,8 @@ export default async function CityLandingPage({ params }: Props) {
                 className="text-brand-700 font-medium hover:underline"
               >
                 kurumsal hesap aç
-              </Link>{" "}
-              — firmanıza özel avantajlı fiyat, açık fatura, size özel temsilci.
+              </Link>,{" "}
+              firmanıza özel avantajlı fiyat, açık fatura, size özel temsilci.
             </p>
           </section>
         )}
@@ -472,8 +472,8 @@ export default async function CityLandingPage({ params }: Props) {
             Kupon kodu:{" "}
             <code className="font-mono px-2 py-0.5 rounded bg-brand-500/15 text-brand-400">
               HOSGELDIN
-            </code>{" "}
-            — sepette uygulanır, tek kullanım.
+            </code>,{" "}
+            sepette uygulanır, tek kullanım.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link

@@ -14,7 +14,7 @@ export const categories: Category[] = [
     name: "Kartvizit",
     shortDescription: "Premium kâğıtlarda profesyonel kartvizit baskısı",
     longDescription:
-      "İlk izleniminizi güçlendiren kartvizitler — mat, parlak veya selefonlu seçeneklerle 24 saatte üretim.",
+      "İlk izleniminizi güçlendiren kartvizitler, mat, parlak veya selefonlu seçeneklerle 24 saatte üretim.",
     imageUrl: catImg("kartvizit"),
     accentColor: "#F5B800",
     startingPrice: 89,
@@ -62,7 +62,7 @@ export const categories: Category[] = [
     name: "Kırlangıç Bayrak",
     shortDescription: "Cadde ve sokak süslemeleri için seri bayrak",
     longDescription:
-      "Üçgen formda renkli kırlangıç bayraklar — düğün, açılış ve etkinlikler için ipe dizili teslim.",
+      "Üçgen formda renkli kırlangıç bayraklar, düğün, açılış ve etkinlikler için ipe dizili teslim.",
     imageUrl: catImg("kirlangic-bayrak"),
     startingPrice: 180,
     productionTime: "2-3 iş günü",
@@ -84,7 +84,7 @@ export const categories: Category[] = [
     name: "Makam Bayrağı",
     shortDescription: "Resmi makamlara özel premium bayrak",
     longDescription:
-      "Püsküllü, sırma işlemeli veya düz baskılı makam bayrakları — krom direk ve taban dahil.",
+      "Püsküllü, sırma işlemeli veya düz baskılı makam bayrakları, krom direk ve taban dahil.",
     imageUrl: catImg("makam-bayragi"),
     startingPrice: 850,
     productionTime: "4-5 iş günü",
@@ -106,7 +106,7 @@ export const categories: Category[] = [
     name: "Araç Sticker",
     shortDescription: "Araç giydirme için kesimli folyo baskı",
     longDescription:
-      "Tam araç giydirme veya logo/yazı kesimi — UV dayanıklı kalıcı folyo, profesyonel uygulama opsiyonu.",
+      "Tam araç giydirme veya logo/yazı kesimi, UV dayanıklı kalıcı folyo, profesyonel uygulama opsiyonu.",
     imageUrl: catImg("arac-sticker"),
     startingPrice: 180,
     productionTime: "2-3 iş günü",
@@ -139,7 +139,7 @@ export const categories: Category[] = [
     name: "Fosforlu Folyo",
     shortDescription: "Karanlıkta parlayan güvenlik ve yön folyosu",
     longDescription:
-      "Fosforlu reflektif folyo — acil çıkış, güvenlik uyarısı ve yön levhaları için ideal.",
+      "Fosforlu reflektif folyo, acil çıkış, güvenlik uyarısı ve yön levhaları için ideal.",
     imageUrl: catImg("fosforlu-folyo"),
     startingPrice: 140,
     productionTime: "2 iş günü",
@@ -150,7 +150,7 @@ export const categories: Category[] = [
     name: "Dekota Baskı",
     shortDescription: "Hafif, dayanıklı dekota plaka baskısı",
     longDescription:
-      "3-5-10 mm dekota üzerine UV baskı — tabela, sergi standı, vitrin için.",
+      "3-5-10 mm dekota üzerine UV baskı, tabela, sergi standı, vitrin için.",
     imageUrl: catImg("dekota-baski"),
     startingPrice: 290,
     productionTime: "2-3 iş günü",
@@ -172,7 +172,7 @@ export const categories: Category[] = [
     name: "Plaket",
     shortDescription: "Ödül ve teşekkür için kişiye özel plaket",
     longDescription:
-      "Ahşap, kristal veya metal plaket — lazer kazıma ve UV baskı seçenekleriyle özel günlere armağan.",
+      "Ahşap, kristal veya metal plaket, lazer kazıma ve UV baskı seçenekleriyle özel günlere armağan.",
     imageUrl: catImg("plaket"),
     startingPrice: 280,
     productionTime: "3-5 iş günü",
@@ -183,7 +183,7 @@ export const categories: Category[] = [
     name: "Madalya",
     shortDescription: "Spor ve organizasyonlar için kişiye özel madalya",
     longDescription:
-      "Kurdele dahil metal madalya — özel kalıp ve baskı seçenekleriyle.",
+      "Kurdele dahil metal madalya, özel kalıp ve baskı seçenekleriyle.",
     imageUrl: catImg("madalya"),
     startingPrice: 25,
     productionTime: "5-7 iş günü",
@@ -194,7 +194,7 @@ export const categories: Category[] = [
     name: "Kupa",
     shortDescription: "Promosyon ve hediye için baskılı kupa",
     longDescription:
-      "Beyaz veya renkli kupa, sublimasyon baskı — kurum logosu, fotoğraf veya özel tasarım.",
+      "Beyaz veya renkli kupa, sublimasyon baskı, kurum logosu, fotoğraf veya özel tasarım.",
     imageUrl: catImg("kupa"),
     startingPrice: 45,
     productionTime: "2-3 iş günü",
@@ -203,9 +203,9 @@ export const categories: Category[] = [
   {
     slug: "kase",
     name: "Kaşe",
-    shortDescription: "Otomatik veya cep kaşesi — hızlı teslim",
+    shortDescription: "Otomatik veya cep kaşesi, hızlı teslim",
     longDescription:
-      "Trodat, Shiny ve Colop kaşeler — yuvarlak, dikdörtgen veya özel ebat. 24 saatte teslim.",
+      "Trodat, Shiny ve Colop kaşeler, yuvarlak, dikdörtgen veya özel ebat. 24 saatte teslim.",
     imageUrl: catImg("kase"),
     startingPrice: 120,
     productionTime: "24 saat",
@@ -216,7 +216,7 @@ export const categories: Category[] = [
     name: "Lightbox",
     shortDescription: "İç ve dış mekan ışıklı tabela",
     longDescription:
-      "LED aydınlatmalı lightbox — alüminyum çerçeve, gergi membran veya pleksi yüzey seçenekleri.",
+      "LED aydınlatmalı lightbox, alüminyum çerçeve, gergi membran veya pleksi yüzey seçenekleri.",
     imageUrl: catImg("lightbox"),
     startingPrice: 1850,
     productionTime: "5-7 iş günü",
@@ -227,7 +227,7 @@ export const categories: Category[] = [
     name: "Plastik Reklam Dubası",
     shortDescription: "Yön ve uyarı için baskılı plastik dubalar",
     longDescription:
-      "İçi su veya kum doldurulabilir plastik dubalar — özel logo ve uyarı baskılı.",
+      "İçi su veya kum doldurulabilir plastik dubalar, özel logo ve uyarı baskılı.",
     imageUrl: catImg("plastik-reklam-dubasi"),
     startingPrice: 320,
     productionTime: "3-4 iş günü",
@@ -242,7 +242,7 @@ const matbaaCategories: Category[] = [
   {
     slug: "el-ilani",
     name: "El İlanı",
-    shortDescription: "105 gr Kuşe tek yön renkli — kampanya ve sokak dağıtımı için ekonomik",
+    shortDescription: "105 gr Kuşe tek yön renkli, kampanya ve sokak dağıtımı için ekonomik",
     longDescription:
       "105 gr Kuşe kâğıt üzerine tek yön renkli el ilanı baskı; A7 / A5 / A4 / A3 ebatlarında 2.000-12.000 adet aralığında. Açılış kampanyası, sokak/kapı dağıtımı, etkinlik davetiye için en hızlı ve uygun maliyetli matbaa çözümü.",
     imageUrl: catImg("el-ilani"),
@@ -254,7 +254,7 @@ const matbaaCategories: Category[] = [
   {
     slug: "afis",
     name: "Afiş",
-    shortDescription: "105 gr Kuşe kâğıt afiş — etkinlik, konser, vitrin için",
+    shortDescription: "105 gr Kuşe kâğıt afiş: etkinlik, konser, vitrin için",
     longDescription:
       "105 gr Kuşe tek yön renkli kâğıt afiş; 34×49 ve 49×69 cm ebatlarda 250-1.000 adet. Konser, festival, sergi, mağaza vitrin tanıtımı için iç mekan ve kısa süreli kullanıma uygun ekonomik çözüm.",
     imageUrl: catImg("afis"),
@@ -266,7 +266,7 @@ const matbaaCategories: Category[] = [
   {
     slug: "antetli-kagit",
     name: "Antetli Kağıt",
-    shortDescription: "90 gr 1.Hamur kurumsal antetli — A5 ve A4",
+    shortDescription: "90 gr 1.Hamur kurumsal antetli, A5 ve A4",
     longDescription:
       "90 gr 1.Hamur kâğıt üzerine tek yön renkli baskılı kurumsal antetli kağıt; A5 ve A4 ebatlarda 2.000-12.000 adet. Resmi yazışma, fatura üst yazısı, sözleşme kapağı için.",
     imageUrl: catImg("antetli-kagit"),
@@ -278,7 +278,7 @@ const matbaaCategories: Category[] = [
   {
     slug: "zarf",
     name: "Zarf",
-    shortDescription: "110 gr 1.Hamur diplomat ve torba zarf — tek renk veya CMYK",
+    shortDescription: "110 gr 1.Hamur diplomat ve torba zarf, tek renk veya CMYK",
     longDescription:
       "Diplomat (10.5×24 cm) zarf tek renk veya tam renkli baskı + Torba (24×32 cm) renkli zarf seçenekleri. Resmi yazışma, fatura, davetiye, ihale dosya gönderimi için 110 gr 1.Hamur kâğıttan üretilir.",
     imageUrl: catImg("zarf"),
@@ -335,7 +335,7 @@ const matbaaCategories: Category[] = [
   {
     slug: "etiket",
     name: "Etiket",
-    shortDescription: "90 gr Kuşe yapışkanlı etiket — 6 varyant",
+    shortDescription: "90 gr Kuşe yapışkanlı etiket, 6 varyant",
     longDescription:
       "Ürün ambalajı, kavanoz/şişe etiketi, kargo paket etiketi için 90 gr Kuşe yapışkanlı çıkartma. 53×83 / 52×82 mm kartvizit boy ve 15.5×25.5 / 25.5×33 cm büyük boy seçenekleri; selefonlu/selefonsuz, özel kesim, altın yaldız varyantları.",
     imageUrl: catImg("etiket"),
@@ -434,7 +434,7 @@ const newCategories4: Category[] = [
     name: "PVC Kart",
     shortDescription: "Ãœyelik, sadakat ve kimlik kartÄ± â€” sert plastik PVC",
     longDescription:
-      "Kredi kartÄ± boyutunda (85.6Ã—54 mm) 760 Âµ sert PVC kart. Ãœyelik, sadakat, otel oda anahtarÄ± ve Ã§alÄ±ÅŸan kimlik kartÄ±; RFID Ã§ip veya manyetik ÅŸerit eklenerek akÄ±llÄ± karta dÃ¶nÃ¼ÅŸtÃ¼rÃ¼lebilir.",
+      "Kredi kartÄ± boyutunda (85.6Ã, 54 mm) 760 Âµ sert PVC kart. Ãœyelik, sadakat, otel oda anahtarÄ± ve Ã§alÄ±ÅŸan kimlik kartÄ±; RFID Ã§ip veya manyetik ÅŸerit eklenerek akÄ±llÄ± karta dÃ¶nÃ¼ÅŸtÃ¼rÃ¼lebilir.",
     imageUrl: catImg("pvc-kart"),
     accentColor: "#4B3AA0",
     startingPrice: 1200,
@@ -494,7 +494,7 @@ const newCategories4: Category[] = [
     name: "Yaka KartÄ±",
     shortDescription: "Ã‡alÄ±ÅŸan kimlik ve etkinlik akreditasyonu iÃ§in yaka kartÄ±",
     longDescription:
-      "350 gr karton veya 760 Âµ sert PVC yaka kartÄ±. PVC kÄ±lÄ±f, klips veya lanyard dahil. Standart kredi kartÄ± (85Ã—54 mm), 90Ã—60 mm ve A7 boyut seÃ§enekleri.",
+      "350 gr karton veya 760 Âµ sert PVC yaka kartÄ±. PVC kÄ±lÄ±f, klips veya lanyard dahil. Standart kredi kartÄ± (85Ã, 54 mm), 90Ã, 60 mm ve A7 boyut seÃ§enekleri.",
     imageUrl: catImg("yaka-karti"),
     accentColor: "#4B3AA0",
     startingPrice: 800,

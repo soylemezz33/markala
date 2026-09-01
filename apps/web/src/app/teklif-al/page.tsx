@@ -184,7 +184,7 @@ export default function TeklifAlPage() {
               İşletmene özel <span className="text-brand-400">teklif</span> hazırlayalım
             </h1>
             <p className="mt-4 text-paper-100/70 text-lg leading-relaxed">
-              İhtiyacını birkaç adımda anlat — sana en uygun ürün, adet ve fiyat kombinasyonunu
+              İhtiyacını birkaç adımda anlat, sana en uygun ürün, adet ve fiyat kombinasyonunu
               ekibimiz hazırlasın. Toplu işlerde özel indirim ve kurumsal cari hesap imkânı.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-paper-100/80">
@@ -354,7 +354,7 @@ export default function TeklifAlPage() {
                   <textarea
                     rows={4}
                     className={`${inputClass} resize-none`}
-                    placeholder="Adet, ölçü, teslim tarihi, tasarım durumu — aklındaki her şeyi yazabilirsin."
+                    placeholder="Adet, ölçü, teslim tarihi, tasarım durumu: aklındaki her şeyi yazabilirsin."
                     value={form.message}
                     onChange={(e) => update("message", e.target.value)}
                   />

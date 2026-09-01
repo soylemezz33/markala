@@ -49,12 +49,12 @@ export class MailService {
 
   /** İşlemsel doğrulama maili. HATA FIRLATMAZ — register'ı bloke etmez. */
   async sendVerificationEmail(to: string, verifyUrl: string): Promise<boolean> {
-    const subject = "Markala — E-posta adresinizi doğrulayın";
-    const text = `Markala hesabınızı etkinleştirmek için bağlantıya tıklayın:\n${verifyUrl}\n\nBağlantı 24 saat geçerlidir. Bu işlemi siz başlatmadıysanız e-postayı yok sayın.\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
+    const subject = "Markala - E-posta adresinizi doğrulayın";
+    const text = `Markala hesabınızı etkinleştirmek için bağlantıya tıklayın:\n${verifyUrl}\n\nBağlantı 24 saat geçerlidir. Bu işlemi siz başlatmadıysanız e-postayı yok sayın.\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
     const html = renderEmail({
       title: "Markala'ya hoş geldiniz 👋",
       intro: "Hesabınızı etkinleştirmek için e-posta adresinizi doğrulayın.",
-      preheader: "E-posta adresinizi doğrulayın — bağlantı 24 saat geçerli.",
+      preheader: "E-posta adresinizi doğrulayın, bağlantı 24 saat geçerli.",
       bodyHtml: `<p style="margin:0">Hesabınızı etkinleştirmek için aşağıdaki butona tıklayın:</p>
         ${emailButton("E-postamı doğrula", verifyUrl)}
         ${emailFallbackLink(verifyUrl)}
@@ -74,16 +74,16 @@ export class MailService {
 
   /** Şifre sıfırlama maili. HATA FIRLATMAZ — akışı bloke etmez (enumeration koruması için sessiz başarı). */
   async sendPasswordResetEmail(to: string, resetUrl: string): Promise<boolean> {
-    const subject = "Markala — Şifre sıfırlama talebi";
-    const text = `Markala hesabınızın şifresini sıfırlamak için bağlantıya tıklayın:\n${resetUrl}\n\nBağlantı 1 saat geçerlidir. Bu talebi siz oluşturmadıysanız e-postayı yok sayın; şifreniz değişmez.\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
+    const subject = "Markala - Şifre sıfırlama talebi";
+    const text = `Markala hesabınızın şifresini sıfırlamak için bağlantıya tıklayın:\n${resetUrl}\n\nBağlantı 1 saat geçerlidir. Bu talebi siz oluşturmadıysanız e-postayı yok sayın; şifreniz değişmez.\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
     const html = renderEmail({
       title: "Şifre Sıfırlama",
       intro: "Markala hesabınızın şifresini sıfırlama talebi aldık.",
-      preheader: "Şifre sıfırlama bağlantısı — 1 saat geçerli.",
+      preheader: "Şifre sıfırlama bağlantısı, 1 saat geçerli.",
       bodyHtml: `<p style="margin:0">Şifrenizi sıfırlamak için aşağıdaki butona tıklayın:</p>
         ${emailButton("Şifremi sıfırla", resetUrl)}
         ${emailFallbackLink(resetUrl)}
-        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bağlantı 1 saat geçerlidir. Bu talebi siz oluşturmadıysanız bu e-postayı yok sayın — şifreniz değişmez.</p>`,
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bağlantı 1 saat geçerlidir. Bu talebi siz oluşturmadıysanız bu e-postayı yok sayın, şifreniz değişmez.</p>`,
     });
 
     try {
@@ -103,12 +103,12 @@ export class MailService {
     const safeCompany = String(companyName)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    const subject = "Markala — Kurumsal hesabınız onaylandı";
-    const text = `${companyName} kurumsal hesabınız onaylandı. Panele giriş için önce şifrenizi belirleyin:\n${inviteUrl}\n\nBağlantı 7 gün geçerlidir.\n\nMarkala — 324 Ajans BT (işlemsel ileti).`;
+    const subject = "Markala - Kurumsal hesabınız onaylandı";
+    const text = `${companyName} kurumsal hesabınız onaylandı. Panele giriş için önce şifrenizi belirleyin:\n${inviteUrl}\n\nBağlantı 7 gün geçerlidir.\n\nMarkala, 324 Ajans BT (işlemsel ileti).`;
     const html = renderEmail({
       title: "Kurumsal Hesabınız Onaylandı 🎉",
       intro: `${safeCompany} için kurumsal hesabınız aktif edildi.`,
-      preheader: "Kurumsal hesabınız onaylandı — şifrenizi belirleyin.",
+      preheader: "Kurumsal hesabınız onaylandı, şifrenizi belirleyin.",
       bodyHtml: `<p style="margin:0">Panele giriş yapmak için önce şifrenizi belirleyin:</p>
         ${emailButton("Şifremi belirle ve giriş yap", inviteUrl)}
         ${emailFallbackLink(inviteUrl)}
@@ -145,18 +145,18 @@ export class MailService {
     const fmt = (n: number) =>
       new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
-    const subject = `Markala — ${input.period} dönemi cari hesap ekstresi`;
+    const subject = `Markala - ${input.period} dönemi cari hesap ekstresi`;
     const rowsText = input.orders
-      .map((o) => `  • ${o.orderNumber} (${o.date}) — ${fmt(o.amount)} ₺`)
+      .map((o) => `  • ${o.orderNumber} (${o.date}) - ${fmt(o.amount)} ₺`)
       .join("\n");
     const invoiceNote = input.invoiceIssued
       ? "Bu döneme ait e-faturanız Paraşüt üzerinden düzenlenmiştir."
       : "Bu döneme ait fatura kaydı oluşturulmuştur.";
     const text =
-      `${input.companyName} — ${input.period} dönemi açık hesap (cari) ekstresi:\n\n` +
+      `${input.companyName} - ${input.period} dönemi açık hesap (cari) ekstresi:\n\n` +
       `${rowsText}\n\n` +
       `Toplam: ${fmt(input.total)} ₺ (${input.orders.length} sipariş)\n\n` +
-      `${invoiceNote}\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir.`;
+      `${invoiceNote}\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir.`;
 
     const rowsHtml = input.orders
       .map(
@@ -168,8 +168,8 @@ export class MailService {
       .join("");
     const html = renderEmail({
       title: `${esc(input.period)} Dönemi Cari Hesap Ekstresi`,
-      intro: `${esc(input.companyName)} — açık hesap (cari) sipariş özeti`,
-      preheader: `${esc(input.period)} ekstresi — toplam ${fmt(input.total)} ₺`,
+      intro: `${esc(input.companyName)}, açık hesap (cari) sipariş özeti`,
+      preheader: `${esc(input.period)} ekstresi, toplam ${fmt(input.total)} ₺`,
       bodyHtml: `<p style="margin:0 0 12px"><strong>${esc(input.companyName)}</strong> için açık hesap (cari) siparişlerinizin ${esc(input.period)} dönemi özeti:</p>
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
           <thead><tr>
@@ -292,19 +292,19 @@ export class MailService {
       ? `<p style="margin:14px 0 0;padding:10px 12px;background:#FDF3E7;border:1px solid #F5D7B2;border-radius:8px;color:#57534e;font-size:13px;line-height:1.5"><strong style="color:#1A1410">Yüklediğiniz tasarım dosyası hakkında:</strong> Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından markala.com.tr sorumlu değildir. Gerekirse grafik ekibimiz görselinize istinaden <strong style="color:#1A1410">vektörel çizimi ücretsiz hazırlayıp onayınıza sunar</strong>; üretim, tasarım onayınızdan sonra başlar.</p>`
       : "";
 
-    const subject = `Markala — Siparişiniz alındı (${order.orderNumber})`;
+    const subject = `Markala - Siparişiniz alındı (${order.orderNumber})`;
     const text =
       `${name ? `Merhaba ${name},` : "Merhaba,"}\n\nSiparişinizi aldık. Sipariş No: ${order.orderNumber}\n\n` +
-      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity * birimAdet(i.configurationSummary)} — ${fmt(i.lineTotal)} ₺`).join("\n") +
+      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity * birimAdet(i.configurationSummary)} - ${fmt(i.lineTotal)} ₺`).join("\n") +
       `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
       `${isCari ? "Açık hesap (cari) ile alındı; ay sonu faturalandırılır." : "Ödemeniz alındı, siparişiniz onaylandı."}` +
       fileQualityText +
-      `\n\nSiparişlerim: ${orderUrl}\n\nMarkala — 324 Ajans güvencesiyle.`;
+      `\n\nSiparişlerim: ${orderUrl}\n\nMarkala, 324 Ajans güvencesiyle.`;
 
     const html = renderEmail({
       title: "Siparişiniz Alındı 🎉",
       intro: `${greeting} siparişinizi aldık ve hazırlamaya başlıyoruz.`,
-      preheader: `Sipariş ${order.orderNumber} alındı — toplam ${fmt(order.total)} ₺`,
+      preheader: `Sipariş ${order.orderNumber} alındı, toplam ${fmt(order.total)} ₺`,
       bodyHtml: `<p style="margin:0 0 4px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
         <p style="margin:0 0 14px;color:#78716c;font-size:13px">${statusNote}</p>
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
@@ -379,7 +379,7 @@ export class MailService {
       this.logger.warn(`mail.newOrderAdmin: tasarımcı listesi alınamadı: ${(e as Error).message}`);
     }
     if (recipients.length === 0) {
-      this.logger.warn("mail.newOrderAdmin: ORDER_NOTIFY_TO/ADMIN_EMAIL tanımsız — bildirim atlandı");
+      this.logger.warn("mail.newOrderAdmin: ORDER_NOTIFY_TO/ADMIN_EMAIL tanımsız, bildirim atlandı");
       return false;
     }
 
@@ -431,7 +431,7 @@ export class MailService {
       )
       .join("");
 
-    const subject = `🔔 Yeni sipariş — ${order.orderNumber} · ${fmt(order.total)} ₺${paid || isCari ? "" : " (ödeme bekliyor)"}`;
+    const subject = `🔔 Yeni sipariş - ${order.orderNumber} · ${fmt(order.total)} ₺${paid || isCari ? "" : " (ödeme bekliyor)"}`;
     const text =
       `Yeni sipariş: ${order.orderNumber}\nTutar: ${fmt(order.total)} ₺ (KDV dahil)\nÖdeme: ${payLabel}\n\n` +
       `Müşteri: ${customerName}\nTelefon: ${order.phone ?? "-"}\nE-posta: ${order.email ?? "-"}\n` +
@@ -516,7 +516,7 @@ Markala`;
     const html = renderEmail({
       title: "Siparişin Baskıda 🖨️",
       intro: `${greeting} siparişin baskıya verildi.`,
-      preheader: `${order.orderNumber} — üretim başladı, sırada kargo var`,
+      preheader: `${order.orderNumber}, üretim başladı, sırada kargo var`,
       bodyHtml:
         `<p style="margin:0 0 8px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>` +
         `<p style="margin:0 0 12px">Üretim tamamlanınca kargoya veriyoruz ve takip numarasını ayrıca ileteceğiz.</p>` +
@@ -603,7 +603,7 @@ Markala`;
       ? `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate;margin-top:12px">
           <tr><td style="background:#FAFAF9;border:1px solid #e7e5e4;border-radius:8px;padding:12px 14px">
             <p style="margin:0 0 4px;font-size:11px;color:#a8a29e;font-weight:700;letter-spacing:0.5px">TESLİMAT ADRESİ</p>
-            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(adres.fullName ?? "")}${adres.fullName ? " — " : ""}${esc(adres.fullAddress ?? "")}${(adres.district || adres.city) && !(adres.fullAddress ?? "").includes(adres.city ?? " ") ? `, ${esc(adres.district ?? "")}${adres.district && adres.city ? " / " : ""}${esc(adres.city ?? "")}` : ""}</p>
+            <p style="margin:0;font-size:13px;color:#1A1410;line-height:1.5">${esc(adres.fullName ?? "")}${adres.fullName ? "-" : ""}${esc(adres.fullAddress ?? "")}${(adres.district || adres.city) && !(adres.fullAddress ?? "").includes(adres.city ?? " ") ? `, ${esc(adres.district ?? "")}${adres.district && adres.city ? " / " : ""}${esc(adres.city ?? "")}` : ""}</p>
             <p style="margin:6px 0 0;font-size:12px;color:#78716c">Tahmini teslim: <strong style="color:#1A1410">1-3 iş günü</strong></p>
           </td></tr>
         </table>`
@@ -619,14 +619,14 @@ Markala`;
     const html = renderEmail({
       title: "Siparişin Kargoda 📦",
       intro: `${greeting} paketin yola çıktı!`,
-      preheader: `${order.orderNumber} kargoya verildi — tahmini teslim 1-3 iş günü`,
+      preheader: `${order.orderNumber} kargoya verildi, tahmini teslim 1-3 iş günü`,
       bodyHtml: `${kargoKarti}
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px;margin-top:14px">
           <tr><td colspan="2" style="padding:0 0 6px;font-size:12px;color:#78716c">Sipariş No: <strong style="color:#1A1410">${esc(order.orderNumber)}</strong></td></tr>
           ${urunSatirlari}
         </table>
         ${adresBlok}
-        <p style="margin:14px 0 0;padding:10px 12px;background:#F0F9F1;border:1px solid #BBE5C0;border-radius:8px;color:#57534e;font-size:12px;line-height:1.5">💡 <strong style="color:#1A1410">Teslim alırken:</strong> Pakette gözle görülür hasar varsa kuryeye "hasarlı teslim alındı" tutanağı tutturmanızı öneririz — olası değişim/iade sürecini hızlandırır.</p>
+        <p style="margin:14px 0 0;padding:10px 12px;background:#F0F9F1;border:1px solid #BBE5C0;border-radius:8px;color:#57534e;font-size:12px;line-height:1.5">💡 <strong style="color:#1A1410">Teslim alırken:</strong> Pakette gözle görülür hasar varsa kuryeye "hasarlı teslim alındı" tutanağı tutturmanızı öneririz, olası değişim/iade sürecini hızlandırır.</p>
         ${emailButton("Siparişlerim", orderUrl)}
         <p style="margin:12px 0 0;color:#78716c;font-size:13px">Bir sorun olursa bu e-postayı yanıtlayabilir ya da WhatsApp'tan yazabilirsin.</p>`,
     });
@@ -658,15 +658,15 @@ Markala`;
     const refundLineText = paid
       ? "Ödemen 3-7 iş günü içinde kartına iade edilir; gecikirse bu e-postayı yanıtlaman yeterli."
       : "Bu sipariş için tahsil edilmiş bir ödeme yok.";
-    const subject = `Siparişin iptal edildi — ${order.orderNumber}`;
+    const subject = `Siparişin iptal edildi - ${order.orderNumber}`;
     const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (WhatsApp: 0505 741 70 28).\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişin İptal Edildi",
       intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin iptal edildi.`,
-      preheader: `${order.orderNumber} iptal edildi${paid ? " — ödemen iade edilecek" : ""}`,
+      preheader: `${order.orderNumber} iptal edildi${paid ? ", ödemen iade edilecek" : ""}`,
       bodyHtml: `<p style="margin:0 0 14px">${esc(refundLineText)}</p>
         ${emailButton("Yeniden sipariş ver", `${webUrl}/urunler`)}
-        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Yanlışlıkla iptal olduğunu düşünüyorsan bu e-postayı yanıtla ya da WhatsApp'tan yaz — hemen bakalım.</p>`,
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Yanlışlıkla iptal olduğunu düşünüyorsan bu e-postayı yanıtla ya da WhatsApp'tan yaz, hemen bakalım.</p>`,
     });
     try {
       const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
@@ -706,12 +706,12 @@ Markala`;
     const waMessage = `Sipariş ${order.orderNumber} için değerlendirmemi paylaşıyorum: `;
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 
-    const subject = "Siparişiniz teslim edildi — Değerlendirmenizi paylaşır mısınız?";
+    const subject = "Siparişiniz teslim edildi - Değerlendirmenizi paylaşır mısınız?";
     const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişiniz teslim edildi. Umarız beğenirsiniz!\nBaskı kalitesinden memnunsanız, değerlendirmenizi WhatsApp üzerinden bizimle paylaşır mısınız:\n${waUrl}\nAynı ürünlere yeniden ihtiyacınız olursa tek tıkla tekrar sipariş verebilirsiniz: ${reorderUrl}\nBir sorun varsa hemen bize yazın.\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişiniz Teslim Edildi ✅",
-      intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişiniz teslim edildi — umarız beğenirsiniz!`,
-      preheader: `${order.orderNumber} teslim edildi — değerlendirmeniz bizim için değerli`,
+      intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişiniz teslim edildi, umarız beğenirsiniz!`,
+      preheader: `${order.orderNumber} teslim edildi, değerlendirmeniz bizim için değerli`,
       bodyHtml: `<p style="margin:0 0 14px">Baskı kalitesinden memnun kaldıysanız, değerlendirmenizi <strong>WhatsApp</strong> üzerinden bizimle paylaşır mısınız? Görüşünüz hem bize hem yeni müşterilere yol gösterir.</p>
         ${emailButtonColored("💬 WhatsApp'tan değerlendir", waUrl)}
         ${emailFallbackLink(waUrl)}
@@ -776,7 +776,7 @@ Markala`;
     // "stok/fiyat değişebilir" gibi baskı cümlesi de kurulmaz — nötr son hatırlatma.
     const subject =
       stage === 1
-        ? `Siparişin seni bekliyor — ödemeni tamamla (${order.orderNumber})`
+        ? `Siparişin seni bekliyor, ödemeni tamamla (${order.orderNumber})`
         : `Son hatırlatma: ${order.orderNumber} siparişinin ödemesi açık`;
     const introLine =
       stage === 1
@@ -795,15 +795,15 @@ Markala`;
     const text =
       `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n` +
       `${order.orderNumber} numaralı siparişinin ödemesi henüz tamamlanmadı.\n\n` +
-      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} — ${fmt(i.lineTotal)} ₺`).join("\n") +
+      (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} - ${fmt(i.lineTotal)} ₺`).join("\n") +
       `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
       `Ödemeyi tamamla: ${payUrl}\n\n` +
-      `Sorun yaşıyorsan bu e-postayı yanıtlayabilirsin.\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
+      `Sorun yaşıyorsan bu e-postayı yanıtlayabilirsin.\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
 
     const html = renderEmail({
       title: stage === 1 ? "Siparişin Seni Bekliyor" : "Son Hatırlatma",
       intro: `${greeting} ${introLine}`,
-      preheader: `${order.orderNumber} — ödeme bekleniyor, toplam ${fmt(order.total)} ₺`,
+      preheader: `${order.orderNumber}, ödeme bekleniyor, toplam ${fmt(order.total)} ₺`,
       bodyHtml: `<p style="margin:0 0 4px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
         <p style="margin:0 0 14px;color:#78716c;font-size:13px">Ödemen tamamlanınca siparişini hemen üretime alıyoruz.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
@@ -820,7 +820,7 @@ Markala`;
         </table>
         ${emailButton("Ödemeyi Tamamla", payUrl)}
         ${emailFallbackLink(payUrl)}
-        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bir sorunla karşılaştıysan ya da vazgeçtiysen bu e-postayı yanıtlaman yeterli — yardımcı olalım.</p>`,
+        <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bir sorunla karşılaştıysan ya da vazgeçtiysen bu e-postayı yanıtlaman yeterli, yardımcı olalım.</p>`,
     });
 
     try {
@@ -865,7 +865,7 @@ Markala`;
     const text =
       `${greeting}\n\nSepetine eklediğin şu ürünler hâlâ seni bekliyor:\n\n` +
       safeItems.map((i) => `  • ${i.productName} × ${i.quantity}`).join("\n") +
-      `\n\nSepetine dön: ${cartUrl}\n\nMarkala — 324 Ajans BT tarafından gönderilmiştir.`;
+      `\n\nSepetine dön: ${cartUrl}\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir.`;
 
     const html = renderEmail({
       title: "Sepetin Seni Bekliyor",
@@ -966,7 +966,7 @@ Markala`;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     const reviewUrl = `${webUrl}/yorum?order=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}`;
-    const subject = "Siparişiniz teslim edildi — deneyiminizi paylaşır mısınız?";
+    const subject = "Siparişiniz teslim edildi, deneyiminizi paylaşır mısınız?";
     const text =
       `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n` +
       `${order.orderNumber} numaralı siparişinizi teslim aldığınızı umuyoruz.\n\n` +
@@ -976,8 +976,8 @@ Markala`;
       `Bağlantı tek kullanımlıktır.\n\nMarkala`;
     const html = renderEmail({
       title: "Deneyiminizi Paylaşır mısınız? ⭐",
-      intro: `${greeting} siparişinizi ulaştırdık — ne düşünüyorsunuz?`,
-      preheader: `${esc(order.orderNumber)} teslim edildi — deneyiminizi paylaşır mısınız?`,
+      intro: `${greeting} siparişinizi ulaştırdık, ne düşünüyorsunuz?`,
+      preheader: `${esc(order.orderNumber)} teslim edildi, deneyiminizi paylaşır mısınız?`,
       bodyHtml: `<p style="margin:0 0 14px">
           ${order.items[0] ? `<strong>${esc(order.items[0].productName)}</strong> ve diğer ürünlerinizi teslim aldınız.` : "Siparişinizi teslim aldınız."}
           Deneyiminizi paylaşarak hem bize hem de diğer müşterilere yardımcı olabilirsiniz.
