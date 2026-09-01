@@ -10,11 +10,11 @@ describe("computeItemCostTotal", () => {
     expect(computeItemCostTotal(null, {}, 1, 100, 1.2)).toBeNull();
   });
 
-  it("area: KDV hariç satış ÷ marj (satış motoru maliyet×marj ürettiği için)", () => {
-    expect(computeItemCostTotal(areaProduct, {}, 1, 120, 1.2)).toBe(100);
+  it("area: maliyet BİLİNMİYOR → null (fiyat satırı artık satış fiyatı tutuyor, geri-hesap yok)", () => {
+    expect(computeItemCostTotal(areaProduct, {}, 1, 120, 1.2)).toBeNull();
   });
 
-  it("area: marj geçersizse null (0'a bölme/uydurma yok)", () => {
+  it("area: marj ne olursa olsun null (uydurma maliyet yazılmaz)", () => {
     expect(computeItemCostTotal(areaProduct, {}, 1, 120, 0)).toBeNull();
   });
 

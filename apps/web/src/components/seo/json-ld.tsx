@@ -75,7 +75,7 @@ export function OrganizationJsonLd() {
         "@type": "WebSite",
         "@id": `${SITE}/#website`,
         url: SITE,
-        name: "Markala — Matbaa & Reklam Ürünleri",
+        name: "Markala - Matbaa & Reklam Ürünleri",
         publisher: { "@id": `${SITE}/#organization` },
         inLanguage: "tr-TR",
         potentialAction: {
@@ -182,7 +182,7 @@ export function ProductJsonLd({
     // fiyat noktası içeriyorsa AggregateOffer basılır: tek "price" kademeli üründe yanıltıcı,
     // low/high aralığı gerçeği yansıtır (Google ürün snippet'inde fiyat aralığı gösterir).
     // ⚠️ pricingMode="area" satırları müşteri fiyatı DEĞİL ham maliyettir (dolar bazlı;
-    // kur×marj×KDV motoru sonradan uygular) → area ürünlerinde daima tek Offer (displayPrice).
+    // kur motoru sonradan uygular; deger KDV dahil son satis) → area urunlerinde daima tek Offer (displayPrice).
     const rowPrices =
       product.pricingMode === "area"
         ? []
@@ -284,7 +284,7 @@ export function LocalBusinessJsonLd() {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "@id": `${SITE}/#localbusiness`,
-    name: "Markala — Matbaa & Reklam Ürünleri",
+    name: "Markala - Matbaa & Reklam Ürünleri",
     image: `${SITE}/og-default.png`,
     url: SITE,
     telephone: "+90-324-433-3351",

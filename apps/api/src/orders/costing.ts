@@ -29,10 +29,15 @@ export function computeItemCostTotal(
   if (!product) return null; // kampanya paketi vb. — ürün ilişkisi yok
   const qty = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
 
-  // area: satış motoru zaten `satış_hariç = maliyet × marj` üretir → maliyet geri hesaplanır.
+  // area: 2026-09-01'den önce satış motoru `satış_hariç = maliyet × marj` ürettiği için maliyet
+  // geri hesaplanabiliyordu. Artık fiyat satırı KDV DAHİL SON SATIŞ fiyatını tutuyor (kâr rakamın
+  // içinde, ürün ürün farklı: 1,32–2,50) → satıştan maliyete giden sabit bir oran YOK.
+  // Uydurma rakam yazmak yerine null döneriz: rapor "maliyet bilinmiyor" der, yanlış kâr göstermez.
+  // KALICI ÇÖZÜM: gerçek maliyetler ürünün content.maliyetUsd alanına yazılıyor (fiyat Excel'inin
+  // MALİYET kolonu); costing bunu okuyup m² kârını yeniden hesaplayabilir — geliştirme oturumu işi.
   if (product.pricingMode === "area") {
-    if (!(marj > 0)) return null;
-    return round2(satisHaricLine / marj);
+    void marj;
+    return null;
   }
 
   const rows = (product.prices ?? []) as Array<{

@@ -37,14 +37,14 @@ describe("m² başlangıç fiyatı — ek işlem grubu adaya girmez", () => {
   it("ana malzemeden hesaplar, CNC kesime düşmez", async () => {
     const s = svc(PLEKSI);
     const r = (await s.findBySlug("pleksi-baski")) as { displayPrice: number };
-    // 45 $ × 49 kur × 1,2 marj × 1,2 KDV = 3.175,20
-    expect(r.displayPrice).toBeCloseTo(3175.2, 1);
-    expect(r.displayPrice).not.toBeCloseTo(176.4, 1); // CNC kesimin fiyatı
+    // 45 $ × 49 kur = 2.205,00 — fiyat satırı KDV DAHİL son satış tutar, marj/KDV EKLENMEZ (2026-09-01)
+    expect(r.displayPrice).toBeCloseTo(2205, 1);
+    expect(r.displayPrice).not.toBeCloseTo(122.5, 1); // CNC kesimin fiyatı (2,50 $ × 49)
   });
 
   it("ek işlem grubu YOKSA sonuç değişmez", async () => {
     const s = svc({ ...PLEKSI, options: [PLEKSI.options[0]], prices: [PLEKSI.prices[0]] });
     const r = (await s.findBySlug("pleksi-baski")) as { displayPrice: number };
-    expect(r.displayPrice).toBeCloseTo(3175.2, 1);
+    expect(r.displayPrice).toBeCloseTo(2205, 1);
   });
 });

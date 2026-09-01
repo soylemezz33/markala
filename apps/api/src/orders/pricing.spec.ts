@@ -5,39 +5,40 @@ const aopt = (groupKey: string, role: "dimension"|"priced", optionKey: string, r
   ({ groupKey, groupLabel: groupKey, groupRole: role, groupSort: 0, optionKey, optionLabel: optionKey, optionSort: 0, rules: rules ?? null });
 
 describe("computeAreaPrice", () => {
-  // Bu testler ALAN MATEMATİĞİNİ doğrular; beklenen tutarlar marj 1.5'e göre sabitlenmiştir.
-  // İşletme fallback marjı (DEFAULT_PRICING) 1.2'ye çekildiğinden, testi işletme değerinden
-  // ayır: kendi sabit marjını geçir (aksi halde matematik testi ayara bağımlı kalırdı).
-  const TEST_PRICING = { ...DEFAULT_PRICING, marj: 1.5 };
+  // Bu testler ALAN MATEMATİĞİNİ doğrular. 2026-09-01'den itibaren fiyat satırındaki değer
+  // KDV DAHİL SON SATIŞ fiyatıdır: motor üstüne marj veya KDV EKLEMEZ, KDV'yi içinden ayırır.
+  // marj artık computeAreaPrice'ta kullanılmıyor — testte de sabitlenmesine gerek yok.
+  const TEST_PRICING = { ...DEFAULT_PRICING };   // kur 46, kdv 0.2
   const malzeme = (cost: number, rules: object) => ({
     options: [aopt("malzeme", "priced", "m", rules)],
     prices: [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost }],
   });
 
-  it("Çin 440 (2.20$/m², dolar) 100x100=1m² → haric 151.80, dahil 182.16", () => {
+  it("Çin 440 (2.20$/m², dolar) 100x100=1m² → dahil 101.20 (2.20×46), haric 84.33", () => {
     const { options, prices } = malzeme(2.20, { effect: "perM2", birim: "dolar" });
     const r = computeAreaPrice(options, prices, { malzeme: "m", en: "100", boy: "100", adet: "1" }, TEST_PRICING);
-    expect(r.haric).toBe(151.8);
-    expect(r.dahil).toBe(182.16);
+    expect(r.dahil).toBe(101.2);
+    expect(r.haric).toBe(84.33);
   });
 
-  it("min 1 m²: 60x150=0.9m² → 1 m² sayılır (Saten Kırlangıç 3.75$ → dahil 310.50)", () => {
+  it("min 1 m²: 60x150=0.9m² → 1 m² sayılır (Saten Kırlangıç 3.75$ → dahil 172.50)", () => {
     const { options, prices } = malzeme(3.75, { effect: "perM2", birim: "dolar" });
     const r = computeAreaPrice(options, prices, { malzeme: "m", en: "60", boy: "150", adet: "1" }, TEST_PRICING);
-    expect(r.dahil).toBe(310.5);
+    expect(r.dahil).toBe(172.5);
   });
 
-  it("perPiece TL (Yelken takım 550₺) × adet 2 → dahil 1980", () => {
+  it("perPiece TL (Yelken takım 550₺) × adet 2 → dahil 1100 (marj eklenmez)", () => {
     const { options, prices } = malzeme(550, { effect: "perPiece", birim: "tl" });
     const r = computeAreaPrice(options, prices, { malzeme: "m", en: "0", boy: "0", adet: "2" }, TEST_PRICING);
-    expect(r.dahil).toBe(1980);
+    expect(r.dahil).toBe(1100);
   });
 
-  it("perPerimeter (kolon dikiş 0.50$/m) 100x200, çevre 6m → haric 207", () => {
+  it("perPerimeter (kolon dikiş 0.50$/m) 100x200, çevre 6m → dahil 138, haric 115", () => {
     const opts = [aopt("kolon", "priced", "k", { effect: "perPerimeter", birim: "dolar" })];
     const prices = [{ groupKey: "kolon", optionKey: "k", dimKey: null, price: 0, cost: 0.5 }];
     const r = computeAreaPrice(opts, prices, { kolon: "k", en: "100", boy: "200", adet: "1" }, TEST_PRICING);
-    expect(r.haric).toBe(207);
+    expect(r.dahil).toBe(138);
+    expect(r.haric).toBe(115);
   });
 
   it("conditional (<1m² dikiş 0.20$) sadece alan<1'de eklenir", () => {

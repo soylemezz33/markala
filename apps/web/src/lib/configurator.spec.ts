@@ -446,23 +446,23 @@ const aopt = (groupKey: string, role: "dimension" | "priced", optionKey: string,
   ({ groupKey, groupLabel: groupKey, groupRole: role, groupSort: 0, optionKey, optionLabel: optionKey, optionSort: 0, rules: rules ?? null });
 
 describe("computeAreaPrice (web — API paritesi)", () => {
-  it("Çin 440 1m² → dahil 182.16", () => {
+  it("Çin 440 1m² → dahil 101.20 (2,20×46, marj/KDV eklenmez)", () => {
     const r = computeAreaPrice(
       [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar" })] as any,
       [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 2.20 }],
       { malzeme: "m", en: "100", boy: "100", adet: "1" },
       DEFAULT_PRICING,
     );
-    expect(r.dahil).toBe(182.16);
+    expect(r.dahil).toBe(101.2);
   });
-  it("min 1 m²: 60x150 Saten Kırlangıç 3.75$ → dahil 310.50", () => {
+  it("min 1 m²: 60x150 Saten Kırlangıç 3.75$ → dahil 172.50", () => {
     const r = computeAreaPrice(
       [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar" })] as any,
       [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 3.75 }],
       { malzeme: "m", en: "60", boy: "150", adet: "1" },
       DEFAULT_PRICING,
     );
-    expect(r.dahil).toBe(310.5);
+    expect(r.dahil).toBe(172.5);
   });
 });
 

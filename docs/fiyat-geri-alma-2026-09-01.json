@@ -1,0 +1,429 @@
+[
+  {
+    "slug": "dekota-baski-5mm",
+    "id": "cmqdrw6nw0036nhx8kyf7tirg",
+    "oncekiPrices": [
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-3mm",
+        "dimKey": null,
+        "cost": "8",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-5mm",
+        "dimKey": null,
+        "cost": "11",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-7mm",
+        "dimKey": null,
+        "cost": "18",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-10mm",
+        "dimKey": null,
+        "cost": "23",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-cift-yon-3mm",
+        "dimKey": null,
+        "cost": "12",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-cift-yon-5mm",
+        "dimKey": null,
+        "cost": "15",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-cift-yon-7mm",
+        "dimKey": null,
+        "cost": "22",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "dekota-cift-yon-10mm",
+        "dimKey": null,
+        "cost": "27",
+        "price": "0"
+      }
+    ],
+    "oncekiContent": {
+      "seo": {
+        "title": "Dekota Baskı — 5 mm UV Baskı, Özel Ölçü",
+        "keywords": [
+          "dekota baskı",
+          "dekota tabela",
+          "5 mm dekota",
+          "uv baskı",
+          "pvc tabela",
+          "vitrin tabela",
+          "fuar standı"
+        ],
+        "description": "5 mm beyaz dekota plaka üzerine UV baskı. Düz veya CNC özel form kesim. Tabela, sergi, vitrin için hafif ve dayanıklı çözüm. İstediğiniz ebatta m² hesabı."
+      },
+      "sku": "MK-DKT-5MM-001",
+      "faqs": [
+        {
+          "a": "Dekota dış mekanda 2-3 yıl deformasyona uğramadan kullanılabilir. Ancak doğrudan yağmur ve güneş alan açık alanlarda 8-10 yıl dayanan alüminyum kompozit (alkomp) panel veya 10+ yıl dayanan dibond öneririz. Yarı korunaklı (saçak altı, mağaza alın tabelası vb.) yerlerde 5 mm dekota uygundur.",
+          "q": "Dış mekanda ne kadar dayanır?"
+        },
+        {
+          "a": "Vektörel kesim çizgisini ayrı bir katmanda (genellikle macenta/kırmızı çizgi) belirtmeniz yeterli. Tasarım katmanından farklı renkte olması, makinenin kesim çizgisini ayırt etmesini sağlar.",
+          "q": "Özel form kesim için tasarım nasıl olmalı?"
+        }
+      ],
+      "brand": "Markala",
+      "rating": {
+        "count": 31,
+        "average": 4.6
+      },
+      "features": [
+        "5 mm beyaz dekota plaka — hafif, dayanıklı",
+        "UV baskı — solvent ve yıpranmaya dayanıklı",
+        "Düz kesim veya özel form CNC lazer kesim",
+        "30-305 cm ebat aralığında özel üretim",
+        "Askılık ve çift ayaklı stand ekstraları"
+      ],
+      "useCases": [
+        "Mağaza ve restoran tabela",
+        "Fuar standı arka panel",
+        "Yön levhası ve bilgilendirme tabela",
+        "Vitrin içi sergi standı",
+        "Açılış kuşak ve karşılama panoları"
+      ],
+      "relatedSlugs": [
+        "lightbox-led-100cm",
+        "vinil-branda-440gr"
+      ],
+      "bestsellerRank": 4,
+      "specifications": [
+        {
+          "label": "Kalınlık",
+          "value": "5 mm"
+        },
+        {
+          "label": "Renk",
+          "value": "Beyaz dekota (siyah, gri seçenekleri ek talep)"
+        },
+        {
+          "label": "Baskı",
+          "value": "UV dayanıklı, mat veya parlak"
+        },
+        {
+          "label": "Ebat Aralığı",
+          "value": "30 - 305 cm"
+        },
+        {
+          "label": "Üretim Süresi",
+          "value": "2-3 iş günü"
+        }
+      ]
+    }
+  },
+  {
+    "slug": "kanvas-tablo-baski",
+    "id": "c7733dd0-3af4-43d1-96a8-dc1d31d40c41",
+    "oncekiPrices": [
+      {
+        "groupKey": "malzeme",
+        "optionKey": "solvent",
+        "dimKey": null,
+        "cost": "5",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "uv",
+        "dimKey": null,
+        "cost": "7",
+        "price": "0"
+      }
+    ],
+    "oncekiContent": null
+  },
+  {
+    "slug": "kompozit-baski",
+    "id": "a7bc987a-e5be-4dcd-a720-6e9aa9f4750a",
+    "oncekiPrices": [
+      {
+        "groupKey": "malzeme",
+        "optionKey": "3mm",
+        "dimKey": null,
+        "cost": "26",
+        "price": "0"
+      },
+      {
+        "groupKey": "ekislem",
+        "optionKey": "cnc-kesim",
+        "dimKey": null,
+        "cost": "2.5",
+        "price": "0"
+      }
+    ],
+    "oncekiContent": null
+  },
+  {
+    "slug": "pleksi-baski",
+    "id": "0c237a35-18c2-4635-b95d-cfaab518f431",
+    "oncekiPrices": [
+      {
+        "groupKey": "malzeme",
+        "optionKey": "3mm-beyaz",
+        "dimKey": null,
+        "cost": "45",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "3mm-siyah",
+        "dimKey": null,
+        "cost": "45",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "3mm-seffaf",
+        "dimKey": null,
+        "cost": "45",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "5mm-beyaz",
+        "dimKey": null,
+        "cost": "60",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "5mm-siyah",
+        "dimKey": null,
+        "cost": "60",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "5mm-seffaf",
+        "dimKey": null,
+        "cost": "60",
+        "price": "0"
+      },
+      {
+        "groupKey": "ekislem",
+        "optionKey": "cnc-kesim",
+        "dimKey": null,
+        "cost": "2.5",
+        "price": "0"
+      }
+    ],
+    "oncekiContent": null
+  },
+  {
+    "slug": "baskes-folyo",
+    "id": "39e6ed98-3899-4a0e-8217-99b4af3ce92f",
+    "oncekiPrices": [
+      {
+        "groupKey": "malzeme",
+        "optionKey": "folyo-baskes",
+        "dimKey": null,
+        "cost": "5.5",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "mat-folyo-baskes",
+        "dimKey": null,
+        "cost": "8",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "arkasi-gri-baskes",
+        "dimKey": null,
+        "cost": "8",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "arkasi-gri-mat-baskes",
+        "dimKey": null,
+        "cost": "8",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "seffaf-baskes",
+        "dimKey": null,
+        "cost": "10",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "kumlama-baskes",
+        "dimKey": null,
+        "cost": "8",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "kumlama-kesim",
+        "dimKey": null,
+        "cost": "6",
+        "price": "0"
+      }
+    ],
+    "oncekiContent": null
+  },
+  {
+    "slug": "duvar-kagidi-baski",
+    "id": "0ff2a227-9da2-4c1e-b506-a4291d4566e5",
+    "oncekiPrices": [
+      {
+        "groupKey": "malzeme",
+        "optionKey": "uv",
+        "dimKey": null,
+        "cost": "8",
+        "price": "0"
+      },
+      {
+        "groupKey": "malzeme",
+        "optionKey": "solvent",
+        "dimKey": null,
+        "cost": "7",
+        "price": "0"
+      }
+    ],
+    "oncekiContent": null
+  },
+  {
+    "slug": "kirlangic-bayrak-3m",
+    "id": "cmqdrw6ji002onhx8sabias6m",
+    "oncekiPrices": [
+      {
+        "groupKey": "paket",
+        "optionKey": "60x150-rasel",
+        "dimKey": null,
+        "cost": "2.25",
+        "price": "0"
+      },
+      {
+        "groupKey": "paket",
+        "optionKey": "60x150-saten",
+        "dimKey": null,
+        "cost": "3.38",
+        "price": "0"
+      },
+      {
+        "groupKey": "paket",
+        "optionKey": "70x150-rasel",
+        "dimKey": null,
+        "cost": "2.63",
+        "price": "0"
+      },
+      {
+        "groupKey": "paket",
+        "optionKey": "70x150-saten",
+        "dimKey": null,
+        "cost": "3.94",
+        "price": "0"
+      },
+      {
+        "groupKey": "paket",
+        "optionKey": "75x200-rasel",
+        "dimKey": null,
+        "cost": "3.75",
+        "price": "0"
+      },
+      {
+        "groupKey": "paket",
+        "optionKey": "75x200-saten",
+        "dimKey": null,
+        "cost": "5.63",
+        "price": "0"
+      }
+    ],
+    "oncekiContent": {
+      "seo": {
+        "title": "Kırlangıç Bayrak Baskı — 3m İpli Set, Düğün ve Açılış İçin",
+        "keywords": [
+          "kırlangıç bayrak",
+          "üçgen bayrak",
+          "düğün bayrağı",
+          "açılış süsü",
+          "renkli bayrak",
+          "cadde süslemesi"
+        ],
+        "description": "20x30 cm üçgen kırlangıç bayrak, 3 m ipe dizili 15 adet — 180 TL'den. Karışık 5 renk veya özel logolu, düğün, açılış, mağaza süslemesi için."
+      },
+      "sku": "MK-KRL-3M-001",
+      "faqs": [
+        {
+          "a": "Evet. Karışık set sipariş ettiyseniz sipariş notunda renk düzenini belirtebilirsiniz; aksi halde standart sıralama uygulanır.",
+          "q": "Renk sıralamasını ben mi belirleyebilirim?"
+        },
+        {
+          "a": "Özel logo / yazı baskılı setler 2-3 iş günü içinde üretilir. Logo çözünürlüğü düşükse baskı kalitesi düşebilir; mümkünse vektörel veya 300 dpi PNG gönderin.",
+          "q": "Logolu baskı ne kadar sürer?"
+        }
+      ],
+      "brand": "Markala",
+      "rating": {
+        "count": 78,
+        "average": 4.6
+      },
+      "features": [
+        "110 gr polyester saten — yıkanabilir",
+        "20x30 cm üçgen form, 3 m ipte 15 adet",
+        "Hazır 5 renk karışık set veya özel logolu baskı",
+        "Düğün, açılış, etkinlik için ideal",
+        "Çoklu metrelerde indirimli paket"
+      ],
+      "useCases": [
+        "Düğün, nişan, kına süslemesi",
+        "Mağaza açılışı ve cadde süslemesi",
+        "Sünnet ve doğum günü organizasyonu",
+        "Festival ve etkinlik dekorasyonu",
+        "Çocuk parkı ve okul kutlamaları"
+      ],
+      "relatedSlugs": [
+        "yelken-bayrak-damla",
+        "masa-bayragi-krom"
+      ],
+      "specifications": [
+        {
+          "label": "Üçgen Ebat",
+          "value": "20 x 30 cm"
+        },
+        {
+          "label": "İp Uzunluğu",
+          "value": "3 m (15 adet bayrak)"
+        },
+        {
+          "label": "Kumaş",
+          "value": "110 gr polyester saten"
+        },
+        {
+          "label": "Baskı",
+          "value": "Sublime — solmaz"
+        },
+        {
+          "label": "Üretim Süresi",
+          "value": "2-3 iş günü (hazır karışık 1 iş günü)"
+        }
+      ]
+    }
+  }
+]
