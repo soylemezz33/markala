@@ -109,6 +109,8 @@ export interface OrderDetailProps {
   shippingAddress?: {
     fullName?: string;
     fullAddress?: string;
+    /** İlçe — kargo için ZORUNLU; tipte eksik olduğu için ekranlara hiç basılmıyordu (2026-09-01). */
+    district?: string;
     city?: string;
     zipCode?: string;
     phone?: string;
@@ -269,7 +271,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       const ok = window.confirm(
         `Sipariş İPTAL EDİLECEK.\n\n` +
           `• Müşteriye iptal e-postası GİDECEK.\n` +
-          `• Bu işlem GERİ ALINAMAZ — iptal edilen sipariş yeniden açılamaz.\n\n` +
+          `• Bu işlem GERİ ALINAMAZ, iptal edilen sipariş yeniden açılamaz.\n\n` +
           `Devam edilsin mi?`,
       );
       if (!ok) return;
@@ -308,7 +310,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
             const res = await updateOrderStatus(order.id, "iptal-edildi");
             if (!res.ok) {
               setCurrentStatus(prev);
-              setStatusError(`İade yapıldı ama iptal işaretlenemedi: ${res.error} — durumu elle iptal edin.`);
+              setStatusError(`İade yapıldı ama iptal işaretlenemedi: ${res.error}, durumu elle iptal edin.`);
             }
           });
           return;
@@ -364,11 +366,15 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
     });
   };
 
-  const customer = order.customerName ?? order.email ?? "—";
+  const customer = order.customerName ?? order.email ?? "-";
   const currentStatusIndex = STATUSES.findIndex((s) => s.id === currentStatus);
   const isCancelled = currentStatus === "iptal-edildi";
 
   const a = order.shippingAddress;
+
+  // "İlçe / İl" satırı. İlçesiz gönderi kargoya verilemez, bu yüzden tüm çıktılarda
+  // birlikte basılır. Eski kayıtlarda ilçe boş olabilir → filter ile tek başına il kalır.
+  const ilceIl = [a?.district, a?.city].filter(Boolean).join(" / ");
 
   // Sevkiyat/paketleme etiketi
   const printLabel = () =>
@@ -378,7 +384,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       <div class="box"><div class="muted">Alıcı</div>
         <div style="font-size:15px;font-weight:700">${esc(a?.fullName ?? customer)}</div>
         <div>${esc(a?.fullAddress ?? "")}</div>
-        <div>${esc(a?.city ?? "")} ${esc(a?.zipCode ?? "")}</div>
+        <div>${esc(ilceIl)} ${esc(a?.zipCode ?? "")}</div>
         <div>${esc(a?.phone ?? "")}</div></div>
       <div class="box"><div class="muted">İçerik</div>
         ${order.items.map((i) => `<div>• ${esc(i.productName)}${i.quantity != null ? " × " + esc(i.quantity) : ""}</div>`).join("")}</div>`);
@@ -396,7 +402,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
       <div class="row"><div><div class="brand">Markala</div><div class="muted">324 Ajans BT · markala.com.tr</div></div>
       <div style="text-align:right"><h1>PROFORMA FATURA</h1><div class="muted">No: ${esc(order.orderNumber)}<br>${esc(formatDate(order.createdAt))}</div></div></div>
       <div class="box"><div class="muted">Müşteri</div><div style="font-weight:700">${esc(a?.fullName ?? customer)}</div>
-        <div>${esc(order.email ?? "")}</div><div>${esc(a?.fullAddress ?? "")} ${esc(a?.city ?? "")}</div></div>
+        <div>${esc(order.email ?? "")}</div><div>${esc(a?.fullAddress ?? "")} ${esc(ilceIl)}</div></div>
       <table><thead><tr><th>Ürün</th><th class="r">Adet</th><th class="r">Birim</th><th class="r">Tutar</th></tr></thead><tbody>${rows}</tbody></table>
       <div class="box" style="margin-left:auto;max-width:300px">
         <div class="row"><span class="muted">Ara Toplam</span><span>${TL(order.subtotal)}</span></div>
@@ -411,11 +417,11 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const printCargo = () =>
     openPrint(`Kargo ${order.orderNumber}`, `
       <div class="row"><div class="brand">Markala</div><div class="muted">${esc(trackCarrier || "Kargo")}</div></div>
-      <div class="box"><div class="muted">Takip No</div><div class="big">${esc(trackNo || "—")}</div></div>
+      <div class="box"><div class="muted">Takip No</div><div class="big">${esc(trackNo || "-")}</div></div>
       <div class="row" style="gap:12px">
         <div class="box" style="flex:1"><div class="muted">Gönderen</div><div style="font-weight:700">Markala · 324 Ajans</div><div>Yenişehir / Mersin</div><div>0324 433 33 51</div></div>
         <div class="box" style="flex:1"><div class="muted">Alıcı</div><div style="font-weight:700">${esc(a?.fullName ?? customer)}</div>
-          <div>${esc(a?.fullAddress ?? "")}</div><div>${esc(a?.city ?? "")} ${esc(a?.zipCode ?? "")}</div><div>${esc(a?.phone ?? "")}</div></div></div>
+          <div>${esc(a?.fullAddress ?? "")}</div><div>${esc(ilceIl)} ${esc(a?.zipCode ?? "")}</div><div>${esc(a?.phone ?? "")}</div></div></div>
       <div class="box"><div class="muted">Sipariş No</div><div style="font-weight:700;font-family:ui-monospace,monospace">${esc(order.orderNumber)}</div></div>`);
 
   return (
@@ -478,7 +484,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                                 <span className="font-medium text-ink-700">
                                   {d.group}: {d.label}
                                 </span>{" "}
-                                — {d.detail}
+ - {d.detail}
                               </li>
                             ))}
                         </ul>
@@ -559,11 +565,11 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                           </div>
                         ) : item.needsDesignSupport ? (
                           <div className="mt-0.5 text-xs text-brand-700">
-                            Tasarım desteği istendi — grafik ekibi hazırlayacak
+                            Tasarım desteği istendi, grafik ekibi hazırlayacak
                           </div>
                         ) : (
                           <div className="mt-0.5 text-xs text-warning">
-                            Dosya yüklenmedi — müşteriden iste{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
+                            Dosya yüklenmedi, müşteriden iste{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
                           </div>
                         )}
                       </div>
@@ -760,10 +766,10 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 <MapPin size={12} className="flex-none mt-0.5 text-ink-500" />
                 <span>
                   {order.shippingAddress.fullAddress}
-                  {order.shippingAddress.city && (
+                  {ilceIl && (
                     <>
                       <br />
-                      {order.shippingAddress.city}
+                      {ilceIl}
                       {order.shippingAddress.zipCode && ` · ${order.shippingAddress.zipCode}`}
                     </>
                   )}
@@ -814,7 +820,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                     />
                   </label>
                   <p className="text-[11px] text-ink-500 leading-snug">
-                    Buradan kaydetmek müşteriye e-posta <strong>göndermez</strong> — yalnız kaydı düzeltir.
+                    Buradan kaydetmek müşteriye e-posta <strong>göndermez</strong>, yalnız kaydı düzeltir.
                   </p>
                   <div className="flex gap-2">
                     <button
