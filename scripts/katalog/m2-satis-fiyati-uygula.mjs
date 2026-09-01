@@ -48,7 +48,10 @@ let XLSX;
 try {
   XLSX = require("xlsx");
 } catch {
-  console.error("`xlsx` paketi yok. Kur: npm i -D xlsx  (ya da FIYAT_JSON ile hazır JSON ver)");
+  // Tek seferlik ops scripti. xlsx BİLEREK package.json'a EKLENMEDİ: repo pnpm kullanıyor,
+  // package.json'a npm ile bağımlılık eklemek pnpm-lock.yaml ile uyumsuzluk yaratır ve
+  // deploy'daki `--frozen-lockfile` kurulumunu kırar (2026-09-01'de bu hataya düşüldü).
+  console.error("`xlsx` paketi yok. Geçici kur: pnpm add -w -D xlsx  (iş bitince geri al).");
   process.exit(1);
 }
 if (!fs.existsSync(XLS)) { console.error(`Excel bulunamadı: ${XLS}`); process.exit(1); }
