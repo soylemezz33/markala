@@ -22,7 +22,10 @@ const fontSans = DM_Sans({
   subsets: ["latin", "latin-ext"],
   variable: "--font-sans",
   display: "swap",
-  axes: ["opsz"],
+  // opsz ekseni KALDIRILDI: kodda hiçbir yerde font-optical-sizing/opsz kullanılmıyordu.
+  // Ekstra eksen, <head>'de önden preload edilen 2 varyasyonel woff2'yi (~92KB) büyütüp
+  // soğuk mobil yüklemede render-blocking CSS + LCP hero görseliyle bant genişliği için
+  // yarışıyordu. wght-only varyant görsel farksız ve kritik yolda daha hafif.
 });
 
 export const metadata: Metadata = {
