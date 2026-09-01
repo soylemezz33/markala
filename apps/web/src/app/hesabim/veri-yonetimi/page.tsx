@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@markala/ui";
 import { apiClient, withRefresh } from "@/lib/api";
@@ -9,14 +8,12 @@ import {
   Download,
   Trash,
   ShieldCheck,
-  Warning,
   EnvelopeSimple,
   ChatCircle,
   Bell,
   Megaphone,
   CheckCircle,
   Database,
-  X,
   Lock,
 } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
@@ -31,21 +28,11 @@ import { useAuthStore } from "@/lib/auth-store";
  * Auth check: hesabim layout zaten user yoksa /giris'e atıyor.
  */
 export default function VeriYonetimiPage() {
-  const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
 
   // Export state
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
-
-  // Delete state
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteStage, setDeleteStage] = useState<1 | 2>(1);
-  const [confirmText, setConfirmText] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Marketing prefs
   const [emailMarketing, setEmailMarketing] = useState(true);
@@ -106,57 +93,6 @@ export default function VeriYonetimiPage() {
       setExportError("Sunucuya ulaşılamadı.");
     } finally {
       setExporting(false);
-    }
-  }
-
-  function openDeleteModal() {
-    setShowDeleteModal(true);
-    setDeleteStage(1);
-    setConfirmText("");
-    setConfirmPassword("");
-    setDeleteError(null);
-  }
-
-  function closeDeleteModal() {
-    setShowDeleteModal(false);
-    setDeleteStage(1);
-    setConfirmText("");
-    setConfirmPassword("");
-    setDeleteError(null);
-  }
-
-  async function handleDelete() {
-    if (confirmText !== "HESABIMI SİL") {
-      setDeleteError("Onay metni tam olarak \"HESABIMI SİL\" olmalı.");
-      return;
-    }
-    if (confirmPassword.length < 4) {
-      setDeleteError("Parolanızı girin.");
-      return;
-    }
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      const res = await fetch("/api/hesabim/hesap-sil", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user?.email,
-          password: confirmPassword,
-          confirmText,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setDeleteError(data.error ?? "Hesap silme başarısız oldu.");
-        return;
-      }
-      logout();
-      router.replace("/?account_deleted=1");
-    } catch {
-      setDeleteError("Sunucuya ulaşılamadı.");
-    } finally {
-      setDeleting(false);
     }
   }
 
@@ -326,40 +262,40 @@ export default function VeriYonetimiPage() {
       </section>
 
       {/* 3. Hesabımı Sil — DANGER */}
+      {/* Hesap silme (2026-09-01): kendi kendine silme akisi KALDIRILDI.
+          Eski akis GERCEKTEN SILMIYORDU - /api/hesabim/hesap-sil ucu bastan sona mock'tu
+          (sahte parola dogrulamasi, console.log ile "soft delete"). Kullaniciya sildik
+          diyip hicbir sey silmemek, silmemekten daha kotu. KVKK m.11 silme TALEBI hakki
+          duruyor; talep artik gercekten isleyen /kvkk-basvuru formundan aliniyor. */}
       <section
         aria-labelledby="delete-title"
-        className="p-6 bg-error/5 border-2 border-error/20 rounded-xl"
+        className="p-6 bg-paper-50 border border-paper-200 rounded-xl"
       >
         <div className="flex items-start gap-4">
-          <div className="w-11 h-11 rounded-lg bg-error/10 text-error grid place-items-center flex-none">
+          <div className="w-11 h-11 rounded-lg bg-paper-200 text-ink-700 grid place-items-center flex-none">
             <Trash size={20} weight="bold" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3
-              id="delete-title"
-              className="font-semibold text-ink-900 text-lg flex items-center gap-2"
-            >
-              Hesabımı Sil
-              <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded bg-error text-paper-50">
-                Geri alınamaz
-              </span>
+            <h3 id="delete-title" className="font-semibold text-ink-900 text-lg">
+              Hesabımın Silinmesini İstiyorum
             </h3>
             <p className="mt-1 text-sm text-ink-700 leading-relaxed">
-              Hesabınız ve bağlı kişisel veriler kalıcı olarak silinir. Sipariş ve fatura kayıtları VUK 213 gereği <strong className="text-ink-900">10 yıl boyunca anonimleştirilmiş</strong> olarak saklanır.
+              Hesabınızın ve kişisel verilerinizin silinmesi talebini KVKK başvuru
+              formundan iletebilirsiniz. Talebiniz kimliğiniz doğrulandıktan sonra en geç{" "}
+              <strong className="text-ink-900">30 gün içinde</strong> sonuçlandırılır.
+              Sipariş ve fatura kayıtları VUK 213 gereği{" "}
+              <strong className="text-ink-900">10 yıl boyunca</strong> saklanmak zorundadır;
+              bu kayıtlar silinemez ancak kimliğinizle ilişkisi kesilir.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={openDeleteModal}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-md text-sm font-semibold bg-error text-paper-50 hover:bg-error/90 transition-colors"
-              >
-                <Trash size={14} weight="bold" /> Hesabımı Kalıcı Sil
-              </button>
               <Link
-                href="/yasal/kvkk"
-                className="text-sm text-ink-700 hover:text-ink-900 underline"
+                href="/kvkk-basvuru"
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-md text-sm font-semibold bg-ink-900 text-paper-50 hover:bg-ink-700 transition-colors"
               >
-                Önce KVKK metnini oku
+                <ShieldCheck size={14} weight="bold" /> Silme Talebi Oluştur
+              </Link>
+              <Link href="/yasal/kvkk" className="text-sm text-ink-700 hover:text-ink-900 underline">
+                KVKK metnini oku
               </Link>
             </div>
           </div>
@@ -381,130 +317,6 @@ export default function VeriYonetimiPage() {
         kullanabilirsiniz.
       </div>
 
-      {/* 2 aşamalı silme modal'ı */}
-      {showDeleteModal && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ink-900/60 backdrop-blur-sm p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="delete-modal-title"
-        >
-          <div className="w-full max-w-md bg-paper-50 rounded-2xl shadow-2xl overflow-hidden">
-            <header className="flex items-center justify-between px-6 py-4 border-b border-paper-200 bg-error/5">
-              <h3
-                id="delete-modal-title"
-                className="font-semibold text-ink-900 flex items-center gap-2"
-              >
-                <Warning size={18} weight="fill" className="text-error" />
-                {deleteStage === 1 ? "Emin misiniz?" : "Son onay"}
-              </h3>
-              <button
-                onClick={closeDeleteModal}
-                className="text-ink-500 hover:text-ink-900"
-                aria-label="Kapat"
-              >
-                <X size={20} />
-              </button>
-            </header>
-
-            <div className="p-6 space-y-4">
-              {deleteStage === 1 ? (
-                <>
-                  <p className="text-sm text-ink-700 leading-relaxed">
-                    Hesabınızı silmek üzeresiniz. Bu işlem
-                    <strong className="text-ink-900"> geri alınamaz</strong>.
-                  </p>
-                  <ul className="text-xs text-ink-700 space-y-1.5 list-disc list-inside leading-relaxed bg-paper-100 p-4 rounded-lg">
-                    <li>Profil, adres ve favorileriniz <strong>30 gün içinde</strong> kalıcı silinir</li>
-                    <li>Siparişleriniz anonimleştirilir ancak VUK gereği 10 yıl saklanır</li>
-                    <li>Yorumlarınız &quot;Anonim Kullanıcı&quot; olarak değiştirilir</li>
-                    <li>Aynı e-posta ile tekrar üye olabilirsiniz, geçmiş veri geri gelmez</li>
-                  </ul>
-                  <p className="text-xs text-ink-500">
-                    İptal etmek için bu pencereyi kapatın veya devam edin.
-                  </p>
-                  <div className="flex items-center justify-end gap-2 pt-2">
-                    <Button variant="outline" onClick={closeDeleteModal}>
-                      Vazgeç
-                    </Button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteStage(2)}
-                      className="inline-flex items-center gap-1.5 px-5 h-11 rounded text-[15px] font-medium bg-error text-paper-50 hover:bg-error/90 transition-colors"
-                    >
-                      Devam et
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-ink-700">
-                    Hesap silme işlemini doğrulamak için aşağıdaki bilgileri girin:
-                  </p>
-
-                  {deleteError && (
-                    <div
-                      role="alert"
-                      aria-live="polite"
-                      className="px-3 py-2 rounded bg-error/10 border border-error/20 text-error text-xs"
-                    >
-                      {deleteError}
-                    </div>
-                  )}
-
-                  <label className="block">
-                    <span className="text-xs font-medium text-ink-900">
-                      Onaylamak için <code className="font-mono bg-error/10 text-error px-1 rounded">HESABIMI SİL</code> yazın
-                    </span>
-                    <input
-                      value={confirmText}
-                      onChange={(e) => setConfirmText(e.target.value)}
-                      className="mt-1.5 w-full px-3 py-2.5 rounded-md border border-paper-200 bg-paper-50 text-sm font-mono"
-                      autoComplete="off"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="text-xs font-medium text-ink-900 flex items-center gap-1.5">
-                      <Lock size={12} /> Parolanız
-                    </span>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="mt-1.5 w-full px-3 py-2.5 rounded-md border border-paper-200 bg-paper-50 text-sm"
-                      autoComplete="current-password"
-                    />
-                  </label>
-
-                  <div className="flex items-center justify-between gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setDeleteStage(1)}
-                      className="text-sm text-ink-700 hover:text-ink-900"
-                    >
-                      ← Geri
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      disabled={
-                        deleting ||
-                        confirmText !== "HESABIMI SİL" ||
-                        confirmPassword.length < 4
-                      }
-                      className="inline-flex items-center gap-1.5 px-5 h-11 rounded text-[15px] font-medium bg-error text-paper-50 hover:bg-error/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Trash size={14} weight="bold" />
-                      {deleting ? "Siliniyor..." : "Hesabı Kalıcı Sil"}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

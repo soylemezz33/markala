@@ -132,6 +132,19 @@ function formatDate(iso: string): string {
   }
 }
 
+/**
+ * Tasarım dosyası indirme yolu (2026-09-01). Dosyalar artık public DEĞİL; API'de
+ * auth+ORDERS_READ korumalı uçtan geliyor ve düz <a href> Authorization gönderemiyor.
+ * Bu yüzden link admin'in kendi BFF rotasından geçer (çerezle kimliklenir).
+ * URL'nin son parçası (uuid.uzantı) anahtardır — hem eski hem yeni kayıt için aynı.
+ */
+function tasarimIndirmeYolu(url: string | null | undefined): string | undefined {
+  const key = String(url ?? "").split("?")[0]?.split("/").pop();
+  return key && /^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key)
+    ? `/api/tasarim-dosya/${key}`
+    : undefined;
+}
+
 const TL = (v: unknown) => "₺ " + Number(v ?? 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
 
 /** HTML enjeksiyonuna karşı basit kaçış (admin print içeriği). */
@@ -591,9 +604,9 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                           </div>
                         )}
                       </div>
-                      {hasFile && (
+                      {hasFile && tasarimIndirmeYolu(item.uploadedFileUrl) && (
                         <a
-                          href={item.uploadedFileUrl ?? undefined}
+                          href={tasarimIndirmeYolu(item.uploadedFileUrl)}
                           target="_blank"
                           rel="noopener noreferrer"
                           download

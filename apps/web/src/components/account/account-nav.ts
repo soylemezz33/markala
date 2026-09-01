@@ -27,8 +27,9 @@ import {
  * Artık masaüstü kenar çubuğu, mobil şerit ve panodaki kısayollar HEP bu diziden okuyor.
  * Yeni sayfa eklerken buraya bir satır ekle — üç yüzeyde birden görünür.
  *
- * NOT: /hesabim/siparislerim/[orderId] ve /hesabim/hesap-sil bilerek menüde YOK
- * (biri detay sayfası, diğeri yalnız yönlendirme hedefi).
+ * NOT: /hesabim/siparislerim/[orderId] bilerek menüde YOK — detay sayfası, üst rotadan
+ * ulaşılır. (/hesabim/hesap-sil rotası 2026-09-01'de tamamen kaldırıldı: silme akışı
+ * gerçekte hiçbir şey silmiyordu, talep artık /kvkk-basvuru formundan alınıyor.)
  */
 export type AccountNavGroup = "is" | "odeme" | "hesap" | "listeler" | "tercihler";
 
@@ -96,7 +97,7 @@ export const ACCOUNT_NAV: AccountNavItem[] = [
   { href: "/hesabim/onceden-gezdiklerim", label: "Önceden Gezdiklerim", desc: "Son baktıkların", icon: ClockCounterClockwise, group: "listeler" },
 
   { href: "/hesabim/bildirim", label: "Bildirim Tercihleri", desc: "E-posta ve SMS", icon: BellSimple, group: "tercihler" },
-  { href: "/hesabim/veri-yonetimi", label: "Veri Yönetimi", desc: "KVKK ve hesap silme", icon: ShieldCheck, group: "tercihler" },
+  { href: "/hesabim/veri-yonetimi", label: "Veri Yönetimi", desc: "Verilerimi indir, KVKK", icon: ShieldCheck, group: "tercihler" },
 ];
 
 /** Bağlama göre görünecek maddeler (koşulsuzlar her zaman girer). */

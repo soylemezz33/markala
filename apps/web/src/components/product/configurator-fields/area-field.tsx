@@ -55,11 +55,16 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
   const matMinM2 = matOpt?.rules?.minM2;
   const etkinMinM2 = typeof matMinM2 === "number" && matMinM2 >= 0 ? matMinM2 : minM2;
 
-  // Fiyat PARÇA BAŞINA min uygular (her parça max(minM2, alan), sonra × adet) — configurator.ts
-  // + server ile aynı. Gösterim de aynı formülü kullanmalı; eski toplam-alan formülü çok adet +
-  // küçük parçada gösterilen alan ≠ ödenen alan yapıyordu.
-  const toplamAlan = Math.max(etkinMinM2, alan) * adetN;
-  const minApplied = alan > 0 && alan < etkinMinM2;
+  // Minimum TOPLAM alana uygulanır: max(minM2, alan × adet) — configurator.ts computeAreaPrice
+  // ve api/orders/pricing.ts ile BİREBİR aynı formül.
+  //
+  // 2026-09-01 DÜZELTME: burada eskiden `max(minM2, alan) * adet` (parça başına min) vardı,
+  // fiyat motoru ise toplam alana uyguluyordu. 0,5 m²'lik üründen 2 adet alındığında ekran
+  // "2 m²" yazıp fiyat 1 m² üzerinden çıkıyordu — gösterilen alan ödenen alanı tutmuyordu.
+  // Doğru olan motordur (Hasan kuralı: "1 m²'yi geçtiyse min hiç uygulanmasın, ölçüye göre
+  // fiyat"); bu yüzden EKRAN motora hizalandı, fiyatta değişiklik YOK.
+  const toplamAlan = Math.max(etkinMinM2, alan * adetN);
+  const minApplied = alan > 0 && alan * adetN < etkinMinM2;
   // Rozet/açıklama metni — eskiden "1 m²" sabit yazıyordu; malzemeye özel taban devreye
   // girince yanlış rakam gösteriyordu (0,90 m² tabanında "min 1 m²" demek gibi).
   const minMetni = etkinMinM2.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
@@ -186,7 +191,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
           </strong>
           {minApplied && (
             <span className="ml-2 rounded bg-paper-200 px-1.5 py-0.5 text-[11px] font-medium text-ink-700">
-              parça başına min {minMetni} m²
+              en az {minMetni} m²
             </span>
           )}
         </p>
@@ -194,8 +199,9 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
 
       {minApplied && (
         <p className="text-[11px] text-ink-500">
-          Üretim minimumu parça başına {minMetni} m² olduğundan, daha küçük işler parça başına{" "}
-          {minMetni} m² üzerinden fiyatlanır.
+          Üretim minimumu {minMetni} m² olduğundan, toplamı bunun altında kalan işler{" "}
+          {minMetni} m² üzerinden fiyatlanır. Adet artırdığınızda toplam bu sınırı geçerse
+          minimum uygulanmaz, gerçek ölçüye göre fiyatlanır.
         </p>
       )}
 
