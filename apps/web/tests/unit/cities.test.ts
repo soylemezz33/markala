@@ -28,12 +28,70 @@ describe("getCityBySlug", () => {
     expect(getCityBySlug("istanbul-yok")).toBeUndefined();
   });
 
-  it("tüm şehirler unique slug ve geo bilgisine sahip", () => {
+  it("tüm şehirler unique slug'a sahip", () => {
     const slugs = cities.map((c) => c.slug);
     expect(new Set(slugs).size).toBe(slugs.length);
+  });
+
+  it("elle yazılan illerde geo koordinatı dolu", () => {
+    const curated = cities.filter((c) => c.curated);
+    expect(curated.length).toBeGreaterThan(0);
+    for (const c of curated) {
+      expect(c.geo?.lat).toBeGreaterThan(0);
+      expect(c.geo?.lng).toBeGreaterThan(0);
+    }
+  });
+});
+
+/**
+ * 81 il düzeninin değişmezleri (2026-09-01).
+ *
+ * Şablonla üretilen 74 il, elle yazılan 7 ilin İDDİALARINI TAŞIMAMALI:
+ * o illerde müşterimiz olduğunu söyleyemeyiz ve uydurma koordinat basamayız.
+ * Ayrıca ilçelerine alt sayfa açılmamalı — açılsaydı 972 ince sayfa üretilirdi.
+ */
+describe("81 il düzeni", () => {
+  const curated = cities.filter((c) => c.curated);
+  const generated = cities.filter((c) => !c.curated);
+
+  it("81 ilin tamamı var, 7'si elle yazılmış", () => {
+    expect(cities.length).toBe(81);
+    expect(curated.length).toBe(7);
+    expect(generated.length).toBe(74);
+  });
+
+  it("şablon iller uydurma veri taşımaz (geo/nüfus yok, referans boş)", () => {
+    for (const c of generated) {
+      expect(c.geo).toBeUndefined();
+      expect(c.population).toBeUndefined();
+      expect(c.localReferences).toEqual([]);
+    }
+  });
+
+  it("şablon illerin ilçelerine ALT SAYFA açılmaz", () => {
+    for (const c of generated) {
+      expect(c.districts).toBeUndefined();
+      // İlçeler yalnız düz liste olarak taşınır.
+      expect(c.districtNames?.length ?? 0).toBeGreaterThan(0);
+    }
+    // Alt sayfa üreten tek il elle yazılan Mersin olmalı.
+    const altSayfaIlleri = new Set(getAllDistrictParams().map((p) => p.city));
+    expect([...altSayfaIlleri]).toEqual(["mersin"]);
+  });
+
+  it("her ilin içeriği dolu ve bölgesi tanımlı", () => {
     for (const c of cities) {
-      expect(c.geo.lat).toBeGreaterThan(0);
-      expect(c.geo.lng).toBeGreaterThan(0);
+      expect(c.intro.length).toBeGreaterThan(80);
+      expect(c.faqs.length).toBeGreaterThan(0);
+      expect(c.region).toBeTruthy();
+      expect(c.deliveryDays.min).toBeGreaterThan(0);
+      expect(c.deliveryDays.max).toBeGreaterThanOrEqual(c.deliveryDays.min);
+    }
+  });
+
+  it("İstanbul gibi büyük iller gerçekten sayfaya sahip", () => {
+    for (const slug of ["istanbul", "ankara", "izmir", "bursa", "konya"]) {
+      expect(getCityBySlug(slug)).toBeDefined();
     }
   });
 });
