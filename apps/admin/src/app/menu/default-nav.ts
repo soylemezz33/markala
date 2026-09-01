@@ -20,13 +20,13 @@ export const DEFAULT_NAV: NavCategory[] = [
     label: "Kartvizit & Kırtasiye",
     href: "/urunler",
     groups: [
-      { title: "Kartvizit", items: [{ label: "Klasik Kartvizit (21 paket)", href: "/urun/klasik-kartvizit", badge: "POPÜLER" }] },
+      { title: "Kartvizit", items: [{ label: "Klasik Kartvizit (21 paket)", href: "/urun/klasik-kartvizit" }] },
       {
         title: "Kâğıt Ürünleri",
         items: [
           { label: "Antetli Kağıt", href: "/urun/antetli-kagit" },
-          { label: "Diplomat Zarf — Tek Renk", href: "/urun/zarf-diplomat-tek-renk" },
-          { label: "Diplomat Zarf — Renkli", href: "/urun/zarf-diplomat-renkli" },
+          { label: "Diplomat Zarf - Tek Renk", href: "/urun/zarf-diplomat-tek-renk" },
+          { label: "Diplomat Zarf - Renkli", href: "/urun/zarf-diplomat-renkli" },
           { label: "Torba Zarf 24×32", href: "/urun/zarf-torba" },
           { label: "Cepli Dosya", href: "/urun/cepli-dosya" },
           { label: "Makbuz NCR", href: "/urun/makbuz" },
@@ -46,7 +46,7 @@ export const DEFAULT_NAV: NavCategory[] = [
         title: "Broşür",
         items: [
           { label: "Broşür 115 gr Çift Yön", href: "/urun/brosur" },
-          { label: "Pro Broşür 128 gr", href: "/urun/pro-brosur", badge: "YENİ" },
+          { label: "Pro Broşür 128 gr", href: "/urun/pro-brosur" },
           { label: "Selefonlu Broşür 200 gr", href: "/urun/selefonlu-brosur" },
           { label: "Kapı Askı Broşür", href: "/urun/kapi-aski-brosur" },
         ],
@@ -146,7 +146,7 @@ export const DEFAULT_NAV: NavCategory[] = [
       {
         title: "Vinil & Branda",
         items: [
-          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr", badge: "POPÜLER" },
+          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr" },
           { label: "Mesh Branda", href: "/urun/mesh-branda" },
           { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
         ],
@@ -203,7 +203,7 @@ export const DEFAULT_NAV: NavCategory[] = [
       {
         title: "İş Güvenliği Levhaları",
         items: [
-          { label: "Uyarı / İkaz Levhaları", href: "/kategori/is-guvenligi-uyari-ikaz", badge: "YENİ" },
+          { label: "Uyarı / İkaz Levhaları", href: "/kategori/is-guvenligi-uyari-ikaz" },
           { label: "Yasaklayıcı Levhalar", href: "/kategori/is-guvenligi-yasaklayici" },
           { label: "Emredici / KKD Levhaları", href: "/kategori/is-guvenligi-emredici-kkd" },
           { label: "Acil Durum & İlk Yardım", href: "/kategori/is-guvenligi-acil-ilk-yardim" },
