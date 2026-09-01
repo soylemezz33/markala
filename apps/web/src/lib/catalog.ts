@@ -79,6 +79,7 @@ function mapProduct(p: ApiProduct): Product {
     specifications: content.specifications as Product["specifications"] | undefined,
     faqs: content.faqs as Product["faqs"] | undefined,
     relatedSlugs: content.relatedSlugs as string[] | undefined,
+    birlikteSlugs: content.birlikteSlugs as string[] | undefined,
     seo: content.seo as Product["seo"] | undefined,
     brand: content.brand as string | undefined,
     sku: content.sku as string | undefined,
@@ -285,6 +286,26 @@ export async function getCategories(): Promise<Category[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * Slug listesinden ürünler — "Benzer ürünler" ve "Birlikte alınanlar" bölümleri için.
+ *
+ * Tek tek fetch YERİNE zaten önbellekli tam listeyi filtreler: N ürün için N istek atmaz,
+ * ISR cache'ini paylaşır. Liste yalnız AKTİF ürünleri döndürdüğü için pasife alınmış ya da
+ * silinmiş slug'lar sessizce elenir — ölü kart render edilmez (2026-09-01: 16 üründe
+ * kaldırılmış ürüne işaret eden kayıt bulundu). Sıra, verilen slug sırasını korur.
+ */
+export async function getProductsBySlugs(slugs: string[] | undefined): Promise<Product[]> {
+  if (!Array.isArray(slugs) || slugs.length === 0) return [];
+  const hepsi = await getProducts();
+  const harita = new Map(hepsi.map((p) => [p.slug, p]));
+  const sonuc: Product[] = [];
+  for (const s of slugs) {
+    const p = harita.get(s);
+    if (p && !sonuc.some((x) => x.slug === p.slug)) sonuc.push(p);
+  }
+  return sonuc;
 }
 
 /** Tek kategori (slug). API'de yoksa → undefined (mock fallback kaldırıldı). */

@@ -207,8 +207,17 @@ export interface Product {
   specifications?: SpecItem[];
   /** Ürüne özel sık sorulan sorular */
   faqs?: FaqItem[];
-  /** Ürünle birlikte sıkça sipariş edilen ek ürün slug'ları */
+  /**
+   * BENZER ürünler — aynı işi gören alternatifler (ör. Çin branda ↔ Avrupa branda).
+   * Doluysa "Benzer ürünler" bölümü bunu gösterir; boşsa aynı kategoriden doldurulur.
+   */
   relatedSlugs?: string[];
+  /**
+   * BİRLİKTE ALINANLAR — tamamlayıcı ürünler, alternatif DEĞİL (ör. yangın söndürücü
+   * levhası ↔ acil çıkış levhası + toplanma alanı). Kategoriler arası olabilir, bu yüzden
+   * "aynı kategori" mantığıyla üretilemez; elle kürate edilir. Boşsa bölüm hiç gösterilmez.
+   */
+  birlikteSlugs?: string[];
   /** Per-product SEO override (yoksa otomatik üretilir) */
   seo?: SeoMeta;
   /** Marka — JSON-LD Product için */

@@ -16,6 +16,7 @@ import {
   getCategoryBySlug,
   getProductBySlug,
   getProductsByCategory,
+  getProductsBySlugs,
   getProducts,
 } from "@/lib/catalog";
 import { getProductRatingStats } from "@/lib/reviews";
@@ -47,9 +48,11 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProductBySlug(params.slug);
-  // Ürün yok/silinmiş → gerçek HTTP 404. generateMetadata gövde stream'inden ÖNCE çözülür;
-  // notFound() burada çağrılınca statü 200 (soft-404) değil gerçek 404 döner (fetch zaten cache'li).
-  if (!product) notFound();
+  // BURADA notFound() ÇAĞIRMA (2026-08-31). Eski yorumun iddiası ("notFound() burada
+  // çağrılınca statü 200 değil gerçek 404 döner") ÖLÇÜMLE ÇÜRÜTÜLDÜ: /urun/<olmayan>
+  // konteynere doğrudan sorulduğunda HTTP 200 + not-found gövdesi dönüyordu.
+  // Statüyü sayfa bileşenindeki notFound() belirler; burada yalnız noindex metadata döner.
+  if (!product) return { title: "Sayfa bulunamadı", robots: { index: false, follow: false } };
   const category = await getCategoryBySlug(product.categorySlug);
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim.
   // Kategori adı yoksa "X —  Baskı" (çift boşluk) yerine sade "X Baskı" fallback'i.
@@ -59,7 +62,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const TITLE_MAX = 60;
   const fullTitle =
     product.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
-    (category?.name ? `${product.name} — ${category.name} Baskı` : `${product.name} Baskı`);
+    (category?.name ? `${product.name} - ${category.name} Baskı` : `${product.name} Baskı`);
   const seoTitle =
     fullTitle.length <= TITLE_MAX
       ? fullTitle
@@ -164,7 +167,7 @@ function makeTrustBadges(freeThreshold: number, productionTime?: string) {
     {
       icon: MagnifyingGlass,
       label: "Hızlı Tasarım Kontrolü",
-      sub: "baskı öncesi uzman kontrolü — ücretsiz",
+      sub: "baskı öncesi uzman kontrolü, ücretsiz",
       grad: "from-rose-500 to-pink-600",
       tint: "bg-rose-50 border-rose-200",
     },
@@ -175,14 +178,31 @@ export default async function ProductPage({ params }: Props) {
   const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const [category, related, ratingStats, shippingThreshold, pricingSettings] = await Promise.all([
-    getCategoryBySlug(product.categorySlug),
-    getProductsByCategory(product.categorySlug),
-    getProductRatingStats(product.slug),
-    getShippingThreshold(),
-    getPricingSettings(),
-  ]);
-  const relatedProducts = related.filter((p) => p.slug !== product.slug).slice(0, 4);
+  const [category, related, ratingStats, shippingThreshold, pricingSettings, kurateBenzer, birlikte] =
+    await Promise.all([
+      getCategoryBySlug(product.categorySlug),
+      getProductsByCategory(product.categorySlug),
+      getProductRatingStats(product.slug),
+      getShippingThreshold(),
+      getPricingSettings(),
+      getProductsBySlugs(product.relatedSlugs),
+      getProductsBySlugs(product.birlikteSlugs),
+    ]);
+
+  // BENZER ÜRÜNLER — kürate edilmiş liste (content.relatedSlugs) varsa o kazanır; yoksa aynı
+  // kategoriden doldurulur. Kürate liste "Çin branda ↔ Avrupa branda" gibi gerçekten muadil
+  // olanları verir; kategori dolgusu rastgeledir. 2026-09-01'e kadar relatedSlugs okunuyor
+  // ama HİÇ KULLANILMIYORDU — alan doluydu, sayfa yok sayıyordu.
+  const kategoriDolgu = related.filter((p) => p.slug !== product.slug);
+  const benzerUrunler = (kurateBenzer.length > 0 ? kurateBenzer : kategoriDolgu)
+    .filter((p) => p.slug !== product.slug)
+    .slice(0, 4);
+
+  // BİRLİKTE ALINANLAR — tamamlayıcılar, kategoriler arası olabilir (yangın söndürücü levhası
+  // → acil çıkış + toplanma alanı). Yalnız elle kürate edilmişse gösterilir; uydurma yapılmaz.
+  const birlikteUrunler = birlikte
+    .filter((p) => p.slug !== product.slug && !benzerUrunler.some((b) => b.slug === p.slug))
+    .slice(0, 4);
 
   // Tek ürünlü kategorilerde kategori adı ile ürün adı birebir aynı olabiliyor → kırılımda
   // "Kartvizit › Kartvizit" tekrarı oluşur. Aynıysa kategori kırılımını gizle.
@@ -422,19 +442,41 @@ export default async function ProductPage({ params }: Props) {
           <ProductReviewsSection productSlug={product.slug} />
         </div>
 
-        {/* Related products */}
-        {relatedProducts.length > 0 && (
+        {/* BİRLİKTE ALINANLAR — tamamlayıcı ürünler. Benzer ürünlerden ÖNCE gelir: müşteri
+            alternatif aramaktan çok setini tamamlamaya yönlendirilir (sepet ortalaması). */}
+        {birlikteUrunler.length > 0 && (
           <section className="mt-24 md:mt-32 pt-16 border-t border-paper-200">
             <header className="mb-10">
               <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
-                Aynı kategoride
+                Setini tamamla
               </p>
               <h2 className="mt-2 text-3xl md:text-4xl font-semibold text-ink-900">
-                Bunları da inceleyin
+                Bununla birlikte alınanlar
               </h2>
             </header>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-              {relatedProducts.map((p) => (
+              {birlikteUrunler.map((p) => (
+                <ProductCard key={p.slug} product={p} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* BENZER ÜRÜNLER — muadiller (kürate liste varsa o, yoksa aynı kategori) */}
+        {benzerUrunler.length > 0 && (
+          <section
+            className={`pt-16 border-t border-paper-200 ${birlikteUrunler.length > 0 ? "mt-16" : "mt-24 md:mt-32"}`}
+          >
+            <header className="mb-10">
+              <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
+                {kurateBenzer.length > 0 ? "Muadil seçenekler" : "Aynı kategoride"}
+              </p>
+              <h2 className="mt-2 text-3xl md:text-4xl font-semibold text-ink-900">
+                {kurateBenzer.length > 0 ? "Benzer ürünler" : "Bunları da inceleyin"}
+              </h2>
+            </header>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+              {benzerUrunler.map((p) => (
                 <ProductCard key={p.slug} product={p} />
               ))}
             </div>
