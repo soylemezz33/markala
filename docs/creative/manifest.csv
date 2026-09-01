@@ -1,0 +1,51 @@
+order,tier,school_relevance,product_slug,product_name,category_slug,template,r2_key_cover,output_files,master_source,status
+1,P0,okul-core,kristal-plaket,Kristal Plaket — Lazer Kazıma,plaket,T1,products/kristal-plaket-1.webp,kristal-plaket-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+2,P0,okul-core,madalya-7cm-kurdela,Madalya — 7cm Kurdela Dahil,madalya,T2,products/madalya-7cm-kurdela-1.webp,madalya-7cm-kurdela-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+3,P0,okul-core,klasik-beyaz-kupa,Klasik Beyaz Kupa (ödül),kupa,T6,products/klasik-beyaz-kupa-1.webp,klasik-beyaz-kupa-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+4,P0,okul-core,sertifika-diploma,Sertifika / Diploma Baskısı,sertifika,T3,products/sertifika-diploma-1.webp,sertifika-diploma-1..5.webp,NEW_PRODUCT,BLOCKED_no_product_no_master
+5,P0,okul-core,lanyard-15mm,Lanyard 15mm Sublimasyon,lanyard,T4,products/lanyard-15mm-1.webp,lanyard-15mm-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+6,P0,okul-core,lanyard-10mm,Lanyard 10mm İnce,lanyard,T4,products/lanyard-10mm-1.webp,lanyard-10mm-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+7,P0,okul-core,yaka-karti-sert,Sert PVC Yaka Kartı,yaka-karti,T4,products/yaka-karti-sert-1.webp,yaka-karti-sert-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+8,P0,okul-core,yaka-karti-standart,Standart Yaka Kartı,yaka-karti,T4,products/yaka-karti-standart-1.webp,yaka-karti-standart-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+9,P0,okul-core,kurumsal-davetiye,Kurumsal Davetiye (tören/mezuniyet),davetiye,T4,products/kurumsal-davetiye-1.webp,kurumsal-davetiye-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+10,P0,okul-core,dugum-davetiyesi,Davetiye (mezuniyet/balo bağlamı),davetiye,T4,products/dugum-davetiyesi-1.webp,dugum-davetiyesi-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+11,P1,okul-idare,klasik-kartvizit,Klasik Kartvizit,kartvizit,T4,products/klasik-kartvizit-1.webp,klasik-kartvizit-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+12,P1,okul-idare,trodat-printy-4912,Trodat Printy 4912 Kaşe,kase,T5,products/trodat-printy-4912-1.webp,trodat-printy-4912-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+13,P1,okul-idare,antetli-kagit,Antetli Kağıt — 90 gr 1.Hamur,antetli-kagit,T4,products/antetli-kagit-1.webp,antetli-kagit-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+14,P1,okul-idare,zarf-diplomat-tek-renk,Diplomat Zarf — 10.5x24 cm Tek Renk,zarf,T4,products/zarf-diplomat-tek-renk-1.webp,zarf-diplomat-tek-renk-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+15,P1,okul-idare,zarf-diplomat-renkli,Diplomat Zarf — 10.5x24 cm Renkli,zarf,T4,products/zarf-diplomat-renkli-1.webp,zarf-diplomat-renkli-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+16,P1,okul-idare,zarf-torba,Torba Zarf — 24x32 cm Renkli,zarf,T4,products/zarf-torba-1.webp,zarf-torba-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+17,P1,okul-idare,makbuz,Makbuz — 54 gr Kendinden Kopyalı,makbuz,T4,products/makbuz-1.webp,makbuz-1..5.webp,MISSING,NEEDS_MASTER_all
+18,P1,okul-idare,cepli-dosya,Cepli Dosya — 22.5x31 cm,cepli-dosya,T4,products/cepli-dosya-1.webp,cepli-dosya-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+19,P1,okul-idare,katalog-perfect,Perfect Binding Katalog,katalog,T4,products/katalog-perfect-1.webp,katalog-perfect-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+20,P1,okul-idare,katalog-saddle,Saddle-Stitch Katalog,katalog,T4,products/katalog-saddle-1.webp,katalog-saddle-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+21,P1,okul-idare,duvar-takvimi,Duvar Takvimi,takvim,T4,products/duvar-takvimi-1.webp,duvar-takvimi-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+22,P1,okul-idare,masa-takvimi,Masa Takvimi,takvim,T4,products/masa-takvimi-1.webp,masa-takvimi-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+23,P1,okul-idare,pvc-uyelik-karti,PVC Üyelik/Öğrenci Kimlik Kartı,pvc-kart,T4,products/pvc-uyelik-karti-1.webp,pvc-uyelik-karti-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+24,P1,okul-idare,kanvas-tablo-60x40,Kanvas Tablo 60x40 cm,kanvas-tablo,T1,products/kanvas-tablo-60x40-1.webp,kanvas-tablo-60x40-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+25,P1,okul-idare,kanvas-tablo-100x70,Kanvas Tablo 100x70 cm,kanvas-tablo,T1,products/kanvas-tablo-100x70-1.webp,kanvas-tablo-100x70-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+26,P1,etkinlik,rollup-standart,Standart Roll-Up — 85x200 cm,rollup,T1,products/rollup-standart-1.webp,rollup-standart-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+27,P1,etkinlik,magnet-promosyon,Promosyon Magnet — 46x68 mm,magnet,T4,products/magnet-promosyon-1.webp,magnet-promosyon-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+28,P1,etkinlik,stiker-beyaz-vinyl,Beyaz Vinyl Stiker,stiker-kesimli,T4,products/stiker-beyaz-vinyl-1.webp,stiker-beyaz-vinyl-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+29,P1,etkinlik,stiker-seffaf-vinyl,Şeffaf Vinyl Stiker,stiker-kesimli,T4,products/stiker-seffaf-vinyl-1.webp,stiker-seffaf-vinyl-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+30,P1,etkinlik,etiket,Etiket — 90 gr Kuşe Çıkartma,etiket,T4,products/etiket-1.webp,etiket-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+31,P1,etkinlik,brosur,Broşür — 115 gr Kuşe Çift Yön,brosur,T4,products/brosur-1.webp,brosur-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+32,P1,etkinlik,pro-brosur,Pro Broşür — 128 gr Kuşe,brosur,T4,products/pro-brosur-1.webp,pro-brosur-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+33,P1,etkinlik,selefonlu-brosur,Selefonlu Broşür — 200 gr Kuşe,brosur,T4,products/selefonlu-brosur-1.webp,selefonlu-brosur-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+34,P1,etkinlik,el-ilani,El İlanı — 105 gr Kuşe Tek Yön,el-ilani,T4,products/el-ilani-1.webp,el-ilani-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+35,P1,etkinlik,afis-105gr,Afiş — 105 gr Kuşe Tek Yön,afis,T4,products/afis-105gr-1.webp,afis-105gr-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+36,P1,etkinlik,notluk,Notluk — 7.8x14 cm 70'lik,bloknot,T4,products/notluk-1.webp,notluk-1..5.webp,MISSING,NEEDS_MASTER_all
+37,P1,etkinlik,kapakli-bloknot,Kapaklı Bloknot — Amerikan Cilt,bloknot,T4,products/kapakli-bloknot-1.webp,kapakli-bloknot-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+38,P1,etkinlik,kup-bloknot,Küp Bloknot — 78x78 mm,bloknot,T4,products/kup-bloknot-1.webp,kup-bloknot-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+39,P1,etkinlik,spiralli-bloknot,Spiralli Bloknot — 50'lik,bloknot,T4,products/spiralli-bloknot-1.webp,spiralli-bloknot-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+40,P1,etkinlik,kapaksiz-bloknot,Kapaksız Bloknot — 50'lik Tutkallı,bloknot,T4,products/kapaksiz-bloknot-1.webp,kapaksiz-bloknot-1..5.webp,MISSING,NEEDS_MASTER_all
+41,P1,etkinlik,canta,Çanta — 210 gr Amerikan Bristol,canta-kese,T4,products/canta-1.webp,canta-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+42,P1,etkinlik,bez-tote-140gr,Bez Tote Çanta 140gr,bez-tote,T4,products/bez-tote-140gr-1.webp,bez-tote-140gr-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+43,P1,etkinlik,bez-tote-canvas-180gr,Canvas Tote Çanta 180gr,bez-tote,T4,products/bez-tote-canvas-180gr-1.webp,bez-tote-canvas-180gr-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+44,P1,etkinlik,kraft-torba-baskili,Baskılı Kraft Torba,kraft-torba,T4,products/kraft-torba-baskili-1.webp,kraft-torba-baskili-1..5.webp,MISSING_verify,NEEDS_MASTER_all
+45,P2,genel,yelken-bayrak-damla,Damla Yelken Bayrak,yelken-bayrak,T1,products/yelken-bayrak-damla-1.webp,yelken-bayrak-damla-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+46,P2,genel,kirlangic-bayrak-3m,Kırlangıç Bayrak — 3m İpli Set,kirlangic-bayrak,T1,products/kirlangic-bayrak-3m-1.webp,kirlangic-bayrak-3m-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+47,P2,genel,masa-bayragi-krom,Krom Direkli Masa Bayrağı,masa-bayragi,T1,products/masa-bayragi-krom-1.webp,masa-bayragi-krom-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+48,P2,genel,makam-bayragi-puskullu,Püsküllü Makam Bayrağı,makam-bayragi,T1,products/makam-bayragi-puskullu-1.webp,makam-bayragi-puskullu-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+49,P2,genel,lightbox-led-100cm,Lightbox LED Tabela — 100x70 cm,lightbox,T1,products/lightbox-led-100cm-1.webp,lightbox-led-100cm-1..5.webp,prod_r2_cover,NEEDS_MASTER_angles2-5
+50,P2,genel,guvenlik-levhasi-sigorta,İSG Güvenlik Levhası — Standart (ISO 7010),guvenlik-uyari-levhalari,T1,products/guvenlik-levhasi-sigorta-1.webp,guvenlik-levhasi-sigorta-1..5.webp,MISSING,NEEDS_MASTER_all_ISG_color_locked
