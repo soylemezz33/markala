@@ -27,6 +27,32 @@ describe("computeAreaPrice", () => {
     expect(r.dahil).toBe(172.5);
   });
 
+  // Seçeneğe özel minM2 (2026-09-01, kırlangıç bayrak): tedarikçi 60×150'yi gerçek alanı
+  // (0,90 m²) üzerinden fiyatlıyor; işletme geneli 1 m² tabanı bu üründe %11 fazla yazıyordu.
+  it("minM2 ezmesi: 0.9 tabanı ile 60x150 gerçek alanından fiyatlanır (5.10$ → dahil 211.14)", () => {
+    const { options, prices } = malzeme(5.10, { effect: "perM2", birim: "dolar", minM2: 0.9 });
+    const r = computeAreaPrice(options, prices, { malzeme: "m", en: "60", boy: "150", adet: "1" }, TEST_PRICING);
+    expect(r.dahil).toBe(211.14); // 5.10 × 46 × 0.9 — genel 1 m² tabanı UYGULANMAZ
+  });
+
+  it("minM2 ezmesi taban olarak durur: 10x10=0.01m² yine 0.9 m² sayılır", () => {
+    const { options, prices } = malzeme(5.10, { effect: "perM2", birim: "dolar", minM2: 0.9 });
+    const r = computeAreaPrice(options, prices, { malzeme: "m", en: "10", boy: "10", adet: "1" }, TEST_PRICING);
+    expect(r.dahil).toBe(211.14); // kuruşluk bayrak siparişi engellenir
+  });
+
+  it("minM2 ezmesi + adet: 60x150 ×2 = 1.8 m² (taban devreye girmez, doğrusal)", () => {
+    const { options, prices } = malzeme(5.10, { effect: "perM2", birim: "dolar", minM2: 0.9 });
+    const r = computeAreaPrice(options, prices, { malzeme: "m", en: "60", boy: "150", adet: "2" }, TEST_PRICING);
+    expect(r.dahil).toBe(422.28); // 211.14 × 2
+  });
+
+  it("minM2 YOKSA işletme geneli (1 m²) aynen geçerli — mevcut ürünler etkilenmez", () => {
+    const { options, prices } = malzeme(5.10, { effect: "perM2", birim: "dolar" });
+    const r = computeAreaPrice(options, prices, { malzeme: "m", en: "60", boy: "150", adet: "1" }, TEST_PRICING);
+    expect(r.dahil).toBe(234.6); // 5.10 × 46 × 1 (0.9 değil)
+  });
+
   it("perPiece TL (Yelken takım 550₺) × adet 2 → dahil 1100 (marj eklenmez)", () => {
     const { options, prices } = malzeme(550, { effect: "perPiece", birim: "tl" });
     const r = computeAreaPrice(options, prices, { malzeme: "m", en: "0", boy: "0", adet: "2" }, TEST_PRICING);

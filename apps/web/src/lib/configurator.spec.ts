@@ -455,6 +455,37 @@ describe("computeAreaPrice (web — API paritesi)", () => {
     );
     expect(r.dahil).toBe(101.2);
   });
+  // Seçeneğe özel minM2 (2026-09-01, kırlangıç bayrak) — API pricing.spec.ts ile aynı senaryolar.
+  it("minM2 ezmesi: 0.9 tabanı ile 60x150 gerçek alanından (5.10$ → dahil 211.14)", () => {
+    const r = computeAreaPrice(
+      [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar", minM2: 0.9 })] as any,
+      [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 5.10 }],
+      { malzeme: "m", en: "60", boy: "150", adet: "1" },
+      DEFAULT_PRICING,
+    );
+    expect(r.dahil).toBe(211.14);
+  });
+
+  it("minM2 ezmesi + adet 2 → 1.8 m², doğrusal (422.28)", () => {
+    const r = computeAreaPrice(
+      [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar", minM2: 0.9 })] as any,
+      [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 5.10 }],
+      { malzeme: "m", en: "60", boy: "150", adet: "2" },
+      DEFAULT_PRICING,
+    );
+    expect(r.dahil).toBe(422.28);
+  });
+
+  it("minM2 YOKSA işletme geneli (1 m²) korunur → 234.60", () => {
+    const r = computeAreaPrice(
+      [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar" })] as any,
+      [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 5.10 }],
+      { malzeme: "m", en: "60", boy: "150", adet: "1" },
+      DEFAULT_PRICING,
+    );
+    expect(r.dahil).toBe(234.6);
+  });
+
   it("min 1 m²: 60x150 Saten Kırlangıç 3.75$ → dahil 172.50", () => {
     const r = computeAreaPrice(
       [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar" })] as any,
