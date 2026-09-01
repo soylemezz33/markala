@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { DM_Sans } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
-import { getHeaderNav } from "@/lib/catalog";
+import { getHeaderNav, getCategories } from "@/lib/catalog";
 import { SiteFooter } from "@/components/site-footer";
 import { CtaBanner } from "@/components/home/cta-banner";
 import { ThemeBody } from "@/components/theme-body";
@@ -28,7 +28,7 @@ const fontSans = DM_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL("https://markala.com.tr"),
   title: {
-    default: "Markala — Matbaa ve Reklam Ürünleri | 324 Ajans Çatısı",
+    default: "Markala, Matbaa ve Reklam Ürünleri | 324 Ajans Çatısı",
     template: "%s · Markala",
   },
   description:
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     locale: "tr_TR",
     siteName: "Markala",
     url: "https://markala.com.tr",
-    title: "Markala — Matbaa ve Reklam Ürünleri",
+    title: "Markala | Matbaa ve Reklam Ürünleri",
     description:
       "750+ matbaa ürünü, ücretsiz tasarım, 2-3 iş günü üretim, Türkiye geneli DHL kargo. 324 Ajans güvencesiyle.",
     images: [
@@ -58,13 +58,13 @@ export const metadata: Metadata = {
         url: "/og-default.png",
         width: 1200,
         height: 630,
-        alt: "Markala — Matbaa ve Reklam Ürünleri",
+        alt: "Markala - Matbaa ve Reklam Ürünleri",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Markala — Matbaa ve Reklam Ürünleri",
+    title: "Markala | Matbaa ve Reklam Ürünleri",
     description:
       "750+ matbaa ürünü, ücretsiz tasarım, hızlı kargo. 324 Ajans güvencesiyle.",
     images: ["/og-default.png"],
@@ -103,7 +103,11 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Header menüsü — admin /menu yönetir (header_nav); yoksa SiteHeader DEFAULT_NAV'a düşer.
-  const headerNav = await getHeaderNav();
+  // Kategoriler footer'ın "Tüm Kategoriler" bloğu için (SEO iç link, 2026-09-01).
+  // İkisi de ISR önbellekli (/settings/header-nav ve /categories, revalidate 300) ve
+  // paralel çekiliyor — ek gecikme yok. getCategories hatada [] döner, blok gizlenir.
+  const [headerNav, kategoriler] = await Promise.all([getHeaderNav(), getCategories()]);
+  const footerKategoriler = kategoriler.map((c) => ({ slug: c.slug, name: c.name }));
   return (
     <html lang="tr" className={fontSans.variable}>
       <head>
@@ -139,7 +143,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CtaBanner />
 
         {/* Footer — FULL WIDTH */}
-        <SiteFooter />
+        <SiteFooter categories={footerKategoriler} />
 
         <CartDrawerLazy />
         <FloatingActions />
