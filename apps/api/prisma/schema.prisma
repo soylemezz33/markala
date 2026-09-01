@@ -369,6 +369,10 @@ model Product {
   reviews    Review[]
   prices     ProductPrice[]
   options    ProductOption[]
+  /// Çoklu görsel kayıtları (AJA-385). Legacy `images String[]` geriye dönük uyum için
+  /// KORUNUR; yeni galeri/varyant sunumu bu ilişki üzerinden yapılır. Frontend galeri iş
+  /// kolunun tükettiği kontrat: coverImage = isPrimary olan kayıt, gallery = sort'a göre sıralı.
+  imageRecords ProductImage[]
 
   @@index([categoryId, isActive])
   @@index([bestseller, isActive])
@@ -1025,6 +1029,42 @@ model ProductPrice {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   @@index([productId])
   @@map("product_prices")
+}
+
+/// Ürün görseli — çoklu görsel + varyant + responsive (AJA-385).
+///
+/// TASARIM: `url` FORMAT-AGNOSTİK base/key tutar (örn.
+/// "products/kartvizit/on/a1b2c3d4"); boyut (160/400/800/1200/2000) ve format
+/// (avif/webp) runtime'da türetilir. Böylece her boyut×format için ayrı satır
+/// açılmaz — satır patlaması önlenir. CDN URL:
+///   {CDN_PUBLIC_URL}/{url}-{size}.{fmt}   (örn. .../a1b2c3d4-800.avif)
+/// Orijinal: {CDN_PUBLIC_URL}/{url}_orig.{fmt}
+///
+/// KVKK: yalnız PUBLIC ürün katalog görselleri. Müşteri baskı/tasarım dosyaları
+/// (isim/logo/TC içerebilir) BU MODELE GİRMEZ — ayrı private kulvar (DesignUpload).
+model ProductImage {
+  id         String   @id @default(cuid())
+  productId  String   @map("product_id")
+  /// Format-agnostik base key (uzantısız). Boyut+format runtime'da eklenir.
+  url        String
+  alt        String?
+  sort       Int      @default(0)
+  /// Görselin ait olduğu varyant (örn. "on", "arka", "kirmizi"). Varyantsız üründe "default".
+  variantKey String   @default("default") @map("variant_key")
+  width      Int?
+  height     Int?
+  isPrimary  Boolean  @default(false) @map("is_primary")
+  /// BlurHash placeholder (LQIP) — galeri yüklenirken bulanık önizleme.
+  blurhash   String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, variantKey, sort])
+  @@index([productId, sort])
+  @@index([productId, variantKey])
+  @@map("product_images")
 }
 
 

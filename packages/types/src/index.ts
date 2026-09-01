@@ -228,6 +228,75 @@ export interface Testimonial {
   productCategory?: string;
 }
 
+// ============================================================================
+// Ürün görseli KONTRATI (AJA-385) — Backend ↔ Frontend galeri ortak tanımı.
+// TEK KAYNAK burada; Frontend galeri iş kolu bu tipleri tüketir, kopya tanım açmaz.
+// ============================================================================
+
+/** CDN responsive boyut seti (px genişlik). Backend sharp pipeline ile eşleşir. */
+export const PRODUCT_IMAGE_SIZES = [160, 400, 800, 1200, 2000] as const;
+export type ProductImageSize = (typeof PRODUCT_IMAGE_SIZES)[number];
+
+/** Kanonik AVIF + WebP fallback. Sıra = tercih önceliği (<picture> source sırası). */
+export const PRODUCT_IMAGE_FORMATS = ["avif", "webp"] as const;
+export type ProductImageFormat = (typeof PRODUCT_IMAGE_FORMATS)[number];
+
+/**
+ * API'nin döndürdüğü tek görsel kaydı.
+ *
+ * `url` FORMAT-AGNOSTİK base key'tir (uzantısız, örn.
+ * "products/kartvizit/on/a1b2c3d4"). Gerçek CDN URL'i istemci tarafında türetilir:
+ *   {CDN_BASE}/{url}-{size}.{fmt}     (örn. .../a1b2c3d4-800.avif)
+ * Bkz. `productImageUrl()` yardımcısı.
+ */
+export interface ProductImageDto {
+  id: string;
+  /** Format-agnostik base key (uzantısız). */
+  url: string;
+  alt: string | null;
+  sort: number;
+  /** Görselin ait olduğu varyant (örn. "on", "arka"); varyantsızda "default". */
+  variantKey: string;
+  width: number | null;
+  height: number | null;
+  isPrimary: boolean;
+  /** BlurHash LQIP placeholder (yükleme sırasında bulanık önizleme). */
+  blurhash: string | null;
+}
+
+/**
+ * Ürün sayfasının tükettiği galeri görünümü.
+ * - `coverImage` = isPrimary olan kayıt (yoksa sort'a göre ilk).
+ * - `gallery`    = sort'a göre sıralı tüm kayıtlar.
+ * - `byVariant`  = variantKey → o varyantın görselleri (varyant seçiciyle eşleme).
+ */
+export interface ProductGallery {
+  coverImage: ProductImageDto | null;
+  gallery: ProductImageDto[];
+  byVariant: Record<string, ProductImageDto[]>;
+}
+
+/** base key + boyut + format → CDN URL. Frontend/Storefront bunu kullanır. */
+export function productImageUrl(
+  cdnBase: string,
+  baseKey: string,
+  size: ProductImageSize,
+  fmt: ProductImageFormat,
+): string {
+  return `${cdnBase.replace(/\/$/, "")}/${baseKey}-${size}.${fmt}`;
+}
+
+/** ProductImageDto listesinden ProductGallery kontratı türetir (istemci yardımcı). */
+export function toProductGallery(images: ProductImageDto[]): ProductGallery {
+  const gallery = [...images].sort((a, b) => a.sort - b.sort);
+  const coverImage = gallery.find((i) => i.isPrimary) ?? gallery[0] ?? null;
+  const byVariant: Record<string, ProductImageDto[]> = {};
+  for (const img of gallery) {
+    (byVariant[img.variantKey] ??= []).push(img);
+  }
+  return { coverImage, gallery, byVariant };
+}
+
 export interface ConfiguratorSelection {
   parameterId: string;
   optionId?: string;
