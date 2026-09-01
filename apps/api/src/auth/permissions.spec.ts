@@ -33,10 +33,19 @@ describe("kargo rolü (2026-09-01)", () => {
     expect(roleHasPerm("kargo", PERM.ORDERS_STATUS)).toBe(false);
   });
 
-  it("müşteri e-posta günlüğünü toplayamaz — CUSTOMERS_READ yok", () => {
-    // Tek açtığı uç /admin/notification-logs: tüm müşterilerin e-posta adresleri,
-    // sayfalanabilir ve aranabilir (KVKK'da toplu PII dışa aktarımı).
-    expect(roleHasPerm("kargo", PERM.CUSTOMERS_READ)).toBe(false);
+  it("müşteri kartını görür (Hasan: menüde Siparişler + Müşteriler)", () => {
+    expect(roleHasPerm("kargo", PERM.CUSTOMERS_READ)).toBe(true);
+  });
+
+  it("müşteri e-posta günlüğünü toplayamaz — INBOX yok", () => {
+    // /admin/notification-logs tüm müşterilerin e-posta adresini sayfalayarak veriyor
+    // (KVKK'da toplu PII dışa aktarımı). CUSTOMERS_READ'ten ayrılıp INBOX'a taşındı ki
+    // kargoya müşteri kartı açılırken bu döküm de açılmasın.
+    expect(roleHasPerm("kargo", PERM.INBOX)).toBe(false);
+  });
+
+  it("panoyu görmez — DASHBOARD yok (doğrudan Siparişler'e düşer)", () => {
+    expect(roleHasPerm("kargo", PERM.DASHBOARD)).toBe(false);
   });
 
   it("içerik/ayar/medya yetkisi yok", () => {
@@ -45,9 +54,11 @@ describe("kargo rolü (2026-09-01)", () => {
     }
   });
 
-  it("izin listesi tam olarak iki anahtardan ibaret", () => {
+  it("izin listesi tam olarak üç anahtardan ibaret", () => {
     // Yeni izin eklenirse burada görünür — "acaba kargo bunu görmeli mi?" sorusunu zorlar.
-    expect(permsForRole("kargo").sort()).toEqual([PERM.ORDERS_READ, PERM.ORDERS_TRACKING].sort());
+    expect(permsForRole("kargo").sort()).toEqual(
+      [PERM.ORDERS_READ, PERM.ORDERS_TRACKING, PERM.CUSTOMERS_READ].sort(),
+    );
   });
 });
 
@@ -67,6 +78,16 @@ describe("mevcut roller — kargo eklenirken regresyon olmamalı", () => {
   it("muhasebe durum makinesine dokunamaz (eskiden de dokunamıyordu)", () => {
     expect(roleHasPerm("muhasebe", PERM.ORDERS_STATUS)).toBe(false);
     expect(roleHasPerm("muhasebe", PERM.ORDERS_TRACKING)).toBe(false);
+  });
+
+  it("tasarımcı ve muhasebe gelen kutusu + panoyu KAYBETMEDİ (kargo icin ayirma yapildi)", () => {
+    // customers.read dört sayfayi birden aciyordu; inbox.read'e ayirinca bu iki rolun
+    // yetkisi acikca geri verilmeliydi, yoksa sessizce sayfa kaybederlerdi.
+    for (const rol of ["tasarimci", "muhasebe"]) {
+      expect(roleHasPerm(rol, PERM.INBOX)).toBe(true);
+      expect(roleHasPerm(rol, PERM.DASHBOARD)).toBe(true);
+      expect(roleHasPerm(rol, PERM.CUSTOMERS_READ)).toBe(true);
+    }
   });
 
   it("admin ve super_admin joker izinli", () => {

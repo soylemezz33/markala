@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateAddressDto, UpdateAddressDto, UpdateProfileDto, UpdateCorporateDto } from "./users.dto";
+import { PERM, roleHasPerm } from "../auth/permissions";
 
 @Injectable()
 export class UsersService {
@@ -141,8 +142,8 @@ export class UsersService {
    * hiçbir zaman döndürülmez (Prisma select ile açıkça seçilmiş alanlar dışındakiler gelmez).
    * Burada yalnızca admin UI'nın ihtiyaç duyduğu alanlar listelenmiştir.
    */
-  getForAdmin(id: string) {
-    return this.prisma.user.findUnique({
+  async getForAdmin(id: string, role?: string) {
+    const kayit = await this.prisma.user.findUnique({
       where: { id },
       select: {
         id: true, email: true, fullName: true, phone: true, accountType: true,
@@ -169,6 +170,22 @@ export class UsersService {
         },
       },
     });
+    if (!kayit) return kayit;
+    // PARASAL ALAN TEMİZLİĞİ (2026-09-01) — sipariş uçlarındaki kuralın aynısı.
+    // ORDERS_AMOUNTS izni olmayan rol (kargo) müşteri kartında kredi limiti, kurumsal
+    // iskonto ve sipariş tutarlarını GÖRMEZ. Alanlar silinir, sıfırlanmaz: panel bloğu
+    // veri yoksa hiç render etmez, "₺0" gibi yanlış bilgi üretmez.
+    // Cari bakiye ayrı uçtan geliyor ve o zaten @Roles("super_admin") ile kapalı.
+    if (roleHasPerm(role, PERM.ORDERS_AMOUNTS)) return kayit;
+    const { corporateDiscount: _d, corporateCreditLimit: _l, ...kalan } = kayit;
+    return {
+      ...kalan,
+      // Array.isArray koruması: seçim değişirse ya da çağıran orders istemezse .map patlar
+      // (test bunu yakaladı). Alan yoksa olduğu gibi bırakılır, uydurma [] yazılmaz.
+      orders: Array.isArray(kayit.orders)
+        ? kayit.orders.map(({ total: _t, paymentStatus: _ps, paymentMethod: _pm, ...o }) => o)
+        : kayit.orders,
+    };
   }
 
   /** Admin: kurumsal müşteri ayarları (indirim oranı + kredi limiti) — müşteri başına. */

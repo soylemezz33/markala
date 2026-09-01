@@ -15,7 +15,10 @@ import { PrismaService } from "../prisma/prisma.service";
 @Controller("admin/notification-logs")
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles("admin", "super_admin")
-@Perms(PERM.CUSTOMERS_READ)
+// 2026-09-01: CUSTOMERS_READ'ten INBOX'a taşındı. Bu uç TÜM müşterilerin e-posta
+// adresini sayfalayıp arattırıyor; kargo rolü müşteri kartını görsün diye CUSTOMERS_READ
+// alınca bu toplu PII dökümünü de kazanmasın.
+@Perms(PERM.INBOX)
 @ApiBearerAuth()
 export class NotificationLogsController {
   constructor(private prisma: PrismaService) {}
