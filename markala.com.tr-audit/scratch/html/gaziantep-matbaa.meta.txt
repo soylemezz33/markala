@@ -1,5 +1,0 @@
-saved to scratch/html/gaziantep-matbaa.html
-
-Final URL: https://markala.com.tr/matbaa/gaziantep
-Status: 200 | mode=raw | is_spa=False
-Publication date: 2026-07-01
