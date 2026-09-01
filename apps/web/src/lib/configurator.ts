@@ -490,7 +490,8 @@ export function computeAreaPrice(
   const sels = selections && typeof selections === "object" ? selections : {};
   const opts = Array.isArray(options) ? options : [];
   const rows = Array.isArray(prices) ? prices : [];
-  const { kur, marj, kdv, minM2 } = settings;
+  // marj BİLEREK kullanılmıyor — aşağıdaki KDV dahil son fiyat notuna bak.
+  const { kur, kdv, minM2 } = settings;
 
   const en = _num(sels.en);
   const boy = _num(sels.boy);
@@ -532,8 +533,11 @@ export function computeAreaPrice(
     }
   }
 
-  const haric = Math.max(0, maliyet * marj);
-  const dahil = haric * (1 + kdv);
+  // Fiyat satırındaki değer KDV DAHİL SON SATIŞ fiyatıdır (kâr Hasanın fiyat Excelinde zaten
+  // içinde) — motor üstüne NE MARJ NE KDV EKLER, KDVyi içinden ayırır.
+  // api/src/orders/pricing.ts computeAreaPrice ile BİREBİR AYNI olmalı (client/server parite).
+  const dahil = Math.max(0, maliyet);
+  const haric = dahil / (1 + kdv);
   return { haric: _round2(haric), dahil: _round2(dahil) };
 }
 

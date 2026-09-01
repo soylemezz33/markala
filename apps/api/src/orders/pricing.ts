@@ -207,7 +207,7 @@ type AreaOption = PricingOption & { rules?: AreaOptionRules | null };
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
- * m² bazlı fiyat: maliyet (cost) × marj × kur, etki tipine göre.
+ * m² bazlı fiyat: fiyat satırındaki değer (KDV DAHİL son satış, USD veya TL) × kur, etki tipine göre.
  * - perM2/perM2Add: tl × toplamAlan (min minM2)
  * - perPerimeter: tl × çevre(m) × adet
  * - conditional: alan<1 m² ise tl × adet
@@ -223,7 +223,8 @@ export function computeAreaPrice(
   const sels = selections && typeof selections === "object" ? selections : {};
   const opts = Array.isArray(options) ? options : [];
   const rows = Array.isArray(prices) ? prices : [];
-  const { kur, marj, kdv, minM2 } = settings;
+  // `marj` BİLEREK kullanılmıyor — bkz. aşağıdaki KDV dahil son fiyat notu.
+  const { kur, kdv, minM2 } = settings;
 
   const en = num(sels.en);
   const boy = num(sels.boy);
@@ -265,7 +266,13 @@ export function computeAreaPrice(
     }
   }
 
-  const haric = Math.max(0, maliyet * marj);
-  const dahil = haric * (1 + kdv);
+  // Fiyat satırındaki değer, Hasan'ın fiyat Excel'inde belirlediği KDV DAHİL SON SATIŞ
+  // fiyatıdır (adet ürünlerdeki `price` ile aynı mantık) — kâr oranı zaten o rakamın
+  // içindedir. Sistem üstüne NE MARJ NE KDV EKLER; KDV faturalandırma için içinden
+  // geriye ayrılır (orders.service'teki "basePrice KDV dahil" reverse hesabıyla tutarlı).
+  // 2026-09-01 öncesi burada `maliyet × marj × (1+kdv)` uygulanıyordu; bu, Excel'de zaten
+  // kârı eklenmiş rakamın üstüne ikinci bir kâr bindiriyordu.
+  const dahil = Math.max(0, maliyet);
+  const haric = dahil / (1 + kdv);
   return { haric: round2(haric), dahil: round2(dahil) };
 }
