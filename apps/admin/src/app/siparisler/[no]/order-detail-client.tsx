@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
+import { useServerPerms } from "@/components/perms-provider";
 import {
   ArrowLeft,
   Package,
@@ -188,9 +189,24 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const [trackEditing, setTrackEditing] = useState(false);
   const [trackMsg, setTrackMsg] = useState<string | null>(null);
 
+  // TUTAR GORUNURLUGU (2026-09-01, kargo rolu): bu sayfada hic izin kontrolu YOKTU,
+  // tutarlar/odeme/fatura herkese aciktı. "orders.amounts" iznine baglandi -> tasarimci ve
+  // muhasebe bu izne sahip oldugu icin BUGUNKU davranis aynen korunur, yalniz kargo gormez.
+  // API de ayni izne gore alanlari yanittan siliyor (orders.service parasalAlanlariAyikla);
+  // burasi ikincil savunma + NaN basmasini onleyen gorsel katman.
+  const perms = useServerPerms();
+  const showMoney = !perms || perms.includes("orders.amounts");
+  // Tam durum makinesi (iptal + geri adim) yalnizca ORDERS_STATUS'u olanlarda. Kargo rolunde
+  // yok: API zaten 403 doner ama butonu gostermek kullaniciyi hataya surukler.
+  const canFullStatus = !perms || perms.includes("orders.status");
+
+
   // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
   const payStatus = String(order.paymentStatus ?? "beklemede");
-  const canRefund = payStatus === "basarili" && order.paymentMethod !== "cari";
+  // showMoney sarti: iade onay penceresi tutari METIN olarak yaziyor (window.confirm),
+  // yani buton gorunur kalirsa tutar gizlemenin etrafindan dolasilir. API zaten FINANCE
+  // istiyor (403) ama sizinti butona basmadan ONCE oluyordu.
+  const canRefund = showMoney && payStatus === "basarili" && order.paymentMethod !== "cari";
   const alreadyRefunded = payStatus === "iade-edildi" || payStatus === "iade_edildi";
 
   const handleRefund = () => {
@@ -444,9 +460,11 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
           <button onClick={printLabel} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
             <Printer size={14} /> Etiket Yazdır
           </button>
-          <button onClick={printInvoice} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
-            <FileText size={14} /> Fatura Kes
-          </button>
+          {showMoney && (
+            <button onClick={printInvoice} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
+              <FileText size={14} /> Fatura Kes
+            </button>
+          )}
         </div>
       </div>
 
@@ -507,7 +525,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                       )}
                       {/* Tasarım dosyası gösterimi ayrı "Tasarım Dosyaları" bölümünde (aşağıda). */}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right" hidden={!showMoney}>
                       <div className="font-semibold text-ink-900 tabular-nums">
                         ₺ {Number(item.lineTotal ?? item.unitPrice ?? 0).toLocaleString("tr-TR")}
                       </div>
@@ -527,7 +545,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 ))
               )}
             </div>
-            <div className="mt-4 pt-4 border-t border-paper-200 space-y-1.5 text-sm">
+            <div className="mt-4 pt-4 border-t border-paper-200 space-y-1.5 text-sm" hidden={!showMoney}>
               <RowKV label="Ara Toplam" value={`₺ ${Number(order.subtotal ?? 0).toLocaleString("tr-TR")}`} />
               <RowKV label="Kargo" value={`₺ ${Number(order.shippingFee ?? 0).toLocaleString("tr-TR")}`} />
               {Number(order.discount ?? 0) > 0 && (
@@ -597,12 +615,15 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 <XCircle size={14} weight="fill" /> Bu sipariş iptal edildi.
               </p>
             )}
+            {/* Kargo rolu (canFullStatus=false) yalnizca "Kargoda"yi gorur; diger gecisler
+                API'de de 403 doner, butonu gostermek kullaniciyi hataya surukler. Mevcut
+                durum bilgi amacli gorunur kalir ama tiklanamaz. */}
             <div className="flex flex-wrap gap-2 mb-4">
-              {STATUSES.map((s) => (
+              {STATUSES.filter((s) => canFullStatus || s.id === "kargoya-verildi" || s.id === currentStatus).map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleStatusChange(s.id)}
-                  disabled={isPending || isCancelled}
+                  disabled={isPending || isCancelled || (!canFullStatus && s.id !== "kargoya-verildi")}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all disabled:opacity-60 ${
                     currentStatus === s.id
                       ? "bg-ink-900 text-paper-50 border-ink-900"
@@ -614,7 +635,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
               ))}
             </div>
 
-            {!isCancelled && (
+            {!isCancelled && canFullStatus && (
               <div className="mb-4">
                 <button
                   onClick={() => handleStatusChange("iptal-edildi")}
@@ -781,7 +802,11 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
           {/* Kargo kartı: takip numarası VARSA ya da sipariş kargolanmış/teslim edilmişse
               görünür. İkinci koşul olmadan, takip numarası girilmemiş kargolu siparişlerde
               kart hiç çıkmıyordu → numarayı sonradan eklemenin yolu yoktu (2026-08-29). */}
-          {(trackNo || currentStatus === "kargoya-verildi" || currentStatus === "teslim-edildi") && (
+          {/* Kargo rolu icin ek dal: tutar goremeyen (yani kargo) kullanici siparis daha
+              "uretimde" iken de takip no girebilmeli — eskiden kart yalnizca numara VARSA
+              ya da durum kargoda/teslim ise cikiyordu, dolayisiyla numarayi girmenin tek
+              yolu durumu degistirmekti (bu da musteriye mail atiyor). */}
+          {(trackNo || !showMoney || currentStatus === "kargoya-verildi" || currentStatus === "teslim-edildi") && (
             <Card title="Kargo">
               {trackEditing || !trackNo ? (
                 <div className="space-y-2">
@@ -869,22 +894,26 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
             </Card>
           )}
 
-          <Card title="Ödeme">
-            <div className="mt-1 text-xs">
-              {(() => {
-                const ps = String(order.paymentStatus ?? "beklemede");
-                const p = PAYMENT_LABELS[ps] ?? { label: ps, color: "bg-paper-200 text-ink-700" };
-                return (
-                  <span className={`inline-block px-2 py-0.5 rounded-full font-semibold ${p.color}`}>
-                    {p.label}
-                  </span>
-                );
-              })()}
-            </div>
-            <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
-              ₺ {Number(order.total).toLocaleString("tr-TR")}
-            </div>
-          </Card>
+          {/* Ödeme kartının TAMAMI izne bağlı: tutarın yanında ödeme DURUMU da
+              gizlenmeli ("Ödeme Bekliyor" rozeti de yasak kapsamında). */}
+          {showMoney && (
+            <Card title="Ödeme">
+              <div className="mt-1 text-xs">
+                {(() => {
+                  const ps = String(order.paymentStatus ?? "beklemede");
+                  const p = PAYMENT_LABELS[ps] ?? { label: ps, color: "bg-paper-200 text-ink-700" };
+                  return (
+                    <span className={`inline-block px-2 py-0.5 rounded-full font-semibold ${p.color}`}>
+                      {p.label}
+                    </span>
+                  );
+                })()}
+              </div>
+              <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
+                ₺ {Number(order.total).toLocaleString("tr-TR")}
+              </div>
+            </Card>
+          )}
         </div>
       </div>
 

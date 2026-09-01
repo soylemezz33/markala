@@ -13,10 +13,28 @@ import { SetMetadata } from "@nestjs/common";
 
 /** İzin anahtarları — kaba taneli, menü/sayfa seviyesinde düşünüldü. */
 export const PERM = {
-  /** Sipariş listesi + detayını görme (tutarlar ayrıca FINANCE_READ ister). */
+  /** Sipariş listesi + detayını görme (tutarlar ayrıca ORDERS_AMOUNTS ister). */
   ORDERS_READ: "orders.read",
-  /** Sipariş durumunu ilerletme (üretim akışı). */
+  /**
+   * Sipariş yanıtında PARASAL alanları görme: total/subtotal/vat/discount/shippingFee,
+   * paymentStatus/paymentMethod, items[].unitPrice/lineTotal ve items[].costTotal (maliyet).
+   *
+   * NEDEN AYRI ANAHTAR (2026-09-01): "kargo" rolü siparişi görmeli ama tutarı görmemeli.
+   * Filtreyi FINANCE'e bağlasaydık tasarımcı da anında etkilenirdi (bugün tutarları
+   * görüyor). Hasan kararı: şimdilik yalnız kargo kısıtlansın → tasarımcı/muhasebe bu
+   * izni ALIR, davranışları değişmez. İleride tasarımcıda da kapatmak istenirse
+   * ROLE_PERMISSIONS'tan tek satır silmek yeter.
+   */
+  ORDERS_AMOUNTS: "orders.amounts",
+  /** Sipariş durumunu ilerletme (üretim akışı) + iptal. */
   ORDERS_STATUS: "orders.status",
+  /**
+   * SADECE kargo takip no / firma yazma (PATCH :id/tracking) ve siparişi "kargoya verildi"
+   * işaretleme. ORDERS_STATUS'tan ayrıldı çünkü o izin sipariş İPTALİNİ (sadakat puanı
+   * iadesi + müşteriye iptal maili), durumu geri almayı ve mail-önizleme ucunu da açıyor —
+   * dar yetkili kargo rolü için fazla geniş.
+   */
+  ORDERS_TRACKING: "orders.tracking",
   /** Müşteri kartı: ad, iletişim, adres. */
   CUSTOMERS_READ: "customers.read",
   /** Parasal her şey: ciro/kâr, ödemeler, iade, cari, fatura, Paraşüt. */
@@ -46,13 +64,23 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
 
   /**
    * Grafik tasarımcı: işini yapmak için sipariş içeriğini ve müşteri iletişimini görür,
-   * görsel/medya ve yorumları yönetir. Hasan kararı (2026-08-21): TUTARLARI GÖRMEZ —
-   * bu yüzden FINANCE ve PRICING YOK. Tutar gizleme uç seviyesinde de uygulanır
-   * (bkz. orders.service sanitize).
+   * görsel/medya ve yorumları yönetir. FINANCE ve PRICING YOK (ciro raporu ve fiyat
+   * güncelleme kapalı).
+   *
+   * ⚠️ TUTARLAR: 2026-08-21'de "tasarımcı tutarları görmesin" kararı verilmiş ama uçtaki
+   * filtre (stripAmounts) 2026-08-24'te paneli bozduğu için KALDIRILMIŞ — o tarihten beri
+   * tasarımcı sipariş tutarlarını görüyor. 2026-09-01'de kargo rolü eklenirken filtre
+   * ORDERS_AMOUNTS anahtarıyla yeniden yazıldı; Hasan kararı "şimdilik yalnız kargoya
+   * uygula" olduğu için tasarımcıya bu izin AÇIKÇA verildi = bugünkü davranış korunur.
+   * Tasarımcıda da kapatmak istenirse aşağıdaki ORDERS_AMOUNTS satırını silmek yeterli.
    */
   tasarimci: [
     PERM.ORDERS_READ,
+    PERM.ORDERS_AMOUNTS,
     PERM.ORDERS_STATUS,
+    // Takip ucu ORDERS_STATUS'tan ORDERS_TRACKING'e taşındı (kargo rolü için ayrıştırma);
+    // tasarımcı bugüne kadar takip no girebiliyordu, yetkisi aynen kalsın diye eklendi.
+    PERM.ORDERS_TRACKING,
     PERM.CUSTOMERS_READ,
     PERM.MEDIA,
     PERM.REVIEWS,
@@ -69,14 +97,36 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
    */
   muhasebe: [
     PERM.ORDERS_READ,
+    PERM.ORDERS_AMOUNTS,
     PERM.CUSTOMERS_READ,
     PERM.FINANCE,
     PERM.PRICING,
   ],
+
+  /**
+   * Kargo (2026-09-01, Hasan talebi): siparişi paketleyip gönderiyi açan iç personel.
+   *
+   * GÖRÜR: hangi sipariş olduğu (ürün, konfigürasyon, adet, yüklenen tasarım dosyası),
+   * alıcının adı/adresi/telefonu/e-postası — hepsi sipariş detayından gelir.
+   * GÖRMEZ: tutar, maliyet, ödeme durumu, fatura, cari (ORDERS_AMOUNTS ve FINANCE YOK).
+   *
+   * ORDERS_STATUS BİLEREK VERİLMEDİ: o izin sipariş iptalini (sadakat puanı iadesi +
+   * müşteriye iptal maili), durumu geri almayı ve mail-önizleme ucunu (fiyatlı siparişi
+   * keyfi adrese gönderme) da açıyor. Yerine dar ORDERS_TRACKING var: takip no yazar ve
+   * siparişi yalnız "kargoya verildi"ye çeker.
+   *
+   * CUSTOMERS_READ BİLEREK VERİLMEDİ: tek açtığı uç /admin/notification-logs, yani tüm
+   * müşterilerin e-posta adreslerini sayfalayarak toplama (KVKK'da toplu PII dışa aktarımı).
+   * Kargonun ihtiyacı olan iletişim bilgisi zaten sipariş detayında.
+   */
+  kargo: [
+    PERM.ORDERS_READ,
+    PERM.ORDERS_TRACKING,
+  ],
 };
 
 /** Panele giriş yapabilen roller (müşteri hariç). */
-export const PANEL_ROLES = ["super_admin", "admin", "tasarimci", "muhasebe"] as const;
+export const PANEL_ROLES = ["super_admin", "admin", "tasarimci", "muhasebe", "kargo"] as const;
 
 export function roleHasPerm(role: string | undefined, perm: Perm): boolean {
   if (!role) return false;

@@ -154,13 +154,15 @@ export function OrdersClient({ orders }: Props) {
   const { pageItems, pageCount, safePage } = paginate(sorted, page, PAGE_SIZE);
 
   function downloadCsv() {
-    const head = ["Sipariş No", "Müşteri", "E-posta", "Tarih", "Tutar", "Durum"];
+    // Tutar sutunu showMoney'e BAGLI (2026-09-01): tabloda gizlenen tutarlar CSV'den
+    // tek tikla disari cikiyordu — maskenin etrafindan dolasan sizinti.
+    const head = ["Sipariş No", "Müşteri", "E-posta", "Tarih", ...(showMoney ? ["Tutar"] : []), "Durum"];
     const rows = sorted.map((o) => [
       o.orderNumber,
       o.customerName ?? "",
       o.email ?? "",
       formatDateTime(o.createdAt),
-      String(Number(o.total)),
+      ...(showMoney ? [String(Number(o.total))] : []),
       STATUS_LABELS[toSlug(o.status)]?.label ?? o.status,
     ]);
     const csv = [head, ...rows]
@@ -296,7 +298,7 @@ export function OrdersClient({ orders }: Props) {
               ) : (
                 pageItems.map((o) => {
                   const s = STATUS_LABELS[toSlug(o.status)] ?? { label: o.status, color: "bg-paper-200 text-ink-700" };
-                  const customer = o.customerName ?? o.email ?? "—";
+                  const customer = o.customerName ?? o.email ?? "-";
                   return (
                     <tr key={o.id} className="hover:bg-paper-100/40">
                       <td className="px-4 py-3 font-mono text-xs font-semibold text-ink-900">

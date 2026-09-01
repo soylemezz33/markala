@@ -18,7 +18,7 @@ import { permForPath } from "@/lib/route-perms";
 interface CurrentUser {
   email: string;
   name: string;
-  role: "super_admin" | "admin" | "tasarimci" | "muhasebe";
+  role: "super_admin" | "admin" | "tasarimci" | "muhasebe" | "kargo";
   /** API'den gelen izin listesi — menüyü filtrelemek için (GÜVENLİK SINIRI DEĞİL). */
   permissions?: string[];
 }
@@ -28,6 +28,7 @@ const ROLE_LABEL: Record<string, string> = {
   super_admin: "Süper Admin",
   admin: "Admin",
   tasarimci: "Grafik Tasarım",
+  kargo: "Kargo",
   muhasebe: "Muhasebe",
 };
 

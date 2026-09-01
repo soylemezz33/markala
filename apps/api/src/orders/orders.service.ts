@@ -9,6 +9,44 @@ import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 import { computeItemCostTotal } from "./costing";
+import { PERM, roleHasPerm } from "../auth/permissions";
+
+/**
+ * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.
+ *
+ * ORDERS_AMOUNTS izni olmayan panel rolünde tutar/maliyet/ödeme alanları yanıttan
+ * SİLİNİR (0'a çekilmez!). Ağustos 2026'daki stripAmounts denemesi alanları sıfırladığı
+ * için panel "₺0 / Ödeme Bekliyor" gösterdi ve geri alındı; alan hiç yoksa panel bloğu
+ * render etmez, yanlış bilgi üretmez.
+ *
+ * costTotal ÖZELLİKLE kritik: sipariş anındaki TEDARİKÇİ MALİYETİ snapshot'ı. lineTotal
+ * ile yan yana görülürse kâr marjı doğrudan hesaplanır.
+ *
+ * "customer" MUAF: müşteri kendi siparişinin tutarlarını görmek zorunda.
+ * Rol verilmezse FAIL-CLOSED (siler) — bugün tek çağıran OrdersController ve rolü hep
+ * geçiriyor; ileride iç çağıran eklenirse tutar eksikliği hemen fark edilsin diye böyle.
+ */
+const PARASAL_ORDER_ALANLARI = [
+  "subtotal", "shippingFee", "discount", "vat", "total",
+  "paymentStatus", "paymentMethod",
+  "iyzicoPaymentId", "iyzicoConversationId", "iyzicoCheckoutToken",
+  "parasutInvoiceId", "recoveryMailStage",
+] as const;
+const PARASAL_ITEM_ALANLARI = ["unitPrice", "lineTotal", "costTotal"] as const;
+
+function parasalAlanlariAyikla<T extends object>(order: T, role?: string): T {
+  if (role === "customer" || roleHasPerm(role, PERM.ORDERS_AMOUNTS)) return order;
+  const temiz = { ...(order as Record<string, unknown>) };
+  for (const alan of PARASAL_ORDER_ALANLARI) delete temiz[alan];
+  if (Array.isArray(temiz.items)) {
+    temiz.items = (temiz.items as Array<Record<string, unknown>>).map((kalem) => {
+      const k = { ...kalem };
+      for (const alan of PARASAL_ITEM_ALANLARI) delete k[alan];
+      return k;
+    });
+  }
+  return temiz as T;
+}
 
 function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -522,7 +560,7 @@ export class OrdersService {
     const overLine = recalculatedItems.find((it) => it.lineTotal > MAX_ORDER_TOTAL);
     if (overLine || subtotal > MAX_ORDER_TOTAL) {
       throw new BadRequestException(
-        `Bu tutarda sipariş online alınamıyor. Lütfen bizimle iletişime geçin (0324 433 33 51) — kurumsal teklif hazırlayalım.`,
+        `Bu tutarda sipariş online alınamıyor. Lütfen bizimle iletişime geçin (0324 433 33 51), kurumsal teklif hazırlayalım.`,
       );
     }
 
@@ -924,7 +962,7 @@ export class OrdersService {
     });
   }
 
-  async listAll(opts: { status?: string; take?: number; skip?: number } = {}) {
+  async listAll(opts: { status?: string; take?: number; skip?: number; role?: string } = {}) {
     // Geçersiz/bilinmeyen status filtresi → filtre uygulanmaz (eskiden Prisma'da 500'e yol açıyordu).
     const status = slugToOrderStatus(opts.status);
     const orders = await this.prisma.order.findMany({
@@ -943,20 +981,23 @@ export class OrdersService {
     // Admin sipariş tablolarında e-posta yerine isim göstermek için.
     return orders.map((o) => {
       const nameOf = (a: unknown) => (a as { fullName?: string } | null)?.fullName || undefined;
-      return {
-        ...o,
-        customerName:
-          o.user?.fullName ||
-          nameOf(o.shippingAddress) ||
-          nameOf(o.billingAddress) ||
-          nameOf(o.shippingAddressSnapshot) ||
-          nameOf(o.billingAddressSnapshot) ||
-          null,
-      };
+      return parasalAlanlariAyikla(
+        {
+          ...o,
+          customerName:
+            o.user?.fullName ||
+            nameOf(o.shippingAddress) ||
+            nameOf(o.billingAddress) ||
+            nameOf(o.shippingAddressSnapshot) ||
+            nameOf(o.billingAddressSnapshot) ||
+            null,
+        },
+        opts.role,
+      );
     });
   }
 
-  async findById(id: string, userId?: string) {
+  async findById(id: string, userId?: string, role?: string) {
     const order = await this.prisma.order.findUnique({
       where: { id },
       // user DARALTILDI (2026-08-24): `user: true` TÜM satırı — passwordHash dahil —
@@ -988,14 +1029,14 @@ export class OrdersService {
       optionDetails: optionDetailsFor(optsById.get(it.productId ?? "") ?? [], it.configuration),
     }));
     // Misafir siparişinde FK relation null; snapshot'ı adres olarak yüzeye çıkar (admin detay render).
-    return withAddressView({ ...order, items });
+    return parasalAlanlariAyikla(withAddressView({ ...order, items }), role);
   }
 
   async updateStatus(
     id: string,
     status: string,
     extras?: { trackingNumber?: string; trackingCarrier?: string },
-    actor?: { actorId?: string | null; ipAddress?: string | null },
+    actor?: { actorId?: string | null; ipAddress?: string | null; role?: string },
   ) {
     // State-machine kontrolü: izinsiz geçişleri engelle.
     const current = await this.prisma.order.findUnique({ where: { id }, select: { status: true } });
@@ -1077,7 +1118,9 @@ export class OrdersService {
       })
       .catch((e) => console.error("[audit] updateStatus denetim kaydı yazılamadı:", e?.message));
 
-    return updated;
+    // Kaydetme yaniti da filtreden gecer: aksi halde kargo rolu takip no yazdigi
+    // anda tam siparis satirini (tutar, odeme, fatura kimligi) yanit govdesinde gorurdu.
+    return parasalAlanlariAyikla(updated, actor?.role);
   }
 
   /**
@@ -1090,7 +1133,7 @@ export class OrdersService {
   async updateTracking(
     id: string,
     extras: { trackingNumber?: string; trackingCarrier?: string },
-    actor?: { actorId?: string | null; ipAddress?: string | null },
+    actor?: { actorId?: string | null; ipAddress?: string | null; role?: string },
   ) {
     const current = await this.prisma.order.findUnique({
       where: { id },
@@ -1124,7 +1167,9 @@ export class OrdersService {
       })
       .catch((e) => console.error("[audit] updateTracking denetim kaydı yazılamadı:", e?.message));
 
-    return updated;
+    // Kaydetme yaniti da filtreden gecer: aksi halde kargo rolu takip no yazdigi
+    // anda tam siparis satirini (tutar, odeme, fatura kimligi) yanit govdesinde gorurdu.
+    return parasalAlanlariAyikla(updated, actor?.role);
   }
 
   /**
