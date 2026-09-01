@@ -1,6 +1,7 @@
 import type { Product, Category, FaqItem } from "@markala/types";
 import { cities } from "@/lib/cities";
 import { POSTAL_ADDRESS_SCHEMA, GEO, MAPS_SHORT_LINK } from "@/lib/company";
+import { resolveProductImage, isRealImage } from "@/lib/product-image";
 
 const SITE = "https://markala.com.tr";
 
@@ -109,9 +110,11 @@ export function ProductJsonLd({
 
   // Google, Product görselinde SVG desteklemez — /api/mockup SVG fallback'i JSON-LD'ye GİRMEZ.
   // Gerçek (raster) görsel yoksa image alanı tamamen atlanır; yanlış format vermekten iyidir.
-  const realImages = product.images
-    .filter((img) => !img.includes("/api/mockup"))
-    .map((img) => (img.startsWith("http") ? img : `${SITE}${img}`));
+  // AJA-386: çoklu görsel — resolver'ın galerisindeki TÜM gerçek görseller dizi olarak verilir
+  // (cover ilk sırada). Kategori-fallback (context tipi) ve mockup SVG'leri hariç tutulur.
+  const realImages = resolveProductImage(product)
+    .gallery.filter((img) => !img.fallback && isRealImage(img.src))
+    .map((img) => (img.src.startsWith("http") ? img.src : `${SITE}${img.src}`));
 
   const productNode: Record<string, unknown> = {
     "@type": "Product",

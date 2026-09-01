@@ -1,78 +1,92 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@markala/ui";
 import { ProductImageFallback } from "@/components/product/product-image-fallback";
+import { GalleryLightbox } from "@/components/product/gallery-lightbox";
+import type { ResolvedImage } from "@/lib/product-image";
 
 /**
- * Ürün galerisi.
+ * Ürün galerisi (AJA-386 çoklu görsel).
  *
- * 2026-08-26 (Hasan: "fotoğraflar arası geçiş yok, yavaş geldi"):
- * Eski davranışta TEK bir <Image> vardı ve küçük resme tıklayınca `src` değişiyordu.
- * Tarayıcı yeni (büyük) varyantı indirene kadar kutu BOŞ kalıyor, sonra görsel birden
- * beliriyordu — yani hem geçiş efekti yoktu hem de her tıklama bir ağ beklemesiydi
- * (galerinin 2./3. görseli genelde hiçbir önbellekte olmadığı için 0,2-0,8 sn).
+ * Girdi ARTIK URL dizisi değil, `resolveProductImage` çıktısı `ResolvedImage[]` — her görsel
+ * kendi `id/alt/width/height/blurDataURL`'ini taşır. Böylece:
+ *  - CLS=0: kutu `aspect-square`, görseller `fill` + doğru `sizes` → yükleme zıplaması yok.
+ *  - Erişilebilirlik: yalnız GÖRÜNEN görsel ekran okuyucuya metin verir, kopyalar dekoratif.
+ *  - Varyant senkronu: konfigüratör `markala:gorsel-sec` olayında `imageId` (yeni) veya
+ *    `index` (eski) gönderir; galeri ona geçer, eşleşme yoksa cover'da kalır.
  *
- * Yeni davranış:
- * 1. Görseller üst üste yığılır; yalnız görünen olanın opacity'si 1 → yumuşak çapraz geçiş.
- * 2. Yeni görsel İNENE KADAR eskisi ekranda kalır (boş kutu/zıplama yok).
- * 3. Küçük resme dokunma/üzerine gelme anında o görsel indirilmeye başlar (ön-yükleme).
- * 4. Sayfa yerleştikten sonra boşta kalan görseller de sessizce indirilir → tıklama anında
- *    geçiş. Veri tasarrufu açık ya da 2G bağlantıda bu adım atlanır.
- * LCP davranışı korunur: yalnız ilk görsel `priority`.
+ * Yerleşim:
+ *  - Masaüstü (lg+): SOLDA dikey thumbnail şeridi (aktif = amber #F5B800 çerçeve) + sağda
+ *    ana görsel (yumuşak çapraz geçiş). Ana görsele tıklama → lightbox (zoom).
+ *  - Mobil: yatay `scroll-snap` şerit + altında nokta göstergesi. Dokunma → lightbox.
+ *
+ * LCP: yalnız cover `priority` + `fetchPriority=high` + eager; gerisi `lazy`.
  */
-export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: string; fallbackSrc?: string }) {
+export function Gallery({ images }: { images: ResolvedImage[] }) {
   const [active, setActive] = useState(0);
-  /** Ekranda GÖSTERİLEN görsel — hedef görsel inene kadar öncekinde kalır. */
+  /** Masaüstü çapraz geçiş: hedef görsel inene kadar öncekinde kal (boş kutu yok). */
   const [visible, setVisible] = useState(0);
-  /** İndirmesi tamamlanmış görseller. */
-  const [loaded, setLoaded] = useState<Set<number>>(new Set());
-  /** Yüklenemeyen (404/ağ hatası) görseller. */
-  const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
-  /** İndirmesi BAŞLATILMIŞ görseller: ilk görsel + ön-yüklenenler. */
+  const [loaded, setLoaded] = useState<Set<number>>(new Set([0]));
+  /** Yüklenemeyen görseller için onError zincirinde ilerlemiş src override'ı. */
+  const [srcOverride, setSrcOverride] = useState<Record<number, string>>({});
+  /** Hepten bozuk (fallback de yüklenemedi) → "görsel yok" durumu. */
+  const [dead, setDead] = useState<Set<number>>(new Set());
+  /** İndirmesi başlatılmış görseller (cover + ön-yüklenenler). */
   const [mounted, setMounted] = useState<Set<number>>(() => new Set([0]));
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
-  const hasImages = images.length > 0;
+  const count = images.length;
+  const safeActive = Math.min(active, Math.max(0, count - 1));
 
-  function markBroken(index: number) {
-    setBrokenImages((prev) => (prev.has(index) ? prev : new Set(prev).add(index)));
-  }
-  /** Görseli DOM'a ekleyerek indirmesini başlatır (hover/dokunma/boşta ön-yükleme). */
-  function prefetch(index: number) {
-    setMounted((prev) => (prev.has(index) ? prev : new Set(prev).add(index)));
-  }
+  const prefetch = useCallback((i: number) => {
+    setMounted((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
+  }, []);
 
-  // Hedef görsel hazır olunca (ya da bozuksa) ekranı ona çevir.
+  const goTo = useCallback(
+    (i: number) => {
+      if (i < 0 || i >= count) return;
+      prefetch(i);
+      setActive(i);
+    },
+    [count, prefetch],
+  );
+
+  // Hedef görsel hazır/bozuk olunca masaüstü görünürü ona çevir.
   useEffect(() => {
-    if (loaded.has(active) || brokenImages.has(active)) setVisible(active);
-  }, [active, loaded, brokenImages]);
+    if (loaded.has(safeActive) || dead.has(safeActive)) setVisible(safeActive);
+  }, [safeActive, loaded, dead]);
 
-  // Konfigüratör seçimi galeriyi yönlendirsin (2026-08-29, Hasan: "kumaş+takıma
-  // tıklandığında takım görseli seçilsin"). rules.gorsel taşıyan bir seçenek
-  // seçilince configurator "markala:gorsel-sec" olayı yayınlar; galeri o kareye
-  // geçer. prefetch: hedef görsel henüz DOM'da değilse indirmesi başlatılır.
+  // Konfigüratör varyant senkronu — imageId (yeni kontrat) veya index (eski, 1-tabanlı çevrilmiş).
   useEffect(() => {
     function onSec(e: Event) {
-      const idx = (e as CustomEvent<{ index?: number }>).detail?.index;
-      if (typeof idx === "number" && Number.isInteger(idx) && idx >= 0 && idx < images.length) {
-        prefetch(idx);
-        setActive(idx);
+      const detail = (e as CustomEvent<{ index?: number; imageId?: string }>).detail;
+      let idx = -1;
+      if (detail?.imageId) idx = images.findIndex((g) => g.id === detail.imageId);
+      if (idx < 0 && typeof detail?.index === "number") idx = detail.index;
+      if (Number.isInteger(idx) && idx >= 0 && idx < count) {
+        goTo(idx);
+        // Mobilde ilgili slayta kaydır.
+        const el = scrollerRef.current?.children[idx] as HTMLElement | undefined;
+        el?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
       }
     }
     window.addEventListener("markala:gorsel-sec", onSec);
     return () => window.removeEventListener("markala:gorsel-sec", onSec);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- prefetch fonksiyonel setState kullanır, bayat kapanış zararsız
-  }, [images.length]);
+  }, [images, count, goTo]);
 
-  // Sayfa yerleştikten sonra kalan görselleri sessizce indir — tıklama anında geçiş için.
+  // Sayfa yerleştikten sonra kalan görselleri boşta indir (tıklama anında geçiş). 2G/veri
+  // tasarrufunda atlanır.
   useEffect(() => {
-    if (images.length < 2) return;
-    const conn = (navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }).connection;
+    if (count < 2) return;
+    const conn = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
     if (conn?.saveData || /(^|-)2g$/.test(conn?.effectiveType ?? "")) return;
-
     const run = () => setMounted(new Set(images.map((_, i) => i)));
     const w = window as Window & {
       requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
@@ -84,116 +98,190 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
     }
     const id = window.setTimeout(run, 1500);
     return () => window.clearTimeout(id);
-  }, [images]);
+  }, [images, count]);
 
-  const showFallback = !hasImages || brokenImages.has(visible);
-  const waiting = active !== visible;
+  // Mobil scroll-snap: kaydırma bitince aktif noktayı güncelle.
+  const onScroll = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const i = Math.round(el.scrollLeft / el.clientWidth);
+    if (i !== active && i >= 0 && i < count) setActive(i);
+  }, [active, count]);
 
-  // lg:max-w-full ZORUNLU: genişlik 48vh'den, yani EKRAN YÜKSEKLİĞİNDEN türüyor ve
-  // sütunun genişliğinden habersiz. Uzun pencerede clamp 460px'e çıkıyor, oysa 1024px
-  // genişlikte galeri sütunu ~350px; aradaki fark yan sütunun ÜSTÜNE binip ürün
-  // başlığını örtüyordu (2026-08-31). max-w-full taşmayı keser, sığdığı durumlarda
-  // hiçbir şeyi değiştirmez.
-  return (
-    <div className="lg:mx-auto lg:w-[clamp(320px,48vh,460px)] lg:max-w-full">
-      {/* Kutu HER ZAMAN KARE. Masaüstünde eskiden yalnız YÜKSEKLİK sabitti
-          (lg:h-[min(48vh,460px)]) ama genişlik sütunu dolduruyordu → 563x460'lık
-          dikdörtgen kutuya 1080x1080 kare görsel object-cover ile oturunca üstten ve
-          alttan %18'i kırpılıyordu (2026-08-28, Hasan ekran görüntüsü). Artık genişlik
-          de aynı ölçüye clamp'lenir; yükseklik sınırı (fiyat+CTA scroll'suz görünsün,
-          2026-08-07) böylece korunur, kırpma biter. mx-auto: küçük resimler de
-          büyük görselle aynı hizada kalsın diye sarmalayıcıya uygulanır. */}
+  function handleError(i: number, product: ResolvedImage) {
+    setSrcOverride((prev) => {
+      // Zaten fallback (kategori/mockup) src'sindeyken de patlarsa → ölü işaretle.
+      if (prev[i] || product.fallback) {
+        setDead((d) => new Set(d).add(i));
+        return prev;
+      }
+      // Gerçek foto patladı → jenerik mockup'a düş (kategori fallback resolver'da; burada
+      // ürün bağlamı yok, güvenli jenerik mockup id'siyle aynı görsel adını korur).
+      return { ...prev, [i]: `/api/mockup?slug=${encodeURIComponent(product.id)}&w=1200&h=1200` };
+    });
+  }
+
+  function srcOf(i: number): string {
+    return srcOverride[i] ?? images[i]?.src ?? "";
+  }
+
+  if (count === 0) {
+    return (
       <div className="relative aspect-square bg-paper-100 rounded-lg overflow-hidden">
-        {hasImages
-          ? images.map((src, i) =>
-              mounted.has(i) && !brokenImages.has(i) ? (
+        <ProductImageFallback />
+      </div>
+    );
+  }
+
+  const activeImg = images[safeActive]!;
+
+  return (
+    <>
+      {/* ===== MASAÜSTÜ (lg+): dikey thumbnail şeridi + ana görsel ===== */}
+      <div className="hidden lg:flex lg:gap-3 lg:mx-auto lg:w-[clamp(360px,52vh,520px)] lg:max-w-full">
+        {count > 1 && (
+          <div
+            className="flex flex-col gap-2 w-[64px] shrink-0 max-h-[520px] overflow-y-auto"
+            role="tablist"
+            aria-label="Ürün görselleri"
+          >
+            {images.map((img, i) => (
+              <button
+                key={img.id}
+                type="button"
+                role="tab"
+                aria-selected={i === safeActive}
+                aria-label={`Görsel ${i + 1}: ${img.alt}`}
+                onClick={() => goTo(i)}
+                onMouseEnter={() => prefetch(i)}
+                onFocus={() => prefetch(i)}
+                className={cn(
+                  "relative aspect-square rounded-md overflow-hidden border-2 bg-paper-100 transition-all",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
+                  i === safeActive
+                    ? "border-brand-500 ring-2 ring-brand-500/30" // aktif = amber #F5B800
+                    : "border-paper-200 hover:border-ink-300",
+                )}
+              >
+                {dead.has(i) ? (
+                  <ProductImageFallback />
+                ) : (
+                  <Image
+                    src={srcOf(i)}
+                    alt=""
+                    fill
+                    loading="lazy"
+                    sizes="64px"
+                    className="object-contain"
+                    onError={() => handleError(i, img)}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(true)}
+            aria-label="Görseli büyüt"
+            className="group relative block w-full aspect-square bg-paper-100 rounded-lg overflow-hidden cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900"
+          >
+            {images.map((img, i) =>
+              mounted.has(i) && !dead.has(i) ? (
                 <Image
-                  key={src + i}
-                  src={src}
-                  // Yalnız görünen görsel ekran okuyucuya metin verir; diğerleri dekoratif kopya.
-                  alt={i === visible ? alt : ""}
+                  key={img.id}
+                  src={srcOf(i)}
+                  alt={i === visible ? img.alt : ""}
                   aria-hidden={i !== visible}
                   fill
                   priority={i === 0}
+                  fetchPriority={i === 0 ? "high" : undefined}
                   loading={i === 0 ? undefined : "eager"}
-                  sizes="(min-width:1024px) 460px, 100vw"
+                  sizes="(min-width:1024px) 520px, 100vw"
+                  placeholder={img.blurDataURL ? "blur" : undefined}
+                  blurDataURL={img.blurDataURL}
                   className={cn(
-                    // contain: kare olmayan bir görsel yüklenirse de HİÇBİR ŞEY kırpılmaz;
-                    // kare görselde kare kutuda cover ile birebir aynı sonucu verir.
                     "object-contain transition-opacity duration-300 ease-out",
                     i === visible ? "opacity-100" : "opacity-0",
                   )}
                   onLoad={() => setLoaded((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))}
-                  onError={() => markBroken(i)}
+                  onError={() => handleError(i, img)}
                 />
               ) : null,
-            )
-          : null}
-
-        {showFallback &&
-          (fallbackSrc && !hasImages ? (
-            <Image
-              src={fallbackSrc}
-              alt={alt}
-              fill
-              priority
-              sizes="(min-width:1024px) 460px, 100vw"
-              className="object-contain"
-              unoptimized
-            />
-          ) : (
-            <ProductImageFallback name={alt} />
-          ))}
-
-        {/* Görsel inerken üstte ince ilerleme şeridi — "tıkladım, bir şey oluyor" geri bildirimi. */}
-        {waiting && (
-          <span
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-0.5 bg-brand-500/70 animate-pulse"
-          />
-        )}
+            )}
+            {dead.has(safeActive) && <ProductImageFallback name={activeImg.alt} />}
+            {/* Zoom ipucu — hover'da beliren rozet. */}
+            <span className="absolute bottom-2 right-2 rounded-md bg-ink-900/70 px-2 py-1 text-[11px] font-medium text-paper-50 opacity-0 transition-opacity group-hover:opacity-100">
+              Büyütmek için tıkla
+            </span>
+          </button>
+        </div>
       </div>
 
-      {hasImages && images.length > 1 && (
-        <div className="mt-2.5 grid grid-cols-6 lg:grid-cols-7 gap-2">
-          {images.map((src, i) => (
+      {/* ===== MOBİL (<lg): scroll-snap şerit + nokta göstergesi ===== */}
+      <div className="lg:hidden">
+        <div
+          ref={scrollerRef}
+          onScroll={onScroll}
+          className="flex snap-x snap-mandatory overflow-x-auto scrollbar-hide rounded-lg bg-paper-100"
+        >
+          {images.map((img, i) => (
             <button
-              key={src + i}
+              key={img.id}
               type="button"
-              onClick={() => {
-                prefetch(i);
-                setActive(i);
-              }}
-              // Tıklamadan ÖNCE indirmeyi başlat: masaüstünde hover, mobilde dokunma anı.
-              onMouseEnter={() => prefetch(i)}
-              onFocus={() => prefetch(i)}
-              onTouchStart={() => prefetch(i)}
-              aria-label={`${alt}, görsel ${i + 1}`}
-              aria-pressed={i === active}
-              className={cn(
-                "relative aspect-square bg-paper-100 rounded-md overflow-hidden border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-1",
-                i === active
-                  ? "border-ink-900 ring-2 ring-ink-900/10"
-                  : "border-paper-200 hover:border-ink-300",
-              )}
+              onClick={() => setLightboxOpen(true)}
+              aria-label={`Görsel ${i + 1}: ${img.alt}. Büyütmek için dokun`}
+              className="relative w-full shrink-0 snap-center aspect-square"
             >
-              {brokenImages.has(i) ? (
-                <ProductImageFallback />
+              {dead.has(i) ? (
+                <ProductImageFallback name={img.alt} />
               ) : (
                 <Image
-                  src={src}
-                  alt={`${alt}, görsel ${i + 1}`}
+                  src={srcOf(i)}
+                  alt={i === 0 ? img.alt : `${img.alt}`}
                   fill
-                  loading="lazy"
-                  sizes="100px"
+                  priority={i === 0}
+                  fetchPriority={i === 0 ? "high" : undefined}
+                  loading={i === 0 ? undefined : "lazy"}
+                  sizes="100vw"
+                  placeholder={img.blurDataURL ? "blur" : undefined}
+                  blurDataURL={img.blurDataURL}
                   className="object-contain"
-                  onError={() => markBroken(i)}
+                  onError={() => handleError(i, img)}
                 />
               )}
             </button>
           ))}
         </div>
+
+        {count > 1 && (
+          <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
+            {images.map((img, i) => (
+              <span
+                key={img.id}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === safeActive ? "w-5 bg-brand-500" : "w-1.5 bg-ink-300",
+                )}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {lightboxOpen && (
+        <GalleryLightbox
+          images={images}
+          srcOverride={srcOverride}
+          initialIndex={safeActive}
+          onIndexChange={goTo}
+          onClose={() => setLightboxOpen(false)}
+          onError={handleError}
+          deadSet={dead}
+        />
       )}
-    </div>
+    </>
   );
 }

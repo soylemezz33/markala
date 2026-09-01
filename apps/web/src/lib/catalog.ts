@@ -25,6 +25,16 @@ function num(v: unknown, fallback = 0): number {
 }
 
 /**
+ * AJA-386 — API'den gelen bir öğenin geçerli ProductImage şeklinde olup olmadığını
+ * doğrular (id + src zorunlu). Eksik/bozuk kayıtlar sessizce elenir, sayfa çökmez.
+ */
+function isProductImage(v: unknown): boolean {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  return typeof o.id === "string" && o.id.length > 0 && typeof o.src === "string" && o.src.length > 0;
+}
+
+/**
  * API'den gelen updatedAt'i (ISO string veya Date) güvenli ISO string'e çevirir.
  * Geçersiz/eksikse undefined döner — sitemap sahte lastModified yazmaz.
  */
@@ -57,6 +67,16 @@ function mapProduct(p: ApiProduct): Product {
     productionTime: String(p.productionTime ?? ""),
     sizeLabel: (p.sizeLabel as string | null) ?? undefined,
     images: Array.isArray(p.images) ? (p.images as string[]) : [],
+    // AJA-386 çoklu görsel kontratı — backend gönderirse aynen taşınır, yoksa undefined
+    // kalır ve resolveProductImage `images`'tan türetir (backend'i bloklamaz).
+    coverImage: isProductImage(p.coverImage) ? (p.coverImage as Product["coverImage"]) : undefined,
+    gallery: Array.isArray(p.gallery)
+      ? (p.gallery as unknown[]).filter(isProductImage) as Product["gallery"]
+      : undefined,
+    variantImageMap:
+      p.variantImageMap && typeof p.variantImageMap === "object" && !Array.isArray(p.variantImageMap)
+        ? (p.variantImageMap as Product["variantImageMap"])
+        : undefined,
     badges: Array.isArray(p.badges) ? (p.badges as Product["badges"]) : [],
     options: Array.isArray(p.options) ? (p.options as Product["options"]) : [],
     prices: Array.isArray(p.prices) ? (p.prices as Product["prices"]) : [],

@@ -21,6 +21,7 @@ import {
 import { getProductRatingStats } from "@/lib/reviews";
 import { Configurator } from "@/components/product/configurator";
 import { Gallery } from "@/components/product/gallery";
+import { resolveProductImage } from "@/lib/product-image";
 import { ProductCard } from "@/components/product-card";
 import { ProductTabs } from "@/components/product/product-tabs";
 import { ProductReviewsSection } from "@/components/product/reviews-section";
@@ -251,11 +252,9 @@ export default async function ProductPage({ params }: Props) {
           {/* 1) Galeri + hızlı aksiyon — mobilde 1. 2026-08-07: 6→5 kolon; konfigüratör
               seçenekler + sağda ayrı fiyat özet kartı (rakip deseni) için 7 kolona çıktı. */}
           <div className="lg:col-span-5 lg:col-start-1 lg:row-start-1 space-y-3">
-            <Gallery
-              images={product.images}
-              alt={product.name}
-              fallbackSrc={`/api/mockup?slug=${product.slug}&w=800&h=800`}
-            />
+            {/* AJA-386: tek görsel çözümleme kaynağı — kart/detay/galeri aynı mantığı
+                kullanır, kategori-bazlı fallback (bug #4) resolver içinde uygulanır. */}
+            <Gallery images={resolveProductImage(product).gallery} />
             <div className="flex items-center gap-2">
               <WishlistButton slug={product.slug} variant="labeled" />
               <ShareButton title={product.name} />
