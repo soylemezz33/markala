@@ -6,6 +6,7 @@ import {
   Buildings, Storefront,
 } from "@phosphor-icons/react/dist/ssr";
 import { cities } from "@/lib/cities";
+import { REGION_LABEL, REGION_ORDER } from "@/lib/cities-generated";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const SITE = "https://markala.com.tr";
@@ -13,13 +14,13 @@ const SITE = "https://markala.com.tr";
 export const metadata: Metadata = {
   title: "Türkiye Geneli Matbaa Hizmeti — 81 İl, Hızlı Üretim",
   description:
-    "Mersin merkezli matbaa atölyemizden Türkiye geneli kartvizit, broşür, afiş, branda, kupa baskı hizmeti. Antalya, Adana, Şanlıurfa, Hatay, Osmaniye, Gaziantep'e 1-2 iş günü kargo. Mersin ve çevresine hızlı kargo/kurye.",
+    "Mersin merkezli matbaa atölyemizden 81 ile kartvizit, broşür, afiş, branda, kupa baskı. Antalya, Adana, Şanlıurfa, Hatay, Osmaniye ve Gaziantep'e 1-2 iş günü; Türkiye geneline 2-4 iş günü kargo. İlinizi seçip teslim süresini görün.",
   alternates: { canonical: "/matbaa" },
   openGraph: {
     type: "website",
     title: "Türkiye Geneli Matbaa — Markala",
     description:
-      "81 ilde matbaa hizmeti. Mersin merkezli atölye, hızlı üretim, DHL Express ile 1-2 iş günü teslim.",
+      "81 ilde matbaa hizmeti. Mersin merkezli atölye; komşu illerde 1-2, Türkiye geneli 2-4 iş günü teslim.",
     url: "/matbaa",
     images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Türkiye Geneli Matbaa — Markala" }],
   },
@@ -27,14 +28,19 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Türkiye Geneli Matbaa — Markala",
     description:
-      "81 ilde matbaa hizmeti. Mersin merkezli atölye, hızlı üretim, DHL Express ile 1-2 iş günü teslim.",
+      "81 ilde matbaa hizmeti. Mersin merkezli atölye; komşu illerde 1-2, Türkiye geneli 2-4 iş günü teslim.",
     images: ["/og-default.png"],
   },
 };
 
 export default function MatbaaHubPage() {
-  const akdeniz = cities.filter((c) => c.region === "akdeniz");
-  const guneydogu = cities.filter((c) => c.region === "guneydogu");
+  // Elle yazılmış iller kart olarak, kalan 74 il bölge bölge liste olarak.
+  const curated = cities.filter((c) => c.curated);
+  const byRegion = REGION_ORDER.map((r) => ({
+    region: r,
+    label: REGION_LABEL[r],
+    iller: cities.filter((c) => c.region === r && !c.curated),
+  })).filter((g) => g.iller.length > 0);
 
   return (
     <>
@@ -87,9 +93,9 @@ export default function MatbaaHubPage() {
             Türkiye geneli matbaa & baskı hizmeti
           </h1>
           <p className="mt-4 text-lg text-ink-700">
-            Mersin merkezli atölyemizden 81 ilde kartvizit, broşür, afiş, branda,
-            kupa baskı. Komşu illerde 1-2 iş günü, Mersin ve çevresine 1-2 iş
-            günü teslim.
+            Mersin merkezli atölyemizden Türkiye'nin 81 iline kartvizit, broşür,
+            afiş, branda ve İSG levhası baskısı. Aşağıdan ilinizi seçip teslim
+            süresini, ilçe kapsamını ve o ile özel sık sorulanları görebilirsiniz.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-ink-500">
             <span className="inline-flex items-center gap-1.5">
@@ -97,8 +103,8 @@ export default function MatbaaHubPage() {
               Hızlı üretim
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Truck size={14} className="text-brand-700" weight="fill" /> DHL
-              Express 1-2 gün (Akdeniz/Güneydoğu)
+              <Truck size={14} className="text-brand-700" weight="fill" /> Komşu
+              illerde 1-2 gün, Türkiye geneli 2-4 gün
             </span>
             <span className="inline-flex items-center gap-1.5">
               <ShieldCheck size={14} className="text-brand-700" weight="fill" />{" "}
@@ -109,33 +115,57 @@ export default function MatbaaHubPage() {
       </div>
 
       <Container className="py-12 md:py-16">
-        {/* Akdeniz */}
+        {/* Atölyeye en yakın iller — elle yazılmış, detaylı kartlar */}
         <section>
           <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            Akdeniz Bölgesi
+            En hızlı teslim ettiğimiz iller
           </h2>
           <p className="text-ink-700 mb-6 max-w-2xl">
-            Mersin merkezli atölyeye en yakın iller — DHL Express ile 1 iş günü
-            içinde teslim.
+            Mersin'deki atölyeye en yakın iller. Bu illerde teslim süresi 1-2 iş
+            günü; ilçe kırılımı ve şehre özel bilgiler sayfalarında.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {akdeniz.map((city) => (
+            {curated.map((city) => (
               <CityCard key={city.slug} city={city} />
             ))}
           </div>
         </section>
 
-        {/* Güneydoğu */}
+        {/* Kalan 74 il — bölge bölge, hepsi tıklanabilir */}
         <section className="mt-16">
           <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            Güneydoğu Anadolu
+            Türkiye geneli — 81 ilin tamamı
           </h2>
-          <p className="text-ink-700 mb-6 max-w-2xl">
-            Şanlıurfa, Gaziantep ve çevresine 1-2 iş günü içinde DHL ile teslim.
+          <p className="text-ink-700 mb-8 max-w-2xl">
+            Aşağıdaki illerin tamamına kargoyla gönderim yapıyoruz. İl sayfasında
+            o ilin bütün ilçeleri, tahmini teslim süresi ve sık sorulanlar yer
+            alır.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {guneydogu.map((city) => (
-              <CityCard key={city.slug} city={city} />
+
+          <div className="space-y-8">
+            {byRegion.map((grup) => (
+              <div key={grup.region}>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-3 flex items-center gap-2">
+                  <MapPin size={14} weight="fill" />
+                  {grup.label}
+                  <span className="text-ink-500 font-normal normal-case tracking-normal">
+                    ({grup.iller.length} il · {grup.iller[0]?.deliveryDays.min}-
+                    {grup.iller[0]?.deliveryDays.max} iş günü)
+                  </span>
+                </h3>
+                <ul className="flex flex-wrap gap-2">
+                  {grup.iller.map((c) => (
+                    <li key={c.slug}>
+                      <Link
+                        href={`/matbaa/${c.slug}`}
+                        className="inline-flex items-center px-3 py-1.5 bg-paper-50 border border-paper-200 rounded-lg text-sm text-ink-900 hover:border-ink-300 hover:text-brand-700 transition-colors"
+                      >
+                        {c.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
           </div>
         </section>
@@ -150,13 +180,13 @@ export default function MatbaaHubPage() {
                 className="text-brand-400 mb-3"
               />
               <h2 className="text-2xl md:text-3xl font-semibold">
-                Diğer 74 il için hizmet
+                Tek tesis, tek fiyat
               </h2>
               <p className="mt-3 text-paper-100/70 leading-relaxed">
-                İstanbul, Ankara, İzmir, Bursa, Konya başta olmak üzere
-                Türkiye'nin tüm illerine DHL Express, Aras Kargo ve MNG ile 2-4
-                iş günü içinde teslim ediyoruz. Online sipariş — kargo takip —
-                kapıda imza.
+                Tüm üretim Mersin'deki tesisimizde yapılır; bu yüzden baskı
+                fiyatlarımız şehirden şehre değişmez. Siparişiniz DHL Express,
+                Aras Kargo ve MNG ile 2-4 iş günü içinde adresinize ulaşır.
+                Online sipariş, kargo takip, kapıda imza.
               </p>
             </div>
             <div className="md:text-right">
@@ -206,7 +236,8 @@ function CityCard({
             {city.name} Matbaa
           </h3>
           <p className="text-xs text-ink-500 mt-0.5">
-            {city.population} nüfus · {city.region === "akdeniz" ? "Akdeniz" : "Güneydoğu"}
+            {city.population ? `${city.population} nüfus · ` : ""}
+            {REGION_LABEL[city.region]}
           </p>
         </div>
         <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-900 text-[11px] font-bold uppercase">

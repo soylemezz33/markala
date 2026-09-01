@@ -1,26 +1,55 @@
 /**
  * Şehir + ilçe verileri — local SEO landing page'leri için.
  *
- * Strateji: Mersin merkez şehri (atölyeye en yakın), Akdeniz/Doğu Akdeniz
- * bölgesi (1 günlük kargo) + Mersin ilçeleri (kargo/kurye ile 1-2 iş günü).
+ * İKİ KATMAN (2026-09-01):
+ * 1. CURATED_CITIES — bu dosyadaki 7 il. Elle yazılmış özgün içerik: gerçek
+ *    müşteri referansı, şehre özel ürün kırılımı ve SSS. Mersin merkez şehri
+ *    (atölyeye en yakın) + Akdeniz/Güneydoğu komşuları.
+ * 2. GENERATED_CITIES — cities-generated.ts'te tr-locations.ts'in gerçek ilçe
+ *    verisinden üretilen kalan 74 il. "81 ilde hizmet" iddiasının sayfa
+ *    karşılığı. İlçelerine ALT SAYFA AÇILMAZ (bkz. getAllDistrictParams).
+ *
+ * `cities` ikisinin birleşimidir; sıralama korunur (önce elle yazılan 7 il).
  *
  * Slug'lar URL'de "matbaa" kelimesini içerir (URL-keyword match).
  */
 
+import { GENERATED_CITIES } from "./cities-generated";
+
+/** Türkiye'nin 7 coğrafi bölgesi. */
+export type Region =
+  | "marmara"
+  | "ege"
+  | "akdeniz"
+  | "ic-anadolu"
+  | "karadeniz"
+  | "dogu-anadolu"
+  | "guneydogu";
+
 export interface CityData {
   slug: string;
   name: string;
-  region: "akdeniz" | "guneydogu";
+  region: Region;
   /** Kargo ulaşım süresi (iş günü) */
   deliveryDays: { min: number; max: number };
   /** Aynı gün motor kurye var mı (artık hiçbir şehirde sunulmuyor) */
   sameDayCourier: boolean;
-  /** Bölgenin yaklaşık nüfus (binin) — content için */
-  population: string;
+  /** Bölgenin yaklaşık nüfus — yalnız elle yazılan illerde var */
+  population?: string;
   /** Şehrin matbaa konteksti — neden Markala? */
   intro: string;
-  /** Önemli mahalleler/iş bölgeleri (içerik zenginliği için) */
+  /**
+   * Alt sayfası OLAN ilçeler (/matbaa/<il>/<ilce>). Yalnız elle yazılan
+   * illerde doludur — generateStaticParams bunu kullanır.
+   */
   districts?: District[];
+  /**
+   * Alt sayfası OLMAYAN ilçe adları — sayfada düz liste olarak gösterilir.
+   * Şablonla üretilen 74 ilde doludur; 972 ince sayfa açmamak için ayrı alan.
+   */
+  districtNames?: string[];
+  /** Elle yazılmış özgün içerik mi (true) yoksa şablon mu (false) */
+  curated: boolean;
   /** Bu şehirden sık alınan ürünler */
   popularProducts: string[];
   /** Bu şehre özel referans/case (sosyal kanıt) */
@@ -29,8 +58,8 @@ export interface CityData {
   commonNeeds: string[];
   /** Bu şehre özel SSS — FAQPage schema için */
   faqs: { q: string; a: string }[];
-  /** Coğrafi koordinat — LocalBusiness schema için */
-  geo: { lat: number; lng: number };
+  /** Coğrafi koordinat — LocalBusiness schema için (elle yazılan illerde) */
+  geo?: { lat: number; lng: number };
   /** Hizmet alanı yarıçap (km) */
   serviceRadius?: number;
 }
@@ -175,9 +204,11 @@ const MERSIN_DISTRICTS: District[] = [
 ];
 
 // === ANA ŞEHİRLER ===
-export const cities: CityData[] = [
+/** Elle yazılmış 7 il — özgün içerik. Şablon bunların üstüne YAZMAZ. */
+const CURATED_CITIES: CityData[] = [
   {
     slug: "mersin",
+    curated: true,
     name: "Mersin",
     region: "akdeniz",
     deliveryDays: { min: 1, max: 2 },
@@ -239,6 +270,7 @@ export const cities: CityData[] = [
 
   {
     slug: "antalya",
+    curated: true,
     name: "Antalya",
     region: "akdeniz",
     deliveryDays: { min: 1, max: 2 },
@@ -281,6 +313,7 @@ export const cities: CityData[] = [
 
   {
     slug: "adana",
+    curated: true,
     name: "Adana",
     region: "akdeniz",
     deliveryDays: { min: 1, max: 1 },
@@ -320,6 +353,7 @@ export const cities: CityData[] = [
 
   {
     slug: "sanliurfa",
+    curated: true,
     name: "Şanlıurfa",
     region: "guneydogu",
     deliveryDays: { min: 1, max: 2 },
@@ -358,6 +392,7 @@ export const cities: CityData[] = [
 
   {
     slug: "hatay",
+    curated: true,
     name: "Hatay",
     region: "akdeniz",
     deliveryDays: { min: 1, max: 2 },
@@ -395,6 +430,7 @@ export const cities: CityData[] = [
 
   {
     slug: "osmaniye",
+    curated: true,
     name: "Osmaniye",
     region: "akdeniz",
     deliveryDays: { min: 1, max: 1 },
@@ -424,6 +460,7 @@ export const cities: CityData[] = [
 
   {
     slug: "gaziantep",
+    curated: true,
     name: "Gaziantep",
     region: "guneydogu",
     deliveryDays: { min: 1, max: 2 },
@@ -460,6 +497,12 @@ export const cities: CityData[] = [
     geo: { lat: 37.066135, lng: 37.378361 },
   },
 ];
+
+/**
+ * Sitede yayınlanan TÜM iller: önce elle yazılan 7 il, sonra şablonla üretilen
+ * 74 il. /matbaa, /matbaa/[city], sitemap ve schema hep bunu okur.
+ */
+export const cities: CityData[] = [...CURATED_CITIES, ...GENERATED_CITIES];
 
 // === Helpers ===
 

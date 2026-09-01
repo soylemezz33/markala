@@ -8,6 +8,8 @@ import {
   Buildings, Receipt, Storefront, Question, CaretRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
+import { REGION_LABEL } from "@/lib/cities-generated";
+import { trLoc, trLocAdj, trDat, trAbl, trGen } from "@/lib/tr-suffix";
 import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
@@ -88,6 +90,11 @@ export default async function CityLandingPage({ params }: Props) {
   const city = getCityBySlug(params.city);
   if (!city) notFound();
 
+  // Elle yazılmış il mi (gerçek referans/şehre özel iddia kurulabilir) yoksa
+  // şablonla üretilen il mi (yalnız doğrulanabilir bilgi yazılır).
+  const curated = city.curated;
+  const { min: gunMin, max: gunMax } = city.deliveryDays;
+
   const nearbyCities = getNearbyCities(city.slug, 3);
   const products = await getProducts();
   const featuredProducts = products
@@ -124,11 +131,14 @@ export default async function CityLandingPage({ params }: Props) {
             areaServed: {
               "@type": "City",
               name: city.name,
-              geo: {
-                "@type": "GeoCoordinates",
-                latitude: city.geo.lat,
-                longitude: city.geo.lng,
-              },
+              // Koordinat yalnız elle yazılan illerde var — uydurma koordinat basmıyoruz.
+              ...(city.geo && {
+                geo: {
+                  "@type": "GeoCoordinates",
+                  latitude: city.geo.lat,
+                  longitude: city.geo.lng,
+                },
+              }),
               ...(city.serviceRadius && {
                 geoRadius: {
                   "@type": "QuantitativeValue",
@@ -191,11 +201,11 @@ export default async function CityLandingPage({ params }: Props) {
           <div className="flex items-center gap-2 mb-4">
             <MapPin size={20} weight="fill" className="text-brand-700" />
             <span className="text-sm font-semibold text-brand-700 uppercase tracking-wider">
-              {city.region === "akdeniz" ? "Akdeniz Bölgesi" : "Güneydoğu Anadolu"} · {city.name}
+              {REGION_LABEL[city.region]} Bölgesi · {city.name}
             </span>
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-semibold text-ink-900 leading-tight">
-            {city.name}'de matbaa & baskı hizmeti
+            {trLoc(city.name)} matbaa & baskı hizmeti
           </h1>
           <p className="mt-5 text-lg md:text-xl text-ink-700 leading-relaxed">
             {city.intro}
@@ -253,11 +263,12 @@ export default async function CityLandingPage({ params }: Props) {
         {/* Popüler Ürünler */}
         <section>
           <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            {city.name}'de en çok tercih edilen matbaa ürünleri
+            {curated ? `${trLoc(city.name)} en çok tercih edilen matbaa ürünleri` : "Sık sipariş edilen matbaa ürünleri"}
           </h2>
           <p className="text-ink-700 mb-6 max-w-2xl">
-            {city.name} bölgesindeki müşterilerimizin siparişlerinden
-            derlediğimiz en popüler ürünler:
+            {curated
+              ? `${city.name} bölgesindeki müşterilerimizin siparişlerinden derlediğimiz en popüler ürünler:`
+              : `${trDat(city.name)} en sık gönderdiğimiz kalemler — hepsi online sipariş edilebilir:`}
           </p>
           <ul className="grid sm:grid-cols-2 gap-3">
             {city.popularProducts.map((p) => (
@@ -279,10 +290,12 @@ export default async function CityLandingPage({ params }: Props) {
         {/* Yaygın İhtiyaçlar */}
         <section>
           <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            {city.name}'de matbaa ihtiyaçları
+            {trLoc(city.name)} matbaa ihtiyaçları
           </h2>
           <p className="text-ink-700 mb-6 max-w-2xl">
-            Bu şehirden gelen taleplerin büyük çoğunluğu şu konularda:
+            {curated
+              ? "Bu şehirden gelen taleplerin büyük çoğunluğu şu konularda:"
+              : "İşletmelerin bize en çok bu başlıklarda ulaştığını görüyoruz:"}
           </p>
           <ul className="space-y-2">
             {city.commonNeeds.map((n) => (
@@ -301,11 +314,11 @@ export default async function CityLandingPage({ params }: Props) {
         {city.districts && city.districts.length > 0 && (
           <section>
             <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-              {city.name}'in ilçelerine teslim
+              {trGen(city.name)} ilçelerine teslim
             </h2>
             <p className="text-ink-700 mb-6 max-w-2xl">
-              {city.name}'in tüm ilçelerine atölyemizden direkt teslim. Mersin
-              ve ilçelerine kurye/kargo ile 1-2 iş günü.
+              {trGen(city.name)} tüm ilçelerine atölyemizden direkt teslim —
+              ortalama {gunMin}-{gunMax} iş günü.
             </p>
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {city.districts.map((d) => (
@@ -336,14 +349,44 @@ export default async function CityLandingPage({ params }: Props) {
           </section>
         )}
 
+        {/*
+          İlçe listesi — ALT SAYFASI OLMAYAN iller (şablonla üretilen 74 il).
+          Bilerek link DEĞİL: 972 ilçeye ayrı sayfa açmak ince içerik üretirdi.
+          Buradaki liste tr-locations.ts'ten gelen gerçek ilçe verisidir ve her
+          ilde farklı olduğu için sayfaları birbirinden ayıran asıl içeriktir.
+        */}
+        {city.districtNames && city.districtNames.length > 0 && (
+          <section>
+            <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
+              {trGen(city.name)} ilçelerine gönderim
+            </h2>
+            <p className="text-ink-700 mb-6 max-w-2xl">
+              {trGen(city.name)} {city.districtNames.length} ilçesinin tamamına
+              gönderim yapıyoruz — ortalama {gunMin}-{gunMax} iş günü.
+            </p>
+            <ul className="flex flex-wrap gap-2">
+              {city.districtNames.map((d) => (
+                <li
+                  key={d}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-paper-50 border border-paper-200 rounded-full text-sm text-ink-700"
+                >
+                  <MapPin size={12} className="text-brand-700 shrink-0" />
+                  {d}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* Featured Products */}
         <section>
           <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
             En çok tercih edilen ürünler
           </h2>
           <p className="text-ink-700 mb-6 max-w-2xl">
-            {city.name}'deki müşterilerimizin sıkça sipariş verdiği başlangıç
-            ürünleri.
+            {curated
+              ? `${trLocAdj(city.name)} müşterilerimizin sıkça sipariş verdiği başlangıç ürünleri.`
+              : "Türkiye genelinde en çok sipariş edilen başlangıç ürünleri."}
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {featuredProducts.map((p) => (
@@ -370,7 +413,7 @@ export default async function CityLandingPage({ params }: Props) {
                 className="text-brand-500"
               />
               <h2 className="text-xl md:text-2xl font-semibold text-ink-900">
-                {city.name}'den müşterilerimiz
+                {trAbl(city.name)} müşterilerimiz
               </h2>
             </div>
             <p className="text-ink-700 mb-5">
@@ -437,8 +480,8 @@ export default async function CityLandingPage({ params }: Props) {
               Yakın iller
             </h2>
             <p className="text-ink-700 mb-6 max-w-2xl">
-              Aynı bölgedeki diğer illere de kargo ile 1-2 iş günü içinde
-              teslim ediyoruz.
+              Aynı bölgedeki diğer illere de aynı tesisten kargoyla teslim
+              ediyoruz.
             </p>
             <div className="grid sm:grid-cols-3 gap-4">
               {nearbyCities.map((c) => (
@@ -465,7 +508,7 @@ export default async function CityLandingPage({ params }: Props) {
         {/* Final CTA */}
         <section className="text-center p-10 md:p-14 bg-ink-900 text-paper-50 rounded-2xl">
           <h2 className="text-2xl md:text-4xl font-semibold">
-            {city.name}'deki ilk siparişine{" "}
+            {trLocAdj(city.name)} ilk siparişine{" "}
             <span className="text-brand-400">%10 indirim</span>
           </h2>
           <p className="mt-4 text-paper-100/70 max-w-xl mx-auto">

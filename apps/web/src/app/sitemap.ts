@@ -110,11 +110,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: h.priority,
   }));
 
-  // Şehir landing'leri — Mersin priority en yüksek
+  // Şehir landing'leri — 81 il. Öncelik kademeli: Mersin (atölye) > elle
+  // yazılmış 6 komşu il > şablonla üretilen 74 il. Şablon sayfalar da
+  // indekslenmeli ama tarama bütçesinde öne geçmemeli.
   const cityEntries: MetadataRoute.Sitemap = cities.map((c) => ({
     url: `${SITE}/matbaa/${c.slug}`,
-    changeFrequency: "weekly",
-    priority: c.slug === "mersin" ? 0.95 : 0.85,
+    changeFrequency: c.curated ? "weekly" : "monthly",
+    priority: c.slug === "mersin" ? 0.95 : c.curated ? 0.85 : 0.6,
   }));
 
   // İlçe landing'leri — sadece Mersin ilçeleri var şu an
