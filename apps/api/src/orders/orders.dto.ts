@@ -243,7 +243,11 @@ export class CreateOrderDto {
   @MaxLength(2000)
   notes?: string;
 
-  /** Ödeme yolu: "iyzico" (varsayılan/online) veya "cari" (açık hesap — onaylı kurumsal). */
+  /**
+   * Ödeme yolu: "iyzico" (varsayılan/online kart), "havale" (havale/EFT — para
+   * sonradan gelir, sipariş paymentStatus="beklemede" açılır) veya "cari"
+   * (açık hesap — yalnız onaylı kurumsal).
+   */
   @IsString()
   @IsOptional()
   @IsIn(["iyzico", "cari", "havale"])

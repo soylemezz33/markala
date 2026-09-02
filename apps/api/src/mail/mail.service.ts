@@ -4,6 +4,7 @@ import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
 import { renderEmail, emailButton, emailButtonColored, emailFallbackLink } from "./email-layout";
+import { BANKA_HESABI, ODEME_YONTEMI } from "@markala/types";
 
 /**
  * Konfigürasyon özetindeki paket adedini çıkarır ("2 Adet" → 2, "1.000 Adet" → 1000).
@@ -220,6 +221,9 @@ export class MailService {
       new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n) || 0);
 
     const isCari = order.paymentMethod === "cari";
+    // Havale siparişinde para HENÜZ GELMEDİ — "ödemeniz alındı" YAZILMAZ; onun
+    // yerine hesap bilgileri ve sipariş no (açıklamaya yazılacak referans) verilir.
+    const isHavale = order.paymentMethod === ODEME_YONTEMI.havale;
     const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
@@ -279,7 +283,39 @@ export class MailService {
 
     const statusNote = isCari
       ? "Siparişiniz <strong>açık hesap (cari)</strong> ile alınmıştır; ay sonunda faturalandırılır."
-      : "Ödemeniz alınmıştır, siparişiniz onaylandı.";
+      : isHavale
+        ? "Siparişiniz <strong>havale/EFT</strong> ile alındı. Ödemeniz hesabımıza geçtiğinde onaylayıp üretime alacağız."
+        : "Ödemeniz alınmıştır, siparişiniz onaylandı.";
+
+    /**
+     * Havale hesap bloğu — sipariş numarası AÇIKLAMAYA yazılmalı; ödemeyi siparişle
+     * eşleştirmenin tek yolu bu. Tutar, %5 havale indirimi uygulanmış GENEL TOPLAM.
+     */
+    const havaleHtml = isHavale
+      ? `<div style="margin:16px 0 0;padding:14px;background:#F7F5F0;border:1px solid #E7E2D8;border-radius:10px">
+        <p style="margin:0 0 10px;font-weight:600;color:#1A1410">Havale/EFT bilgileri</p>
+        <p style="margin:0;font-size:14px;color:#44403c;line-height:1.9">
+          <strong style="color:#1A1410">Alıcı:</strong> ${BANKA_HESABI.unvan}<br>
+          <strong style="color:#1A1410">Banka:</strong> ${BANKA_HESABI.banka}<br>
+          <strong style="color:#1A1410">IBAN:</strong> <span style="font-family:monospace;font-size:15px">${BANKA_HESABI.iban}</span><br>
+          <strong style="color:#1A1410">Tutar:</strong> ${fmt(order.total)} ₺<br>
+          <strong style="color:#1A1410">Açıklama:</strong> <span style="font-family:monospace">${order.orderNumber}</span>
+        </p>
+        <p style="margin:10px 0 0;font-size:13px;color:#8a6d3b">Açıklama alanına sipariş numaranızı yazmayı unutmayın — ödemenizi siparişinizle bu numara üzerinden eşleştiriyoruz.</p>
+      </div>`
+      : "";
+    const havaleText = isHavale
+      ? `
+
+HAVALE/EFT BİLGİLERİ
+Alıcı: ${BANKA_HESABI.unvan}
+Banka: ${BANKA_HESABI.banka}
+IBAN: ${BANKA_HESABI.iban}
+Tutar: ${fmt(order.total)} ₺
+Açıklama: ${order.orderNumber}
+
+Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleştirilir.`
+      : "";
 
     // Dosya kalitesi notu (sipariş SONRASI bilgilendirme ayağı — ürün sayfası uyarısı ve
     // sözleşme m.7.C ile aynı kurgu): yalnız tasarım dosyası yüklenmiş siparişlerde eklenir.
@@ -297,7 +333,8 @@ export class MailService {
       `${name ? `Merhaba ${name},` : "Merhaba,"}\n\nSiparişinizi aldık. Sipariş No: ${order.orderNumber}\n\n` +
       (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity * birimAdet(i.configurationSummary)} - ${fmt(i.lineTotal)} ₺`).join("\n") +
       `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
-      `${isCari ? "Açık hesap (cari) ile alındı; ay sonu faturalandırılır." : "Ödemeniz alındı, siparişiniz onaylandı."}` +
+      `${isCari ? "Açık hesap (cari) ile alındı; ay sonu faturalandırılır." : isHavale ? "Havale/EFT ile alındı. Ödemeniz hesabımıza geçtiğinde üretime alınacaktır." : "Ödemeniz alındı, siparişiniz onaylandı."}` +
+      havaleText +
       fileQualityText +
       `\n\nSiparişlerim: ${orderUrl}\n\nMarkala, 324 Ajans güvencesiyle.`;
 
@@ -311,6 +348,7 @@ export class MailService {
           <tbody>${rowsHtml}</tbody>
           <tfoot>${totalsHtml}</tfoot>
         </table>
+        ${havaleHtml}
         ${adresBlok}
         ${emailButton("Siparişimi görüntüle", orderUrl)}
         ${yasalBlok}

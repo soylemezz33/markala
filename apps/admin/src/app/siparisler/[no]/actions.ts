@@ -34,6 +34,28 @@ export async function refundOrder(
 }
 
 /**
+ * Havale/EFT ödemesini ONAYLA — para hesaba geçtiği GÖRÜLDÜKTEN sonra çağrılır.
+ *
+ * PARA KARARI: bu işaret siparişi "ödendi" sayar ve üretim yolunu açar. Onaylamadan
+ * önce banka ekstresinde tutarın VE açıklamadaki sipariş numarasının tuttuğu
+ * doğrulanmalı. Sunucu idempotent: iki kez basmak ikinci bir onay logu üretmez.
+ */
+export async function confirmHavalePayment(
+  id: string,
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  try {
+    const api = await getAdminApi();
+    await api.orders.odemeOnayla(id);
+    revalidatePath("/siparisler");
+    revalidatePath(`/siparisler/${id}`);
+    return { ok: true, message: "Havale ödemesi onaylandı." };
+  } catch (e) {
+    const msg = (e as { message?: string })?.message ?? "Ödeme onaylanamadı";
+    return { ok: false, error: msg };
+  }
+}
+
+/**
  * Sipariş durumunu günceller. "kargoya-verildi"ye geçerken takip bilgisi de gönderilir —
  * müşteriye giden kargo e-postası takip numarasını İÇİNDE taşısın diye (2026-08-29).
  * Takip alanları opsiyonel: diğer durum geçişlerinde boş geçilir.

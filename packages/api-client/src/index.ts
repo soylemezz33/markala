@@ -301,6 +301,13 @@ export class MarkalaApiClient {
       id: string,
       body: { trackingNumber?: string; trackingCarrier?: string },
     ) => this.request<Order>("PATCH", `/orders/${id}/tracking`, body, { auth: true }),
+
+    /**
+     * Havale/EFT ödemesini onayla (admin) — para hesaba geçtiğinde çağrılır.
+     * Yalnız paymentStatus'ü "basarili" yapar; sipariş durumuna dokunmaz.
+     */
+    odemeOnayla: (id: string) =>
+      this.request<Order>("PATCH", `/orders/${id}/odeme-onayla`, undefined, { auth: true }),
   };
 
   // === Sadakat (puan) ===

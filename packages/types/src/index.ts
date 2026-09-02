@@ -433,3 +433,6 @@ export interface Order {
   trackingNumber?: string;
   trackingCarrier?: string;
 }
+
+/** Havale/EFT banka bilgileri ve ödeme yöntemi sabitleri. */
+export * from "./banka";

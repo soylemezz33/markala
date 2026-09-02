@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { Container, Button, Price } from "@markala/ui";
-import { CheckCircle, Truck, EnvelopeSimple, House, Receipt, Buildings } from "@phosphor-icons/react";
+import { CheckCircle, Truck, EnvelopeSimple, House, Receipt, Buildings, Bank } from "@phosphor-icons/react";
+import { BANKA_HESABI } from "@/lib/company";
 import { useOrdersStore } from "@/lib/orders-store";
 import { useCartStore, unitCountFromSummary } from "@/lib/cart-store";
 import { formatDate, orderStatusLabel } from "@/lib/format";
@@ -28,6 +29,13 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
   const searchParams = useSearchParams();
   // Açık hesap (cari) ile verilen sipariş → "ödeme alındı" değil, "cari hesaba işlendi" mesajı göster.
   const isCari = searchParams.get("method") === "cari";
+  /**
+   * Havale/EFT ile verilen sipariş: para HENÜZ GELMEDİ.
+   * Bilerek purchase ATEŞLENMEZ (paymentConfirmed false kalır) — ödenmemiş sipariş
+   * gelir sayılırsa GA4/Ads dönüşümü şişer. Admin ödemeyi onayladıktan sonra sayfa
+   * tekrar açılırsa paymentStatus="basarili" gelir ve purchase o zaman ateşlenir.
+   */
+  const isHavale = searchParams.get("method") === "havale";
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   // Ödeme SUNUCU'dan doğrulanana kadar null — localStorage'a güvenmeyiz (sahte "ödendi" + GA4 şişmesi önlenir).
@@ -127,15 +135,22 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
         <h1 className="mt-5 text-3xl md:text-5xl font-semibold text-ink-900">
           {isCari
             ? "Siparişin alındı, teşekkürler! 🎉"
-            : paymentConfirmed === false
-              ? "Siparişin alındı, ödeme doğrulanıyor"
-              : "Ödemen alındı, teşekkürler! 🎉"}
+            : isHavale && !paymentConfirmed
+              ? "Siparişin alındı, ödemeni bekliyoruz"
+              : paymentConfirmed === false
+                ? "Siparişin alındı, ödeme doğrulanıyor"
+                : "Ödemen alındı, teşekkürler! 🎉"}
         </h1>
         <p className="mt-3 text-lg text-ink-700">
           {isCari ? (
             <>
               Siparişin başarıyla alındı ve tutarı <strong>açık hesabına (cari)</strong> işlendi. Faturan
               e-posta adresine iletilecek; ekibimiz üretim ve kargo sürecini başlatıyor.
+            </>
+          ) : isHavale && !paymentConfirmed ? (
+            <>
+              Siparişini aldık. Aşağıdaki hesaba <strong>havale/EFT</strong> yaptığında ödemeni
+              onaylayıp üretime alacağız. Bu bilgiler e-posta adresine de gönderildi.
             </>
           ) : (
             <>
@@ -148,6 +163,45 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
           <Receipt size={16} className="text-ink-700" />
           Sipariş No: <span className="font-mono font-medium text-ink-900">{order.orderNumber}</span>
         </div>
+
+        {isHavale && !paymentConfirmed && (
+          <div className="mx-auto mt-8 max-w-xl rounded-xl border border-paper-200 bg-paper-50 p-5 text-left">
+            <div className="mb-3 flex items-center gap-2">
+              <Bank size={18} weight="fill" className="text-brand-700" />
+              <span className="font-semibold text-ink-900">Havale / EFT bilgileri</span>
+            </div>
+            <dl className="space-y-2 text-sm">
+              <div className="flex flex-wrap justify-between gap-2">
+                <dt className="text-ink-500">Alıcı</dt>
+                <dd className="text-right font-medium text-ink-900">{BANKA_HESABI.unvan}</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-ink-500">Banka</dt>
+                <dd className="font-medium text-ink-900">{BANKA_HESABI.banka}</dd>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-paper-200 pt-2">
+                <dt className="text-ink-500">IBAN</dt>
+                <dd className="font-mono text-base font-semibold text-ink-900">
+                  {BANKA_HESABI.iban}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-ink-500">Tutar</dt>
+                <dd className="font-semibold text-ink-900">
+                  {Number(order.total).toLocaleString("tr-TR")} ₺
+                </dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-ink-500">Açıklama</dt>
+                <dd className="font-mono font-semibold text-ink-900">{order.orderNumber}</dd>
+              </div>
+            </dl>
+            <p className="mt-3 rounded-md border border-brand-500/25 bg-brand-50/60 px-3 py-2 text-xs text-ink-700">
+              <strong className="text-ink-900">Açıklama alanına sipariş numaranı yaz.</strong>{" "}
+              Ödemeni siparişinle bu numara üzerinden eşleştiriyoruz; yazılmazsa onay gecikir.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="mt-10 grid md:grid-cols-3 gap-3">
@@ -157,6 +211,8 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
             title="Cari hesaba işlendi"
             desc={<Link href="/hesabim/cari-hesabim" className="text-brand-700 hover:underline">Cari hesabımı gör</Link>}
           />
+        ) : isHavale && !paymentConfirmed ? (
+          <InfoTile icon={<Bank size={20} />} title="Ödeme bekleniyor" desc="Havale ulaştığında üretime alınır" />
         ) : (
           <InfoTile icon={<EnvelopeSimple size={20} />} title="Ödeme onaylandı" desc="Faturan e-posta ile gönderilecek" />
         )}
