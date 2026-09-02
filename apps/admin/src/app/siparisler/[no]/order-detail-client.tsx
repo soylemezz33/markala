@@ -138,11 +138,47 @@ function formatDate(iso: string): string {
  * Bu yüzden link admin'in kendi BFF rotasından geçer (çerezle kimliklenir).
  * URL'nin son parçası (uuid.uzantı) anahtardır — hem eski hem yeni kayıt için aynı.
  */
-function tasarimIndirmeYolu(url: string | null | undefined): string | undefined {
+function tasarimIndirmeYolu(
+  url: string | null | undefined,
+  ad?: string,
+): string | undefined {
   const key = String(url ?? "").split("?")[0]?.split("/").pop();
-  return key && /^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key)
-    ? `/api/tasarim-dosya/${key}`
-    : undefined;
+  if (!key || !/^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key)) return undefined;
+  return ad
+    ? `/api/tasarim-dosya/${key}?ad=${encodeURIComponent(ad)}`
+    : `/api/tasarim-dosya/${key}`;
+}
+
+/**
+ * İndirilecek tasarım dosyasının adı (2026-09-02 üretim ARGE).
+ *
+ * Eskiden dosya "9f3c1a72-...-2c5e91d4f6ab.pdf" olarak iniyordu (ham depolama anahtarı);
+ * operatör baskı kuyruğunda hangi siparişe ait olduğunu göremiyordu ve üretimde işler
+ * bu yüzden karışıyordu. Artık:
+ *
+ *   MK-2026-1234-2__klasik-kartvizit__1000ad
+ *
+ * SATIR NUMARASI DAHİL: üretim birimi sipariş değil sipariş SATIRIDIR — bir siparişte
+ * kartvizit + broşür olabilir, ikisi farklı makinede farklı saatte basılır. Satır numarası
+ * olmadan iki dosya aynı adı alırdı.
+ *
+ * Uzantıyı BFF ekler (anahtardaki gerçek uzantıdan) — burada yazılırsa yanlış uzantı
+ * üretme riski olur.
+ */
+function tasarimDosyaAdi(
+  orderNumber: string,
+  satirNo: number,
+  item: { productSlug?: string; productName: string; quantity?: number },
+): string {
+  const urun = (item.productSlug ?? item.productName)
+    .toLocaleLowerCase("tr")
+    .replace(/ı/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g")
+    .replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40);
+  const adet = item.quantity ? `__${item.quantity}ad` : "";
+  return `${orderNumber}-${satirNo}__${urun}${adet}`;
 }
 
 const TL = (v: unknown) => "₺ " + Number(v ?? 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
@@ -640,7 +676,10 @@ Devam edilsin mi?`,
                       </div>
                       {hasFile && tasarimIndirmeYolu(item.uploadedFileUrl) && (
                         <a
-                          href={tasarimIndirmeYolu(item.uploadedFileUrl)}
+                          href={tasarimIndirmeYolu(
+                            item.uploadedFileUrl,
+                            tasarimDosyaAdi(order.orderNumber, i + 1, item),
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           download
