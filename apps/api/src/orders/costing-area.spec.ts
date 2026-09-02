@@ -81,6 +81,53 @@ describe("area (m²) maliyeti content.maliyetUsd'den hesaplanır", () => {
     expect(r).toBeNull();
   });
 
+  it("satış değeri 0 olan seçenek maliyetUsd'de olmasa da engel değil", () => {
+    // CANLI ÖRNEK: Kompozit Baskı'da "ekislem: yok" seçeneği `priced` grupta
+    // tanımlı ve fiyatı 0; maliyetUsd'de karşılığı YOK. Bu istisna olmadan TÜM
+    // kalem "maliyeti bilinmiyor" sayılıyordu.
+    const kompozit = {
+      pricingMode: "area",
+      content: { maliyetUsd: { "3mm": 26, "cnc-kesim": 2.5 } },
+      options: [
+        { groupKey: "malzeme", optionKey: "3mm", groupRole: "priced", rules: { birim: "dolar", effect: "perM2" } },
+        { groupKey: "ekislem", optionKey: "yok", groupRole: "priced", rules: {} },
+        { groupKey: "ekislem", optionKey: "cnc-kesim", groupRole: "priced", rules: { birim: "dolar", effect: "perM2" } },
+      ],
+      prices: [
+        { groupKey: "malzeme", optionKey: "3mm", price: 0, cost: 37.44 },
+        { groupKey: "ekislem", optionKey: "yok", price: 0, cost: 0 },
+        { groupKey: "ekislem", optionKey: "cnc-kesim", price: 0, cost: 3.6 },
+      ],
+    };
+    // 30×40 = 0,12 m² → minM2 1 → 1 m². Maliyet 26 × 49 × 1 = 1.274 ₺
+    const r = computeItemCostTotal(
+      kompozit, sel({ en: "30", boy: "40", adet: "1", malzeme: "3mm", ekislem: "yok" }),
+      1, 1528.8, 1.2, PRICING,
+    );
+    expect(r).toBe(1274);
+  });
+
+  it("satış değeri SIFIR DEĞİLKEN maliyet yoksa yine null", () => {
+    // cnc-kesim satılıyor (3,6 $) ama maliyeti tabloda yok → gerçekten bilinmiyor.
+    const eksik = {
+      pricingMode: "area",
+      content: { maliyetUsd: { "3mm": 26 } },
+      options: [
+        { groupKey: "malzeme", optionKey: "3mm", groupRole: "priced", rules: { effect: "perM2" } },
+        { groupKey: "ekislem", optionKey: "cnc-kesim", groupRole: "priced", rules: { effect: "perM2" } },
+      ],
+      prices: [
+        { groupKey: "malzeme", optionKey: "3mm", price: 0, cost: 37.44 },
+        { groupKey: "ekislem", optionKey: "cnc-kesim", price: 0, cost: 3.6 },
+      ],
+    };
+    const r = computeItemCostTotal(
+      eksik, sel({ en: "30", boy: "40", adet: "1", malzeme: "3mm", ekislem: "cnc-kesim" }),
+      1, 1528.8, 1.2, PRICING,
+    );
+    expect(r).toBeNull();
+  });
+
   it("maliyetUsd hiç yoksa null (eski davranış)", () => {
     const bos = { ...cinBranda, content: {} };
     const r = computeItemCostTotal(

@@ -82,17 +82,41 @@ export function computeItemCostTotal(
       const g = String(o.groupKey ?? "");
       if (g && !rolePerGroup.has(g)) rolePerGroup.set(g, String(o.groupRole ?? ""));
     }
+    const priceRowsRaw = (product.prices ?? []) as Array<{
+      groupKey?: string | null;
+      optionKey?: string | null;
+      price?: unknown;
+      cost?: unknown;
+    }>;
+    /** Seçeneğin SATIŞ değeri (area'da fiyat satırının cost'u satış fiyatını tutar). */
+    const satisDegeri = (gKey: string, oKey: string) => {
+      const row = priceRowsRaw.find((r) => r.groupKey === gKey && r.optionKey === oKey);
+      if (!row) return 0;
+      const n = Number(row.cost ?? row.price ?? 0);
+      return Number.isFinite(n) ? n : 0;
+    };
+
     for (const [gKey, role] of rolePerGroup) {
       if (role !== "priced") continue;
       const sel = sels[gKey];
       if (!sel) continue; // seçilmemiş grup fiyata da girmez
       const v = maliyetUsd[sel];
-      if (v === undefined || v === null || !Number.isFinite(Number(v))) return null;
+      if (v !== undefined && v !== null && Number.isFinite(Number(v))) continue;
+      /**
+       * maliyetUsd'de yok AMA satış değeri de 0 ise maliyeti 0 kabul et.
+       * Örnek: kompozit üründe "ekislem: yok" seçeneği. Ürün onu `priced` grupta
+       * tanımlamış (fiyatı 0), maliyet tablosunda karşılığı olması da beklenmez —
+       * satılmayan şey tüketilmez. Bu istisna olmadan TÜM kalem "maliyeti
+       * bilinmiyor" sayılıyordu (canlıda Kompozit Baskı böyle düşüyordu).
+       *
+       * Satış değeri 0 DEĞİLSE maliyet gerçekten bilinmiyordur → null.
+       */
+      if (satisDegeri(gKey, sel) === 0) continue;
+      return null;
     }
 
     // Satış satırlarını maliyet değerleriyle değiştir — motor aynı, girdi farklı.
-    const priceRows = (product.prices ?? []) as Array<{ optionKey?: string | null }>;
-    const costRows = priceRows.map((r) => {
+    const costRows = priceRowsRaw.map((r) => {
       const v = maliyetUsd[String(r.optionKey ?? "")];
       const n = Number(v);
       return { ...r, cost: Number.isFinite(n) ? n : null, price: 0 };
