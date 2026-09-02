@@ -91,7 +91,7 @@ export function AboutMarkala() {
             <p className="mt-2.5 text-ink-700 leading-relaxed">
               Üretim Mersin&#39;deki atölyemizde yapılıyor, sevkiyat DHL ve Aras Kargo ile
               Türkiye&#39;nin 81 iline gidiyor. Standart işlerde üretim 2-3 iş günü, kargo
-              1-3 iş günü sürüyor.{" "}
+              2-4 iş günü sürüyor.{" "}
               <Link href="/matbaa" className="text-brand-700 font-medium hover:underline">
                 Şehir sayfalarımızda
               </Link>{" "}
