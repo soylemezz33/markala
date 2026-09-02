@@ -195,3 +195,15 @@ export function grubaGoreHref(navLabel: string, dbHref: string): string {
   }
   return dbHref;
 }
+
+/**
+ * Bir kategorinin ait olduğu grup (2026-09-02).
+ *
+ * Bir kategori birden fazla grupta olabilir (örn. vinil-branda-afis hem "Bayrak & Stand"
+ * hem "Dijital Baskı" hem "Sektörel Ürünler" listesinde). İLK eşleşen grup döner —
+ * footer'daki kuralın aynısı, böylece kullanıcı aynı kategoriyi sitenin her yerinde aynı
+ * grubun altında görür. Grubu olmayan kategoriler (kartvizit) için undefined.
+ */
+export function kategoriyeGoreGrup(categorySlug: string): ProductGroup | undefined {
+  return PRODUCT_GROUPS.find((g) => g.categorySlugs.includes(categorySlug));
+}

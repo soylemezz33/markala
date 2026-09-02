@@ -25,6 +25,19 @@ import { KARGO_SURESI, URETIM_SURESI } from "@/lib/delivery";
  */
 export const revalidate = 300;
 
+/**
+ * dynamicParams=false → listede olmayan slug ROUTER seviyesinde gerçek 404 döner
+ * (2026-09-02). Aksi hâlde /kategoriler/olmayan-grup, sayfa bileşeni notFound() çağırsa
+ * bile HTTP 200 + not-found gövdesi dönüyordu: ISR ile talep anında render edilen yollarda
+ * Next 14 statüyü 404'e çevirmiyor. Google bunu "soft 404" sayar.
+ *
+ * BURADA GÜVENLİ, ÜRÜN/KATEGORİ ROTALARINDA DEĞİL: gruplar kod tarafında sabit bir liste
+ * (PRODUCT_GROUPS), yani "yeni grup eklendi ama build alınmadı" durumu mümkün değil.
+ * /urun/[slug] ve /kategori/[slug] verisini DB'den aldığı için aynı satır oraya konulamaz —
+ * yeni eklenen ürün bir sonraki build'e kadar 404 olurdu. Aynı desen /matbaa/[city]'de var.
+ */
+export const dynamicParams = false;
+
 /** 7 grup da build'de üretilir — sayı sabit ve küçük, dinamik bırakmanın anlamı yok. */
 export function generateStaticParams() {
   return PRODUCT_GROUPS.map((g) => ({ grup: g.slug }));
@@ -38,6 +51,21 @@ export async function generateMetadata({
   const grup = getProductGroup(params.grup);
   if (!grup) return {};
   const url = `/kategoriler/${grup.slug}`;
+
+  // OG GÖRSELİ (2026-09-02): yedi hub da /og-default.png kullanıyordu, yani WhatsApp'ta
+  // paylaşılan yedi farklı link aynı jenerik kartla görünüyordu. Grubun ilk kategorisinin
+  // GERÇEK görseli varsa onu kullan. getCategories hata/boş dönerse sessizce varsayılana
+  // düşer — metadata üretimi hiçbir koşulda sayfayı düşürmemeli.
+  let ogImage = "/og-default.png";
+  try {
+    const categories = await getCategories();
+    const ilk = grup.categorySlugs
+      .map((slug) => categories.find((c) => c.slug === slug))
+      .find((c) => c?.imageUrl);
+    if (ilk?.imageUrl) ogImage = ilk.imageUrl;
+  } catch {
+    // varsayılan kalır
+  }
   return {
     // absolute: kök layout'un "%s · Markala" şablonu bu alt ağaçta geçerli değil
     // (/kategoriler/layout.tsx düz string title verdiği için zincir kopuyor), o yüzden
@@ -52,13 +80,13 @@ export async function generateMetadata({
       url,
       title: `${grup.title} · Markala`,
       description: grup.description,
-      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: grup.label }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: grup.label }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${grup.title} · Markala`,
       description: grup.description,
-      images: ["/og-default.png"],
+      images: [ogImage],
     },
   };
 }

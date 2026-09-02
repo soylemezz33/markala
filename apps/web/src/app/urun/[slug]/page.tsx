@@ -31,6 +31,7 @@ import { TrackRecentlyViewed, RecentlyViewedRail } from "@/components/product/re
 import { TrackViewItem } from "@/components/product/track-view-item";
 import { ProductViewTracker } from "@/components/product-view-tracker";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { kategoriyeGoreGrup } from "@/lib/product-groups";
 import type { Metadata } from "next";
 
 interface Props {
@@ -208,9 +209,16 @@ export default async function ProductPage({ params }: Props) {
   // "Kartvizit › Kartvizit" tekrarı oluşur. Aynıysa kategori kırılımını gizle.
   const showCategoryCrumb =
     category && category.name.trim().toLocaleLowerCase("tr") !== product.name.trim().toLocaleLowerCase("tr");
+  // GRUP KATMANI (2026-09-02): kategori ile "Ürünler" arasına ürün grubu hub'ı girer.
+  // Neden: 7 grup hub'ı yalnız anasayfadan, footer'dan ve /kategoriler'den link alıyordu.
+  // Breadcrumb'a eklenince 790 ürün sayfasının her biri ait olduğu hub'a bir iç link verir
+  // ve kırıntı yolu gerçek site yapısını gösterir. Kartvizit gibi hub'ı olmayan
+  // kategorilerde satır hiç basılmaz (kategoriyeGoreGrup undefined döner).
+  const urunGrubu = kategoriyeGoreGrup(product.categorySlug);
   const breadcrumbs = [
     { name: "Anasayfa", href: "/" },
     { name: "Ürünler", href: "/urunler" },
+    ...(urunGrubu ? [{ name: urunGrubu.label, href: `/kategoriler/${urunGrubu.slug}` }] : []),
     ...(showCategoryCrumb ? [{ name: category!.name, href: `/kategori/${category!.slug}` }] : []),
     { name: product.name, href: `/urun/${product.slug}` },
   ];
@@ -238,6 +246,20 @@ export default async function ProductPage({ params }: Props) {
             <Link href="/urunler" className="hover:text-ink-900 transition-colors">
               Ürünler
             </Link>
+            {/* Grup katmanı — DAR EKRANDA GİZLİ ama DOM'da (2026-09-02): mobilde beşinci
+                seviye kırıntı bandı taşırıyordu; `hidden` görsel olarak saklar, bağlantı
+                HTML'de kaldığı için Google iç linki görmeye devam eder. */}
+            {urunGrubu && (
+              <span className="hidden sm:flex items-center gap-1.5">
+                <CaretRight size={12} />
+                <Link
+                  href={`/kategoriler/${urunGrubu.slug}`}
+                  className="hover:text-ink-900 transition-colors"
+                >
+                  {urunGrubu.label}
+                </Link>
+              </span>
+            )}
             {category && (
               <>
                 <CaretRight size={12} />
