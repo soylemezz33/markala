@@ -91,7 +91,7 @@ const MERSIN_DISTRICTS: District[] = [
     ],
     sameDayDelivery: false,
     intro:
-      "Tarsus, Mersin'in en yoğun ticaret hacmine sahip ilçelerinden. Otomotiv yan sanayi, tekstil, gıda işletmeleri için kartvizit-broşür-magnet-antetli kâğıt taleplerine kargo/kurye ile 1-2 iş günü teslim sağlıyoruz.",
+      "Tarsus, Mersin'in en yoğun ticaret hacmine sahip ilçelerinden. Otomotiv yan sanayi, tekstil, gıda işletmeleri için kartvizit-broşür-magnet-antetli kâğıt taleplerine kargo ile 2-4 iş günü teslim sağlıyoruz.",
   },
   {
     slug: "yenisehir",
@@ -108,7 +108,7 @@ const MERSIN_DISTRICTS: District[] = [
     ],
     sameDayDelivery: false,
     intro:
-      "Yenişehir, Mersin'in modern iş ve eğitim merkezi. Mersin Üniversitesi, hastaneler, hukuk büroları ve danışmanlık ofisleri için kurumsal kimlik, antetli kâğıt, dosya ve bloknot ihtiyaçlarına kargo/kurye ile 1-2 iş günü teslim.",
+      "Yenişehir, Mersin'in modern iş ve eğitim merkezi. Mersin Üniversitesi, hastaneler, hukuk büroları ve danışmanlık ofisleri için kurumsal kimlik, antetli kâğıt, dosya ve bloknot ihtiyaçlarına kargo ile 2-4 iş günü teslim.",
   },
   {
     slug: "akdeniz",
@@ -171,7 +171,7 @@ const MERSIN_DISTRICTS: District[] = [
     ],
     sameDayDelivery: false,
     intro:
-      "Erdemli, narenciye üretiminin başkenti. Ambalaj etiketi, kasa baskısı, ihracat dokümanları ve tarım broşürleri için kargo ile 1 iş günü ulaşıyoruz.",
+      "Erdemli, narenciye üretiminin başkenti. Ambalaj etiketi, kasa baskısı, ihracat dokümanları ve tarım broşürleri için kargo ile 2-4 iş günü ulaşıyoruz.",
   },
   {
     slug: "silifke",
@@ -199,7 +199,7 @@ const MERSIN_DISTRICTS: District[] = [
     ],
     sameDayDelivery: false,
     intro:
-      "Anamur, Türkiye'nin en güney ucu, muz ve fıstık üretimiyle bilinir. Tarımsal ihracat ambalajı, etiket ve B2B promosyon ürünlerine kargo ile 1-2 gün teslim.",
+      "Anamur, Türkiye'nin en güney ucu, muz ve fıstık üretimiyle bilinir. Tarımsal ihracat ambalajı, etiket ve B2B promosyon ürünlerine kargo ile 2-4 iş günü teslim.",
   },
 ];
 
@@ -211,11 +211,11 @@ const CURATED_CITIES: CityData[] = [
     curated: true,
     name: "Mersin",
     region: "akdeniz",
-    deliveryDays: { min: 1, max: 2 },
+    deliveryDays: { min: 2, max: 4 },
     sameDayCourier: false,
     population: "1.916.000",
     intro:
-      "Mersin merkezli matbaa atölyemiz, Mersin ve çevresine kurye/kargo ile 1-2 iş günü teslimat sağlar. Mersin Limanı, Yenişehir ticaret bölgesi, Tarsus OSB ve Toroslar sanayi siteleri çevresinde 12.000+ aktif müşteriye matbaa hizmeti veriyoruz.",
+      "Mersin merkezli matbaa atölyemiz, Mersin ve çevresine kargo ile 2-4 iş günü teslimat sağlar. Mersin Limanı, Yenişehir ticaret bölgesi, Tarsus OSB ve Toroslar sanayi siteleri çevresinde 12.000+ aktif müşteriye matbaa hizmeti veriyoruz.",
     districts: MERSIN_DISTRICTS,
     popularProducts: [
       "Klasik kartvizit (selefonlu/UV/yaldız)",
@@ -243,7 +243,7 @@ const CURATED_CITIES: CityData[] = [
     faqs: [
       {
         q: "Mersin'de kartvizit baskı yapıyor musunuz?",
-        a: "Evet. Mersin ve ilçelerine kurye/kargo ile genellikle 1-2 iş günü içinde teslim ediyoruz.",
+        a: "Evet. Mersin ve ilçelerine kargo ile genellikle 2-4 iş günü içinde teslim ediyoruz.",
       },
       {
         q: "Mersin'de matbaa ücreti rakiplerden farklı mı?",
@@ -251,7 +251,7 @@ const CURATED_CITIES: CityData[] = [
       },
       {
         q: "Tarsus, Yenişehir, Toroslar, Mezitli'ye teslim ediyor musunuz?",
-        a: "Evet, Mersin'in 13 ilçesinin tamamına kurye veya kargo ile teslim ediyoruz. Mersin'in tüm ilçelerine kurye/kargo ile 1-2 iş günü içinde teslim sağlanır.",
+        a: "Evet, Mersin'in 13 ilçesinin tamamına kargo ile teslim ediyoruz. Mersin'in tüm ilçelerine kargo ile 2-4 iş günü içinde teslim sağlanır.",
       },
       {
         q: "Mersin Limanı'na evrak baskısı yapar mısınız?",
@@ -273,11 +273,11 @@ const CURATED_CITIES: CityData[] = [
     curated: true,
     name: "Antalya",
     region: "akdeniz",
-    deliveryDays: { min: 1, max: 2 },
+    deliveryDays: { min: 2, max: 4 },
     sameDayCourier: false,
     population: "2.696.000",
     intro:
-      "Antalya, Türkiye'nin turizm başkenti. Otel, restoran, marina ve kongre merkezi yoğunluğu nedeniyle matbaa talebi yıl boyunca sezonsal olarak artıp azalır. Markala olarak Antalya'ya 1-2 iş günü içinde DHL kargo ile ulaşıyoruz; sezon başı toplu kampanyalı paketlerimiz var.",
+      "Antalya, Türkiye'nin turizm başkenti. Otel, restoran, marina ve kongre merkezi yoğunluğu nedeniyle matbaa talebi yıl boyunca sezonsal olarak artıp azalır. Markala olarak Antalya'ya 2-4 iş günü içinde DHL kargo ile ulaşıyoruz; sezon başı toplu kampanyalı paketlerimiz var.",
     popularProducts: [
       "Otel anahtar zarfı ve kart",
       "Restoran menü kartı, masa standı, peçete altı",
@@ -297,7 +297,7 @@ const CURATED_CITIES: CityData[] = [
     faqs: [
       {
         q: "Antalya'ya kaç günde teslim ediyorsunuz?",
-        a: "DHL Express ile Antalya merkez, Lara, Kemer, Belek, Side ve Manavgat'a 1-2 iş günü içinde teslim ediyoruz. Acil siparişlerde sabah uçağıyla 1 günde ulaşım da mümkün.",
+        a: "DHL Express ile Antalya merkez, Lara, Kemer, Belek, Side ve Manavgat'a 2-4 iş günü içinde teslim ediyoruz. ",
       },
       {
         q: "Antalya'daki otelime özel menü tasarımı yapıyor musunuz?",
@@ -316,11 +316,11 @@ const CURATED_CITIES: CityData[] = [
     curated: true,
     name: "Adana",
     region: "akdeniz",
-    deliveryDays: { min: 1, max: 1 },
+    deliveryDays: { min: 2, max: 4 },
     sameDayCourier: false,
     population: "2.274.000",
     intro:
-      "Adana, Çukurova'nın ticaret ve sanayi merkezi. Tekstil, gıda, otomotiv ve tarım sektörlerinin yoğun olduğu Adana'ya Mersin atölyemizden 1 iş günü içinde DHL ile teslim sağlıyoruz. Komşu il olarak nakliye süresi en kısa.",
+      "Adana, Çukurova'nın ticaret ve sanayi merkezi. Tekstil, gıda, otomotiv ve tarım sektörlerinin yoğun olduğu Adana'ya Mersin atölyemizden 2-4 iş günü içinde DHL ile teslim sağlıyoruz.",
     popularProducts: [
       "Tekstil etiket ve barkod",
       "Gıda ambalaj etiketi",
@@ -341,7 +341,7 @@ const CURATED_CITIES: CityData[] = [
     faqs: [
       {
         q: "Adana'ya teslimat kaç günde?",
-        a: "DHL Express ile Adana merkez ve OSB'ye 1 iş günü içinde teslim. Sabah verilen sipariş ertesi öğle teslim edilir.",
+        a: "DHL Express ile Adana merkez ve OSB'ye 2-4 iş günü içinde teslim.",
       },
       {
         q: "Adana'daki tekstil firmasıyım, etiket baskısı yapar mısınız?",
@@ -356,11 +356,11 @@ const CURATED_CITIES: CityData[] = [
     curated: true,
     name: "Şanlıurfa",
     region: "guneydogu",
-    deliveryDays: { min: 1, max: 2 },
+    deliveryDays: { min: 2, max: 4 },
     sameDayCourier: false,
     population: "2.143.000",
     intro:
-      "Şanlıurfa, Türkiye'nin en hızlı büyüyen şehirlerinden. Tekstil, tarım, gıda ve hizmet sektörlerinde matbaa ihtiyaçlarına Mersin merkezimizden 1-2 iş günü içinde teslim sağlıyoruz.",
+      "Şanlıurfa, Türkiye'nin en hızlı büyüyen şehirlerinden. Tekstil, tarım, gıda ve hizmet sektörlerinde matbaa ihtiyaçlarına Mersin merkezimizden 2-4 iş günü içinde teslim sağlıyoruz.",
     popularProducts: [
       "Restoran menü kartı (Urfa mutfağı için özel)",
       "Tekstil etiket ve marka kart",
@@ -380,7 +380,7 @@ const CURATED_CITIES: CityData[] = [
     faqs: [
       {
         q: "Şanlıurfa'ya teslimat kaç günde?",
-        a: "DHL ile Şanlıurfa merkez ve ilçelere 1-2 iş günü içinde teslim. Acil işlerde uçak kargoyla 1 günde ulaşım mümkün.",
+        a: "DHL ile Şanlıurfa merkez ve ilçelere 2-4 iş günü içinde teslim. ",
       },
       {
         q: "Çoklu dilli menü (Arapça dahil) basabiliyor musunuz?",
@@ -395,11 +395,11 @@ const CURATED_CITIES: CityData[] = [
     curated: true,
     name: "Hatay",
     region: "akdeniz",
-    deliveryDays: { min: 1, max: 2 },
+    deliveryDays: { min: 2, max: 4 },
     sameDayCourier: false,
     population: "1.686.000",
     intro:
-      "Hatay (Antakya, İskenderun, Dörtyol), Akdeniz'in tarihi ve kültürel zenginliğe sahip ili. Restoran, otel, lojistik ve narenciye sektörleri yoğun. Mersin'den 1-2 iş günü içinde ulaşıyoruz; Antakya'nın yeniden inşa sürecinde küçük işletmelere özel kampanyamız var.",
+      "Hatay (Antakya, İskenderun, Dörtyol), Akdeniz'in tarihi ve kültürel zenginliğe sahip ili. Restoran, otel, lojistik ve narenciye sektörleri yoğun. Mersin'den 2-4 iş günü içinde ulaşıyoruz; Antakya'nın yeniden inşa sürecinde küçük işletmelere özel kampanyamız var.",
     popularProducts: [
       "Restoran menü (Antakya mutfağı için)",
       "Otel ve butik pansiyon broşürü",
@@ -422,7 +422,7 @@ const CURATED_CITIES: CityData[] = [
       },
       {
         q: "İskenderun limanı için lojistik evrak baskısı yapar mısınız?",
-        a: "Evet, CMR, sevk irsaliyesi, etiket, konteyner numarası ve gümrük formları için 1-2 iş günü içinde teslim ediyoruz.",
+        a: "Evet, CMR, sevk irsaliyesi, etiket, konteyner numarası ve gümrük formları için 2-4 iş günü içinde teslim ediyoruz.",
       },
     ],
     geo: { lat: 36.402150, lng: 36.349534 },
@@ -433,11 +433,11 @@ const CURATED_CITIES: CityData[] = [
     curated: true,
     name: "Osmaniye",
     region: "akdeniz",
-    deliveryDays: { min: 1, max: 1 },
+    deliveryDays: { min: 2, max: 4 },
     sameDayCourier: false,
     population: "550.000",
     intro:
-      "Osmaniye, Çukurova ve Doğu Akdeniz arasında kavşak konumda. Demir-çelik, tarım ve gıda sektörleri yoğun. Mersin'den 1 iş günü içinde DHL ile teslim sağlıyoruz; OSB içi firmalara özel kurumsal hesap.",
+      "Osmaniye, Çukurova ve Doğu Akdeniz arasında kavşak konumda. Demir-çelik, tarım ve gıda sektörleri yoğun. Mersin'den 2-4 iş günü içinde DHL ile teslim sağlıyoruz; OSB içi firmalara özel kurumsal hesap.",
     popularProducts: [
       "Demir-çelik üretim etiket ve barkod",
       "Gıda ambalaj baskısı",
@@ -452,7 +452,7 @@ const CURATED_CITIES: CityData[] = [
     faqs: [
       {
         q: "Osmaniye'ye teslimat süresi nedir?",
-        a: "Mersin atölyemizden DHL ile Osmaniye'ye 1 iş günü içinde teslim. Sabah verilen sipariş ertesi gün öğle saatlerinde elinizde.",
+        a: "Mersin atölyemizden DHL ile Osmaniye'ye 2-4 iş günü içinde teslim.",
       },
     ],
     geo: { lat: 37.069569, lng: 36.247221 },
@@ -463,11 +463,11 @@ const CURATED_CITIES: CityData[] = [
     curated: true,
     name: "Gaziantep",
     region: "guneydogu",
-    deliveryDays: { min: 1, max: 2 },
+    deliveryDays: { min: 2, max: 4 },
     sameDayCourier: false,
     population: "2.130.000",
     intro:
-      "Gaziantep, Güneydoğu'nun ticaret ve sanayi başkenti. Tekstil, makine, gıda (baklava, fıstık) ve mobilya sektörleri yoğun. Mersin'den 1-2 iş günü içinde DHL ile teslim sağlıyoruz; Gaziantep OSB ve sanayi sitelerine özel kurumsal teklif.",
+      "Gaziantep, Güneydoğu'nun ticaret ve sanayi başkenti. Tekstil, makine, gıda (baklava, fıstık) ve mobilya sektörleri yoğun. Mersin'den 2-4 iş günü içinde DHL ile teslim sağlıyoruz; Gaziantep OSB ve sanayi sitelerine özel kurumsal teklif.",
     popularProducts: [
       "Baklava/fıstık premium ambalaj baskısı",
       "Tekstil etiket ve kart",
@@ -491,7 +491,7 @@ const CURATED_CITIES: CityData[] = [
       },
       {
         q: "Gaziantep'e teslimat süresi?",
-        a: "DHL Express ile Gaziantep merkez ve OSB'ye 1-2 iş günü içinde teslim.",
+        a: "DHL Express ile Gaziantep merkez ve OSB'ye 2-4 iş günü içinde teslim.",
       },
     ],
     geo: { lat: 37.066135, lng: 37.378361 },

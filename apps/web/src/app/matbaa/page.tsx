@@ -14,7 +14,7 @@ const SITE = "https://markala.com.tr";
 export const metadata: Metadata = {
   title: "Türkiye Geneli Matbaa Hizmeti | 81 İl, Hızlı Üretim",
   description:
-    "Mersin merkezli matbaa atölyemizden 81 ile kartvizit, broşür, afiş, branda, kupa baskı. Antalya, Adana, Şanlıurfa, Hatay, Osmaniye ve Gaziantep'e 1-2 iş günü; Türkiye geneline 2-4 iş günü kargo. İlinizi seçip teslim süresini görün.",
+    "Mersin merkezli matbaa atölyemizden 81 ile kartvizit, broşür, afiş, branda, kupa baskı. Türkiye'nin her iline 2-4 iş günü kargo, tek fiyat. İlinizi seçip ilçe kapsamını ve sık sorulanları görün.",
   alternates: { canonical: "/matbaa" },
   openGraph: {
     type: "website",
@@ -94,8 +94,9 @@ export default function MatbaaHubPage() {
           </h1>
           <p className="mt-4 text-lg text-ink-700">
             Mersin merkezli atölyemizden Türkiye'nin 81 iline kartvizit, broşür,
-            afiş, branda ve İSG levhası baskısı. Aşağıdan ilinizi seçip teslim
-            süresini, ilçe kapsamını ve o ile özel sık sorulanları görebilirsiniz.
+            afiş, branda ve İSG levhası baskısı. Kargo süresi her ilde aynı:
+            2-4 iş günü. Aşağıdan ilinizi seçip ilçe kapsamını ve o ile özel
+            sık sorulanları görebilirsiniz.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-4 text-sm text-ink-500">
             <span className="inline-flex items-center gap-1.5">
@@ -103,8 +104,8 @@ export default function MatbaaHubPage() {
               Hızlı üretim
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <Truck size={14} className="text-brand-700" weight="fill" /> Komşu
-              illerde 1-2 gün, Türkiye geneli 2-4 gün
+              <Truck size={14} className="text-brand-700" weight="fill" /> Tüm
+              Türkiye'ye 2-4 iş günü kargo
             </span>
             <span className="inline-flex items-center gap-1.5">
               <ShieldCheck size={14} className="text-brand-700" weight="fill" />{" "}
@@ -118,11 +119,11 @@ export default function MatbaaHubPage() {
         {/* Atölyeye en yakın iller — elle yazılmış, detaylı kartlar */}
         <section>
           <h2 className="text-2xl md:text-3xl font-semibold text-ink-900 mb-2">
-            En hızlı teslim ettiğimiz iller
+            Öne çıkan iller
           </h2>
           <p className="text-ink-700 mb-6 max-w-2xl">
-            Mersin'deki atölyeye en yakın iller. Bu illerde teslim süresi 1-2 iş
-            günü; ilçe kırılımı ve şehre özel bilgiler sayfalarında.
+            Atölyemize en yakın iller — sayfalarında ilçe kırılımı, o şehre özel
+            ürün örnekleri ve müşteri referanslarımız yer alır.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {curated.map((city) => (
@@ -137,8 +138,8 @@ export default function MatbaaHubPage() {
             Türkiye geneli — 81 ilin tamamı
           </h2>
           <p className="text-ink-700 mb-8 max-w-2xl">
-            Aşağıdaki illerin tamamına kargoyla gönderim yapıyoruz. İl sayfasında
-            o ilin bütün ilçeleri, tahmini teslim süresi ve sık sorulanlar yer
+            Aşağıdaki illerin tamamına 2-4 iş günü içinde kargoyla gönderim
+            yapıyoruz. İl sayfasında o ilin bütün ilçeleri ve sık sorulanlar yer
             alır.
           </p>
 
@@ -149,8 +150,7 @@ export default function MatbaaHubPage() {
                   <MapPin size={14} weight="fill" />
                   {grup.label}
                   <span className="text-ink-500 font-normal normal-case tracking-normal">
-                    ({grup.iller.length} il · {grup.iller[0]?.deliveryDays.min}-
-                    {grup.iller[0]?.deliveryDays.max} iş günü)
+                    ({grup.iller.length} il)
                   </span>
                 </h3>
                 <ul className="flex flex-wrap gap-2">

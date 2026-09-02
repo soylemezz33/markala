@@ -47,7 +47,7 @@ export function generateMetadata({ params }: Props): Metadata {
   const teslim = district.sameDayDelivery ? "Aynı Gün Motor Kurye" : "1 Günde Kapında";
   const title = `${district.name} ${city.name} Matbaa & Baskı Fiyatları - ${teslim}`;
   const description = `${district.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün - ${
-    district.sameDayDelivery ? "aynı gün motor kurye ile teslim" : "1 iş gününde kapınızda"
+    district.sameDayDelivery ? "aynı gün motor kurye ile teslim" : "2-4 iş gününde kapınızda"
   }.`;
 
   return {
@@ -168,7 +168,7 @@ export default async function DistrictLandingPage({ params }: Props) {
               <Truck size={13} weight="fill" />
               {district.sameDayDelivery
                 ? "Aynı gün motor kurye"
-                : "1 iş günü kargo"}
+                : "2-4 iş günü kargo"}
             </span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-100 text-brand-900 rounded-full font-medium">
               <Lightning size={13} weight="fill" />
@@ -216,7 +216,7 @@ export default async function DistrictLandingPage({ params }: Props) {
             {district.name}'in başlıca iş ve sanayi bölgelerine{" "}
             {district.sameDayDelivery
               ? "motor kurye ile aynı gün"
-              : "kargo ile 1 iş günü"}{" "}
+              : "kargo ile 2-4 iş günü"}{" "}
             içinde teslim ediyoruz.
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
