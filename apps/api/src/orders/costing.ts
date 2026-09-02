@@ -1,4 +1,5 @@
-import { computeConfiguredPrice, extractSelections } from "./pricing";
+import { computeConfiguredPrice, computeAreaPrice, extractSelections } from "./pricing";
+import type { PricingSettings } from "./pricing";
 
 /**
  * SİPARİŞ KALEMİ MALİYETİ — TEK DOĞRULUK KAYNAĞI (2026-08-24).
@@ -16,6 +17,8 @@ export interface CostingProduct {
   pricingMode?: string | null;
   options?: unknown;
   prices?: unknown;
+  /** Ürün içeriği — area (m²) ürünlerde `content.maliyetUsd` gerçek maliyeti taşır. */
+  content?: unknown;
 }
 
 export function computeItemCostTotal(
@@ -25,19 +28,80 @@ export function computeItemCostTotal(
   /** KDV hariç satır cirosu — yalnız area (m²) ürünlerde geri-hesap için kullanılır. */
   satisHaricLine: number,
   marj: number,
+  /**
+   * Fiyat ayarları — area (m²) ürünlerde maliyet hesabı için ŞART (kur, minM2, kdv).
+   * Verilmezse area ürün null döner (eski davranış korunur).
+   */
+  pricing?: PricingSettings,
 ): number | null {
   if (!product) return null; // kampanya paketi vb. — ürün ilişkisi yok
   const qty = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
 
-  // area: 2026-09-01'den önce satış motoru `satış_hariç = maliyet × marj` ürettiği için maliyet
-  // geri hesaplanabiliyordu. Artık fiyat satırı KDV DAHİL SON SATIŞ fiyatını tutuyor (kâr rakamın
-  // içinde, ürün ürün farklı: 1,32–2,50) → satıştan maliyete giden sabit bir oran YOK.
-  // Uydurma rakam yazmak yerine null döneriz: rapor "maliyet bilinmiyor" der, yanlış kâr göstermez.
-  // KALICI ÇÖZÜM: gerçek maliyetler ürünün content.maliyetUsd alanına yazılıyor (fiyat Excel'inin
-  // MALİYET kolonu); costing bunu okuyup m² kârını yeniden hesaplayabilir — geliştirme oturumu işi.
+  /**
+   * AREA (m²) MALİYETİ — 2026-09-02'de bağlandı (Hasan: "bunların maliyetleri dolar
+   * üzerinden mevcut olması lazım").
+   *
+   * Satıştan maliyete giden sabit bir oran YOK: fiyat satırı KDV DAHİL SON SATIŞ
+   * fiyatını tutuyor ve kâr çarpanı ürün ürün değişiyor (1,32–2,50). Eskiden burada
+   * `satış_hariç ÷ marj` yapılıyordu; 2026-09-01'de bu geçersiz olunca fonksiyon
+   * koşulsuz null dönmeye başladı — oysa GERÇEK maliyet `content.maliyetUsd`'de duruyor
+   * (fiyat Excel'inin MALİYET kolonu, seçenek başına USD/m²).
+   *
+   * Hesap satış motorunun BİREBİR aynısı: fiyat satırlarındaki değerler maliyetle
+   * değiştirilip `computeAreaPrice` çalıştırılır. Böylece m²/çevre/adet kuralları,
+   * minM2 ve `birim: "tl"` istisnası satışla aynı şekilde uygulanır.
+   *
+   * `.dahil` alınır, `.haric` DEĞİL: motorun "dahil" çıktısı ham çarpım sonucudur.
+   * Beslenen değer maliyet (KDV hariç) olduğu için sonuç da KDV hariç maliyettir;
+   * `.haric` almak 1,2'ye ikinci kez bölerdi.
+   *
+   * EKSİK MALİYET = null: seçili seçeneklerden BİRİNİN bile maliyeti yoksa hesap
+   * eksik çıkar. Eksik maliyet göstermek, "bilinmiyor" demekten daha tehlikelidir
+   * (kâr olduğundan yüksek görünür) — bu dosyanın temel kuralı.
+   */
   if (product.pricingMode === "area") {
-    void marj;
-    return null;
+    void marj; // area'da marj kullanılmaz — maliyet doğrudan veriden gelir.
+    if (!pricing) return null; // ayar verilmediyse eski davranış: bilinmiyor.
+
+    const maliyetUsd = (product.content as { maliyetUsd?: Record<string, unknown> } | null)
+      ?.maliyetUsd;
+    if (!maliyetUsd || typeof maliyetUsd !== "object") return null;
+
+    const sels = extractSelections(configuration) as Record<string, string> | null;
+    if (!sels || Object.keys(sels).length === 0) return null;
+
+    const opts = (product.options ?? []) as Array<{
+      groupKey?: string | null;
+      optionKey?: string | null;
+      groupRole?: string | null;
+    }>;
+
+    // Fiyatlanan her grupta SEÇİLİ seçeneğin maliyeti var mı? Biri bile yoksa null.
+    const rolePerGroup = new Map<string, string>();
+    for (const o of opts) {
+      const g = String(o.groupKey ?? "");
+      if (g && !rolePerGroup.has(g)) rolePerGroup.set(g, String(o.groupRole ?? ""));
+    }
+    for (const [gKey, role] of rolePerGroup) {
+      if (role !== "priced") continue;
+      const sel = sels[gKey];
+      if (!sel) continue; // seçilmemiş grup fiyata da girmez
+      const v = maliyetUsd[sel];
+      if (v === undefined || v === null || !Number.isFinite(Number(v))) return null;
+    }
+
+    // Satış satırlarını maliyet değerleriyle değiştir — motor aynı, girdi farklı.
+    const priceRows = (product.prices ?? []) as Array<{ optionKey?: string | null }>;
+    const costRows = priceRows.map((r) => {
+      const v = maliyetUsd[String(r.optionKey ?? "")];
+      const n = Number(v);
+      return { ...r, cost: Number.isFinite(n) ? n : null, price: 0 };
+    });
+
+    const { dahil } = computeAreaPrice(opts as never, costRows as never, sels, pricing);
+    if (!Number.isFinite(dahil) || dahil <= 0) return null;
+    // Motor "bir set"in maliyetini döndürür (unitPrice ile aynı kapsam); satır = set × adet.
+    return round2(dahil * qty);
   }
 
   const rows = (product.prices ?? []) as Array<{

@@ -91,7 +91,8 @@ export class ProfitService {
     const products = productIds.length
       ? await this.prisma.product.findMany({
           where: { id: { in: productIds } },
-          select: { id: true, pricingMode: true, options: true, prices: true },
+          // content: area (m²) ürünlerde gerçek maliyet content.maliyetUsd'de duruyor.
+          select: { id: true, pricingMode: true, options: true, prices: true, content: true },
         })
       : [];
     const byId = new Map(products.map((p) => [p.id, p]));
@@ -138,6 +139,8 @@ export class ProfitService {
               it.quantity ?? 1,
               ciroHaricBrut,
               marj,
+              // area ürünlerde kur/minM2 olmadan maliyet hesaplanamaz.
+              pricing,
             );
 
       ciroToplam += ciroHaric;
