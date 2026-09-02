@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Buildings,
   Wallet,
+  Bank,
 } from "@phosphor-icons/react";
 import { IlIlceSelect } from "@/components/forms/il-ilce-select";
 import { PhoneInput, toNationalPhone } from "@/components/forms/phone-input";
@@ -26,6 +27,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { generateOrderNumber } from "@/lib/format";
+import { BANKA_HESABI, HAVALE_INDIRIM_YUZDE } from "@/lib/company";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { readAttribution } from "@/lib/attribution";
 import { track, trackBeginCheckout } from "@/lib/analytics";
@@ -97,7 +99,7 @@ export default function CheckoutPage() {
   } | null>(null);
   // Ödeme yolu seçimi — kart (iyzico) veya cari (açık hesap). Cari yalnız kurumsal üyeye sunulur;
   // "approved" şartını backend doğrular (uygun değilse anlaşılır hata döner, payError'da gösterilir).
-  const [paymentMethod, setPaymentMethod] = useState<"iyzico" | "cari">("iyzico");
+  const [paymentMethod, setPaymentMethod] = useState<"iyzico" | "cari" | "havale">("iyzico");
   // Kullanıcının hesabında kayıtlı adresleri — giriş yapmışsa çekilir, seçilebilir + varsayılan otomatik dolar.
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -271,7 +273,15 @@ export default function CheckoutPage() {
   // kalan tutar. enabled=false ise tüm değerler 0 → puan UI'ı gizli, checkout değişmez.
   const loyaltyOn = Boolean(loyalty?.enabled && user);
   const redeemPerTl = loyalty?.redeemPerTl ?? 100;
-  const roomBeforeRedeem = Math.max(0, sub - discount - corpDiscount);
+  // Havale/EFT indirimi — sunucudaki formülün BİREBİR aynısı (orders.service.ts):
+  // kupon ve kurumsal indirim düşüldükten SONRA kalan tutarın %5'i. Yalnız önizleme;
+  // gerçek indirim siparişte sunucuda yeniden hesaplanır (client'a güvenilmez).
+  const havaleDiscount =
+    paymentMethod === "havale"
+      ? Math.round((sub - discount - corpDiscount) * HAVALE_INDIRIM_YUZDE) / 100
+      : 0;
+
+  const roomBeforeRedeem = Math.max(0, sub - discount - corpDiscount - havaleDiscount);
   const maxRedeemTl = loyaltyOn
     ? Math.min(
         Math.floor(sub * 0.5),
@@ -283,7 +293,7 @@ export default function CheckoutPage() {
   const redeemApplied = Math.max(0, Math.min(redeemPoints, maxRedeemPoints));
   const redeemTl = redeemApplied / redeemPerTl;
 
-  const subAfterDiscount = Math.max(0, sub - discount - corpDiscount - redeemTl);
+  const subAfterDiscount = Math.max(0, sub - discount - corpDiscount - havaleDiscount - redeemTl);
   // Kargo eşiği İNDİRİM ÖNCESİ ara toplama göre — sepet ekranı VE backend ile birebir aynı
   // (aksi halde kuponlu siparişte sepet "ücretsiz" derken ödeme 79₺ ekleyebiliyordu).
   // free_shipping kuponu (backend doğruladıysa) kargoyu sıfırlar.
@@ -311,10 +321,13 @@ export default function CheckoutPage() {
     }
   }, [isBootstrapping, user, processing, guestMode]);
 
-  // Ödeme yolu hesap tipine göre SABİTLENİR: onaylı kurumsal → cari, diğer herkes → kart.
-  // (Seçim kutusu yok; kurumsal=sadece cari, bireysel=sadece kart.)
+  // Onaylı kurumsal → her zaman cari (açık hesap). Diğer herkes kart ile havale
+  // arasında SEÇİM YAPAR; seçim burada ezilmemeli (eskiden koşulsuz "iyzico"ya
+  // çekiliyordu, havale seçimi bir sonraki render'da kayboluyordu).
   useEffect(() => {
-    setPaymentMethod(isApprovedCorporate ? "cari" : "iyzico");
+    setPaymentMethod((prev) =>
+      isApprovedCorporate ? "cari" : prev === "cari" ? "iyzico" : prev,
+    );
   }, [isApprovedCorporate]);
 
   // begin_checkout: checkout sayfasına ilk girildiğinde ateşlenir (GA4 spec gereği),
@@ -518,7 +531,7 @@ export default function CheckoutPage() {
   // Başarılı siparişten sonra tuz yenilenir (bilinçli ikinci sipariş her durumda yeni anahtar).
   const idemSaltRef = useRef<string>(newIdempotencyKey());
 
-  async function saveOrder(opts: { channel: string; paymentMethod?: "iyzico" | "cari" }): Promise<{
+  async function saveOrder(opts: { channel: string; paymentMethod?: "iyzico" | "cari" | "havale" }): Promise<{
     ok?: boolean;
     orderId?: string;
     orderNumber?: string;
@@ -711,6 +724,43 @@ export default function CheckoutPage() {
       idemSaltRef.current = newIdempotencyKey();
       clearCart();
       router.push(`/odeme/basarili/${saveRes.orderId}?method=cari`);
+    } catch {
+      setProcessing(false);
+      setPayError("Bir hata oluştu. Lütfen tekrar deneyin.");
+    }
+  }
+
+  /**
+   * Havale/EFT ile sipariş ver: online ödeme YOK — sipariş paymentStatus="beklemede"
+   * açılır, müşteri başarı sayfasında IBAN + sipariş numarasını görür ve parayı
+   * gönderir. Admin ekstreden eşleştirip "ödeme geldi" işaretler.
+   * Akış cari ile aynı (ikisi de kartsız), ayrı tutulmasının sebebi indirim ve mesaj.
+   */
+  async function handlePlaceHavale() {
+    if (!consentOk || processing || isApprovedCorporate) return;
+    if (!guardAllSteps()) return;
+    setPayError(null);
+    setProcessing(true);
+
+    try {
+      const saveRes = await saveOrder({ channel: "havale", paymentMethod: "havale" });
+
+      if (!saveRes?.ok || !saveRes.orderId) {
+        setProcessing(false);
+        setPayError(
+          saveRes?.error
+            ? `Sipariş oluşturulamadı: ${saveRes.error}`
+            : "Sipariş oluşturulamadı. Lütfen tekrar deneyin.",
+        );
+        return;
+      }
+
+      const order = buildOrder(saveRes.orderNumber ?? generateOrderNumber());
+      order.id = saveRes.orderId;
+      addOrder(order);
+      idemSaltRef.current = newIdempotencyKey();
+      clearCart();
+      router.push(`/odeme/basarili/${saveRes.orderId}?method=havale`);
     } catch {
       setProcessing(false);
       setPayError("Bir hata oluştu. Lütfen tekrar deneyin.");
@@ -1119,6 +1169,63 @@ export default function CheckoutPage() {
                   </label>
                 </div>
 
+                {/*
+                  Ödeme yöntemi seçimi — yalnız kartlı akışta gösterilir.
+                  Onaylı kurumsal müşteri açık hesapla (cari) çalışır, seçim görmez.
+                */}
+                {!isApprovedCorporate && (
+                  <div className="pt-2">
+                    <div className="text-sm font-medium text-ink-900 mb-2">Ödeme yöntemi</div>
+                    <div className="grid gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("iyzico")}
+                        aria-pressed={paymentMethod === "iyzico"}
+                        className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+                          paymentMethod === "iyzico"
+                            ? "border-brand-500 bg-brand-50/60"
+                            : "border-paper-200 hover:border-ink-300"
+                        }`}
+                      >
+                        <Lock size={18} weight="fill" className="mt-0.5 flex-none text-brand-700" />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-ink-900">
+                            Kredi / banka kartı
+                          </span>
+                          <span className="block text-xs text-ink-500">
+                            3D Secure ile anında onay, sipariş hemen üretime girer.
+                          </span>
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("havale")}
+                        aria-pressed={paymentMethod === "havale"}
+                        className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+                          paymentMethod === "havale"
+                            ? "border-brand-500 bg-brand-50/60"
+                            : "border-paper-200 hover:border-ink-300"
+                        }`}
+                      >
+                        <Bank size={18} weight="fill" className="mt-0.5 flex-none text-brand-700" />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-ink-900">
+                            Havale / EFT{" "}
+                            <span className="rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-bold text-success">
+                              %{HAVALE_INDIRIM_YUZDE} indirim
+                            </span>
+                          </span>
+                          <span className="block text-xs text-ink-500">
+                            IBAN sipariş sonunda gösterilir. Ödemeniz hesabımıza geçince üretime
+                            alınır.
+                          </span>
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="pt-2 space-y-3">
                   {paymentMethod === "cari" ? (
                     <>
@@ -1136,6 +1243,24 @@ export default function CheckoutPage() {
                       <div className="flex items-center justify-center gap-1.5 text-xs text-ink-500">
                         <Buildings size={14} /> Kurumsal açık hesap · Online ödeme yapılmaz · Vade
                         dahilinde
+                      </div>
+                    </>
+                  ) : paymentMethod === "havale" ? (
+                    <>
+                      <Button
+                        size="lg"
+                        fullWidth
+                        onClick={handlePlaceHavale}
+                        disabled={!consentOk || processing}
+                      >
+                        <Bank size={18} weight="fill" />{" "}
+                        {processing
+                          ? "Sipariş oluşturuluyor…"
+                          : `Havale ile Sipariş Ver - ${total.toLocaleString("tr-TR")} ₺`}
+                      </Button>
+                      <div className="rounded-md border border-paper-200 bg-paper-50 px-3 py-2 text-xs text-ink-600">
+                        Siparişi verdiğinizde IBAN ve sipariş numaranız gösterilir. Açıklamaya
+                        sipariş numaranızı yazın; ödemeniz onaylandığında üretime alınır.
                       </div>
                     </>
                   ) : (
@@ -1258,6 +1383,12 @@ export default function CheckoutPage() {
                     <Row
                       label={`Kurumsal indirim (%${corpPct})`}
                       value={<Price amount={-corpDiscount} className="text-success" />}
+                    />
+                  )}
+                  {havaleDiscount > 0 && (
+                    <Row
+                      label={`Havale indirimi (%${HAVALE_INDIRIM_YUZDE})`}
+                      value={<Price amount={-havaleDiscount} className="text-success" />}
                     />
                   )}
                   {redeemApplied > 0 && (

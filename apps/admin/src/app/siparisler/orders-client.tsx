@@ -348,8 +348,15 @@ export function OrdersClient({ orders }: Props) {
                             ● İade Edildi
                           </span>
                         ) : o.paymentStatus && o.paymentStatus !== "basarili" && toSlug(o.status) !== "iptal-edildi" ? (
-                          <span className="mt-1 block text-[10px] font-semibold text-warning">
-                            ● Ödeme Bekliyor
+                          /* Havale ayrı gösterilir: kartta "ödeme bekliyor" terk edilmiş sepet
+                             demektir, havalede ise MÜŞTERİ PARAYI GÖNDERECEK — ekstre kontrolü
+                             gerektiren, takip edilmesi gereken bir iş. */
+                          <span
+                            className={`mt-1 block text-[10px] font-semibold ${
+                              o.paymentMethod === "havale" ? "text-brand-700" : "text-warning"
+                            }`}
+                          >
+                            ● {o.paymentMethod === "havale" ? "Havale Bekleniyor" : "Ödeme Bekliyor"}
                           </span>
                         ) : null}
                         {o.paymentStatus === "basarili" && o.paymentMethod !== "cari" && (

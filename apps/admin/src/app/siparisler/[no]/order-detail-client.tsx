@@ -20,7 +20,7 @@ import {
   PaintBrush,
   ArrowCounterClockwise,
 } from "@phosphor-icons/react";
-import { updateOrderStatus, updateOrderTracking, refundOrder } from "./actions";
+import { updateOrderStatus, updateOrderTracking, refundOrder, confirmHavalePayment } from "./actions";
 
 /**
  * Kargo firmaları (2026-08-29). Markala fiilen YALNIZ DHL eCommerce kullanıyor
@@ -192,6 +192,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const [isPending, startTransition] = useTransition();
   const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [refunding, setRefunding] = useState(false);
+  const [havaleOnayliyor, setHavaleOnayliyor] = useState(false);
 
   // Kargo takip bilgisi (2026-08-29). İki giriş noktası var:
   //  · "kargoya-verildi"ye geçerken açılan pencere → numara müşteriye giden maile girer
@@ -221,6 +222,39 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   // istiyor (403) ama sizinti butona basmadan ONCE oluyordu.
   const canRefund = showMoney && payStatus === "basarili" && order.paymentMethod !== "cari";
   const alreadyRefunded = payStatus === "iade-edildi" || payStatus === "iade_edildi";
+
+  /**
+   * Havale onayı — siparişi "ödendi" sayar ve üretim yolunu açar.
+   * canFullStatus şartı: ödeme kararı kargo rolünün işi değil (API de 403 döner,
+   * ama butonu hiç göstermemek kullanıcıyı hataya sürüklemez).
+   * showMoney şartı: onay penceresi TUTARI yazıyor — tutar gizlemenin etrafından
+   * dolaşılmasın (iade butonundaki aynı gerekçe).
+   */
+  const havaleBekliyor =
+    order.paymentMethod === "havale" && payStatus !== "basarili" && !alreadyRefunded;
+  const canConfirmHavale = showMoney && canFullStatus && havaleBekliyor;
+
+  const handleConfirmHavale = () => {
+    if (havaleOnayliyor) return;
+    const ok = window.confirm(
+      `Bu siparişin HAVALE ödemesi ALINDI olarak işaretlenecek.
+
+Sipariş: ${order.orderNumber}
+Beklenen tutar: ${Number(order.total ?? 0).toFixed(2)} ₺
+
+Onaylamadan önce banka ekstresinde bu tutarın geldiğini ve açıklamada sipariş numarasının yazdığını doğrulayın.
+
+Devam edilsin mi?`,
+    );
+    if (!ok) return;
+    setRefundMsg(null);
+    setHavaleOnayliyor(true);
+    startTransition(async () => {
+      const res = await confirmHavalePayment(order.id);
+      setHavaleOnayliyor(false);
+      setRefundMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+    });
+  };
 
   const handleRefund = () => {
     if (refunding) return;
@@ -657,6 +691,32 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
                 >
                   <XCircle size={14} /> Siparişi İptal Et
                 </button>
+              </div>
+            )}
+
+            {/* HAVALE ONAYI — para GELDİ işareti. Havale siparişinde ödeme otomatik
+                doğrulanamaz; ekstreyi gören kişi burada onaylar. */}
+            {havaleBekliyor && (
+              <div className="mb-4 rounded-md border border-brand-500/30 bg-brand-50/50 px-3 py-2.5">
+                <p className="text-xs font-semibold text-ink-900">Havale/EFT bekleniyor</p>
+                <p className="mt-0.5 text-[11px] text-ink-600">
+                  Müşteri havale yapacak. Ekstrede{" "}
+                  <strong className="font-mono">{order.orderNumber}</strong> açıklamalı tutarı
+                  gördüğünüzde onaylayın.
+                </p>
+                {canConfirmHavale ? (
+                  <button
+                    onClick={handleConfirmHavale}
+                    disabled={havaleOnayliyor || isPending}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-success/40 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 disabled:opacity-60"
+                  >
+                    {havaleOnayliyor ? "Onaylanıyor…" : "Ödeme geldi, onayla"}
+                  </button>
+                ) : (
+                  <p className="mt-1.5 text-[11px] text-ink-500">
+                    Onaylama yetkiniz yok.
+                  </p>
+                )}
               </div>
             )}
 

@@ -135,6 +135,26 @@ export class OrdersController {
    * bu izne zaten sahip. Asıl ayrım gövdede: ORDERS_STATUS'u OLMAYAN rol (kargo) yalnız
    * "kargoya-verildi"ye çekebilir; iptal, geri adım ve diğer geçişler kapalı.
    */
+  /**
+   * Havale/EFT ödemesini onayla — para hesaba geçtiğinde admin işaretler.
+   * ORDERS_STATUS izni şart: tutar/ödeme kararı kargo rolünün işi değil.
+   */
+  @Patch(":id/odeme-onayla")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_STATUS)
+  @ApiBearerAuth()
+  odemeOnayla(
+    @Param("id") id: string,
+    @Req() req: Request & { user?: { sub?: string; role?: string } },
+  ) {
+    return this.service.odemeOnayla(id, {
+      actorId: req.user?.sub ?? null,
+      ipAddress: req.ip ?? null,
+      role: req.user?.role,
+    });
+  }
+
   @Patch(":id/status")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")

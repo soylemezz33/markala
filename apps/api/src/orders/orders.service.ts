@@ -10,6 +10,7 @@ import { LoyaltyService } from "../loyalty/loyalty.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 import { computeItemCostTotal } from "./costing";
 import { PERM, roleHasPerm } from "../auth/permissions";
+import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "@markala/types";
 
 /**
  * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.
@@ -651,6 +652,18 @@ export class OrdersService {
       }
     }
 
+    // === Havale/EFT indirimi ===
+    // Kart komisyonu ödenmediği için müşteriye yansıtılır (Hasan, 2026-09-02).
+    // KUPON VE KURUMSAL İNDİRİMDEN SONRA kalan tutara uygulanır: subtotal'ın
+    // tamamı üzerinden verilseydi kupon+kurumsal+havale üst üste binip marjı
+    // yerdi. Puan harcamasından ÖNCE hesaplanır ki puanın harcanabileceği
+    // boşluk (roomTl) doğru daralsın.
+    // Client'a GÜVENİLMEZ: yöntem "havale" ise indirimi sunucu kendisi ekler.
+    const havaleOdeme = input.paymentMethod === ODEME_YONTEMI.havale;
+    if (havaleOdeme) {
+      discount = round2(discount + ((subtotal - discount) * HAVALE_INDIRIM_YUZDE) / 100);
+    }
+
     // === Sadakat puanı harcama (LOYALTY_ENABLED açıksa) ===
     // Puan indirimi mevcut `discount` değişkenine eklenir → KDV/toplam/iyzico sepeti otomatik
     // doğru (payments.service order.discount'ı okur, ek değişiklik gerekmez). Client'a GÜVENİLMEZ:
@@ -746,7 +759,9 @@ export class OrdersService {
           discount: new Prisma.Decimal(discount),
           vat: new Prisma.Decimal(vat),
           total: new Prisma.Decimal(total),
-          paymentMethod: onAccount ? "cari" : input.paymentMethod ?? null,
+          // Havale siparişi paymentStatus=beklemede ile açılır (şemadaki varsayılan):
+          // para gelmeden üretime girmemeli. Admin "ödeme geldi" deyince basarili olur.
+          paymentMethod: onAccount ? ODEME_YONTEMI.cari : input.paymentMethod ?? null,
           // Meta CAPI: onay + eşleşme sinyalleri (yoksa false/null → CAPI sessizce atlar).
           marketingConsent: input.marketingConsent ?? false,
           fbp: input.fbp ?? null,
@@ -1030,6 +1045,62 @@ export class OrdersService {
     }));
     // Misafir siparişinde FK relation null; snapshot'ı adres olarak yüzeye çıkar (admin detay render).
     return parasalAlanlariAyikla(withAddressView({ ...order, items }), role);
+  }
+
+  /**
+   * Havale/EFT ödemesini ONAYLA (admin) — para hesaba geçtikten SONRA çağrılır.
+   *
+   * Neden ayrı uç: havale siparişi paymentStatus="beklemede" açılır, çünkü para
+   * otomatik gelmiyor; eşleştirmeyi insan yapar (ekstredeki açıklamada sipariş
+   * numarası). Bu uç yalnız ÖDEME durumunu değiştirir, sipariş durumuna DOKUNMAZ:
+   * üretime alma kararı admin'in mevcut durum akışında kalır (orada zaten üretim
+   * e-postası gidiyor — burada ikinci bir bildirim kurgusu üretmiyoruz).
+   *
+   * Idempotent: zaten onaylanmış siparişte hata vermez, kaydı aynen döndürür
+   * (panelde çift tıklama kazası ↔ çift onay logu üretmesin).
+   */
+  async odemeOnayla(
+    id: string,
+    actor?: { actorId?: string | null; ipAddress?: string | null; role?: string },
+  ) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      select: { id: true, orderNumber: true, paymentStatus: true, paymentMethod: true, total: true },
+    });
+    if (!order) throw new NotFoundException("Sipariş bulunamadı.");
+    if (order.paymentMethod !== ODEME_YONTEMI.havale) {
+      throw new BadRequestException(
+        "Bu işlem yalnızca havale/EFT siparişleri içindir; kart ödemeleri otomatik onaylanır.",
+      );
+    }
+    if (order.paymentStatus === "basarili") return order;
+
+    const updated = await this.prisma.order.update({
+      where: { id },
+      data: { paymentStatus: "basarili" },
+    });
+
+    // Denetim kaydı — parayı kimin onayladığı izlenebilir olmalı (mali sorumluluk).
+    // Yazım hatası onayı bozmaz.
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actor?.actorId ?? null,
+          entityType: "Order",
+          entityId: id,
+          action: "havale_odeme_onay",
+          diff: {
+            orderNumber: order.orderNumber,
+            tutar: String(order.total),
+            paymentStatus: { from: order.paymentStatus, to: "basarili" },
+            role: actor?.role ?? null,
+          },
+          ipAddress: actor?.ipAddress ?? null,
+        },
+      })
+      .catch((e) => console.error("[audit] havale onayı denetim kaydı yazılamadı:", e?.message));
+
+    return updated;
   }
 
   async updateStatus(

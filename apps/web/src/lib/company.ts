@@ -71,3 +71,10 @@ export const POSTAL_ADDRESS_SCHEMA = {
   addressCountry: ADDRESS.country,
   ...(ADDRESS.postalCode ? { postalCode: ADDRESS.postalCode } : {}),
 } as const;
+
+/**
+ * Havale/EFT hesap bilgileri — asıl tanım packages/types/src/banka.ts'te.
+ * Buradan yeniden dışa açılıyor ki web tarafında "firma bilgisi company.ts'ten
+ * gelir" kuralı bozulmasın; IBAN yine TEK yerde tanımlı kalır.
+ */
+export { BANKA_HESABI, HAVALE_INDIRIM_YUZDE, ODEME_YONTEMI } from "@markala/types";
