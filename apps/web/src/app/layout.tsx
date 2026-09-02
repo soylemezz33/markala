@@ -83,7 +83,15 @@ export const metadata: Metadata = {
       noimageindex: false,
     },
   },
-  formatDetection: { telephone: true, email: true, address: true },
+  // formatDetection KASITLI OLARAK YOK (2026-09-01 SEO denetimi). Burada
+  // `{ telephone: true, email: true, address: true }` yazıyordu ve canlıda tam TERSİNİ
+  // basıyordu: <meta name="format-detection" content="telephone=no, address=no, email=no">.
+  // Sebep Next 14.2'nin kendi davranışı — anahtarın DEĞERİNE bakmıyor, sözlükte adı geçen
+  // her anahtar için "=no" yazıyor (next/dist/lib/metadata/generate/basic.js:
+  //   if (key in formatDetection) { content += `${key}=no` }).
+  // Sonuç: iOS Safari footer künyesindeki düz metin telefonu tıklanabilir yapmıyordu.
+  // Anahtarı hiç yazmamak = meta hiç basılmaz = algılama zaten AÇIK (istenen davranış).
+  // Bir şey "kapatmak" gerekirse değeri false yapmak DEĞİL, anahtarı eklemek yeterlidir.
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
     yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,

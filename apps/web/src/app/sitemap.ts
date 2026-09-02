@@ -5,6 +5,7 @@ import { getLegalSlugs } from "@/lib/legal";
 import { cities, getAllDistrictParams } from "@/lib/cities";
 import { services } from "@/lib/services";
 import { getHelpPaths } from "@/lib/help-center";
+import { PRODUCT_GROUPS } from "@/lib/product-groups";
 
 const SITE = "https://markala.com.tr";
 
@@ -60,8 +61,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Statik/city/service/help gibi girdilerde lastModified BİLEREK yok: her üretimde
   // "bugün" yazmak sahte tazelik sinyalidir (tüm site her gün değişmiş görünür, crawl
   // budget israfı). Gerçek tarih bilinen girdiler (ürün/kategori/blog) kendi tarihini yazar.
+  // ANASAYFA İSTİSNASI (2026-09-01 SEO denetimi): denetimde anasayfanın sitemap girdisinin
+  // yalnız changefreq+priority taşıdığı çıktı — Google bu iki alanı yıllardır TAMAMEN yok
+  // sayar, yani günde birkaç kez içeriği değişen sayfa hiç tazelik sinyali göndermiyordu.
+  //
+  // Yukarıdaki "sahte tarih yazma" kuralı burada ÇİĞNENMİYOR: anasayfanın içeriği gerçekten
+  // katalogla değişiyor (çok satanlar rafı, yeni gelenler rafı). O yüzden uydurma "bugün"
+  // değil, ürünlerin GERÇEK en yeni updatedAt'i yazılır. Hiçbir üründe tarih yoksa alan
+  // yine atlanır — yanlış tarih yazmaktansa hiç yazmamak doğru.
+  const enYeniUrunTarihi = products.reduce<Date | undefined>((enYeni, p) => {
+    if (!p.updatedAt) return enYeni;
+    const t = new Date(p.updatedAt);
+    if (Number.isNaN(t.getTime())) return enYeni;
+    return !enYeni || t > enYeni ? t : enYeni;
+  }, undefined);
+
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((r) => ({
     url: `${SITE}${r.path}`,
+    ...(r.path === "/" && enYeniUrunTarihi ? { lastModified: enYeniUrunTarihi } : {}),
     changeFrequency: r.freq,
     priority: r.priority,
   }));
@@ -74,6 +91,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(p.updatedAt ? { lastModified: new Date(p.updatedAt) } : {}),
     changeFrequency: "weekly",
     priority: p.bestseller ? 0.85 : 0.7,
+  }));
+
+  // Ürün grubu hub'ları (2026-09-01): anasayfa kutularının yeni hedefi. lastModified YOK —
+  // içerikleri kod tarafında sabit (intro metinleri), her üretimde tarih yazmak sahte
+  // tazelik olurdu; statik rotalarla aynı kural.
+  const groupEntries: MetadataRoute.Sitemap = PRODUCT_GROUPS.map((g) => ({
+    url: `${SITE}/kategoriler/${g.slug}`,
+    changeFrequency: "weekly",
+    priority: 0.85,
   }));
 
   const categoryEntries: MetadataRoute.Sitemap = categories.map((c) => ({
@@ -110,11 +136,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: h.priority,
   }));
 
-  // Şehir landing'leri — Mersin priority en yüksek
+  // Şehir landing'leri — 81 il. Öncelik kademeli: Mersin (atölye) > elle
+  // yazılmış 6 komşu il > şablonla üretilen 74 il. Şablon sayfalar da
+  // indekslenmeli ama tarama bütçesinde öne geçmemeli.
   const cityEntries: MetadataRoute.Sitemap = cities.map((c) => ({
     url: `${SITE}/matbaa/${c.slug}`,
-    changeFrequency: "weekly",
-    priority: c.slug === "mersin" ? 0.95 : 0.85,
+    changeFrequency: c.curated ? "weekly" : "monthly",
+    priority: c.slug === "mersin" ? 0.95 : c.curated ? 0.85 : 0.6,
   }));
 
   // İlçe landing'leri — sadece Mersin ilçeleri var şu an
@@ -135,6 +163,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticEntries,
+    ...groupEntries,
     ...cityEntries,
     ...districtEntries,
     ...serviceEntries,

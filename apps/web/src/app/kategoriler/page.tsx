@@ -5,6 +5,7 @@ import { Container } from "@markala/ui";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { getProducts, getCategories } from "@/lib/catalog";
 import { formatPriceDisplay } from "@/lib/format";
+import { PRODUCT_GROUPS } from "@/lib/product-groups";
 
 export const metadata: Metadata = {
   title: "Tüm Kategoriler | Matbaa & Reklam Ürünleri",
@@ -54,6 +55,28 @@ export default async function CategoriesPage() {
       </div>
 
       <Container className="py-12 md:py-16">
+        {/* Ürün grupları (2026-09-01 SEO denetimi): bu hub 28 günde 0 gösterim alıyordu —
+            45 kategorilik düz bir liste, hiçbir arama terimine karşılık gelmiyordu.
+            Grup bağlantıları hem sayfaya yapı kazandırıyor hem de yeni hub'ları besliyor. */}
+        <nav aria-label="Ürün grupları" className="mb-10">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-500">
+            Ürün grupları
+          </h2>
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {PRODUCT_GROUPS.map((g) => (
+              <li key={g.slug}>
+                <Link
+                  href={`/kategoriler/${g.slug}`}
+                  className="inline-block px-3.5 py-2 rounded-full border border-paper-200 bg-paper-50 text-sm font-medium text-ink-700 hover:border-ink-300 hover:text-ink-900 transition-colors"
+                >
+                  {g.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <h2 className="sr-only">Tüm kategoriler</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
           {sorted.map((cat) => {
             const productCount = products.filter(
@@ -81,9 +104,9 @@ export default async function CategoriesPage() {
                   </div>
                 </div>
                 <div className="p-4 flex-1 flex flex-col">
-                  <h2 className="font-semibold text-ink-900 group-hover:text-brand-700 transition-colors">
+                  <h3 className="font-semibold text-ink-900 group-hover:text-brand-700 transition-colors">
                     {cat.name}
-                  </h2>
+                  </h3>
                   <p className="mt-1 text-sm text-ink-500 line-clamp-2">
                     {cat.shortDescription}
                   </p>

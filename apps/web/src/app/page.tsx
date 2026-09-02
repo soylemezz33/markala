@@ -13,6 +13,9 @@ import { ProductRail } from "@/components/home/product-rail";
 import { SectorShowcase } from "@/components/home/sector-showcase";
 import { TrustedBy } from "@/components/home/trusted-by";
 import { CustomerReviews } from "@/components/home/customer-reviews";
+import { AboutMarkala } from "@/components/home/about-markala";
+import { HomeFaq } from "@/components/home/home-faq";
+import { HomeJsonLd } from "@/components/seo/json-ld";
 import { ProcessTimeline } from "@/components/home/process-timeline";
 import { PromoBanner } from "@/components/promo-banner";
 
@@ -27,6 +30,37 @@ export const metadata: Metadata = {
   description:
     "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
   alternates: { canonical: "/" },
+  // OG/Twitter başlıkları BURADA tekrar yazılıyor (2026-09-01 SEO denetimi): denetimde
+  // <title> özenle yazılmışken paylaşım başlığının kök layout'un jenerik varsayılanında
+  // ("Markala | Matbaa ve Reklam Ürünleri") kaldığı çıktı — WhatsApp/LinkedIn'de paylaşılan
+  // her anasayfa linki o zayıf başlıkla görünüyordu.
+  //
+  // DİKKAT: Next `openGraph`/`twitter` nesnelerini derin birleştirmez, KOMPLE değiştirir.
+  // images/url/siteName/locale/type burada tekrar yazılmazsa kaybolur — o yüzden tam liste.
+  openGraph: {
+    type: "website",
+    locale: "tr_TR",
+    siteName: "Markala",
+    url: "https://markala.com.tr",
+    title: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı",
+    description:
+      "750+ matbaa ürünü online. Ebadını ve adedini seç, fiyatı anında gör. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo.",
+    images: [
+      {
+        url: "/og-default.png",
+        width: 1200,
+        height: 630,
+        alt: "Markala - Matbaa ve Reklam Ürünleri",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı",
+    description:
+      "750+ matbaa ürünü online. Fiyatı anında gör, ücretsiz tasarım desteği al, 2-3 iş gününde üretilsin.",
+    images: ["/og-default.png"],
+  },
 };
 
 /**
@@ -85,6 +119,12 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Anasayfaya ÖZEL şema (2026-09-01 SEO denetimi): WebPage + görünen rafların
+          ItemList'i. Liste, sayfada GERÇEKTEN basılan iki raftan beslenir — şema ile
+          görünen içerik uyuşmazlığı Google ihlali sayılır, o yüzden ayrı sorgu yok. */}
+      <HomeJsonLd
+        products={[...bestsellers, ...newArrivals].map((p) => ({ slug: p.slug, name: p.name }))}
+      />
       {/* HowTo JSON-LD kaldırıldı (2026-08): Google HowTo zengin sonucunu Eylül 2023'te
           tüm sonuçlardan çekti — işaretleme artık hiçbir görsel çıktı üretmiyordu.
           Görünen "Üretim Süreci" bölümü (ProcessTimeline) aynen duruyor. */}
@@ -106,7 +146,13 @@ export default async function HomePage() {
         title="Çok satılanlar"
         description="Markala müşterilerinin en çok sipariş ettiği matbaa ürünleri."
         products={bestsellers}
-        viewAllHref="/urunler?sort=popular"
+        // ?sort=popular KALDIRILDI (2026-09-01 SEO denetimi): robots.txt `/*?sort=*`'ı
+        // engelliyordu, yani anasayfanın en görünür iki CTA'sından biri taranması yasak
+        // bir adrese gidiyordu. Parametreyi silmek hiçbir şey kaybettirmiyor: /urunler
+        // sıralamayı URL'den HİÇ okumuyor (all-products-client.tsx useState<SortKey>
+        // varsayılanı zaten "popular"), yani ?sort=popular ölü bir parametreydi ve
+        // sayfa ikisinde de aynı sırayla açılıyordu.
+        viewAllHref="/urunler"
         viewAllLabel="Tüm çok satanlar"
       />
 
@@ -129,6 +175,16 @@ export default async function HomePage() {
       <SectorShowcase />
 
       <CustomerReviews />
+
+      {/* Açıklama metni EN ALTTA (2026-09-01, Hasan onayı): SEO denetiminde anasayfada
+          Markala'nın ne yaptığını anlatan hiç metin olmadığı çıktı. Satın alma akışının
+          önüne geçmesin diye kasıtlı olarak sayfanın sonunda — yukarıdaki rafların ve
+          sektör bloğunun sırası değişmedi. */}
+      <AboutMarkala />
+
+      {/* SSS anlatım metninin ALTINDA: metin "biz kimiz"i anlatır, SSS itirazları karşılar —
+          okuma sırası bu. Sorular admin'den gelir, elle yazılmadı. */}
+      <HomeFaq />
     </>
   );
 }

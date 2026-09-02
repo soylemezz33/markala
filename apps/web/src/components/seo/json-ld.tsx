@@ -605,3 +605,61 @@ export function CategoryJsonLd({ category, products }: { category: Category; pro
     />
   );
 }
+
+/**
+ * Anasayfa düğümü — WebPage + öne çıkan ürünlerin ItemList'i (2026-09-01 SEO denetimi).
+ *
+ * NEDEN: denetimde anasayfada SAYFANIN KENDİSİNİ tanımlayan hiçbir şema olmadığı çıktı.
+ * İki JSON-LD bloğu da kök layout'tan geliyordu (Organization/WebSite ve LocalBusiness) ve
+ * her sayfada aynıydı; GSC URL denetimi de "Zengin sonuç: yok" diyordu.
+ *
+ * `isPartOf` ile #website'a, `about`/`publisher` ile #organization'a bağlanır — böylece
+ * anasayfa, zaten var olan kimlik grafiğinin köküne oturur, ayrı duran bir düğüm olmaz.
+ *
+ * ItemList'e giren ürünler GÖRÜNEN raflarla birebir aynıdır (çok satanlar + yeni gelenler).
+ * Sayfada olmayan ürünü listelemek Google'ın "yapılandırılmış veri görünen içerikle
+ * uyuşmuyor" ihlalidir — o yüzden liste page.tsx'te zaten hesaplanmış dizilerden beslenir.
+ */
+export function HomeJsonLd({
+  products,
+}: {
+  products: Array<{ slug: string; name: string }>;
+}) {
+  const data = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${SITE}/#webpage`,
+        url: `${SITE}/`,
+        name: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı",
+        description:
+          "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo.",
+        inLanguage: "tr-TR",
+        isPartOf: { "@id": `${SITE}/#website` },
+        about: { "@id": `${SITE}/#organization` },
+        publisher: { "@id": `${SITE}/#organization` },
+        primaryImageOfPage: { "@type": "ImageObject", url: `${SITE}/og-default.png` },
+      },
+      {
+        "@type": "ItemList",
+        "@id": `${SITE}/#one-cikan-urunler`,
+        name: "Anasayfada öne çıkan matbaa ürünleri",
+        numberOfItems: products.length,
+        itemListOrder: "https://schema.org/ItemListOrderDescending",
+        itemListElement: products.map((p, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          url: `${SITE}/urun/${p.slug}`,
+          name: p.name,
+        })),
+      },
+    ],
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\u003c") }}
+    />
+  );
+}

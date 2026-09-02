@@ -2,6 +2,7 @@ import { Container } from "@markala/ui";
 import type { Category, Product } from "@markala/types";
 import type { NavCategory } from "@/components/site-header";
 import { CategoryTileLink, type KategoriKutusu } from "@/components/home/category-tile-link";
+import { grubaGoreHref } from "@/lib/product-groups";
 
 /**
  * Hero altı kategori kutuları (2026-08-31) — ilk ekranda katalog girişi.
@@ -86,7 +87,12 @@ export function CategoryTiles({
     const min = enDusukFiyat(products, slugs);
     return {
       label: n.label,
-      href: n.href,
+      // HEDEF DEĞİŞTİ (2026-09-01 SEO denetimi): eskiden doğrudan `n.href` yazılıyordu ve
+      // 8 kutunun 7'si `/urunler?kategoriler=…` filtre adresine gidiyordu — hepsi
+      // `/urunler`'e canonical verdiği için ilk ekranın bağlantı gücü boşa gidiyordu.
+      // grubaGoreHref: grup hub'ı varsa oraya, grup tek kategoriyse o kategoriye,
+      // hiçbiri tutmazsa DB href'ine (yeni grup eklenirse kutu yine çalışır) düşer.
+      href: grubaGoreHref(n.label, n.href),
       imageUrl: temsiliGorsel(categories, slugs),
       fiyat: min > 0 && min <= FIYAT_CIPA_TAVANI ? min : 0,
       izlemeId: slugs[0] ?? n.label,
