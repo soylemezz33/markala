@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { BreadcrumbJsonLd } from '@/components/seo/json-ld';
+import { BreadcrumbJsonLd, LocalBusinessJsonLd } from '@/components/seo/json-ld';
 
 export const metadata: Metadata = {
   title: 'İletişim | Markala',
@@ -17,6 +17,10 @@ export default function IletisimLayout({ children }: { children: React.ReactNode
           { name: 'İletişim', href: '/iletisim' },
         ]}
       />
+      {/* LocalBusiness (2026-09-02 SEO denetimi): eskiden kök layout'tan 900+ sayfada
+          basılıyordu. İşletme kaydı site başına bir kez bildirilir; artık yalnız anasayfa
+          ve burası — Google'ın adres/telefon/çalışma saati beklediği iki sayfa. */}
+      <LocalBusinessJsonLd />
       {children}
     </>
   );

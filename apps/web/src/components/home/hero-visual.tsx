@@ -226,7 +226,12 @@ export function HeroVisual({ slides }: { slides: HeroBannerData[] }) {
         />
         <Image
           src={slide.imageUrl}
-          alt={slide.title}
+          // ALT METNİ (2026-09-02 SEO denetimi): eskiden `slide.title` yazılıyordu ve o alan
+          // admin'de "Yelken Bayrak, Antetli Kağıt, Kartvizit, Vinil Branda, Cam Folyosu"
+          // gibi bir ÜRÜN LİSTESİ tutuyor — görselde ne olduğunu anlatmıyor. Ekran okuyucu
+          // için anlamsız, Google Görseller için zayıf. Başlık artık açıklamanın İÇİNE
+          // konuluyor, tek başına alt metin olarak kullanılmıyor.
+          alt={`Markala baskı ürünleri: ${slide.title}`}
           fill
           sizes="(min-width:1024px) 42vw, 100vw"
           // İlk slayt LCP adayı: preload + fetchpriority=high + eager.

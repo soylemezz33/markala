@@ -8,6 +8,7 @@ import { getProducts, getCategories } from "@/lib/catalog";
 import { formatPriceDisplay } from "@/lib/format";
 import { PRODUCT_GROUPS, getProductGroup } from "@/lib/product-groups";
 import { BreadcrumbJsonLd, CategoryJsonLd } from "@/components/seo/json-ld";
+import { ProductRail } from "@/components/home/product-rail";
 import { KARGO_SURESI, URETIM_SURESI } from "@/lib/delivery";
 
 /**
@@ -79,6 +80,33 @@ export default async function ProductGroupPage({ params }: { params: { grup: str
 
   const kategoriSlugSet = new Set(grupKategorileri.map((c) => c.slug));
   const grupUrunleri = products.filter((p) => kategoriSlugSet.has(p.categorySlug));
+
+  /**
+   * Raf ürünleri — RSC yükünü şişirmemek için ProductCard'ın gerçekten kullandığı
+   * alanlara indirgenir (anasayfadaki slimForCard ile aynı gerekçe: karta giden her alan
+   * sayfa HTML'ine hydration verisi olarak İKİNCİ kez gömülür).
+   */
+  const rafUrunleri = [...grupUrunleri]
+    .filter((p) => (p.images?.length ?? 0) > 0)
+    .sort((a, b) => Number(b.bestseller ?? false) - Number(a.bestseller ?? false))
+    .slice(0, 12)
+    .map((p) => ({
+      slug: p.slug,
+      name: p.name,
+      categorySlug: p.categorySlug,
+      shortDescription: "",
+      description: "",
+      basePrice: p.basePrice,
+      startingPrice: p.startingPrice,
+      productionTime: p.productionTime,
+      sizeLabel: p.sizeLabel,
+      images: p.images.slice(0, 2),
+      badges: p.badges,
+      displayPrice: p.displayPrice,
+      pricingMode: p.pricingMode,
+      rating: p.rating,
+      bestseller: p.bestseller,
+    }));
 
   const breadcrumbs = [
     { name: "Ana Sayfa", href: "/" },
@@ -186,6 +214,28 @@ export default async function ProductGroupPage({ params }: { params: { grup: str
           })}
         </div>
 
+      </Container>
+
+      {/* GRUPTAN ÖNE ÇIKAN ÜRÜNLER (2026-09-02): hub'lar açıldığında yalnız giriş metni +
+          kategori ızgarasından ibaretti. Kullanıcı "matbaa" arayıp buraya düştüğünde tek bir
+          ürün göremiyor, tekrar tıklamak zorunda kalıyordu; Google açısından da ürünsüz bir
+          ara sayfa ince içerik. Raf, gruba giren GERÇEK ürünlerden beslenir.
+
+          SIRALAMA: önce bestseller'lar (getProducts ciro sırasını taşır), sonra kalanlar.
+          GÖRSELSİZ ÜRÜN GİRMEZ — anasayfadaki "Katalogdaki yenilikler" rafında alınan
+          kararın (0b4edfc) aynısı: boş kutu ilk izlenimi bozuyor. */}
+      {rafUrunleri.length > 0 && (
+        <ProductRail
+          eyebrow={grup.label}
+          title="Bu gruptan öne çıkanlar"
+          description={`${grup.label} kategorilerinde en çok tercih edilen ürünler.`}
+          products={rafUrunleri}
+          viewAllHref={`/kategori/${grupKategorileri[0]!.slug}`}
+          viewAllLabel={`${grupKategorileri[0]!.name} ürünlerini gör`}
+        />
+      )}
+
+      <Container className="pb-12 md:pb-16">
         {/* Diğer gruplara yatay bağlantı — hub'lar birbirini besler, aksi hâlde her biri
             yalnız anasayfadan tek link alan yaprak sayfa olurdu. */}
         <div className="mt-14 pt-8 border-t border-paper-200">

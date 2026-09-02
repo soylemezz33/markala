@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { CtaBanner } from "@/components/home/cta-banner";
 import { ThemeBody } from "@/components/theme-body";
 import { CartDrawerLazy } from "@/components/cart/cart-drawer-lazy";
-import { OrganizationJsonLd, LocalBusinessJsonLd } from "@/components/seo/json-ld";
+import { OrganizationJsonLd } from "@/components/seo/json-ld";
 import { Analytics } from "@/components/analytics";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { AttributionCapture } from "@/components/attribution-capture";
@@ -129,7 +129,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
         <OrganizationJsonLd />
-        <LocalBusinessJsonLd />
+        {/* LocalBusinessJsonLd BURADAN KALDIRILDI (2026-09-02 SEO denetimi): her sayfada
+            tekrarlanıyordu. Bir işletmenin fiziksel kaydı sayfa başına değil, SİTE başına
+            bir kez bildirilir; 900+ sayfada tekrarlanan aynı düğüm sinyali güçlendirmiyor,
+            sulandırıyor. Artık yalnız anasayfa ve /iletisim basıyor — Google'ın işletme
+            kaydını beklediği iki sayfa. */}
       </head>
       <body className="min-h-screen bg-paper-50 flex flex-col">
         {/* Skip-to-content link — WCAG 2.4.1 Bypass Blocks */}

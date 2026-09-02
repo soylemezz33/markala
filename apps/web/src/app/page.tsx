@@ -15,7 +15,8 @@ import { TrustedBy } from "@/components/home/trusted-by";
 import { CustomerReviews } from "@/components/home/customer-reviews";
 import { AboutMarkala } from "@/components/home/about-markala";
 import { HomeFaq } from "@/components/home/home-faq";
-import { HomeJsonLd } from "@/components/seo/json-ld";
+import { GuidesRail } from "@/components/home/guides-rail";
+import { HomeJsonLd, LocalBusinessJsonLd } from "@/components/seo/json-ld";
 import { ProcessTimeline } from "@/components/home/process-timeline";
 import { PromoBanner } from "@/components/promo-banner";
 
@@ -125,6 +126,9 @@ export default async function HomePage() {
       <HomeJsonLd
         products={[...bestsellers, ...newArrivals].map((p) => ({ slug: p.slug, name: p.name }))}
       />
+      {/* LocalBusiness artık kök layout'ta değil (900+ sayfada tekrarlanıyordu); işletme
+          kaydını beklenen iki sayfa basıyor: burası ve /iletisim. */}
+      <LocalBusinessJsonLd />
       {/* HowTo JSON-LD kaldırıldı (2026-08): Google HowTo zengin sonucunu Eylül 2023'te
           tüm sonuçlardan çekti — işaretleme artık hiçbir görsel çıktı üretmiyordu.
           Görünen "Üretim Süreci" bölümü (ProcessTimeline) aynen duruyor. */}
@@ -180,6 +184,12 @@ export default async function HomePage() {
           Markala'nın ne yaptığını anlatan hiç metin olmadığı çıktı. Satın alma akışının
           önüne geçmesin diye kasıtlı olarak sayfanın sonunda — yukarıdaki rafların ve
           sektör bloğunun sırası değişmedi. */}
+      {/* Rehberler — açıklama metninin ÜSTÜNDE (2026-09-02): sitenin en çok gösterim alan
+          sayfaları rehber/blog yazıları ama anasayfadan hiç link almıyorlardı. Buraya
+          konuldu çünkü hâlâ sayfanın alt yarısı ama "biz kimiz" metninden önce gelmesi
+          okuma sırası açısından doğru: önce işine yarayacak içerik, sonra kurumsal anlatım. */}
+      <GuidesRail />
+
       <AboutMarkala />
 
       {/* SSS anlatım metninin ALTINDA: metin "biz kimiz"i anlatır, SSS itirazları karşılar —
