@@ -22,8 +22,25 @@ const RANGES = [
   { label: "Tümü", days: null as number | null },
 ];
 
+function MutabakatSatir({
+  label,
+  value,
+  negatif,
+}: {
+  label: string;
+  value: string;
+  negatif?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <dt className="text-ink-700">{label}</dt>
+      <dd className={negatif ? "text-warning" : "text-ink-900"}>{value}</dd>
+    </div>
+  );
+}
+
 export function ProfitClient({ data, days }: { data: AdminProfitDto; days: number | null }) {
-  const { toplam, urunler, aylik, kapsam } = data;
+  const { toplam, urunler, aylik, kapsam, mutabakat } = data;
   const enIyi = urunler.filter((u) => u.kar !== null).slice(0, 8);
   const maliyetsiz = urunler.filter((u) => u.kar === null);
   // Aylık grafik için ölçek — en yüksek ciro 100% kabul edilir.
@@ -41,7 +58,8 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
           </Link>
           <h1 className="text-2xl font-semibold text-ink-900">Ciro & Kâr Analizi</h1>
           <p className="mt-1 text-sm text-ink-500">
-            Ciro <strong>KDV hariçtir</strong>; kargo bedeli kâra dahil edilmez.
+            Ciro <strong>KDV hariç</strong> ve <strong>indirimler düşülmüştür</strong>; kargo
+            bedeli kâra dahil edilmez.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -76,6 +94,45 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
           tone="text-success"
         />
       </div>
+
+      {/*
+        MUTABAKAT — panelde "Toplam Ciro 25.401,63" derken burada "Ciro 20.977,28"
+        yazması çelişki gibi görünüyordu (Hasan sordu). İkisi farklı şeyleri ölçüyor;
+        aradaki köprü artık ekranda. Rakamlar dashboard ile AYNI sipariş kümesinden.
+      */}
+      <section className="mt-4 rounded-xl border border-paper-200 bg-paper-50 p-4">
+        <h2 className="text-sm font-semibold text-ink-900">
+          Paneldeki &ldquo;Toplam Ciro&rdquo; ile bu sayfa nasıl bağlanıyor?
+        </h2>
+        <dl className="mt-3 space-y-1.5 text-sm">
+          <MutabakatSatir
+            label="Ürün ara toplamı (KDV dahil, indirim öncesi)"
+            value={TL(mutabakat.urunAraToplam)}
+          />
+          <MutabakatSatir
+            label="İndirimler (kupon, kurumsal, puan, havale)"
+            value={`− ${TL(mutabakat.indirim)}`}
+            negatif
+          />
+          <MutabakatSatir label="Kargo bedeli (kâra katılmaz)" value={`+ ${TL(mutabakat.kargo)}`} />
+          <div className="flex items-center justify-between border-t border-paper-200 pt-2 font-semibold text-ink-900">
+            <dt>Panelde görünen Toplam Ciro</dt>
+            <dd>{TL(mutabakat.tahsilEdilen)}</dd>
+          </div>
+          <div className="flex items-center justify-between pt-2 text-ink-500">
+            <dt>Bunun içindeki KDV (devlete ait, kâr değil)</dt>
+            <dd>{TL(mutabakat.kdv)}</dd>
+          </div>
+          <div className="flex items-center justify-between border-t border-paper-200 pt-2 font-semibold text-brand-700">
+            <dt>Bu sayfadaki Ciro (KDV hariç, indirim düşülmüş)</dt>
+            <dd>{TL(toplam.ciro)}</dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-xs text-ink-500">
+          {mutabakat.siparisSayisi} sipariş üzerinden. Kâr; KDV ve kargo hariç tutarlar
+          üzerinden hesaplanır — ikisi de bize kalan gelir değildir.
+        </p>
+      </section>
 
       {/* Maliyeti girilmemiş ciro uyarısı — sessizce %100 kâr göstermemek için ŞART. */}
       {toplam.maliyetiBilinmeyenCiro > 0 && (

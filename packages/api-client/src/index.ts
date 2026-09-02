@@ -1208,6 +1208,20 @@ export function createMarkalaClient(opts?: Partial<ApiClientConfig>): MarkalaApi
 
 export interface AdminProfitDto {
   kapsam: { gunSayisi: number | null; kalemSayisi: number; not: string };
+  /**
+   * Dashboard'daki "Toplam Ciro" ile bu sayfanın ilişkisi:
+   *   tahsilEdilen = urunAraToplam − indirim + kargo
+   *   toplam.ciro  = (urunAraToplam − indirim) ÷ 1,2
+   * İkisi farklı şeyleri ölçer; bu blok olmadan çelişki gibi görünüyordu.
+   */
+  mutabakat: {
+    siparisSayisi: number;
+    urunAraToplam: number;
+    indirim: number;
+    kargo: number;
+    tahsilEdilen: number;
+    kdv: number;
+  };
   toplam: {
     ciro: number;
     maliyet: number;

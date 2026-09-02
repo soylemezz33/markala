@@ -11,6 +11,7 @@ const ALLOWED_DAYS = [30, 90, 365] as const;
 function emptyProfit(days: number | null): AdminProfitDto {
   return {
     kapsam: { gunSayisi: days, kalemSayisi: 0, not: "" },
+    mutabakat: { siparisSayisi: 0, urunAraToplam: 0, indirim: 0, kargo: 0, tahsilEdilen: 0, kdv: 0 },
     toplam: { ciro: 0, maliyet: 0, kar: 0, marjYuzde: null, maliyetiBilinmeyenCiro: 0 },
     urunler: [],
     aylik: [],
