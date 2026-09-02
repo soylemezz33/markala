@@ -51,6 +51,21 @@ export async function generateMetadata({
   const grup = getProductGroup(params.grup);
   if (!grup) return {};
   const url = `/kategoriler/${grup.slug}`;
+
+  // OG GÖRSELİ (2026-09-02): yedi hub da /og-default.png kullanıyordu, yani WhatsApp'ta
+  // paylaşılan yedi farklı link aynı jenerik kartla görünüyordu. Grubun ilk kategorisinin
+  // GERÇEK görseli varsa onu kullan. getCategories hata/boş dönerse sessizce varsayılana
+  // düşer — metadata üretimi hiçbir koşulda sayfayı düşürmemeli.
+  let ogImage = "/og-default.png";
+  try {
+    const categories = await getCategories();
+    const ilk = grup.categorySlugs
+      .map((slug) => categories.find((c) => c.slug === slug))
+      .find((c) => c?.imageUrl);
+    if (ilk?.imageUrl) ogImage = ilk.imageUrl;
+  } catch {
+    // varsayılan kalır
+  }
   return {
     // absolute: kök layout'un "%s · Markala" şablonu bu alt ağaçta geçerli değil
     // (/kategoriler/layout.tsx düz string title verdiği için zincir kopuyor), o yüzden
@@ -65,13 +80,13 @@ export async function generateMetadata({
       url,
       title: `${grup.title} · Markala`,
       description: grup.description,
-      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: grup.label }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: grup.label }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${grup.title} · Markala`,
       description: grup.description,
-      images: ["/og-default.png"],
+      images: [ogImage],
     },
   };
 }

@@ -8,6 +8,7 @@ import { AllProductsClient } from "@/app/urunler/all-products-client";
 import { CategoryJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/seo/json-ld";
 import { formatPriceDisplay } from "@/lib/format";
 import type { Metadata } from "next";
+import { kategoriyeGoreGrup } from "@/lib/product-groups";
 
 interface Props {
   params: { slug: string };
@@ -167,9 +168,16 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   // fetch Data Cache katmanındadır; cache'te son başarılı veri varken blip kullanıcıya yansımaz.
   const products = await getProductsByCategory(cat.slug, { strict: true });
 
+  // GRUP KATMANI (2026-09-02): kategori, ait olduğu ürün grubu hub'ının altına yerleşir.
+  // 41 kategori sayfasının her biri hub'a bir iç link verir ve kırıntı yolu gerçek yapıyı
+  // gösterir. Kartvizit gibi hub'ı olmayan kategoride satır hiç basılmaz.
+  const kategoriGrubu = kategoriyeGoreGrup(cat.slug);
   const breadcrumbs = [
     { name: "Anasayfa", href: "/" },
     { name: "Ürünler", href: "/urunler" },
+    ...(kategoriGrubu
+      ? [{ name: kategoriGrubu.label, href: `/kategoriler/${kategoriGrubu.slug}` }]
+      : []),
     { name: cat.name, href: `/kategori/${cat.slug}` },
   ];
 
@@ -195,6 +203,18 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             <Link href="/urunler" className="hover:text-ink-900 transition-colors">
               Ürünler
             </Link>
+            {/* Dar ekranda gizli ama DOM'da — bkz. /urun/[slug]'daki aynı desen. */}
+            {kategoriGrubu && (
+              <span className="hidden sm:flex items-center gap-1.5">
+                <CaretRight size={12} />
+                <Link
+                  href={`/kategoriler/${kategoriGrubu.slug}`}
+                  className="hover:text-ink-900 transition-colors"
+                >
+                  {kategoriGrubu.label}
+                </Link>
+              </span>
+            )}
             <CaretRight size={12} />
             <span className="text-ink-900 font-medium">{cat.name}</span>
           </nav>
