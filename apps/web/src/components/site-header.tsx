@@ -363,6 +363,15 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
   const [megaMode, setMegaMode] = useState<"all" | "single">("all");
   const [megaIndex, setMegaIndex] = useState(0);
   const megaCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * Fare HAREKET ETMEDEN gelen hover'ı yok say (2026-09-02, Hasan bildirdi).
+   * Menü çubuğu `{!scrolled && …}` ile render ediliyor; aşağı kaydırınca DOM'dan
+   * kalkıyor, yukarı çıkınca geri geliyor. Sekme, HAREKETSİZ farenin altında
+   * yeniden belirdiği için tarayıcı `mouseenter`'ı tekrar ateşliyor ve menü
+   * kullanıcı hiçbir şey yapmadan açılıyordu.
+   * Kilit, çubuk gizlendiğinde kurulur; ilk GERÇEK fare hareketinde açılır.
+   */
+  const hoverKilitli = useRef(false);
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
 
@@ -370,11 +379,13 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
   const megaItems = useMemo(() => NAV.filter((n) => n.groups && n.groups.length > 0), [NAV]);
 
   const openAll = () => {
+    if (hoverKilitli.current) return; // yeniden monte olmadan gelen sahte hover
     if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
     setMegaMode("all");
     setMegaOpen(true);
   };
   const openSingle = (i: number) => {
+    if (hoverKilitli.current) return; // yeniden monte olmadan gelen sahte hover
     if (megaCloseTimer.current) clearTimeout(megaCloseTimer.current);
     setMegaMode("single");
     setMegaIndex(i);
@@ -405,6 +416,47 @@ export function SiteHeader({ nav }: { nav?: NavCategory[] } = {}) {
   // Effect 1: mounted flag — hidrasyon-sonrası client-only render gate
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  /**
+   * Effect 1b: SAYFA KAYDIRILINCA AÇIK MEGA MENÜYÜ KAPAT.
+   *
+   * Hata (Hasan bildirdi, 2026-09-02): sekme üzerinde hover varken aşağı kaydırınca
+   * menü gözden kayboluyor ama YUKARI çıkınca fare nerede olursa olsun geri açılıyordu.
+   *
+   * Sebep: menü çubuğu `{!scrolled && (...)}` ile render ediliyor — kaydırınca DOM'dan
+   * TAMAMEN kalkıyor. Eleman kalkınca `onMouseLeave` HİÇ ateşlenmiyor, dolayısıyla
+   * `megaOpen` true kalıyor. Yukarı çıkıp çubuk yeniden monte olduğunda state hâlâ
+   * "açık" dediği için panel kendiliğinden açılıyordu.
+   *
+   * (Kullanıcının gözlemi bunu doğruluyor: kaydırmadan önce hover'ı çekince
+   * onMouseLeave çalışıp state temizlendiği için sorun yaşanmıyordu.)
+   *
+   * Çözüm state'i kaynağında temizlemek: çubuk gizlendiği anda menü de kapanmış sayılır.
+   * Bekleyen kapanma zamanlayıcısı da iptal edilir — yeniden monte olduktan sonra
+   * ateşleyip yeni bir hover'ı yanlışlıkla kapatmasın.
+   */
+  useEffect(() => {
+    if (!scrolled) return;
+    if (megaCloseTimer.current) {
+      clearTimeout(megaCloseTimer.current);
+      megaCloseTimer.current = null;
+    }
+    setMegaOpen(false);
+    // Çubuk geri geldiğinde fare kıpırdamadan açılmasın diye kilidi kur.
+    hoverKilitli.current = true;
+  }, [scrolled]);
+
+  /**
+   * Kilidi ilk GERÇEK fare hareketinde aç. Tekerlekle kaydırma pointermove
+   * üretmez; dolayısıyla kilit yalnız kullanıcı fareyi bilerek oynattığında kalkar.
+   */
+  useEffect(() => {
+    const ac = () => {
+      hoverKilitli.current = false;
+    };
+    window.addEventListener("pointermove", ac, { passive: true });
+    return () => window.removeEventListener("pointermove", ac);
   }, []);
 
   // Effect 2: scroll (rAF debounced) + keyboard (Cmd+K aç, Escape kapat)
