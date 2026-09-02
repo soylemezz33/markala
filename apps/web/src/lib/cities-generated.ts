@@ -74,19 +74,14 @@ put(
 );
 
 /**
- * Bölgeye göre KARGO süresi (iş günü, üretim HARİÇ).
- * Not: bunlar tahmini transit süreleridir; /matbaa sayfasının "2-4 iş günü"
- * vaadiyle uyumlu tutuldu. Kargo anlaşması değişirse TEK YERDEN güncellenir.
+ * KARGO süresi (iş günü, üretim HARİÇ) — TÜM İLLERDE AYNI.
+ *
+ * 2026-09-02 (Hasan kararı: "kargo süresi herkese aynı yaz"): önceden bölgeye
+ * göre 2-3 / 3-4 ayrımı vardı ve elle yazılan 7 il 1-2 gün diyordu. Tek değere
+ * indirildi; sayfalardaki "komşu ilde daha hızlı" ifadeleri de temizlendi.
+ * Değişirse YALNIZ burası ve cities.ts'teki 7 ilin deliveryDays'i güncellenir.
  */
-const DELIVERY: Record<Region, { min: number; max: number }> = {
-  akdeniz: { min: 2, max: 3 },
-  guneydogu: { min: 2, max: 3 },
-  "ic-anadolu": { min: 2, max: 3 },
-  ege: { min: 3, max: 4 },
-  marmara: { min: 3, max: 4 },
-  karadeniz: { min: 3, max: 4 },
-  "dogu-anadolu": { min: 3, max: 4 },
-};
+export const KARGO_GUN = { min: 2, max: 4 };
 
 /** Bölgeye özgü bağlam cümlesi — sayfalar birbirinin kopyası olmasın diye. */
 const REGION_SENTENCE: Record<Region, string> = {
@@ -95,7 +90,7 @@ const REGION_SENTENCE: Record<Region, string> = {
   ege:
     "Tarım, turizm ve üretim işletmelerinin bir arada olduğu bölgede sezonluk tanıtım işleriyle kalıcı tabela-levha işleri birlikte yürür.",
   akdeniz:
-    "Atölyemize en yakın bölge olduğu için kargo süresi kısadır; turizm ve tarım işletmelerinin sezon başı toplu baskı ihtiyacı yoğundur.",
+    "Turizm ve tarım işletmelerinin yoğun olduğu bölgede sezon başı toplu menü, broşür ve etiket baskısı öne çıkar.",
   "ic-anadolu":
     "Organize sanayi bölgeleri ve lojistik hatları nedeniyle iş güvenliği levhaları ile kurumsal kimlik ürünleri en çok istenen kalemlerdir.",
   karadeniz:
@@ -174,7 +169,7 @@ function regionOf(il: string): Region {
 
 function buildCity(il: string, ilceler: string[]): CityData {
   const region = regionOf(il);
-  const d = DELIVERY[region];
+  const d = KARGO_GUN;
   const n = ilceler.length;
 
   return {
