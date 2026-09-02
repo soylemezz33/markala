@@ -16,7 +16,7 @@ function parseRefreshFromSetCookie(setCookies: string[]): string | null {
   return null;
 }
 
-export async function middleware(req: NextRequest) {
+async function middlewareInner(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname === "/robots.txt") {
@@ -120,6 +120,21 @@ export async function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+// ── ÖNBELLEK KİLİDİ (2026-09-02, olay) ────────────────────────────────────────
+// Cloudflare'da vitrin için yazılmış "path eq /" cache kuralı host koşulu taşımadığı
+// için admin.markala.com.tr/ da 120 sn kenar önbelleğine girdi ve giriş yapmış bir
+// kullanıcının panosu (izin listesi, son siparişler) OTURUMSUZ isteklere de servis
+// edildi (Hasan: "başka makinede admin girince tasarımcı arayüzü karşılıyor").
+// Kural düzeltildi; ama panel ARTIK KENDİ KENDİNİ korur: statik varlıklar hariç
+// (matcher dışı, immutable önbellekleri kalır) her yanıt — sayfa, yönlendirme,
+// /api/* — "private, no-store" taşır. Hiçbir CDN/proxy kuralı bunu aşamaz; ileride
+// benzer bir kural yazılsa bile paylaşımlı önbellek hep boş kalır.
+export async function middleware(req: NextRequest) {
+  const res = await middlewareInner(req);
+  res.headers.set("Cache-Control", "private, no-store");
+  return res;
 }
 
 export const config = {
