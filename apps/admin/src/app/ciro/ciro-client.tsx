@@ -68,8 +68,10 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
           </Link>
           <h1 className="text-2xl font-semibold text-ink-900">Ciro & Kâr Analizi</h1>
           <p className="mt-1 text-sm text-ink-500">
-            Ciro <strong>KDV hariç</strong> ve <strong>indirimler düşülmüştür</strong>; kargo
-            bedeli kâra dahil edilmez.
+            Buradaki ciro <strong>bize kalan</strong> tutardır: KDV ve kargo çıkarılmış,
+            indirimler düşülmüştür. Paneldeki “Toplam Ciro” ise müşterinin{" "}
+            <strong>ödediği</strong> tutardır (KDV + kargo dahil) — ikisi farklı şeyleri
+            ölçer, aşağıdaki tabloda adım adım bağlanıyor.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -94,7 +96,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
 
       {/* KPI şeridi */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Kpi label="Ciro (KDV hariç)" value={TL(toplam.ciro)} icon={<TrendUp size={18} />} tone="text-brand-700" />
+        <Kpi label="Net ciro (KDV ve kargo hariç)" value={TL(toplam.ciro)} icon={<TrendUp size={18} />} tone="text-brand-700" />
         <Kpi label="Maliyet" value={TL(toplam.maliyet)} icon={<Coins size={18} />} tone="text-ink-700" />
         <Kpi label="Kâr" value={TL(toplam.kar)} icon={<ChartPieSlice size={18} />} tone="text-success" big />
         <Kpi
