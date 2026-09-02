@@ -1100,6 +1100,23 @@ export class OrdersService {
       })
       .catch((e) => console.error("[audit] havale onayı denetim kaydı yazılamadı:", e?.message));
 
+    /**
+     * Sunucu-taraflı Purchase dönüşümü — havalede TEK KAYNAK burasıdır.
+     *
+     * Kartta dönüşümü tarayıcı ateşler (başarı sayfası). Havalede o an para
+     * GELMEMİŞTİR; ödenmemiş siparişi dönüşüm saymak Ads/GA4'ü şişirir. Bu
+     * yüzden istemci havale siparişinde purchase ATEŞLEMEZ (bkz.
+     * /odeme/basarili/[orderId]/page.tsx) ve gerçek dönüşüm PARANIN GELDİĞİ
+     * an, yani burada bildirilir.
+     *
+     * Meta CAPI event_id = orderNumber olduğundan tekrar çağrılsa bile Meta
+     * tarafında tekilleşir; ayrıca bu uç idempotent (zaten onaylıysa yukarıda
+     * döner), dolayısıyla çift sayım iki katmanda da engellenmiş olur.
+     * Pazarlama onayı yoksa sendPurchase kendi içinde atlar (KVKK).
+     * Hata dönüşü ödemeyi bozmaz — void + catch.
+     */
+    void this.metaCapi.sendPurchase(id).catch(() => undefined);
+
     return updated;
   }
 

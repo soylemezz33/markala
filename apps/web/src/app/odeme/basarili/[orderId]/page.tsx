@@ -60,8 +60,19 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
         if (cancelled) return;
         if (srv && !local) setOrder(srv as unknown as Order); // store boşsa sunucudan doldur
         const ok = !!srv && (srv.paymentStatus === "basarili" || (isCari && srv.paymentMethod === "cari"));
+        /**
+         * Havale siparişinde purchase'ı İSTEMCİ ATEŞLEMEZ — dönüşümü sunucu,
+         * ödemenin onaylandığı an bildirir (orders.service.ts > odemeOnayla).
+         *
+         * Neden: havalede sipariş anında para gelmemiştir. Ödeme onaylandıktan
+         * sonra müşteri bu sayfayı tekrar açarsa paymentStatus="basarili" gelir
+         * ve buradan da ateşlenirdi → aynı sipariş İKİ KEZ sayılırdı (2026-08
+         * çift sayım olayının tekrarı). Ekran "ödemen alındı" göstermeye devam
+         * eder; yalnız dönüşüm bildirimi sunucuya bırakılır.
+         */
+        const donusumuSunucuBildirir = srv?.paymentMethod === "havale";
         setPaymentConfirmed(ok);
-        if (ok) {
+        if (ok && !donusumuSunucuBildirir) {
           // SUNUCU verisi öncelikli: local (store) siparişi client fiyatlarıyla kurulmuştur;
           // fiyat sapması varsa GA4/Meta purchase value yanlış gider. srv elimizdeyken onu kullan.
           const src = (srv as unknown as Order) ?? local;
