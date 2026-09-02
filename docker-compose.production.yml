@@ -60,6 +60,12 @@ services:
       # aktif olur (GERÇEK PARA etkisi: ~%1 geri kazanım). Varsayılan false → dark-launch güvenli.
       # Go-live: VPS .env'de LOYALTY_ENABLED=true set edip yeniden deploy et.
       LOYALTY_ENABLED: ${LOYALTY_ENABLED:-false}
+      # Google Drive aktarimi (2026-09-03): tasarimci calisma/baski dosyalari siparis klasorune tasinir.
+      # Dordu de doluysa acik, biri bossa KAPALI (dosyalar sunucuda kalir). Degerler .env.production icinde.
+      GOOGLE_DRIVE_CLIENT_ID: ${GOOGLE_DRIVE_CLIENT_ID:-}
+      GOOGLE_DRIVE_CLIENT_SECRET: ${GOOGLE_DRIVE_CLIENT_SECRET:-}
+      GOOGLE_DRIVE_REFRESH_TOKEN: ${GOOGLE_DRIVE_REFRESH_TOKEN:-}
+      GOOGLE_DRIVE_ROOT_FOLDER_ID: ${GOOGLE_DRIVE_ROOT_FOLDER_ID:-}
       # Integrations
       IYZICO_API_KEY: ${IYZICO_API_KEY}
       IYZICO_SECRET: ${IYZICO_SECRET}
