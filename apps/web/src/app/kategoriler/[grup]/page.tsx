@@ -8,6 +8,7 @@ import { getProducts, getCategories } from "@/lib/catalog";
 import { formatPriceDisplay } from "@/lib/format";
 import { PRODUCT_GROUPS, getProductGroup } from "@/lib/product-groups";
 import { BreadcrumbJsonLd, CategoryJsonLd } from "@/components/seo/json-ld";
+import { KARGO_SURESI, URETIM_SURESI } from "@/lib/delivery";
 
 /**
  * Ürün grubu hub sayfası (2026-09-01 SEO denetimi, B seçeneği).
@@ -125,8 +126,8 @@ export default async function ProductGroupPage({ params }: { params: { grup: str
           </h1>
           <p className="mt-4 text-lg text-ink-700 leading-relaxed">{grup.intro}</p>
           <p className="mt-4 text-sm text-ink-500">
-            {grupKategorileri.length} kategori · {grupUrunleri.length} ürün · 2-3 iş günü
-            üretim · 81 ile kargo
+            {grupKategorileri.length} kategori · {grupUrunleri.length} ürün ·{" "}
+            {URETIM_SURESI} üretim · 81 ile kargo {KARGO_SURESI}
           </p>
         </Container>
       </div>

@@ -1,3 +1,5 @@
+import { URETIM_SURESI } from "./delivery";
+
 /**
  * ÜRÜN GRUPLARI — menüdeki 8 grubun İNDEKSLENEBİLİR karşılığı (2026-09-01 SEO denetimi).
  *
@@ -47,7 +49,7 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
     h1: "Matbaa ve broşür baskı",
     title: "Matbaa ve Broşür Baskı — Broşür, Afiş, Antetli",
     description:
-      "Broşür, el ilanı, afiş, etiket, antetli kağıt, zarf, cepli dosya, makbuz ve bloknot baskısı. Ebadını ve adedini seç, fiyatı anında gör. 2-3 iş günü üretim, 81 ile kargo.",
+      `Broşür, el ilanı, afiş, etiket, antetli kağıt, zarf, cepli dosya, makbuz ve bloknot baskısı. Ebadını ve adedini seç, fiyatı anında gör. ${URETIM_SURESI} üretim, 81 ile kargo.`,
     intro:
       "Klasik matbaa işlerinin tamamı bu başlık altında: kuşe ve 1. hamur kâğıda broşür, el ilanı, afiş; kurumsal kırtasiye tarafında antetli kağıt, diplomat ve torba zarf, cepli dosya, NCR makbuz; yapışkanlı etiket ve bloknot çeşitleri. Her üründe gramaj, ebat, tek/çift yön ve selefon seçenekleri konfigüratörden seçilir; tutar KDV dahil anında görünür.",
     categorySlugs: [
@@ -68,7 +70,7 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
     h1: "Bayrak ve stand baskı",
     title: "Bayrak & Stand — Yelken Bayrak, Roll-Up",
     description:
-      "Yelken bayrak, kırlangıç bayrak, masa ve makam bayrağı, roll-up, vinil branda afiş. Fuar, mağaza ve etkinlik için hazır çözümler. 2-3 iş günü üretim.",
+      `Yelken bayrak, kırlangıç bayrak, masa ve makam bayrağı, roll-up, vinil branda afiş. Fuar, mağaza ve etkinlik için hazır çözümler. ${URETIM_SURESI} üretim.`,
     intro:
       "Fuar, mağaza önü ve etkinlik tanıtımı için kullanılan dış mekân görünürlük ürünleri: rüzgârda okunur kalan yelken ve kırlangıç bayraklar, toplantı masası için krom direkli masa bayrağı, saten püsküllü makam bayrağı, taşınabilir roll-up standlar ve dilediğiniz ebatta vinil branda afiş. Direk, ayak ve taşıma çantası gibi aparatlar ürün sayfasında ayrıca seçilir.",
     categorySlugs: [

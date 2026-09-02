@@ -16,6 +16,7 @@ import { calculateTotal, getDisplayPrice } from "@/lib/configurator";
 import { formatPriceWithSymbol, formatPriceDisplay } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
 import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
+import { KARGO_SURESI } from "@/lib/delivery";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -126,7 +127,7 @@ export default async function BrosurFiyatlariPage() {
     },
     {
       q: "Broşür kaç günde teslim edilir?",
-      a: `Üretim süresi ${matrix.productionTime || "2-3 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Yoğun kampanya dönemleri için siparişi dağıtım tarihinden birkaç gün önce vermeni öneririz.`,
+      a: `Üretim süresi ${matrix.productionTime || "2-3 iş günü"}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Yoğun kampanya dönemleri için siparişi dağıtım tarihinden birkaç gün önce vermeni öneririz.`,
     },
   ];
 

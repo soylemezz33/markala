@@ -1,3 +1,4 @@
+import { KARGO_SURESI, URETIM_SURESI, TOPLAM_SURE } from "./delivery";
 /**
  * Yardım Merkezi veri katmanı — kategori → makale iki seviyeli yapı.
  *
@@ -391,9 +392,9 @@ export const HELP_CATEGORIES: HelpCategory[] = [
       {
         slug: "teslimat-suresi-ne-kadar",
         question: "Teslimat süresi ne kadar?",
-        description: "Üretim + kargo süresi: çoğu üründe toplam 3-6 iş günü; şehirlere göre farklar.",
+        description: `Üretim + kargo süresi: çoğu üründe toplam ${TOPLAM_SURE}.`,
         shortAnswer:
-          "Çoğu üründe üretim 2-3 iş günü sürer; buna DHL kargo süresi (1-3 iş günü) eklenir. Toplamda siparişiniz genellikle 3-6 iş günü içinde elinizde olur. Büyük ebatlı veya özel üretim işlerde süre 7 iş gününe uzayabilir.",
+          `Çoğu üründe üretim ${URETIM_SURESI} sürer; buna DHL kargo süresi (${KARGO_SURESI}) eklenir. Toplamda siparişiniz genellikle ${TOPLAM_SURE} içinde elinizde olur. Büyük ebatlı veya özel üretim işlerde süre daha uzun olabilir.`,
         keywords: ["teslimat süresi", "kaç günde gelir", "ne zaman gelir", "üretim süresi"],
         sections: [
           { heading: "Üretim Süresi", body: "Kartvizit, broşür gibi standart işler 2-3 iş günü; branda, tabela, özel kesim gibi işler 3-7 iş günü sürebilir. Her ürünün sayfasında tahmini üretim süresi belirtilir." },

@@ -16,6 +16,7 @@ import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
 import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
+import { KARGO_SURESI } from "@/lib/delivery";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -96,7 +97,7 @@ export default async function AfisFiyatlariPage() {
     },
     {
       q: "Afiş kaç günde teslim edilir?",
-      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Etkinlik/kampanya tarihine birkaç gün pay bırakmanı öneririz.`,
+      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Etkinlik/kampanya tarihine birkaç gün pay bırakmanı öneririz.`,
     },
     {
       q: "Tasarımım yok, afişi kim hazırlayacak?",

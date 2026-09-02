@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "@markala/ui";
+import { KARGO_SURESI, URETIM_SURESI } from "@/lib/delivery";
 
 /**
  * Anasayfa açıklama metni (2026-09-01 SEO denetimi, Hasan onayı).
@@ -90,8 +91,8 @@ export function AboutMarkala() {
             <h3 className="text-lg font-semibold text-ink-900">Nerede üretiliyor, nereye gidiyor?</h3>
             <p className="mt-2.5 text-ink-700 leading-relaxed">
               Üretim Mersin&#39;deki atölyemizde yapılıyor, sevkiyat DHL ve Aras Kargo ile
-              Türkiye&#39;nin 81 iline gidiyor. Standart işlerde üretim 2-3 iş günü, kargo
-              2-4 iş günü sürüyor.{" "}
+              Türkiye&#39;nin 81 iline gidiyor. Standart işlerde üretim {URETIM_SURESI},
+              kargo {KARGO_SURESI} sürüyor.{" "}
               <Link href="/matbaa" className="text-brand-700 font-medium hover:underline">
                 Şehir sayfalarımızda
               </Link>{" "}

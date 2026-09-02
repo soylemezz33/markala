@@ -16,6 +16,7 @@ import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
 import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
+import { KARGO_SURESI } from "@/lib/delivery";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -108,7 +109,7 @@ export default async function RollupFiyatlariPage() {
     },
     {
       q: "Roll-up kaç günde teslim edilir?",
-      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Fuar/etkinlik tarihin belliyse siparişi birkaç gün önceden vermeni öneririz.`,
+      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Fuar/etkinlik tarihin belliyse siparişi birkaç gün önceden vermeni öneririz.`,
     },
     {
       q: "Tasarımım yok, ne yapmalıyım?",

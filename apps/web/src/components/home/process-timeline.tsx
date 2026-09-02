@@ -1,4 +1,5 @@
 import { Container } from "@markala/ui";
+import { KARGO_SURESI, TOPLAM_SURE } from "@/lib/delivery";
 import {
   CursorClick, PaintBrush, Printer, Package as PackageIcon, Truck,
   ArrowRight,
@@ -50,7 +51,7 @@ const steps = [
     icon: Truck,
     title: "Kargo",
     desc: "DHL veya Aras Kargo ile 81 ile teslim. Takip linki SMS/e-posta.",
-    duration: "1-3 iş günü",
+    duration: KARGO_SURESI,
     grad: "from-[#3DDC84] to-[#00A86B]",
     glow: "shadow-[0_8px_24px_rgba(61,220,132,0.35)]",
   },
@@ -165,9 +166,10 @@ export function ProcessTimeline() {
             </div>
             <div className="mt-1 text-2xl md:text-3xl font-semibold tabular-nums">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5B800] to-[#FF8A00]">
-                {/* 2026-08-31: "3-5" KENDİ adımlarıyla çelişiyordu (üretim 2-3 + kargo 1-3
-                    = 3-6) ve yardım merkezindeki teslimat maddesiyle de uyuşmuyordu. */}
-                3-6 iş günü
+                {/* Süreler lib/delivery.ts'ten TEK KAYNAKTAN gelir (2026-09-02):
+                    daha önce burada elle yazılıydı ve Hasan'ın 2-4 kargo kararından
+                    sonra kendi adımlarıyla çelişti. */}
+                {TOPLAM_SURE}
               </span>
               <span className="text-base text-paper-100/60 ml-2">
                 · sipariş → kapı

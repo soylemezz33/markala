@@ -7,6 +7,7 @@ import { Truck, MagnifyingGlass, Package, Receipt, EnvelopeSimple } from "@phosp
 import { TrackingTimeline } from "@/components/tracking/timeline";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { buildTrackingEvents } from "@/lib/tracking-events";
+import { KARGO_SURESI, URETIM_SURESI } from "@/lib/delivery";
 
 const inputClass = "w-full px-4 py-3 rounded-lg border border-paper-200 bg-paper-50 text-ink-900 text-sm focus:border-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-300/30 transition-all";
 
@@ -329,8 +330,8 @@ export default function TrackingPage() {
         {tab === "siparis" && !result && (
           <section className="mt-12 grid sm:grid-cols-3 gap-3 text-sm">
             <Tile icon={<Receipt size={20} />} title="Sipariş No" desc="Onay mailinde MK- ile başlayan kod" />
-            <Tile icon={<Package size={20} />} title="Üretim Süresi" desc="Çoğu üründe 1-3 iş günü" />
-            <Tile icon={<Truck size={20} />} title="DHL Takip" desc="Türkiye geneli 1-3 iş günü" />
+            <Tile icon={<Package size={20} />} title="Üretim Süresi" desc={`Çoğu üründe ${URETIM_SURESI}`} />
+            <Tile icon={<Truck size={20} />} title="DHL Takip" desc={`Türkiye geneli ${KARGO_SURESI}`} />
           </section>
         )}
 

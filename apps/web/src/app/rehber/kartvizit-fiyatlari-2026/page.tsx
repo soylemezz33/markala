@@ -16,6 +16,7 @@ import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol, formatPrice } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
 import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
+import { KARGO_SURESI } from "@/lib/delivery";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir (rehber içeriği için yeterli).
 export const revalidate = 3600;
@@ -135,7 +136,7 @@ export default async function KartvizitFiyatlariPage() {
     },
     {
       q: "Kartvizit kaç günde teslim edilir?",
-      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli 1-3 iş günü sürer. Sipariş durumu hesabından ve kargo takip sayfasından izlenebilir.`,
+      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Sipariş durumu hesabından ve kargo takip sayfasından izlenebilir.`,
     },
     {
       q: "Tasarımım yok, ne yapmalıyım?",

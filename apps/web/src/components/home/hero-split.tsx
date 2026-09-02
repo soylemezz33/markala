@@ -4,6 +4,7 @@ import { ArrowRight, ChatCircleText } from "@phosphor-icons/react/dist/ssr";
 import type { Product } from "@markala/types";
 import type { HeroBannerData } from "@/lib/catalog";
 import { HeroVisual } from "@/components/home/hero-visual";
+import { URETIM_SURESI } from "@/lib/delivery";
 
 /**
  * Anasayfa hero (2026-08-31 yeniden düzeni) — solda GERÇEK METİN, sağda görsel.
@@ -102,7 +103,7 @@ export function HeroSplit({
                 </li>
               )}
               <li>
-                <strong className="font-semibold text-ink-900">2-3 iş günü</strong> üretim
+                <strong className="font-semibold text-ink-900">{URETIM_SURESI}</strong> üretim
               </li>
               <li>
                 <strong className="font-semibold text-ink-900">81 ile</strong> kargo

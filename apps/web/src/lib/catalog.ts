@@ -1,6 +1,7 @@
 import type { Product, Category } from "@markala/types";
 import { type HeroSlide } from "@markala/mock-data";
 import type { NavCategory } from "@/components/site-header";
+import { URETIM_SURESI } from "./delivery";
 
 /**
  * Katalog veri katmanı — storefront ürünleri artık CANLI API'den (admin yönetir).
@@ -263,7 +264,8 @@ function mapCategory(c: Record<string, unknown>): Category {
     imageUrl: String(c.imageUrl || `/api/mockup?category=${slug}&w=1200&h=900`),
     accentColor: (c.accentColor as string) ?? undefined,
     startingPrice: c.startingPrice != null ? num(c.startingPrice) : 0,
-    productionTime: String(c.productionTime ?? "1-3 iş günü"),
+    // Fallback site geneli standart iddiayla aynı olmalı (2026-09-02, lib/delivery.ts).
+    productionTime: String(c.productionTime ?? URETIM_SURESI),
     productCount: (c._count as { products?: number } | undefined)?.products ?? 0,
     seoIntro: content.seoIntro as string | undefined,
     seoBolumler: content.seoBolumler as Category["seoBolumler"],

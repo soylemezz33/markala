@@ -6,6 +6,7 @@ import {
 import type { Metadata } from "next";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { ADDRESS, MAPS_LINK } from "@/lib/company";
+import { KARGO_SURESI, TOPLAM_SURE } from "@/lib/delivery";
 
 export const metadata: Metadata = {
   title: "Hakkımızda | Markala & 324 Ajans",
@@ -31,13 +32,13 @@ export const metadata: Metadata = {
 const values = [
   { icon: Lightning, title: "Hızlı Üretim", desc: "Çoğu üründe 24-72 saat içinde teslim. Acil işler için özel hat." },
   { icon: PaintBrush, title: "Ücretsiz Tasarım", desc: "Profesyonel grafik ekibimizle çalışın, sınırsız revize." },
-  { icon: Truck, title: "81 İle Kargo", desc: "DHL anlaşması, Türkiye'nin her noktasına 1-3 iş günü." },
+  { icon: Truck, title: "81 İle Kargo", desc: `DHL anlaşması, Türkiye'nin her noktasına ${KARGO_SURESI}.` },
 ];
 
 const stats = [
   { value: "10+", label: "Yıllık ajans tecrübesi" },
   { value: "20+", label: "Ürün kategorisi" },
-  { value: "3-6 iş günü", label: "Üretim + kargo toplam süre" },
+  { value: TOPLAM_SURE, label: "Üretim + kargo toplam süre" },
   { value: "0 ₺", label: "Tasarım ücreti" },
 ];
 

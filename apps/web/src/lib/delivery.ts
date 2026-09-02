@@ -59,3 +59,26 @@ export function estimateDelivery(productionTime: string, now: Date = new Date())
   const label = `${shipDate.getDate()} ${TR_MONTHS[shipDate.getMonth()]} ${TR_DAYS[shipDate.getDay()]}`;
   return { shipDate, label, sameDayIntake, beforeCutoff };
 }
+
+/**
+ * SİTE GENELİ TESLİMAT VAADİ — TEK KAYNAK (2026-09-02).
+ *
+ * NEDEN BURADA: Hasan 57fa12a ile "kargo süresi herkese aynı, 81 ilin tamamı 2-4 iş günü"
+ * dedi; ama o karar YALNIZCA lib/cities.ts'e uygulanabildi, çünkü aynı iddia sitede sekiz
+ * ayrı dosyada elle yazılıydı (anasayfa süreç şeridi, hakkımızda, kargo takip, dört rehber
+ * sayfası, yardım merkezi). Sonuç: site kendi kendisiyle çelişti — bir yerde 2-4, dört
+ * yerde hâlâ 1-3 yazıyordu. Teslim vaadi tüketiciye verilen bir taahhüt; çelişkili olması
+ * hem güven hem mevzuat açısından sorun.
+ *
+ * BUNDAN SONRA: süre değişecekse SADECE burası değişir. Yeni bir yere süre yazarken
+ * literal string yazma, bu sabitleri import et.
+ */
+
+/** Üretim süresi — ürün bazında DB'den gelebilir; bu, site geneli standart iddiadır. */
+export const URETIM_SURESI = "2-3 iş günü";
+
+/** Kargo süresi — 81 ilin tamamı için aynı (Hasan kararı, 2026-09-02). */
+export const KARGO_SURESI = "2-4 iş günü";
+
+/** Üretim + kargo toplamı. URETIM_SURESI ve KARGO_SURESI ile tutarlı olmak ZORUNDA. */
+export const TOPLAM_SURE = "4-7 iş günü";
