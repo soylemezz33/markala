@@ -544,6 +544,8 @@ model OrderItem {
 
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product? @relation(fields: [productId], references: [id])
+  /// Tasarımcının panelden bu satıra yüklediği dosyalar (önizleme/çalışma/baskı) — 2026-09-02.
+  designUploads DesignUpload[]
 
   @@index([orderId])
   @@index([productId])
@@ -552,21 +554,45 @@ model OrderItem {
 
 // === Tasarım yüklemeleri (R2 storage) ===
 
+/// Sipariş SATIRINA bağlı tasarım dosyaları (2026-09-02, üretim ARGE Faz 2).
+///
+/// Bu tablo init'ten beri vardı ama HİÇBİR yerde yazılmıyor/okunmuyordu (ölü). Tasarımı
+/// Markala'nın yaptığı siparişlerde bitmiş dosya sisteme hiç girmiyordu; üretimde "hangi
+/// bayrak kimin" karışıklığının kök nedeni buydu. Artık panelden tasarımcı/admin yükler.
+///
+/// OrderItem.uploadedFile* (müşterinin checkout'ta yüklediği) AYNEN kalır; burası tasarımcı
+/// tarafının dosyaları: önizleme (küçük RGB JPG — panelde tanıma için), çalışma (AI/PSD),
+/// baskı (baskıya hazır PDF). Bir satırda birden çok dosya ve yeniden yükleme geçmişi tutulur.
 model DesignUpload {
   id        String   @id @default(cuid())
+  /// YÜKLEYEN panel kullanıcısı (tasarımcı/admin). Alan hiç kullanılmamıştı; anlamı bu şekilde
+  /// tanımlandı ki User'a ikinci bir ilişki/FK açmak gerekmesin.
   userId    String?  @map("user_id")
   orderId   String?  @map("order_id")
+  /// Hangi sipariş satırı. null = eski/kullanılmayan kayıt (tablo ölüyken veri yoktu).
+  orderItemId String? @map("order_item_id")
+  /// onizleme | calisma | baski — DTO'da ve DB CHECK'te doğrulanır. Prisma enum DEĞİL:
+  /// ALTER TYPE ... ADD VALUE transaction içinde çalışmaz, migration tuzağı (bkz. kargo_role).
+  kind      String   @default("calisma")
   fileName  String   @map("file_name")
   fileSize  Int      @map("file_size")
   fileUrl   String   @map("file_url")
+  /// secure/tasarim altındaki depolama anahtarı (uuid.ext) — silme için. URL'den türetmek
+  /// yerine açık tutuluyor; URL tabanı (API_PUBLIC_URL) değişse de silme doğru dosyayı bulur.
+  storageKey String? @map("storage_key")
   mimeType  String   @map("mime_type")
+  /// Faz 4 (Google Drive'a taşıma) için ayrıldı; şimdilik hep null.
+  driveFileId String? @map("drive_file_id")
   createdAt DateTime @default(now()) @map("created_at")
 
-  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
-  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  order     Order?     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  /// Satır silinirse dosya kaydı anlamsız → Cascade (OrderItem.order ile aynı yaklaşım).
+  orderItem OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([orderId])
+  @@index([orderItemId])
   @@map("design_uploads")
 }
 

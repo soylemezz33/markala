@@ -386,6 +386,29 @@ export interface OrderItem {
   uploadedFileName?: string | null;
   /** Yüklenen tasarım dosyasının indirilebilir URL'i (admin "İndir") */
   uploadedFileUrl?: string | null;
+  /** Satır kimliği — API zaten döner, tipte eksikti; panelden satıra dosya yüklemek için gerekir (2026-09-02). */
+  id?: string;
+  /**
+   * Tasarımcının panelden bu satıra yüklediği dosyalar (2026-09-02). YALNIZ panel rollerinde
+   * döner; müşteri yanıtında bulunmaz (çalışma dosyaları vitrine sızmasın).
+   */
+  designUploads?: DesignUploadRow[];
+}
+
+/** Tasarımcı dosyası türü — onizleme (küçük RGB JPG/PNG) · calisma (AI/PSD…) · baski (baskıya hazır PDF). */
+export type DesignUploadKind = "onizleme" | "calisma" | "baski";
+
+/** Panele dönen tasarımcı dosyası satırı. storageKey/driveFileId BİLEREK yok (iç alanlar). */
+export interface DesignUploadRow {
+  id: string;
+  kind: DesignUploadKind;
+  fileName: string;
+  fileSize: number;
+  /** İndirme adresi (API GET /uploads/design/:key); panel BFF üzerinden çeker. */
+  fileUrl: string;
+  mimeType: string;
+  createdAt: string;
+  uploadedBy?: { id: string; fullName?: string | null } | null;
 }
 
 export type TrackingEventStatus =

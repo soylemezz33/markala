@@ -303,6 +303,19 @@ export class MarkalaApiClient {
     ) => this.request<Order>("PATCH", `/orders/${id}/tracking`, body, { auth: true }),
 
     /**
+     * Sipariş satırındaki tasarımcı dosyasını sil (2026-09-02, üretim ARGE Faz 2).
+     * Yükleme BURADA YOK: multipart olduğu için tarayıcı → panel BFF → API yolunu izler
+     * (bu istemci JSON gövde taşır). Silme JSON'dur, buradan gider.
+     */
+    deleteItemDesign: (orderId: string, uploadId: string) =>
+      this.request<{ ok: true; id: string }>(
+        "DELETE",
+        `/orders/${orderId}/tasarim/${uploadId}`,
+        undefined,
+        { auth: true },
+      ),
+
+    /**
      * Havale/EFT ödemesini onayla (admin) — para hesaba geçtiğinde çağrılır.
      * Yalnız paymentStatus'ü "basarili" yapar; sipariş durumuna dokunmaz.
      */
