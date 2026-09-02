@@ -22,25 +22,35 @@ const RANGES = [
   { label: "Tümü", days: null as number | null },
 ];
 
-function MutabakatSatir({
-  label,
-  value,
-  negatif,
-}: {
-  label: string;
-  value: string;
-  negatif?: boolean;
-}) {
+const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+
+function Satir({ label, value, eksi }: { label: string; value: string; eksi?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <dt className="text-ink-700">{label}</dt>
-      <dd className={negatif ? "text-warning" : "text-ink-900"}>{value}</dd>
+      <dd className={eksi ? "text-warning" : "text-ink-900"}>{value}</dd>
+    </div>
+  );
+}
+
+/** Ara toplam satırı — zincirin nerede toplandığını gözle ayırır. */
+function Ara({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-t border-paper-200 pt-2 font-semibold text-ink-900">
+      <dt>{label}</dt>
+      <dd>{value}</dd>
     </div>
   );
 }
 
 export function ProfitClient({ data, days }: { data: AdminProfitDto; days: number | null }) {
   const { toplam, urunler, aylik, kapsam, mutabakat } = data;
+  // Şelale HEP tutsun diye KDV farktan türetilir (DB'deki vat toplamı yuvarlamadan
+  // 1 kuruş sapabiliyor ve ekranda tutmuyordu).
+  const kdvPayi = round2(mutabakat.tahsilEdilen - mutabakat.kargo - toplam.ciro);
+  const kapsananCiro = round2(toplam.ciro - toplam.maliyetiBilinmeyenCiro);
+  const maliyetsizPay =
+    toplam.ciro > 0 ? ((toplam.maliyetiBilinmeyenCiro / toplam.ciro) * 100).toFixed(1) : "";
   const enIyi = urunler.filter((u) => u.kar !== null).slice(0, 8);
   const maliyetsiz = urunler.filter((u) => u.kar === null);
   // Aylık grafik için ölçek — en yüksek ciro 100% kabul edilir.
@@ -96,41 +106,45 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
       </div>
 
       {/*
-        MUTABAKAT — panelde "Toplam Ciro 25.401,63" derken burada "Ciro 20.977,28"
-        yazması çelişki gibi görünüyordu (Hasan sordu). İkisi farklı şeyleri ölçüyor;
-        aradaki köprü artık ekranda. Rakamlar dashboard ile AYNI sipariş kümesinden.
+        ŞELALE — panelin "Toplam Ciro"sundan kâra kadar her adım görünür.
+        Neden gerekli (Hasan: "hâlâ tutarsız"): KPI kutularında
+        Ciro − Maliyet = 9.058,72 çıkıyor ama Kâr 1.963,99 yazıyordu. Aradaki
+        fark, maliyeti girilmemiş ürünlerin cirosunun kâr hesabına KATILMAMASI.
+        Bu ekranda görünmediği için sayfa bozuk sanılıyordu.
+
+        KDV satırı DB'deki vat toplamından değil, farktan türetilir: yuvarlama
+        yüzünden 1 kuruş sapma olabiliyor ve şelale gözle tutmuyordu.
       */}
       <section className="mt-4 rounded-xl border border-paper-200 bg-paper-50 p-4">
         <h2 className="text-sm font-semibold text-ink-900">
-          Paneldeki &ldquo;Toplam Ciro&rdquo; ile bu sayfa nasıl bağlanıyor?
+          Panelden kâra: rakam nereden nereye gidiyor?
         </h2>
         <dl className="mt-3 space-y-1.5 text-sm">
-          <MutabakatSatir
-            label="Ürün ara toplamı (KDV dahil, indirim öncesi)"
-            value={TL(mutabakat.urunAraToplam)}
+          <Satir label="Ürün ara toplamı (KDV dahil, indirim öncesi)" value={TL(mutabakat.urunAraToplam)} />
+          <Satir label="İndirimler (kupon, kurumsal, puan, havale)" value={`− ${TL(mutabakat.indirim)}`} eksi />
+          <Satir label="Kargo bedeli" value={`+ ${TL(mutabakat.kargo)}`} />
+          <Ara label="Panelde görünen Toplam Ciro" value={TL(mutabakat.tahsilEdilen)} />
+
+          <Satir label="Kargo bedeli (kâra katılmaz — kargo gideri sistemde yok)" value={`− ${TL(mutabakat.kargo)}`} eksi />
+          <Satir label="KDV (devlete ait, kâr değil)" value={`− ${TL(kdvPayi)}`} eksi />
+          <Ara label="Ciro (KDV hariç, indirim düşülmüş)" value={TL(toplam.ciro)} />
+
+          <Satir
+            label={`Maliyeti girilmemiş ürünlerin cirosu${maliyetsizPay ? ` (%${maliyetsizPay})` : ""}`}
+            value={`− ${TL(toplam.maliyetiBilinmeyenCiro)}`}
+            eksi
           />
-          <MutabakatSatir
-            label="İndirimler (kupon, kurumsal, puan, havale)"
-            value={`− ${TL(mutabakat.indirim)}`}
-            negatif
-          />
-          <MutabakatSatir label="Kargo bedeli (kâra katılmaz)" value={`+ ${TL(mutabakat.kargo)}`} />
-          <div className="flex items-center justify-between border-t border-paper-200 pt-2 font-semibold text-ink-900">
-            <dt>Panelde görünen Toplam Ciro</dt>
-            <dd>{TL(mutabakat.tahsilEdilen)}</dd>
-          </div>
-          <div className="flex items-center justify-between pt-2 text-ink-500">
-            <dt>Bunun içindeki KDV (devlete ait, kâr değil)</dt>
-            <dd>{TL(mutabakat.kdv)}</dd>
-          </div>
-          <div className="flex items-center justify-between border-t border-paper-200 pt-2 font-semibold text-brand-700">
-            <dt>Bu sayfadaki Ciro (KDV hariç, indirim düşülmüş)</dt>
-            <dd>{TL(toplam.ciro)}</dd>
+          <Ara label="Kâr hesabına giren ciro" value={TL(kapsananCiro)} />
+          <Satir label="Maliyet" value={`− ${TL(toplam.maliyet)}`} eksi />
+          <div className="flex items-center justify-between gap-4 border-t-2 border-ink-900 pt-2 text-base font-semibold text-success">
+            <dt>Kâr</dt>
+            <dd>{TL(toplam.kar)}</dd>
           </div>
         </dl>
         <p className="mt-3 text-xs text-ink-500">
-          {mutabakat.siparisSayisi} sipariş üzerinden. Kâr; KDV ve kargo hariç tutarlar
-          üzerinden hesaplanır — ikisi de bize kalan gelir değildir.
+          {mutabakat.siparisSayisi} sipariş üzerinden. Kâr kutusu bu zincirin son
+          satırıdır — “Ciro − Maliyet” değildir, çünkü maliyeti girilmemiş ürünler
+          hesaba katılmaz.
         </p>
       </section>
 

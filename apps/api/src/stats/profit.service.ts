@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SettingsService } from "../settings/settings.service";
 import { computeItemCostTotal } from "../orders/costing";
+import { gerceklesenSiparis } from "./gerceklesen-siparis";
 
 /**
  * KÂR ANALİZİ — 2026-08-20 (Hasan talebi: "ciroya tıklayınca ne kadar kâr etmişiz").
@@ -60,12 +61,7 @@ export class ProfitService {
     // stats.service'teki ciro tanımıyla aynı olmalı, yoksa iki ekran çelişir.
     // Sipariş filtresi TEK YERDE: kalem sorgusu ile mutabakat toplamı aynı kümeyi
     // saymazsa iki rakam çelişir (bu sayfanın zaten yaşadığı sorun).
-    const siparisFiltresi = {
-      deletedAt: null,
-      status: { not: "iptal_edildi" as const },
-      OR: [{ paymentStatus: "basarili" as const }, { paymentMethod: "cari" }],
-      ...(since ? { createdAt: { gte: since } } : {}),
-    };
+    const siparisFiltresi = gerceklesenSiparis(since);
 
     const [items, siparisToplam] = await Promise.all([
       this.prisma.orderItem.findMany({

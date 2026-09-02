@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../prisma/prisma.service";
+import { GERCEKLESEN_SIPARIS } from "./gerceklesen-siparis";
 
 @Injectable()
 export class StatsService {
@@ -36,10 +37,10 @@ export class StatsService {
     // için yarıda bırakılan her deneme DB'de satır bırakıyor; orderCount ve ordersByStatus
     // bunları da sayınca panel gerçekte olmayan siparişleri raporluyordu. `revenue` zaten
     // doğru filtreliyordu — sayımlar da onunla hizalandı (toplam ile kırılım tutarlı kalsın).
-    const realOrder = {
-      deletedAt: null,
-      OR: [{ paymentStatus: "basarili" as const }, { paymentMethod: "cari" }],
-    };
+    // 2026-09-02: tanım artık TEK KAYNAKTAN. Eskiden burada status filtresi YOKTU →
+    // iptal edilmiş sipariş sayıya giriyor ama ciroya girmiyordu (panel 26 sipariş /
+    // 25 siparişlik ciro gösteriyordu). Ayrıca ciro cari siparişleri hiç saymıyordu.
+    const realOrder = GERCEKLESEN_SIPARIS;
     const [
       orderCount,
       revenueAgg,
@@ -56,14 +57,8 @@ export class StatsService {
         // 2026-08-20 (Hasan bildirdi): status filtresi YOKTU → ödenip sonra iptal edilen
         // sipariş ciroda kalıyordu. Gerçek veride 529,00 TL'lik iptal sipariş toplam
         // cironun %16'sını şişiriyordu. Ayrıca iadesi yapılmış ödemeler de düşülür.
-        this.prisma.order.aggregate({
-          _sum: { total: true },
-          where: {
-            paymentStatus: "basarili",
-            deletedAt: null,
-            status: { not: "iptal_edildi" },
-          },
-        }),
+        // Ciro ve sipariş sayısı AYNI kümeden — ikisi ayrışırsa panel kendi içinde çelişir.
+        this.prisma.order.aggregate({ _sum: { total: true }, where: realOrder }),
         this.prisma.user.count({ where: { role: "customer" } }),
         this.prisma.corporateApplication.count({ where: { status: "pending" } }),
         this.prisma.order.groupBy({ by: ["status"], _count: true, where: realOrder }),
