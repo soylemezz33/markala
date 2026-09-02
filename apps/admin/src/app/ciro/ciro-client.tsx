@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import {
@@ -51,10 +52,27 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
   const kapsananCiro = round2(toplam.ciro - toplam.maliyetiBilinmeyenCiro);
   const maliyetsizPay =
     toplam.ciro > 0 ? ((toplam.maliyetiBilinmeyenCiro / toplam.ciro) * 100).toFixed(1) : "";
+  /**
+   * KDV GÖRÜNÜMÜ (2026-09-02, Hasan istedi) — yalnız CİRO rakamlarını etkiler.
+   *
+   * API her zaman KDV HARİÇ döner; çevrim burada, gösterim katmanında yapılır.
+   * Tek kaynak bozulmasın diye sunucuya ikinci bir hesap eklenmedi.
+   *
+   * KÂR VE MALİYET ÇEVRİLMEZ. Tahsil edilen KDV devlete ödenir, gelir değildir;
+   * kârı 1,2 ile çarpmak kârı %20 fazla gösterirdi. Maliyet zaten KDV hariç
+   * tutuluyor (pricing: satış = maliyet × kur × marj × (1+KDV)), dolayısıyla
+   * kâr = ciro_hariç − maliyet bazı doğru olan tek bazdır.
+   */
+  const [kdvDahil, setKdvDahil] = useState(false);
+  const KDV_ORANI = 1.2;
+  /** Ciro tutarını seçili görünüme çevirir. Yalnız ciro için kullanılır. */
+  const c = (n: number) => (kdvDahil ? round2(n * KDV_ORANI) : n);
+  const ciroEtiketi = kdvDahil ? "Ciro (KDV dahil, kargo hariç)" : "Net ciro (KDV ve kargo hariç)";
+
   const enIyi = urunler.filter((u) => u.kar !== null).slice(0, 8);
   const maliyetsiz = urunler.filter((u) => u.kar === null);
   // Aylık grafik için ölçek — en yüksek ciro 100% kabul edilir.
-  const maxAy = Math.max(1, ...aylik.map((a) => a.ciro));
+  const maxAy = Math.max(1, ...aylik.map((a) => c(a.ciro)));
 
   return (
     <AdminShell>
@@ -74,7 +92,34 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
             ölçer, aşağıdaki tabloda adım adım bağlanıyor.
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/*
+            KDV görünümü — Hasan: "orası KDV dahil göstersin, yanına bir buton
+            ekleyelim". Yalnız CİRO rakamlarını çevirir; kâr/maliyet KDV hariç kalır
+            (tahsil edilen KDV devlete ödenir, gelir değildir).
+          */}
+          <div className="mr-2 inline-flex rounded-full border border-paper-200 bg-paper-50 p-0.5">
+            <button
+              type="button"
+              onClick={() => setKdvDahil(false)}
+              aria-pressed={!kdvDahil}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                !kdvDahil ? "bg-ink-900 text-paper-50" : "text-ink-500 hover:text-ink-900"
+              }`}
+            >
+              KDV hariç
+            </button>
+            <button
+              type="button"
+              onClick={() => setKdvDahil(true)}
+              aria-pressed={kdvDahil}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                kdvDahil ? "bg-ink-900 text-paper-50" : "text-ink-500 hover:text-ink-900"
+              }`}
+            >
+              KDV dahil
+            </button>
+          </div>
           {RANGES.map((r) => {
             const active = r.days === days;
             return (
@@ -96,7 +141,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
 
       {/* KPI şeridi */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Kpi label="Net ciro (KDV ve kargo hariç)" value={TL(toplam.ciro)} icon={<TrendUp size={18} />} tone="text-brand-700" />
+        <Kpi label={ciroEtiketi} value={TL(c(toplam.ciro))} icon={<TrendUp size={18} />} tone="text-brand-700" />
         <Kpi label="Maliyet" value={TL(toplam.maliyet)} icon={<Coins size={18} />} tone="text-ink-700" />
         <Kpi label="Kâr" value={TL(toplam.kar)} icon={<ChartPieSlice size={18} />} tone="text-success" big />
         <Kpi
@@ -106,6 +151,14 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
           tone="text-success"
         />
       </div>
+
+      {kdvDahil && (
+        <p className="mt-3 rounded-lg border border-brand-500/25 bg-brand-50/50 px-3 py-2 text-xs text-ink-700">
+          <strong className="text-ink-900">Ciro rakamları KDV dahil gösteriliyor.</strong>{" "}
+          Maliyet ve kâr KDV hariç kalır — tahsil ettiğiniz KDV devlete ödenir, gelir
+          değildir. Kârı KDV ile çarpmak kârınızı olduğundan %20 fazla gösterirdi.
+        </p>
+      )}
 
       {/*
         ŞELALE — panelin "Toplam Ciro"sundan kâra kadar her adım görünür.
@@ -194,7 +247,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
                     <tr key={u.productSlug} className="border-t border-paper-200">
                       <td className="px-4 py-2.5 text-ink-900">{u.productName}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-ink-700">{u.adet}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-ink-700">{TL(u.ciro)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-ink-700">{TL(c(u.ciro))}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-ink-500">{TL(u.maliyet)}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-success">
                         {TL(u.kar ?? 0)}
@@ -224,7 +277,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
                   <div className="flex items-baseline justify-between text-xs mb-1">
                     <span className="text-ink-700">{a.ay}</span>
                     <span className="tabular-nums text-ink-500">
-                      {TL(a.ciro)}
+                      {TL(c(a.ciro))}
                       {a.kar !== null && (
                         <span className="ml-2 text-success font-medium">kâr {TL(a.kar)}</span>
                       )}
@@ -234,7 +287,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
                   <div className="h-2 rounded-full bg-paper-200 overflow-hidden">
                     <div
                       className="h-full bg-brand-500/40"
-                      style={{ width: `${(a.ciro / maxAy) * 100}%` }}
+                      style={{ width: `${(c(a.ciro) / maxAy) * 100}%` }}
                     >
                       <div
                         className="h-full bg-success"
@@ -263,7 +316,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
               <li key={u.productSlug} className="px-4 py-2.5 flex items-center justify-between gap-3 text-sm">
                 <span className="text-ink-900 min-w-0 truncate">{u.productName}</span>
                 <span className="flex items-center gap-3 flex-none">
-                  <span className="tabular-nums text-ink-500">{TL(u.ciro)} ciro</span>
+                  <span className="tabular-nums text-ink-500">{TL(c(u.ciro))} ciro</span>
                   <Link
                     href={`/urunler?q=${encodeURIComponent(u.productSlug)}`}
                     className="text-xs font-medium text-brand-700 hover:underline"
