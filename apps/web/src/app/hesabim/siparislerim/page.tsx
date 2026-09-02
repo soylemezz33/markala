@@ -1,5 +1,6 @@
 "use client";
 
+import { HavaleOdemeBekliyor } from "@/components/banka-bilgileri";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -118,6 +119,10 @@ export default function OrdersPage() {
                 )}
               </span>
             </header>
+
+            {/* Havale bekleyen sipariş: hesap bilgisi + referans burada dursun ki
+                müşteri e-postayı aramak zorunda kalmasın (Hasan istedi). */}
+            <HavaleOdemeBekliyor order={o} className="mb-4" />
 
             <ul className="space-y-3">
               {o.items.map((item, i) => (

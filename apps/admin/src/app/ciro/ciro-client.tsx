@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import {
@@ -22,12 +23,56 @@ const RANGES = [
   { label: "Tümü", days: null as number | null },
 ];
 
+const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+
+function Satir({ label, value, eksi }: { label: string; value: string; eksi?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <dt className="text-ink-700">{label}</dt>
+      <dd className={eksi ? "text-warning" : "text-ink-900"}>{value}</dd>
+    </div>
+  );
+}
+
+/** Ara toplam satırı — zincirin nerede toplandığını gözle ayırır. */
+function Ara({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-t border-paper-200 pt-2 font-semibold text-ink-900">
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
 export function ProfitClient({ data, days }: { data: AdminProfitDto; days: number | null }) {
-  const { toplam, urunler, aylik, kapsam } = data;
+  const { toplam, urunler, aylik, kapsam, mutabakat } = data;
+  // Şelale HEP tutsun diye KDV farktan türetilir (DB'deki vat toplamı yuvarlamadan
+  // 1 kuruş sapabiliyor ve ekranda tutmuyordu).
+  const kdvPayi = round2(mutabakat.tahsilEdilen - mutabakat.kargo - toplam.ciro);
+  const kapsananCiro = round2(toplam.ciro - toplam.maliyetiBilinmeyenCiro);
+  const maliyetsizPay =
+    toplam.ciro > 0 ? ((toplam.maliyetiBilinmeyenCiro / toplam.ciro) * 100).toFixed(1) : "";
+  /**
+   * KDV GÖRÜNÜMÜ (2026-09-02, Hasan istedi) — yalnız CİRO rakamlarını etkiler.
+   *
+   * API her zaman KDV HARİÇ döner; çevrim burada, gösterim katmanında yapılır.
+   * Tek kaynak bozulmasın diye sunucuya ikinci bir hesap eklenmedi.
+   *
+   * KÂR VE MALİYET ÇEVRİLMEZ. Tahsil edilen KDV devlete ödenir, gelir değildir;
+   * kârı 1,2 ile çarpmak kârı %20 fazla gösterirdi. Maliyet zaten KDV hariç
+   * tutuluyor (pricing: satış = maliyet × kur × marj × (1+KDV)), dolayısıyla
+   * kâr = ciro_hariç − maliyet bazı doğru olan tek bazdır.
+   */
+  const [kdvDahil, setKdvDahil] = useState(false);
+  const KDV_ORANI = 1.2;
+  /** Ciro tutarını seçili görünüme çevirir. Yalnız ciro için kullanılır. */
+  const c = (n: number) => (kdvDahil ? round2(n * KDV_ORANI) : n);
+  const ciroEtiketi = kdvDahil ? "Ciro (KDV dahil, kargo hariç)" : "Net ciro (KDV ve kargo hariç)";
+
   const enIyi = urunler.filter((u) => u.kar !== null).slice(0, 8);
   const maliyetsiz = urunler.filter((u) => u.kar === null);
   // Aylık grafik için ölçek — en yüksek ciro 100% kabul edilir.
-  const maxAy = Math.max(1, ...aylik.map((a) => a.ciro));
+  const maxAy = Math.max(1, ...aylik.map((a) => c(a.ciro)));
 
   return (
     <AdminShell>
@@ -41,10 +86,40 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
           </Link>
           <h1 className="text-2xl font-semibold text-ink-900">Ciro & Kâr Analizi</h1>
           <p className="mt-1 text-sm text-ink-500">
-            Ciro <strong>KDV hariçtir</strong>; kargo bedeli kâra dahil edilmez.
+            Buradaki ciro <strong>bize kalan</strong> tutardır: KDV ve kargo çıkarılmış,
+            indirimler düşülmüştür. Paneldeki “Toplam Ciro” ise müşterinin{" "}
+            <strong>ödediği</strong> tutardır (KDV + kargo dahil) — ikisi farklı şeyleri
+            ölçer, aşağıdaki tabloda adım adım bağlanıyor.
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/*
+            KDV görünümü — Hasan: "orası KDV dahil göstersin, yanına bir buton
+            ekleyelim". Yalnız CİRO rakamlarını çevirir; kâr/maliyet KDV hariç kalır
+            (tahsil edilen KDV devlete ödenir, gelir değildir).
+          */}
+          <div className="mr-2 inline-flex rounded-full border border-paper-200 bg-paper-50 p-0.5">
+            <button
+              type="button"
+              onClick={() => setKdvDahil(false)}
+              aria-pressed={!kdvDahil}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                !kdvDahil ? "bg-ink-900 text-paper-50" : "text-ink-500 hover:text-ink-900"
+              }`}
+            >
+              KDV hariç
+            </button>
+            <button
+              type="button"
+              onClick={() => setKdvDahil(true)}
+              aria-pressed={kdvDahil}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                kdvDahil ? "bg-ink-900 text-paper-50" : "text-ink-500 hover:text-ink-900"
+              }`}
+            >
+              KDV dahil
+            </button>
+          </div>
           {RANGES.map((r) => {
             const active = r.days === days;
             return (
@@ -66,7 +141,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
 
       {/* KPI şeridi */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Kpi label="Ciro (KDV hariç)" value={TL(toplam.ciro)} icon={<TrendUp size={18} />} tone="text-brand-700" />
+        <Kpi label={ciroEtiketi} value={TL(c(toplam.ciro))} icon={<TrendUp size={18} />} tone="text-brand-700" />
         <Kpi label="Maliyet" value={TL(toplam.maliyet)} icon={<Coins size={18} />} tone="text-ink-700" />
         <Kpi label="Kâr" value={TL(toplam.kar)} icon={<ChartPieSlice size={18} />} tone="text-success" big />
         <Kpi
@@ -76,6 +151,57 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
           tone="text-success"
         />
       </div>
+
+      {kdvDahil && (
+        <p className="mt-3 rounded-lg border border-brand-500/25 bg-brand-50/50 px-3 py-2 text-xs text-ink-700">
+          <strong className="text-ink-900">Ciro rakamları KDV dahil gösteriliyor.</strong>{" "}
+          Maliyet ve kâr KDV hariç kalır — tahsil ettiğiniz KDV devlete ödenir, gelir
+          değildir. Kârı KDV ile çarpmak kârınızı olduğundan %20 fazla gösterirdi.
+        </p>
+      )}
+
+      {/*
+        ŞELALE — panelin "Toplam Ciro"sundan kâra kadar her adım görünür.
+        Neden gerekli (Hasan: "hâlâ tutarsız"): KPI kutularında
+        Ciro − Maliyet = 9.058,72 çıkıyor ama Kâr 1.963,99 yazıyordu. Aradaki
+        fark, maliyeti girilmemiş ürünlerin cirosunun kâr hesabına KATILMAMASI.
+        Bu ekranda görünmediği için sayfa bozuk sanılıyordu.
+
+        KDV satırı DB'deki vat toplamından değil, farktan türetilir: yuvarlama
+        yüzünden 1 kuruş sapma olabiliyor ve şelale gözle tutmuyordu.
+      */}
+      <section className="mt-4 rounded-xl border border-paper-200 bg-paper-50 p-4">
+        <h2 className="text-sm font-semibold text-ink-900">
+          Panelden kâra: rakam nereden nereye gidiyor?
+        </h2>
+        <dl className="mt-3 space-y-1.5 text-sm">
+          <Satir label="Ürün ara toplamı (KDV dahil, indirim öncesi)" value={TL(mutabakat.urunAraToplam)} />
+          <Satir label="İndirimler (kupon, kurumsal, puan, havale)" value={`− ${TL(mutabakat.indirim)}`} eksi />
+          <Satir label="Kargo bedeli" value={`+ ${TL(mutabakat.kargo)}`} />
+          <Ara label="Panelde görünen Toplam Ciro" value={TL(mutabakat.tahsilEdilen)} />
+
+          <Satir label="Kargo bedeli (kâra katılmaz — kargo gideri sistemde yok)" value={`− ${TL(mutabakat.kargo)}`} eksi />
+          <Satir label="KDV (devlete ait, kâr değil)" value={`− ${TL(kdvPayi)}`} eksi />
+          <Ara label="Ciro (KDV hariç, indirim düşülmüş)" value={TL(toplam.ciro)} />
+
+          <Satir
+            label={`Maliyeti girilmemiş ürünlerin cirosu${maliyetsizPay ? ` (%${maliyetsizPay})` : ""}`}
+            value={`− ${TL(toplam.maliyetiBilinmeyenCiro)}`}
+            eksi
+          />
+          <Ara label="Kâr hesabına giren ciro" value={TL(kapsananCiro)} />
+          <Satir label="Maliyet" value={`− ${TL(toplam.maliyet)}`} eksi />
+          <div className="flex items-center justify-between gap-4 border-t-2 border-ink-900 pt-2 text-base font-semibold text-success">
+            <dt>Kâr</dt>
+            <dd>{TL(toplam.kar)}</dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-xs text-ink-500">
+          {mutabakat.siparisSayisi} sipariş üzerinden. Kâr kutusu bu zincirin son
+          satırıdır — “Ciro − Maliyet” değildir, çünkü maliyeti girilmemiş ürünler
+          hesaba katılmaz.
+        </p>
+      </section>
 
       {/* Maliyeti girilmemiş ciro uyarısı — sessizce %100 kâr göstermemek için ŞART. */}
       {toplam.maliyetiBilinmeyenCiro > 0 && (
@@ -121,7 +247,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
                     <tr key={u.productSlug} className="border-t border-paper-200">
                       <td className="px-4 py-2.5 text-ink-900">{u.productName}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-ink-700">{u.adet}</td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-ink-700">{TL(u.ciro)}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums text-ink-700">{TL(c(u.ciro))}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums text-ink-500">{TL(u.maliyet)}</td>
                       <td className="px-3 py-2.5 text-right tabular-nums font-semibold text-success">
                         {TL(u.kar ?? 0)}
@@ -151,7 +277,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
                   <div className="flex items-baseline justify-between text-xs mb-1">
                     <span className="text-ink-700">{a.ay}</span>
                     <span className="tabular-nums text-ink-500">
-                      {TL(a.ciro)}
+                      {TL(c(a.ciro))}
                       {a.kar !== null && (
                         <span className="ml-2 text-success font-medium">kâr {TL(a.kar)}</span>
                       )}
@@ -161,7 +287,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
                   <div className="h-2 rounded-full bg-paper-200 overflow-hidden">
                     <div
                       className="h-full bg-brand-500/40"
-                      style={{ width: `${(a.ciro / maxAy) * 100}%` }}
+                      style={{ width: `${(c(a.ciro) / maxAy) * 100}%` }}
                     >
                       <div
                         className="h-full bg-success"
@@ -190,7 +316,7 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
               <li key={u.productSlug} className="px-4 py-2.5 flex items-center justify-between gap-3 text-sm">
                 <span className="text-ink-900 min-w-0 truncate">{u.productName}</span>
                 <span className="flex items-center gap-3 flex-none">
-                  <span className="tabular-nums text-ink-500">{TL(u.ciro)} ciro</span>
+                  <span className="tabular-nums text-ink-500">{TL(c(u.ciro))} ciro</span>
                   <Link
                     href={`/urunler?q=${encodeURIComponent(u.productSlug)}`}
                     className="text-xs font-medium text-brand-700 hover:underline"

@@ -1,5 +1,6 @@
 "use client";
 
+import { HavaleOdemeBekliyor } from "@/components/banka-bilgileri";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -108,6 +109,13 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
             </Link>
           </div>
         </section>
+      ) : order.paymentMethod === "havale" &&
+        order.paymentStatus !== "basarili" &&
+        normStatus(order.status as unknown as string) !== "iptal-edildi" ? (
+        /* HAVALE: kartlı "Ödeme Yap" butonu BURAYA UYMAZ — müşteri havaleyi seçti,
+           iyzico'ya yönlendirmek kafa karıştırır. Onun yerine hesap bilgileri ve
+           açıklamaya yazması gereken sipariş numarası gösterilir (Hasan istedi). */
+        <HavaleOdemeBekliyor order={order} />
       ) : order.paymentStatus === "beklemede" && normStatus(order.status as unknown as string) !== "iptal-edildi" ? (
         <section className="p-5 bg-warning/10 border border-warning/30 rounded-xl">
           <div className="flex flex-wrap items-center justify-between gap-3">

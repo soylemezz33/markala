@@ -529,11 +529,13 @@ export class OrdersService {
         // sonradan yapılan maliyet güncellemeleri geçmiş kâr raporunu DEĞİŞTİRMEZ.
         // null = maliyeti girilmemiş ürün (rapor "maliyet girilmemiş" olarak toplar).
         const costTotal = computeItemCostTotal(
-          product as { pricingMode?: string | null; options?: unknown; prices?: unknown },
+          product as { pricingMode?: string | null; options?: unknown; prices?: unknown; content?: unknown },
           { selections },
           quantity,
           lineTotal / 1.2,
           Number(pricing.marj) > 0 ? Number(pricing.marj) : DEFAULT_PRICING.marj,
+          // area (m²) ürünlerde maliyet content.maliyetUsd'den kur/minM2 ile hesaplanır.
+          pricing,
         );
         return {
           ...common,

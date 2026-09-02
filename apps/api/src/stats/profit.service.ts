@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { SettingsService } from "../settings/settings.service";
 import { computeItemCostTotal } from "../orders/costing";
+import { gerceklesenSiparis } from "./gerceklesen-siparis";
 
 /**
  * KÂR ANALİZİ — 2026-08-20 (Hasan talebi: "ciroya tıklayınca ne kadar kâr etmişiz").
@@ -25,7 +26,19 @@ import { computeItemCostTotal } from "../orders/costing";
  *    bu tehlikeli bir yanlış olur. Katalogda 836 aktif üründe (tüm İSG) hiç maliyet yok.
  *    Böyle kalemler ayrı toplanır ve arayüzde "maliyeti girilmemiş" olarak gösterilir.
  *
- * 5) MALİYET SNAPSHOT'I (2026-08-24, kalıcı çözüm): orders.service.create sipariş anında
+ * 5) SİPARİŞ SEVİYESİ İNDİRİM CİRODAN DÜŞÜLÜR (2026-09-02 düzeltmesi).
+ *    `lineTotal` kalem tutarıdır ve kupon / kurumsal iskonto / puan / havale %5 gibi
+ *    SİPARİŞ seviyesindeki indirimleri İÇERMEZ — onlar `orders.discount` alanında durur.
+ *    Eskiden ciro = Σ lineTotal ÷ 1,2 idi; indirimler hiç düşülmüyordu. Canlı veride
+ *    1.272,11 ₺ indirim yok sayılıyordu → ciro ve KÂR, KDV hariç 1.060 ₺ fazla
+ *    görünüyordu (Hasan bildirdi: dashboard 25.401,63 derken bu sayfa 20.977,28 diyordu).
+ *    İndirim kaleme lineTotal oranında dağıtılır ki ürün bazlı kâr da doğru olsun.
+ *
+ *    DİKKAT: maliyet fallback'ine İNDİRİMSİZ ciro verilir. "area" ürünlerde
+ *    maliyet = KDV hariç satış ÷ marj; indirimli tutar geçilirse maliyet de düşerdi —
+ *    oysa müşteriye indirim yapmak bizim maliyetimizi değiştirmez.
+ *
+ * 6) MALİYET SNAPSHOT'I (2026-08-24, kalıcı çözüm): orders.service.create sipariş anında
  *    `OrderItem.costTotal` yazar — maliyet güncellemesi GEÇMİŞ kârı artık DEĞİŞTİRMEZ.
  *    Snapshot'sız eski kalemlerde fallback: ürünün güncel maliyetinden hesap
  *    (orders/costing.ts — sipariş yazımıyla AYNI fonksiyon). Eski kalemler tek seferlik
@@ -46,33 +59,40 @@ export class ProfitService {
 
     // GERÇEKLEŞEN satışlar: ödemesi başarılı (veya cari) + iptal DEĞİL + silinmemiş.
     // stats.service'teki ciro tanımıyla aynı olmalı, yoksa iki ekran çelişir.
-    const items = await this.prisma.orderItem.findMany({
-      where: {
-        order: {
-          deletedAt: null,
-          status: { not: "iptal_edildi" },
-          OR: [{ paymentStatus: "basarili" }, { paymentMethod: "cari" }],
-          ...(since ? { createdAt: { gte: since } } : {}),
+    // Sipariş filtresi TEK YERDE: kalem sorgusu ile mutabakat toplamı aynı kümeyi
+    // saymazsa iki rakam çelişir (bu sayfanın zaten yaşadığı sorun).
+    const siparisFiltresi = gerceklesenSiparis(since);
+
+    const [items, siparisToplam] = await Promise.all([
+      this.prisma.orderItem.findMany({
+        where: { order: siparisFiltresi },
+        select: {
+          productId: true,
+          productSlug: true,
+          productName: true,
+          quantity: true,
+          lineTotal: true,
+          costTotal: true,
+          configuration: true,
+          // discount/subtotal: sipariş seviyesi indirimi kaleme dağıtmak için.
+          order: { select: { createdAt: true, discount: true, subtotal: true } },
         },
-      },
-      select: {
-        productId: true,
-        productSlug: true,
-        productName: true,
-        quantity: true,
-        lineTotal: true,
-        costTotal: true,
-        configuration: true,
-        order: { select: { createdAt: true } },
-      },
-    });
+      }),
+      // Dashboard'daki "Toplam Ciro" ile birebir aynı küme — mutabakat bunun üstüne kurulur.
+      this.prisma.order.aggregate({
+        where: siparisFiltresi,
+        _sum: { total: true, subtotal: true, discount: true, shippingFee: true, vat: true },
+        _count: true,
+      }),
+    ]);
 
     // Maliyet için ürün seçenek/fiyat satırları — tek seferde çek (N+1 olmasın).
     const productIds = [...new Set(items.map((i) => i.productId).filter((v): v is string => !!v))];
     const products = productIds.length
       ? await this.prisma.product.findMany({
           where: { id: { in: productIds } },
-          select: { id: true, pricingMode: true, options: true, prices: true },
+          // content: area (m²) ürünlerde gerçek maliyet content.maliyetUsd'de duruyor.
+          select: { id: true, pricingMode: true, options: true, prices: true, content: true },
         })
       : [];
     const byId = new Map(products.map((p) => [p.id, p]));
@@ -95,8 +115,21 @@ export class ProfitService {
     let ciroMaliyetiBilinmeyen = 0;
 
     for (const it of items) {
-      const ciroHaric = Number(it.lineTotal) / ProfitService.VAT_DIVISOR;
+      const kalemTutar = Number(it.lineTotal) || 0;
+      const sipAraToplam = Number(it.order.subtotal) || 0;
+      const sipIndirim = Number(it.order.discount) || 0;
+      // İndirimi kaleme AGIRLIKLI dağıt: pahalı kalem indirimin çoğunu üstlenir.
+      // sipAraToplam 0 ise (olmamalı) bölme yapma — indirim 0 sayılır.
+      const kalemIndirim = sipAraToplam > 0 ? (sipIndirim * kalemTutar) / sipAraToplam : 0;
+
+      /** İNDİRİMSİZ, KDV hariç kalem tutarı — YALNIZ maliyet fallback'i için. */
+      const ciroHaricBrut = kalemTutar / ProfitService.VAT_DIVISOR;
+      /** Gerçek ciro: indirim düşülmüş, KDV hariç. Kâr bunun üzerinden hesaplanır. */
+      const ciroHaric = (kalemTutar - kalemIndirim) / ProfitService.VAT_DIVISOR;
+
       // Önce SNAPSHOT (sipariş anındaki maliyet); yoksa güncel maliyetten fallback hesap.
+      // Fallback'e ciroHaricBrut gider: "area" ürünlerde maliyet = satış ÷ marj olduğu
+      // için indirimli tutar geçilseydi maliyet de düşerdi — indirim maliyeti değiştirmez.
       const cost =
         it.costTotal != null
           ? Number(it.costTotal)
@@ -104,8 +137,10 @@ export class ProfitService {
               it.productId ? byId.get(it.productId) : undefined,
               it.configuration,
               it.quantity ?? 1,
-              ciroHaric,
+              ciroHaricBrut,
               marj,
+              // area ürünlerde kur/minM2 olmadan maliyet hesaplanamaz.
+              pricing,
             );
 
       ciroToplam += ciroHaric;
@@ -148,7 +183,26 @@ export class ProfitService {
       kapsam: {
         gunSayisi: days ?? null,
         kalemSayisi: items.length,
-        not: "Ciro KDV hariçtir. Kargo bedeli kâra dahil edilmez (kargo maliyeti sistemde yok).",
+        not: "Ciro KDV hariç ve indirimler düşülmüştür. Kargo bedeli kâra dahil edilmez (kargo maliyeti sistemde yok).",
+      },
+      /**
+       * MUTABAKAT — dashboard'daki "Toplam Ciro" ile bu sayfanın ilişkisini açık eder.
+       * İkisi farklı şeyleri ölçüyor ve bu fark daha önce çelişki gibi görünüyordu:
+       *   tahsilEdilen (dashboard) = urunAraToplam − indirim + kargo
+       *   ciro (bu sayfa)          = (urunAraToplam − indirim) ÷ 1,2
+       */
+      mutabakat: {
+        siparisSayisi: siparisToplam._count,
+        /** Kalem tutarları toplamı — KDV dahil, indirim ÖNCESİ. */
+        urunAraToplam: round2(Number(siparisToplam._sum.subtotal ?? 0)),
+        /** Kupon + kurumsal iskonto + puan + havale indirimi. */
+        indirim: round2(Number(siparisToplam._sum.discount ?? 0)),
+        /** Müşteriden alınan kargo bedeli — kâra katılmaz (kargo gideri sistemde yok). */
+        kargo: round2(Number(siparisToplam._sum.shippingFee ?? 0)),
+        /** Dashboard'da "Toplam Ciro" olarak görünen tutar (KDV + kargo dahil). */
+        tahsilEdilen: round2(Number(siparisToplam._sum.total ?? 0)),
+        /** Devlete ait KDV payı — kâr değildir. */
+        kdv: round2(Number(siparisToplam._sum.vat ?? 0)),
       },
       toplam: {
         ciro: round2(ciroToplam),

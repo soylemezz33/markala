@@ -87,6 +87,14 @@ export default async function DashboardPage() {
       color: "text-success",
       // Hasan: "ciroya tıklandığında ne kadar kâr etmişiz" → kâr analizi sayfası.
       href: "/ciro",
+      /**
+       * 2026-09-02 (Hasan: "dashboardda 25.401,63 ama ciro sayfasında 19.917,19,
+       * neden düzeltemedik?"): iki rakam FARKLI ŞEYLERİ ölçüyor ve ikisi de doğru —
+       * burada müşterinin ÖDEDİĞİ tutar (KDV + kargo dahil), kâr sayfasında bize
+       * KALAN tutar var. Etiket kayıtsız şartsız "Toplam Ciro" dediği için aynı şey
+       * sanılıyor ve sayfa bozuk görünüyordu. Farkı kartın üstünde söylüyoruz.
+       */
+      hint: "KDV ve kargo dahil · kâr detayı →",
     }] : []),
     {
       // 2026-08-18: artık YALNIZ gerçekleşen siparişler (ödemesi başarılı + cari).
@@ -157,7 +165,7 @@ export default async function DashboardPage() {
               </div>
               {/* Delta/karşılaştırma verisi API'de yok — tıklanabilir kartta ipucu gösterilir */}
               <div className="mt-1 text-[11px] md:text-xs text-ink-400">
-                {"href" in k && k.href ? "Kâr detayını gör →" : "-"}
+                {"hint" in k && k.hint ? k.hint : "href" in k && k.href ? "Detay →" : "-"}
               </div>
             </>
           );

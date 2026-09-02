@@ -19,6 +19,13 @@ import { getBlogPosts } from "@/lib/blog";
  *
  * ŞEHİR SAYFALARI DA BURADA: /matbaa hub'ı denetimde yalnız footer'dan link alıyordu,
  * oysa /matbaa/antalya (141 gös) ve /matbaa/gaziantep (103 gös) gerçek trafik alıyor.
+ *
+ * ── TASARIM DÜZENİ (2026-09-02, Hasan: "bu alanın tasarımını hiç sevmedim") ──
+ * Önceki hâlde iki farklı içerik türü (fiyat rehberi + blog yazısı) HİÇBİR ayrım
+ * olmadan alt alta iki satır hâlinde duruyordu: 6 birbirine benzeyen kutu. Üstelik
+ * üst satırda başlık/özet kırpılmadığı, alt satırda kırpıldığı için kart boyları
+ * tutmuyordu. Şimdi her iki grup kendi küçük başlığını taşıyor ve iki satırda da
+ * aynı kırpma uygulanıyor → boylar eşit, gruplar okunur.
  */
 
 /** Fiyat rehberleri — en çok arama alan üçü. Rota listesi sitemap ile aynı kaynaktan
@@ -65,24 +72,34 @@ export async function GuidesRail() {
           </Link>
         </div>
 
-        <div className="grid gap-3 md:gap-4 md:grid-cols-3">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
+          Fiyat ve mevzuat rehberleri
+        </p>
+        <div className="grid items-stretch gap-3 md:gap-4 md:grid-cols-3">
           {FIYAT_REHBERLERI.map((r) => (
             <Link
               key={r.href}
               href={r.href}
-              className="group flex flex-col rounded-xl border border-paper-200 bg-paper-50 p-5 transition-all hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2"
+              className="group flex h-full flex-col rounded-xl border border-paper-200 bg-paper-50 p-5 transition-all hover:border-ink-300 hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2"
             >
               <Article size={20} weight="duotone" className="text-brand-700" />
-              <h3 className="mt-3 font-semibold text-ink-900 group-hover:text-brand-700 transition-colors">
+              <h3 className="mt-3 font-semibold text-ink-900 group-hover:text-brand-700 transition-colors line-clamp-2">
                 {r.baslik}
               </h3>
-              <p className="mt-1.5 text-sm text-ink-500 leading-snug">{r.ozet}</p>
+              <p className="mt-1.5 text-sm text-ink-500 leading-snug line-clamp-2">{r.ozet}</p>
+              <span className="mt-auto pt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 group-hover:gap-2 transition-all">
+                Rehberi oku <ArrowRight size={12} weight="bold" />
+              </span>
             </Link>
           ))}
         </div>
 
         {yazilar.length > 0 && (
-          <ul className="mt-4 grid gap-3 md:gap-4 md:grid-cols-3">
+          <>
+          <p className="mt-8 mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
+            Blogdan son yazılar
+          </p>
+          <ul className="grid items-stretch gap-3 md:gap-4 md:grid-cols-3">
             {yazilar.map((y) => (
               <li key={y.slug}>
                 <Link
@@ -98,13 +115,17 @@ export async function GuidesRail() {
                   <p className="mt-1.5 text-sm text-ink-500 leading-snug line-clamp-2">
                     {y.excerpt}
                   </p>
+                  <span className="mt-auto pt-4 inline-flex items-center gap-1 text-xs font-semibold text-brand-700 group-hover:gap-2 transition-all">
+                    Yazıyı oku <ArrowRight size={12} weight="bold" />
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
+          </>
         )}
 
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-paper-200 pt-5">
           <Link
             href="/matbaa"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:gap-2.5 transition-all"
