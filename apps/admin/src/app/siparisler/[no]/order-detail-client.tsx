@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { DesignFileUploader } from "@/components/design-file-uploader";
 import { AdminShell } from "@/components/admin-shell";
 import { useServerPerms } from "@/components/perms-provider";
 import {
@@ -19,8 +21,16 @@ import {
   DownloadSimple,
   PaintBrush,
   ArrowCounterClockwise,
+  Trash,
+  Image as ImageIcon,
 } from "@phosphor-icons/react";
-import { updateOrderStatus, updateOrderTracking, refundOrder, confirmHavalePayment } from "./actions";
+import {
+  updateOrderStatus,
+  updateOrderTracking,
+  refundOrder,
+  confirmHavalePayment,
+  deleteOrderDesign,
+} from "./actions";
 
 /**
  * Kargo firmaları (2026-08-29). Markala fiilen YALNIZ DHL eCommerce kullanıyor
@@ -104,6 +114,19 @@ export interface OrderDetailProps {
     needsDesignSupport?: boolean;
     uploadedFileName?: string | null;
     uploadedFileUrl?: string | null;
+    /** Satır kimliği — panelden bu satıra tasarım dosyası yüklemek için (2026-09-02). */
+    id?: string;
+    /** Tasarımcının yüklediği dosyalar (önizleme/çalışma/baskı) — yalnız panel rollerinde gelir. */
+    designUploads?: Array<{
+      id: string;
+      kind: "onizleme" | "calisma" | "baski";
+      fileName: string;
+      fileSize: number;
+      fileUrl: string;
+      mimeType: string;
+      createdAt: string;
+      uploadedBy?: { id: string; fullName?: string | null } | null;
+    }>;
     /** Seçimlerin ürün şemasındaki etiket + teknik açıklaması (API findById üretir). */
     optionDetails?: Array<{ group: string; label: string; detail?: string | null }>;
   }>;
@@ -138,6 +161,15 @@ function formatDate(iso: string): string {
  * Bu yüzden link admin'in kendi BFF rotasından geçer (çerezle kimliklenir).
  * URL'nin son parçası (uuid.uzantı) anahtardır — hem eski hem yeni kayıt için aynı.
  */
+/** Dosya URL'inden depolama anahtarını (uuid.uzantı) çıkarır; desen tutmazsa undefined. */
+function tasarimAnahtari(url: string | null | undefined): string | undefined {
+  const key = String(url ?? "").split("?")[0]?.split("/").pop();
+  return key && /^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key) ? key : undefined;
+}
+
+const KIND_ETIKET: Record<string, string> = { onizleme: "Önizleme", calisma: "Çalışma", baski: "Baskı PDF" };
+const boyut = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
+
 function tasarimIndirmeYolu(
   url: string | null | undefined,
   ad?: string,
@@ -169,6 +201,8 @@ function tasarimDosyaAdi(
   orderNumber: string,
   satirNo: number,
   item: { productSlug?: string; productName: string; quantity?: number },
+  /** Tasarımcı dosyalarında tür eki: "onizleme" | "calisma" | "baski" (2026-09-02). Müşteri dosyası eksiz. */
+  sonEk?: string,
 ): string {
   const urun = (item.productSlug ?? item.productName)
     .toLocaleLowerCase("tr")
@@ -178,7 +212,8 @@ function tasarimDosyaAdi(
     .replace(/^-|-$/g, "")
     .slice(0, 40);
   const adet = item.quantity ? `__${item.quantity}ad` : "";
-  return `${orderNumber}-${satirNo}__${urun}${adet}`;
+  const ek = sonEk ? `__${sonEk}` : "";
+  return `${orderNumber}-${satirNo}__${urun}${adet}${ek}`;
 }
 
 const TL = (v: unknown) => "₺ " + Number(v ?? 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
@@ -249,6 +284,12 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   // Tam durum makinesi (iptal + geri adim) yalnizca ORDERS_STATUS'u olanlarda. Kargo rolunde
   // yok: API zaten 403 doner ama butonu gostermek kullaniciyi hataya surukler.
   const canFullStatus = !perms || perms.includes("orders.status");
+  // Satıra tasarım dosyası yükleme/silme (2026-09-02): tasarımcı + admin. Kargo/muhasebe
+  // yalnız görür/indirir; API 403 döner ama butonu göstermek kullanıcıyı hataya sürükler.
+  const canDesign = !perms || perms.includes("orders.design");
+  // Yükleme/silme sonrası sayfa RSC'den yeniden çekilsin (api.orders.detail) — optimistik
+  // liste tutmak yerine kaynağa dönüyoruz; dosya listesi küçük, gecikme fark edilmez.
+  const router = useRouter();
 
 
   // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
@@ -420,8 +461,22 @@ Devam edilsin mi?`,
       const geri = geriAdimMi(currentStatus, statusId);
       const mailliDurumlar = ["uretimde", "kargoya-verildi", "teslim-edildi"];
       const mailGidecek = !geri && mailliDurumlar.includes(statusId);
+      // ÖNİZLEME UYARISI (2026-09-02, Hasan kararı: "uyarı göster, engelleme"): Üretimde'ye
+      // geçerken önizleme JPG'si olmayan kalem varsa onay metninin başına yazılır. Engel YOK —
+      // müşteri dosyasıyla basılan işlerde önizleme şart değil; disiplin oturunca sıkılaştırılır.
+      const onizlemesiz =
+        statusId === "uretimde" && !geri
+          ? order.items
+              .filter((it) => !(it.designUploads ?? []).some((d) => d.kind === "onizleme"))
+              .map((it) => it.productName)
+          : [];
+      const onizlemeUyari = onizlemesiz.length
+        ? `⚠ Önizleme JPG yüklenmemiş kalem var: ${onizlemesiz.join(", ")}\n` +
+          `Üretimde ürünü tanımak için önizleme yüklemeniz önerilir.\n\n`
+        : "";
       const ok = window.confirm(
-        `${mevcut} → ${hedef}\n\n` +
+        onizlemeUyari +
+          `${mevcut} → ${hedef}\n\n` +
           (mailGidecek
             ? `⚠ Müşteriye "${hedef}" bildirimi E-POSTA ile GÖNDERİLECEK.\n\n`
             : geri
@@ -643,50 +698,153 @@ Devam edilsin mi?`,
             </div>
           </Card>
 
-          {/* Tasarım Dosyaları — müşterinin yüklediği baskı dosyaları ayrı, belirgin bölümde + büyük İndir butonu */}
-          {order.items.some(
-            (it) =>
-              /^https?:\/\//i.test(it.uploadedFileUrl ?? "") || it.needsDesignSupport || it.uploadedFileName,
-          ) && (
+          {/* Tasarım Dosyaları — müşterinin yüklediği dosya + TASARIMCININ yüklediği dosyalar
+              (2026-09-02, üretim ARGE Faz 2). Kart artık yükleme yetkisi olan herkese görünür:
+              tasarımcı, müşteri hiçbir şey yüklememiş olsa da satıra dosya ekleyebilmeli. */}
+          {(canDesign ||
+            order.items.some(
+              (it) =>
+                /^https?:\/\//i.test(it.uploadedFileUrl ?? "") ||
+                it.needsDesignSupport ||
+                it.uploadedFileName ||
+                (it.designUploads?.length ?? 0) > 0,
+            )) && (
             <Card title="Tasarım Dosyaları">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {order.items.map((item, i) => {
                   const hasFile = /^https?:\/\//i.test(item.uploadedFileUrl ?? "");
-                  if (!hasFile && !item.needsDesignSupport && !item.uploadedFileName) return null;
+                  const dosyalar = item.designUploads ?? [];
+                  if (!canDesign && !hasFile && !item.needsDesignSupport && !item.uploadedFileName && !dosyalar.length) return null;
+                  const satirNo = i + 1;
                   return (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between gap-3 p-3 rounded-lg border border-paper-200 bg-paper-100/40"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-medium text-ink-900 text-sm truncate">{item.productName}</div>
-                        {hasFile ? (
-                          <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-500 break-all">
-                            <FileText size={12} /> {item.uploadedFileName ?? "tasarim"}
+                    <div key={item.id ?? i} className="rounded-lg border border-paper-200 bg-paper-100/40 p-3">
+                      {/* Müşterinin dosyası — bu satır DEĞİŞMEDİ */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-medium text-ink-900 text-sm truncate">
+                            <span className="font-mono text-[11px] text-ink-400 mr-1.5">#{satirNo}</span>
+                            {item.productName}
                           </div>
-                        ) : item.needsDesignSupport ? (
-                          <div className="mt-0.5 text-xs text-brand-700">
-                            Tasarım desteği istendi, grafik ekibi hazırlayacak
-                          </div>
-                        ) : (
-                          <div className="mt-0.5 text-xs text-warning">
-                            Dosya yüklenmedi, müşteriden iste{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
-                          </div>
+                          {hasFile ? (
+                            <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-500 break-all">
+                              <FileText size={12} /> Müşteri dosyası: {item.uploadedFileName ?? "tasarim"}
+                            </div>
+                          ) : item.needsDesignSupport ? (
+                            <div className="mt-0.5 text-xs text-brand-700">
+                              Tasarım desteği istendi, grafik ekibi hazırlayacak
+                            </div>
+                          ) : (
+                            <div className="mt-0.5 text-xs text-ink-500">
+                              Müşteri dosya yüklemedi{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
+                            </div>
+                          )}
+                        </div>
+                        {hasFile && tasarimIndirmeYolu(item.uploadedFileUrl) && (
+                          <a
+                            href={tasarimIndirmeYolu(
+                              item.uploadedFileUrl,
+                              tasarimDosyaAdi(order.orderNumber, satirNo, item),
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="flex-none inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium bg-ink-900 text-paper-50 hover:bg-ink-700"
+                          >
+                            <DownloadSimple size={14} /> İndir
+                          </a>
                         )}
                       </div>
-                      {hasFile && tasarimIndirmeYolu(item.uploadedFileUrl) && (
-                        <a
-                          href={tasarimIndirmeYolu(
-                            item.uploadedFileUrl,
-                            tasarimDosyaAdi(order.orderNumber, i + 1, item),
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download
-                          className="flex-none inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium bg-ink-900 text-paper-50 hover:bg-ink-700"
-                        >
-                          <DownloadSimple size={14} /> İndir
-                        </a>
+
+                      {/* Tasarımcı dosyaları — önizleme küçük görselle (ASIL tanıma aracı), diğerleri satır */}
+                      {dosyalar.length > 0 && (
+                        <ul className="mt-3 space-y-1.5">
+                          {dosyalar.map((d) => {
+                            const key = tasarimAnahtari(d.fileUrl);
+                            const onizleme = d.kind === "onizleme" && key && /\.(jpe?g|png)$/i.test(key);
+                            return (
+                              <li
+                                key={d.id}
+                                className="flex items-center gap-3 rounded-md border border-paper-200 bg-paper-50 px-2.5 py-2"
+                              >
+                                {onizleme ? (
+                                  <a
+                                    href={`/api/tasarim-onizleme/${key}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Büyük görüntüle"
+                                    className="flex-none"
+                                  >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={`/api/tasarim-onizleme/${key}`}
+                                      alt={`${item.productName} önizleme`}
+                                      className="h-16 w-24 object-contain rounded border border-paper-200 bg-paper-100"
+                                    />
+                                  </a>
+                                ) : (
+                                  <span className="flex-none grid place-items-center h-10 w-10 rounded bg-paper-100 text-ink-500">
+                                    {d.kind === "onizleme" ? <ImageIcon size={18} /> : <FileText size={18} />}
+                                  </span>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <span className="px-1.5 py-0.5 rounded bg-ink-900/5 text-ink-700 font-medium">
+                                      {KIND_ETIKET[d.kind] ?? d.kind}
+                                    </span>
+                                    <span className="text-ink-900 truncate">{d.fileName}</span>
+                                  </div>
+                                  <div className="mt-0.5 text-[11px] text-ink-500">
+                                    {boyut(d.fileSize)} · {d.uploadedBy?.fullName ?? "—"} · {formatDate(d.createdAt)}
+                                  </div>
+                                </div>
+                                {tasarimIndirmeYolu(d.fileUrl) && (
+                                  <a
+                                    href={tasarimIndirmeYolu(
+                                      d.fileUrl,
+                                      tasarimDosyaAdi(order.orderNumber, satirNo, item, d.kind),
+                                    )}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    download
+                                    className="flex-none inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium border border-paper-200 hover:bg-paper-100"
+                                  >
+                                    <DownloadSimple size={13} /> İndir
+                                  </a>
+                                )}
+                                {canDesign && (
+                                  <button
+                                    type="button"
+                                    disabled={isPending}
+                                    onClick={() => {
+                                      const ok = window.confirm(
+                                        `"${d.fileName}" silinecek.\n\nKayıt ve dosya kaldırılır; işlem denetim kaydına yazılır. Devam?`,
+                                      );
+                                      if (!ok) return;
+                                      startTransition(async () => {
+                                        const r = await deleteOrderDesign(order.id, d.id);
+                                        if (!r.ok) {
+                                          window.alert(`Silinemedi: ${r.error}`);
+                                          return;
+                                        }
+                                        router.refresh();
+                                      });
+                                    }}
+                                    className="flex-none p-1.5 rounded-md text-error hover:bg-error/10 disabled:opacity-50"
+                                    aria-label={`${d.fileName} dosyasını sil`}
+                                    title="Sil"
+                                  >
+                                    <Trash size={14} />
+                                  </button>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+
+                      {/* Yükleyici — yalnız orders.design (tasarımcı/admin). item.id API'den gelir. */}
+                      {canDesign && item.id && (
+                        <DesignFileUploader orderId={order.id} itemId={item.id} onDone={() => router.refresh()} />
                       )}
                     </div>
                   );

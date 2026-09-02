@@ -101,3 +101,26 @@ export async function updateOrderTracking(
     return { ok: false, error: msg };
   }
 }
+
+/**
+ * Sipariş satırındaki tasarımcı dosyasını sil (2026-09-02, üretim ARGE Faz 2).
+ * API kaydı ve diskteki dosyayı kaldırır, denetim kaydına yazar. Yalnız ORDERS_DESIGN
+ * (tasarımcı/admin) — kargo/muhasebe API'de 403 alır; panel butonu da göstermez.
+ * YÜKLEME burada DEĞİL: multipart olduğu için /api/siparis-tasarim BFF rotasından gider
+ * (server action gövde sınırı 1 MB).
+ */
+export async function deleteOrderDesign(
+  orderId: string,
+  uploadId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const api = await getAdminApi();
+    await api.orders.deleteItemDesign(orderId, uploadId);
+    revalidatePath("/siparisler");
+    revalidatePath(`/siparisler/${orderId}`);
+    return { ok: true };
+  } catch (e) {
+    const msg = (e as { message?: string })?.message ?? "Dosya silinemedi";
+    return { ok: false, error: msg };
+  }
+}
