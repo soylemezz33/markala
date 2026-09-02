@@ -11,3 +11,8 @@ node_modules/
 # Kilit dosyası (üretilen) ve üretilen Prisma migration SQL'leri.
 pnpm-lock.yaml
 apps/api/prisma/migrations/
+
+# SEO denetim raporları — üretilen içerik, biçim denetimine girmesi anlamsız.
+# (Ham HTML dökümleri artık .gitignore'da; bunlar Prettier'ı SyntaxError ile
+# patlatıyordu — tek satırlık minified Next çıktısı.)
+markala.com.tr-audit/

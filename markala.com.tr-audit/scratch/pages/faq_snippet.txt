@@ -1,1 +1,0 @@
-script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","@id":"https://markala.com.tr/rehber/kartvizit-fiyatlari-2026#faq","mainEntity":[{"@type":"Question","name":"1.000 adet kartvizit kaç TL?","acceptedAnswer":{"@type":"Answer","text":"Ağustos 2026 itibarıyla katalog fiyatlarına göre 1.000 adet kartvizit 480,00 ₺'den 

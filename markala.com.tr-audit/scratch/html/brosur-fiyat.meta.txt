@@ -1,5 +1,0 @@
-saved to scratch/html/brosur-fiyat.html
-
-Final URL: https://markala.com.tr/rehber/brosur-baski-fiyatlari-2026
-Status: 200 | mode=raw | is_spa=False
-Publication date: 2026-07-20

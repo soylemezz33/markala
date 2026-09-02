@@ -102,3 +102,15 @@ _server_backup_*/
 /*.png
 /*.jpeg
 /*.jpg
+
+# SEO denetim CIKTILARI — canli siteden yeniden uretilebilir, repoya girmemeli.
+# 2026-09-01'de toplu commit'le 229 dosya / 19.6 MB olarak girmisti: Docker build
+# baglamini sisiriyor ve her denetim tekrarinda yeniden churn uretiyor.
+# Insan/AI yazimi ANALIZ (findings/*.md ve ACTION-PLAN.md) BILEREK takipte tutuluyor.
+markala.com.tr-audit/scratch/
+markala.com.tr-audit/screenshots/
+markala.com.tr-audit/samples/
+markala.com.tr-audit/home.html
+markala.com.tr-audit/sitemap.xml
+markala.com.tr-audit/sitemap_fresh.xml
+markala.com.tr-audit/all-urls.txt

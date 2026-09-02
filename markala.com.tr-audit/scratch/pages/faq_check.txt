@@ -1,9 +1,0 @@
-occurrences: 4
----
-pe":"Answer","text":"Evet. Bu sayfadaki ve ürün sayfasýndaki tüm fiyatlar KDV dahildir; sepette gördüðün rakam ödediðin rakamdýr. Kartvizit fiyatý karþýlaþtýrýrken listelenen fiyatýn KDV dahil olup olmadýðýný mutlaka kontrol et — KDV hariç yazýlan fiyat sepette artar."}},{"@type":"Question","name":"Selefonlu kartvizit ne demek?","acceptedAnswer":{"
----
-lan fiyat sepette artar.</span></div></details><details class="group bg-paper-50 border border-paper-200 rounded-lg overflow-hidden open:shadow-sm"><summary class="cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors"><span>Selefonlu kartvizit ne demek?</span><svg xmlns="ht
----
-",\"text\":\"Evet. Bu sayfadaki ve ürün sayfasýndaki tüm fiyatlar KDV dahildir; sepette gördüðün rakam ödediðin rakamdýr. Kartvizit fiyatý karþýlaþtýrýrken listelenen fiyatýn KDV dahil olup olmadýðýný mutlaka kontrol et — KDV hariç yazýlan fiyat sepette artar.\"}},{\"@type\":\"Question\",\"name\":\"Selefonlu kartvizit ne demek?\",\"acceptedAnswer\"
----
-r border-paper-200 rounded-lg overflow-hidden open:shadow-sm\",\"children\":[[\"$\",\"summary\",null,{\"className\":\"cursor-pointer px-4 py-3 font-medium text-ink-900 text-sm flex items-center justify-between hover:bg-paper-100 transition-colors\",\"children\":[[\"$\",\"span\",null,{\"children\":\"Selefonlu kartvizit ne demek?\"}],[\"$\",\"svg\",n
