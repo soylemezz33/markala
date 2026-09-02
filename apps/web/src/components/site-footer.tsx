@@ -8,6 +8,7 @@ import {
   WhatsappLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { openCookieSettings } from "@/components/cookie-consent";
+import { PRODUCT_GROUPS } from "@/lib/product-groups";
 
 /**
  * Site footer — 2026-08-08 yenileme: koyu (marka charcoal) zemin + amber/cyan
@@ -19,6 +20,56 @@ import { openCookieSettings } from "@/components/cookie-consent";
 export type FooterKategori = { slug: string; name: string };
 
 export function SiteFooter({ categories = [] }: { categories?: FooterKategori[] }) {
+  /**
+   * Kategorileri PRODUCT_GROUPS sırasına göre grupla (2026-09-02).
+   *
+   * Bir kategori birden fazla gruba ait olabilir (örn. vinil-branda-afis hem "Dijital
+   * Baskı" hem "Bayrak & Stand" listesinde). Footer'da TEK yerde görünsün diye ilk
+   * eşleşen grup kazanır — aynı adı iki sütunda görmek kafa karıştırır ve iç link
+   * dağılımına da bir şey katmaz.
+   *
+   * Kartvizit'in hub'ı yok (tek kategori olduğu için kasıtlı); başlığı doğrudan
+   * kendi kategori sayfasına bağlanır.
+   */
+  const kalan = new Map(categories.map((c) => [c.slug, c]));
+  const kategoriGruplari: Array<{
+    baslik: string;
+    href: string | null;
+    kategoriler: FooterKategori[];
+  }> = [];
+
+  if (kalan.has("kartvizit")) {
+    kategoriGruplari.push({
+      baslik: "Kartvizit",
+      href: "/kategori/kartvizit",
+      kategoriler: [kalan.get("kartvizit")!],
+    });
+    kalan.delete("kartvizit");
+  }
+
+  for (const g of PRODUCT_GROUPS) {
+    const uyeler = g.categorySlugs
+      .map((slug) => kalan.get(slug))
+      .filter((c): c is FooterKategori => Boolean(c));
+    uyeler.forEach((c) => kalan.delete(c.slug));
+    if (uyeler.length > 0) {
+      kategoriGruplari.push({
+        baslik: g.label,
+        href: `/kategoriler/${g.slug}`,
+        kategoriler: uyeler,
+      });
+    }
+  }
+
+  // Hiçbir grubun listesinde olmayanlar — footer'dan sessizce düşmesinler.
+  if (kalan.size > 0) {
+    kategoriGruplari.push({
+      baslik: "Diğer",
+      href: "/kategoriler",
+      kategoriler: [...kalan.values()],
+    });
+  }
+
   return (
     <footer className="bg-[#191722] text-paper-100 mt-16">
       {/* Marka aksan şeridi — amber → cyan gradient */}
@@ -106,15 +157,23 @@ export function SiteFooter({ categories = [] }: { categories?: FooterKategori[] 
       </Container>
 
       {/*
-        KATEGORİ BLOĞU (2026-09-01) — SEO iç link düzeltmesi.
-        Ölçüm: anasayfada `/kategori/` linki SIFIRDI. Mega menü kategori linkleri yalnız
-        hover'da DOM'a girdiği için sunucu HTML'inde yok; sekme URL'lerinin tamamı da
-        /urunler'e canonical veriyor. Sonuç: 41 kategori sayfası iç link gücünü SADECE
-        /kategoriler hub'ından alıyordu.
-        Bu blok her sayfada sunucudan basılır → her kategori site genelinde iç link kazanır.
-        Mega menüyü SSR'a taşımak yerine buraya konuldu: aynı faydayı verir ama header'ın
-        LCP kritik yoluna dokunmaz (footer ekranın altında).
-        Maliyet: ~41 bağlantı ≈ 3 KB ham / brotli sonrası birkaç yüz bayt.
+        KATEGORİ BLOĞU — 2026-09-01'de düz 41 linklik liste olarak eklendi,
+        2026-09-02'de GRUP YAPISINA çevrildi.
+
+        İlk hâlin gerekçesi duruyor: anasayfada `/kategori/` linki SIFIRDI. Mega menü
+        kategori linkleri yalnız hover'da DOM'a girdiği için sunucu HTML'inde yok;
+        sekme URL'lerinin tamamı da /urunler'e canonical veriyor. Bu blok her sayfada
+        sunucudan basılır → her kategori site genelinde iç link kazanır. Header'ın LCP
+        kritik yoluna dokunmaz (footer ekranın altında).
+
+        NEDEN GRUPLANDI: 41 ad alt alta anlamsız bir liste; kullanıcı aradığını bulamıyor.
+        Ayrıca 7 grup hub'ı (/kategoriler/<grup>) yalnız anasayfadan ve /kategoriler'den
+        link alıyordu — grup başlıkları oraya bağlanınca hub'lar da site geneli iç link
+        kazanır. 41 kategori linkinin TAMAMI korunur, yalnız başlık altına dizilir.
+
+        GRUBA GİRMEYEN KATEGORİ KAYBOLMAZ: hiçbir grubun listesinde olmayan kategoriler
+        "Diğer" başlığı altında toplanır — yeni kategori eklendiğinde footer'dan sessizce
+        düşmesin diye (aksi hâlde kimse fark etmezdi).
       */}
       {categories.length > 0 && (
         <div className="border-t border-white/10">
@@ -122,18 +181,36 @@ export function SiteFooter({ categories = [] }: { categories?: FooterKategori[] 
             <h2 className="text-[11px] font-semibold uppercase tracking-wider text-paper-100/50">
               Tüm Kategoriler
             </h2>
-            <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-1.5">
-              {categories.map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/kategori/${c.slug}`}
-                    className="block py-1 text-[13px] leading-snug text-paper-100/70 hover:text-brand-300 transition-colors"
-                  >
-                    {c.name}
-                  </Link>
-                </li>
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-6">
+              {kategoriGruplari.map((g) => (
+                <div key={g.baslik}>
+                  {g.href ? (
+                    <Link
+                      href={g.href}
+                      className="block text-[12px] font-semibold text-paper-100/90 hover:text-brand-300 transition-colors"
+                    >
+                      {g.baslik}
+                    </Link>
+                  ) : (
+                    <span className="block text-[12px] font-semibold text-paper-100/90">
+                      {g.baslik}
+                    </span>
+                  )}
+                  <ul className="mt-1.5 space-y-0.5">
+                    {g.kategoriler.map((c) => (
+                      <li key={c.slug}>
+                        <Link
+                          href={`/kategori/${c.slug}`}
+                          className="block py-0.5 text-[13px] leading-snug text-paper-100/70 hover:text-brand-300 transition-colors"
+                        >
+                          {c.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ul>
+            </div>
           </Container>
         </div>
       )}
