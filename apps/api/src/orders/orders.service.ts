@@ -10,7 +10,7 @@ import { LoyaltyService } from "../loyalty/loyalty.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 import { computeItemCostTotal } from "./costing";
 import { PERM, roleHasPerm } from "../auth/permissions";
-import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "@markala/types";
+import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "../common/banka";
 
 /**
  * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.

@@ -4,7 +4,7 @@ import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
 import { renderEmail, emailButton, emailButtonColored, emailFallbackLink } from "./email-layout";
-import { BANKA_HESABI, ODEME_YONTEMI } from "@markala/types";
+import { BANKA_HESABI, ODEME_YONTEMI } from "../common/banka";
 
 /**
  * Konfigürasyon özetindeki paket adedini çıkarır ("2 Adet" → 2, "1.000 Adet" → 1000).
