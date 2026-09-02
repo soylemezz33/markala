@@ -23,8 +23,7 @@ import {
   PaintBrush,
   ArrowCounterClockwise,
   Trash,
-  Image as ImageIcon,
-} from "@phosphor-icons/react";
+  Image as ImageIcon, ArrowSquareOut } from "@phosphor-icons/react";
 import {
   updateOrderStatus,
   updateOrderTracking,
@@ -127,6 +126,7 @@ export interface OrderDetailProps {
       mimeType: string;
       createdAt: string;
       uploadedBy?: { id: string; fullName?: string | null } | null;
+      driveUrl?: string | null;
     }>;
     /** Seçimlerin ürün şemasındaki etiket + teknik açıklaması (API findById üretir). */
     optionDetails?: Array<{ group: string; label: string; detail?: string | null }>;
@@ -799,6 +799,17 @@ Devam edilsin mi?`,
                                     {boyut(d.fileSize)} · {d.uploadedBy?.fullName ?? "—"} · {formatDate(d.createdAt)}
                                   </div>
                                 </div>
+                                {d.driveUrl && (
+                                  <a
+                                    href={d.driveUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Dosya Google Drive'da; yeni sekmede açılır"
+                                    className="flex-none inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium border border-paper-200 hover:bg-paper-100"
+                                  >
+                                    <ArrowSquareOut size={13} /> Drive'da aç
+                                  </a>
+                                )}
                                 {tasarimIndirmeYolu(d.fileUrl) && (
                                   <a
                                     href={tasarimIndirmeYolu(

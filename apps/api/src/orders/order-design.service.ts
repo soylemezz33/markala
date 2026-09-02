@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
+import { DriveService, driveFileUrl } from "../storage/drive.service";
 import { DESIGN_KINDS, type DesignKind } from "./orders.dto";
 
 /**
@@ -24,6 +25,8 @@ export const DESIGN_ROW_SELECT = {
   fileUrl: true,
   mimeType: true,
   createdAt: true,
+  // driveFileId dışarı ID olarak çıkmaz; designRowToPublic bunu driveUrl'e çevirir (2026-09-03).
+  driveFileId: true,
   user: { select: { id: true, fullName: true } },
 } as const;
 
@@ -35,6 +38,7 @@ type DesignRowRaw = {
   fileUrl: string;
   mimeType: string;
   createdAt: Date;
+  driveFileId?: string | null;
   user: { id: string; fullName: string | null } | null;
 };
 
@@ -49,6 +53,8 @@ export function designRowToPublic(r: DesignRowRaw) {
     mimeType: r.mimeType,
     createdAt: r.createdAt,
     uploadedBy: r.user ? { id: r.user.id, fullName: r.user.fullName } : null,
+    /** Dosya Drive'a taşındıysa panel "Drive'da aç" basar; yerel dosya artık yoktur. */
+    driveUrl: r.driveFileId ? driveFileUrl(r.driveFileId) : null,
   };
 }
 
@@ -86,10 +92,27 @@ export function tasarimYuklemeKontrol(input: {
 
 type Actor = { actorId?: string | null; ipAddress?: string | null };
 
+/**
+ * Drive'daki dosya adı: sipariş no + ürün + tür + özgün ad. Sipariş numarası başta — Drive'da
+ * arama ve sıralama onunla; özgün ad sonda kalır ki tasarımcı kendi dosyasını tanısın.
+ * Örn: MK-2026-1234__cin-vinil-branda__baski__final-v3.pdf
+ */
+export function driveDosyaAdi(orderNumber: string, urun: string, kind: string, ozgunAd: string): string {
+  const slug = urun
+    .toLocaleLowerCase("tr")
+    .replace(/ı/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  return `${orderNumber}__${slug || "urun"}__${kind}__${ozgunAd}`;
+}
+
 @Injectable()
 export class OrderDesignService {
   private readonly logger = new Logger(OrderDesignService.name);
-  constructor(private prisma: PrismaService, private storage: StorageService) {}
+  constructor(
+    private prisma: PrismaService,
+    private storage: StorageService,
+    private drive: DriveService,
+  ) {}
 
   async add(
     orderId: string,
@@ -101,7 +124,19 @@ export class OrderDesignService {
     // Sahiplik: kalem bu siparişe ait mi? Tahmin edilen itemId ile başka siparişe yazılamaz.
     const item = await this.prisma.orderItem.findFirst({
       where: { id: itemId, orderId },
-      select: { id: true, order: { select: { status: true } } },
+      select: {
+        id: true,
+        productName: true,
+        productSlug: true,
+        order: {
+          select: {
+            status: true,
+            orderNumber: true,
+            user: { select: { fullName: true } },
+            shippingAddressSnapshot: true,
+          },
+        },
+      },
     });
     if (!item) throw new NotFoundException("Sipariş satırı bulunamadı.");
 
@@ -143,6 +178,37 @@ export class OrderDesignService {
       throw e;
     }
 
+    // Drive aktarımı (2026-09-03): çalışma/baskı dosyası Drive'a gider, yerel kopya silinir;
+    // ÖNİZLEME sunucuda kalır (panel kartları). Drive kapalı/hatalıysa dosya yerelde kalır —
+    // yükleme asla Drive yüzünden düşmez, yalnız log'a yazılır.
+    let driveFileId: string | null = null;
+    if (kind !== "onizleme" && this.drive.enabled) {
+      try {
+        const musteri =
+          item.order?.user?.fullName ??
+          (item.order?.shippingAddressSnapshot as { fullName?: string } | null)?.fullName ??
+          null;
+        const folderId = await this.drive.ensureOrderFolder(item.order?.orderNumber ?? orderId, musteri);
+        const up = await this.drive.uploadFile({
+          folderId,
+          name: driveDosyaAdi(item.order?.orderNumber ?? orderId, item.productSlug ?? item.productName, kind, r.fileName),
+          mimeType: file.mimetype,
+          buffer: file.buffer,
+        });
+        row = await this.prisma.designUpload.update({
+          where: { id: row.id },
+          data: { driveFileId: up.id, fileUrl: up.webViewLink, storageKey: null },
+          select: DESIGN_ROW_SELECT,
+        });
+        driveFileId = up.id;
+        await this.storage
+          .deleteDesign(r.key)
+          .catch((e) => this.logger.warn(`Drive'a taşınan dosyanın yerel kopyası silinemedi (${r.key}): ${e?.message}`));
+      } catch (e) {
+        this.logger.warn(`Drive aktarımı başarısız, dosya sunucuda kaldı (${r.key}): ${(e as Error)?.message}`);
+      }
+    }
+
     await this.prisma.auditLog
       .create({
         data: {
@@ -150,7 +216,7 @@ export class OrderDesignService {
           entityType: "OrderItem",
           entityId: itemId,
           action: "design_upload",
-          diff: { orderId, uploadId: row.id, kind, fileName: r.fileName, fileSize: r.fileSize },
+          diff: { orderId, uploadId: row.id, kind, fileName: r.fileName, fileSize: r.fileSize, driveFileId },
           ipAddress: actor.ipAddress ?? null,
         },
       })
@@ -162,11 +228,18 @@ export class OrderDesignService {
   async remove(orderId: string, uploadId: string, actor: Actor) {
     const row = await this.prisma.designUpload.findFirst({
       where: { id: uploadId, orderId, orderItemId: { not: null } },
-      select: { id: true, orderItemId: true, kind: true, fileName: true, storageKey: true },
+      select: { id: true, orderItemId: true, kind: true, fileName: true, storageKey: true, driveFileId: true },
     });
     if (!row) throw new NotFoundException("Dosya kaydı bulunamadı.");
 
     await this.prisma.designUpload.delete({ where: { id: row.id } });
+
+    // Drive'daki kopya da best-effort silinir (kayıt gitti; Drive'da kalırsa log'dan bulunur).
+    if (row.driveFileId && this.drive.enabled) {
+      await this.drive
+        .deleteFile(row.driveFileId)
+        .catch((e) => this.logger.warn(`Drive dosyası silinemedi (${row.driveFileId}): ${e?.message}`));
+    }
 
     // Best-effort: dosya silinemese de kayıt silindi, istek düşmez — log yeter.
     if (row.storageKey) {

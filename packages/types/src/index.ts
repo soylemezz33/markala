@@ -409,6 +409,8 @@ export interface DesignUploadRow {
   mimeType: string;
   createdAt: string;
   uploadedBy?: { id: string; fullName?: string | null } | null;
+  /** Dosya Drive'a taşındıysa (çalışma/baskı) bağlantı; önizleme ve Drive kapalıyken null. */
+  driveUrl?: string | null;
 }
 
 export type TrackingEventStatus =
