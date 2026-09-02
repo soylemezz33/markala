@@ -10,7 +10,7 @@ import { LoyaltyService } from "../loyalty/loyalty.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 import { computeItemCostTotal } from "./costing";
 import { PERM, roleHasPerm } from "../auth/permissions";
-import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "@markala/types";
+import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "../common/banka";
 
 /**
  * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.
@@ -261,6 +261,28 @@ function withAddressView<
     shippingAddress: order.shippingAddress ?? order.shippingAddressSnapshot ?? null,
     billingAddress: order.billingAddress ?? order.billingAddressSnapshot ?? null,
   };
+}
+
+/**
+ * Sipariş onay maili SİPARİŞ OLUŞTURULURKEN mi gönderilmeli?
+ *
+ * Kartlı sipariş mailini ödeme başarısında alır (payments.handleCallback).
+ * Ödemesiz akışlar iyzico callback'inden GEÇMEZ; onlarda mail burada gider:
+ *  - cari (açık hesap): üyeye bağlıdır, userId şart.
+ *  - havale/EFT: misafire de açık (Hasan kararı), userId ARANMAZ.
+ *
+ * Saf fonksiyon: kural create() içindeki prisma/transaction yığınına gömülü
+ * kalmasın, doğrudan test edilebilsin diye ayrıldı. 2026-09-02'de koşul yalnız
+ * `onAccount && userId` olduğu için havale siparişleri HİÇBİR mail almıyordu —
+ * müşteri IBAN'ı e-postayla göremiyor, yönetici bekleyen havaleyi bilmiyordu.
+ */
+export function siparisAnindaMailGonderilir(
+  paymentMethod: string | null | undefined,
+  userId: string | null | undefined,
+): boolean {
+  if (paymentMethod === ODEME_YONTEMI.havale) return true;
+  if (paymentMethod === ODEME_YONTEMI.cari) return Boolean(userId);
+  return false;
 }
 
 @Injectable()
@@ -829,9 +851,19 @@ export class OrdersService {
       return withAddressView(created);
     });
 
-    // Cari (açık hesap) sipariş ödemesiz oluşur → onay maili BURADA gönderilir. Ödemeli
-    // siparişler ödeme başarısında (payments.handleCallback) mail alır. Fire-and-forget.
-    if (onAccount && input.userId) {
+    // ÖDEMESİZ AKIŞLAR — sipariş iyzico callback'inden GEÇMEZ, o yüzden onay maili
+    // BURADA gönderilir. Kartlı siparişler mailini ödeme başarısında alır
+    // (payments.handleCallback). Fire-and-forget.
+    //
+    // 2026-09-02 DÜZELTMESİ: koşul yalnız `onAccount` idi; havale siparişi ne cari ne
+    // kartlı olduğu için HİÇBİR mail almıyordu — müşteri IBAN'ı e-postayla hiç görmüyor,
+    // yönetici de bekleyen havaleden haberdar olmuyordu. Havalede mailin İÇERİĞİ zaten
+    // ödeme beklendiğini söyler ve hesap bilgilerini taşır (mail.service > isHavale).
+    //
+    // userId şartı yalnız cari için: açık hesap üyeye bağlıdır. Havale MİSAFİRE de açık
+    // (Hasan kararı) — orada mail adresi sipariş kaydından gelir.
+    const odemesizAkis = siparisAnindaMailGonderilir(input.paymentMethod, input.userId);
+    if (odemesizAkis) {
       void this.mail.sendOrderConfirmationEmail((placed as { id: string }).id).catch(() => undefined);
       // Yöneticiye "yeni sipariş" bildirimi. BİLEREK onay mailiyle AYNI noktada: sipariş
       // ancak burada (cari) ya da ödeme başarısında "gerçek" olur. Sipariş oluşturma anına
@@ -841,7 +873,13 @@ export class OrdersService {
       // Meta CAPI Purchase: cari sipariş iyzico callback'inden GEÇMEZ → burada tetiklenmezse
       // kurumsal dönüşümler Meta'da hiç görünmüyordu. event_id=orderNumber olduğundan tarayıcı
       // Pixel'iyle dedup korunur (handleCallback'teki çağrı deseninin aynısı, fire-and-forget).
-      void this.metaCapi.sendPurchase((placed as { id: string }).id).catch(() => undefined);
+      //
+      // HAVALEDE ATEŞLENMEZ: para henüz gelmedi. Havalenin dönüşümü, ödemenin onaylandığı
+      // an odemeOnayla() içinden bildirilir — ödenmemiş siparişi dönüşüm saymak Ads/GA4'ü
+      // şişirirdi.
+      if (onAccount) {
+        void this.metaCapi.sendPurchase((placed as { id: string }).id).catch(() => undefined);
+      }
     }
     return placed;
   }
@@ -1099,6 +1137,23 @@ export class OrdersService {
         },
       })
       .catch((e) => console.error("[audit] havale onayı denetim kaydı yazılamadı:", e?.message));
+
+    /**
+     * Sunucu-taraflı Purchase dönüşümü — havalede TEK KAYNAK burasıdır.
+     *
+     * Kartta dönüşümü tarayıcı ateşler (başarı sayfası). Havalede o an para
+     * GELMEMİŞTİR; ödenmemiş siparişi dönüşüm saymak Ads/GA4'ü şişirir. Bu
+     * yüzden istemci havale siparişinde purchase ATEŞLEMEZ (bkz.
+     * /odeme/basarili/[orderId]/page.tsx) ve gerçek dönüşüm PARANIN GELDİĞİ
+     * an, yani burada bildirilir.
+     *
+     * Meta CAPI event_id = orderNumber olduğundan tekrar çağrılsa bile Meta
+     * tarafında tekilleşir; ayrıca bu uç idempotent (zaten onaylıysa yukarıda
+     * döner), dolayısıyla çift sayım iki katmanda da engellenmiş olur.
+     * Pazarlama onayı yoksa sendPurchase kendi içinde atlar (KVKK).
+     * Hata dönüşü ödemeyi bozmaz — void + catch.
+     */
+    void this.metaCapi.sendPurchase(id).catch(() => undefined);
 
     return updated;
   }

@@ -4,7 +4,7 @@ import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
 import { renderEmail, emailButton, emailButtonColored, emailFallbackLink } from "./email-layout";
-import { BANKA_HESABI, ODEME_YONTEMI } from "@markala/types";
+import { BANKA_HESABI, ODEME_YONTEMI } from "../common/banka";
 
 /**
  * Konfigürasyon özetindeki paket adedini çıkarır ("2 Adet" → 2, "1.000 Adet" → 1000).
@@ -302,6 +302,7 @@ export class MailService {
           <strong style="color:#1A1410">Açıklama:</strong> <span style="font-family:monospace">${order.orderNumber}</span>
         </p>
         <p style="margin:10px 0 0;font-size:13px;color:#8a6d3b">Açıklama alanına sipariş numaranızı yazmayı unutmayın — ödemenizi siparişinizle bu numara üzerinden eşleştiriyoruz.</p>
+        <p style="margin:8px 0 0;font-size:12px;color:#78716c">Hesap bilgilerimiz değişmez. Farklı bir IBAN'a ödeme isteyen e-posta/mesaj alırsanız dikkate almayın, bizi 0324 433 33 51'den arayın.</p>
       </div>`
       : "";
     const havaleText = isHavale
@@ -792,6 +793,8 @@ Markala`;
       total: unknown;
       items: Array<{ productName: string; quantity: number; lineTotal: unknown }>;
       user?: { fullName: string | null } | null;
+      /** Havalede hesap bilgisi maile eklenir; lifecycle findMany tüm skaler alanları getirir. */
+      paymentMethod?: string | null;
     },
     stage: 1 | 2,
   ): Promise<boolean> {
@@ -809,6 +812,32 @@ Markala`;
     // Sipariş detayında "Ödeme Yap" akışı zaten var → müşteriyi doğrudan oraya götür.
     const payUrl = `${webUrl}/hesabim/siparislerim/${order.id}`;
     const template = `payment-recovery-${stage}`;
+
+    /**
+     * Havale hatırlatmasında HESAP BİLGİSİ tekrar verilir.
+     * Neden: müşteri ilk maildeki IBAN'ı kaybetmiş olabilir ve "Ödemeyi Tamamla"
+     * butonu /hesabim/... adresine gider — MİSAFİR havale siparişinde orası giriş
+     * ister, çıkmaz sokaktır. IBAN'ı doğrudan koymak tek işleyen yol.
+     *
+     * Dolandırıcılık notu bilinçli: "IBAN değişti" konulu sahte e-postalar
+     * Türkiye'de yaygın bir saldırı; hesabın değişmediğini burada söylemek
+     * müşteriyi o senaryoya karşı uyarır.
+     */
+    const isHavale = order.paymentMethod === ODEME_YONTEMI.havale;
+    const havaleHtml = isHavale
+      ? `<div style="margin:16px 0 0;padding:14px;background:#F7F5F0;border:1px solid #E7E2D8;border-radius:10px">
+        <p style="margin:0 0 10px;font-weight:600;color:#1A1410">Havale/EFT bilgileri</p>
+        <p style="margin:0;font-size:14px;color:#44403c;line-height:1.9">
+          <strong style="color:#1A1410">Alıcı:</strong> ${esc(BANKA_HESABI.unvan)}<br>
+          <strong style="color:#1A1410">Banka:</strong> ${esc(BANKA_HESABI.banka)}<br>
+          <strong style="color:#1A1410">IBAN:</strong> <span style="font-family:monospace;font-size:15px">${esc(BANKA_HESABI.iban)}</span><br>
+          <strong style="color:#1A1410">Tutar:</strong> ${fmt(order.total)} ₺<br>
+          <strong style="color:#1A1410">Açıklama:</strong> <span style="font-family:monospace">${esc(order.orderNumber)}</span>
+        </p>
+        <p style="margin:10px 0 0;font-size:13px;color:#8a6d3b">Açıklama alanına sipariş numaranızı yazmayı unutmayın — ödemenizi siparişinizle bu numara üzerinden eşleştiriyoruz.</p>
+        <p style="margin:8px 0 0;font-size:12px;color:#78716c">Hesap bilgilerimiz değişmez. Farklı bir IBAN'a ödeme isteyen e-posta/mesaj alırsanız dikkate almayın, bizi 0324 433 33 51'den arayın.</p>
+      </div>`
+      : "";
 
     // 2. mailde YANLIŞ VAAT YOK: iptal otomasyonu olmadığı için "yarın iptal edilir" denmez,
     // "stok/fiyat değişebilir" gibi baskı cümlesi de kurulmaz — nötr son hatırlatma.
@@ -835,7 +864,21 @@ Markala`;
       `${order.orderNumber} numaralı siparişinin ödemesi henüz tamamlanmadı.\n\n` +
       (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} - ${fmt(i.lineTotal)} ₺`).join("\n") +
       `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
-      `Ödemeyi tamamla: ${payUrl}\n\n` +
+      (isHavale
+        ? `HAVALE/EFT BİLGİLERİ
+Alıcı: ${BANKA_HESABI.unvan}
+Banka: ${BANKA_HESABI.banka}
+IBAN: ${BANKA_HESABI.iban}
+Tutar: ${fmt(order.total)} ₺
+Açıklama: ${order.orderNumber}
+
+Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleştirilir.
+Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin (0324 433 33 51).
+
+`
+        : `Ödemeyi tamamla: ${payUrl}
+
+`) +
       `Sorun yaşıyorsan bu e-postayı yanıtlayabilirsin.\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
 
     const html = renderEmail({
@@ -856,8 +899,7 @@ Markala`;
             <td style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">${fmt(order.total)} ₺</td>
           </tr></tfoot>
         </table>
-        ${emailButton("Ödemeyi Tamamla", payUrl)}
-        ${emailFallbackLink(payUrl)}
+        ${isHavale ? havaleHtml : emailButton("Ödemeyi Tamamla", payUrl) + emailFallbackLink(payUrl)}
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bir sorunla karşılaştıysan ya da vazgeçtiysen bu e-postayı yanıtlaman yeterli, yardımcı olalım.</p>`,
     });
 
