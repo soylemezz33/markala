@@ -11,6 +11,7 @@ import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelec
 import { computeItemCostTotal } from "./costing";
 import { PERM, roleHasPerm } from "../auth/permissions";
 import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "../common/banka";
+import { DESIGN_ROW_SELECT, designRowToPublic } from "./order-design.service";
 
 /**
  * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.
@@ -1057,7 +1058,13 @@ export class OrdersService {
       // yanıta koyuyordu (admin paneline ve müşterinin kendi sipariş detayına sızıyordu).
       // Panelin ihtiyacı üye kimliği + üyelik tarihi (üye/misafir rozeti) kadarıdır.
       include: {
-        items: true,
+        // Tasarımcı dosyaları (2026-09-02) YALNIZ panel rollerinde: aynı uç müşteriye de
+        // servis ediyor; çalışma dosyaları (AI/PSD) vitrine sızmasın. Müşteri kendi yüklediği
+        // dosyayı zaten uploadedFile* alanında görür.
+        items:
+          role && role !== "customer"
+            ? { include: { designUploads: { orderBy: { createdAt: "asc" }, select: DESIGN_ROW_SELECT } } }
+            : true,
         shippingAddress: true,
         billingAddress: true,
         user: { select: { id: true, fullName: true, email: true, accountType: true, createdAt: true } },
@@ -1077,10 +1084,15 @@ export class OrdersService {
         })
       : [];
     const optsById = new Map(optProducts.map((p) => [p.id, p.options]));
-    const items = order.items.map((it) => ({
-      ...it,
-      optionDetails: optionDetailsFor(optsById.get(it.productId ?? "") ?? [], it.configuration),
-    }));
+    const items = order.items.map((it) => {
+      // designUploads yalnız panel rollerinde include edilir (yukarıda); müşteride alan yoktur.
+      const ham = (it as { designUploads?: Parameters<typeof designRowToPublic>[0][] }).designUploads;
+      return {
+        ...it,
+        optionDetails: optionDetailsFor(optsById.get(it.productId ?? "") ?? [], it.configuration),
+        ...(ham ? { designUploads: ham.map(designRowToPublic) } : {}),
+      };
+    });
     // Misafir siparişinde FK relation null; snapshot'ı adres olarak yüzeye çıkar (admin detay render).
     return parasalAlanlariAyikla(withAddressView({ ...order, items }), role);
   }

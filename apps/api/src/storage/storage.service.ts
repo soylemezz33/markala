@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, Logger } from "@nes
 import { ConfigService } from "@nestjs/config";
 import sharp from "sharp";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
 
 /**
@@ -69,6 +69,12 @@ const CORP_DOC_ALLOWED_EXT = new Set(["pdf", "jpg", "jpeg", "png", "webp", "tif"
 const CORP_DOC_MAX_BYTES = 15 * 1024 * 1024;
 /** Tasarım dosyalarının saklandığı alt dizin — main.ts /uploads/secure'ü statikten 404'ler. */
 const DESIGN_SUBDIR = "secure/tasarim";
+/**
+ * Tasarım dosyası anahtar deseni: uuid.uzantı. getDesign/deleteDesign ve panel BFF'leri
+ * aynı deseni kullanır — path traversal ve alt dizin geçişi bu regex'le imkânsız.
+ * (2026-09-02: getDesign içindeki satır-içi regex buraya taşındı, silme de paylaşıyor.)
+ */
+export const DESIGN_KEY_RE = /^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i;
 
 /** İndirme yanıtının Content-Type'ı. Vendor formatlar octet-stream'e düşer (tarayıcı indirir). */
 const DESIGN_MIME: Record<string, string> = {
@@ -278,7 +284,7 @@ export class StorageService {
    * key SIKI doğrulanır: path traversal (../) ve alt dizin geçişi imkansız.
    */
   async getDesign(key: string): Promise<SecureFile> {
-    if (!/^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key)) {
+    if (!DESIGN_KEY_RE.test(key)) {
       throw new NotFoundException("Dosya bulunamadı.");
     }
     const ext = (key.split(".").pop() ?? "").toLowerCase();
@@ -295,6 +301,23 @@ export class StorageService {
       } catch {
         throw new NotFoundException("Dosya bulunamadı.");
       }
+    }
+  }
+
+  /**
+   * Korumalı tasarım dosyasını diskten siler (2026-09-02, panelden silme).
+   * Yalnız secure/tasarim altına bakar — getDesign'daki eski public-kök yedeğine DOKUNMAZ
+   * (orada yalnız zaten public ürün görselleri var, yanlışlıkla silinmesin).
+   * ENOENT yutulur: DB kaydı silinmiş ama dosya zaten yoksa istek düşmemeli. Diğer hatalar
+   * (izin vb.) fırlatılır; çağıran best-effort davranıp loglar.
+   */
+  async deleteDesign(key: string): Promise<void> {
+    if (!DESIGN_KEY_RE.test(key)) throw new NotFoundException("Dosya bulunamadı.");
+    try {
+      await unlink(join(this.uploadDir, DESIGN_SUBDIR, key));
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException)?.code === "ENOENT") return;
+      throw e;
     }
   }
 

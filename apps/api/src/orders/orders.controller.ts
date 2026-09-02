@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, Req, Query, Headers, ForbiddenException } from "@nestjs/common";
-import { ApiTags, ApiBearerAuth } from "@nestjs/swagger";
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  Req,
+  Query,
+  Headers,
+  ForbiddenException,
+  BadRequestException,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ApiTags, ApiBearerAuth, ApiConsumes } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
 import { OrdersService } from "./orders.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
@@ -12,8 +29,10 @@ import {
   UpdateOrderTrackingDto,
   MailOnizlemeDto,
   TrackOrderDto,
+  UploadItemDesignDto,
 } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
+import { OrderDesignService } from "./order-design.service";
 import type { Request } from "express";
 
 
@@ -35,7 +54,13 @@ import type { Request } from "express";
 @ApiTags("orders")
 @Controller("orders")
 export class OrdersController {
-  constructor(private service: OrdersService, private config: ConfigService) {}
+  constructor(
+    private service: OrdersService,
+    private config: ConfigService,
+    // Satıra tasarım dosyası ekleme/silme (2026-09-02) — OrdersService'e enjekte edilmedi,
+    // bkz. order-design.service.ts başlığı (36 spec çağrısı ctor'u elle kuruyor).
+    private design: OrderDesignService,
+  ) {}
 
   /**
    * Sipariş yanıtına ödeme nonce'u ekler — /payments/iyzico/init bunu zorunlu kılar.
@@ -220,5 +245,52 @@ export class OrdersController {
       { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
       { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null, role: req.user?.role },
     );
+  }
+
+  /**
+   * Sipariş SATIRINA tasarımcı dosyası yükle (2026-09-02, üretim ARGE Faz 2).
+   *
+   * multipart: `file` (multer) + `kind` (onizleme|calisma|baski, DTO doğrular). Yetki
+   * ORDERS_DESIGN: tasarımcı + admin; kargo/muhasebe 403 (yalnız görür/indirir).
+   * multer 52 MB hard limit = putDesign'daki 50 MB iş kuralının üstünde son emniyet
+   * (design-uploads.controller.ts ile aynı). Kural/sahiplik kontrolü serviste, diske
+   * yazmadan ÖNCE yapılır.
+   */
+  @Post(":id/items/:itemId/tasarim")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_DESIGN)
+  @ApiBearerAuth()
+  @ApiConsumes("multipart/form-data")
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 52 * 1024 * 1024 } }))
+  uploadItemDesign(
+    @Param("id") id: string,
+    @Param("itemId") itemId: string,
+    @Body() dto: UploadItemDesignDto,
+    @Req() req: Request & { user?: { sub?: string } },
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException("Dosya bulunamadı.");
+    return this.design.add(id, itemId, dto.kind, file, {
+      actorId: req.user?.sub ?? null,
+      ipAddress: req.ip ?? null,
+    });
+  }
+
+  /** Satırdaki tasarımcı dosyasını sil — kayıt + disk; denetim kaydına yazılır. */
+  @Delete(":id/tasarim/:uploadId")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_DESIGN)
+  @ApiBearerAuth()
+  deleteItemDesign(
+    @Param("id") id: string,
+    @Param("uploadId") uploadId: string,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.design.remove(id, uploadId, {
+      actorId: req.user?.sub ?? null,
+      ipAddress: req.ip ?? null,
+    });
   }
 }

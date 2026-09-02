@@ -384,6 +384,23 @@ export class UpdateOrderTrackingDto {
   trackingCarrier?: string;
 }
 
+/**
+ * Tasarımcı dosyası türleri (2026-09-02, üretim ARGE Faz 2) — TEK doğruluk kaynağı.
+ * DB'de enum DEĞİL (migration tuzağı); DB CHECK ile aynı liste. Panel de bu listeyi kullanır.
+ *   onizleme: küçük RGB JPG/PNG (≤ 2 MB) — panelde "hangi bayrak kimin" için
+ *   calisma : AI/PSD/CDR/EPS/TIF çalışma dosyası
+ *   baski   : baskıya hazır PDF
+ */
+export const DESIGN_KINDS = ["onizleme", "calisma", "baski"] as const;
+export type DesignKind = (typeof DESIGN_KINDS)[number];
+
+/** POST /orders/:id/items/:itemId/tasarim — multipart; `file` alanı multer'da, `kind` burada. */
+export class UploadItemDesignDto {
+  @IsString()
+  @IsIn(DESIGN_KINDS as unknown as string[])
+  kind!: DesignKind;
+}
+
 /** Public kargo takip sorgusu — sipariş no + e-posta eşleşmesi (auth YOK, rate-limitli). */
 export class TrackOrderDto {
   @IsString()

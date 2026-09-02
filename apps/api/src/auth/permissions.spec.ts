@@ -102,3 +102,22 @@ describe("mevcut roller — kargo eklenirken regresyon olmamalı", () => {
     expect(roleHasPerm("uydurma_rol", PERM.ORDERS_READ)).toBe(false);
   });
 });
+
+describe("tasarım dosyası izni — orders.design (2026-09-02, üretim ARGE Faz 2)", () => {
+  it("tasarımcı ve admin yükler/siler", () => {
+    expect(roleHasPerm("tasarimci", PERM.ORDERS_DESIGN)).toBe(true);
+    expect(roleHasPerm("admin", PERM.ORDERS_DESIGN)).toBe(true);
+  });
+
+  it("kargo ve muhasebe YALNIZ görür/indirir — yükleyemez (varsayılan kapalı)", () => {
+    expect(roleHasPerm("kargo", PERM.ORDERS_DESIGN)).toBe(false);
+    expect(roleHasPerm("muhasebe", PERM.ORDERS_DESIGN)).toBe(false);
+    // İndirme ORDERS_READ'e bağlı kalır; ikisi de görmeye devam eder.
+    expect(roleHasPerm("kargo", PERM.ORDERS_READ)).toBe(true);
+    expect(roleHasPerm("muhasebe", PERM.ORDERS_READ)).toBe(true);
+  });
+
+  it("ORDERS_STATUS'tan ayrı bir anahtar — biri diğerini ima etmez", () => {
+    expect(PERM.ORDERS_DESIGN).not.toBe(PERM.ORDERS_STATUS);
+  });
+});

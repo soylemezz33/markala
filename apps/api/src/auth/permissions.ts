@@ -35,6 +35,15 @@ export const PERM = {
    * dar yetkili kargo rolü için fazla geniş.
    */
   ORDERS_TRACKING: "orders.tracking",
+  /**
+   * Sipariş SATIRINA tasarım dosyası yükleme/silme (2026-09-02, üretim ARGE Faz 2).
+   *
+   * NEDEN AYRI ANAHTAR: ORDERS_STATUS "durum ilerletme + iptal + mail-önizleme" demek; dosya
+   * yazmayı ona bağlamak, ileride tasarımcıdan durum yetkisi alınırsa dosya yüklemeyi de
+   * götürürdü (ya da tersi). Tasarımcı bu izni ALIR; kargo/muhasebe ALMAZ (varsayılan kapalı):
+   * onlar yalnız görür/indirir (ORDERS_READ). Kod-içi değişiklik, migration gerektirmez.
+   */
+  ORDERS_DESIGN: "orders.design",
   /** Müşteri kartı: ad, iletişim, adres. Parasal alanlar ayrıca ORDERS_AMOUNTS ister. */
   CUSTOMERS_READ: "customers.read",
   /**
@@ -96,6 +105,8 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
     // Takip ucu ORDERS_STATUS'tan ORDERS_TRACKING'e taşındı (kargo rolü için ayrıştırma);
     // tasarımcı bugüne kadar takip no girebiliyordu, yetkisi aynen kalsın diye eklendi.
     PERM.ORDERS_TRACKING,
+    // 2026-09-02 (üretim ARGE): sipariş satırına önizleme/çalışma/baskı dosyası yükler ve siler.
+    PERM.ORDERS_DESIGN,
     PERM.CUSTOMERS_READ,
     PERM.MEDIA,
     PERM.REVIEWS,
