@@ -22,6 +22,8 @@ export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]>
   ["/analitik", "finance.manage"],
   ["/ciro", "finance.manage"],
   ["/siparisler", "orders.read"],
+
+  ["/kargoda", "orders.read"],
   ["/musteriler", "customers.read"],
   // Kurumsal başvurular /musteriler ALTINDA olduğu için customers.read'e düşüyordu; kargo
   // rolüne müşteri kartı açılınca vergi levhası + imza sirküleri içeren bu başvuruları da

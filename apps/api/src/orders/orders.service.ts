@@ -1021,10 +1021,16 @@ export class OrdersService {
   async listAll(opts: { status?: string; take?: number; skip?: number; role?: string } = {}) {
     // Geçersiz/bilinmeyen status filtresi → filtre uygulanmaz (eskiden Prisma'da 500'e yol açıyordu).
     const status = slugToOrderStatus(opts.status);
+    // designUploads (2026-09-03, "Kargodaki ürünler" ekranı): panel listesi kalem başına
+    // tasarımcı önizlemesini göstersin diye satırlar listeye de eklendi — findById ile aynı
+    // kural: müşteri rolünde ASLA (çalışma dosyaları vitrine sızmaz), panelde her rolde.
+    const panelRolu = !!opts.role && opts.role !== "customer";
     const orders = await this.prisma.order.findMany({
       where: status ? { status } : {},
       include: {
-        items: true,
+        items: panelRolu
+          ? { include: { designUploads: { orderBy: { createdAt: "asc" }, select: DESIGN_ROW_SELECT } } }
+          : true,
         user: { select: { email: true, fullName: true } },
         shippingAddress: true,
         billingAddress: true,
@@ -1037,9 +1043,16 @@ export class OrdersService {
     // Admin sipariş tablolarında e-posta yerine isim göstermek için.
     return orders.map((o) => {
       const nameOf = (a: unknown) => (a as { fullName?: string } | null)?.fullName || undefined;
+      const items = (o.items as Array<Record<string, unknown> & { designUploads?: unknown[] }>).map((it) => {
+        const { designUploads: ham, ...kalem } = it;
+        return panelRolu
+          ? { ...kalem, designUploads: ((ham ?? []) as Parameters<typeof designRowToPublic>[0][]).map(designRowToPublic) }
+          : kalem;
+      });
       return parasalAlanlariAyikla(
         {
           ...o,
+          items,
           customerName:
             o.user?.fullName ||
             nameOf(o.shippingAddress) ||

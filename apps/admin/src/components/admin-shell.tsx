@@ -8,8 +8,7 @@ import {
   Gear, SignOut, Sliders, ImageSquare, Bell, List, X,
   PaintBrush, Image as ImageIcon, Plug, Translate, ArrowSquareOut,
   ChatCircle, CurrencyCircleDollar, Receipt, Buildings, CaretDown, UserCircle,
-  Pulse, Medal, EnvelopeSimple, PaperPlaneTilt, ListBullets, Calculator, Wrench, ShieldCheck, Percent,
-} from "@phosphor-icons/react";
+  Pulse, Medal, EnvelopeSimple, PaperPlaneTilt, ListBullets, Calculator, Wrench, ShieldCheck, Percent, Truck } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
 import { useServerPerms } from "@/components/perms-provider";
@@ -47,6 +46,10 @@ const navGroups: Array<{
       { href: "/analitik", label: "Ziyaretçi Analizi", icon: Pulse },
       { href: "/ciro", label: "Ciro & Kâr", icon: CurrencyCircleDollar },
       { href: "/siparisler", label: "Siparişler", icon: ShoppingCart },
+
+      // Kargodaki ürünler (2026-09-03): kargoya verilenler görselleriyle tek ekranda; orders.read ile açılır (kargo rolü dâhil).
+
+      { href: "/kargoda", label: "Kargodaki Ürünler", icon: Truck },
       { href: "/musteriler", label: "Müşteriler", icon: Users },
       { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings },
       { href: "/iletisim-mesajlari", label: "Gelen Kutusu", icon: EnvelopeSimple },
