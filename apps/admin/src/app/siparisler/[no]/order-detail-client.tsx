@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { havaleOnayBekliyorMu } from "./havale-onay-kurali";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DesignFileUploader } from "@/components/design-file-uploader";
@@ -307,8 +308,9 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
    * showMoney şartı: onay penceresi TUTARI yazıyor — tutar gizlemenin etrafından
    * dolaşılmasın (iade butonundaki aynı gerekçe).
    */
-  const havaleBekliyor =
-    order.paymentMethod === "havale" && payStatus !== "basarili" && !alreadyRefunded;
+  // Kural ayrı dosyada ve test altında — burada satır arasında dururken İPTAL
+  // kontrolü unutulmuştu ve iptal edilmiş havale siparişinde buton çıkıyordu.
+  const havaleBekliyor = havaleOnayBekliyorMu(order);
   const canConfirmHavale = showMoney && canFullStatus && havaleBekliyor;
 
   const handleConfirmHavale = () => {
