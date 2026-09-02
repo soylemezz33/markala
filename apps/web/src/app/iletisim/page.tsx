@@ -1,5 +1,6 @@
 "use client";
 
+import { BankaBilgileri } from "@/components/banka-bilgileri";
 import { useState, cloneElement, isValidElement, ReactElement } from "react";
 import { TurnstileWidget, turnstileEnabled } from "@/components/turnstile-widget";
 import Link from "next/link";
@@ -290,6 +291,12 @@ export default function ContactPage() {
                   </div>
                 </div>
               ))}
+
+              {/* BANKA BİLGİLERİ (2026-09-02, Hasan istedi): havale/EFT ile ödemek
+                  isteyen müşteri hesap bilgisini sipariş vermeden de görebilsin.
+                  IBAN tek kaynaktan gelir (lib/company → packages/types); bileşen
+                  sipariş sayfalarında da aynısı. */}
+              <BankaBilgileri />
 
               {/* KONUM — iframe YOK (2026-08-31).
                   Eskiden Google Maps embed'i vardı. Üç sorunu birden çözmek için kaldırıldı:
