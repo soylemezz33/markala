@@ -192,7 +192,9 @@ const DEFAULT_NAV: NavCategory[] = [
       {
         title: "Folyo & Film",
         items: [
-          { label: "Folyo Çeşitleri", href: "/urun/folyo-cesitleri" },
+          // "Folyo Çeşitleri" (toplayıcı ürün) 2026-09-03'te pasife alındı ve menüden
+          // çıkarıldı (bkz. commit 6ae066e) — bu yedek listeden de kaldırıldı ki DB kaydı
+          // kaybolursa (SiteHeader'ın kendi düşme senaryosu) ölü bağlantı geri gelmesin.
           { label: "Baskes Folyo", href: "/urun/baskes-folyo" },
           { label: "One Way Vision", href: "/urun/one-way-vision-baski" },
           { label: "UV DTF Baskı", href: "/urun/uv-dtf-baski" },

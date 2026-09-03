@@ -52,14 +52,19 @@ const TURLER = [
 ];
 
 export default async function FolyoBaskiFiyatlariPage() {
+  // Taban fiyat kaynağı "folyo-cesitleri" (toplayıcı ürün) DEĞİL: 2026-09-03'te pasife
+  // alındı (10 folyo türü ayrı ürünlere bölündüğü için — bkz. next.config.mjs redirect
+  // notu). "kesim-folyo" bu türlerin dördünü (normal/mat/arkası gri/arkası gri mat)
+  // taşıyan, en ekonomik ve hâlâ AKTİF üründür; sayfanın "en ekonomik folyo" iddiasıyla
+  // tutarlı taban fiyat kaynağı budur.
   const [folyo, baskes, owv] = await Promise.all([
-    getProductBySlug("folyo-cesitleri"),
+    getProductBySlug("kesim-folyo"),
     getProductBySlug("baskes-folyo"),
     getProductBySlug("one-way-vision-baski"),
   ]);
   // Fiyatsız/boş dönerse THROW — ISR son başarılı sayfayı korur, uydurma fiyat yayınlanmaz.
   if (!folyo || getDisplayPrice(folyo) <= 0) {
-    throw new Error("rehber/folyo: Folyo Çeşitleri fiyatsız/boş döndü (API blip?), stale ISR korunur");
+    throw new Error("rehber/folyo: Kesim Folyo fiyatsız/boş döndü (API blip?), stale ISR korunur");
   }
   const m2Ham = folyo.displayPrice ?? 0;
   const m2 = getDisplayPrice(folyo);
@@ -291,7 +296,10 @@ export default async function FolyoBaskiFiyatlariPage() {
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
-              href="/urun/folyo-cesitleri"
+              // "folyo-cesitleri" pasife alındı (2026-09-03) ve artık /kategori/folyo-film'e
+              // 301 yönlendiriliyor — hesap makinesi olmayan bir listeleme sayfası. Bu CTA
+              // "ölçünü gir, fiyatı hesapla" vaat ettiği için doğrudan aktif ürün sayfasına gider.
+              href="/urun/kesim-folyo"
               className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-brand-500 text-ink-900 text-sm font-bold hover:bg-brand-400 transition-colors"
             >
               Folyo fiyatı hesapla <ArrowRight size={15} weight="bold" />
