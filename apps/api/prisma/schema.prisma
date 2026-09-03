@@ -541,6 +541,9 @@ model OrderItem {
   needsDesignSupport Boolean @default(false) @map("needs_design_support")
   uploadedFileName   String? @map("uploaded_file_name")
   uploadedFileUrl    String? @map("uploaded_file_url")
+  /// Müşteri dosyası ödeme kesinleşince Drive sipariş klasörüne taşındıysa Drive dosya kimliği
+  /// (2026-09-03). Dolu = taşındı (idempotency). Bkz. storage/order-drive.service.ts
+  uploadedFileDriveId String? @map("uploaded_file_drive_id")
 
   order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product? @relation(fields: [productId], references: [id])

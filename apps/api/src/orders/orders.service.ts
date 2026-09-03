@@ -13,6 +13,7 @@ import { iptalMailiGonderilirMi } from "./iptal-mail-kurali";
 import { PERM, roleHasPerm } from "../auth/permissions";
 import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "../common/banka";
 import { DESIGN_ROW_SELECT, designRowToPublic } from "./order-design.service";
+import { driveFileUrl } from "../storage/drive.service";
 
 /**
  * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.
@@ -1051,8 +1052,13 @@ export class OrdersService {
       const nameOf = (a: unknown) => (a as { fullName?: string } | null)?.fullName || undefined;
       const items = (o.items as Array<Record<string, unknown> & { designUploads?: unknown[] }>).map((it) => {
         const { designUploads: ham, ...kalem } = it;
+        const driveId = (kalem as { uploadedFileDriveId?: string | null }).uploadedFileDriveId;
         return panelRolu
-          ? { ...kalem, designUploads: ((ham ?? []) as Parameters<typeof designRowToPublic>[0][]).map(designRowToPublic) }
+          ? {
+              ...kalem,
+              designUploads: ((ham ?? []) as Parameters<typeof designRowToPublic>[0][]).map(designRowToPublic),
+              uploadedFileDriveUrl: driveId ? driveFileUrl(driveId) : null,
+            }
           : kalem;
       });
       return parasalAlanlariAyikla(
@@ -1108,10 +1114,13 @@ export class OrdersService {
     const items = order.items.map((it) => {
       // designUploads yalnız panel rollerinde include edilir (yukarıda); müşteride alan yoktur.
       const ham = (it as { designUploads?: Parameters<typeof designRowToPublic>[0][] }).designUploads;
+      const driveId = (it as { uploadedFileDriveId?: string | null }).uploadedFileDriveId;
       return {
         ...it,
         optionDetails: optionDetailsFor(optsById.get(it.productId ?? "") ?? [], it.configuration),
         ...(ham ? { designUploads: ham.map(designRowToPublic) } : {}),
+        // Müşteri dosyası Drive'a taşındıysa panel "Drive'da aç" basar (2026-09-03). Yalnız panelde.
+        ...(ham ? { uploadedFileDriveUrl: driveId ? driveFileUrl(driveId) : null } : {}),
       };
     });
     // Misafir siparişinde FK relation null; snapshot'ı adres olarak yüzeye çıkar (admin detay render).

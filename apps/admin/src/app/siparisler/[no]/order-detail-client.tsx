@@ -115,6 +115,7 @@ export interface OrderDetailProps {
     needsDesignSupport?: boolean;
     uploadedFileName?: string | null;
     uploadedFileUrl?: string | null;
+    uploadedFileDriveUrl?: string | null;
     /** Satır kimliği — panelden bu satıra tasarım dosyası yüklemek için (2026-09-02). */
     id?: string;
     /** Tasarımcının yüklediği dosyalar (önizleme/çalışma/baskı) — yalnız panel rollerinde gelir. */
@@ -747,6 +748,17 @@ Devam edilsin mi?`,
                             </div>
                           )}
                         </div>
+                        {item.uploadedFileDriveUrl && (
+                          <a
+                            href={item.uploadedFileDriveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Müşteri dosyası Google Drive'da; yeni sekmede açılır"
+                            className="flex-none inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100"
+                          >
+                            <ArrowSquareOut size={14} /> Drive'da aç
+                          </a>
+                        )}
                         {hasFile && tasarimIndirmeYolu(item.uploadedFileUrl) && (
                           <a
                             href={tasarimIndirmeYolu(

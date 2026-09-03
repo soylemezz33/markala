@@ -384,8 +384,10 @@ export interface OrderItem {
   needsDesignSupport?: boolean;
   /** Yüklenen tasarım dosyasının adı (sanitize) */
   uploadedFileName?: string | null;
-  /** Yüklenen tasarım dosyasının indirilebilir URL'i (admin "İndir") */
+  /** Yüklenen tasarım dosyasının indirilebilir URL'i (admin "İndir"); ödeme sonrası Drive bağlantısı olabilir */
   uploadedFileUrl?: string | null;
+  /** Müşteri dosyası Drive'a taşındıysa bağlantı (yalnız panel rollerinde, 2026-09-03) */
+  uploadedFileDriveUrl?: string | null;
   /** Satır kimliği — API zaten döner, tipte eksikti; panelden satıra dosya yüklemek için gerekir (2026-09-02). */
   id?: string;
   /**
