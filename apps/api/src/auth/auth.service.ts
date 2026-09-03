@@ -426,17 +426,46 @@ export class AuthService {
       include: { user: true },
     });
 
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
-      // Replay tespit edildiyse o kullanıcının TÜM aktif refresh'lerini revoke et.
-      if (stored?.userId) {
-        await this.prisma.refreshToken.updateMany({
-          where: { userId: stored.userId, revokedAt: null },
-          data: { revokedAt: new Date() },
-        });
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new UnauthorizedException("Refresh token geçersiz.");
+    }
+
+    if (stored.revokedAt) {
+      /**
+       * EŞZAMANLILIK PAYI (2026-09-03) — "panelden birkaç dakikada bir atılıyorum".
+       *
+       * Admin paneli Next middleware'i HER istekte çalışıyor (sayfa, RSC ön-yükleme,
+       * /api/*). Access token'ın son 60 saniyesine girildiğinde aynı anda uçan birkaç
+       * istek AYNI refresh token'la /auth/refresh'e gidiyor: ilki rotasyonu yapıyor,
+       * geri kalanlar artık revoke edilmiş token sunuyor. Eski davranış bunu replay
+       * sanıp kullanıcının TÜM oturumlarını iptal ediyordu → anında panelden düşme.
+       * Üretim logunda 72 saatte 5 kez, biri AYNI SANİYEDE iki kez (18:05:26/27).
+       *
+       * Çözüm sektör standardı "rotation leeway": token AZ ÖNCE rotasyona girmişse bu
+       * bir yarıştır, saldırı değil — aileyi iptal etmeden yeni bir çift veriyoruz.
+       * Pencere dışındaki kullanım HÂLÂ replay sayılır ve tüm oturumlar düşer.
+       *
+       * Pencerenin bedeli: sızdırılmış bir token, meşru rotasyondan sonra yalnız bu
+       * kadar süre içinde kullanılabilirse tespit edilmeden bir çift alabilir. Access
+       * token ömrü (15dk) ve tespit değeri karşısında saniyeler mertebesi kabul edilebilir.
+       */
+      const yarisPayiMs = Number(this.config.get<string>("REFRESH_RACE_GRACE_MS") ?? 20_000);
+      const revokeYasiMs = Date.now() - stored.revokedAt.getTime();
+      if (revokeYasiMs <= yarisPayiMs) {
         this.logger.warn(
-          `refresh.replay_detected userId=${stored.userId} ip=${context.ipAddress ?? "?"}`,
+          `refresh.race_tolerated userId=${stored.userId} yas=${revokeYasiMs}ms ip=${context.ipAddress ?? "?"}`,
         );
+        return this.issueTokenPair(stored.user, context);
       }
+
+      // Pencere DIŞI: gerçek replay — kullanıcının tüm aktif refresh'lerini iptal et.
+      await this.prisma.refreshToken.updateMany({
+        where: { userId: stored.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      this.logger.warn(
+        `refresh.replay_detected userId=${stored.userId} yas=${revokeYasiMs}ms ip=${context.ipAddress ?? "?"}`,
+      );
       throw new UnauthorizedException("Refresh token geçersiz.");
     }
 

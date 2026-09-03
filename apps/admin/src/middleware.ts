@@ -8,6 +8,31 @@ import { permForPath, varsayilanRota } from "@/lib/route-perms";
 const PUBLIC_PATHS = ["/giris", "/api/auth/login"];
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+/**
+ * UÇUŞTAKİ REFRESH'LERİ BİRLEŞTİR (2026-09-03).
+ *
+ * Bu middleware HER istekte çalışıyor: sayfa, RSC ön-yükleme, /api/*. Access token'ın
+ * son 60 saniyesine girildiğinde aynı anda uçan isteklerin HEPSİ refresh'e gidiyordu;
+ * ilki rotasyonu yapıp diğerlerini geçersiz token'la bırakıyordu. API tarafına da pay
+ * eklendi (auth.service refresh.race_tolerated) ama asıl çözüm isteği ÇOĞALTMAMAK:
+ * aynı refresh token için uçuşta olan çağrı varsa yenisi açılmaz, o sözü paylaşırlar.
+ *
+ * Süreç-içi (tek admin konteyneri) yeterli: yarış aynı örnekte doğuyor. Harita sözden
+ * sonra temizlenir, sınırsız büyümez.
+ */
+const ucustakiRefresh = new Map<string, Promise<{ accessToken: string; refreshToken: string } | null>>();
+
+function refreshiPaylas(
+  refreshToken: string,
+  calistir: () => Promise<{ accessToken: string; refreshToken: string } | null>,
+) {
+  const mevcut = ucustakiRefresh.get(refreshToken);
+  if (mevcut) return mevcut;
+  const soz = calistir().finally(() => ucustakiRefresh.delete(refreshToken));
+  ucustakiRefresh.set(refreshToken, soz);
+  return soz;
+}
+
 function parseRefreshFromSetCookie(setCookies: string[]): string | null {
   for (const c of setCookies) {
     const m = c.match(/(?:^|;\s*)mk_refresh=([^;]+)/);
@@ -85,17 +110,21 @@ async function middlewareInner(req: NextRequest) {
         req.headers.get("cf-connecting-ip") ||
         req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
         null;
-      const r = await fetch(`${API_URL}/api/auth/refresh`, {
-        method: "POST",
-        headers: {
-          Cookie: `mk_refresh=${encodeURIComponent(session.refreshToken)}`,
-          ...(ip ? { "x-forwarded-for": ip } : {}),
-        },
-      });
-      if (r.ok) {
+      const yeni = await refreshiPaylas(session.refreshToken, async () => {
+        const r = await fetch(`${API_URL}/api/auth/refresh`, {
+          method: "POST",
+          headers: {
+            Cookie: `mk_refresh=${encodeURIComponent(session.refreshToken)}`,
+            ...(ip ? { "x-forwarded-for": ip } : {}),
+          },
+        });
+        if (!r.ok) return null;
         const data = (await r.json()) as { accessToken: string };
         const newRefresh = parseRefreshFromSetCookie(r.headers.getSetCookie?.() ?? []) ?? session.refreshToken;
-        const updated: AdminSession = { ...session, accessToken: data.accessToken, refreshToken: newRefresh };
+        return { accessToken: data.accessToken, refreshToken: newRefresh };
+      });
+      if (yeni) {
+        const updated: AdminSession = { ...session, accessToken: yeni.accessToken, refreshToken: yeni.refreshToken };
         const newToken = await signSession(updated, secret);
         const res = NextResponse.next();
         res.cookies.set(SESSION_COOKIE, newToken, {

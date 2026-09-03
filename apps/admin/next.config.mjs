@@ -9,6 +9,23 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   poweredByHeader: false,
   compress: true,
+  /**
+   * İSTEMCİ YÖNLENDİRİCİ ÖNBELLEĞİ KAPALI (2026-09-03) — Hasan: "normal yenilediğimde
+   * güncellemeleri almıyor, ctrl+shift+r yapınca alıyor".
+   *
+   * App Router, YUMUŞAK gezinmede (panel içi link tıklama, geri düğmesi) sayfanın RSC
+   * çıktısını istemci belleğinde 30 saniye tutuyor. Panelde bu, "Siparişler'e git, geri
+   * dön" hareketinde eski sipariş sayısı/tutarı görmek demek. Deneyle doğrulandı:
+   * arka planda eklenen kayıt yumuşak gezinmeden sonra GÖRÜNMÜYOR, tam yenilemede
+   * görünüyor.
+   *
+   * dynamic: 0 → dinamik sayfa hiç yeniden kullanılmaz, her gezinmede sunucudan gelir.
+   * Panelde sayıların DOĞRU olması, gezinmenin bir tık daha hızlı olmasından önemli.
+   * static: 180 → kod-tabanlı statik parçalar (giriş vb.) boşuna yeniden çekilmesin.
+   */
+  experimental: {
+    staleTimes: { dynamic: 0, static: 180 },
+  },
   transpilePackages: [
     "@markala/ui",
     "@markala/types",
