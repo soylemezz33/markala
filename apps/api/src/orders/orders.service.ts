@@ -9,6 +9,7 @@ import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
 import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 import { computeItemCostTotal } from "./costing";
+import { iptalMailiGonderilirMi } from "./iptal-mail-kurali";
 import { PERM, roleHasPerm } from "../auth/permissions";
 import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "../common/banka";
 import { DESIGN_ROW_SELECT, designRowToPublic } from "./order-design.service";
@@ -1252,9 +1253,21 @@ export class OrdersService {
         .catch(() => undefined);
     if (!geriAdim && status === "teslim-edildi")
       void this.mail.sendOrderDeliveredEmail(id).catch(() => undefined);
-    // İptal bildirimi — müşteri iptali maille öğrenir (ödenmişse iade beklentisi yönetilir).
-    if (status === "iptal-edildi")
-      void this.mail.sendOrderCancelledEmail(id).catch(() => undefined);
+    // İptal bildirimi — YALNIZ parası alınmış (veya cari) siparişte. Ödemesi hiç
+    // tamamlanmamış siparişin iptali müşteriyi ilgilendirmeyen bir kayıt temizliğidir;
+    // mail atmak "yeni siparişim mi iptal oldu?" paniğine yol açıyor (2026-09-03, Hasan).
+    // Kural + testler: iptal-mail-kurali.ts
+    if (status === "iptal-edildi") {
+      const iptalMaili = iptalMailiGonderilirMi({
+        paymentMethod: updated.paymentMethod,
+        paymentStatus: updated.paymentStatus ? String(updated.paymentStatus) : null,
+      });
+      if (iptalMaili) void this.mail.sendOrderCancelledEmail(id).catch(() => undefined);
+      else
+        this.logger.log(
+          `İptal maili gönderilmedi (ödeme alınmamış): order=${id} yöntem=${updated.paymentMethod ?? "-"} durum=${String(updated.paymentStatus ?? "-")}`,
+        );
+    }
 
     // Denetim izi: hangi admin, hangi IP, önce→sonra durum değişikliği. Best-effort —
     // audit yazımı hatası sipariş güncellemesini bozmaz.
