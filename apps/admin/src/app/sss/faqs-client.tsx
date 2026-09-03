@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
 import { Plus, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import type { FaqDto } from "@markala/api-client";
@@ -94,8 +95,14 @@ export function FaqsClient({ faqs: initialFaqs }: Props) {
     setForm(EMPTY_FORM);
   }
 
-  function handleDelete(f: FaqDto) {
-    if (!window.confirm(`"${f.question}" sorusunu silmek istediğinize emin misiniz?`)) return;
+  async function handleDelete(f: FaqDto) {
+    const onay = await confirm({
+      title: "Soru silinecek",
+      description: f.question,
+      confirmLabel: "Soruyu sil",
+      tone: "danger",
+    });
+    if (!onay) return;
     startTransition(async () => {
       try {
         await removeFaq(f.id);

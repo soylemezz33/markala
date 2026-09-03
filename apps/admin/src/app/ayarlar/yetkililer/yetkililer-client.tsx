@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { confirm } from "@/components/confirm-dialog";
 import { ShieldCheck, UserPlus, Info } from "@phosphor-icons/react";
 import { createPanelUser, changeRole } from "./actions";
 
@@ -48,11 +49,17 @@ export function PanelUsersClient({ users, roles }: { users: U[]; roles: string[]
     });
   };
 
-  const onRoleChange = (u: U, next: string) => {
+  const onRoleChange = async (u: U, next: string) => {
     if (next === u.role) return;
-    const ok = window.confirm(
-      `${u.email} kullanıcısının yetkisi "${ROLE_LABEL[next] ?? next}" olarak değişecek.\n\nDevam edilsin mi?`,
-    );
+    const ok = await confirm({
+      title: "Kullanıcının yetkisi değişecek",
+      description: u.email,
+      bullets: [
+        `${ROLE_LABEL[u.role] ?? u.role} → ${ROLE_LABEL[next] ?? next}`,
+        "Yeni yetki, kullanıcının bir sonraki isteğinde geçerli olur.",
+      ],
+      confirmLabel: "Yetkiyi değiştir",
+    });
     if (!ok) return;
     setMsg(null);
     startTransition(async () => {

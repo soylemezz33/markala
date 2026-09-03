@@ -149,12 +149,31 @@ module.exports = {
           "0%": { width: "0%" },
           "100%": { width: "100%" },
         },
+        // Panel onay penceresi (confirm-dialog.tsx). tailwindcss-animate kurulu DEĞİL —
+        // "animate-in fade-in zoom-in-95" gibi sınıflar bu projede hiçbir şey yapmaz.
+        "overlay-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "dialog-in": {
+          "0%": { opacity: "0", transform: "translateY(8px) scale(0.97)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
+        // Toast (toast.tsx) sağ alttan girer. Aynı sebep: "animate-in slide-in-from-bottom-2"
+        // sınıfı kurulu olmayan bir eklentiye ait olduğu için bugüne dek hiç çalışmıyordu.
+        "toast-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 400ms cubic-bezier(0.16, 1, 0.3, 1)",
         "blur-in": "blur-in 600ms cubic-bezier(0.16, 1, 0.3, 1)",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
         "hero-progress": "hero-progress linear forwards",
+        "overlay-in": "overlay-in 140ms ease-out",
+        "dialog-in": "dialog-in 180ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "toast-in": "toast-in 200ms cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },

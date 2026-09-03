@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
 import {
   FloppyDisk,
@@ -109,11 +110,18 @@ export function MenuClient({ initial, hasSaved }: { initial: NavCategory[]; hasS
     });
   }
 
-  function handleReset() {
-    if (window.confirm("Menü fabrika varsayılanına dönsün mü? (Kaydedene kadar canlıya gitmez)")) {
-      setNav(structuredClone(DEFAULT_NAV));
-      toast.success("Varsayılan yüklendi, kaydetmeyi unutmayın.");
-    }
+  async function handleReset() {
+    const ok = await confirm({
+      title: "Menü fabrika varsayılanına dönsün mü?",
+      bullets: [
+        "Şu anki düzenlemeler kaybolur.",
+        "Kaydedene kadar canlıya gitmez — vazgeçerseniz sayfayı yenilemeniz yeterli.",
+      ],
+      confirmLabel: "Varsayılana dön",
+    });
+    if (!ok) return;
+    setNav(structuredClone(DEFAULT_NAV));
+    toast.success("Varsayılan yüklendi, kaydetmeyi unutmayın.");
   }
 
   async function runSearch(ci: number, q: string) {
@@ -215,9 +223,16 @@ export function MenuClient({ initial, hasSaved }: { initial: NavCategory[]; hasS
                   <ArrowDown size={15} />
                 </button>
                 <button
-                  onClick={() =>
-                    window.confirm(`"${cat.label}" kategorisi silinsin mi?`) && removeCat(ci)
-                  }
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Kategori menüden silinsin mi?",
+                      description: cat.label,
+                      bullets: ["Altındaki tüm bağlantılar da kaldırılır."],
+                      confirmLabel: "Kategoriyi sil",
+                      tone: "danger",
+                    });
+                    if (ok) removeCat(ci);
+                  }}
                   className="rounded-md p-1.5 text-error hover:bg-error/10"
                   title="Kategoriyi sil"
                 >
