@@ -33,6 +33,7 @@ import {
 } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
 import { OrderDesignService } from "./order-design.service";
+import { OrderDriveService } from "../storage/order-drive.service";
 import type { Request } from "express";
 
 
@@ -60,6 +61,8 @@ export class OrdersController {
     // Satıra tasarım dosyası ekleme/silme (2026-09-02) — OrdersService'e enjekte edilmedi,
     // bkz. order-design.service.ts başlığı (36 spec çağrısı ctor'u elle kuruyor).
     private design: OrderDesignService,
+    // Havale onayında Drive sipariş klasörü (2026-09-03) — servise değil buraya enjekte, aynı sebep.
+    private orderDrive: OrderDriveService,
   ) {}
 
   /**
@@ -169,15 +172,19 @@ export class OrdersController {
   @Roles("admin", "super_admin")
   @Perms(PERM.ORDERS_STATUS)
   @ApiBearerAuth()
-  odemeOnayla(
+  async odemeOnayla(
     @Param("id") id: string,
     @Req() req: Request & { user?: { sub?: string; role?: string } },
   ) {
-    return this.service.odemeOnayla(id, {
+    const sonuc = await this.service.odemeOnayla(id, {
       actorId: req.user?.sub ?? null,
       ipAddress: req.ip ?? null,
       role: req.user?.role,
     });
+    // Para geldi → Drive sipariş klasörü (Hasan, 2026-09-03). Servis ödeme durumunu DB'den
+    // yeniden okur; yanıtı bekletmez, hata verirse yalnız log.
+    void this.orderDrive.klasorAc(id);
+    return sonuc;
   }
 
   @Patch(":id/status")

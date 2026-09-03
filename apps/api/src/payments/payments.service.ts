@@ -4,8 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   ServiceUnavailableException,
-  OnModuleInit,
-} from "@nestjs/common";
+  OnModuleInit, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Iyzipay from "iyzipay";
 import { Prisma } from "@prisma/client";
@@ -15,6 +14,7 @@ import { MetaCapiService } from "../integrations/meta/meta-capi.service";
 import { verifyPaymentNonce, paymentNonce } from "./payment-nonce";
 import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
+import { OrderDriveService } from "../storage/order-drive.service";
 
 interface AddressView {
   fullName?: string;
@@ -36,6 +36,8 @@ export class PaymentsService implements OnModuleInit {
     private mail: MailService,
     private metaCapi: MetaCapiService,
     private loyalty: LoyaltyService,
+    // Drive sipariş klasörü (2026-09-03). @Optional + son parametre: spec'ler 6 argümanla kuruyor.
+    @Optional() private orderDrive?: OrderDriveService,
   ) {}
 
   /**
@@ -597,6 +599,7 @@ export class PaymentsService implements OnModuleInit {
         // Sadakat kazanımı (idempotent + best-effort) — callback kaçmış siparişte de kazanım kaybolmasın.
         void this.loyalty.earnForOrder(o.id).catch(() => undefined);
         void this.notifyN8nOrderPaid(o.id).catch(() => undefined);
+        void this.orderDrive?.klasorAc(o.id); // Drive sipariş klasörü (kurtarmada da)
         this.logger.warn(`reconcile: KURTARILDI order=${o.id} payment=${result.paymentId} (callback kaçmıştı) → mail+CAPI tetiklendi`);
       } catch (e) {
         /* tek sipariş hatası tüm taramayı bozmasın — ama logla */
@@ -701,6 +704,8 @@ export class PaymentsService implements OnModuleInit {
         void this.loyalty.earnForOrder(orderId).catch(() => undefined);
         // n8n'e ödeme onayı bildirimi (Trello kart otomasyonu). Fire-and-forget, akışı bloke etmez.
         void this.notifyN8nOrderPaid(orderId).catch(() => undefined);
+        // Drive sipariş klasörü — yalnız ÖDENEN sipariş için (Hasan, 2026-09-03). Fire-and-forget.
+        void this.orderDrive?.klasorAc(orderId);
       }
       this.logger.log(
         `iyzico ödeme BAŞARILI order=${orderId} payment=${result.paymentId} price=${result.price} paid=${result.paidPrice}`,
