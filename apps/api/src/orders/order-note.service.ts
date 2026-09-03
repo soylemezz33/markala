@@ -1,4 +1,9 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 /**
@@ -38,10 +43,14 @@ export class OrderNoteService {
 
   async add(orderId: string, body: string, author: { id?: string; email?: string; role?: string }) {
     await this.orderVarMi(orderId);
+    // İkinci kapı: DTO'da @Transform ile kırpılıp doğrulanıyor ama servis başka bir
+    // yerden çağrılırsa boş gövdeli not oluşmasın (canlıda bir kez oluştu, 2026-09-03).
+    const metin = body.trim();
+    if (!metin) throw new BadRequestException("Not boş olamaz.");
     return this.prisma.orderNote.create({
       data: {
         orderId,
-        body: body.trim(),
+        body: metin,
         authorId: author.id ?? null,
         // Ad snapshot'ı: personel hesabı silinse/adı değişse bile not okunabilir kalsın.
         // JWT yalnız sub/email/role taşıyor, ad DB'den okunuyor (e-posta yedek).

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { OrderNoteService } from "./order-note.service";
 
 function makeService(
@@ -89,5 +89,21 @@ describe("OrderNoteService", () => {
     const { svc, prisma } = makeService();
     await svc.list("ord1");
     expect(prisma.orderNote.findMany.mock.calls[0]![0].orderBy).toEqual({ createdAt: "desc" });
+  });
+});
+
+describe("OrderNoteService — boş not (2026-09-03 canlı bulgusu)", () => {
+  // DTO'daki @MinLength(1) tek başına "   " girdisini geçiriyordu: doğrulama kırpmadan
+  // ÖNCE koşuyor, 3 karakter sayılıyordu. Canlıda gövdesi boş bir not oluştu.
+  it("yalnız boşluktan oluşan not reddedilir", async () => {
+    const { svc, prisma } = makeService({ user: { fullName: "Admin", email: "a@b.c" } });
+    await expect(svc.add("ord1", "   \n\t ", { id: "u1" })).rejects.toThrow(BadRequestException);
+    expect(prisma.orderNote.create).not.toHaveBeenCalled();
+  });
+
+  it("boş string reddedilir", async () => {
+    const { svc, prisma } = makeService();
+    await expect(svc.add("ord1", "", { id: "u1" })).rejects.toThrow(BadRequestException);
+    expect(prisma.orderNote.create).not.toHaveBeenCalled();
   });
 });
