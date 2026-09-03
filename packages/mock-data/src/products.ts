@@ -202,7 +202,7 @@ const legacyRaw: ProductWithParams[] = [
     sizeLabel: "85 x 200 cm",
     productionTime: "2 iş günü",
     images: [prodImg("rollup-standart", 1), prodImg("rollup-standart", 2), prodImg("rollup-standart", 3)],
-    badges: ["cok-satilan", "hizli-sevkiyat"],
+    badges: ["cok-satilan"],
     bestseller: true,
     rating: { average: 4.9, count: 156 },
     features: [
@@ -358,7 +358,7 @@ const legacyRaw: ProductWithParams[] = [
     sizeLabel: "330 ml",
     productionTime: "2-3 iş günü",
     images: [prodImg("klasik-beyaz-kupa", 1), prodImg("klasik-beyaz-kupa", 2)],
-    badges: ["hizli-sevkiyat"],
+    badges: [],
     bestseller: true,
     rating: { average: 4.9, count: 312 },
     features: [
@@ -415,7 +415,7 @@ const legacyRaw: ProductWithParams[] = [
     sizeLabel: "20 x 30 cm üçgen · 3m ip",
     productionTime: "2-3 iş günü",
     images: [prodImg("kirlangic-bayrak-3m", 1), prodImg("kirlangic-bayrak-3m", 2)],
-    badges: ["hizli-sevkiyat"],
+    badges: [],
     rating: { average: 4.6, count: 78 },
     features: [
       "110 gr polyester saten, yıkanabilir",
@@ -601,7 +601,7 @@ const legacyRaw: ProductWithParams[] = [
     sizeLabel: "30 x 40 cm",
     productionTime: "2 iş günü",
     images: [prodImg("arac-magneti-30x40", 1)],
-    badges: ["hizli-sevkiyat"],
+    badges: [],
     rating: { average: 4.6, count: 62 },
     features: [
       "0,8 mm magnet, boyaya zarar vermez",
@@ -1244,7 +1244,7 @@ const legacyRaw: ProductWithParams[] = [
     sizeLabel: "47 x 18 mm",
     productionTime: "24 saat",
     images: [prodImg("trodat-printy-4912", 1), prodImg("trodat-printy-4912", 2)],
-    badges: ["hizli-sevkiyat", "cok-satilan"],
+    badges: ["cok-satilan"],
     bestseller: true,
     rating: { average: 4.9, count: 488 },
     features: [

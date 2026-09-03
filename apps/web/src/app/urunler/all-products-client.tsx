@@ -26,7 +26,6 @@ const badgeOptions: { value: BadgeKind; label: string }[] = [
   { value: "yeni", label: "Yeni" },
   { value: "firsat", label: "Fırsat" },
   { value: "cok-satilan", label: "Çok Satılan" },
-  { value: "hizli-sevkiyat", label: "Hızlı Sevkiyat" },
   { value: "tukenmek-uzere", label: "Tükenmek Üzere" },
 ];
 

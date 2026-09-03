@@ -1,4 +1,7 @@
-export type BadgeKind = "yeni" | "firsat" | "hizli-sevkiyat" | "cok-satilan" | "tukenmek-uzere";
+// "hizli-sevkiyat" 2026-09-03'te KALDIRILDI (Hasan): teslim suresi artik tek kaynaktan
+// (2-4 is gunu, cities-generated.ts KARGO_GUN) veriliyor; urun basina "hizli" iddiasi
+// bununla celisiyordu. Bilinmeyen rozet kart tarafinda zaten gormezden geliniyor.
+export type BadgeKind = "yeni" | "firsat" | "cok-satilan" | "tukenmek-uzere";
 
 export interface SeoMeta {
   /** <title> içeriği */

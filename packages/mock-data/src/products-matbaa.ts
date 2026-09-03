@@ -98,7 +98,7 @@ const klasikKartvizit: ProductWithParams = {
   sizeLabel: "Tek Ebat: 82 × 52 mm · Çift Yön Renkli",
   productionTime: "1-2 iş günü",
   images: [prodImg("klasik-kartvizit", 1), prodImg("klasik-kartvizit", 2), prodImg("klasik-kartvizit", 3)],
-  badges: ["cok-satilan", "hizli-sevkiyat"],
+  badges: ["cok-satilan"],
   bestseller: true,
   rating: { average: 4.8, count: 247 },
   features: [
@@ -188,7 +188,7 @@ const brosur: ProductWithParams = {
   sizeLabel: "115 gr Kuşe · Çift Yön Renkli · 4 Ebat",
   productionTime: "1-2 iş günü",
   images: [prodImg("brosur", 1), prodImg("brosur", 2)],
-  badges: ["cok-satilan", "hizli-sevkiyat"],
+  badges: ["cok-satilan"],
   bestseller: true,
   rating: { average: 4.8, count: 134 },
   features: [
@@ -408,7 +408,7 @@ const elIlani: ProductWithParams = {
   sizeLabel: "105 gr Kuşe · Tek Yön Renkli · 4 Ebat",
   productionTime: "1-2 iş günü",
   images: [prodImg("el-ilani", 1)],
-  badges: ["cok-satilan", "hizli-sevkiyat"],
+  badges: ["cok-satilan"],
   bestseller: true,
   rating: { average: 4.7, count: 92 },
   features: [
