@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DesignFileUploader } from "@/components/design-file-uploader";
 import { AdminShell } from "@/components/admin-shell";
+import { iptalMailiGonderilirMi } from "./iptal-mail-kurali";
 import { useServerPerms } from "@/components/perms-provider";
 import {
   ArrowLeft,
@@ -357,7 +358,7 @@ Devam edilsin mi?`,
       if (res.ok && currentStatus !== "iptal-edildi") {
         const iptalDe = window.confirm(
           "İade tamamlandı.\n\nSipariş de İPTAL EDİLSİN Mİ?\n\n" +
-            "• Müşteriye iptal e-postası gider.\n" +
+            "• Ödemesi alınmış sipariş → müşteriye iptal e-postası gider.\n" +
             "• Hayır derseniz sipariş mevcut durumunda kalır.",
         );
         if (iptalDe) {
@@ -410,9 +411,14 @@ Devam edilsin mi?`,
     const mevcut = STATUSES.find((s) => s.id === currentStatus)?.label ?? currentStatus;
 
     if (statusId === "iptal-edildi") {
+      // Ödemesi hiç alınmamış siparişin iptalinde API mail ATMAZ (2026-09-03, Hasan:
+      // müşteri "yeni siparişim mi iptal oldu?" diye paniklüyor). Onay metni bunu yansıtır.
+      const iptalMaili = iptalMailiGonderilirMi(order);
       const ok = window.confirm(
         `Sipariş İPTAL EDİLECEK.\n\n` +
-          `• Müşteriye iptal e-postası GİDECEK.\n` +
+          (iptalMaili
+            ? `• Müşteriye iptal e-postası GİDECEK.\n`
+            : `• Ödemesi alınmamış sipariş → müşteriye e-posta GÖNDERİLMEZ.\n`) +
           `• Bu işlem GERİ ALINAMAZ, iptal edilen sipariş yeniden açılamaz.\n\n` +
           `Devam edilsin mi?`,
       );

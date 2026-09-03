@@ -26,6 +26,7 @@ import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { apiClient, withRefresh } from "@/lib/api";
+import { adresKaydiSorulsunMu } from "./adres-kaydet-kurali";
 import { generateOrderNumber } from "@/lib/format";
 import { BANKA_HESABI, HAVALE_INDIRIM_YUZDE } from "@/lib/company";
 import { whatsappUrl } from "@/lib/whatsapp";
@@ -102,6 +103,12 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"iyzico" | "cari" | "havale">("iyzico");
   // Kullanıcının hesabında kayıtlı adresleri — giriş yapmışsa çekilir, seçilebilir + varsayılan otomatik dolar.
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  /**
+   * "Bu adresi bir sonraki siparişim için kaydet" (2026-09-03, Hasan istedi).
+   * Varsayılan AÇIK: kullanıcı kendi adresini kendi hesabına kaydediyor, bir dahaki
+   * siparişte tek tıkla seçebilsin diye. İstemeyene tek tık kapatma imkânı var.
+   */
+  const [adresiKaydet, setAdresiKaydet] = useState(true);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   // Sadakat puanı — yalnız program AÇIKSA (LOYALTY_ENABLED) ve giriş yapılmışsa sunulur.
   // enabled=false → hiçbir puan UI'ı görünmez, redeemPoints gönderilmez (checkout değişmez).
@@ -211,6 +218,42 @@ export default function CheckoutPage() {
     track("checkout_guest_start", {});
     trackVisitor("checkout_guest_start", { type: "checkout_guest_start" });
     setGuestMode(true);
+  }
+
+  /** Sorunun ne zaman gösterileceği — kural + testleri: adres-kaydet-kurali.ts */
+  const adresKaydiSorulsun = adresKaydiSorulsunMu({
+    girisYapildi: Boolean(user),
+    form: { city, district, fullAddress },
+    kayitliAdresler: savedAddresses,
+  });
+
+  /**
+   * Adresi hesaba kaydet — SİPARİŞ BAŞARIYLA OLUŞTUKTAN SONRA çağrılır.
+   * Adım geçişinde kaydetmiyoruz: sepeti yarıda bırakan kullanıcının adres
+   * defterini kirletmek doğru olmaz.
+   * Hata sipariş akışını BOZMAZ (fire-and-forget) — adres kaydı ikincil bir kolaylık.
+   */
+  async function adresiHesabaKaydet() {
+    if (!adresKaydiSorulsun || !adresiKaydet) return;
+    // Etiket adres listesinde ayırt edici olsun; DTO 2-40 karakter istiyor.
+    const etiket = (district || city).slice(0, 40) || "Adresim";
+    try {
+      await withRefresh(() =>
+        apiClient.users.createAddress({
+          label: etiket,
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          city: city.trim(),
+          district: district.trim(),
+          fullAddress: fullAddress.trim(),
+          ...(zipCode.trim() ? { zipCode: zipCode.trim() } : {}),
+          // İlk adresse varsayılan yap — sonraki siparişte otomatik dolsun.
+          isDefault: savedAddresses.length === 0,
+        }),
+      );
+    } catch {
+      /* adres kaydedilemedi — sipariş tamamlandı, sessiz geç */
+    }
   }
 
   /**
@@ -646,6 +689,8 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Sipariş oluştu → adres kaydı (istenmişse). Fire-and-forget: hata akışı bozmaz.
+      void adresiHesabaKaydet();
       // Başarı sayfası store'dan okusun diye siparişi backend id'siyle ekle. Sepet ödeme
       // BAŞARILI olunca (başarı sayfasında) temizlenir — başarısızlıkta sepet korunur.
       const order = buildOrder(saveRes.orderNumber ?? generateOrderNumber());
@@ -715,6 +760,8 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Sipariş oluştu → adres kaydı (istenmişse). Fire-and-forget: hata akışı bozmaz.
+      void adresiHesabaKaydet();
       // Sipariş başarıyla oluştu → başarı sayfası store'dan okusun. Cari'de online ödeme yok,
       // o yüzden sepeti hemen boşaltıp başarı sayfasına yönlendiriyoruz (?method=cari → doğru mesaj).
       const order = buildOrder(saveRes.orderNumber ?? generateOrderNumber());
@@ -755,6 +802,8 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Sipariş oluştu → adres kaydı (istenmişse). Fire-and-forget: hata akışı bozmaz.
+      void adresiHesabaKaydet();
       const order = buildOrder(saveRes.orderNumber ?? generateOrderNumber());
       order.id = saveRes.orderId;
       addOrder(order);
@@ -1045,6 +1094,33 @@ export default function CheckoutPage() {
                 />
                 Fatura adresi teslimat adresiyle aynı
               </label>
+
+              {/*
+                ADRESİ KAYDET (2026-09-03, Hasan: "onay ve ödeme adımına geçmeden
+                adresinizi bir sonraki siparişiniz için kaydedelim mi sorusunu soralım").
+                Yalnız GİRİŞLİ kullanıcıya ve adres hesapta YOKSA görünür — kayıtlı bir
+                adres seçildiğinde sormak, her siparişte aynı adresin kopyasını üretirdi.
+                Kayıt, sipariş BAŞARIYLA oluştuktan sonra yapılır.
+              */}
+              {adresKaydiSorulsun && (
+                <label className="mt-3 flex items-start gap-2 rounded-lg border border-paper-200 bg-paper-100/60 px-3 py-2.5 text-sm text-ink-700">
+                  <input
+                    type="checkbox"
+                    checked={adresiKaydet}
+                    onChange={(e) => setAdresiKaydet(e.target.checked)}
+                    className="mt-0.5 rounded border-paper-200"
+                  />
+                  <span>
+                    <strong className="font-medium text-ink-900">
+                      Bu adresi bir sonraki siparişim için kaydet
+                    </strong>
+                    <span className="block text-xs text-ink-500">
+                      Hesabınıza kaydedilir; sonraki siparişlerde tek tıkla seçebilirsiniz.
+                      Adreslerinizi Hesabım &rsaquo; Adreslerim&apos;den yönetebilirsiniz.
+                    </span>
+                  </span>
+                </label>
+              )}
             </Section>
 
             <Section
