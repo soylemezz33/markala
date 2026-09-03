@@ -13,7 +13,6 @@ import { getDisplayPrice } from "@/lib/configurator";
 const badgeStyles: Record<BadgeKind, { label: string; className: string }> = {
   yeni: { label: "Yeni", className: "bg-ink-900 text-paper-50" },
   firsat: { label: "Fırsat", className: "bg-error text-paper-50" },
-  "hizli-sevkiyat": { label: "Hızlı Sevkiyat", className: "bg-success text-paper-50" },
   "cok-satilan": { label: "Çok Satılan", className: "bg-brand-500 text-ink-900" },
   "tukenmek-uzere": { label: "Tükenmek Üzere", className: "bg-warning text-paper-50" },
 };
