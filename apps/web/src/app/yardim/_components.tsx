@@ -69,7 +69,7 @@ export function HelpContactBox() {
             İletişim formundan
           </Link>{" "}
           ulaşın ya da{" "}
-          <a href="https://wa.me/905057417028" className="text-brand-700 hover:underline font-medium">
+          <a href="https://wa.me/905319004102" className="text-brand-700 hover:underline font-medium">
             WhatsApp
           </a>{" "}
           ile yazın. Hafta içi 09:00-18:00 arası destek veriyoruz.

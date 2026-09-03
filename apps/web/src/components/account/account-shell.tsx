@@ -116,7 +116,7 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
             <SignOut size={18} /> Çıkış Yap
           </button>
           <a
-            href="https://wa.me/905057417028"
+            href="https://wa.me/905319004102"
             className="mt-1 w-full h-9 px-3 rounded-lg text-xs text-ink-500 hover:text-ink-900 hover:bg-paper-100 flex items-center gap-2.5 transition-colors"
           >
             <WhatsappLogo size={16} /> Destek hattı

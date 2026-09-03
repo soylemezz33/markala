@@ -181,7 +181,7 @@ export default async function ServicePage({ params }: Props) {
               Sipariş Ver <ArrowRight size={14} weight="bold" />
             </Link>
             <a
-              href="https://wa.me/905057417028"
+              href="https://wa.me/905319004102"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 bg-[#25D366] hover:bg-[#1FB358] text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2"
@@ -304,7 +304,7 @@ export default async function ServicePage({ params }: Props) {
               Ürünleri Keşfet <ArrowRight size={14} weight="bold" />
             </Link>
             <a
-              href="https://wa.me/905057417028"
+              href="https://wa.me/905319004102"
               target="_blank"
               rel="noopener noreferrer"
               className="px-6 py-3 bg-[#25D366] hover:bg-[#1FB358] text-white rounded-lg text-sm font-semibold inline-flex items-center gap-2"

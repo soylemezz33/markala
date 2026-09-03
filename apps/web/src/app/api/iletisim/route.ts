@@ -83,8 +83,8 @@ function buildAutoReplyHtml(ad: string, konu: string): string {
       </p>
       <p style="margin:0 0 20px">
         Acil durumlar için WhatsApp hattımızdan ulaşabilirsiniz:
-        <a href="https://wa.me/905057417028" style="color:#4B3AA0;font-weight:600">
-          0505 741 70 28
+        <a href="https://wa.me/905319004102" style="color:#4B3AA0;font-weight:600">
+          0531 900 41 02
         </a>
       </p>
       <p style="margin:0;color:#78716c;font-size:13px">İyi günler dileriz,<br>Markala Ekibi</p>

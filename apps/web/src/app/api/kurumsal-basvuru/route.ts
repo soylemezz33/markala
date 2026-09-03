@@ -248,7 +248,7 @@ export async function POST(req: NextRequest) {
       refId,
       degraded: true,
       message:
-        "Başvurun alındı. En hızlı dönüş için WhatsApp hattımızdan da yazabilirsin: 0505 741 70 28",
+        "Başvurun alındı. En hızlı dönüş için WhatsApp hattımızdan da yazabilirsin: 0531 900 41 02",
     });
   }
 
