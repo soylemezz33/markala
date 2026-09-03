@@ -322,6 +322,7 @@ export const ORDER_STATUS_VALUES = [
   "siparis-alindi",
   "tasarim-bekleniyor",
   "tasarim-onayindi",
+  "tasarim-onaylandi",
   "uretimde",
   "kargoya-verildi",
   "teslim-edildi",

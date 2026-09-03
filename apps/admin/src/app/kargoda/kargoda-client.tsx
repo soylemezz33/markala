@@ -3,19 +3,19 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { MagnifyingGlass, Truck, Image as ImageIcon, ArrowSquareOut, Copy } from "@phosphor-icons/react";
+import { MagnifyingGlass, Truck, Image as ImageIcon, ArrowSquareOut, Copy, Factory, CheckCircle } from "@phosphor-icons/react";
 import { toast } from "@/components/toast";
 
 /**
- * Kargodaki ürünler — istemci (2026-09-03).
+ * Üretim & Kargo — istemci (2026-09-03).
  *
- * Tek amaç: kargoya verilmiş her siparişi kalem kalem GÖRSELİYLE göstermek; operatör
- * paketin üstündeki görselle ekrandakini eşleştirip "bu kimin" sorusunu saniyede kapatsın.
- * Görsel önceliği: tasarımcının yüklediği ÖNİZLEME (en yeni) → müşterinin yüklediği dosya
- * (yalnız JPG/PNG ise; PDF/AI önizlenemez) → yer tutucu ikon.
+ * Tek amaç: atölyedeki kişi (kargo rolü) hangi işin hangi aşamada olduğunu KALEM KALEM GÖRSELİYLE
+ * görsün: "Üretime hazır" (tasarım onaylandı → üretime alınacak), "Üretimde" (bitince kargoya
+ * verilecek), "Kargoda" (takip no). Görsel önceliği: tasarımcının yüklediği ÖNİZLEME (en yeni) →
+ * müşterinin yüklediği dosya (yalnız JPG/PNG ise) → yer tutucu ikon.
  *
- * Görseller admin BFF'sinden gelir (/api/tasarim-onizleme/<key>): API ucu auth ister,
- * düz <img src> Authorization gönderemez; BFF çerezle kimliklenir ve yalnız jpg/png servis eder.
+ * Görseller admin BFF'sinden gelir (/api/tasarim-onizleme/<key>): API ucu auth ister, düz <img src>
+ * Authorization gönderemez; BFF çerezle kimliklenir ve yalnız jpg/png servis eder.
  */
 
 export interface KargoKalem {
@@ -40,6 +40,8 @@ export interface KargoSiparis {
   items: KargoKalem[];
 }
 
+type Sekme = "uretime-hazir" | "uretimde" | "kargoda";
+
 /** Dosya URL'inden depolama anahtarını (uuid.uzantı) çıkarır; BFF aynı deseni doğrular. */
 function anahtar(url: string | null | undefined): string | undefined {
   const key = String(url ?? "").split("?")[0]?.split("/").pop();
@@ -60,14 +62,21 @@ function kalemGorseli(k: KargoKalem): { src: string; kaynak: "onizleme" | "muste
 }
 
 const tarih = (iso: string | null | undefined) =>
-  iso
-    ? new Date(iso).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" })
-    : "—";
+  iso ? new Date(iso).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
 
-export function KargodaClient({ orders }: { orders: KargoSiparis[] }) {
+const SEKMELER: Array<{ id: Sekme; label: string; Icon: typeof Truck; aciklama: string }> = [
+  { id: "uretime-hazir", label: "Üretime hazır", Icon: CheckCircle, aciklama: "Tasarımı onaylanmış, üretime alınmayı bekleyen siparişler. Detaydan 'Üretimde' yapın." },
+  { id: "uretimde", label: "Üretimde", Icon: Factory, aciklama: "Basılan/hazırlanan siparişler. Bitince detaydan takip numarasıyla 'Kargoda' yapın." },
+  { id: "kargoda", label: "Kargoda", Icon: Truck, aciklama: "Kargoya verilmiş siparişler; görsele bakıp paketi eşleştirin." },
+];
+
+export function KargodaClient({ uretimeHazir, uretimde, kargoda }: { uretimeHazir: KargoSiparis[]; uretimde: KargoSiparis[]; kargoda: KargoSiparis[] }) {
   const [q, setQ] = useState("");
+  const [sekme, setSekme] = useState<Sekme>(() => (uretimeHazir.length ? "uretime-hazir" : uretimde.length ? "uretimde" : "kargoda"));
+  const kaynak: Record<Sekme, KargoSiparis[]> = { "uretime-hazir": uretimeHazir, uretimde, kargoda };
 
   const liste = useMemo(() => {
+    const orders = kaynak[sekme];
     const s = q.trim().toLocaleLowerCase("tr");
     const filtreli = s
       ? orders.filter((o) =>
@@ -76,13 +85,17 @@ export function KargodaClient({ orders }: { orders: KargoSiparis[] }) {
             .some((v) => String(v).toLocaleLowerCase("tr").includes(s)),
         )
       : orders;
-    // En son kargoya verilen üstte; shippedAt yoksa sipariş tarihine düş.
+    // Kargoda: en son kargoya verilen üstte; diğer sekmelerde en eski üstte (sırada bekleyen önce).
     return [...filtreli].sort((a, b) =>
-      (b.shippedAt ?? b.createdAt) < (a.shippedAt ?? a.createdAt) ? -1 : 1,
+      sekme === "kargoda"
+        ? ((b.shippedAt ?? b.createdAt) < (a.shippedAt ?? a.createdAt) ? -1 : 1)
+        : (a.createdAt < b.createdAt ? -1 : 1),
     );
-  }, [orders, q]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uretimeHazir, uretimde, kargoda, sekme, q]);
 
   const kalemSayisi = liste.reduce((n, o) => n + o.items.reduce((m, i) => m + (i.quantity || 1), 0), 0);
+  const aktif = SEKMELER.find((s) => s.id === sekme)!;
 
   const kopyala = (v: string) => {
     navigator.clipboard?.writeText(v).then(
@@ -93,15 +106,12 @@ export function KargodaClient({ orders }: { orders: KargoSiparis[] }) {
 
   return (
     <AdminShell>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-serif text-2xl text-ink-900 flex items-center gap-2">
-            <Truck size={26} weight="duotone" className="text-brand-700" /> Kargodaki Ürünler
+            <Factory size={26} weight="duotone" className="text-brand-700" /> Üretim &amp; Kargo
           </h1>
-          <p className="mt-1 text-sm text-ink-500">
-            Kargoya verilmiş {liste.length} sipariş · {kalemSayisi} adet ürün. Görsele bakıp paketi eşleştirin;
-            durum değişikliği sipariş detayından yapılır.
-          </p>
+          <p className="mt-1 text-sm text-ink-500">{aktif.aciklama}</p>
         </div>
         <label className="relative block w-full max-w-xs">
           <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
@@ -114,9 +124,31 @@ export function KargodaClient({ orders }: { orders: KargoSiparis[] }) {
         </label>
       </div>
 
+      <div className="mb-5 flex flex-wrap items-center gap-2" role="tablist">
+        {SEKMELER.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            role="tab"
+            aria-selected={sekme === s.id}
+            onClick={() => setSekme(s.id)}
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+              sekme === s.id ? "bg-ink-900 text-paper-50 border-ink-900" : "border-paper-300 text-ink-700 hover:bg-paper-100"
+            }`}
+          >
+            <s.Icon size={15} weight={sekme === s.id ? "fill" : "regular"} />
+            {s.label}
+            <span className={`ml-0.5 rounded-full px-1.5 text-[11px] ${sekme === s.id ? "bg-paper-50/20" : "bg-paper-200 text-ink-700"}`}>
+              {kaynak[s.id].length}
+            </span>
+          </button>
+        ))}
+        <span className="text-xs text-ink-500">{liste.length} sipariş · {kalemSayisi} adet ürün</span>
+      </div>
+
       {liste.length === 0 ? (
         <div className="rounded-xl border border-dashed border-paper-300 p-10 text-center text-sm text-ink-500">
-          {q ? "Aramayla eşleşen kargodaki sipariş yok." : "Şu anda kargoda sipariş yok."}
+          {q ? "Aramayla eşleşen sipariş yok." : "Bu sekmede sipariş yok."}
         </div>
       ) : (
         <div className="space-y-4">
@@ -128,27 +160,33 @@ export function KargodaClient({ orders }: { orders: KargoSiparis[] }) {
                     {o.orderNumber}
                   </Link>
                   <span className="text-sm text-ink-700">{o.customerName || o.email || "—"}</span>
-                  <span className="text-xs text-ink-500">Kargoya veriliş: {tarih(o.shippedAt)}</span>
+                  <span className="text-xs text-ink-500">
+                    {sekme === "kargoda" ? `Kargoya veriliş: ${tarih(o.shippedAt)}` : `Sipariş: ${tarih(o.createdAt)}`}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-ink-500">{o.trackingCarrier || "Kargo firması yok"}</span>
-                  {o.trackingNumber ? (
-                    <button
-                      type="button"
-                      onClick={() => kopyala(o.trackingNumber!)}
-                      title="Takip numarasını kopyala"
-                      className="inline-flex items-center gap-1 rounded-md border border-paper-300 bg-paper-50 px-2 py-1 font-mono text-xs text-ink-900 hover:border-ink-500"
-                    >
-                      {o.trackingNumber} <Copy size={13} />
-                    </button>
-                  ) : (
-                    <span className="rounded-md bg-warning/10 px-2 py-1 text-xs text-warning">Takip no girilmemiş</span>
+                  {sekme === "kargoda" && (
+                    <>
+                      <span className="text-ink-500">{o.trackingCarrier || "Kargo firması yok"}</span>
+                      {o.trackingNumber ? (
+                        <button
+                          type="button"
+                          onClick={() => kopyala(o.trackingNumber!)}
+                          title="Takip numarasını kopyala"
+                          className="inline-flex items-center gap-1 rounded-md border border-paper-300 bg-paper-50 px-2 py-1 font-mono text-xs text-ink-900 hover:border-ink-500"
+                        >
+                          {o.trackingNumber} <Copy size={13} />
+                        </button>
+                      ) : (
+                        <span className="rounded-md bg-warning/10 px-2 py-1 text-xs text-warning">Takip no girilmemiş</span>
+                      )}
+                    </>
                   )}
                   <Link
                     href={`/siparisler/${o.id}`}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-brand-700 hover:bg-paper-100"
+                    className="inline-flex items-center gap-1 rounded-md bg-ink-900 px-2.5 py-1.5 text-xs font-semibold text-paper-50 hover:bg-ink-700"
                   >
-                    Detay <ArrowSquareOut size={13} />
+                    {sekme === "uretime-hazir" ? "Üretime al" : sekme === "uretimde" ? "Kargoya ver" : "Detay"} <ArrowSquareOut size={13} />
                   </Link>
                 </div>
               </header>

@@ -14,6 +14,7 @@ describe("slugToOrderStatus", () => {
       "siparis-alindi",
       "tasarim-bekleniyor",
       "tasarim-onayindi",
+      "tasarim-onaylandi",
       "uretimde",
       "kargoya-verildi",
       "teslim-edildi",

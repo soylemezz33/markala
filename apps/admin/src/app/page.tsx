@@ -29,7 +29,10 @@ function statusBadge(status: string): { label: string; className: string } {
       return { label: "Tasarım Bekliyor", className: "bg-[#1565C0]/10 text-[#1565C0]" };
     case "tasarim_onayindi":
     case "tasarim-onayindi":
-      return { label: "Tasarım Onaylandı", className: "bg-[#1565C0]/10 text-[#1565C0]" };
+      return { label: "Tasarım Onayında", className: "bg-[#1565C0]/10 text-[#1565C0]" };
+    case "tasarim_onaylandi":
+    case "tasarim-onaylandi":
+      return { label: "Tasarım Onaylandı", className: "bg-success/10 text-success" };
     case "uretimde":
       return { label: "Üretimde", className: "bg-warning/10 text-warning" };
     case "kargoya_verildi":

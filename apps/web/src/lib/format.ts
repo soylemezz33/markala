@@ -68,6 +68,7 @@ const orderStatusLabels: Record<string, string> = {
   "siparis-alindi": "Sipariş Alındı",
   "tasarim-bekleniyor": "Tasarım Bekleniyor",
   "tasarim-onayindi": "Tasarım Onayı Bekliyor",
+  "tasarim-onaylandi": "Tasarım Onaylandı",
   "uretimde": "Üretimde",
   "kargoya-verildi": "Kargoya Verildi",
   "teslim-edildi": "Teslim Edildi",

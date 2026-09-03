@@ -383,6 +383,51 @@ Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleş
    *
    * Alıcı: ORDER_NOTIFY_TO (virgülle birden fazla) → yoksa ADMIN_EMAIL. İkisi de yoksa no-op.
    */
+  /**
+   * "Tasarım Onaylandı" → üretim/kargo ekibine bildirim (2026-09-03, Hasan).
+   * Müşteriye HİÇBİR ŞEY gitmez; alıcı PRODUCTION_NOTIFY_TO (virgülle birden fazla), yoksa
+   * kargo@markala.com.tr. Amaç: atölyedeki kişi panele bakmadan işin üretime alınabileceğini görsün.
+   */
+  async sendDesignApprovedProductionEmail(orderId: string): Promise<boolean> {
+    const raw = (this.config.get<string>("PRODUCTION_NOTIFY_TO") ?? "").trim() || "kargo@markala.com.tr";
+    const to = raw.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, user: { select: { fullName: true } } },
+    });
+    if (!order) {
+      this.logger.warn(`mail.designApproved: sipariş yok order=${orderId}`);
+      return false;
+    }
+    const esc = (s: unknown) =>
+      String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const adminUrl = (this.config.get<string>("ADMIN_URL") ?? "https://admin.markala.com.tr").replace(/\/$/, "");
+    const detayUrl = `${adminUrl}/siparisler/${order.id}`;
+    const musteri = order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName || "Müşteri";
+    const kalemler = (order.items ?? []).map((it) => `${it.quantity} × ${it.productName}`);
+    const subject = `✅ Tasarım onaylandı — üretime alınabilir · ${order.orderNumber}`;
+    const text =
+      `Tasarım onaylandı, üretime alınabilir.\nSipariş: ${order.orderNumber}\nMüşteri: ${musteri}\n` +
+      kalemler.map((k) => `- ${k}`).join("\n") + `\n\nPanel: ${detayUrl}`;
+    const html = renderEmail({
+      title: "Tasarım onaylandı — üretime alınabilir",
+      intro: `${esc(order.orderNumber)} · ${esc(musteri)}`,
+      preheader: `${order.orderNumber} üretime hazır`,
+      bodyHtml:
+        `<ul style="margin:0 0 12px;padding-left:18px">${kalemler.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>` +
+        `<p style="margin:0 0 8px">Tasarım dosyaları ve önizleme sipariş detayında. İşi üretime aldığınızda durumu "Üretimde" yapın.</p>` +
+        emailButton("Siparişi aç", detayUrl) + emailFallbackLink(detayUrl),
+    });
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      await this.logNotification(to, "sent", { messageId: info.messageId }, subject);
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.designApproved failed to=${to}: ${(err as Error).message}`);
+      return false;
+    }
+  }
+
   async sendNewOrderAdminEmail(orderId: string): Promise<boolean> {
     // 2026-08-21 DÜZELTME: ilk sürüm yalnız ORDER_NOTIFY_TO/ADMIN_EMAIL'e bakıyordu ve
     // bildirim HİÇ gitmedi. Sebep: ADMIN_EMAIL .env.production'da tanımlı ama API
@@ -698,7 +743,7 @@ Markala`;
       ? "Ödemen 3-7 iş günü içinde kartına iade edilir; gecikirse bu e-postayı yanıtlaman yeterli."
       : "Bu sipariş için tahsil edilmiş bir ödeme yok.";
     const subject = `Siparişin iptal edildi - ${order.orderNumber}`;
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (WhatsApp: 0505 741 70 28).\n\nMarkala`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (WhatsApp: 0531 900 41 02).\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişin İptal Edildi",
       intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin iptal edildi.`,
@@ -741,7 +786,7 @@ Markala`;
     // mobil hattı (apps/web/src/lib/whatsapp.ts MARKALA_WHATSAPP_NUMBER ile aynı — 0324 sabit
     // hat WhatsApp'a kayıtlı DEĞİL). Ön-doldurulmuş mesaj müşteri-kaynaklı değer içermediğinden
     // (yalnız orderNumber) güvenli; encodeURIComponent Türkçe + boşlukları güvenle kodlar.
-    const waNumber = (this.config.get<string>("WHATSAPP_NUMBER") ?? "905057417028").replace(/\D/g, "");
+    const waNumber = (this.config.get<string>("WHATSAPP_NUMBER") ?? "905319004102").replace(/\D/g, "");
     const waMessage = `Sipariş ${order.orderNumber} için değerlendirmemi paylaşıyorum: `;
     const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
 

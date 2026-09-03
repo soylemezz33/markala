@@ -21,6 +21,7 @@ const STATUS_LABEL: Record<string, string> = {
   "siparis-alindi": "Sipariş Alındı",
   "tasarim-bekleniyor": "Tasarım Bekleniyor",
   "tasarim-onayindi": "Tasarım Onayında",
+  "tasarim-onaylandi": "Tasarım Onaylandı",
   uretimde: "Üretimde",
   "kargoya-verildi": "Kargoda",
   "teslim-edildi": "Teslim Edildi",

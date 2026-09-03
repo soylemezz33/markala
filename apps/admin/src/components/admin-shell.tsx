@@ -49,7 +49,7 @@ const navGroups: Array<{
 
       // Kargodaki ürünler (2026-09-03): kargoya verilenler görselleriyle tek ekranda; orders.read ile açılır (kargo rolü dâhil).
 
-      { href: "/kargoda", label: "Kargodaki Ürünler", icon: Truck },
+      { href: "/kargoda", label: "Üretim & Kargo", icon: Truck },
       { href: "/musteriler", label: "Müşteriler", icon: Users },
       { href: "/musteriler/kurumsal-basvurular", label: "Kurumsal Başvurular", icon: Buildings },
       { href: "/iletisim-mesajlari", label: "Gelen Kutusu", icon: EnvelopeSimple },

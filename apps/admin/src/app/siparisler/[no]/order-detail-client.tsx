@@ -40,11 +40,14 @@ import {
  */
 const KARGO_FIRMALARI = ["DHL eCommerce", "Aras Kargo", "MNG Kargo", "Yurtiçi Kargo", "PTT Kargo"];
 const VARSAYILAN_KARGO = KARGO_FIRMALARI[0]!;
+/** Kargo rolünün (orders.status yok) yapabildiği geçişler — API status-yetki.ts ile AYNI liste (2026-09-03). */
+const KARGO_GECISLERI = ["uretimde", "kargoya-verildi"];
 
 const STATUSES = [
   { id: "siparis-alindi",     label: "Sipariş Alındı" },
   { id: "tasarim-bekleniyor", label: "Tasarım Bekleniyor" },
   { id: "tasarim-onayindi",   label: "Tasarım Onayında" },
+  { id: "tasarim-onaylandi",  label: "Tasarım Onaylandı" }, // 2026-09-03: müşteriye mail yok, kargo@'ya bildirim
   { id: "uretimde",           label: "Üretimde" },
   { id: "kargoya-verildi",    label: "Kargoda" },
   { id: "teslim-edildi",      label: "Teslim Edildi" },
@@ -894,11 +897,11 @@ Devam edilsin mi?`,
                 API'de de 403 doner, butonu gostermek kullaniciyi hataya surukler. Mevcut
                 durum bilgi amacli gorunur kalir ama tiklanamaz. */}
             <div className="flex flex-wrap gap-2 mb-4">
-              {STATUSES.filter((s) => canFullStatus || s.id === "kargoya-verildi" || s.id === currentStatus).map((s) => (
+              {STATUSES.filter((s) => canFullStatus || KARGO_GECISLERI.includes(s.id) || s.id === currentStatus).map((s) => (
                 <button
                   key={s.id}
                   onClick={() => handleStatusChange(s.id)}
-                  disabled={isPending || isCancelled || (!canFullStatus && s.id !== "kargoya-verildi")}
+                  disabled={isPending || isCancelled || (!canFullStatus && !KARGO_GECISLERI.includes(s.id))}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all disabled:opacity-60 ${
                     currentStatus === s.id
                       ? "bg-ink-900 text-paper-50 border-ink-900"

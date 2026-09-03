@@ -402,6 +402,8 @@ enum OrderStatus {
   siparis_alindi     @map("siparis-alindi")
   tasarim_bekleniyor @map("tasarim-bekleniyor")
   tasarim_onayindi   @map("tasarim-onayindi")
+  /// 2026-09-03 (Hasan): tasarım onaylandı → üretime alınabilir. Müşteriye mail yok, kargo@'ya bildirim.
+  tasarim_onaylandi  @map("tasarim-onaylandi")
   uretimde
   kargoya_verildi    @map("kargoya-verildi")
   teslim_edildi      @map("teslim-edildi")

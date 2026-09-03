@@ -89,6 +89,7 @@ export const STATUS_ORDER = [
   "siparis-alindi",
   "tasarim-bekleniyor",
   "tasarim-onayindi",
+  "tasarim-onaylandi", // 2026-09-03: onay geldi, üretime alınabilir (kargo@'ya bildirim)
   "uretimde",
   "kargoya-verildi",
   "teslim-edildi",
@@ -1259,6 +1260,10 @@ export class OrdersService {
     // admin, müşteriye ikinci bir bildirim göndermiş olmamalı. İleri gidince yine gider.
     const geriAdim = isGeriAdim(currentSlug, status);
     if (geriAdim) this.logger.log(`Durum geri alındı (mail gönderilmedi): ${currentSlug} → ${status} order=${id}`);
+    // "Tasarım Onaylandı" (2026-09-03, Hasan): müşteriye mail YOK; yalnız üretim/kargo ekibine
+    // (kargo@) bildirim gider ki işi üretime alsın. Geri adımda gitmez.
+    if (!geriAdim && status === "tasarim-onaylandi")
+      void this.mail.sendDesignApprovedProductionEmail(id).catch(() => undefined);
     if (!geriAdim && status === "uretimde")
       void this.mail.sendOrderInProductionEmail(id).catch(() => undefined);
     if (!geriAdim && status === "kargoya-verildi")

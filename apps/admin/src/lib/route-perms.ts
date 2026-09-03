@@ -65,7 +65,8 @@ export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]>
  */
 export function varsayilanRota(perms: readonly string[] | undefined | null): string {
   const p = perms ?? [];
-  const sirali = ["/", "/siparisler", "/musteriler", "/urunler", "/yorumlar", "/ayarlar"];
+  // /kargoda /siparisler'den ÖNCE: panosu olmayan kargo rolü girişte doğrudan Üretim & Kargo'ya düşsün (2026-09-03).
+  const sirali = ["/", "/kargoda", "/siparisler", "/musteriler", "/urunler", "/yorumlar", "/ayarlar"];
   for (const yol of sirali) {
     const need = permForPath(yol);
     if (!need || p.includes(need)) return yol;

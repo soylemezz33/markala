@@ -34,6 +34,7 @@ import {
 import { paymentNonce } from "../payments/payment-nonce";
 import { OrderDesignService } from "./order-design.service";
 import { OrderDriveService } from "../storage/order-drive.service";
+import { izinliDurumGecisi } from "./status-yetki";
 import type { Request } from "express";
 
 
@@ -197,9 +198,11 @@ export class OrdersController {
     @Body() dto: UpdateOrderStatusDto,
     @Req() req: Request & { user?: { sub?: string; role?: string } },
   ) {
-    if (!roleHasPerm(req.user?.role, PERM.ORDERS_STATUS) && dto.status !== "kargoya-verildi") {
+    // Kargo rolü (ORDERS_STATUS yok): yalnız Üretimde + Kargoda (2026-09-03, Hasan — atölyede
+    // üretim ve kargo aynı kişi). Kural status-yetki.ts'te; panel düğmeleri aynı kuralı kullanır.
+    if (!izinliDurumGecisi({ tamYetki: roleHasPerm(req.user?.role, PERM.ORDERS_STATUS), status: dto.status })) {
       throw new ForbiddenException(
-        "Bu rol siparişi yalnızca 'Kargoya Verildi' olarak işaretleyebilir.",
+        "Bu rol siparişi yalnızca 'Üretimde' veya 'Kargoya Verildi' olarak işaretleyebilir.",
       );
     }
     return this.service.updateStatus(
