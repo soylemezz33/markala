@@ -54,11 +54,20 @@ describe("kargo rolü (2026-09-01)", () => {
     }
   });
 
-  it("izin listesi tam olarak üç anahtardan ibaret", () => {
+  it("izin listesi tam olarak dört anahtardan ibaret", () => {
     // Yeni izin eklenirse burada görünür — "acaba kargo bunu görmeli mi?" sorusunu zorlar.
+    // ORDERS_NOTES 2026-09-03'te BİLEREK eklendi: iç not defterinin değeri herkesin
+    // yazabilmesinden geliyor ("kutu ezik geldi", "adres teyit edildi"). Not müşteriye
+    // görünmez ve parasal/durumsal hiçbir kapı açmaz.
     expect(permsForRole("kargo").sort()).toEqual(
-      [PERM.ORDERS_READ, PERM.ORDERS_TRACKING, PERM.CUSTOMERS_READ].sort(),
+      [PERM.ORDERS_READ, PERM.ORDERS_TRACKING, PERM.ORDERS_NOTES, PERM.CUSTOMERS_READ].sort(),
     );
+  });
+
+  it("not yazabilir ama siparişi ilerletemez — not defteri yetki genişletmez", () => {
+    expect(roleHasPerm("kargo", PERM.ORDERS_NOTES)).toBe(true);
+    expect(roleHasPerm("kargo", PERM.ORDERS_STATUS)).toBe(false);
+    expect(roleHasPerm("kargo", PERM.ORDERS_AMOUNTS)).toBe(false);
   });
 });
 

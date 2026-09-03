@@ -13,6 +13,7 @@ import {
   IsString,
   MaxLength,
   Min,
+  MinLength,
   ValidateNested,
   registerDecorator,
   ValidationOptions,
@@ -417,4 +418,12 @@ export class ListOrdersQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsIn(ORDER_STATUS_VALUES as unknown as string[])
   status?: OrderStatusInput;
+}
+
+/** Sipariş iç notu ekleme (2026-09-03) — panel personeli arası, müşteri görmez. */
+export class CreateOrderNoteDto {
+  @IsString()
+  @MinLength(1, { message: "Not boş olamaz." })
+  @MaxLength(2000, { message: "Not en fazla 2000 karakter olabilir." })
+  body!: string;
 }

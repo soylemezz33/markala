@@ -17,5 +17,13 @@ export default async function OrderDetailPage({ params }: Props) {
     if ((e as { status?: number })?.status === 404) notFound();
     throw e;
   }
-  return <OrderDetailClient order={order as never} />;
+  // İç notlar burada çekilir: ilk boyamada dolu gelsin (client'ta ikinci tur beklenmesin).
+  // Not defteri ikincil bir bilgi — çekilemezse sipariş detayı yine açılır, kart boş görünür.
+  let notes: Awaited<ReturnType<typeof api.orders.notes>> = [];
+  try {
+    notes = await api.orders.notes(id);
+  } catch {
+    /* yetkisiz rol veya geçici hata — kart boş açılır */
+  }
+  return <OrderDetailClient order={order as never} initialNotes={notes} />;
 }

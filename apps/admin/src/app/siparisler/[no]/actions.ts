@@ -2,6 +2,7 @@
 
 import { getAdminApi } from "@/lib/api";
 import { revalidatePath } from "next/cache";
+import type { OrderNote } from "@markala/types";
 
 /**
  * Sipariş durumunu günceller. Hata olursa (örn. geçersiz geçiş, yetki) sessizce yutmaz —
@@ -122,5 +123,41 @@ export async function deleteOrderDesign(
   } catch (e) {
     const msg = (e as { message?: string })?.message ?? "Dosya silinemedi";
     return { ok: false, error: msg };
+  }
+}
+
+/**
+ * Sipariş iç notu ekle (2026-09-03). Panel personeli arası; müşteri bu notu görmez.
+ * Order.notes'a DOKUNMAZ — ayrı tabloya yazar (o kolon idempotency etiketi taşıyor).
+ */
+export async function addOrderNote(
+  id: string,
+  body: string,
+): Promise<{ ok: true; note: OrderNote } | { ok: false; error: string }> {
+  const metin = body.trim();
+  if (!metin) return { ok: false, error: "Not boş olamaz." };
+  if (metin.length > 2000) return { ok: false, error: "Not en fazla 2000 karakter olabilir." };
+  try {
+    const api = await getAdminApi();
+    const note = await api.orders.addNote(id, metin);
+    revalidatePath(`/siparisler/${id}`);
+    return { ok: true, note };
+  } catch (e) {
+    return { ok: false, error: (e as { message?: string })?.message ?? "Not eklenemedi" };
+  }
+}
+
+/** Notu sil. Sunucu kuralı: kendi notu herkes, başkasınınki yalnız admin/super_admin. */
+export async function deleteOrderNote(
+  id: string,
+  noteId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const api = await getAdminApi();
+    await api.orders.deleteNote(id, noteId);
+    revalidatePath(`/siparisler/${id}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as { message?: string })?.message ?? "Not silinemedi" };
   }
 }

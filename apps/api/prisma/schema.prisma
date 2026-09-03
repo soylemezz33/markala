@@ -87,6 +87,7 @@ model User {
 
   addresses             Address[]
   orders                Order[]
+  orderNotes            OrderNote[]
   designUploads         DesignUpload[]
   corporateApplications CorporateApplication[]
   ledgerEntries         CorporateLedgerEntry[]
@@ -505,6 +506,10 @@ model Order {
   billingAddress  Address?       @relation("BillingAddress", fields: [billingAddressId], references: [id])
   items           OrderItem[]
   designUploads   DesignUpload[]
+  // Panel içi not defteri. Order.notes AYRI bir şeydir: müşterinin checkout notunu ve
+  // idempotency etiketini ([[idem:...]]) taşır, üzerine yazmak mükerrer sipariş korumasını
+  // bozar. İç notlar bu yüzden kendi tablosunda ve ekleyen + zaman bilgisiyle tutulur.
+  internalNotes   OrderNote[]
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
@@ -516,6 +521,28 @@ model Order {
   // Postgres unique index çoklu NULL'a izin verir → ödenmemiş siparişler etkilenmez.
   @@unique([iyzicoPaymentId])
   @@map("orders")
+}
+
+// Sipariş iç notu (panel personeli arasında yazışma) — 2026-09-03.
+// Ekleme-tabanlı: her not ayrı satır, kim/ne zaman ile. Düzenleme yok; yanlış yazılan
+// not silinir (yazarı veya admin). Müşteri bu notları HİÇBİR yerde görmez.
+model OrderNote {
+  id      String @id @default(cuid())
+  orderId String @map("order_id")
+  // Yazan personel. Hesap silinirse not kalır (authorName snapshot'ı okunabilirliği korur).
+  authorId   String? @map("author_id")
+  authorName String  @map("author_name")
+  authorRole String? @map("author_role")
+
+  body String @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("order_notes")
 }
 
 model OrderItem {

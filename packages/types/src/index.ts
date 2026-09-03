@@ -437,6 +437,19 @@ export interface TrackingEvent {
   state: "done" | "active" | "pending";
 }
 
+/**
+ * Sipariş İÇ NOTU (2026-09-03) — panel personeli arası not defteri.
+ * Order.notes ile karıştırma: o alan müşterinin checkout notunu (+ idempotency etiketi)
+ * taşır; bunlar müşteriye hiçbir uçta dönmez.
+ */
+export interface OrderNote {
+  id: string;
+  body: string;
+  authorName: string;
+  authorRole?: string | null;
+  createdAt: string;
+}
+
 export interface Order {
   id: string;
   orderNumber: string;
