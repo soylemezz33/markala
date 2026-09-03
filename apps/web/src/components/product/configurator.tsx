@@ -213,10 +213,48 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         if (o.groupKey !== "malzeme") continue;
         matHints[o.optionKey] = computeAreaPrice(opts, rows, { malzeme: o.optionKey, en: "100", boy: "100", adet: "1" }, pricing).dahil;
       }
-      return { malzeme: matHints };
+      const hints: Record<string, Record<string, number>> = { malzeme: matHints };
+
+      // MALZEME DIŞINDAKİ ücretli gruplar (ör. "Ek İşlem") — 2026-09-03, Hasan: "ek
+      // fiyatları neden yazmadın?". Buraya kadar yalnız malzeme ipucu hesaplanıyordu,
+      // dolayısıyla CNC Kesim / Laminasyon gibi ÜCRETLİ seçenekler fiyatsız görünüyordu;
+      // müşteri ancak seçtikten sonra toplamın arttığını fark ediyordu.
+      //
+      // Fiyat AÇIKLAMA METNİNE YAZILMAZ: tutar kura ve girilen ölçüye bağlı (CNC m²
+      // başına, laminasyon adet başına). Sabit metin ilk kur değişiminde yalan olur.
+      // Bunun yerine fark, o anki seçimlerle hesaplanır ve "+245,00 ₺" olarak basılır.
+      //
+      // Ölçü girilmeden ipucu YOK — hasValidSize ile aynı kural: min-1m² kıskacı
+      // yüzünden müşteriye ölçüsüz sahte rakam gösterilmesin (bkz. unitArea).
+      if (hasValidSize) {
+        const tumOpts = (product.options ?? []) as Array<{
+          groupKey: string;
+          optionKey: string;
+          groupRole?: string;
+        }>;
+        const ucretliGruplar = [
+          ...new Set(
+            tumOpts.filter((o) => o.groupRole === "priced" && o.groupKey !== "malzeme").map((o) => o.groupKey),
+          ),
+        ];
+        for (const gKey of ucretliGruplar) {
+          // Taban = grup HİÇ seçilmemiş hâl; fark yalnız o seçeneğin eklediğidir.
+          // adet:"1" ile birim üzerinden hesaplanıp adetle çarpılır — ekrandaki
+          // toplamın (unitArea × areaAdet) kurulumuyla birebir aynı olsun diye.
+          const taban = computeAreaPrice(opts, rows, { ...effSel, adet: "1", [gKey]: "" }, pricing).dahil;
+          const grup: Record<string, number> = {};
+          for (const o of tumOpts) {
+            if (o.groupKey !== gKey) continue;
+            const ile = computeAreaPrice(opts, rows, { ...effSel, adet: "1", [gKey]: o.optionKey }, pricing).dahil;
+            grup[o.optionKey] = Math.round((ile - taban) * areaAdet * 100) / 100;
+          }
+          hints[gKey] = grup;
+        }
+      }
+      return hints;
     }
     return optionPriceHints(product, effSel);
-  }, [isArea, product, effSel, pricing]);
+  }, [isArea, product, effSel, pricing, hasValidSize, areaAdet]);
 
   // Area: seçili malzemenin maxM2'sini aşan ölçü sipariş edilemez (basılamaz).
   const areaMaxExceeded = useMemo(() => {
