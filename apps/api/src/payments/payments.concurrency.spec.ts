@@ -182,6 +182,29 @@ describe("PaymentsService.handleCallback — sipariş ödemesi idempotency (koş
     // Eşzamanlı başarı callback'ini ezmemek için where'de beklemede guard'ı var.
     expect(call.where).toMatchObject({ id: "ord1", paymentStatus: "beklemede" });
     expect(call.data).toMatchObject({ paymentStatus: "basarisiz" });
+    // Panelde okunabilir arıza nedeni (2026-09-03): iyzico kod/mesaj DB'ye yazılır.
+    expect(call.data).toMatchObject({ paymentErrorCode: "10", paymentErrorMessage: "red" });
+  });
+
+  it("başarısız ödeme: errorCode/errorMessage yoksa null yazılır (undefined DEĞİL — Prisma undefined'ı yok sayar)", async () => {
+    const prisma = makeOrderPrisma({ ...ORDER });
+    const failResult = { ...OK, status: "failure", paymentStatus: "FAILURE" };
+    const svc = new PaymentsService(prisma as never, makeIyzico(failResult) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendNewOrderAdminEmail: vi.fn().mockResolvedValue(true) } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never, { earnForOrder: () => Promise.resolve() } as never);
+
+    await svc.handleCallback("tok");
+
+    const call = prisma.order.updateMany.mock.calls[0][0];
+    expect(call.data).toMatchObject({ paymentErrorCode: null, paymentErrorMessage: null });
+  });
+
+  it("başarılı ödeme: önceki arızadan kalan hata mesajı temizlenir", async () => {
+    const prisma = makeOrderPrisma({ ...ORDER });
+    const svc = new PaymentsService(prisma as never, makeIyzico(OK) as never, makeConfig() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendNewOrderAdminEmail: vi.fn().mockResolvedValue(true) } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never, { earnForOrder: () => Promise.resolve() } as never);
+
+    await svc.handleCallback("tok");
+
+    const call = prisma.order.updateMany.mock.calls[0][0];
+    expect(call.data).toMatchObject({ paymentErrorCode: null, paymentErrorMessage: null });
   });
 });
 

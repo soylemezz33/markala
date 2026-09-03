@@ -452,6 +452,12 @@ model Order {
   iyzicoPaymentId      String? @map("iyzico_payment_id")
   iyzicoConversationId String? @map("iyzico_conversation_id")
 
+  /// Son başarısız ödeme denemesinin iyzico hata kodu/mesajı (2026-09-03, panelde okunabilir
+  /// arıza nedeni için — Hasan: "hata mesajını panele anlamlı yazabilir miyiz"). Ödeme
+  /// başarılı olunca temizlenir; PII/kart bilgisi İÇERMEZ (iyzico'nun genel mesajı).
+  paymentErrorCode    String? @map("payment_error_code")
+  paymentErrorMessage String? @map("payment_error_message")
+
   // Kargo takibi
   trackingNumber  String?   @map("tracking_number")
   trackingCarrier String?   @map("tracking_carrier")

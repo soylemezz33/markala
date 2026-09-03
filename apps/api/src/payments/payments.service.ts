@@ -584,7 +584,13 @@ export class PaymentsService implements OnModuleInit {
         // onu yeniden işlemez (count=0). Çift-işleme/yarış kapatılır.
         const claimed = await this.prisma.order.updateMany({
           where: { id: o.id, paymentStatus: "beklemede" },
-          data: { paymentStatus: "basarili", iyzicoPaymentId: result.paymentId ?? undefined, iyzicoConversationId: o.id },
+          data: {
+            paymentStatus: "basarili",
+            iyzicoPaymentId: result.paymentId ?? undefined,
+            iyzicoConversationId: o.id,
+            paymentErrorCode: null,
+            paymentErrorMessage: null,
+          },
         });
         if (claimed.count === 0) continue; // callback zaten işlemişti → no-op
         recovered++;
@@ -688,6 +694,9 @@ export class PaymentsService implements OnModuleInit {
           paymentStatus: "basarili",
           iyzicoPaymentId: result.paymentId ?? undefined,
           iyzicoConversationId: orderId,
+          // Önceki denemeden kalan arıza mesajı temizlenir (müşteri tekrar deneyip başardıysa).
+          paymentErrorCode: null,
+          paymentErrorMessage: null,
         },
       });
       // Yalnız İLK başarı işaretlemesinde (count>0) MÜŞTERİYE onay maili → yinelenen
@@ -719,7 +728,13 @@ export class PaymentsService implements OnModuleInit {
     if (basketOk) {
       await this.prisma.order.updateMany({
         where: { id: orderId, paymentStatus: "beklemede" },
-        data: { paymentStatus: "basarisiz" },
+        data: {
+          paymentStatus: "basarisiz",
+          // Panelde okunabilir arıza nedeni (2026-09-03, Hasan). iyzico'nun genel mesajı —
+          // kart numarası/PII içermez, doğrudan gösterilebilir.
+          paymentErrorCode: result.errorCode ?? null,
+          paymentErrorMessage: (result.errorMessage ?? "").slice(0, 500) || null,
+        },
       });
     }
     this.logger.warn(

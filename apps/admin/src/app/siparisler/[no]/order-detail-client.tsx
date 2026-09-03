@@ -29,7 +29,7 @@ import {
   Trash,
   TrashSimple,
   NotePencil,
-  Image as ImageIcon, ArrowSquareOut } from "@phosphor-icons/react";
+  Image as ImageIcon, ArrowSquareOut, WarningCircle } from "@phosphor-icons/react";
 import {
   updateOrderStatus,
   updateOrderTracking,
@@ -107,6 +107,8 @@ export interface OrderDetailProps {
   status: string;
   paymentStatus?: string | null;
   paymentMethod?: string | null;
+  paymentErrorCode?: string | null;
+  paymentErrorMessage?: string | null;
   total: unknown;
   subtotal?: unknown;
   shippingFee?: unknown;
@@ -1368,6 +1370,17 @@ export function OrderDetailClient({
                   );
                 })()}
               </div>
+              {/* Arıza nedeni (2026-09-03, Hasan: "hata mesajını panele anlamlı yazabilir miyiz").
+                  iyzico'nun genel mesajı — kart/PII içermez, doğrudan gösterilebilir. */}
+              {String(order.paymentStatus ?? "") === "basarisiz" && order.paymentErrorMessage && (
+                <p className="mt-2 flex items-start gap-1.5 text-xs text-error leading-snug">
+                  <WarningCircle size={14} weight="fill" className="mt-0.5 flex-none" />
+                  <span>
+                    {order.paymentErrorMessage}
+                    {order.paymentErrorCode ? ` (kod ${order.paymentErrorCode})` : ""}
+                  </span>
+                </p>
+              )}
               <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
                 ₺ {Number(order.total).toLocaleString("tr-TR")}
               </div>

@@ -36,6 +36,7 @@ const PARASAL_ORDER_ALANLARI = [
   "paymentStatus", "paymentMethod",
   "iyzicoPaymentId", "iyzicoConversationId", "iyzicoCheckoutToken",
   "parasutInvoiceId", "recoveryMailStage",
+  "paymentErrorCode", "paymentErrorMessage",
 ] as const;
 const PARASAL_ITEM_ALANLARI = ["unitPrice", "lineTotal", "costTotal"] as const;
 

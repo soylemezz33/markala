@@ -17,6 +17,7 @@ export interface OrderRow {
   status: string;
   paymentStatus?: string | null;
   paymentMethod?: string | null;
+  paymentErrorMessage?: string | null;
   items: unknown[];
 }
 
@@ -347,6 +348,16 @@ export function OrdersClient({ orders }: Props) {
                              gibi görünüyordu. */
                           <span className="mt-1 block text-[10px] font-semibold text-ink-500">
                             ● İade Edildi
+                          </span>
+                        ) : o.paymentStatus === "basarisiz" ? (
+                          /* Başarısız ödeme (2026-09-03, Hasan): eskiden "Ödeme Bekliyor"la
+                             AYNI görünüyordu — terk edilmiş sepetle bankanın reddettiği kart
+                             ayırt edilemiyordu. Arıza nedeni (varsa) title tooltip'te. */
+                          <span
+                            className="mt-1 block text-[10px] font-semibold text-error"
+                            title={o.paymentErrorMessage ?? undefined}
+                          >
+                            ● Ödeme Başarısız{o.paymentErrorMessage ? " ⓘ" : ""}
                           </span>
                         ) : o.paymentStatus && o.paymentStatus !== "basarili" && toSlug(o.status) !== "iptal-edildi" ? (
                           /* Havale ayrı gösterilir: kartta "ödeme bekliyor" terk edilmiş sepet

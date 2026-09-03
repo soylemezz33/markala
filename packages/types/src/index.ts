@@ -470,6 +470,9 @@ export interface Order {
   paymentStatus?: string;
   /** Ödeme yolu: "cari" (açık hesap) | "iyzico" | "havale" | null. Cari siparişte kartla ödeme YAPILMAZ. */
   paymentMethod?: string | null;
+  /** paymentStatus="basarisiz" olduğunda iyzico'nun genel hata kodu/mesajı (2026-09-03, panelde arıza nedeni için). */
+  paymentErrorCode?: string | null;
+  paymentErrorMessage?: string | null;
   /** Misafir veya kayıtlı müşteri e-postası — kargo takip sayfasında doğrulama için */
   email?: string;
   items: OrderItem[];
