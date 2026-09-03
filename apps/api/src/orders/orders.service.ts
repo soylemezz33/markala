@@ -1013,7 +1013,11 @@ export class OrdersService {
 
   listMine(userId: string) {
     return this.prisma.order.findMany({
-      where: { userId },
+      // Soft-delete edilmiş sipariş müşteriye GÖRÜNMEZ. Şema deletedAt'i "KVKK & TTK,
+      // mali kayıt 10 yıl saklanır" diye tanımlıyor: satır DB'de kalır, arayüzde yoktur.
+      // Cron'lar (lifecycle/reconcile) ve ciro/kâr sorguları bunu zaten filtreliyordu;
+      // bu iki liste atlanmıştı (2026-09-03).
+      where: { userId, deletedAt: null },
       include: { items: true },
       orderBy: { createdAt: "desc" },
     });
@@ -1027,7 +1031,8 @@ export class OrdersService {
     // kural: müşteri rolünde ASLA (çalışma dosyaları vitrine sızmaz), panelde her rolde.
     const panelRolu = !!opts.role && opts.role !== "customer";
     const orders = await this.prisma.order.findMany({
-      where: status ? { status } : {},
+      // Soft-delete edilmiş sipariş panel listesinde de görünmez (bkz. listMine notu).
+      where: status ? { status, deletedAt: null } : { deletedAt: null },
       include: {
         items: panelRolu
           ? { include: { designUploads: { orderBy: { createdAt: "asc" }, select: DESIGN_ROW_SELECT } } }
