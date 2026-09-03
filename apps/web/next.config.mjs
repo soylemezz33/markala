@@ -174,12 +174,21 @@ const nextConfig = {
         destination: "/icon.png",
         permanent: false,
       },
-      // Ürün adı "Cam Vitrin Folyosu" → "Folyo Çeşitleri" olunca slug da güncellendi
-      // (2026-08-28). Kalıcı yönlendirme: Google'daki mevcut sıralama ve dışarıdan
-      // gelen linkler yeni adrese TAŞINIR, kaybolmaz.
+      // Folyo ürünlerinin sadeleşmesi (2026-09-03). Tarihçe: "Cam Vitrin Folyosu"
+      // → slug "folyo-cesitleri" (2026-08-28) → 30 Ağustos'ta 10 folyo türü AYRI
+      // ürünlere bölündü. Toplayıcı ürünün taşıdığı 10 malzemenin tamamı o altı üründe
+      // var; kendisi menüden çıkarıldı ve pasife alındı.
+      //
+      // İKİSİ DE DOĞRUDAN kategoriye gider — eski slug'ı "folyo-cesitleri"ye bırakmak
+      // 301 ZİNCİRİ üretirdi (iki atlama, gereksiz gecikme ve sinyal kaybı).
       {
         source: "/urun/cam-folyosu-kesimli",
-        destination: "/urun/folyo-cesitleri",
+        destination: "/kategori/folyo-film",
+        permanent: true,
+      },
+      {
+        source: "/urun/folyo-cesitleri",
+        destination: "/kategori/folyo-film",
         permanent: true,
       },
       // Mükerrer KVKK sayfası → DB-yönetimli kanonik yasal sayfa
