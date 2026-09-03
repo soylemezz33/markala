@@ -1,4 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Optional } from "@nestjs/common";
+import { MailHealthService } from "./mail-health.service";
 import { ConfigService } from "@nestjs/config";
 import * as nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
@@ -25,7 +26,12 @@ export class MailService {
   private readonly from: string;
   private transporter: Transporter;
 
-  constructor(private config: ConfigService, private prisma: PrismaService) {
+  constructor(
+    private config: ConfigService,
+    private prisma: PrismaService,
+    // Arıza uyarısı (2026-09-03). @Optional + son parametre: spec'ler iki argümanla kuruyor.
+    @Optional() private health?: MailHealthService,
+  ) {
     const secure = (this.config.get<string>("SMTP_SECURE") ?? "false") === "true";
     const user = this.config.get<string>("SMTP_USER");
     const pass = this.config.get<string>("SMTP_PASS");
@@ -1154,5 +1160,11 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
         },
       })
       .catch((e) => this.logger.error(`notificationLog yazılamadı: ${(e as Error).message}`));
+    // Arıza/düzelme uyarısı — fire-and-forget, gönderim akışını asla etkilemez (2026-09-03).
+    void this.health?.kaydet(status, {
+      recipient,
+      subject: subject ?? template,
+      error: typeof metadata.error === "string" ? metadata.error : undefined,
+    });
   }
 }

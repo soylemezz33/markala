@@ -2,6 +2,7 @@ import { Controller, Get, HttpException, HttpStatus } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import * as net from "net";
 import { PrismaService } from "../prisma/prisma.service";
+import { MailHealthService } from "../mail/mail-health.service";
 
 type CheckStatus = "ok" | "error" | "not_configured";
 
@@ -10,7 +11,20 @@ type CheckStatus = "ok" | "error" | "not_configured";
 export class HealthController {
   private readonly startedAt = Date.now();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly mailHealth: MailHealthService) {}
+
+  /**
+   * E-posta gönderim sağlığı (2026-09-03): son 15 dk'da başarısız gönderim var ve sonrasında
+   * başarılı yoksa 503. Gizli veri yok; harici izleme (UptimeRobot vb.) buna bağlanır.
+   */
+  @Get("mail")
+  @ApiOperation({ summary: "E-posta gönderim sağlığı; arızada 503" })
+  async mail() {
+    const d = await this.mailHealth.durum();
+    const body = { status: d.ok ? "ok" : "mail_failing", ...d, timestamp: new Date().toISOString() };
+    if (!d.ok) throw new HttpException(body, HttpStatus.SERVICE_UNAVAILABLE);
+    return body;
+  }
 
   /** Shallow: API process ayakta mı? Bağımlılık testi yok. Load-balancer için. */
   @Get()

@@ -125,6 +125,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
   // Sistem sağlığı: null = bilinmiyor (ilk yükleme), true = ok, false = sorun var.
   const [systemOk, setSystemOk] = useState<boolean | null>(null);
+  // E-posta arızası şeridi (2026-09-03): /api/system-health → mail.ok=false ise her sayfada görünür.
+  const [mailAriza, setMailAriza] = useState<{ lastFailureAt?: string | null; failedLast15m?: number; lastError?: string | null } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,7 +167,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       fetch("/api/system-health")
         .then((r) => (r.ok ? r.json() : { ok: false }))
         .then((d) => {
-          if (!cancelled) setSystemOk(!!d.ok);
+          if (cancelled) return;
+          setSystemOk(!!d.ok);
+          setMailAriza(d?.mail && d.mail.ok === false ? d.mail : null);
         })
         .catch(() => {
           if (!cancelled) setSystemOk(false);
@@ -363,6 +367,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        {/* E-posta arızası şeridi — 2026-09-03 SMTP olayı: 25 mail sessizce kaybolmuştu. */}
+        {mailAriza && (
+          <div role="alert" className="bg-error text-paper-50 px-4 py-2.5 text-sm flex flex-wrap items-center justify-between gap-2">
+            <span>
+              <strong>E-posta gönderimi arızalı.</strong> Son 15 dk'da {mailAriza.failedLast15m ?? "?"} gönderim başarısız
+              {mailAriza.lastError ? ` — ${mailAriza.lastError}` : ""}
+              {mailAriza.lastFailureAt ? ` (son hata ${new Date(mailAriza.lastFailureAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })})` : ""}.
+              Müşteri mailleri şu an gitmiyor; SMTP şifresini/hesabını hosting'de kontrol edin.
+            </span>
+            <Link href="/e-postalar" className="underline font-semibold whitespace-nowrap">E-posta kayıtları →</Link>
+          </div>
+        )}
         {/* Content */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1400px] w-full mx-auto">{children}</main>
 
