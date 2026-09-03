@@ -70,8 +70,10 @@ function makeService(opts: { item?: unknown; createFails?: boolean; existing?: u
       opts.driveFails ? Promise.reject(new Error("drive 403")) : Promise.resolve({ id: "DRV1", webViewLink: "https://drive.google.com/file/d/DRV1/view" }),
     ),
     deleteFile: vi.fn().mockResolvedValue(undefined),
+    createResumableSession: vi.fn().mockResolvedValue("https://upload.googleapis.com/session/1"),
+    getFileMeta: vi.fn().mockResolvedValue({ id: "DRV9", name: "x", size: 12345, mimeType: "application/pdf", parents: ["FOLDER"], webViewLink: "https://drive.google.com/file/d/DRV9/view" }),
   };
-  const svc = new OrderDesignService(prisma as never, storage as never, drive as never);
+  const svc = new OrderDesignService(prisma as never, storage as never, drive as never, { get: () => "https://admin.test" } as never);
   return { svc, prisma, storage, drive };
 }
 
@@ -198,5 +200,43 @@ describe("driveDosyaAdi", () => {
   it("sipariş no + ürün slug + tür + özgün ad; Türkçe karakterler sadeleşir", () => {
     expect(driveDosyaAdi("MK-1", "Çin Vinil Branda", "baski", "Final V3.pdf")).toBe("MK-1__cin-vinil-branda__baski__Final V3.pdf");
     expect(driveDosyaAdi("MK-2", "!!!", "calisma", "x.ai")).toBe("MK-2__urun__calisma__x.ai");
+  });
+});
+
+describe("OrderDesignService — doğrudan Drive yüklemesi (2026-09-03, 1000 MB)", () => {
+  const dto = { kind: "baski", fileName: "final.pdf", mimeType: "application/pdf", size: 12345 };
+  const item = { id: "it1", productName: "Çin Vinil Branda", productSlug: "cin-vinil-branda", order: { status: "uretimde", orderNumber: "MK-77", user: { fullName: "Ayşe" }, shippingAddressSnapshot: null } };
+
+  it("driveOturum: Drive kapalıysa 409 (panel sunucu yoluna düşer)", async () => {
+    const { svc } = makeService({ drive: false });
+    await expect(svc.driveOturum("o1", "it1", dto)).rejects.toMatchObject({ status: 409 });
+  });
+  it("driveOturum: önizleme bu yoldan geçmez, 1000 MB üstü reddedilir, baskı PDF olmalı", async () => {
+    const { svc } = makeService({ drive: true, item });
+    await expect(svc.driveOturum("o1", "it1", { ...dto, kind: "onizleme" })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(svc.driveOturum("o1", "it1", { ...dto, size: 1000 * 1024 * 1024 + 1 })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(svc.driveOturum("o1", "it1", { ...dto, fileName: "final.ai" })).rejects.toBeInstanceOf(BadRequestException);
+  });
+  it("driveOturum: klasörü açar, panel origin'iyle resumable oturum döner", async () => {
+    const { svc, drive } = makeService({ drive: true, item });
+    const r = await svc.driveOturum("o1", "it1", dto);
+    expect(r.uploadUrl).toBe("https://upload.googleapis.com/session/1");
+    expect(drive.ensureOrderFolder).toHaveBeenCalledWith("MK-77", "Ayşe");
+    expect(drive.createResumableSession).toHaveBeenCalledWith(expect.objectContaining({ folderId: "FOLDER", name: "MK-77__cin-vinil-branda__baski__final.pdf", size: 12345, origin: "https://admin.test" }));
+  });
+  it("driveTamamla: Drive'da doğrular (klasör + boyut), kaydı Drive kimliğiyle açar", async () => {
+    const { svc, prisma } = makeService({ drive: true, item });
+    const r = await svc.driveTamamla("o1", "it1", { ...dto, driveFileId: "DRV9" }, actor);
+    expect(prisma.designUpload.create.mock.calls[0][0].data).toMatchObject({ kind: "baski", driveFileId: "DRV9", storageKey: null, fileSize: 12345, fileUrl: "https://drive.google.com/file/d/DRV9/view" });
+    expect(r.id).toBe("up1");
+    expect(prisma.auditLog.create.mock.calls[0][0].data.diff).toMatchObject({ driveFileId: "DRV9", yol: "drive-dogrudan" });
+  });
+  it("driveTamamla: başka klasördeki veya boyutu tutmayan dosya reddedilir, kayıt açılmaz", async () => {
+    const { svc, drive, prisma } = makeService({ drive: true, item });
+    drive.getFileMeta.mockResolvedValueOnce({ id: "DRV9", name: "x", size: 12345, mimeType: "application/pdf", parents: ["BASKA"], webViewLink: "u" });
+    await expect(svc.driveTamamla("o1", "it1", { ...dto, driveFileId: "DRV9" }, actor)).rejects.toBeInstanceOf(BadRequestException);
+    drive.getFileMeta.mockResolvedValueOnce({ id: "DRV9", name: "x", size: 1, mimeType: "application/pdf", parents: ["FOLDER"], webViewLink: "u" });
+    await expect(svc.driveTamamla("o1", "it1", { ...dto, driveFileId: "DRV9" }, actor)).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.designUpload.create).not.toHaveBeenCalled();
   });
 });

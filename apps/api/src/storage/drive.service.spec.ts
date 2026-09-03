@@ -20,7 +20,7 @@ const TAM = {
 
 class TestDrive extends DriveService {
   calls: Array<{ url: string; init: RequestInit }> = [];
-  constructor(vals: Record<string, string | undefined>, private yanitlar: Array<{ status: number; body: unknown }>) {
+  constructor(vals: Record<string, string | undefined>, private yanitlar: Array<{ status: number; body: unknown; headers?: Record<string, string> }>) {
     super(config(vals));
     this.fetchImpl = (async (url: string, init: RequestInit = {}) => {
       this.calls.push({ url, init });
@@ -30,6 +30,7 @@ class TestDrive extends DriveService {
         status: y.status,
         json: async () => y.body,
         text: async () => JSON.stringify(y.body),
+        headers: { get: (h: string) => (y.headers ?? {})[h.toLowerCase()] ?? null },
       } as unknown as Response;
     }) as unknown as typeof fetch;
   }
@@ -90,6 +91,21 @@ describe("DriveService", () => {
     await expect(d.deleteFile("yok")).resolves.toBeUndefined();
     await expect(d.deleteFile("bozuk")).rejects.toThrow("Drive DELETE 500");
   });
+  it("resumable oturum: metadata + X-Upload-* + Origin gönderir, Location döner", async () => {
+    const d = new TestDrive(TAM, [{ status: 200, body: {}, headers: { location: "https://upload.googleapis.com/s/1" } }]);
+    const url = await d.createResumableSession({ folderId: "F1", name: "MK-1__x__baski__a.pdf", mimeType: "application/pdf", size: 999, origin: "https://admin.markala.com.tr" });
+    expect(url).toBe("https://upload.googleapis.com/s/1");
+    const c = d.calls[0];
+    expect(c.url).toContain("uploadType=resumable");
+    expect(c.init.headers).toMatchObject({ "X-Upload-Content-Type": "application/pdf", "X-Upload-Content-Length": "999", Origin: "https://admin.markala.com.tr" });
+    expect(JSON.parse(String(c.init.body))).toEqual({ name: "MK-1__x__baski__a.pdf", parents: ["F1"] });
+  });
+
+  it("getFileMeta: boyutu sayıya çevirir, parents döner", async () => {
+    const d = new TestDrive(TAM, [{ status: 200, body: { id: "X", name: "a", size: "42", mimeType: "application/pdf", parents: ["F1"], webViewLink: "w" } }]);
+    expect(await d.getFileMeta("X")).toEqual({ id: "X", name: "a", size: 42, mimeType: "application/pdf", parents: ["F1"], webViewLink: "w" });
+  });
+
 
   it("driveFileUrl panel bağlantısını üretir", () => {
     expect(driveFileUrl("abc")).toBe("https://drive.google.com/file/d/abc/view");

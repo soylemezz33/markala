@@ -1,8 +1,9 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { DriveService, driveFileUrl } from "../storage/drive.service";
 import { DESIGN_KINDS, type DesignKind } from "./orders.dto";
+import { ConfigService } from "@nestjs/config";
 
 /**
  * Sipariş SATIRINA tasarımcı dosyası ekleme/silme (2026-09-02, üretim ARGE Faz 2).
@@ -112,7 +113,95 @@ export class OrderDesignService {
     private prisma: PrismaService,
     private storage: StorageService,
     private drive: DriveService,
+    private config?: ConfigService,
   ) {}
+
+  /** Doğrudan Drive yüklemesinde kabul edilen uzantılar (çalışma/baskı). */
+  private static readonly DRIVE_EXT = new Set(["ai", "eps", "pdf", "cdr", "psd", "tif", "tiff", "jpg", "jpeg", "png", "zip", "indd", "svg"]);
+  static readonly DRIVE_MAX_BYTES = 1000 * 1024 * 1024;
+
+  private async kalemVeSiparis(orderId: string, itemId: string) {
+    const item = await this.prisma.orderItem.findFirst({
+      where: { id: itemId, orderId },
+      select: {
+        id: true,
+        productName: true,
+        productSlug: true,
+        order: { select: { status: true, orderNumber: true, user: { select: { fullName: true } }, shippingAddressSnapshot: true } },
+      },
+    });
+    if (!item) throw new NotFoundException("Sipariş satırı bulunamadı.");
+    if (item.order?.status === "iptal_edildi") throw new BadRequestException("İptal edilmiş siparişe dosya yüklenemez.");
+    return item;
+  }
+
+  /**
+   * Doğrudan Drive yüklemesi — 1. adım (2026-09-03, Hasan: "50 MB çok düşük → 1000 MB").
+   * Dosya sunucuya uğramaz: burada yalnız kural kontrolü + sipariş klasörü + Drive resumable
+   * oturumu. Tarayıcı parçaları Drive'a PUT eder, sonra driveTamamla ile kayıt açılır.
+   * Drive kapalıysa 409 → panel ≤ 50 MB için eski sunucu yoluna düşer.
+   */
+  async driveOturum(orderId: string, itemId: string, dto: { kind: string; fileName: string; mimeType?: string; size: number }) {
+    if (!this.drive.enabled) throw new ConflictException("Drive aktarımı kapalı.");
+    if (dto.kind !== "calisma" && dto.kind !== "baski") throw new BadRequestException("Bu yol yalnız çalışma/baskı dosyaları içindir.");
+    const ext = (dto.fileName.split(".").pop() ?? "").toLowerCase();
+    if (!OrderDesignService.DRIVE_EXT.has(ext)) throw new BadRequestException("Desteklenmeyen dosya türü.");
+    if (dto.kind === "baski" && ext !== "pdf") throw new BadRequestException("Baskı dosyası PDF olmalı.");
+    if (dto.size > OrderDesignService.DRIVE_MAX_BYTES) throw new BadRequestException("Dosya en fazla 1000 MB olabilir.");
+    const item = await this.kalemVeSiparis(orderId, itemId);
+    const musteri =
+      item.order?.user?.fullName ?? (item.order?.shippingAddressSnapshot as { fullName?: string } | null)?.fullName ?? null;
+    const folderId = await this.drive.ensureOrderFolder(item.order?.orderNumber ?? orderId, musteri);
+    const driveName = driveDosyaAdi(item.order?.orderNumber ?? orderId, item.productSlug ?? item.productName, dto.kind, dto.fileName.replace(/[^\w.\-() ]+/g, "_").slice(0, 120));
+    const origin = (this.config?.get<string>("ADMIN_URL") ?? "https://admin.markala.com.tr").replace(/\/$/, "");
+    const uploadUrl = await this.drive.createResumableSession({ folderId, name: driveName, mimeType: dto.mimeType || "application/octet-stream", size: dto.size, origin });
+    return { uploadUrl, folderId, driveName };
+  }
+
+  /**
+   * Doğrudan Drive yüklemesi — 2. adım: dosya Drive'da mı, doğru klasörde mi, boyut tutuyor mu?
+   * Sonra DesignUpload kaydı (storageKey yok, driveFileId var). Yanlış kimlik/klasör → 400.
+   */
+  async driveTamamla(orderId: string, itemId: string, dto: { kind: string; driveFileId: string; fileName: string; mimeType?: string; size: number }, actor: Actor) {
+    if (!this.drive.enabled) throw new ConflictException("Drive aktarımı kapalı.");
+    if (dto.kind !== "calisma" && dto.kind !== "baski") throw new BadRequestException("Geçersiz dosya türü.");
+    const item = await this.kalemVeSiparis(orderId, itemId);
+    const musteri =
+      item.order?.user?.fullName ?? (item.order?.shippingAddressSnapshot as { fullName?: string } | null)?.fullName ?? null;
+    const folderId = await this.drive.ensureOrderFolder(item.order?.orderNumber ?? orderId, musteri);
+    const meta = await this.drive.getFileMeta(dto.driveFileId).catch(() => null);
+    if (!meta) throw new BadRequestException("Drive'da dosya bulunamadı.");
+    if (!meta.parents.includes(folderId)) throw new BadRequestException("Dosya bu siparişin klasöründe değil.");
+    if (meta.size !== dto.size) throw new BadRequestException("Dosya boyutu uyuşmuyor; yükleme tamamlanmamış olabilir.");
+    const row = await this.prisma.designUpload.create({
+      data: {
+        orderId,
+        orderItemId: itemId,
+        userId: actor.actorId ?? null,
+        kind: dto.kind,
+        fileName: dto.fileName.replace(/[^\w.\-() ]+/g, "_").slice(0, 200),
+        fileSize: meta.size,
+        fileUrl: meta.webViewLink,
+        storageKey: null,
+        driveFileId: meta.id,
+        mimeType: dto.mimeType || meta.mimeType || "application/octet-stream",
+      },
+      select: DESIGN_ROW_SELECT,
+    });
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actor.actorId ?? null,
+          entityType: "OrderItem",
+          entityId: itemId,
+          action: "design_upload",
+          diff: { orderId, uploadId: row.id, kind: dto.kind, fileName: row.fileName, fileSize: meta.size, driveFileId: meta.id, yol: "drive-dogrudan" },
+          ipAddress: actor.ipAddress ?? null,
+        },
+      })
+      .catch((e) => this.logger.error(`[audit] design_upload (drive) yazılamadı: ${e?.message}`));
+    return designRowToPublic(row);
+  }
 
   async add(
     orderId: string,

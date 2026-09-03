@@ -30,8 +30,7 @@ import {
   MailOnizlemeDto,
   TrackOrderDto,
   UploadItemDesignDto,
-  CreateOrderNoteDto,
-} from "./orders.dto";
+  CreateOrderNoteDto, DriveOturumDto, DriveTamamlaDto } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
 import { OrderDesignService } from "./order-design.service";
 import { OrderDriveService } from "../storage/order-drive.service";
@@ -333,6 +332,33 @@ export class OrdersController {
       actorId: req.user?.sub ?? null,
       ipAddress: req.ip ?? null,
     });
+  }
+
+  /**
+   * Doğrudan Drive yüklemesi (2026-09-03, 1000 MB): 1) oturum aç → tarayıcı Drive'a PUT eder,
+   * 2) tamamla → API Drive'da doğrular ve kaydı yazar. Dosya sunucuya hiç uğramaz.
+   */
+  @Post(":id/items/:itemId/tasarim/drive-oturum")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_DESIGN)
+  @ApiBearerAuth()
+  driveOturum(@Param("id") id: string, @Param("itemId") itemId: string, @Body() dto: DriveOturumDto) {
+    return this.design.driveOturum(id, itemId, dto);
+  }
+
+  @Post(":id/items/:itemId/tasarim/drive-tamamla")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_DESIGN)
+  @ApiBearerAuth()
+  driveTamamla(
+    @Param("id") id: string,
+    @Param("itemId") itemId: string,
+    @Body() dto: DriveTamamlaDto,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.design.driveTamamla(id, itemId, dto, { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null });
   }
 
   /** Satırdaki tasarımcı dosyasını sil — kayıt + disk; denetim kaydına yazılır. */

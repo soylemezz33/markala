@@ -397,6 +397,33 @@ export const DESIGN_KINDS = ["onizleme", "calisma", "baski"] as const;
 export type DesignKind = (typeof DESIGN_KINDS)[number];
 
 /** POST /orders/:id/items/:itemId/tasarim — multipart; `file` alanı multer'da, `kind` burada. */
+/** Doğrudan Drive yüklemesi — oturum isteği (2026-09-03, 1000 MB). Yalnız calisma/baski. */
+export class DriveOturumDto {
+  @IsString()
+  @IsIn(["calisma", "baski"])
+  kind!: "calisma" | "baski";
+
+  @IsString()
+  @MaxLength(255)
+  fileName!: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(120)
+  mimeType?: string;
+
+  @IsInt()
+  @Min(1)
+  size!: number;
+}
+
+/** Doğrudan Drive yüklemesi — tamamlama (tarayıcı parçaları PUT etti, kimlik geldi). */
+export class DriveTamamlaDto extends DriveOturumDto {
+  @IsString()
+  @MaxLength(128)
+  driveFileId!: string;
+}
+
 export class UploadItemDesignDto {
   @IsString()
   @IsIn(DESIGN_KINDS as unknown as string[])

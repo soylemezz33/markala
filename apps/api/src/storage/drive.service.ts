@@ -123,6 +123,48 @@ export class DriveService {
     });
   }
 
+  /**
+   * Tarayıcıdan DOĞRUDAN Drive'a yükleme için kesintiye dayanıklı (resumable) oturum açar
+   * (2026-09-03, Hasan: "50 MB çok düşük → 1000 MB"). Cloudflare ücretsiz plan tek istekte 100 MB
+   * geçirir, sunucu belleği de 1 GB'ı taşıyamaz; bu yüzden dosya sunucuya HİÇ uğramaz: burası
+   * yalnız oturumu açar, panel parçaları Drive'a PUT eder, sonra API kaydı tutar (driveTamamla).
+   *
+   * `origin` ZORUNLU: Google, CORS'u oturum açılırken verilen Origin'e göre kurar; panel bu
+   * origin'den PUT eder. Dönen değer tek kullanımlık oturum URL'si (≈1 hafta geçerli).
+   */
+  async createResumableSession(input: { folderId: string; name: string; mimeType: string; size: number; origin: string }): Promise<string> {
+    const token = await this.accessToken();
+    const res = await this.fetchImpl(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true&fields=id,name,size,webViewLink",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json; charset=UTF-8",
+          "X-Upload-Content-Type": input.mimeType || "application/octet-stream",
+          "X-Upload-Content-Length": String(input.size),
+          Origin: input.origin,
+        },
+        body: JSON.stringify({ name: input.name, parents: [input.folderId] }),
+      },
+    );
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Drive resumable ${res.status}: ${body.slice(0, 200)}`);
+    }
+    const loc = res.headers.get("location");
+    if (!loc) throw new Error("Drive resumable: Location başlığı yok");
+    return loc;
+  }
+
+  /** Dosya meta verisi — tamamlanan tarayıcı yüklemesini doğrulamak için (klasör + boyut). */
+  async getFileMeta(id: string): Promise<{ id: string; name: string; size: number; mimeType: string; parents: string[]; webViewLink: string }> {
+    const m = await this.api<{ id: string; name: string; size?: string; mimeType: string; parents?: string[]; webViewLink: string }>(
+      `${DRIVE}/files/${encodeURIComponent(id)}?fields=id,name,size,mimeType,parents,webViewLink&supportsAllDrives=true`,
+    );
+    return { id: m.id, name: m.name, size: Number(m.size ?? 0), mimeType: m.mimeType, parents: m.parents ?? [], webViewLink: m.webViewLink };
+  }
+
   /** Best-effort silme; Drive'da yoksa (404) sessiz geçer. */
   async deleteFile(id: string): Promise<void> {
     const token = await this.accessToken();
