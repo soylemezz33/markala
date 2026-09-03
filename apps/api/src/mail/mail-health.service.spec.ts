@@ -72,3 +72,20 @@ describe("MailHealthService.kaydet", () => {
     await expect(svc.kaydet("failed", { recipient: "a@x", error: "535" })).resolves.toBeUndefined();
   });
 });
+
+describe("MailHealthService.saatlikKontrol (her saat)", () => {
+  it("arıza sürüyorsa debounce'a bakmadan uyarır", async () => {
+    const { svc, uyar } = make();
+    await svc.kaydet("failed", { recipient: "a@x", error: "535" }); // ilk uyarı
+    await svc.saatlikKontrol(); // 30 dk dolmadı ama saatlik kontrol yine uyarır
+    expect(uyar).toHaveBeenCalledTimes(2);
+    expect(String(uyar.mock.calls[1][0])).toContain("saatlik");
+  });
+  it("sağlıklıysa sessiz", async () => {
+    const { svc, uyar, prisma } = make();
+    prisma.notificationLog.findFirst.mockImplementation(({ where }: { where: { status: string } }) =>
+      Promise.resolve(where.status === "failed" ? null : { createdAt: new Date() }));
+    await svc.saatlikKontrol();
+    expect(uyar).not.toHaveBeenCalled();
+  });
+});

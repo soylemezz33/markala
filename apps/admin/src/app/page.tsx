@@ -7,8 +7,7 @@ import type { AdminStatsDto } from "@markala/api-client";
 import {
   TrendUp, ShoppingCart, Users, Package,
   CurrencyCircleDollar, Truck, Question, Plus, Sparkle, ArrowRight,
-  Bell, ChartLine, ClockCounterClockwise, Receipt,
-} from "@phosphor-icons/react/dist/ssr";
+  Bell, ChartLine, ClockCounterClockwise, Receipt, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
 
 const EMPTY_STATS: AdminStatsDto = {
   orderCount: 0,
@@ -49,6 +48,23 @@ function statusBadge(status: string): { label: string; className: string } {
   }
 }
 
+export const revalidate = 0;
+const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+/** E-posta gönderim sağlığı (2026-09-03, Hasan: "panoda kırmızıya çeksin"). Herkese açık uç; 503 = arızalı. */
+async function mailSagligi(): Promise<{ ok: boolean; failedLast15m?: number; lastError?: string | null; lastFailureAt?: string | null; lastSentAt?: string | null } | null> {
+  try {
+    const r = await fetch(`${API_URL}/api/health/mail`, { cache: "no-store" });
+    const j = (await r.json().catch(() => null)) as Record<string, unknown> | null;
+    if (!j) return { ok: r.ok };
+    return { ok: typeof j.ok === "boolean" ? j.ok : r.ok, failedLast15m: Number(j.failedLast15m ?? 0), lastError: (j.lastError as string) ?? null, lastFailureAt: (j.lastFailureAt as string) ?? null, lastSentAt: (j.lastSentAt as string) ?? null };
+  } catch {
+    return null;
+  }
+}
+
+const saat = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : "—");
+
 export default async function DashboardPage() {
   // 2026-08-21 (Hasan, tasarimci hesabiyla test): parasal kutular herkese gorunuyor ve
   // veri gelmedigi icin "0,00" yaziyordu. Cozum blur/gri degil, KUTUYU HIC BASMAMAK.
@@ -56,6 +72,7 @@ export default async function DashboardPage() {
   // gostermiyoruz. Iki katman: veri kesilir + arayuz basmaz.
   const session = await getAdminSession();
   const canSeeFinance = session?.role === "admin" || session?.role === "super_admin";
+  const mail = await mailSagligi();
 
   let stats: AdminStatsDto = EMPTY_STATS;
   let recentOrders: unknown[] = [];
@@ -152,6 +169,26 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </header>
+
+      {/* E-posta gönderim durumu (2026-09-03): arızada kırmızı, sağlıklıysa yeşil; 2 dk'da bir yenilenir. */}
+      {mail && (
+        <Link
+          href="/e-postalar"
+          className={`mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm ${
+            mail.ok ? "border-success/30 bg-success/10 text-ink-900" : "border-error bg-error text-paper-50"
+          }`}
+        >
+          <span className="inline-flex items-center gap-2 font-semibold">
+            <EnvelopeSimple size={18} weight={mail.ok ? "duotone" : "fill"} />
+            E-posta gönderimi: {mail.ok ? "Sağlıklı" : "ARIZALI"}
+          </span>
+          <span className={mail.ok ? "text-ink-500" : "text-paper-50/90"}>
+            {mail.ok
+              ? `Son gönderim ${saat(mail.lastSentAt)}${mail.lastFailureAt ? ` · son hata ${saat(mail.lastFailureAt)}` : ""}`
+              : `Son 15 dk ${mail.failedLast15m ?? "?"} başarısız · ${mail.lastError ?? "hata"} (${saat(mail.lastFailureAt)}) → kayıtlara git`}
+          </span>
+        </Link>
+      )}
 
       {/* KPI Cards */}
       {/* 5 kart: "Ödeme Bekleyen" eklendi (2026-08-18) → lg'de 5 sütun */}

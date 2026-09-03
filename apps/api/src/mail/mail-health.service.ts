@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Cron, CronExpression } from "@nestjs/schedule";
 import * as nodemailer from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -80,6 +81,28 @@ export class MailHealthService {
       }
     } catch (e) {
       this.logger.warn(`mail-health kaydet: ${(e as Error).message}`);
+    }
+  }
+
+  /**
+   * Saatlik kontrol (Hasan, 2026-09-03: "saatlik olarak atsın"): arıza sürdüğü her saat uyarı
+   * yenilenir — ilk hata bildirimi kaçmış/okunmamışsa kimse habersiz kalmasın. Debounce'u ATLAR
+   * (saatte bir zaten). Sağlıklıyken sessizdir; düzelme mesajını kaydet() üretir.
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async saatlikKontrol(): Promise<void> {
+    try {
+      const d = await this.durum();
+      if (d.ok) return;
+      this.arizada = true;
+      this.lastAlertAt = Date.now();
+      await this.uyar(
+        `⚠️ Markala e-posta gönderimi HÂLÂ ARIZALI (saatlik kontrol)`,
+        `Son hata: ${d.lastError ?? "?"} (${d.lastFailureAt ?? "?"})\nSon 15 dk başarısız: ${d.failedLast15m}\nSon başarılı gönderim: ${d.lastSentAt ?? "yok"}\n\nSMTP şifresi/hesabı hosting'de kontrol edilmeli. Panel → E-posta Kayıtları.`,
+        { tur: "mail_arizasi_saatlik", ...d },
+      );
+    } catch (e) {
+      this.logger.warn(`mail-health saatlik kontrol: ${(e as Error).message}`);
     }
   }
 
