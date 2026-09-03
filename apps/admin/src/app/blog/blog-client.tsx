@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
 import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Trash, CheckCircle, X } from "@phosphor-icons/react";
@@ -145,8 +146,15 @@ export function BlogClient({ posts, categories }: Props) {
     setForm(EMPTY_FORM);
   }
 
-  function handleRemove(p: BlogPostDto) {
-    if (!window.confirm(`"${p.title}" yazısını silmek istediğinizden emin misiniz?`)) return;
+  async function handleRemove(p: BlogPostDto) {
+    const ok = await confirm({
+      title: "Blog yazısı silinecek",
+      description: p.title,
+      bullets: ["Yazı yayından kalkar ve bağlantısı 404 döner."],
+      confirmLabel: "Yazıyı sil",
+      tone: "danger",
+    });
+    if (!ok) return;
     startTransition(async () => {
       try {
         await removePost(p.id);

@@ -52,7 +52,7 @@ export function ToastContainer() {
         <div
           key={t.id}
           role="status"
-          className={`pointer-events-auto px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-sm animate-in slide-in-from-bottom-2 ${
+          className={`pointer-events-auto px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-sm animate-toast-in ${
             t.type === "success"
               ? "bg-success text-paper-50"
               : t.type === "error"

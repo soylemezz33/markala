@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
+import { confirm } from "@/components/confirm-dialog";
 import { Percent, FloppyDisk, Eye, CheckCircle, WarningCircle, Info } from "@phosphor-icons/react";
 import { marjBilgisi, marjKaydet, marjUygula } from "./actions";
 import type { MarginInfoDto, ApplyMarginResultDto } from "@markala/api-client";
@@ -78,7 +79,14 @@ export function MarginClient({
 
   const uygula = () =>
     start(async () => {
-      if (!window.confirm(`${onizleme?.degisecekSatir} fiyat satırı GÜNCELLENECEK. Bu işlem canlı satış fiyatlarını değiştirir. Devam edilsin mi?`)) return;
+      const onay = await confirm({
+        title: "Canlı satış fiyatları güncellenecek",
+        description: "Bu işlem müşterinin gördüğü fiyatları anında değiştirir.",
+        bullets: [`${onizleme?.degisecekSatir} fiyat satırı güncellenecek.`],
+        confirmLabel: "Fiyatları güncelle",
+        tone: "danger",
+      });
+      if (!onay) return;
       try {
         const v = marj.trim() === "" ? undefined : Number(marj.replace(",", "."));
         const r = await marjUygula({ scope, targetId, margin: v, dryRun: false });

@@ -7,6 +7,9 @@ import { useRouter } from "next/navigation";
 import { DesignFileUploader } from "@/components/design-file-uploader";
 import { AdminShell } from "@/components/admin-shell";
 import { iptalMailiGonderilirMi } from "./iptal-mail-kurali";
+import type { OrderNote } from "@markala/types";
+import { confirm } from "@/components/confirm-dialog";
+import { toast } from "@/components/toast";
 import { useServerPerms } from "@/components/perms-provider";
 import {
   ArrowLeft,
@@ -24,6 +27,8 @@ import {
   PaintBrush,
   ArrowCounterClockwise,
   Trash,
+  TrashSimple,
+  NotePencil,
   Image as ImageIcon, ArrowSquareOut } from "@phosphor-icons/react";
 import {
   updateOrderStatus,
@@ -31,6 +36,8 @@ import {
   refundOrder,
   confirmHavalePayment,
   deleteOrderDesign,
+  addOrderNote,
+  deleteOrderNote,
 } from "./actions";
 
 /**
@@ -145,6 +152,14 @@ export interface OrderDetailProps {
     zipCode?: string;
     phone?: string;
   } | null;
+}
+
+/** Onay pencerelerinde tutar: 2646 → "2.646,00 ₺" (tarayıcı yerelinden bağımsız). */
+function tl(v: unknown): string {
+  return `${Number(v ?? 0).toLocaleString("tr-TR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} ₺`;
 }
 
 function formatDate(iso: string): string {
@@ -262,10 +277,21 @@ th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #eee;font-size:12p
   w.document.close();
 }
 
-export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
+export function OrderDetailClient({
+  order,
+  initialNotes = [],
+}: {
+  order: OrderDetailProps;
+  /** İç notlar sunucuda çekilir (page.tsx) — ilk boyamada dolu gelsin. */
+  initialNotes?: OrderNote[];
+}) {
   const [currentStatus, setCurrentStatus] = useState(toSlug(order.status));
   const [statusError, setStatusError] = useState<string | null>(null);
   const [internalNote, setInternalNote] = useState("");
+  // İç not defteri (2026-09-03). Sunucudan gelenle başlar, ekleme/silmede yerelde güncellenir
+  // (router.refresh beklemeden) — not yazmak akıcı olmalı, sayfa yeniden yüklenmemeli.
+  const [notes, setNotes] = useState<OrderNote[]>(initialNotes);
+  const [notEkleniyor, setNotEkleniyor] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [refunding, setRefunding] = useState(false);
@@ -300,7 +326,7 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
 
   // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
   const payStatus = String(order.paymentStatus ?? "beklemede");
-  // showMoney sarti: iade onay penceresi tutari METIN olarak yaziyor (window.confirm),
+  // showMoney sarti: iade onay penceresi tutari METIN olarak yaziyor (onay penceresi),
   // yani buton gorunur kalirsa tutar gizlemenin etrafindan dolasilir. API zaten FINANCE
   // istiyor (403) ama sizinti butona basmadan ONCE oluyordu.
   const canRefund = showMoney && payStatus === "basarili" && order.paymentMethod !== "cari";
@@ -318,18 +344,19 @@ export function OrderDetailClient({ order }: { order: OrderDetailProps }) {
   const havaleBekliyor = havaleOnayBekliyorMu(order);
   const canConfirmHavale = showMoney && canFullStatus && havaleBekliyor;
 
-  const handleConfirmHavale = () => {
+  const handleConfirmHavale = async () => {
     if (havaleOnayliyor) return;
-    const ok = window.confirm(
-      `Bu siparişin HAVALE ödemesi ALINDI olarak işaretlenecek.
-
-Sipariş: ${order.orderNumber}
-Beklenen tutar: ${Number(order.total ?? 0).toFixed(2)} ₺
-
-Onaylamadan önce banka ekstresinde bu tutarın geldiğini ve açıklamada sipariş numarasının yazdığını doğrulayın.
-
-Devam edilsin mi?`,
-    );
+    const ok = await confirm({
+      title: "Havale ödemesi alındı olarak işaretlensin mi?",
+      description:
+        "Onaylamadan önce banka ekstresinde bu tutarın geldiğini ve açıklamada sipariş numarasının yazdığını doğrulayın.",
+      bullets: [
+        `Sipariş: ${order.orderNumber}`,
+        `Beklenen tutar: ${tl(order.total)}`,
+        "Sipariş ödendi sayılır ve üretim yolu açılır.",
+      ],
+      confirmLabel: "Ödemeyi onayla",
+    });
     if (!ok) return;
     setRefundMsg(null);
     setHavaleOnayliyor(true);
@@ -340,15 +367,20 @@ Devam edilsin mi?`,
     });
   };
 
-  const handleRefund = () => {
+  const handleRefund = async () => {
     if (refunding) return;
     // PARA HAREKETİ — geri alınamaz. Tutarı da göstererek onay iste.
-    const ok = window.confirm(
-      "Bu siparişin ödemesi iyzico üzerinden müşteriye İADE EDİLECEK.\n\n" +
-        `Sipariş: ${order.orderNumber}\n` +
-        `Tutar: ${Number(order.total ?? 0).toFixed(2)} ₺\n\n` +
-        "Bu işlem GERİ ALINAMAZ. Devam edilsin mi?",
-    );
+    const ok = await confirm({
+      title: "Ödeme müşteriye iade edilsin mi?",
+      description: "Tutar iyzico üzerinden müşterinin kartına iade edilir.",
+      bullets: [
+        `Sipariş: ${order.orderNumber}`,
+        `İade edilecek tutar: ${tl(order.total)}`,
+        "Bu işlem GERİ ALINAMAZ.",
+      ],
+      confirmLabel: "İadeyi başlat",
+      tone: "danger",
+    });
     if (!ok) return;
     setRefundMsg(null);
     setRefunding(true);
@@ -360,11 +392,16 @@ Devam edilsin mi?`,
       // gerekiyor"). OTOMATİK değil — kısmi/istisna iadelerde sipariş sürebilir — ama
       // olağan akışta tek soruyla bağlanır. Hayır denirse durum olduğu gibi kalır.
       if (res.ok && currentStatus !== "iptal-edildi") {
-        const iptalDe = window.confirm(
-          "İade tamamlandı.\n\nSipariş de İPTAL EDİLSİN Mİ?\n\n" +
-            "• Ödemesi alınmış sipariş → müşteriye iptal e-postası gider.\n" +
-            "• Hayır derseniz sipariş mevcut durumunda kalır.",
-        );
+        const iptalDe = await confirm({
+          title: "İade tamamlandı. Sipariş de iptal edilsin mi?",
+          bullets: [
+            "Ödemesi alınmış sipariş → müşteriye iptal e-postası gider.",
+            "Vazgeçerseniz sipariş mevcut durumunda kalır.",
+          ],
+          confirmLabel: "Siparişi iptal et",
+          cancelLabel: "Durumu değiştirme",
+          tone: "danger",
+        });
         if (iptalDe) {
           const prev = currentStatus;
           setCurrentStatus("iptal-edildi"); // optimistik
@@ -395,7 +432,7 @@ Devam edilsin mi?`,
     });
   };
 
-  const handleStatusChange = (statusId: string) => {
+  const handleStatusChange = async (statusId: string) => {
     if (statusId === currentStatus || isPending) return;
 
     // Kargoya verme İLERİ adımı: takip numarasını burada sor. Numara müşteriye giden
@@ -418,31 +455,42 @@ Devam edilsin mi?`,
       // Ödemesi hiç alınmamış siparişin iptalinde API mail ATMAZ (2026-09-03, Hasan:
       // müşteri "yeni siparişim mi iptal oldu?" diye paniklüyor). Onay metni bunu yansıtır.
       const iptalMaili = iptalMailiGonderilirMi(order);
-      const ok = window.confirm(
-        `Sipariş İPTAL EDİLECEK.\n\n` +
-          (iptalMaili
-            ? `• Müşteriye iptal e-postası GİDECEK.\n`
-            : `• Ödemesi alınmamış sipariş → müşteriye e-posta GÖNDERİLMEZ.\n`) +
-          `• Bu işlem GERİ ALINAMAZ, iptal edilen sipariş yeniden açılamaz.\n\n` +
-          `Devam edilsin mi?`,
-      );
+      const ok = await confirm({
+        title: "Sipariş iptal edilecek",
+        description: `${order.orderNumber} · ${mevcut} → İptal edildi`,
+        bullets: [
+          iptalMaili
+            ? "Müşteriye iptal e-postası GİDECEK."
+            : "Ödemesi alınmamış sipariş → müşteriye e-posta GÖNDERİLMEZ.",
+          "Bu işlem GERİ ALINAMAZ, iptal edilen sipariş yeniden açılamaz.",
+        ],
+        confirmLabel: "Siparişi iptal et",
+        tone: "danger",
+      });
       if (!ok) return;
       // İade + iptal bağlama (2026-08-29, UX denetimi İş 5): ödemesi alınmış siparişte
       // iptal, iadeyi de sorar. "Evet" → önce iade, BAŞARILIYSA iptal (iade düşerse iptal
       // DURUR — parası iade edilmemiş "iptal edilmiş" sipariş oluşamaz). "Hayır" → bilinçli
       // ikinci onayla iadesiz iptal (istisna senaryolar: kısmi iade, havale ile manuel iade).
       if (canRefund) {
-        const iadeDe = window.confirm(
-          `Bu siparişin ödemesi alınmış (${Number(order.total ?? 0).toFixed(2)} ₺).\n\n` +
-            `Ödeme de iyzico üzerinden İADE EDİLSİN Mİ?\n\n` +
-            `Tamam = iade + iptal birlikte\nVazgeç = iade YAPILMADAN yalnız iptal`,
-        );
+        const iadeDe = await confirm({
+          title: "Ödeme de iade edilsin mi?",
+          description: `Bu siparişin ödemesi alınmış (${tl(order.total)}).`,
+          bullets: [
+            "İade + iptal birlikte yapılır; iade başarısız olursa sipariş İPTAL EDİLMEZ.",
+            "Vazgeçerseniz iade YAPILMADAN yalnız iptal edilir.",
+          ],
+          confirmLabel: "İade et ve iptal et",
+          cancelLabel: "İadesiz iptal",
+        });
         if (!iadeDe) {
-          const eminMisin = window.confirm(
-            `DİKKAT: Sipariş iptal edilecek ama ödeme İADE EDİLMEYECEK.\n\n` +
-              `Müşterinin parası sizde kalır; iadeyi ayrıca yapmanız gerekir.\n\n` +
-              `Yine de iadesiz iptal edilsin mi?`,
-          );
+          const eminMisin = await confirm({
+            title: "İade yapılmadan iptal edilecek",
+            description: "Müşterinin parası sizde kalır; iadeyi ayrıca yapmanız gerekir.",
+            bullets: [`Tahsil edilmiş tutar: ${tl(order.total)}`],
+            confirmLabel: "Yine de iadesiz iptal et",
+            tone: "danger",
+          });
           if (!eminMisin) return;
         } else {
           // İade + iptal zinciri — iade başarısızsa iptal YAPILMAZ.
@@ -482,37 +530,81 @@ Devam edilsin mi?`,
               .filter((it) => !(it.designUploads ?? []).some((d) => d.kind === "onizleme"))
               .map((it) => it.productName)
           : [];
-      const onizlemeUyari = onizlemesiz.length
-        ? `⚠ Önizleme JPG yüklenmemiş kalem var: ${onizlemesiz.join(", ")}\n` +
-          `Üretimde ürünü tanımak için önizleme yüklemeniz önerilir.\n\n`
-        : "";
-      const ok = window.confirm(
-        onizlemeUyari +
-          `${mevcut} → ${hedef}\n\n` +
-          (mailGidecek
-            ? `⚠ Müşteriye "${hedef}" bildirimi E-POSTA ile GÖNDERİLECEK.\n\n`
-            : geri
-              ? `Bu bir geri alma. Müşteriye e-posta GÖNDERİLMEZ.\n\n`
-              : `Müşteriye e-posta gönderilmez.\n\n`) +
-          `Devam edilsin mi?`,
+      const maddeler: string[] = [];
+      if (onizlemesiz.length)
+        maddeler.push(
+          `⚠ Önizleme JPG yüklenmemiş kalem var: ${onizlemesiz.join(", ")} — üretimde ürünü tanımak için yüklemeniz önerilir.`,
+        );
+      maddeler.push(
+        mailGidecek
+          ? `Müşteriye "${hedef}" bildirimi E-POSTA ile GÖNDERİLECEK.`
+          : geri
+            ? "Bu bir geri alma. Müşteriye e-posta GÖNDERİLMEZ."
+            : "Müşteriye e-posta gönderilmez.",
       );
+      const ok = await confirm({
+        title: `Sipariş durumu "${hedef}" olarak değişecek`,
+        description: `${order.orderNumber} · ${mevcut} → ${hedef}`,
+        bullets: maddeler,
+        confirmLabel: mailGidecek ? "Değiştir ve bildir" : "Durumu değiştir",
+      });
       if (!ok) return;
     }
     commitStatus(statusId);
   };
 
+  /** İç not ekle. Sunucu yanıtı listeye eklenir; sayfa yeniden yüklenmez. */
+  async function notEkle() {
+    const metin = internalNote.trim();
+    if (!metin || notEkleniyor) return;
+    setNotEkleniyor(true);
+    const res = await addOrderNote(order.id, metin);
+    setNotEkleniyor(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    setNotes((v) => [res.note, ...v]);
+    setInternalNote("");
+  }
+
+  /**
+   * Notu sil. Sunucu kuralı: kendi notunu herkes, başkasınınki yalnız admin/super_admin —
+   * yetkisizse 403 döner ve liste değişmez.
+   */
+  async function notSil(n: OrderNote) {
+    const ok = await confirm({
+      title: "Not silinsin mi?",
+      description: n.body.length > 140 ? `${n.body.slice(0, 140)}…` : n.body,
+      bullets: [`${n.authorName} · ${formatDate(n.createdAt)}`],
+      confirmLabel: "Notu sil",
+      tone: "danger",
+    });
+    if (!ok) return;
+    const res = await deleteOrderNote(order.id, n.id);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    setNotes((v) => v.filter((x) => x.id !== n.id));
+    toast.success("Not silindi.");
+  }
+
   /** Kargo penceresinden onay: takip bilgisiyle birlikte "kargoya-verildi"ye geçir. */
-  const confirmShipment = () => {
+  const confirmShipment = async () => {
     const no = trackNo.trim();
     const firma = trackCarrier.trim();
     if (!no) {
       // Takip numarası olmadan da kargolanabilir (elden teslim, kurye) — ama bilinçli olsun.
-      const ok = window.confirm(
-        "Takip numarası GİRİLMEDİ.\n\n" +
-          "Müşteriye giden kargo e-postasında takip numarası olmayacak ve " +
-          "kargo takip sayfasında sorgulayamayacak.\n\n" +
-          "Yine de devam edilsin mi?",
-      );
+      const ok = await confirm({
+        title: "Takip numarası girilmedi",
+        description: "Kargoya verildi bildirimi yine de gönderilir.",
+        bullets: [
+          "Müşteriye giden e-postada takip numarası olmayacak.",
+          "Müşteri kargo takip sayfasından sorgulayamayacak.",
+        ],
+        confirmLabel: "Takipsiz gönder",
+      });
       if (!ok) return;
     }
     setShipModal(false);
@@ -849,17 +941,25 @@ Devam edilsin mi?`,
                                   <button
                                     type="button"
                                     disabled={isPending}
-                                    onClick={() => {
-                                      const ok = window.confirm(
-                                        `"${d.fileName}" silinecek.\n\nKayıt ve dosya kaldırılır; işlem denetim kaydına yazılır. Devam?`,
-                                      );
+                                    onClick={async () => {
+                                      const ok = await confirm({
+                                        title: "Tasarım dosyası silinecek",
+                                        description: d.fileName,
+                                        bullets: [
+                                          "Kayıt ve dosyanın kendisi kaldırılır.",
+                                          "İşlem denetim kaydına yazılır.",
+                                        ],
+                                        confirmLabel: "Dosyayı sil",
+                                        tone: "danger",
+                                      });
                                       if (!ok) return;
                                       startTransition(async () => {
                                         const r = await deleteOrderDesign(order.id, d.id);
                                         if (!r.ok) {
-                                          window.alert(`Silinemedi: ${r.error}`);
+                                          toast.error(`Silinemedi: ${r.error}`);
                                           return;
                                         }
+                                        toast.success("Tasarım dosyası silindi.");
                                         router.refresh();
                                       });
                                     }}
@@ -900,7 +1000,7 @@ Devam edilsin mi?`,
               {STATUSES.filter((s) => canFullStatus || KARGO_GECISLERI.includes(s.id) || s.id === currentStatus).map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => handleStatusChange(s.id)}
+                  onClick={() => void handleStatusChange(s.id)}
                   disabled={isPending || isCancelled || (!canFullStatus && !KARGO_GECISLERI.includes(s.id))}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all disabled:opacity-60 ${
                     currentStatus === s.id
@@ -916,7 +1016,7 @@ Devam edilsin mi?`,
             {!isCancelled && canFullStatus && (
               <div className="mb-4">
                 <button
-                  onClick={() => handleStatusChange("iptal-edildi")}
+                  onClick={() => void handleStatusChange("iptal-edildi")}
                   disabled={isPending}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-error/30 text-error hover:bg-error/10 disabled:opacity-60"
                 >
@@ -937,7 +1037,7 @@ Devam edilsin mi?`,
                 </p>
                 {canConfirmHavale ? (
                   <button
-                    onClick={handleConfirmHavale}
+                    onClick={() => void handleConfirmHavale()}
                     disabled={havaleOnayliyor || isPending}
                     className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-success/40 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 disabled:opacity-60"
                   >
@@ -960,7 +1060,7 @@ Devam edilsin mi?`,
             ) : canRefund ? (
               <div className="mb-4">
                 <button
-                  onClick={handleRefund}
+                  onClick={() => void handleRefund()}
                   disabled={refunding || isPending}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-warning/40 text-warning hover:bg-warning/10 disabled:opacity-60"
                 >
@@ -1027,23 +1127,73 @@ Devam edilsin mi?`,
             </ol>
           </Card>
 
-          <Card title="İç Not (sadece admin)">
+          <Card title="İç Not (müşteri görmez)">
             <textarea
               value={internalNote}
               onChange={(e) => setInternalNote(e.target.value)}
               rows={3}
-              disabled
-              placeholder="Sipariş notu kaydetme özelliği yakında eklenecek (backend desteği bekleniyor)."
-              className="w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-100/50 text-sm text-ink-500 disabled:cursor-not-allowed"
+              maxLength={2000}
+              disabled={notEkleniyor}
+              placeholder="Ekibin görmesi gereken bir şey mi var? (ör. müşteri aradı, kutu ezik geldi, dekont bekleniyor)"
+              className="w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 disabled:opacity-60"
+              // Ctrl/Cmd+Enter ile gönder — not yazmak sık yapılan iş, fareye uzanmasın.
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void notEkle();
+                }
+              }}
             />
-            <button
-              type="button"
-              disabled
-              title="Sipariş notu kaydetme henüz aktif değil"
-              className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium bg-paper-200 text-ink-500 cursor-not-allowed"
-            >
-              <ClockClockwise size={12} /> Not Ekle (yakında)
-            </button>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => void notEkle()}
+                disabled={notEkleniyor || internalNote.trim().length === 0}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium bg-ink-900 text-paper-50 hover:bg-ink-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <NotePencil size={13} weight="bold" />
+                {notEkleniyor ? "Ekleniyor…" : "Not Ekle"}
+              </button>
+              <span className="text-[11px] text-ink-400 tabular-nums">
+                {internalNote.length}/2000
+              </span>
+            </div>
+
+            {notes.length === 0 ? (
+              <p className="mt-4 text-sm text-ink-500">
+                Henüz not yok. Buraya yazdıkların yalnız panelde görünür.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {notes.map((n) => (
+                  <li
+                    key={n.id}
+                    className="rounded-lg border border-paper-200 bg-paper-100/50 px-3 py-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-xs text-ink-500">
+                        <span className="font-medium text-ink-700">{n.authorName}</span>
+                        {n.authorRole && <span className="text-ink-400"> · {n.authorRole}</span>}
+                        <span className="text-ink-400"> · {formatDate(n.createdAt)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void notSil(n)}
+                        className="flex-none p-1 -mr-1 rounded text-ink-400 hover:text-error hover:bg-error/10"
+                        aria-label="Notu sil"
+                        title="Notu sil"
+                      >
+                        <TrashSimple size={13} />
+                      </button>
+                    </div>
+                    {/* whitespace-pre-wrap: personelin yazdığı satır sonları korunsun. */}
+                    <p className="mt-1.5 text-sm text-ink-800 whitespace-pre-wrap break-words">
+                      {n.body}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
         </div>
 
@@ -1221,7 +1371,7 @@ Devam edilsin mi?`,
         </div>
       </div>
 
-      {/* Kargoya verme penceresi (2026-08-29). window.confirm YERİNE bu pencere çıkar
+      {/* Kargoya verme penceresi (2026-08-29). Düz onay yerine bu pencere çıkar
           çünkü takip numarasını burada almamız gerekiyor: numara müşteriye giden kargo
           e-postasının içine giriyor, sonradan eklenirse müşteri maili takipsiz alıyor. */}
       {shipModal && (
@@ -1270,7 +1420,7 @@ Devam edilsin mi?`,
                 autoFocus
                 value={trackNo}
                 onChange={(e) => setTrackNo(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && confirmShipment()}
+                onKeyDown={(e) => e.key === "Enter" && void confirmShipment()}
                 placeholder="DHL eCommerce takip no"
                 maxLength={128}
                 className="mt-1 w-full border border-paper-200 rounded px-2.5 py-2 text-sm font-mono"
@@ -1279,7 +1429,7 @@ Devam edilsin mi?`,
 
             <div className="mt-5 flex gap-2">
               <button
-                onClick={confirmShipment}
+                onClick={() => void confirmShipment()}
                 disabled={isPending}
                 className="flex-1 py-2.5 rounded text-sm font-semibold bg-brand-700 text-paper-50 hover:bg-brand-800 disabled:opacity-50"
               >

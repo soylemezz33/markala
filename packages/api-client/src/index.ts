@@ -3,7 +3,7 @@
  * Şu an statik tipler; FAZ 4'te Zod ile runtime validation eklenebilir.
  */
 
-import type { Category, Product, Order, User, Address } from "@markala/types";
+import type { Category, Product, Order, OrderNote, User, Address } from "@markala/types";
 
 // Node/Next ortamında env okumak için minimal ambient bildirim (@types/node bağımlılığı eklemeden).
 declare const process: { env: Record<string, string | undefined> };
@@ -321,6 +321,19 @@ export class MarkalaApiClient {
      */
     odemeOnayla: (id: string) =>
       this.request<Order>("PATCH", `/orders/${id}/odeme-onayla`, undefined, { auth: true }),
+
+    /**
+     * Sipariş iç notları (2026-09-03) — panel personeli arası, müşteriye ASLA dönmez.
+     * Order.notes'tan ayrı tablodur (o kolon müşteri notu + idempotency etiketi taşır).
+     */
+    notes: (id: string) =>
+      this.request<OrderNote[]>("GET", `/orders/${id}/notlar`, undefined, { auth: true }),
+    addNote: (id: string, body: string) =>
+      this.request<OrderNote>("POST", `/orders/${id}/notlar`, { body }, { auth: true }),
+    deleteNote: (id: string, noteId: string) =>
+      this.request<{ ok: true }>("DELETE", `/orders/${id}/notlar/${noteId}`, undefined, {
+        auth: true,
+      }),
   };
 
   // === Sadakat (puan) ===

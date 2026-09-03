@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
 import type { ReviewDto } from "@markala/api-client";
 import { setReviewApproval, removeReview } from "./actions";
@@ -52,8 +53,14 @@ export function ReviewsClient({ reviews }: Props) {
     });
   }
 
-  function handleDelete(r: ReviewDto) {
-    if (!window.confirm("Bu yorum silinecek. Emin misiniz?")) return;
+  async function handleDelete(r: ReviewDto) {
+    const onay = await confirm({
+      title: "Yorum silinecek",
+      bullets: ["Ürün sayfasından kaldırılır ve puan ortalaması yeniden hesaplanır."],
+      confirmLabel: "Yorumu sil",
+      tone: "danger",
+    });
+    if (!onay) return;
     startTransition(async () => {
       try {
         await removeReview(r.id);

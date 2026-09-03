@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
 import { ImageUploader } from "@/components/image-uploader";
 import {
@@ -110,8 +111,15 @@ export function SliderClient({ slides }: Props) {
     });
   }
 
-  function handleDelete(s: HeroSlideDto) {
-    if (!window.confirm(`"${s.title}" slide'ı kalıcı olarak silinecek. Emin misin?`)) return;
+  async function handleDelete(s: HeroSlideDto) {
+    const onay = await confirm({
+      title: "Slide silinecek",
+      description: s.title,
+      bullets: ["Anasayfa slider'ından kalıcı olarak kaldırılır."],
+      confirmLabel: "Slide'ı sil",
+      tone: "danger",
+    });
+    if (!onay) return;
     startTransition(async () => {
       const r = await removeSlide(s.id);
       if (r.ok) toast.success(`"${s.title}" silindi.`);

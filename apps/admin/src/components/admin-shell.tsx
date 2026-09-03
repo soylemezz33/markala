@@ -11,6 +11,7 @@ import {
   Pulse, Medal, EnvelopeSimple, PaperPlaneTilt, ListBullets, Calculator, Wrench, ShieldCheck, Percent, Truck } from "@phosphor-icons/react";
 import { cn } from "@markala/ui";
 import { ToastContainer } from "@/components/toast";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useServerPerms } from "@/components/perms-provider";
 import { permForPath } from "@/lib/route-perms";
 
@@ -383,6 +384,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
 
       {/* Global toast notifications */}
       <ToastContainer />
+      {/* Onay penceresi — window.confirm yerine (bkz. confirm-dialog.tsx). */}
+      <ConfirmDialog />
     </div>
   );
 }

@@ -30,11 +30,13 @@ import {
   MailOnizlemeDto,
   TrackOrderDto,
   UploadItemDesignDto,
+  CreateOrderNoteDto,
 } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
 import { OrderDesignService } from "./order-design.service";
 import { OrderDriveService } from "../storage/order-drive.service";
 import { izinliDurumGecisi } from "./status-yetki";
+import { OrderNoteService } from "./order-note.service";
 import type { Request } from "express";
 
 
@@ -64,6 +66,8 @@ export class OrdersController {
     private design: OrderDesignService,
     // Havale onayında Drive sipariş klasörü (2026-09-03) — servise değil buraya enjekte, aynı sebep.
     private orderDrive: OrderDriveService,
+    // İç not defteri — aynı gerekçeyle ayrı servis (bkz. order-note.service.ts başlığı).
+    private notes: OrderNoteService,
   ) {}
 
   /**
@@ -255,6 +259,50 @@ export class OrdersController {
       { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
       { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null, role: req.user?.role },
     );
+  }
+
+  /**
+   * Sipariş İÇ NOTLARI (2026-09-03) — panel personeli arası not defteri.
+   * Müşteriye AÇILAN hiçbir uçta dönmez; yalnız panel guard'ının arkasındadır.
+   * Yetki ORDERS_NOTES: tüm panel rolleri (kargo/muhasebe dahil) yazabilir.
+   */
+  @Get(":id/notlar")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_NOTES)
+  @ApiBearerAuth()
+  listNotes(@Param("id") id: string) {
+    return this.notes.list(id);
+  }
+
+  @Post(":id/notlar")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_NOTES)
+  @ApiBearerAuth()
+  addNote(
+    @Param("id") id: string,
+    @Body() dto: CreateOrderNoteDto,
+    @Req() req: Request & { user?: { sub?: string; role?: string; email?: string } },
+  ) {
+    return this.notes.add(id, dto.body, {
+      id: req.user?.sub,
+      email: req.user?.email,
+      role: req.user?.role,
+    });
+  }
+
+  @Delete(":id/notlar/:noteId")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_NOTES)
+  @ApiBearerAuth()
+  removeNote(
+    @Param("id") id: string,
+    @Param("noteId") noteId: string,
+    @Req() req: Request & { user?: { sub?: string; role?: string } },
+  ) {
+    return this.notes.remove(id, noteId, { id: req.user?.sub, role: req.user?.role });
   }
 
   /**

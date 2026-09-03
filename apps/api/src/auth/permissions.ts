@@ -44,6 +44,13 @@ export const PERM = {
    * onlar yalnız görür/indirir (ORDERS_READ). Kod-içi değişiklik, migration gerektirmez.
    */
   ORDERS_DESIGN: "orders.design",
+  /**
+   * Sipariş iç notu yazma/silme (2026-09-03). ORDERS_READ'den AYRI anahtar: okuma izni
+   * yazma hakkı vermemeli. TÜM panel rollerine verildi — kargo "kutu ezik geldi",
+   * muhasebe "havale dekontu geldi" yazabilsin diye; not defterinin değeri herkesin
+   * yazabilmesinden geliyor. Müşteri rolünde YOK, uçlar da panel guard'ının arkasında.
+   */
+  ORDERS_NOTES: "orders.notes",
   /** Müşteri kartı: ad, iletişim, adres. Parasal alanlar ayrıca ORDERS_AMOUNTS ister. */
   CUSTOMERS_READ: "customers.read",
   /**
@@ -107,6 +114,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
     PERM.ORDERS_TRACKING,
     // 2026-09-02 (üretim ARGE): sipariş satırına önizleme/çalışma/baskı dosyası yükler ve siler.
     PERM.ORDERS_DESIGN,
+    PERM.ORDERS_NOTES,
     PERM.CUSTOMERS_READ,
     PERM.MEDIA,
     PERM.REVIEWS,
@@ -126,6 +134,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
     PERM.INBOX,
     PERM.ORDERS_READ,
     PERM.ORDERS_AMOUNTS,
+    PERM.ORDERS_NOTES,
     PERM.CUSTOMERS_READ,
     PERM.FINANCE,
     PERM.PRICING,
@@ -150,6 +159,7 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
   kargo: [
     PERM.ORDERS_READ,
     PERM.ORDERS_TRACKING,
+    PERM.ORDERS_NOTES,
     // 2026-09-01 (Hasan): "menüde sadece Siparişler ve Müşteriler görünsün".
     // CUSTOMERS_READ artık YALNIZ /musteriler'i açıyor — gelen kutusu sayfaları ve
     // toplu e-posta günlüğü INBOX'a taşındı, o izin kargoda YOK.
