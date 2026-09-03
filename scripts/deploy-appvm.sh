@@ -11,14 +11,56 @@ set -euo pipefail
 COMPOSE="docker compose -f docker-compose.production.yml --env-file .env.production"
 cd /opt/markala
 
+# TAG: iş akışı tam sha etiketini geçirir (main-<sha>). Verilmezse compose "latest"e
+# düşer — elle çalıştırmada çalışsın diye, ama CI'da her zaman verilir.
+TAG="${TAG:-latest}"
+export TAG
+echo "→ Hedef imaj etiketi: $TAG"
+
+# GERİ ALMA — ETİKETE DEĞİL, O AN ÇALIŞAN İMAJIN KİMLİĞİNE dayanır.
+# Etikete güvenilemez: "latest" hareketlidir ve bu deploy'un kendi build'i onu zaten
+# ezmiştir; "latest"e dönmek aynı bozuk imaja dönmek olurdu. İmaj kimliği (sha256:...)
+# ise değişmez ve pull'dan sonra da diskte durur.
+# Geri alırken bu kimlikleri yerel bir etikete (:geri-alma) bağlayıp compose'u onunla
+# ayağa kaldırıyoruz.
+#
+# NOT: .RepoDigests İMAJIN alanıdır, KONTEYNERİN değil — konteyner üzerinde sorgulanınca
+# her zaman boş döner. Betiğin eski "pull öncesi digest" satırı bu yüzden hep "yok"
+# basıyordu (2026-09-03'te fark edildi). Konteynerin .Image alanı doğru olanıdır.
+declare -A ONCEKI_IMAJ=()
+for s in web admin api; do
+  id="$(docker inspect -f '{{.Image}}' "markala-$s" 2>/dev/null || true)"
+  [ -n "$id" ] && ONCEKI_IMAJ[$s]="$id"
+done
+echo "→ Geri alma için saklanan imaj sayısı: ${#ONCEKI_IMAJ[@]}/3"
+
+geri_al() {
+  echo ""
+  if [ "${#ONCEKI_IMAJ[@]}" -lt 3 ]; then
+    echo "⏪ GERİ ALINAMIYOR: önceki imajların hepsi yok (${#ONCEKI_IMAJ[@]}/3) — elle müdahale gerekir."
+    return 0
+  fi
+  echo "⏪ GERİ ALINIYOR (deploy öncesi çalışan imajlar)"
+  local repo="ghcr.io/${GITHUB_REPOSITORY:-soylemezz33/markala}"
+  for s in web admin api; do
+    echo "   $s ← ${ONCEKI_IMAJ[$s]:0:19}..."
+    docker tag "${ONCEKI_IMAJ[$s]}" "$repo/$s:geri-alma" || return 0
+  done
+  TAG="geri-alma" $COMPOSE up -d --no-build --no-deps --force-recreate web admin api || true
+  sleep 5
+  # nginx reload ŞART: recreate sonrası bayat upstream IP kalırsa site stilsiz/502 gelir.
+  docker exec markala-nginx nginx -s reload || true
+  echo "⏪ Geri alma uygulandı — site önceki sürümle ayakta"
+}
+
 echo "→ Pre-deploy DB yedeği (best-effort, postgres'e DOKUNMAZ)..."
 mkdir -p backups
 docker exec markala-postgres sh -c 'pg_dump -U "${POSTGRES_USER:-markala}" "${POSTGRES_DB:-markala}"' \
   > "backups/db-predeploy-$(date +%Y%m%d-%H%M%S).sql" 2>/dev/null || echo "  (yedek atlandı)"
 
-echo "→ Pull öncesi imaj digest'leri (imaj gerçekten yenilendi mi izi):"
+echo "→ Pull öncesi çalışan imajlar (imaj gerçekten yenilendi mi izi):"
 for s in web admin api; do
-  echo "   $s: $(docker inspect -f '{{index .RepoDigests 0}}' "markala-$s" 2>/dev/null || echo yok)"
+  echo "   $s: ${ONCEKI_IMAJ[$s]:-yok}"
 done
 
 echo "→ App imajlarını çek (web/admin/api)..."
@@ -43,7 +85,11 @@ for i in $(seq 1 12); do
   sleep 10
 done
 if [ "$ok" != "1" ]; then
-  echo "❌ Health check başarısız!"; docker ps --format '{{.Names}} {{.Status}}' | grep markala || true; exit 1
+  echo "❌ Health check başarısız!"; docker ps --format '{{.Names}} {{.Status}}' | grep markala || true
+  echo "--- son loglar (teşhis için) ---"
+  for s in web admin api; do echo "[markala-$s]"; docker logs "markala-$s" --tail 25 2>&1 || true; done
+  geri_al
+  exit 1
 fi
 
 echo "→ Konteynerler GERÇEKTEN yeniden başladı mı (eski koda karşı sigorta)..."
@@ -55,8 +101,9 @@ for s in web admin api; do
   echo "  markala-$s: ${age} dk önce başladı"
   [ "$age" -gt 10 ] && { echo "    ❌ yenilenmemiş"; stale=1; }
 done
-[ "$stale" = "0" ] || { echo "❌ Deploy uygulanmadı (konteyner yenilenmedi)"; exit 1; }
+[ "$stale" = "0" ] || { echo "❌ Deploy uygulanmadı (konteyner yenilenmedi)"; geri_al; exit 1; }
 
+# Buraya YALNIZ her şey sağlıklıyken gelinir; artık geri alma imajını tutmaya gerek yok.
 echo "→ Eski imaj temizliği (volume/DB DOKUNULMAZ)..."
 docker image prune -f >/dev/null 2>&1 || true
 df -h / | tail -1

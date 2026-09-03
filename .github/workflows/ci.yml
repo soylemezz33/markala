@@ -3,11 +3,17 @@ name: CI — Type Check & Build
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
+  # main'e push'ta ARTIK DOĞRUDAN TETİKLENMEZ (2026-09-03). Deploy iş akışı bunu
+  # workflow_call ile çağırır ve canlıya alma adımı sonucuna bağlanır. Eskiden ikisi
+  # PARALEL koşuyordu: (a) test bitmeden kod canlıya inebiliyordu, (b) CI'ın web
+  # build'i canlı API'den veri çekerken deploy o API'yi yeniden başlattığı için
+  # son 25 koşunun 6'sı koda bağlı olmayan sebeple kırmızıydı.
+  workflow_call:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # github.workflow, workflow_call'da ÇAĞIRANIN adını verir → deploy'un çağırdığı
+  # doğrulama, bir PR'ın CI'ıyla aynı gruba düşüp onu iptal etmez.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 # Least-privilege GITHUB_TOKEN: CI yalnız checkout + install + build yapar.

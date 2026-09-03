@@ -14,6 +14,13 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # KAPI (2026-09-03): tip kontrolü + testler + build + format. ci.yml'in AYNISI —
+  # workflow_call ile yeniden kullanılıyor, kopyalanmıyor. Canlıya alma bu işin
+  # sonucuna bağlı; imaj derlemesiyle PARALEL koşar, o yüzden deploy süresi uzamaz.
+  dogrulama:
+    name: Doğrulama (CI)
+    uses: ./.github/workflows/ci.yml
+
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
@@ -48,6 +55,9 @@ jobs:
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
+            # Tam sha: deploy TAM OLARAK bu commit'in imajını çeker. "latest" hareketli
+            # bir hedef; hangi commit'in canlıda olduğunu kanıtlamıyordu.
+            type=sha,prefix={{branch}}-,format=long
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build & Push
@@ -79,7 +89,10 @@ jobs:
 
   deploy:
     name: Deploy (self-hosted APP-VM)
-    needs: build-and-push
+    # İKİSİ de yeşil olmadan canlıya çıkılmaz. build-and-push tek başına yeterli
+    # değildi: 2026-09-02'de main'de bozuk kod varken başka bir oturumun push'u
+    # üretimi çökertti — imaj derlenebiliyordu ama kod çalışmıyordu.
+    needs: [dogrulama, build-and-push]
     # 2026-08-17: SSH-over-NAT yaklaşımı kırıldı — production iç ağda (APP-VM 10.20.33.5),
     # GitHub dışarıdan doğrudan erişemiyor; DNS göçünde deploy yanlış sunucuya gitti.
     # Kalıcı çözüm: APP-VM'in İÇİNDE self-hosted runner. Runner GitHub'a DIŞARI bağlanır
@@ -95,14 +108,35 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      # Deploy'lar concurrency ile SIRAYA girer. Birden çok oturum arka arkaya push
+      # ederse kuyrukta bekleyen ESKİ commit'ler anlamsızdır — hatta sırayla uygulanınca
+      # canlıyı geriye alırlar. Bu adım, bu commit artık main'in ucu değilse deploy'u
+      # atlar (hata değil): daha yeni deploy zaten kuyrukta.
+      - name: Bu commit hâlâ main'in ucu mu?
+        id: guncel
+        run: |
+          UC=$(git ls-remote https://github.com/${{ github.repository }} refs/heads/main | cut -f1)
+          echo "main ucu : $UC"
+          echo "bu commit: ${{ github.sha }}"
+          if [ -n "$UC" ] && [ "$UC" != "${{ github.sha }}" ]; then
+            echo "devam=false" >> "$GITHUB_OUTPUT"
+            echo "⏭  Daha yeni bir commit var — bu deploy atlanıyor (kuyruktaki yeni deploy uygulayacak)."
+          else
+            echo "devam=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy (yerel docker, sudo=root — .env root-only olduğu için)
+        if: steps.guncel.outputs.devam == 'true'
         run: |
           chmod +x scripts/deploy-appvm.sh
-          sudo bash scripts/deploy-appvm.sh
+          # TAG: tam sha etiketi → "latest" değil, TAM OLARAK bu commit'in imajı çekilir.
+          # sudo ortamı temizler; değişkeni açıkça geçiriyoruz.
+          sudo env TAG="main-${{ github.sha }}" bash scripts/deploy-appvm.sh
 
       # Dış doğrulama runner'dan yapılır (VPS host'unda curl yok). CF challenge'ı
       # 403 dönebilir — origin çökmesini (502/520/521) yakalamak için eşik <500.
       - name: Verify production (external)
+        if: steps.guncel.outputs.devam == 'true'
         run: |
           for u in "https://markala.com.tr" "https://api.markala.com.tr/api/health"; do
             ok=0
@@ -124,6 +158,7 @@ jobs:
       # kanıtlar: konteyner az önce yeniden başlatıldığına göre canlı /api/health'in
       # bildirdiği uptime KÜÇÜK olmalı. Büyükse yanlış sunucuya deploy ediyoruz.
       - name: Canlı gerçekten güncellendi mi (uptime kanıtı)
+        if: steps.guncel.outputs.devam == 'true'
         run: |
           UP=$(curl -s -m 25 -A "Mozilla/5.0 (GH-Actions verify)" "https://markala.com.tr/api/health" \
                | grep -o '"uptime":[0-9.]*' | cut -d: -f2 | cut -d. -f1)
