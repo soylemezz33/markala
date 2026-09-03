@@ -22,6 +22,7 @@ function make(opts: { enabled?: boolean; order?: unknown; driveFails?: boolean; 
   const prisma = {
     order: { findUnique: vi.fn().mockResolvedValue(opts.order === undefined ? siparis() : opts.order) },
     orderItem: { updateMany: vi.fn().mockResolvedValue({ count: opts.claimCount ?? 1 }) },
+    designUpload: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
   };
   const drive = {
     enabled: opts.enabled ?? true,
@@ -122,5 +123,22 @@ describe("OrderDriveService.klasorAc — müşteri dosyası", () => {
     const { svc, drive } = make({ order: siparis([kalem({}), kalem({ id: "it2" })]), uploadFails: true });
     expect(await svc.klasorAc("o1")).toBe("F1");
     expect(drive.uploadFile).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("OrderDriveService.klasorAc — set başına müşteri dosyaları (kind=musteri)", () => {
+  it("her satır Drive'a taşınır (tasarım sırası adda), eski alan aynı anahtarsa Drive'a eşlenir", async () => {
+    const { svc, drive, prisma, storage } = make({
+      order: siparis([kalem({ uploadedFileUrl: `https://api/uploads/design/${KEY_PDF}`, designUploads: [
+        { id: "m1", fileName: "on.pdf", storageKey: KEY_PDF, mimeType: "application/pdf", designIndex: 0 },
+        { id: "m2", fileName: "arka.pdf", storageKey: "cccccccc-cccc-cccc-cccc-cccccccccccc.pdf", mimeType: "application/pdf", designIndex: 1 },
+      ] } as never)]),
+    });
+    await svc.klasorAc("o1");
+    expect(drive.uploadFile).toHaveBeenCalledTimes(2); // eski alan için ÜÇÜNCÜ yükleme yok
+    expect(drive.uploadFile.mock.calls[0][0].name).toBe("MK-9__cin-vinil-branda__musteri__tasarim1__on.pdf");
+    expect(prisma.designUpload.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "m1", driveFileId: null } }));
+    expect(prisma.orderItem.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "it1", uploadedFileDriveId: null }, data: expect.objectContaining({ uploadedFileDriveId: "D1" }) }));
+    expect(storage.deleteDesign).toHaveBeenCalledTimes(2);
   });
 });

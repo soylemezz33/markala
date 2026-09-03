@@ -28,6 +28,7 @@ export const DESIGN_ROW_SELECT = {
   createdAt: true,
   // driveFileId dışarı ID olarak çıkmaz; designRowToPublic bunu driveUrl'e çevirir (2026-09-03).
   driveFileId: true,
+  designIndex: true,
   user: { select: { id: true, fullName: true } },
 } as const;
 
@@ -40,6 +41,7 @@ type DesignRowRaw = {
   mimeType: string;
   createdAt: Date;
   driveFileId?: string | null;
+  designIndex?: number | null;
   user: { id: string; fullName: string | null } | null;
 };
 
@@ -56,6 +58,8 @@ export function designRowToPublic(r: DesignRowRaw) {
     uploadedBy: r.user ? { id: r.user.id, fullName: r.user.fullName } : null,
     /** Dosya Drive'a taşındıysa panel "Drive'da aç" basar; yerel dosya artık yoktur. */
     driveUrl: r.driveFileId ? driveFileUrl(r.driveFileId) : null,
+    /** kind=musteri satırlarında kaçıncı tasarım (0 tabanlı); diğerlerinde null. */
+    designIndex: r.designIndex ?? null,
   };
 }
 

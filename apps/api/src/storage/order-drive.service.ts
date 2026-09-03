@@ -52,6 +52,7 @@ function anahtar(url: string | null | undefined): string | undefined {
   return key && DESIGN_KEY_RE.test(key) ? key : undefined;
 }
 
+type MusteriSatir = { id: string; fileName: string; storageKey: string | null; mimeType: string; designIndex: number | null };
 type Kalem = {
   id: string;
   productName: string;
@@ -59,6 +60,7 @@ type Kalem = {
   uploadedFileName: string | null;
   uploadedFileUrl: string | null;
   uploadedFileDriveId: string | null;
+  designUploads?: MusteriSatir[];
 };
 
 @Injectable()
@@ -87,7 +89,11 @@ export class OrderDriveService {
           shippingAddressSnapshot: true,
           billingAddressSnapshot: true,
           items: {
-            select: { id: true, productName: true, productSlug: true, uploadedFileName: true, uploadedFileUrl: true, uploadedFileDriveId: true },
+            select: {
+              id: true, productName: true, productSlug: true, uploadedFileName: true, uploadedFileUrl: true, uploadedFileDriveId: true,
+              // Müşterinin set başına dosyaları (2026-09-03) — henüz Drive'a gitmemiş olanlar.
+              designUploads: { where: { kind: "musteri", driveFileId: null }, select: { id: true, fileName: true, storageKey: true, mimeType: true, designIndex: true } },
+            },
           },
         },
       });
@@ -108,9 +114,49 @@ export class OrderDriveService {
   /** Her kalem bağımsız: biri hata verse diğerleri devam eder; hata yalnız log. */
   private async musteriDosyalariniTasi(orderNumber: string, folderId: string, items: Kalem[]): Promise<void> {
     for (const it of items) {
+      // 1) Set başına dosyalar (DesignUpload kind=musteri, 2026-09-03): her satır bağımsız taşınır.
+      //    Aynı anahtar eski uploadedFileUrl'de de duruyorsa (ilk dosya) o alanlar da eşlenir —
+      //    dosya iki kez yüklenmez, eski alan kırık kalmaz.
+      const tasinan = new Map<string, { id: string; webViewLink: string }>();
+      for (const r of it.designUploads ?? []) {
+        if (!r.storageKey) continue;
+        try {
+          const dosya = await this.storage.getDesign(r.storageKey).catch(() => null);
+          if (!dosya) continue;
+          const kalsin = yereldeKalsinMi({ key: r.storageKey, size: dosya.buffer.length });
+          const sira = r.designIndex != null ? `tasarim${r.designIndex + 1}__` : "";
+          const up = await this.drive.uploadFile({
+            folderId,
+            name: musteriDosyaAdi(orderNumber, it.productSlug ?? it.productName, `${sira}${r.fileName}`),
+            mimeType: dosya.mimetype,
+            buffer: dosya.buffer,
+          });
+          const claimed = await this.prisma.designUpload.updateMany({
+            where: { id: r.id, driveFileId: null },
+            data: { driveFileId: up.id, fileUrl: up.webViewLink, ...(kalsin ? {} : { storageKey: null }) },
+          });
+          if (claimed.count === 0) { await this.drive.deleteFile(up.id).catch(() => undefined); continue; }
+          tasinan.set(r.storageKey, { id: up.id, webViewLink: up.webViewLink });
+          if (!kalsin) await this.storage.deleteDesign(r.storageKey).catch(() => undefined);
+          this.logger.log(`müşteri tasarım dosyası Drive'a ${kalsin ? "kopyalandı" : "taşındı"}: ${orderNumber} ${r.storageKey} → ${up.id}`);
+        } catch (e) {
+          this.logger.warn(`müşteri tasarım dosyası taşınamadı (${orderNumber} ${r.storageKey}): ${(e as Error)?.message}`);
+        }
+      }
+
+      // 2) Eski tek-dosya alanı.
       if (it.uploadedFileDriveId) continue; // zaten taşınmış
       const key = anahtar(it.uploadedFileUrl);
       if (!key) continue; // dosya yok ya da eski public biçim (uuid deseni tutmuyor) → dokunma
+      const esKopya = tasinan.get(key);
+      if (esKopya) {
+        // Aynı dosya satır olarak az önce taşındı → eski alanı ona bağla, yeniden yükleme.
+        await this.prisma.orderItem.updateMany({
+          where: { id: it.id, uploadedFileDriveId: null },
+          data: { uploadedFileDriveId: esKopya.id, ...(yereldeKalsinMi({ key, size: 0 }) ? {} : { uploadedFileUrl: esKopya.webViewLink }) },
+        }).catch(() => undefined);
+        continue;
+      }
       try {
         const dosya = await this.storage.getDesign(key).catch(() => null);
         if (!dosya) continue; // diskte yok (eski/silinmiş) → Drive'a bir şey gitmez

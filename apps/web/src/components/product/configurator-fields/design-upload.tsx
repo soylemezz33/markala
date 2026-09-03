@@ -1,68 +1,22 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@markala/ui";
-import { UploadSimple, CheckCircle, SpinnerGap, WarningCircle, PencilSimple } from "@phosphor-icons/react";
+import { WarningCircle, PencilSimple } from "@phosphor-icons/react";
 import { useConfigurator } from "./context";
+import { DesignSlots, slotlariNormalize } from "@/components/product/design-slots";
 
-const MAX_MB = 50;
-
-export function DesignUpload() {
+/**
+ * Tasarım desteği anahtarı + tasarım alanları (2026-09-03 yeniden yazıldı).
+ *
+ * `slotCount` = sepet set adedi: m² ürünlerde girilen adet (2 bayrak → 2 alan), matris ürünlerde
+ * (kartvizit) ürün sayfasında 1 (set adedi sepette artırılırsa eksik alanlar sepet satırında
+ * tamamlanır — CartDesignSlots). Dosya ve hata mantığı DesignSlots'ta; bu bileşen yalnız
+ * konfigüratör state'ine bağlar ve kalite uyarılarını ALTA koyar (madde 3: hata artık üstte,
+ * alanın içinde).
+ */
+export function DesignUpload({ slotCount = 1 }: { slotCount?: number }) {
   const { state, dispatch } = useConfigurator();
-  const { needsDesign, uploadedFileName, uploadedFileUrl } = state;
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const input = e.target;
-    const file = input.files?.[0] ?? null;
-    if (!file) return;
-
-    if (file.size > MAX_MB * 1024 * 1024) {
-      setError(
-        `Dosya çok büyük (maks. ${MAX_MB} MB). Lütfen sipariş sonrası WhatsApp ile gönderin.`,
-      );
-      input.value = "";
-      return;
-    }
-
-    setError(null);
-    setUploading(true);
-    // Seçilen dosyayı hemen state'e koy (ad görünsün); URL yükleme bitince eklenir.
-    dispatch({ type: "UPLOAD_FILE", file });
-
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/tasarim-yukle", { method: "POST", body: form });
-      const data = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        url?: string;
-        fileName?: string;
-        error?: string;
-      };
-      if (!res.ok || !data.ok || !data.url) {
-        throw new Error(data.error || "Dosya yüklenemedi.");
-      }
-      dispatch({
-        type: "SET_UPLOADED_URL",
-        fileName: data.fileName || file.name,
-        url: data.url,
-      });
-    } catch (err) {
-      setError(
-        err instanceof Error && err.message
-          ? `Yükleme başarısız: ${err.message}`
-          : "Dosya yüklenemedi. Lütfen tekrar deneyin.",
-      );
-      dispatch({ type: "UPLOAD_FILE", file: null });
-      input.value = "";
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  const uploaded = Boolean(uploadedFileUrl);
+  const { needsDesign } = state;
 
   return (
     <div className="border-t border-paper-200 pt-6">
@@ -94,42 +48,15 @@ export function DesignUpload() {
       </label>
 
       {!needsDesign && (
-        <label
-          className={cn(
-            "mt-4 block border-2 border-dashed rounded-md p-6 text-center transition-colors",
-            uploading
-              ? "border-paper-200 cursor-wait"
-              : "border-paper-200 hover:border-ink-300 cursor-pointer",
-          )}
-        >
-          <input
-            type="file"
-            className="hidden"
-            accept=".ai,.eps,.pdf,.cdr,.psd,.tif,.tiff,.jpg,.jpeg,.png"
-            onChange={handleFileUpload}
-            disabled={uploading}
-            aria-label="Tasarım dosyasını seçin (AI, PDF, CDR, PSD, JPG, PNG - maks. 50 MB)"
+        <div className="mt-4">
+          <DesignSlots
+            count={slotCount}
+            designs={slotlariNormalize(state.designs, slotCount)}
+            onChange={(designs) => dispatch({ type: "SET_DESIGNS", designs })}
+            onUploadingChange={(n) => dispatch({ type: "SET_UPLOADING", value: n })}
+            idPrefix="urun"
           />
-          {uploading ? (
-            <>
-              <SpinnerGap size={28} className="mx-auto text-ink-500 animate-spin" />
-              <p className="mt-2 text-sm font-medium text-ink-900">Yükleniyor…</p>
-              <p className="mt-1 text-xs text-ink-500 break-all">{uploadedFileName}</p>
-            </>
-          ) : uploaded ? (
-            <>
-              <CheckCircle size={28} className="mx-auto text-success" weight="fill" />
-              <p className="mt-2 text-sm font-medium text-ink-900 break-all">{uploadedFileName}</p>
-              <p className="mt-1 text-xs text-success">✓ Yüklendi · değiştirmek için tıklayın</p>
-            </>
-          ) : (
-            <>
-              <UploadSimple size={28} className="mx-auto text-ink-500" />
-              <p className="mt-2 text-sm font-medium text-ink-900">Tasarım dosyanızı yükleyin</p>
-              <p className="mt-1 text-xs text-ink-500">Maks. 50 MB · AI, PDF, CDR, PSD, JPG, PNG</p>
-            </>
-          )}
-        </label>
+        </div>
       )}
 
       {/* Dosya kalitesi bilgilendirmesi (Hasan talebi 2026-08-23): müşteriler yapay zekâ
@@ -159,13 +86,6 @@ export function DesignUpload() {
             </span>
           </p>
         </div>
-      )}
-
-      {error && (
-        <p role="alert" className="mt-3 flex items-start gap-2 text-xs text-error bg-error/10 border border-error/20 rounded-md px-3 py-2">
-          <WarningCircle size={14} className="flex-none mt-0.5" weight="fill" />
-          <span>{error}</span>
-        </p>
       )}
     </div>
   );

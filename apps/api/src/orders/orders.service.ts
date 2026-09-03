@@ -14,6 +14,7 @@ import { PERM, roleHasPerm } from "../auth/permissions";
 import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "../common/banka";
 import { DESIGN_ROW_SELECT, designRowToPublic } from "./order-design.service";
 import { driveFileUrl } from "../storage/drive.service";
+import { musteriDosyaSatirlari, ilkDosya } from "./musteri-dosyalari";
 
 /**
  * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.
@@ -353,6 +354,7 @@ export class OrdersService {
       needsDesignSupport?: boolean;
       uploadedFileName?: string;
       uploadedFileUrl?: string;
+      designs?: unknown;
     }>;
     // Adres: kayıtlı FK id VEYA satır-içi inline adres (misafir/storefront). En az biri zorunlu.
     shippingAddressId?: string;
@@ -447,13 +449,18 @@ export class OrdersService {
       }
       const configuration = i.configuration ?? {};
       const configurationSummary = pickConfigurationSummary(i.configuration, summarizeConfiguration(i.configuration));
+      // Müşteri tasarım dosyaları (2026-09-03): set başına tasarım × çoklu dosya → DesignUpload
+      // (kind=musteri) satırları. Eski tek-dosya alanları ilk dosyayla doldurulur (geriye dönük).
+      const musteriDosyalari = musteriDosyaSatirlari(i.designs);
+      const ilk = ilkDosya(musteriDosyalari);
       const common = {
         configuration,
         configurationSummary,
         quantity,
         needsDesignSupport: i.needsDesignSupport ?? false,
-        uploadedFileName: i.uploadedFileName,
-        uploadedFileUrl: i.uploadedFileUrl,
+        uploadedFileName: i.uploadedFileName ?? ilk?.uploadedFileName,
+        uploadedFileUrl: i.uploadedFileUrl ?? ilk?.uploadedFileUrl,
+        musteriDosyalari,
       };
 
       const product =
@@ -827,11 +834,25 @@ export class OrdersService {
               needsDesignSupport: i.needsDesignSupport,
               uploadedFileName: i.uploadedFileName,
               uploadedFileUrl: i.uploadedFileUrl,
+              // Müşterinin set başına dosyaları (2026-09-03) — DesignUpload kind=musteri. orderId
+              // iç içe create ile verilemez; hemen aşağıda updateMany ile doldurulur.
+              ...(i.musteriDosyalari.length
+                ? { designUploads: { create: i.musteriDosyalari.map((m) => ({ kind: m.kind, designIndex: m.designIndex, fileName: m.fileName, fileUrl: m.fileUrl, fileSize: m.fileSize, mimeType: m.mimeType, storageKey: m.storageKey })) } }
+                : {}),
             })),
           },
         },
         include: { items: true, shippingAddress: true, billingAddress: true },
       });
+
+      // Müşteri dosya satırlarına (kind=musteri) orderId yaz: iç içe create yalnız orderItemId verir;
+      // Drive taşıma ve panelden silme (findFirst {id, orderId}) sipariş kimliğiyle arar.
+      if (recalculatedItems.some((i) => i.musteriDosyalari.length > 0)) {
+        await tx.designUpload.updateMany({
+          where: { orderItem: { orderId: created.id }, orderId: null },
+          data: { orderId: created.id },
+        });
+      }
 
       // Açık hesap (cari): siparişi cari deftere borç (debit) olarak işle — vade tarihli.
       if (onAccount && input.userId) {

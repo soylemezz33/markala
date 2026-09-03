@@ -131,7 +131,7 @@ export interface OrderDetailProps {
     /** Tasarımcının yüklediği dosyalar (önizleme/çalışma/baskı) — yalnız panel rollerinde gelir. */
     designUploads?: Array<{
       id: string;
-      kind: "onizleme" | "calisma" | "baski";
+      kind: "onizleme" | "calisma" | "baski" | "musteri";
       fileName: string;
       fileSize: number;
       fileUrl: string;
@@ -139,6 +139,7 @@ export interface OrderDetailProps {
       createdAt: string;
       uploadedBy?: { id: string; fullName?: string | null } | null;
       driveUrl?: string | null;
+      designIndex?: number | null;
     }>;
     /** Seçimlerin ürün şemasındaki etiket + teknik açıklaması (API findById üretir). */
     optionDetails?: Array<{ group: string; label: string; detail?: string | null }>;
@@ -188,7 +189,7 @@ function tasarimAnahtari(url: string | null | undefined): string | undefined {
   return key && /^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key) ? key : undefined;
 }
 
-const KIND_ETIKET: Record<string, string> = { onizleme: "Önizleme", calisma: "Çalışma", baski: "Baskı PDF" };
+const KIND_ETIKET: Record<string, string> = { onizleme: "Önizleme", calisma: "Çalışma", baski: "Baskı PDF", musteri: "Müşteri dosyası" };
 const boyut = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 function tasarimIndirmeYolu(
@@ -816,8 +817,11 @@ export function OrderDetailClient({
             <Card title="Tasarım Dosyaları">
               <div className="space-y-3">
                 {order.items.map((item, i) => {
-                  const hasFile = /^https?:\/\//i.test(item.uploadedFileUrl ?? "");
                   const dosyalar = item.designUploads ?? [];
+                  // Set başına müşteri dosyaları satır olarak geliyorsa (2026-09-03) eski tek-dosya
+                  // özeti tekrar basılmaz (ilk dosya zaten satırlarda).
+                  const musteriSatirVar = dosyalar.some((d) => d.kind === "musteri");
+                  const hasFile = !musteriSatirVar && /^https?:\/\//i.test(item.uploadedFileUrl ?? "");
                   if (!canDesign && !hasFile && !item.needsDesignSupport && !item.uploadedFileName && !dosyalar.length) return null;
                   const satirNo = i + 1;
                   return (
@@ -905,6 +909,7 @@ export function OrderDetailClient({
                                   <div className="flex items-center gap-1.5 text-xs">
                                     <span className="px-1.5 py-0.5 rounded bg-ink-900/5 text-ink-700 font-medium">
                                       {KIND_ETIKET[d.kind] ?? d.kind}
+                                      {d.kind === "musteri" && typeof d.designIndex === "number" && (item.quantity ?? 1) > 1 ? ` · Tasarım ${d.designIndex + 1}` : ""}
                                     </span>
                                     <span className="text-ink-900 truncate">{d.fileName}</span>
                                   </div>

@@ -17,6 +17,7 @@ import { PromoBanner } from "@/components/promo-banner";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartCrossSell } from "@/components/cart/cross-sell";
 import { CartEmailCapture } from "@/components/cart/cart-email-capture";
+import { CartDesignSlots } from "@/components/cart/cart-design-slots";
 import { VAT_RATE } from "@/lib/vat";
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
@@ -187,9 +188,8 @@ export default function CartPage() {
                     {item.productName}
                   </Link>
                   <p className="mt-1 text-sm text-ink-500">{item.configuration.summary}</p>
-                  {item.configuration.uploadedFileName && (
-                    <p className="mt-1 text-xs text-success">📎 {item.configuration.uploadedFileName}</p>
-                  )}
+                  {/* Set başına tasarım dosyaları (2026-09-03): eksikse burada tamamlanır. */}
+                  <CartDesignSlots item={item} />
                   {item.configuration.needsDesign && (
                     <p className="mt-1 text-xs text-brand-700">✦ Tasarım desteği isteniyor</p>
                   )}

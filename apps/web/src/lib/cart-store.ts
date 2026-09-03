@@ -14,6 +14,8 @@ interface CartState {
   addItem: (item: Omit<CartItem, "id" | "quantity"> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  /** Sepet satırındaki set başına tasarım dosyaları (2026-09-03). */
+  setDesigns: (id: string, designs: NonNullable<CartItem["configuration"]["designs"]>) => void;
   setCoupon: (code: string | null) => void;
   clear: () => void;
 
@@ -88,6 +90,25 @@ export const useCartStore = create<CartState>()(
           items: state.items.map((i) =>
             i.id === id ? { ...i, quantity: Math.min(100000, Math.max(1, quantity)) } : i,
           ),
+        }));
+      },
+
+      setDesigns: (id, designs) => {
+        set((state) => ({
+          items: state.items.map((i) => {
+            if (i.id !== id) return i;
+            const ilk = designs.find((d) => d.files.length > 0)?.files[0];
+            return {
+              ...i,
+              configuration: {
+                ...i.configuration,
+                designs,
+                // Eski tek-dosya alanları ilk dosyadan türetilir (özet/e-posta/eski panel).
+                uploadedFileName: ilk?.name,
+                uploadedFileUrl: ilk?.url,
+              },
+            };
+          }),
         }));
       },
 

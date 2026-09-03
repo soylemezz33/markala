@@ -259,7 +259,8 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
    * sanıyor, üretim eli boş kalıyordu. Yükleme başarısız olursa reducer adı da temizler,
    * yani bu bayrak kilitli kalmaz.
    */
-  const uploadPending = !state.needsDesign && !!state.uploadedFileName && !state.uploadedFileUrl;
+  // 2026-09-03: çoklu dosya — DesignSlots sürmekte olan yükleme sayısını reducer'a yazar.
+  const uploadPending = !state.needsDesign && state.uploading > 0;
 
   const canBuy = total > 0 && !areaMaxExceeded && !areaMinViolated && !uploadPending;
 
@@ -372,6 +373,8 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         needsDesign: state.needsDesign,
         uploadedFileName: state.uploadedFileName,
         uploadedFileUrl: state.uploadedFileUrl,
+        // Set başına tasarımlar (2026-09-03). Tasarım desteği istendiyse boş.
+        designs: state.needsDesign ? [] : state.designs.map((d) => ({ files: d.files.map((f) => ({ name: f.name, url: f.url, size: f.size, type: f.type })) })),
       },
       quantity: areaAdet, // area: girilen adet; additive: 1
     });
@@ -457,7 +460,9 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                 />
               );
             })}
-            <DesignUpload />
+            {/* Set adedi kadar tasarım alanı: m² üründe girilen adet, diğerlerinde 1 (sepette artarsa
+                sepet satırında tamamlanır — CartDesignSlots). */}
+            <DesignUpload slotCount={isArea ? areaAdet : state.quantity} />
           </div>
         </div>
 

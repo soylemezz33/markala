@@ -56,6 +56,12 @@ function kalemGorseli(k: KargoKalem): { src: string; kaynak: "onizleme" | "muste
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0];
   const k1 = anahtar(onizleme?.fileUrl);
   if (k1 && GORSEL_EXT.test(k1)) return { src: `/api/tasarim-onizleme/${k1}`, kaynak: "onizleme" };
+  // Set başına müşteri dosyaları (kind=musteri): ilk görsel olan
+  for (const d of k.designUploads ?? []) {
+    if (d.kind !== "musteri") continue;
+    const km = anahtar(d.fileUrl);
+    if (km && GORSEL_EXT.test(km)) return { src: `/api/tasarim-onizleme/${km}`, kaynak: "musteri" };
+  }
   const k2 = anahtar(k.uploadedFileUrl);
   if (k2 && GORSEL_EXT.test(k2)) return { src: `/api/tasarim-onizleme/${k2}`, kaynak: "musteri" };
   return undefined;

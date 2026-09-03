@@ -7,6 +7,7 @@ import { X, Trash, ShoppingBagOpen, ArrowRight, Plus, Minus } from "@phosphor-ic
 import { Button, Price } from "@markala/ui";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
+import { CartDesignSlots } from "@/components/cart/cart-design-slots";
 import { useEffect, useRef } from "react";
 
 export function CartDrawer() {
@@ -146,11 +147,7 @@ export function CartDrawer() {
                         <p className="mt-1 text-xs text-ink-500 line-clamp-2">
                           {item.configuration.summary}
                         </p>
-                        {item.configuration.uploadedFileName && (
-                          <p className="mt-1 text-xs text-success">
-                            📎 {item.configuration.uploadedFileName}
-                          </p>
-                        )}
+                        <CartDesignSlots item={item} compact />
                         {item.configuration.needsDesign && (
                           <p className="mt-1 text-xs text-brand-700">✦ Tasarım desteği isteniyor</p>
                         )}

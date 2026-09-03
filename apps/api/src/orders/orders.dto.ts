@@ -121,6 +121,16 @@ export class CreateOrderItemDto {
   @IsOptional()
   @MaxLength(2048)
   uploadedFileUrl?: string;
+
+  /**
+   * Müşterinin set başına tasarımları (2026-09-03): [{ files: [{fileName,fileUrl,fileSize,mimeType}] }].
+   * Şekil/sınır doğrulaması musteri-dosyalari.ts'te (20 tasarım × 10 dosya, yalnız bizim upload URL'i).
+   * @Allow: whitelist'te silinmesin; @IsShallowConfig: derinlik/anahtar tavanı (DoS).
+   */
+  @Allow()
+  @IsOptional()
+  @IsShallowConfig()
+  designs?: unknown;
 }
 
 /**

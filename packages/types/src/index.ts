@@ -305,6 +305,11 @@ export interface CartItemConfiguration {
   uploadedFileName?: string;
   /** Yüklenen tasarım dosyasının indirilebilir URL'i (backend storage) */
   uploadedFileUrl?: string;
+  /**
+   * Set başına tasarımlar (2026-09-03): sepet set adedi kadar alan, her alanda birden çok dosya.
+   * uploadedFileName/Url ilk tasarımın ilk dosyasından türetilir (geriye dönük).
+   */
+  designs?: Array<{ files: Array<{ name: string; url: string; size: number; type?: string }> }>;
 }
 
 export interface CartItem {
@@ -399,7 +404,7 @@ export interface OrderItem {
 }
 
 /** Tasarımcı dosyası türü — onizleme (küçük RGB JPG/PNG) · calisma (AI/PSD…) · baski (baskıya hazır PDF). */
-export type DesignUploadKind = "onizleme" | "calisma" | "baski";
+export type DesignUploadKind = "onizleme" | "calisma" | "baski" | "musteri";
 
 /** Panele dönen tasarımcı dosyası satırı. storageKey/driveFileId BİLEREK yok (iç alanlar). */
 export interface DesignUploadRow {
@@ -414,6 +419,8 @@ export interface DesignUploadRow {
   uploadedBy?: { id: string; fullName?: string | null } | null;
   /** Dosya Drive'a taşındıysa (çalışma/baskı) bağlantı; önizleme ve Drive kapalıyken null. */
   driveUrl?: string | null;
+  /** kind="musteri" satırlarında kaçıncı tasarım (0 tabanlı). */
+  designIndex?: number | null;
 }
 
 export type TrackingEventStatus =

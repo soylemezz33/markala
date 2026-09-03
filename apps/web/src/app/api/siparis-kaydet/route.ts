@@ -53,6 +53,7 @@ interface IncomingItem {
     needsDesign?: boolean;
     uploadedFileName?: string;
     uploadedFileUrl?: string;
+    designs?: Array<{ files?: Array<{ name?: string; url?: string; size?: number; type?: string }> }>;
   } & Record<string, unknown>;
   quantity?: number;
 }
@@ -114,6 +115,15 @@ export async function POST(req: NextRequest) {
       needsDesignSupport: Boolean(i.configuration?.needsDesign),
       uploadedFileName: i.configuration?.uploadedFileName,
       uploadedFileUrl: safeUploadUrl(i.configuration?.uploadedFileUrl),
+      // Set başına tasarımlar (2026-09-03): yalnız bizim upload host'undan gelen URL'ler geçer;
+      // asıl budama/sınır API'de (musteri-dosyalari.ts).
+      designs: Array.isArray(i.configuration?.designs)
+        ? i.configuration!.designs!.slice(0, 20).map((d) => ({
+            files: (Array.isArray(d?.files) ? d.files : []).slice(0, 10)
+              .map((f) => ({ fileName: f?.name, fileUrl: safeUploadUrl(f?.url), fileSize: f?.size, mimeType: f?.type }))
+              .filter((f) => !!f.fileUrl),
+          }))
+        : undefined,
     }));
 
   if (items.length === 0) {

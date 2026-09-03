@@ -613,8 +613,10 @@ model DesignUpload {
   /// yerine açık tutuluyor; URL tabanı (API_PUBLIC_URL) değişse de silme doğru dosyayı bulur.
   storageKey String? @map("storage_key")
   mimeType  String   @map("mime_type")
-  /// Faz 4 (Google Drive'a taşıma) için ayrıldı; şimdilik hep null.
+  /// Drive'a taşındıysa Drive dosya kimliği (Faz 4, 2026-09-03'ten beri dolu olabilir).
   driveFileId String? @map("drive_file_id")
+  /// kind="musteri" satırlarında kaçıncı tasarım (0 tabanlı; sepet set adedi kadar). Diğerlerinde null.
+  designIndex Int? @map("design_index")
   createdAt DateTime @default(now()) @map("created_at")
 
   user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
