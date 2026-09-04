@@ -46,10 +46,12 @@ describe("saf kurallar", () => {
     expect(klasorAcilmaliMi({ enabled: true, paymentStatus: "beklemede" })).toBe(false);
     expect(klasorAcilmaliMi({ enabled: false, paymentStatus: "basarili" })).toBe(false);
   });
-  it("yereldeKalsinMi: jpg/png ≤ 2 MB kalır, pdf/büyük görsel gider", () => {
+  it("yereldeKalsinMi: müşteri dosyası HER ZAMAN yerelde kalır (2026-09-04)", () => {
+    // Hasan: "müşteri dosyası Drive'da da olacak panelde de; tasarımcılar panel kullanıyor".
+    // Eski kural (jpg/png ≤ 2 MB) 2,6 MB'lık bir png'yi yerelden silip paneli kırmıştı.
     expect(yereldeKalsinMi({ key: KEY_JPG, size: 1_000_000 })).toBe(true);
-    expect(yereldeKalsinMi({ key: KEY_JPG, size: 3_000_000 })).toBe(false);
-    expect(yereldeKalsinMi({ key: KEY_PDF, size: 100 })).toBe(false);
+    expect(yereldeKalsinMi({ key: KEY_JPG, size: 3_000_000 })).toBe(true);
+    expect(yereldeKalsinMi({ key: KEY_PDF, size: 100_000_000 })).toBe(true);
   });
   it("musteriDosyaAdi: sipariş no + ürün slug + musteri + özgün ad", () => {
     expect(musteriDosyaAdi("MK-1", "Çin Vinil Branda", "Logo Final.pdf")).toBe("MK-1__cin-vinil-branda__musteri__Logo Final.pdf");
@@ -86,16 +88,16 @@ describe("OrderDriveService.klasorAc — klasör", () => {
 });
 
 describe("OrderDriveService.klasorAc — müşteri dosyası", () => {
-  it("PDF: Drive'a yüklenir, kayıt Drive bağlantısıyla güncellenir, yerel silinir", async () => {
+  it("PDF: Drive'a KOPYALANIR, panel bağlantısı yerelde kalır, yerel dosya silinmez", async () => {
     const { svc, drive, prisma, storage } = make();
     await svc.klasorAc("o1");
     expect(storage.getDesign).toHaveBeenCalledWith(KEY_PDF);
     expect(drive.uploadFile).toHaveBeenCalledWith(expect.objectContaining({ folderId: "F1", name: "MK-9__cin-vinil-branda__musteri__logo.pdf", mimeType: "application/pdf" }));
     expect(prisma.orderItem.updateMany).toHaveBeenCalledWith({
       where: { id: "it1", uploadedFileDriveId: null },
-      data: { uploadedFileDriveId: "D1", uploadedFileUrl: "https://drive.google.com/file/d/D1/view" },
+      data: { uploadedFileDriveId: "D1" }, // uploadedFileUrl EZİLMEZ → "İndir" çalışır
     });
-    expect(storage.deleteDesign).toHaveBeenCalledWith(KEY_PDF);
+    expect(storage.deleteDesign).not.toHaveBeenCalled();
   });
   it("küçük JPG: Drive'a KOPYALANIR, URL değişmez, yerel kalır (panel önizlemesi)", async () => {
     const { svc, prisma, storage } = make({ order: siparis([kalem({ uploadedFileUrl: `https://api/uploads/design/${KEY_JPG}`, uploadedFileName: "on.jpg" })]), dosya: { size: 500_000 } });
@@ -139,7 +141,7 @@ describe("OrderDriveService.klasorAc — set başına müşteri dosyaları (kind
     expect(drive.uploadFile.mock.calls[0][0].name).toBe("MK-9__cin-vinil-branda__musteri__tasarim1__on.pdf");
     expect(prisma.designUpload.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "m1", driveFileId: null } }));
     expect(prisma.orderItem.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "it1", uploadedFileDriveId: null }, data: expect.objectContaining({ uploadedFileDriveId: "D1" }) }));
-    expect(storage.deleteDesign).toHaveBeenCalledTimes(2);
+    expect(storage.deleteDesign).not.toHaveBeenCalled(); // kopyalama: yerel dosyalar durur
   });
 
   /**
@@ -151,7 +153,7 @@ describe("OrderDriveService.klasorAc — set başına müşteri dosyaları (kind
    * hesaplıyordu; kural "jpg/png VE ≤ 2 MB" olduğu için sahte 0 boyut her png'de
    * "yerelde kaldı" diyordu. Doğrusu taşıma anındaki gerçek kararı kullanmak.
    */
-  it("2 MB ÜSTÜ png: yerelden silinir VE eski uploadedFileUrl Drive'a çevrilir", async () => {
+  it("2 MB ÜSTÜ png: yerelden SİLİNMEZ, panelde de Drive'da da erişilir", async () => {
     const KEY_BIG = "dddddddd-dddd-dddd-dddd-dddddddddddd.png";
     const { svc, prisma, storage } = make({
       dosya: { size: 2_749_691 }, // canlıdaki dosyanın boyutu
@@ -164,19 +166,20 @@ describe("OrderDriveService.klasorAc — set başına müşteri dosyaları (kind
       ]),
     });
     await svc.klasorAc("o1");
-    // Yerel kopya silindi → eski alan ARTIK Drive'ı göstermeli, yoksa panel kırık.
-    expect(storage.deleteDesign).toHaveBeenCalledWith(KEY_BIG);
-    expect(prisma.orderItem.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          uploadedFileDriveId: "D1",
-          uploadedFileUrl: "https://drive.google.com/file/d/D1/view",
-        }),
-      }),
-    );
+    // 2026-09-04 (Hasan): "müşteri dosyası Drive'da da olacak panelde de; tasarımcılar
+    // panel kullanıyor". Yerel kopya SİLİNMEZ ve panel bağlantısı yerel kalır.
+    expect(storage.deleteDesign).not.toHaveBeenCalled();
+    const veri = prisma.orderItem.updateMany.mock.calls[0][0].data;
+    expect(veri.uploadedFileDriveId).toBe("D1"); // Drive'da aç düğmesi
+    expect(veri.uploadedFileUrl).toBeUndefined(); // İndir düğmesi yerelden çalışmaya devam
+    // Satır tarafında da fileUrl EZİLMEZ (panelde "İndir" ondan üretiliyor)
+    const satirVeri = prisma.designUpload.updateMany.mock.calls[0][0].data;
+    expect(satirVeri.driveFileId).toBe("D1");
+    expect(satirVeri.fileUrl).toBeUndefined();
+    expect(satirVeri.storageKey).toBeUndefined();
   });
 
-  it("2 MB ALTI png: yerelde kalır, uploadedFileUrl yerel adreste bırakılır", async () => {
+  it("küçük png de aynı: yerelde kalır, uploadedFileUrl yerel adreste bırakılır", async () => {
     const KEY_SMALL = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee.png";
     const { svc, prisma, storage } = make({
       dosya: { size: 500_000 },

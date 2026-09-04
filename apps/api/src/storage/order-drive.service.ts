@@ -30,11 +30,19 @@ export function klasorAcilmaliMi(input: { enabled: boolean; paymentStatus: strin
   return input.enabled && input.paymentStatus === "basarili";
 }
 
-export const ONIZLEME_YERELDE_KALIR_BYTES = 2 * 1024 * 1024;
-
-/** Saf karar: müşteri dosyası Drive'a gittikten sonra yerel kopya kalsın mı? (jpg/png ≤ 2 MB) */
-export function yereldeKalsinMi(input: { key: string; size: number }): boolean {
-  return /\.(jpe?g|png)$/i.test(input.key) && input.size <= ONIZLEME_YERELDE_KALIR_BYTES;
+/**
+ * Müşteri dosyası Drive'a gittikten sonra yerel kopya HER ZAMAN kalır (2026-09-04, Hasan:
+ * "müşteri dosyası Drive'da da olacak panelde de; tasarımcılar panel kullanıyor, Drive değil").
+ *
+ * Önceki kural "jpg/png VE ≤ 2 MB ise kalsın" idi ve dosyayı TAŞIYORDU: 2,6 MB'lık bir png
+ * yerelden silinince panelde indirilemez oldu (MK-MTMMFELC-4Q3C). Boyut kaygısı yersizdi —
+ * sunucuda 363 GB boş alan var, tüm yüklemeler 160 MB.
+ *
+ * Fonksiyon KALDIRILMADI ki dışarıdaki çağıranlar/testler sessizce bozulmasın; artık
+ * Drive aktarımı bir KOPYALAMA, taşıma değil.
+ */
+export function yereldeKalsinMi(_input: { key: string; size: number }): boolean {
+  return true;
 }
 
 /** Müşteri dosyasının Drive adı: SİPARİŞNO__urun__musteri__ozgun-ad (tasarımcı dosyalarıyla aynı düzen). */
@@ -133,9 +141,11 @@ export class OrderDriveService {
             mimeType: dosya.mimetype,
             buffer: dosya.buffer,
           });
+          // fileUrl YERELDE BIRAKILIR: panel "İndir" düğmesini ondan üretiyor. Drive
+          // bağlantısı ayrı alanda (driveFileId → driveUrl) duruyor, ikisi birlikte görünür.
           const claimed = await this.prisma.designUpload.updateMany({
             where: { id: r.id, driveFileId: null },
-            data: { driveFileId: up.id, fileUrl: up.webViewLink, ...(kalsin ? {} : { storageKey: null }) },
+            data: { driveFileId: up.id, ...(kalsin ? {} : { storageKey: null, fileUrl: up.webViewLink }) },
           });
           if (claimed.count === 0) { await this.drive.deleteFile(up.id).catch(() => undefined); continue; }
           tasinan.set(r.storageKey, { id: up.id, webViewLink: up.webViewLink, kalsin });
@@ -167,6 +177,7 @@ export class OrderDriveService {
           where: { id: it.id, uploadedFileDriveId: null },
           data: { uploadedFileDriveId: esKopya.id, ...(esKopya.kalsin ? {} : { uploadedFileUrl: esKopya.webViewLink }) },
         }).catch(() => undefined);
+        // kalsin artık her zaman true → uploadedFileUrl yerelde kalır, "İndir" çalışır.
         continue;
       }
       try {

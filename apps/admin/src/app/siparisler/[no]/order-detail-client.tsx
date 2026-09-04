@@ -843,6 +843,13 @@ export function OrderDetailClient({
                             <div className="mt-0.5 text-xs text-brand-700">
                               Tasarım desteği istendi, grafik ekibi hazırlayacak
                             </div>
+                          ) : musteriSatirVar ? (
+                            // Dosya AŞAĞIDAKİ satırlarda listeleniyor (2026-09-03 set başına
+                            // yükleme). Burada "yüklemedi" yazmak dosya dururken TERSİNİ
+                            // söylüyordu — Hasan ekranda gördü (2026-09-04).
+                            <div className="mt-0.5 text-xs text-ink-500">
+                              Müşteri dosyası aşağıda
+                            </div>
                           ) : (
                             <div className="mt-0.5 text-xs text-ink-500">
                               Müşteri dosya yüklemedi{item.uploadedFileName ? ` (${item.uploadedFileName})` : ""}
