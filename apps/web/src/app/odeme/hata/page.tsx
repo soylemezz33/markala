@@ -7,6 +7,7 @@ import { Container, Button } from "@markala/ui";
 import { XCircle, ClipboardText, WhatsappLogo } from "@phosphor-icons/react";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { useAuthStore } from "@/lib/auth-store";
+import { odemeHataMesaji } from "./odeme-hata-mesaji";
 
 /**
  * iyzico ödeme başarısız/iptal yönlendirmesi.
@@ -22,6 +23,12 @@ import { useAuthStore } from "@/lib/auth-store";
 function PaymentFailedContent() {
   const params = useSearchParams();
   const orderId = params.get("siparis");
+  /**
+   * Başarısızlık sebebi (2026-09-04, Hasan: "müşteri ödemem neden onaylanmadı diye bize
+   * yazıyor"). Backend iyzico hata KODUNU ?kod= ile taşır; metni burada yazıyoruz.
+   * Bilinmeyen kodda uydurma açıklama üretilmez, genel metne düşülür.
+   */
+  const hata = odemeHataMesaji(params.get("kod"));
   const user = useAuthStore((s) => s.user);
   // Hidrasyon güvenliği: sunucu daima "misafir" varyantını basar, üyelik durumu mount sonrası
   // uygulanır (oturum bilgisi yalnız istemcide var).
@@ -41,12 +48,19 @@ function PaymentFailedContent() {
       <div className="w-16 h-16 mx-auto rounded-full bg-red-50 grid place-items-center text-red-500">
         <XCircle size={36} weight="fill" />
       </div>
-      <h1 className="mt-5 text-3xl md:text-4xl font-semibold text-ink-900">Ödeme tamamlanamadı</h1>
+      <h1 className="mt-5 text-3xl md:text-4xl font-semibold text-ink-900">{hata.baslik}</h1>
       <p className="mt-3 text-ink-700">
-        Ödemen alınamadı ya da işlem iptal edildi. <strong>Kartından herhangi bir tahsilat yapılmadı.</strong>{" "}
-        Siparişin oluşturuldu ve <strong>"Ödeme Bekliyor"</strong> olarak duruyor, dilediğin zaman
-        ödemeyi tamamlayabilirsin.
+        {hata.aciklama} <strong>Kartından herhangi bir tahsilat yapılmadı.</strong>{" "}
+        Siparişin oluşturuldu ve <strong>&quot;Ödeme Bekliyor&quot;</strong> olarak duruyor,
+        dilediğin zaman ödemeyi tamamlayabilirsin.
       </p>
+
+      {/* Somut çıkış yolu: müşteri "ne yapacağım?" diye destek yazmak zorunda kalmasın. */}
+      {hata.oneri && (
+        <p className="mt-4 mx-auto max-w-lg rounded-lg border border-paper-200 bg-paper-100/70 px-4 py-3 text-sm text-ink-700">
+          {hata.oneri}
+        </p>
+      )}
 
       {/* Sipariş referansı ekranda GÖRÜNÜR olsun — misafir müşterinin elinde tutunacak
           tek şey bu (2026-08-26 UX denetimi #3). */}

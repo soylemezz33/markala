@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useServerPerms } from "@/components/perms-provider";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { MagnifyingGlass, Eye, Download, Package } from "@phosphor-icons/react";
+import { MagnifyingGlass, Eye, Download, Package, WarningCircle } from "@phosphor-icons/react";
 import { Pagination, paginate } from "@/components/pagination";
 
 export interface OrderRow {
@@ -353,11 +353,18 @@ export function OrdersClient({ orders }: Props) {
                           /* Başarısız ödeme (2026-09-03, Hasan): eskiden "Ödeme Bekliyor"la
                              AYNI görünüyordu — terk edilmiş sepetle bankanın reddettiği kart
                              ayırt edilemiyordu. Arıza nedeni (varsa) title tooltip'te. */
+                          /* Uyarı ikonu BİLEŞENDEN gelir: ham "ⓘ" karakteri sistem
+                             fontundan düşüyordu, satırdaki yazıyla ne boyu ne hizası
+                             tutuyordu (Hasan: "çirkin duruyor", 2026-09-04). */
                           <span
-                            className="mt-1 block text-[10px] font-semibold text-error"
+                            className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-error"
                             title={o.paymentErrorMessage ?? undefined}
                           >
-                            ● Ödeme Başarısız{o.paymentErrorMessage ? " ⓘ" : ""}
+                            <span aria-hidden="true">●</span>
+                            <span>Ödeme Başarısız</span>
+                            {o.paymentErrorMessage && (
+                              <WarningCircle size={12} weight="fill" className="flex-none opacity-80" />
+                            )}
                           </span>
                         ) : o.paymentStatus && o.paymentStatus !== "basarili" && toSlug(o.status) !== "iptal-edildi" ? (
                           /* Havale ayrı gösterilir: kartta "ödeme bekliyor" terk edilmiş sepet

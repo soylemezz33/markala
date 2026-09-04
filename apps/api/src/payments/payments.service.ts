@@ -740,7 +740,12 @@ export class PaymentsService implements OnModuleInit {
     this.logger.warn(
       `iyzico ödeme BAŞARISIZ order=${orderId}: status=${result.paymentStatus} kod=${result.errorCode ?? "-"} mesaj=${result.errorMessage ?? "-"}`,
     );
-    return { redirectUrl: `${webOrigin}/odeme/hata?siparis=${orderId}` };
+    // Hata KODU müşteriye taşınır (2026-09-04, Hasan: "müşteri ödemem neden onaylanmadı
+    // diye bize yazıyor"). Sebep panelde vardı ama müşteriye hiç iletilmiyordu. Ham banka
+    // METNİ değil KOD gönderilir; karşılığını web tarafı kendi tablosundan yazar
+    // (odeme-hata-mesaji.ts) — metin URL ile oynanamaz, ayrıca "ne yapmalı" da eklenir.
+    const kodParam = result.errorCode ? `&kod=${encodeURIComponent(String(result.errorCode))}` : "";
+    return { redirectUrl: `${webOrigin}/odeme/hata?siparis=${orderId}${kodParam}` };
   }
 
   /**
