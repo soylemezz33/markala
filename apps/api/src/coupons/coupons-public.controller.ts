@@ -16,6 +16,6 @@ export class CouponsPublicController {
   @Post("validate")
   @ApiOperation({ summary: "Kupon doğrula (public), geçerlilik + gerçek indirim tutarı" })
   validate(@Body() dto: ValidateCouponDto) {
-    return this.service.validate(dto.code, dto.subtotal, { email: dto.email });
+    return this.service.validate(dto.code, dto.subtotal, { email: dto.email, indirimTabani: dto.indirimTabani });
   }
 }

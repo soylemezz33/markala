@@ -57,6 +57,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const cartItems = useCartStore((s) => s.items);
   const subtotal = useCartStore((s) => s.subtotal);
+  const indirimTabaniFn = useCartStore((s) => s.indirimTabani);
   const clearCart = useCartStore((s) => s.clear);
   const couponCode = useCartStore((s) => s.couponCode);
   const setCoupon = useCartStore((s) => s.setCoupon);
@@ -151,7 +152,7 @@ export default function CheckoutPage() {
     fetch(`${apiBase}/api/coupons/validate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: couponCode, subtotal: s }),
+      body: JSON.stringify({ code: couponCode, subtotal: s, indirimTabani: indirimTabaniFn() }),
     })
       .then((r) => r.json())
       .then((d) => {
@@ -182,7 +183,7 @@ export default function CheckoutPage() {
       const res = await fetch(`${apiBase}/api/coupons/validate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, subtotal: sub, email: email || undefined }),
+        body: JSON.stringify({ code, subtotal: sub, indirimTabani, email: email || undefined }),
       });
       const data = await res.json().catch(() => null);
       if (data && data.valid) {
@@ -286,6 +287,8 @@ export default function CheckoutPage() {
   );
 
   const sub = subtotal();
+  // Kampanyalı (indirimHaric) satırlar hariç indirim tabanı — sunucu formülüyle birebir.
+  const indirimTabani = indirimTabaniFn();
   // HOSGELDIN yalnız GİRİŞ YAPMIŞ üyeye: misafirde (user yok) önizlemede bile uygulanmaz —
   // backend zaten reddeder; "sözde indirim" gösterip bait-and-switch yapmayalım (14ef581 istismarı).
   const hosgeldinBlocked = couponCode === "HOSGELDIN" && !user;
@@ -299,7 +302,7 @@ export default function CheckoutPage() {
   const discount = backendCoupon
     ? backendCoupon.discount
     : appliedCoupon
-      ? sub * (KNOWN_COUPONS[appliedCoupon] ?? 0)
+      ? indirimTabani * (KNOWN_COUPONS[appliedCoupon] ?? 0)
       : 0;
   // Kurumsal oransal indirim — yalnız GİRİŞ YAPMIŞ + onaylı kurumsal üyeye gösterilir/uygulanır.
   // Backend ile aynı formül (subtotal × yüzde); gerçek indirim siparişte yine sunucuda kesinleşir,
@@ -309,7 +312,7 @@ export default function CheckoutPage() {
     user && user.accountType === "corporate" && user.corporateStatus === "approved" && accountType === "corporate"
       ? Number(user.corporateDiscount ?? 0) || 0
       : 0;
-  const corpDiscount = corpPct > 0 ? Math.round(sub * corpPct) / 100 : 0;
+  const corpDiscount = corpPct > 0 ? Math.round(indirimTabani * corpPct) / 100 : 0;
 
   // === Sadakat puanı harcama (önizleme; gerçek indirim siparişte sunucuda yeniden doğrulanır) ===
   // Sunucu kuralıyla aynı sınır: bakiye (tam TL), ara toplamın %50'si ve kupon/kurumsal sonrası
@@ -321,13 +324,13 @@ export default function CheckoutPage() {
   // gerçek indirim siparişte sunucuda yeniden hesaplanır (client'a güvenilmez).
   const havaleDiscount =
     paymentMethod === "havale"
-      ? Math.round((sub - discount - corpDiscount) * HAVALE_INDIRIM_YUZDE) / 100
+      ? Math.round(Math.max(0, indirimTabani - discount - corpDiscount) * HAVALE_INDIRIM_YUZDE) / 100
       : 0;
 
-  const roomBeforeRedeem = Math.max(0, sub - discount - corpDiscount - havaleDiscount);
+  const roomBeforeRedeem = Math.max(0, indirimTabani - discount - corpDiscount - havaleDiscount);
   const maxRedeemTl = loyaltyOn
     ? Math.min(
-        Math.floor(sub * 0.5),
+        Math.floor(indirimTabani * 0.5),
         Math.floor(roomBeforeRedeem),
         Math.floor((loyalty?.balance ?? 0) / redeemPerTl),
       )

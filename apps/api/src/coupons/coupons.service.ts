@@ -20,9 +20,15 @@ export class CouponsService {
   async validate(
     code: string,
     subtotal: number,
-    opts: { userId?: string; email?: string } = {},
+    opts: { userId?: string; email?: string; indirimTabani?: number } = {},
   ) {
     const round2 = (n: number) => Math.round(n * 100) / 100;
+    // Kampanyalı ürünler (content.indirimHaric) indirim tabanına girmez — client sepetten
+    // indirimTabani gönderir; sipariş tarafında (orders.service) sunucu kendisi hesaplar.
+    const taban =
+      typeof opts.indirimTabani === "number" && Number.isFinite(opts.indirimTabani)
+        ? Math.max(0, Math.min(opts.indirimTabani, subtotal))
+        : subtotal;
     const c = await this.prisma.coupon.findUnique({ where: { code: (code ?? "").trim().toUpperCase() } });
     if (!c || !c.isActive) return { valid: false as const, reason: "Kupon bulunamadı veya geçerli değil." };
     const now = new Date();
@@ -59,8 +65,8 @@ export class CouponsService {
     }
     const value = Number(c.value);
     let discount = 0;
-    if (c.type === "percentage") discount = round2((subtotal * value) / 100);
-    else if (c.type === "fixed_amount") discount = round2(Math.min(value, subtotal));
+    if (c.type === "percentage") discount = round2((taban * value) / 100);
+    else if (c.type === "fixed_amount") discount = round2(Math.min(value, taban));
     return {
       valid: true as const,
       code: c.code,

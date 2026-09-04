@@ -45,6 +45,10 @@ export class ValidateCouponDto {
   @IsNumber({ maxDecimalPlaces: 2 }) @Min(0)
   subtotal!: number;
 
+  /** Kampanyalı (indirimHaric) ürünler hariç ara toplam — indirim bu tabana hesaplanır. Yoksa subtotal. */
+  @IsNumber({ maxDecimalPlaces: 2 }) @Min(0) @IsOptional()
+  indirimTabani?: number;
+
   @IsString() @IsOptional()
   email?: string;
 }

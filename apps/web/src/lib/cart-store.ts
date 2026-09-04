@@ -32,6 +32,8 @@ interface CartState {
   // Computed (selector helpers)
   itemCount: () => number;
   subtotal: () => number;
+  /** Kampanyalı (indirimHaric) satırlar hariç ara toplam — kupon/havale/kurumsal/puan indirimi tabanı. */
+  indirimTabani: () => number;
 }
 
 /**
@@ -146,6 +148,11 @@ export const useCartStore = create<CartState>()(
       itemCount: () => get().items.length,
       subtotal: () =>
         get().items.reduce((acc, i) => acc + i.configuration.totalPrice * i.quantity, 0),
+      indirimTabani: () =>
+        get().items.reduce(
+          (acc, i) => acc + (i.configuration.indirimHaric ? 0 : i.configuration.totalPrice * i.quantity),
+          0,
+        ),
     }),
     {
       name: "markala-cart",

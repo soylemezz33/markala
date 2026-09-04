@@ -71,6 +71,9 @@ export default function CartPage() {
   }, []);
 
   const sub = subtotal();
+  // Kampanyalı (indirimHaric) satırlar hariç taban — kupon indirimi yalnız buna hesaplanır.
+  const indirimTabani = useCartStore((s) => s.indirimTabani)();
+  const kampanyaliVar = sub > 0 && indirimTabani < sub;
 
   const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
 
@@ -85,7 +88,7 @@ export default function CartPage() {
       const res = await fetch(`${apiBase}/api/coupons/validate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, subtotal: sub, ...(userEmail ? { email: userEmail } : {}) }),
+        body: JSON.stringify({ code, subtotal: sub, indirimTabani, ...(userEmail ? { email: userEmail } : {}) }),
       });
       const data = await res.json().catch(() => null);
       if (data && data.valid) {
@@ -124,7 +127,7 @@ export default function CartPage() {
   const discount = backendCoupon
     ? backendCoupon.discount
     : appliedCode
-      ? sub * (KNOWN_COUPONS[appliedCode] ?? 0)
+      ? indirimTabani * (KNOWN_COUPONS[appliedCode] ?? 0)
       : 0;
   const freeShipCoupon = Boolean(backendCoupon?.freeShipping);
   const shippingFee = freeShipCoupon || sub >= shipping.freeThreshold ? 0 : sub > 0 ? shipping.fee : 0;
@@ -304,8 +307,16 @@ export default function CartPage() {
               {/* HOSGELDIN bandı — YALNIZ ÜYELERE tek-tık uygula (misafir istismarı: kupon defalarca
                   kullanılıyordu → 14ef581). Oturumsuz kullanıcıya bunun yerine üyelik teşviki gösterilir.
                   Bootstrap sürerken hiçbiri gösterilmez (üye/misafir belirsizken flicker olmasın). */}
+              {kampanyaliVar && (
+                <p className="text-xs text-ink-700">
+                  {indirimTabani <= 0
+                    ? "Sepetinizdeki ürün kampanya fiyatlıdır; kupon ve ek indirim uygulanmaz."
+                    : "Kampanya fiyatlı ürünlere kupon ve ek indirim uygulanmaz; indirim yalnız diğer ürünlere hesaplanır."}
+                </p>
+              )}
               {!appliedCode &&
                 !isBootstrapping &&
+                indirimTabani > 0 &&
                 (user ? (
                   <div className="p-4 bg-brand-100 border border-brand-500/40 rounded-xl">
                     <div className="flex items-center justify-between gap-3">

@@ -414,6 +414,8 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         // Sepet, adet değişince area satırını yeniden fiyatlayabilsin diye işaretlenir
         // (1 m² tabanı toplam alana uygulandığı için birim fiyat adede bağlıdır).
         ...(isArea ? { pricingMode: "area" as const } : {}),
+        // Kampanyalı ürün: sepet/ödeme indirim tabanından düşer (sunucu da content'ten doğrular).
+        ...(product.indirimHaric ? { indirimHaric: true } : {}),
         summary: buildSelectionSummary(product, effSel, state.needsDesign),
         totalPrice: isArea ? unitArea : total, // BİRİM fiyat (sepet satırı = totalPrice × quantity)
         needsDesign: state.needsDesign,
@@ -520,6 +522,11 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                 <span className="text-sm font-semibold text-ink-900">Toplam Fiyat</span>
                 <span className="text-xs text-ink-500">{kdvDahil ? "KDV dahil" : "KDV hariç"}</span>
               </div>
+              {product.indirimHaric && (
+                <p className="mt-1 text-xs font-medium text-brand-700">
+                  Kampanya fiyatı: kupon ve ek indirimler bu üründe uygulanmaz.
+                </p>
+              )}
               {canBuy ? (
                 <>
                   <Price amount={show(total)} size="xl" className="mt-1 block text-brand-600 tabular-nums" />

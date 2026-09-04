@@ -136,9 +136,13 @@ const productContent = {
   },
   sku: "MK-EMLAK-AFS",
   brand: "Markala",
+  // KAMPANYALI ÜRÜN (Hasan 2026-09-04): kupon (HOSGELDIN dahil), kurumsal, havale ve puan
+  // indirimleri bu ürüne uygulanmaz — orders.service/coupons.service indirim tabanından düşer.
+  indirimHaric: true,
   features: [
     `5 hazır ebat: ${ebatListe}`,
     "Adet başına KDV dahil sabit fiyat — ek ücret yok",
+    "Kampanya fiyatı: kupon ve ek indirimler bu üründe uygulanmaz",
     `Minimum ${MIN_ADET} adet, ${KADEMELER[KADEMELER.length - 1]} adede kadar kademeli sipariş`,
     "Tek yön renkli dijital baskı, canlı mor/sarı gibi kampanya renkleri için uygun",
     "Ücretsiz tasarım desteği (ilan bilgilerini yazmanız yeterli)",
@@ -159,6 +163,7 @@ const productContent = {
   ],
   faqs: [
     { q: "Fiyata KDV dahil mi?", a: "Evet, tabloda ve konfigüratörde gördüğünüz fiyatlar adet başına KDV dahil satış fiyatıdır; ödeme sayfasında ek vergi eklenmez." },
+    { q: "Kupon veya yeni üye indirimi geçerli mi?", a: "Hayır. Bu ürün kampanya fiyatıyla satılır; HOSGELDIN dahil kuponlar, havale ve diğer ek indirimler bu üründe uygulanmaz. Sepette başka ürünler varsa indirim yalnız onlara hesaplanır." },
     { q: "Neden en az 5 adet?", a: `Afiş baskısında makine hazırlığı sabit bir maliyettir; ${MIN_ADET} adetlik minimum bu maliyeti dengeler ve adet başına fiyatı düşük tutar. Farklı ilanlar için her tasarımı ayrı satır olarak sepete ekleyebilirsiniz.` },
     { q: "Farklı ebatları aynı siparişte alabilir miyim?", a: "Evet. Her ebadı ayrı satır olarak sepete ekleyin; hepsi tek siparişte üretilip birlikte gönderilir." },
     { q: "Dış mekân için uygun mu?", a: "Kâğıt afiş korunaklı vitrin ve iç mekân içindir. Yağmur ve güneşe doğrudan maruz kalan balkon, cephe ve inşaat sahası için aynı tasarımı Vinil Branda Afiş olarak bastırmanızı öneririz." },

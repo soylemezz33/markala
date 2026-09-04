@@ -40,6 +40,17 @@ const PARASAL_ORDER_ALANLARI = [
 ] as const;
 const PARASAL_ITEM_ALANLARI = ["unitPrice", "lineTotal", "costTotal"] as const;
 
+/**
+ * KAMPANYALI ÜRÜN (2026-09-04, Hasan: "kampanyalı ürüne ekstra indirim yapılamaz").
+ * product.content.indirimHaric === true olan kalemler kupon (HOSGELDIN dahil), kurumsal,
+ * havale ve puan indirimlerinin TABANINA girmez — fiyat zaten kampanya fiyatıdır.
+ * İlk örnek: emlak-afisi. Ara toplam, KDV ve kargo eşiği DEĞİŞMEZ; yalnız indirim tabanı daralır.
+ */
+function kampanyaUrunuMu(product: { content?: unknown }): boolean {
+  const c = product.content;
+  return !!c && typeof c === "object" && (c as { indirimHaric?: unknown }).indirimHaric === true;
+}
+
 function parasalAlanlariAyikla<T extends object>(order: T, role?: string): T {
   if (role === "customer" || roleHasPerm(role, PERM.ORDERS_AMOUNTS)) return order;
   const temiz = { ...(order as Record<string, unknown>) };
@@ -564,6 +575,7 @@ export class OrdersService {
           unitPrice,
           lineTotal,
           costTotal,
+          indirimHaric: kampanyaUrunuMu(product as { content?: unknown }),
         };
       }
 
@@ -583,6 +595,7 @@ export class OrdersService {
           unitPrice,
           lineTotal: round2(unitPrice * quantity),
           costTotal: null as number | null, // paket maliyeti sistemde yok — bilinmiyor
+          indirimHaric: false,
         };
       }
 
@@ -592,6 +605,11 @@ export class OrdersService {
     // Sunucu tarafı toplamlar.
     // basePrice KDV dahil — bu yüzden subtotal da KDV dahil bir "brüt" toplamdır.
     const subtotal = round2(recalculatedItems.reduce((s, it) => s + it.lineTotal, 0));
+    // İndirim TABANI: kampanyalı (content.indirimHaric) kalemler hariç ara toplam. Kupon,
+    // kurumsal, havale ve puan indirimleri bu tabana uygulanır (bkz. kampanyaUrunuMu).
+    const indirimTabani = round2(
+      recalculatedItems.filter((it) => !it.indirimHaric).reduce((s, it) => s + it.lineTotal, 0),
+    );
 
     // Son savunma: item bazında 0-fiyat guard'larına ek olarak toplam sıfır sipariş de reddedilir.
     // (Teorik kenar durum: tüm item'lar geçse de toplam yuvarlama/edge nedeniyle 0 çıkabilir.)
@@ -666,9 +684,9 @@ export class OrdersService {
 
       const value = Number(coupon.value);
       if (coupon.type === "percentage") {
-        discount = round2((subtotal * value) / 100);
+        discount = round2((indirimTabani * value) / 100);
       } else if (coupon.type === "fixed_amount") {
-        discount = round2(Math.min(value, subtotal));
+        discount = round2(Math.min(value, indirimTabani));
       }
       // free_shipping aşağıda shippingFee=0 olarak uygulanır.
       appliedCoupon = { id: coupon.id, code: coupon.code, type: coupon.type };
@@ -691,7 +709,7 @@ export class OrdersService {
         cariCreditLimit = u.corporateCreditLimit != null ? Number(u.corporateCreditLimit) : null;
         cariTermDays = u.corporatePaymentTermDays ?? 0;
         const pct = u.corporateDiscount != null ? Number(u.corporateDiscount) : 0;
-        if (pct > 0) discount = round2(discount + (subtotal * pct) / 100);
+        if (pct > 0) discount = round2(discount + (indirimTabani * pct) / 100);
       }
     }
 
@@ -704,7 +722,7 @@ export class OrdersService {
     // Client'a GÜVENİLMEZ: yöntem "havale" ise indirimi sunucu kendisi ekler.
     const havaleOdeme = input.paymentMethod === ODEME_YONTEMI.havale;
     if (havaleOdeme) {
-      discount = round2(discount + ((subtotal - discount) * HAVALE_INDIRIM_YUZDE) / 100);
+      discount = round2(discount + (Math.max(0, indirimTabani - discount) * HAVALE_INDIRIM_YUZDE) / 100);
     }
 
     // === Sadakat puanı harcama (LOYALTY_ENABLED açıksa) ===
@@ -714,10 +732,10 @@ export class OrdersService {
     let redeemPointsSpent = 0;
     if (this.loyalty.isEnabled() && input.userId && input.redeemPoints && input.redeemPoints > 0) {
       const balance = await this.loyalty.getBalance(input.userId);
-      const maxByRule = this.loyalty.maxRedeemablePoints(balance, subtotal);
+      const maxByRule = this.loyalty.maxRedeemablePoints(balance, indirimTabani);
       // Kupon+kurumsal indirim sonrası kalan subtotal boşluğuna göre de sınırla (toplam indirim
       // subtotal'ı aşmasın; puanlar boşa harcanmasın).
-      const roomTl = Math.max(0, subtotal - discount);
+      const roomTl = Math.max(0, indirimTabani - discount);
       const roomPoints = Math.floor(roomTl) * LoyaltyService.REDEEM_POINTS_PER_TL;
       redeemPointsSpent = Math.max(0, Math.min(Math.floor(input.redeemPoints), maxByRule, roomPoints));
       if (redeemPointsSpent > 0) {

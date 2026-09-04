@@ -227,6 +227,8 @@ export interface Product {
   brand?: string;
   /** GTIN/MPN gibi tanımlar (mock olarak slug üzerinden üretilir) */
   sku?: string;
+  /** Kampanyalı ürün: kupon ve ek indirimler uygulanmaz (API content.indirimHaric). */
+  indirimHaric?: boolean;
   /** Son güncelleme (ISO 8601) — sitemap lastModified için. API'den gelir, yoksa undefined. */
   updatedAt?: string;
 }
@@ -308,6 +310,11 @@ export interface CartItemConfiguration {
    * Tanımsız = additive (birim × adet doğrusal).
    */
   pricingMode?: "area";
+  /**
+   * Kampanyalı ürün (2026-09-04): kupon/kurumsal/havale/puan indirimi bu satıra uygulanmaz
+   * (sepet ve ödeme önizlemesi indirim tabanından düşer; sunucu content.indirimHaric ile kesinleştirir).
+   */
+  indirimHaric?: boolean;
   /** Tasarım desteği istendi mi */
   needsDesign: boolean;
   /** Yüklenen tasarım dosyası adı */

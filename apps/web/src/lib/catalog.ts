@@ -84,6 +84,7 @@ function mapProduct(p: ApiProduct): Product {
     seo: content.seo as Product["seo"] | undefined,
     brand: content.brand as string | undefined,
     sku: content.sku as string | undefined,
+    indirimHaric: content.indirimHaric === true,
     updatedAt: isoDate(p.updatedAt),
   };
 }
