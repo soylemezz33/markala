@@ -117,7 +117,9 @@ export class OrderDriveService {
       // 1) Set başına dosyalar (DesignUpload kind=musteri, 2026-09-03): her satır bağımsız taşınır.
       //    Aynı anahtar eski uploadedFileUrl'de de duruyorsa (ilk dosya) o alanlar da eşlenir —
       //    dosya iki kez yüklenmez, eski alan kırık kalmaz.
-      const tasinan = new Map<string, { id: string; webViewLink: string }>();
+      // kalsin: yerel kopya korundu mu? Eski uploadedFileUrl alanı bu KARARA göre
+      // güncellenir — yeniden hesaplanmaz (bkz. aşağıdaki esKopya notu).
+      const tasinan = new Map<string, { id: string; webViewLink: string; kalsin: boolean }>();
       for (const r of it.designUploads ?? []) {
         if (!r.storageKey) continue;
         try {
@@ -136,7 +138,7 @@ export class OrderDriveService {
             data: { driveFileId: up.id, fileUrl: up.webViewLink, ...(kalsin ? {} : { storageKey: null }) },
           });
           if (claimed.count === 0) { await this.drive.deleteFile(up.id).catch(() => undefined); continue; }
-          tasinan.set(r.storageKey, { id: up.id, webViewLink: up.webViewLink });
+          tasinan.set(r.storageKey, { id: up.id, webViewLink: up.webViewLink, kalsin });
           if (!kalsin) await this.storage.deleteDesign(r.storageKey).catch(() => undefined);
           this.logger.log(`müşteri tasarım dosyası Drive'a ${kalsin ? "kopyalandı" : "taşındı"}: ${orderNumber} ${r.storageKey} → ${up.id}`);
         } catch (e) {
@@ -150,10 +152,20 @@ export class OrderDriveService {
       if (!key) continue; // dosya yok ya da eski public biçim (uuid deseni tutmuyor) → dokunma
       const esKopya = tasinan.get(key);
       if (esKopya) {
-        // Aynı dosya satır olarak az önce taşındı → eski alanı ona bağla, yeniden yükleme.
+        /**
+         * Aynı dosya satır olarak az önce taşındı → eski alanı ona bağla, yeniden yükleme.
+         *
+         * KARAR YENİDEN HESAPLANMAZ (2026-09-04 hatası): burada eskiden
+         * `yereldeKalsinMi({ key, size: 0 })` çağrılıyordu. Kural "jpg/png VE ≤ 2 MB ise
+         * yerelde kalsın"; sahte `size: 0` her png/jpg için TRUE üretiyordu. Yani 2 MB'tan
+         * BÜYÜK bir png yukarıdaki dalda yerelden SİLİNİYOR, burada ise "yerelde kaldı"
+         * sanılıp uploadedFileUrl güncellenmiyordu → panelde "İndir" ölü bağlantıya
+         * gidiyor, tarayıcı hata JSON'unu indiriyordu (MK-MTMMFELC-4Q3C, 2,6 MB png).
+         * Doğrusu: taşıma anında verilen gerçek kararı kullanmak.
+         */
         await this.prisma.orderItem.updateMany({
           where: { id: it.id, uploadedFileDriveId: null },
-          data: { uploadedFileDriveId: esKopya.id, ...(yereldeKalsinMi({ key, size: 0 }) ? {} : { uploadedFileUrl: esKopya.webViewLink }) },
+          data: { uploadedFileDriveId: esKopya.id, ...(esKopya.kalsin ? {} : { uploadedFileUrl: esKopya.webViewLink }) },
         }).catch(() => undefined);
         continue;
       }

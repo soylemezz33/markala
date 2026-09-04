@@ -141,4 +141,56 @@ describe("OrderDriveService.klasorAc — set başına müşteri dosyaları (kind
     expect(prisma.orderItem.updateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "it1", uploadedFileDriveId: null }, data: expect.objectContaining({ uploadedFileDriveId: "D1" }) }));
     expect(storage.deleteDesign).toHaveBeenCalledTimes(2);
   });
+
+  /**
+   * 2026-09-04 CANLI HATASI (MK-MTMMFELC-4Q3C): 2,6 MB'lık bir png satır olarak Drive'a
+   * taşınıp yerelden SİLİNDİ, ama eski uploadedFileUrl alanı güncellenmedi. Panelde
+   * "İndir" ölü bağlantıya gitti, tarayıcı dosya yerine hata JSON'unu indirdi.
+   *
+   * Sebep: eski alan dalı kararı `yereldeKalsinMi({ key, size: 0 })` ile YENİDEN
+   * hesaplıyordu; kural "jpg/png VE ≤ 2 MB" olduğu için sahte 0 boyut her png'de
+   * "yerelde kaldı" diyordu. Doğrusu taşıma anındaki gerçek kararı kullanmak.
+   */
+  it("2 MB ÜSTÜ png: yerelden silinir VE eski uploadedFileUrl Drive'a çevrilir", async () => {
+    const KEY_BIG = "dddddddd-dddd-dddd-dddd-dddddddddddd.png";
+    const { svc, prisma, storage } = make({
+      dosya: { size: 2_749_691 }, // canlıdaki dosyanın boyutu
+      order: siparis([
+        kalem({
+          uploadedFileUrl: `https://api/uploads/design/${KEY_BIG}`,
+          uploadedFileName: "musteri.png",
+          designUploads: [{ id: "m1", fileName: "musteri.png", storageKey: KEY_BIG, mimeType: "image/png", designIndex: 0 }],
+        } as never),
+      ]),
+    });
+    await svc.klasorAc("o1");
+    // Yerel kopya silindi → eski alan ARTIK Drive'ı göstermeli, yoksa panel kırık.
+    expect(storage.deleteDesign).toHaveBeenCalledWith(KEY_BIG);
+    expect(prisma.orderItem.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          uploadedFileDriveId: "D1",
+          uploadedFileUrl: "https://drive.google.com/file/d/D1/view",
+        }),
+      }),
+    );
+  });
+
+  it("2 MB ALTI png: yerelde kalır, uploadedFileUrl yerel adreste bırakılır", async () => {
+    const KEY_SMALL = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee.png";
+    const { svc, prisma, storage } = make({
+      dosya: { size: 500_000 },
+      order: siparis([
+        kalem({
+          uploadedFileUrl: `https://api/uploads/design/${KEY_SMALL}`,
+          designUploads: [{ id: "m1", fileName: "kucuk.png", storageKey: KEY_SMALL, mimeType: "image/png", designIndex: 0 }],
+        } as never),
+      ]),
+    });
+    await svc.klasorAc("o1");
+    expect(storage.deleteDesign).not.toHaveBeenCalled();
+    const veri = prisma.orderItem.updateMany.mock.calls[0][0].data;
+    expect(veri.uploadedFileDriveId).toBe("D1");
+    expect(veri.uploadedFileUrl).toBeUndefined(); // yerel adres korunur
+  });
 });
