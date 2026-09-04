@@ -32,7 +32,9 @@ export interface TasarimSlotu {
 
 export const MAX_DOSYA_MB = 50;
 export const MAX_SLOT = 20;
-const ACCEPT = ".ai,.eps,.pdf,.cdr,.psd,.tif,.tiff,.jpg,.jpeg,.png";
+// WEBP eklendi (2026-09-04): müşteri dosyalarının önemli kısmı Canva/WhatsApp/telefon
+// çıktısı olarak webp geliyordu ve reddedilince sipariş yarıda kalıyordu.
+const ACCEPT = ".ai,.eps,.pdf,.cdr,.psd,.tif,.tiff,.jpg,.jpeg,.png,.webp";
 
 export function slotlariNormalize(designs: TasarimSlotu[] | undefined, count: number): TasarimSlotu[] {
   const n = Math.max(1, Math.min(MAX_SLOT, Math.floor(count) || 1));
@@ -159,7 +161,7 @@ export function DesignSlots({
               <span className={cn("font-medium text-ink-900", compact ? "text-xs" : "text-sm")}>
                 {cokSlot ? `Tasarım ${i + 1}` : "Tasarım dosyanız"}
                 <span className="ml-1.5 text-xs font-normal text-ink-500">
-                  {slot.files.length ? `${slot.files.length} dosya` : "AI, PDF, CDR, PSD, JPG, PNG · dosya başına ≤ 50 MB"}
+                  {slot.files.length ? `${slot.files.length} dosya` : "AI, PDF, CDR, PSD, JPG, PNG, WEBP · dosya başına ≤ 50 MB"}
                 </span>
               </span>
               <label

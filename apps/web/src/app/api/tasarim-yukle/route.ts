@@ -49,7 +49,23 @@ export async function POST(req: NextRequest) {
       const m = (detail as { message?: unknown })?.message;
       const errMsg = Array.isArray(m) ? m.join(", ") : typeof m === "string" ? m : "upload_failed";
       console.error(`[tasarim-yukle] backend ${res.status}:`, detail);
-      return NextResponse.json({ ok: false, status: res.status, error: errMsg }, { status: 502 });
+      /**
+       * KULLANICI HATASINI SUNUCU HATASI GİBİ DÖNDÜRME (2026-09-04).
+       *
+       * Burası backend'in her reddini 502 yapıyordu. Sonuç: müşteri desteklenmeyen bir
+       * dosya seçtiğinde CLOUDFLARE 502'yi görüp bizim JSON gövdemizi ATIYOR ve yerine
+       * kendi hata sayfasını koyuyordu ("error code: 502"). Yani backend net bir Türkçe
+       * sebep yazıyordu ama müşteriye HİÇ ULAŞMIYORDU — "yükleme çalışmıyor" şikâyetinin
+       * kaynağı buydu (canlıda .webp ile birebir üretildi).
+       *
+       * Artık 4xx aynen geçirilir (Cloudflare gövdeye dokunmaz, müşteri sebebi okur);
+       * yalnız backend'in GERÇEK sunucu hataları 502 kalır.
+       */
+      const musteriHatasi = res.status >= 400 && res.status < 500;
+      return NextResponse.json(
+        { ok: false, status: res.status, error: errMsg },
+        { status: musteriHatasi ? res.status : 502 },
+      );
     }
 
     const data = (await res.json()) as {

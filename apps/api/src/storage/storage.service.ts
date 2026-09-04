@@ -36,6 +36,11 @@ const DESIGN_ALLOWED_EXT = new Set([
   "jpg",
   "jpeg",
   "png",
+  // WEBP eklendi (2026-09-04, Hasan): müşterilerin elindeki dosya çoğu zaman bu —
+  // Canva/WhatsApp çıktıları ve telefon ekran görüntüleri webp geliyor, reddedilince
+  // sipariş yarıda kalıyordu. Güvenlik açısından PNG/JPG ile aynı sınıf: script
+  // taşımayan raster format, mimetype whitelist'iyle ayrıca doğrulanır.
+  "webp",
   // SVG BİLEREK YOK — XML+script içerebilir; public upload + admin görüntüleme = stored XSS riski.
   // ZIP/RAR de KALDIRILDI — public servis edilen keyfi arşiv = kötüye kullanım/barındırma riski.
   "tif",
@@ -53,6 +58,7 @@ const DESIGN_MIME_WHITELIST: Record<string, Set<string>> = {
   jpg: new Set(["image/jpeg"]),
   jpeg: new Set(["image/jpeg"]),
   png: new Set(["image/png"]),
+  webp: new Set(["image/webp"]),
   tif: new Set(["image/tiff"]),
   tiff: new Set(["image/tiff"]),
   // ai/eps/cdr/psd: vendor mimetype'lar standart değil → octet-stream de kabul edilir (herhangi mimetype)
@@ -196,10 +202,19 @@ export class StorageService {
    * maks 50MB. putLocal/putR2 yazma altyapısı yeniden kullanılır.
    */
   async putDesign(input: DesignUploadInput): Promise<DesignUploadResult> {
-    const ext = (input.originalName.split(".").pop() ?? "").toLowerCase();
+    // Noktasız ad ("tasarim") uzantı SAYILMAZ: split(".").pop() adın kendisini döndürür
+    // ve müşteriye '".tasarim" dosyası yüklenemiyor' gibi saçma bir mesaj giderdi.
+    const ext = input.originalName.includes(".")
+      ? (input.originalName.split(".").pop() ?? "").toLowerCase()
+      : "";
     if (!ext || !DESIGN_ALLOWED_EXT.has(ext)) {
+      // Hangi uzantıların denendiğini görebilelim: 2026-09-04'e kadar reddin sebebi
+      // hiçbir yere yazılmıyordu, müşteri "yükleme çalışmıyor" derken neyi denediğini
+      // bilemiyorduk. Dosya ADI loglanmaz (müşteri verisi), yalnız uzantı.
+      this.logger.warn(`tasarım yükleme reddedildi: uzantı "${ext || "(yok)"}"`);
+      const neden = ext ? `".${ext}" dosyası yüklenemiyor` : "Dosyanın uzantısı yok";
       throw new BadRequestException(
-        "Yalnızca PDF, AI, EPS, CDR, PSD, JPG, PNG veya TIFF dosyası yükleyebilirsiniz.",
+        `${neden}. Kabul edilen formatlar: PDF, AI, EPS, CDR, PSD, JPG, PNG, WEBP, TIFF.`,
       );
     }
     // Mimetype doğrulama: PDF/JPG/PNG/TIFF için izin verilen mimetype listesi kontrol edilir.
