@@ -167,6 +167,7 @@ export const DEFAULT_NAV: NavCategory[] = [
         title: "Levha & Tablo",
         items: [
           { label: "Dekota / Foreks Baskı", href: "/urun/dekota-baski-5mm" },
+          { label: "Ayaklı Dekota Baskı", href: "/urun/ayakli-dekota-baski" },
           { label: "Pleksi Baskı", href: "/urun/pleksi-baski" },
           { label: "Kompozit Baskı", href: "/urun/kompozit-baski" },
           { label: "Kanvas Tablo Baskı", href: "/urun/kanvas-tablo-baski" },
