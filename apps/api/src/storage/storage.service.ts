@@ -58,7 +58,13 @@ const DESIGN_MIME_WHITELIST: Record<string, Set<string>> = {
   jpg: new Set(["image/jpeg"]),
   jpeg: new Set(["image/jpeg"]),
   png: new Set(["image/png"]),
-  webp: new Set(["image/webp"]),
+  // application/octet-stream DE kabul: webp yeni bir format ve MIME'ı işletim sistemi
+  // kaydından geliyor — kaydı olmayan (özellikle eski Windows) makinelerde tarayıcı
+  // octet-stream gönderiyor ve müşteri "Dosya tipi uyuşmazlığı" duvarına çarpıyor.
+  // ai/eps/cdr/psd zaten aynı sebeple herhangi bir MIME kabul ediyor.
+  // Uzantı whitelist'i asıl kontroldür; servis tarafı ayrıca korumalı:
+  // auth + Content-Disposition: attachment + X-Content-Type-Options: nosniff.
+  webp: new Set(["image/webp", "application/octet-stream"]),
   tif: new Set(["image/tiff"]),
   tiff: new Set(["image/tiff"]),
   // ai/eps/cdr/psd: vendor mimetype'lar standart değil → octet-stream de kabul edilir (herhangi mimetype)

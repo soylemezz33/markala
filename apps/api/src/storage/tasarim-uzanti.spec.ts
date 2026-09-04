@@ -46,6 +46,14 @@ describe("putDesign — uzantı kuralı", () => {
     await expect(svc.putDesign(dosya("c.pdf", "application/pdf"))).resolves.toBeTruthy();
   });
 
+  it("MIME'ı bilmeyen tarayıcıdan gelen webp de kabul edilir (octet-stream)", async () => {
+    // Canlıda görüldü: webp'in MIME'ı OS kaydından gelir; kaydı olmayan makinede
+    // tarayıcı application/octet-stream gönderiyor ve müşteri takılıyordu.
+    await expect(
+      svc.putDesign(dosya("tasarim.webp", "application/octet-stream")),
+    ).resolves.toBeTruthy();
+  });
+
   it("uzantısı webp ama içeriği HTML olan dosya reddedilir", async () => {
     await expect(svc.putDesign(dosya("tasarim.webp", "text/html"))).rejects.toThrow(
       BadRequestException,
