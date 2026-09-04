@@ -553,3 +553,22 @@ export function computeAreaPrice(
   return { haric: _round2(haric), dahil: _round2(dahil) };
 }
 
+
+/**
+ * m² ürünlerde SATIR fiyatı — minimum alan TOPLAM alana uygulanır (2026-09-04).
+ * api/src/orders/pricing.ts computeAreaLine ile BİREBİR AYNI: lineTotal = motor(adet=quantity),
+ * unitPrice = lineTotal ÷ quantity (sepet satırı unit × quantity eşitliği için türetilmiş değer).
+ * Eski "adet=1 ile birim × adet" kurulumu 1 m² tabanını her parçaya ayrı bindiriyordu.
+ */
+export function computeAreaLine(
+  options: AreaOption[],
+  prices: PricingPriceRow[],
+  selections: Record<string, string>,
+  quantity: number,
+  settings: PricingSettings = DEFAULT_PRICING,
+): { unitPrice: number; lineTotal: number } {
+  const qty = Number.isFinite(quantity) && quantity >= 1 ? Math.floor(quantity) : 1;
+  const sels = { ...(selections ?? {}), adet: String(qty) };
+  const lineTotal = computeAreaPrice(options, prices, sels, settings).dahil;
+  return { unitPrice: _round2(lineTotal / qty), lineTotal: _round2(lineTotal) };
+}

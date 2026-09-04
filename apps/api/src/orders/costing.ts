@@ -122,10 +122,13 @@ export function computeItemCostTotal(
       return { ...r, cost: Number.isFinite(n) ? n : null, price: 0 };
     });
 
-    const { dahil } = computeAreaPrice(opts as never, costRows as never, sels, pricing);
+    // 2026-09-04: minimum alan TOPLAM alana uygulanır (satışla aynı — pricing.ts computeAreaLine).
+    // Eskiden adet=1 ile hesaplanıp qty ile çarpılıyordu; 1 m² tabanı her parçaya ayrı biniyor,
+    // maliyet de satış gibi şişiyordu. Motor gerçek adetle çalışır, sonuç zaten SATIR maliyetidir.
+    const qtyN = Number.isFinite(qty) && qty >= 1 ? Math.floor(qty) : 1;
+    const { dahil } = computeAreaPrice(opts as never, costRows as never, { ...sels, adet: String(qtyN) }, pricing);
     if (!Number.isFinite(dahil) || dahil <= 0) return null;
-    // Motor "bir set"in maliyetini döndürür (unitPrice ile aynı kapsam); satır = set × adet.
-    return round2(dahil * qty);
+    return round2(dahil);
   }
 
   const rows = (product.prices ?? []) as Array<{

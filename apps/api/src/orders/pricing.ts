@@ -288,3 +288,29 @@ export function computeAreaPrice(
   const haric = dahil / (1 + kdv);
   return { haric: round2(haric), dahil: round2(dahil) };
 }
+
+/**
+ * m² ürünlerde SATIR fiyatı — minimum alan TOPLAM alana uygulanır (2026-09-04, Hasan kuralı:
+ * "80×100 × 2 = 1,6 m² ölçüye göre fiyatlanır; 1 m² tabanı parça başına değil toplam içindir").
+ *
+ * Eski akış birim fiyatı adet=1 ile hesaplayıp adetle çarpıyordu; 1 m² tabanı böylece her
+ * parçaya ayrı ayrı biniyordu (10×10 cm × 10 adet = 10 m² fiyatı). Artık motor gerçek adetle
+ * çalışır: lineTotal = computeAreaPrice(adet=quantity), unitPrice = lineTotal ÷ quantity
+ * (türetilmiş; OrderItem.unitPrice × quantity = lineTotal eşitliği korunur).
+ *
+ * `selections.adet` NE OLURSA OLSUN quantity ile EZİLİR — sepet adedi tek doğruluk kaynağıdır
+ * (client selections'ta adet="1" saklar; doğrudan API çağrısında tutarsız adet manipülasyonu
+ * da böylece etkisizdir).
+ */
+export function computeAreaLine(
+  options: AreaOption[],
+  prices: PricingPriceRow[],
+  selections: Record<string, string>,
+  quantity: number,
+  settings: PricingSettings = DEFAULT_PRICING,
+): { unitPrice: number; lineTotal: number } {
+  const qty = Number.isFinite(quantity) && quantity >= 1 ? Math.floor(quantity) : 1;
+  const sels = { ...(selections ?? {}), adet: String(qty) };
+  const lineTotal = computeAreaPrice(options, prices, sels, settings).dahil;
+  return { unitPrice: round2(lineTotal / qty), lineTotal: round2(lineTotal) };
+}

@@ -13,6 +13,7 @@ import {
   groupHintMode,
   availablePriceDimKeys,
   computeAreaPrice,
+  computeAreaLine,
   adetTierBadges,
   getInstallmentAmount,
   DEFAULT_PRICING,
@@ -168,10 +169,16 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
   // göstermeyi önler (müşteri ölçü girmeden fiyat görmesin / ölçüsüz sepete eklemesin).
   const hasValidSize = !isArea || (Number(effSel.en) > 0 && Number(effSel.boy) > 0);
 
-  // Area: BİRİM (tek parça) fiyat — "adet" HARİÇ hesaplanır (adet artık sepet adedidir).
-  const unitArea = useMemo(() => {
-    if (!isArea) return 0;
-    if (!(Number(effSel.en) > 0 && Number(effSel.boy) > 0)) return 0; // ölçü yok → fiyat yok
+  // Girilen "adet" area'da SEPET ADEDİ olur (additive'de sepet adedi state.quantity=1).
+  const areaAdet = isArea ? Math.max(1, Number(effSel.adet) || 1) : state.quantity;
+
+  // Area: SATIR fiyatı gerçek adetle hesaplanır — 1 m² tabanı TOPLAM alana uygulanır
+  // (2026-09-04, Hasan kuralı: 80×100 × 2 = 1,6 m², "2 × 1 m²" değil). Birim fiyat türetilir
+  // (satır ÷ adet) ve sepete BİRİM olarak yazılır; sepet satırı unit × quantity ile aynı toplama
+  // varır. Eski "adet=1 ile birim × adet" kurulumu tabanı her parçaya ayrı bindiriyordu.
+  const areaLine = useMemo(() => {
+    if (!isArea) return { unitPrice: 0, lineTotal: 0 };
+    if (!(Number(effSel.en) > 0 && Number(effSel.boy) > 0)) return { unitPrice: 0, lineTotal: 0 }; // ölçü yok → fiyat yok
     const rows = ((product.prices ?? []) as unknown as Array<{
       groupKey: string | null;
       optionKey: string | null;
@@ -185,16 +192,13 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       price: Number(r.price),
       cost: r.cost == null ? null : Number(r.cost),
     }));
-    // adet="1" ZORLA → tek parça birim fiyatı. Toplam = birim × adet (aşağıda).
-    return computeAreaPrice(product.options as never, rows, { ...effSel, adet: "1" }, pricing).dahil;
-  }, [isArea, product, effSel, pricing]);
-
-  // Girilen "adet" area'da SEPET ADEDİ olur (additive'de sepet adedi state.quantity=1).
-  const areaAdet = isArea ? Math.max(1, Number(effSel.adet) || 1) : state.quantity;
+    return computeAreaLine(product.options as never, rows, effSel, areaAdet, pricing);
+  }, [isArea, product, effSel, areaAdet, pricing]);
+  const unitArea = areaLine.unitPrice;
 
   const total = useMemo(
-    () => (isArea ? unitArea * areaAdet : calculateTotal(product, effSel)),
-    [isArea, unitArea, areaAdet, product, effSel],
+    () => (isArea ? areaLine.lineTotal : calculateTotal(product, effSel)),
+    [isArea, areaLine, product, effSel],
   );
 
   const priceHintsMap = useMemo(() => {
@@ -239,14 +243,15 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         ];
         for (const gKey of ucretliGruplar) {
           // Taban = grup HİÇ seçilmemiş hâl; fark yalnız o seçeneğin eklediğidir.
-          // adet:"1" ile birim üzerinden hesaplanıp adetle çarpılır — ekrandaki
-          // toplamın (unitArea × areaAdet) kurulumuyla birebir aynı olsun diye.
-          const taban = computeAreaPrice(opts, rows, { ...effSel, adet: "1", [gKey]: "" }, pricing).dahil;
+          // Gerçek adetle SATIR üzerinden hesaplanır (computeAreaLine) — ekrandaki toplamla
+          // birebir aynı kurulum; 1 m² tabanı toplam alana uygulandığı için "birim × adet"
+          // çarpımı burada da yanlış olurdu.
+          const taban = computeAreaLine(opts, rows, { ...effSel, [gKey]: "" }, areaAdet, pricing).lineTotal;
           const grup: Record<string, number> = {};
           for (const o of tumOpts) {
             if (o.groupKey !== gKey) continue;
-            const ile = computeAreaPrice(opts, rows, { ...effSel, adet: "1", [gKey]: o.optionKey }, pricing).dahil;
-            grup[o.optionKey] = Math.round((ile - taban) * areaAdet * 100) / 100;
+            const ile = computeAreaLine(opts, rows, { ...effSel, [gKey]: o.optionKey }, areaAdet, pricing).lineTotal;
+            grup[o.optionKey] = Math.round((ile - taban) * 100) / 100;
           }
           hints[gKey] = grup;
         }
@@ -403,9 +408,12 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       productImage:
         product.images[0] || `/api/mockup?slug=${product.slug}&w=200&h=200`,
       configuration: {
-        // Area: "adet" sepet adedine taşınır → saklanan selections'ta adet="1"
-        // (server computeAreaPrice(adet=1) × quantity = birim × adet ile aynı sonuç).
+        // Area: "adet" sepet adedine taşınır → saklanan selections'ta adet="1"; sunucu satır
+        // fiyatını quantity ile hesaplar (computeAreaLine — selections.adet'i quantity ile ezer).
         selections: isArea ? { ...effSel, adet: "1" } : effSel,
+        // Sepet, adet değişince area satırını yeniden fiyatlayabilsin diye işaretlenir
+        // (1 m² tabanı toplam alana uygulandığı için birim fiyat adede bağlıdır).
+        ...(isArea ? { pricingMode: "area" as const } : {}),
         summary: buildSelectionSummary(product, effSel, state.needsDesign),
         totalPrice: isArea ? unitArea : total, // BİRİM fiyat (sepet satırı = totalPrice × quantity)
         needsDesign: state.needsDesign,

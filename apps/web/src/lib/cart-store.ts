@@ -14,6 +14,12 @@ interface CartState {
   addItem: (item: Omit<CartItem, "id" | "quantity"> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  /**
+   * Adet + BİRİM fiyatı birlikte günceller (2026-09-04). m² ürünlerde 1 m² tabanı toplam alana
+   * uygulandığı için birim fiyat adede bağlıdır; sepet adet değiştirince satır yeniden
+   * fiyatlanır (bkz. lib/area-line.ts). Additive ürünlerde updateQuantity yeterlidir.
+   */
+  updateQuantityAndPrice: (id: string, quantity: number, unitPrice: number) => void;
   /** Sepet satırındaki set başına tasarım dosyaları (2026-09-03). */
   setDesigns: (id: string, designs: NonNullable<CartItem["configuration"]["designs"]>) => void;
   setCoupon: (code: string | null) => void;
@@ -89,6 +95,21 @@ export const useCartStore = create<CartState>()(
         set((state) => ({
           items: state.items.map((i) =>
             i.id === id ? { ...i, quantity: Math.min(100000, Math.max(1, quantity)) } : i,
+          ),
+        }));
+      },
+
+      updateQuantityAndPrice: (id, quantity, unitPrice) => {
+        if (!Number.isFinite(unitPrice) || unitPrice <= 0) return; // fiyatlanamadı → satıra dokunma
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.id === id
+              ? {
+                  ...i,
+                  quantity: Math.min(100000, Math.max(1, quantity)),
+                  configuration: { ...i.configuration, totalPrice: unitPrice },
+                }
+              : i,
           ),
         }));
       },

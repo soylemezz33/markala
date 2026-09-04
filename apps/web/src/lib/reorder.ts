@@ -5,7 +5,7 @@ import { apiClient } from "./api";
 import { useCartStore } from "./cart-store";
 import {
   computeConfiguredPrice,
-  computeAreaPrice,
+  computeAreaLine,
   DEFAULT_PRICING,
   type PricingSettings,
 } from "./configurator";
@@ -59,7 +59,7 @@ export function consumeReorderNotice(): ReorderNotice | null {
 }
 
 /** Pricing ayarları (kur/marj/kdv) — yalnız area üründe gerekir, tembel + tek sefer çekilir. */
-async function fetchPricingSettings(): Promise<PricingSettings> {
+export async function fetchPricingSettings(): Promise<PricingSettings> {
   // Ürün sayfasıyla aynı fallback mantığı (canlı işletme değeri marj 1.2).
   const fallback: PricingSettings = { ...DEFAULT_PRICING, marj: 1.2 };
   const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
@@ -103,14 +103,18 @@ async function addOrderItemToCart(
 
   // GÜNCEL fiyat: konfigüratörle aynı motorlar (client/server paritesi korunuyor).
   let totalPrice: number;
-  if (product.pricingMode === "area") {
+  const isArea = product.pricingMode === "area";
+  const quantity = Math.max(1, item.quantity);
+  if (isArea) {
     const pricing = await getPricing();
-    totalPrice = computeAreaPrice(
+    // 1 m² tabanı TOPLAM alana uygulanır (2026-09-04): satır gerçek adetle, birim türetilir.
+    totalPrice = computeAreaLine(
       (product.options ?? []) as never,
       (product.prices ?? []) as never,
       selections as Record<string, string>,
+      quantity,
       pricing,
-    ).dahil;
+    ).unitPrice;
   } else {
     totalPrice = computeConfiguredPrice(
       (product.options ?? []) as never,
@@ -126,6 +130,7 @@ async function addOrderItemToCart(
     productImage: product.images?.[0] || item.productImage,
     configuration: {
       selections: selections as Record<string, string>,
+      ...(isArea ? { pricingMode: "area" as const } : {}),
       // Özet snapshot'tan taşınır (etiketler değişmiş olsa bile seçimin dürüst tarifi).
       summary: cfg?.summary || item.configurationSummary || "",
       totalPrice,
@@ -134,7 +139,7 @@ async function addOrderItemToCart(
       uploadedFileName: cfg?.uploadedFileName,
       uploadedFileUrl: cfg?.uploadedFileUrl,
     },
-    quantity: Math.max(1, item.quantity),
+    quantity,
   });
   return true;
 }

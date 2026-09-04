@@ -440,7 +440,26 @@ describe("availablePriceDimKeys", () => {
   });
 });
 
-import { computeAreaPrice, DEFAULT_PRICING } from "./configurator";
+import { computeAreaPrice, computeAreaLine, DEFAULT_PRICING } from "./configurator";
+
+// 2026-09-04 — 1 m² tabanı TOPLAM alana uygulanır (API pricing.spec.ts computeAreaLine ile aynı senaryolar).
+describe("computeAreaLine (web — API paritesi)", () => {
+  const opts = [{ groupKey: "malzeme", groupLabel: "m", groupRole: "priced", groupSort: 0, optionKey: "m", optionLabel: "m", optionSort: 0, rules: { effect: "perM2", birim: "dolar" } }] as any;
+  const prices = [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 3.5 }]; // 161 ₺/m²
+  const sel = { malzeme: "m", en: "80", boy: "100", adet: "1" };
+  it("80×100 × 1 → 1 m² tabanı 161", () => {
+    expect(computeAreaLine(opts, prices, sel, 1, DEFAULT_PRICING)).toEqual({ unitPrice: 161, lineTotal: 161 });
+  });
+  it("80×100 × 2 = 1,6 m² → 257,60 (322 DEĞİL)", () => {
+    expect(computeAreaLine(opts, prices, sel, 2, DEFAULT_PRICING)).toEqual({ unitPrice: 128.8, lineTotal: 257.6 });
+  });
+  it("10×10 × 10 → toplam 1 m² tabanı 161 (1.610 DEĞİL)", () => {
+    expect(computeAreaLine(opts, prices, { ...sel, en: "10", boy: "10" }, 10, DEFAULT_PRICING)).toEqual({ unitPrice: 16.1, lineTotal: 161 });
+  });
+  it("selections.adet quantity ile ezilir", () => {
+    expect(computeAreaLine(opts, prices, { ...sel, adet: "9" }, 2, DEFAULT_PRICING).lineTotal).toBe(257.6);
+  });
+});
 
 const aopt = (groupKey: string, role: "dimension" | "priced", optionKey: string, rules?: object) =>
   ({ groupKey, groupLabel: groupKey, groupRole: role, groupSort: 0, optionKey, optionLabel: optionKey, optionSort: 0, rules: rules ?? null });

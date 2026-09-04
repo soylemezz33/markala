@@ -13,6 +13,7 @@ import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient } from "@/lib/api";
 import { consumeReorderNotice, type ReorderNotice } from "@/lib/reorder";
+import { areaUnitPriceFor } from "@/lib/area-line";
 import { PromoBanner } from "@/components/promo-banner";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartCrossSell } from "@/components/cart/cross-sell";
@@ -24,7 +25,24 @@ import { VAT_RATE } from "@/lib/vat";
 const KNOWN_COUPONS: Record<string, number> = { HOSGELDIN: 0.10 };
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, subtotal } = useCartStore();
+  const { items, updateQuantity, updateQuantityAndPrice, removeItem, subtotal } = useCartStore();
+
+  /**
+   * Adet değişimi. m² ürünlerde (configuration.pricingMode === "area") birim fiyat adede
+   * bağlıdır (1 m² tabanı TOPLAM alana uygulanır, 2026-09-04) → satır güncel ürün verisiyle
+   * yeniden fiyatlanır. Fiyatlanamazsa (ürün kaldırılmış vb.) adet DEĞİŞTİRİLMEZ; müşteri
+   * ürün sayfasından yeniden ekler. Additive ürünlerde eski doğrusal davranış.
+   */
+  const handleQuantityChange = (item: (typeof items)[number], quantity: number) => {
+    if (item.configuration.pricingMode !== "area") {
+      updateQuantity(item.id, quantity);
+      return;
+    }
+    void areaUnitPriceFor(item, quantity).then((unit) => {
+      if (unit == null) return;
+      updateQuantityAndPrice(item.id, quantity, unit);
+    });
+  };
   const storedCoupon = useCartStore((s) => s.couponCode);
   const setStoreCoupon = useCartStore((s) => s.setCoupon);
   // HOSGELDIN kuponu üyeye özel — misafirde istismarı engellemek için user durumu gerekli.
@@ -198,7 +216,7 @@ export default function CartPage() {
                     <QtyControl
                       value={item.quantity * itemUnitCount(item)}
                       step={itemUnitCount(item)}
-                      onChange={(n) => updateQuantity(item.id, Math.round(n / itemUnitCount(item)))}
+                      onChange={(n) => handleQuantityChange(item, Math.round(n / itemUnitCount(item)))}
                     />
                     <div className="flex items-center gap-4">
                       <Price amount={item.configuration.totalPrice * item.quantity} size="lg" className="text-ink-900" />
