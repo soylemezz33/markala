@@ -336,7 +336,26 @@ export async function getHeaderNav(): Promise<NavCategory[] | null> {
         typeof (c as NavCategory).label === "string" &&
         typeof (c as NavCategory).href === "string",
     );
-    return valid ? (data as NavCategory[]) : null;
+    if (!valid) return null;
+    const nav = data as NavCategory[];
+    // Öne çıkan kart görseli (2026-09-04): admin menü editörü `image` yazmıyor; kart slug'dan
+    // tahmin edip (uploads/products/<slug>.webp) çoğu üründe 404 → mockup basıyordu (Çin Vinil
+    // Branda'nın görseli vinil-branda-440gr.webp adında). Kayıtta image yoksa ürünün gerçek ilk
+    // görseliyle SUNUCUDA doldurulur; fetchJson 300 sn önbellekli, 16 kart için maliyet düşük.
+    // Ürün bulunamazsa/hata olursa alan boş kalır, kart eski tahmin+mockup davranışına düşer.
+    const eksik = nav.flatMap((c) => (c.featured ?? []).filter((f) => !f.image));
+    await Promise.all(
+      eksik.map(async (f) => {
+        try {
+          const p = (await fetchJson(`/products/${encodeURIComponent(f.slug)}`)) as { images?: unknown };
+          const img = Array.isArray(p?.images) ? p.images.find((x) => typeof x === "string" && x) : null;
+          if (typeof img === "string") f.image = img;
+        } catch {
+          /* kart tahmin+mockup'a düşer */
+        }
+      }),
+    );
+    return nav;
   } catch {
     return null;
   }
