@@ -7,7 +7,7 @@ import { MetaCapiService } from "../integrations/meta/meta-capi.service";
 import { SettingsService } from "../settings/settings.service";
 import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
-import { computeConfiguredPrice, computeAreaPrice, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
+import { computeConfiguredPrice, computeAreaLine, DEFAULT_PRICING, extractSelections, pickConfigurationSummary, normalizeSelections } from "./pricing";
 import { computeItemCostTotal } from "./costing";
 import { iptalMailiGonderilirMi } from "./iptal-mail-kurali";
 import { PERM, roleHasPerm } from "../auth/permissions";
@@ -487,10 +487,16 @@ export class OrdersService {
           cost: r.cost == null ? null : Number(r.cost),
         }));
         // m² maliyet motoru (area) vs mevcut toplamsal (additive) — ürünün pricingMode'una göre.
-        const configuredUnit =
-          (product as { pricingMode?: string }).pricingMode === "area"
-            ? computeAreaPrice(mappedOpts as never, mappedPrices, selections, pricing).dahil
-            : computeConfiguredPrice(mappedOpts, mappedPrices, selections);
+        // Area (2026-09-04): 1 m² tabanı TOPLAM alana uygulanır → satır fiyatı gerçek adetle
+        // hesaplanır, unitPrice türetilir (computeAreaLine). Eski "adet=1 × quantity" kurulumu
+        // tabanı her parçaya ayrı bindiriyordu (80×100 × 2 → 2 m² yerine 1,6 m² olmalı).
+        const isAreaProduct = (product as { pricingMode?: string }).pricingMode === "area";
+        const areaLine = isAreaProduct
+          ? computeAreaLine(mappedOpts as never, mappedPrices, selections, quantity, pricing)
+          : null;
+        const configuredUnit = areaLine
+          ? areaLine.unitPrice
+          : computeConfiguredPrice(mappedOpts, mappedPrices, selections);
         // Area: sunucu-tarafı maxM2 + emniyet tavanı — doğrudan API ile absürt ölçü (en/boy)
         // siparişini engelle (client'taki areaMaxExceeded kontrolünün sunucu karşılığı).
         if ((product as { pricingMode?: string }).pricingMode === "area") {
@@ -535,7 +541,8 @@ export class OrdersService {
         } else {
           this.logger.debug(`Sunucu fiyat [${product.slug}]: ${unitPrice}₺ × ${quantity}`);
         }
-        const lineTotal = round2(unitPrice * quantity);
+        // Area: satır toplamı motorun kendi sonucudur (unit × qty kuruş yuvarlaması biriktirmesin).
+        const lineTotal = areaLine ? areaLine.lineTotal : round2(unitPrice * quantity);
         // Maliyet SNAPSHOT'ı (2026-08-24): sipariş anındaki maliyet kaleme yazılır —
         // sonradan yapılan maliyet güncellemeleri geçmiş kâr raporunu DEĞİŞTİRMEZ.
         // null = maliyeti girilmemiş ürün (rapor "maliyet girilmemiş" olarak toplar).

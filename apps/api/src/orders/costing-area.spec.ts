@@ -60,7 +60,7 @@ describe("area (m²) maliyeti content.maliyetUsd'den hesaplanır", () => {
     expect(r).toBe(230.3);
   });
 
-  it("satır adedi ile çarpılır (lineTotal ile aynı kapsam)", () => {
+  it("satır adedi ile çarpılır (lineTotal ile aynı kapsam) — 1 m² üstünde doğrusal", () => {
     const bir = computeItemCostTotal(
       cinBranda, sel({ en: "100", boy: "200", adet: "1", malzeme: "cin-280gr", ekislem: "germe" }),
       1, 205.8, 1.2, PRICING,
@@ -70,6 +70,31 @@ describe("area (m²) maliyeti content.maliyetUsd'den hesaplanır", () => {
       3, 617.4, 1.2, PRICING,
     );
     expect(uc).toBe(round2(Number(bir) * 3));
+  });
+
+  // 2026-09-04: 1 m² tabanı TOPLAM alana uygulanır — parça başına değil (satışla aynı kural).
+  it("min alan toplamda: 80×100 × 2 = 1,6 m² → 1,75 × 49 × 1,6 = 137,20 ₺ (2 × 1 m² DEĞİL)", () => {
+    const r = computeItemCostTotal(
+      cinBranda, sel({ en: "80", boy: "100", adet: "1", malzeme: "cin-280gr", ekislem: "germe" }),
+      2, 274.4, 1.2, PRICING,
+    );
+    expect(r).toBe(137.2);
+  });
+
+  it("min alan toplamda: 10×10 × 10 = 0,1 m² → 1 m² tabanı → 85,75 ₺ (10 × 1 m² DEĞİL)", () => {
+    const r = computeItemCostTotal(
+      cinBranda, sel({ en: "10", boy: "10", adet: "1", malzeme: "cin-280gr", ekislem: "germe" }),
+      10, 171.5, 1.2, PRICING,
+    );
+    expect(r).toBe(85.75);
+  });
+
+  it("selections.adet ne olursa olsun satır adedi (qty) geçerlidir", () => {
+    const a = computeItemCostTotal(
+      cinBranda, sel({ en: "80", boy: "100", adet: "5", malzeme: "cin-280gr", ekislem: "germe" }),
+      2, 274.4, 1.2, PRICING,
+    );
+    expect(a).toBe(137.2);
   });
 
   it("seçili seçeneğin maliyeti YOKSA null döner (eksik maliyet göstermez)", () => {

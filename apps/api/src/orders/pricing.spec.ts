@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractSelections, pickConfigurationSummary, computeConfiguredPrice, resolveRules, effectiveSelections, normalizeSelections, computeAreaPrice, DEFAULT_PRICING } from "./pricing";
+import { extractSelections, pickConfigurationSummary, computeConfiguredPrice, resolveRules, effectiveSelections, normalizeSelections, computeAreaPrice, computeAreaLine, DEFAULT_PRICING } from "./pricing";
 
 const aopt = (groupKey: string, role: "dimension"|"priced", optionKey: string, rules?: object) =>
   ({ groupKey, groupLabel: groupKey, groupRole: role, groupSort: 0, optionKey, optionLabel: optionKey, optionSort: 0, rules: rules ?? null });
@@ -79,6 +79,59 @@ describe("computeAreaPrice", () => {
 
 const opt = (groupKey: string, groupRole: "dimension"|"priced", optionKey: string, groupSort=0, optionSort=0) =>
   ({ groupKey, groupLabel: groupKey, groupRole, groupSort, optionKey, optionLabel: optionKey, optionSort });
+
+// 2026-09-04 — Hasan kuralı: 1 m² tabanı TOPLAM alana uygulanır, parça başına DEĞİL.
+// "80×100 siparişini 1 m²'ye sabitledik; ×2 yapınca 2 m² değil 1,6 m² hesaplanmalı."
+describe("computeAreaLine (satır fiyatı — minimum toplam alana)", () => {
+  const TEST_PRICING = { ...DEFAULT_PRICING }; // kur 46, kdv 0.2, minM2 1
+  const cin = () => ({
+    options: [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar" })],
+    prices: [{ groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 3.5 }], // 161 ₺/m²
+  });
+  const sel = { malzeme: "m", en: "80", boy: "100", adet: "1" };
+
+  it("80×100 × 1 = 0,8 m² → 1 m² tabanı: 161 ₺", () => {
+    const { options, prices } = cin();
+    expect(computeAreaLine(options, prices, sel, 1, TEST_PRICING)).toEqual({ unitPrice: 161, lineTotal: 161 });
+  });
+  it("80×100 × 2 = 1,6 m² → taban DEVREYE GİRMEZ: 257,60 ₺ (322 DEĞİL)", () => {
+    const { options, prices } = cin();
+    const r = computeAreaLine(options, prices, sel, 2, TEST_PRICING);
+    expect(r.lineTotal).toBe(257.6);
+    expect(r.unitPrice).toBe(128.8);
+  });
+  it("10×10 × 10 = 0,1 m² → toplam 1 m² tabanı: 161 ₺ (1.610 DEĞİL)", () => {
+    const { options, prices } = cin();
+    const r = computeAreaLine(options, prices, { ...sel, en: "10", boy: "10" }, 10, TEST_PRICING);
+    expect(r.lineTotal).toBe(161);
+    expect(r.unitPrice).toBe(16.1);
+  });
+  it("unitPrice × quantity ≈ lineTotal (kuruş yuvarlaması dışında)", () => {
+    const { options, prices } = cin();
+    const r = computeAreaLine(options, prices, { ...sel, en: "70", boy: "50" }, 3, TEST_PRICING); // 1,05 m²
+    expect(r.lineTotal).toBe(169.05);
+    expect(Math.abs(r.unitPrice * 3 - r.lineTotal)).toBeLessThan(0.02);
+  });
+  it("selections.adet quantity ile EZİLİR (client adet='1' saklar; manipülasyon etkisiz)", () => {
+    const { options, prices } = cin();
+    const a = computeAreaLine(options, prices, { ...sel, adet: "7" }, 2, TEST_PRICING);
+    const b = computeAreaLine(options, prices, { ...sel, adet: "1" }, 2, TEST_PRICING);
+    expect(a).toEqual(b);
+  });
+  it("perPiece ek işlem adetle çarpılır, m² tabanı toplamda: 80×100 × 2 + germe 10$ → 257,60 + 920", () => {
+    const options = [aopt("malzeme", "priced", "m", { effect: "perM2", birim: "dolar" }), aopt("ek", "priced", "g", { effect: "perPiece", birim: "dolar" })];
+    const prices = [
+      { groupKey: "malzeme", optionKey: "m", dimKey: null, price: 0, cost: 3.5 },
+      { groupKey: "ek", optionKey: "g", dimKey: null, price: 0, cost: 10 },
+    ];
+    expect(computeAreaLine(options, prices, { ...sel, ek: "g" }, 2, TEST_PRICING).lineTotal).toBe(1177.6);
+  });
+  it("geçersiz adet (0, NaN) → 1 sayılır", () => {
+    const { options, prices } = cin();
+    expect(computeAreaLine(options, prices, sel, 0, TEST_PRICING).lineTotal).toBe(161);
+    expect(computeAreaLine(options, prices, sel, Number.NaN, TEST_PRICING).lineTotal).toBe(161);
+  });
+});
 
 describe("computeConfiguredPrice", () => {
   it("basit ürün: tek null-key satır", () => {

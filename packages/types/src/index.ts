@@ -302,6 +302,12 @@ export interface CartItemConfiguration {
   summary: string;
   /** Sepete eklenirken hesaplanan toplam fiyat */
   totalPrice: number;
+  /**
+   * m² ürünü işareti (2026-09-04). Area'da 1 m² tabanı TOPLAM alana uygulandığı için BİRİM
+   * fiyat sepet adedine bağlıdır; sepette adet değişince satır yeniden fiyatlanır.
+   * Tanımsız = additive (birim × adet doğrusal).
+   */
+  pricingMode?: "area";
   /** Tasarım desteği istendi mi */
   needsDesign: boolean;
   /** Yüklenen tasarım dosyası adı */
