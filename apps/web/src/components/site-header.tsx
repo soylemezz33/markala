@@ -125,7 +125,7 @@ const DEFAULT_NAV: NavCategory[] = [
   },
   {
     label: "Broşür & El İlanı",
-    href: groupHref("Broşür & El İlanı", ["brosur", "kapi-aski-brosur", "el-ilani", "afis", "etiket"]),
+    href: groupHref("Broşür & El İlanı", ["brosur", "kapi-aski-brosur", "el-ilani", "afis", "emlak-afisi", "etiket"]),
     groups: [
       {
         title: "Broşür",
@@ -141,6 +141,7 @@ const DEFAULT_NAV: NavCategory[] = [
         items: [
           { label: "El İlanı 105 gr", href: "/urun/el-ilani" },
           { label: "Afiş 105 gr", href: "/urun/afis-105gr" },
+          { label: "Emlak Afişi", href: "/urun/emlak-afisi" },
           { label: "Etiket Çıkartma", href: "/urun/etiket" },
         ],
       },

@@ -56,6 +56,7 @@ export const DEFAULT_NAV: NavCategory[] = [
         items: [
           { label: "El İlanı 105 gr", href: "/urun/el-ilani" },
           { label: "Afiş 105 gr", href: "/urun/afis-105gr" },
+          { label: "Emlak Afişi", href: "/urun/emlak-afisi" },
           { label: "Etiket Çıkartma", href: "/urun/etiket" },
         ],
       },
