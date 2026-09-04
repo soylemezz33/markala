@@ -184,7 +184,7 @@ const DEFAULT_NAV: NavCategory[] = [
       {
         title: "Vinil & Branda",
         items: [
-          { label: "Vinil Branda 440 gr", href: "/urun/vinil-branda-440gr" },
+          { label: "Çin Vinil Branda", href: "/urun/cin-vinil-branda" },
           { label: "Mesh Branda", href: "/urun/mesh-branda" },
           { label: "Araç Sticker", href: "/urun/arac-sticker-yan" },
         ],
@@ -213,7 +213,7 @@ const DEFAULT_NAV: NavCategory[] = [
       },
     ],
     featured: [
-      { slug: "vinil-branda-440gr", label: "Vinil Branda", theme: "brand" },
+      { slug: "cin-vinil-branda", label: "Çin Vinil Branda", theme: "brand" },
       { slug: "dekota-baski-5mm", label: "Dekota Baskı", theme: "paper" },
     ],
   },
