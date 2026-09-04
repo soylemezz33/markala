@@ -47,4 +47,26 @@ describe("m² başlangıç fiyatı — ek işlem grubu adaya girmez", () => {
     const r = (await s.findBySlug("pleksi-baski")) as { displayPrice: number };
     expect(r.displayPrice).toBeCloseTo(2205, 1);
   });
+
+  // 2026-09-04: Ayaklı Dekota — kilitli "ayak" grubu (perPiece, TL 400) her siparişe otomatik
+  // eklenir; başlangıç fiyatı da onu içermeli (kart 564 yerine 964 göstermeli).
+  it("KİLİTLİ perPiece grubu başlangıç fiyatına dahil edilir", async () => {
+    const AYAKLI = {
+      ...PLEKSI, slug: "ayakli",
+      options: [
+        ...PLEKSI.options,
+        { groupKey: "ayak", groupRole: "priced", groupSort: 3, optionKey: "cift-ayak", optionSort: 0, locked: true, rules: { effect: "perPiece", birim: "tl" } },
+      ],
+      prices: [...PLEKSI.prices, { groupKey: "ayak", optionKey: "cift-ayak", dimKey: null, price: 0, cost: 400 }],
+    };
+    const s = svc(AYAKLI);
+    const r = (await s.findBySlug("ayakli")) as { displayPrice: number };
+    expect(r.displayPrice).toBeCloseTo(2205 + 400, 1);
+  });
+
+  it("kilitli OLMAYAN ek grup başlangıç fiyatına girmez (mevcut davranış)", async () => {
+    const s = svc({ ...PLEKSI, options: [...PLEKSI.options, { groupKey: "ayak", groupRole: "priced", groupSort: 3, optionKey: "cift-ayak", optionSort: 0, locked: false, rules: { effect: "perPiece", birim: "tl" } }], prices: [...PLEKSI.prices, { groupKey: "ayak", optionKey: "cift-ayak", dimKey: null, price: 0, cost: 400 }] });
+    const r = (await s.findBySlug("pleksi-baski")) as { displayPrice: number };
+    expect(r.displayPrice).toBeCloseTo(2205, 1);
+  });
 });

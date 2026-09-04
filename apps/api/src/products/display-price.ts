@@ -15,6 +15,9 @@ export interface AreaDisplayOption {
   groupRole: string;
   groupSort: number;
   optionKey: string;
+  optionSort?: number;
+  /** Kilitli grup: müşteri seçmez, her siparişe otomatik uygulanır (effectiveSelections). */
+  locked?: boolean;
   rules?: { effect?: string } | null;
 }
 
@@ -51,6 +54,15 @@ export function areaStartingPrice(
   const priced = opts.filter((o) => o.groupRole === "priced");
   if (!priced.length) return null;
   const anaSort = Math.min(...priced.map((o) => o.groupSort ?? 0));
+  // KİLİTLİ gruplar her siparişe otomatik uygulanır (ör. Ayaklı Dekota'da adet başına ayak
+  // ücreti, 2026-09-04). Başlangıç fiyatı da onları içermeli; yoksa kart müşterinin asla
+  // ödemeyeceği bir rakam gösterir. Sipariş motoruyla aynı kural: gruptaki en küçük optionSort.
+  const kilitli: Record<string, string> = {};
+  for (const o of priced) {
+    if (!o.locked) continue;
+    const cur = priced.find((x) => x.groupKey === o.groupKey && x.optionKey === kilitli[o.groupKey]);
+    if (!cur || (o.optionSort ?? 0) < (cur.optionSort ?? 0)) kilitli[o.groupKey] = o.optionKey;
+  }
   let min: number | null = null;
   for (const opt of priced) {
     if ((opt.groupSort ?? 0) !== anaSort) continue; // ek işlem grupları elenir
@@ -59,7 +71,7 @@ export function areaStartingPrice(
     const r = computeAreaPrice(
       rawOptions as never,
       rows,
-      { [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" },
+      { ...kilitli, [opt.groupKey]: opt.optionKey, en: "100", boy: "100", adet: "1" },
       pricing,
     ).dahil;
     if (r > 0 && (min === null || r < min)) min = r;
