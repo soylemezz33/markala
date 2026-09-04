@@ -3,7 +3,7 @@
  * "Emlak Afişi" kategorisi + ürünü (2026-09-04, Hasan talebi).
  *
  * Kaynak: kampanya görseli — 5 ebat, adet başına KDV DAHİL satış fiyatı, minimum 5 adet:
- *   50×70 → 70 ₺ · 70×100 → 125 ₺ (çok satan) · 70×150 → 160 ₺ · 100×150 → 210 ₺ · 100×200 → 290 ₺
+ *   50×70 → 70 ₺ · 70×100 → 125 ₺ · 70×150 → 160 ₺ · 100×150 → 210 ₺ (çok satan, Hasan 2026-09-04 akşam) · 100×200 → 290 ₺
  *
  * MODEL (additive): grup `ebat` (priced) × grup `adet` (dimension). "adet" TEK dimension olduğu
  * için fiyat-boyutu olur (kartvizit/afiş gibi MATRİS): her (ebat, adet-kademesi) satırının price'ı
@@ -33,9 +33,9 @@ const ACCENT = "#4A2A9E";
 // ---- Fiyat kaynağı (KDV dahil, adet başına) ----
 const EBATLAR = [
   { key: "50x70", label: "50 × 70 cm", tl: 70 },
-  { key: "70x100", label: "70 × 100 cm", tl: 125, sublabel: "Çok satan" },
+  { key: "70x100", label: "70 × 100 cm", tl: 125 },
   { key: "70x150", label: "70 × 150 cm", tl: 160 },
-  { key: "100x150", label: "100 × 150 cm", tl: 210 },
+  { key: "100x150", label: "100 × 150 cm", tl: 210, sublabel: "Çok satan" },
   { key: "100x200", label: "100 × 200 cm", tl: 290 },
 ];
 const MIN_ADET = 5;
@@ -79,7 +79,7 @@ const categoryContent = {
     description: `Emlak afişi baskı: 50×70, 70×100, 70×150, 100×150 ve 100×200 cm ebatlarda satılık / kiralık ilan afişi. Adet başına KDV dahil fiyat, ${MIN_ADET} adetten başlayan sipariş, 1-2 iş günü üretim.`,
   },
   faqs: [
-    { q: "Emlak afişi hangi ebatlarda basılıyor?", a: `Beş hazır ebat vardır: ${ebatListe}. 50×70 ve 70×100 cm vitrin camı ve ilan panosu için, 70×150 cm ve üzeri daire balkonu, bina cephesi ve inşaat sahası gibi uzaktan görülmesi gereken noktalar için tercih edilir. En çok satan ebat 70×100 cm'dir.` },
+    { q: "Emlak afişi hangi ebatlarda basılıyor?", a: `Beş hazır ebat vardır: ${ebatListe}. 50×70 ve 70×100 cm vitrin camı ve ilan panosu için, 70×150 cm ve üzeri daire balkonu, bina cephesi ve inşaat sahası gibi uzaktan görülmesi gereken noktalar için tercih edilir. En çok satan ebat 100×150 cm'dir.` },
     { q: "Fiyatlar KDV dahil mi, adet başına mı?", a: "Evet. Ürün sayfasındaki fiyatlar adet başına ve KDV dahildir; ebat ve adedi seçtiğinizde toplam tutar anında görünür, sonradan ek ücret çıkmaz." },
     { q: "En az kaç adet emlak afişi sipariş edebilirim?", a: `Minimum sipariş ${MIN_ADET} adettir. Aynı ebattan farklı ilanlar (farklı daire, farklı tasarım) için her tasarımı ayrı satır olarak sepete ekleyebilirsiniz; adet kademeleri ${KADEMELER[0]} ile ${KADEMELER[KADEMELER.length - 1]} arasında seçilir.` },
     { q: "Afişi dış mekânda, balkon veya cephede kullanabilir miyim?", a: "Kâğıt afiş vitrin arkası ve korunaklı iç mekân için üretilir; doğrudan yağmur ve güneş alan cephe, balkon ve inşaat sahası için aynı tasarımı vinil branda üzerine bastırmanızı öneririz. Vinil Branda Afiş kategorisinden ölçünüzü girerek fiyatı görebilirsiniz." },
@@ -100,7 +100,7 @@ const categoryContent = {
     {
       baslik: "Hangi Ebat Nerede Kullanılır?",
       paragraflar: [
-        "50×70 cm: ofis vitrini, ilan panosu ve daire kapısı gibi yakından okunan yüzeyler. 70×100 cm: vitrin ve bina girişi için en dengeli ebat; en çok tercih edilen ölçüdür. 70×150 ve 100×150 cm: balkon korkuluğu, bahçe duvarı ve apartman cephesi. 100×200 cm: inşaat sahası, boş arsa ve ana cadde üzerindeki dükkânlar gibi uzaktan görülmesi gereken noktalar.",
+        "50×70 cm: ofis vitrini, ilan panosu ve daire kapısı gibi yakından okunan yüzeyler. 70×100 cm: vitrin ve bina girişi için dengeli ebat. 70×150 ve 100×150 cm: balkon korkuluğu, bahçe duvarı ve apartman cephesi; 100×150 cm en çok tercih edilen ölçüdür. 100×200 cm: inşaat sahası, boş arsa ve ana cadde üzerindeki dükkânlar gibi uzaktan görülmesi gereken noktalar.",
         "Kaba kural: her 1 metre okuma mesafesi için en az 1 cm harf yüksekliği. Sokağın karşısından okunacak 'SATILIK' başlığı 100×150 cm afişte 15-20 cm yüksekliğinde tasarlanmalıdır; telefon numarası ise başlığın yarısı kadar büyük olmalıdır.",
       ],
     },
