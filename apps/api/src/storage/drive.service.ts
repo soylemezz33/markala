@@ -85,6 +85,28 @@ export class DriveService {
   }
 
   /**
+   * Klasörü "bağlantıya sahip herkes görüntüleyebilir" yapar (2026-09-04, Hasan:
+   * "Drive'da aç dendiğinde tasarımcılar görmüyor, şimdilik açalım").
+   *
+   * Tasarımcıların Google hesapları Drive klasörüne ekli olmadığı için bağlantı onlarda
+   * yetki hatası veriyordu. Klasör düzeyinde açılıyor: içindeki dosyalar izni MİRAS ALIR,
+   * dosya başına ayrı çağrı gerekmez.
+   *
+   * GÜVENLİK NOTU: bu, bağlantıyı bilen HERKESİN müşterinin baskı dosyasını görebilmesi
+   * demektir — 2026-09-01'de yerel dosyalarda kapatılan şeyin Drive'daki karşılığı.
+   * Bağlantılar yalnız panelde görünüyor (panel de auth arkasında), ama kalıcı çözüm
+   * klasörü tasarımcıların Google hesaplarıyla PAYLAŞMAK olmalı: type=user + emailAddress.
+   * Yazma değil YALNIZ OKUMA verilir; dosya silinemez/değiştirilemez.
+   */
+  async klasoruBaglantiyaAc(folderId: string): Promise<void> {
+    await this.api(`${DRIVE}/files/${encodeURIComponent(folderId)}/permissions?supportsAllDrives=true`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "reader", type: "anyone" }),
+    });
+  }
+
+  /**
    * Sipariş klasörü: kök altında adı sipariş numarasıyla BAŞLAYAN klasör varsa onu kullanır,
    * yoksa "MK-… — Müşteri Adı" olarak açar. Sipariş numarası anahtardır (Hasan'ın elle açtığı
    * "müşteri-adı-tarih" klasörleriyle karışmaz; müşteri adı yalnız okunabilirlik için).
@@ -103,6 +125,11 @@ export class DriveService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: ad, mimeType: FOLDER_MIME, parents: [this.rootFolderId] }),
     });
+    // Bağlantı paylaşımı: tasarımcılar klasöre ekli olmadığı için "Drive'da aç" yetki
+    // hatası veriyordu (2026-09-04). Hata deploy'u/ödemeyi bozmasın — yalnız log.
+    await this.klasoruBaglantiyaAc(created.id).catch((e) =>
+      this.logger.warn(`Drive klasörü bağlantıya açılamadı (${created.id}): ${(e as Error)?.message}`),
+    );
     this.logger.log(`Drive klasörü açıldı: ${ad} (${created.id})`);
     return created.id;
   }
