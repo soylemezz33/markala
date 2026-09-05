@@ -43,6 +43,8 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
    * kalıyor ve görsel yakınlaşmış hâlde donuyordu — orada doğru davranış tam ekran.
    */
   const [lightbox, setLightbox] = useState(false);
+  /** Morf geçişin başlangıç dikdörtgeni: görsel TAM bulunduğu kutudan büyüsün diye. */
+  const [kaynakKutu, setKaynakKutu] = useState<DOMRect | null>(null);
   const [imlecliCihaz, setImlecliCihaz] = useState(false);
   const [buyutec, setBuyutec] = useState<{ x: number; y: number } | null>(null);
 
@@ -127,7 +129,14 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
       */}
       <button
         type="button"
-        onClick={() => hasImages && !showFallback && setLightbox(true)}
+        onClick={(e) => {
+          if (!hasImages || showFallback) return;
+          // Büyüteci bırak: pencere açılırken alttaki görsel yakınlaşmış kalmasın,
+          // morf geçiş kutunun GERÇEK ölçüsünden başlasın.
+          setBuyutec(null);
+          setKaynakKutu(e.currentTarget.getBoundingClientRect());
+          setLightbox(true);
+        }}
         onMouseEnter={(e) => {
           if (!imlecliCihaz || showFallback) return;
           const r = e.currentTarget.getBoundingClientRect();
@@ -259,6 +268,7 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
           images={images}
           alt={alt}
           index={active}
+          sourceRect={kaynakKutu}
           onIndexChange={(i) => {
             prefetch(i);
             setActive(i);
