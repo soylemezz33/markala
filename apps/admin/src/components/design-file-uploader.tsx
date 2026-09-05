@@ -84,6 +84,8 @@ export function DesignFileUploader({
   const [kind, setKind] = useState<DesignKind>("onizleme");
   const [busy, setBusy] = useState(false);
   const [oran, setOran] = useState<number | null>(null);
+  /** Çoklu yüklemede "3/12" göstergesi; tek dosyada null. */
+  const [sira, setSira] = useState<{ simdi: number; toplam: number } | null>(null);
   const [drag, setDrag] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const secili = KINDS.find((k) => k.id === kind)!;
@@ -118,31 +120,70 @@ export function DesignFileUploader({
     return "ok";
   }
 
-  async function handleFile(file: File | undefined) {
-    if (!file) return;
+  /** TEK dosyayı yükler; hata fırlatır (çağıran toplu sonucu raporlar). */
+  async function tekDosyaYukle(file: File) {
     if (file.size > secili.max) {
-      toast.error(`${secili.label} en fazla ${Math.round(secili.max / MB)} MB olabilir.`);
+      throw new Error(`"${file.name}" ${Math.round(secili.max / MB)} MB sınırını aşıyor.`);
+    }
+    if (kind === "onizleme") {
+      await sunucuyaYukle(file);
       return;
     }
+    const sonuc = await driveaYukle(file);
+    if (sonuc === "drive-kapali") {
+      if (file.size > SUNUCU_MAX) {
+        throw new Error(`"${file.name}": Drive kapalı, sunucu yolu en fazla 50 MB.`);
+      }
+      await sunucuyaYukle(file);
+    }
+  }
+
+  /**
+   * ÇOKLU YÜKLEME (2026-09-05, Hasan: "tek tek seçiyorum, çoklu kabul etmiyor").
+   *
+   * Dosyalar SIRAYLA yüklenir, paralel değil: Drive'a doğrudan yüklemede her dosya
+   * kendi resumable oturumunu açıyor ve büyük dosyalarda (1000 MB'a kadar) paralel
+   * akış hem tarayıcıyı hem bağlantıyı boğar; ayrıca ilerleme yüzdesi tek akışta
+   * anlamlı kalır.
+   *
+   * Biri düşerse DİĞERLERİ DEVAM EDER — 30 dosyalık bir işte 12.'de kopup geri
+   * kalanı iptal etmek en kötü davranış olurdu. Sonuçta kaç başarılı / kaç hatalı
+   * olduğu tek bildirimde söylenir, hatalıların adı yazılır.
+   */
+  async function handleFiles(list: FileList | File[] | null | undefined) {
+    const dosyalar = Array.from(list ?? []);
+    if (dosyalar.length === 0) return;
     setBusy(true);
     setOran(null);
+    setSira(dosyalar.length > 1 ? { simdi: 1, toplam: dosyalar.length } : null);
+    const hatalar: string[] = [];
+    let basarili = 0;
     try {
-      if (kind === "onizleme") {
-        await sunucuyaYukle(file);
-      } else {
-        const sonuc = await driveaYukle(file);
-        if (sonuc === "drive-kapali") {
-          if (file.size > SUNUCU_MAX) throw new Error("Drive aktarımı kapalı; bu boyutta dosya için Drive gerekli (sunucu yolu en fazla 50 MB).");
-          await sunucuyaYukle(file);
+      for (let i = 0; i < dosyalar.length; i++) {
+        setSira(dosyalar.length > 1 ? { simdi: i + 1, toplam: dosyalar.length } : null);
+        setOran(null);
+        try {
+          await tekDosyaYukle(dosyalar[i]!);
+          basarili++;
+        } catch (e) {
+          hatalar.push(e instanceof Error ? e.message : `"${dosyalar[i]!.name}" yüklenemedi.`);
         }
       }
-      toast.success(`${secili.label} eklendi.`);
-      onDone();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Dosya yüklenemedi.");
+      if (basarili > 0) {
+        toast.success(
+          dosyalar.length > 1
+            ? `${basarili}/${dosyalar.length} dosya eklendi.`
+            : `${secili.label} eklendi.`,
+        );
+        onDone();
+      }
+      // Hata metinleri tek tek gösterilir ki hangi dosyanın neden düştüğü belli olsun.
+      for (const h of hatalar.slice(0, 4)) toast.error(h);
+      if (hatalar.length > 4) toast.error(`ve ${hatalar.length - 4} dosya daha yüklenemedi.`);
     } finally {
       setBusy(false);
       setOran(null);
+      setSira(null);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -175,8 +216,9 @@ export function DesignFileUploader({
         ref={inputRef}
         type="file"
         accept={secili.accept}
+        multiple
         className="hidden"
-        onChange={(e) => handleFile(e.target.files?.[0])}
+        onChange={(e) => handleFiles(e.target.files)}
       />
       <button
         type="button"
@@ -189,7 +231,7 @@ export function DesignFileUploader({
         onDrop={(e) => {
           e.preventDefault();
           setDrag(false);
-          handleFile(e.dataTransfer.files?.[0]);
+          handleFiles(e.dataTransfer.files);
         }}
         disabled={busy}
         className={`mt-2 w-full flex items-center justify-center gap-2 py-3 rounded-md border-2 border-dashed text-xs transition-colors disabled:opacity-60 ${
@@ -201,13 +243,16 @@ export function DesignFileUploader({
         {busy ? (
           <>
             <CircleNotch size={16} className="animate-spin" />
-            {oran === null ? "Yükleniyor…" : `Drive'a yükleniyor… %${Math.round(oran * 100)}`}
+            {/* Çoklu yüklemede hangi dosyada olduğumuz da yazılır: "3/12 · %48" */}
+            {sira ? `${sira.simdi}/${sira.toplam} · ` : ""}
+            {oran === null ? "Yükleniyor…" : `%${Math.round(oran * 100)}`}
           </>
         ) : (
           <>
             <UploadSimple size={16} />
             <span>
               <strong className="font-semibold text-ink-700">{secili.label}</strong> seç veya sürükle-bırak
+              <span className="ml-1 text-[10px] text-ink-400">(birden fazla seçebilirsin)</span>
               <span className="ml-1.5 text-[10px] text-ink-400">{secili.hint}</span>
             </span>
           </>

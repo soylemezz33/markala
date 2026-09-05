@@ -171,6 +171,8 @@ export function ImageGallery({
   // sıralamayı değiştirmek kapağı değiştirmenin doğal yolu — ayrı "kapak seç" alanı yok.
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  /** Çoklu yüklemede "3/8" göstergesi; tek dosyada null. */
+  const [sira, setSira] = useState<{ simdi: number; toplam: number } | null>(null);
 
   /** i konumundaki görseli j'ye taşır (araya sokar, yer değiştirmez). */
   function reorder(from: number, to: number) {
@@ -187,21 +189,57 @@ export function ImageGallery({
     setOverIndex(null);
   }
 
-  async function handleFile(file: File | undefined) {
-    if (!file) return;
-    if (value.length >= max) {
+  /**
+   * ÇOKLU YÜKLEME (2026-09-05, Hasan: "ürün görsellerini de tek tek seçiyorum,
+   * çoklu kabul etmiyor").
+   *
+   * - Dosyalar SIRAYLA yüklenir: aynı anda 10 istek atmak sunucudaki görsel işlemeyi
+   *   (webp dönüşümü) gereksiz yere sıkıştırır; sıra hem daha öngörülebilir hem de
+   *   sonuçtaki DİZİLİM seçim sırasıyla aynı kalır — kapak görseli ilk eleman olduğu
+   *   için bu sıra önemli.
+   * - `max` sınırı aşılırsa fazlası SESSİZCE atılmaz, kaç tanesinin alındığı söylenir.
+   * - Biri düşerse diğerleri devam eder; sonunda kaç başarılı/hatalı olduğu bildirilir.
+   * - Yükleme bitince liste TEK SEFERDE güncellenir (her dosyada onChange çağırmak
+   *   üst formu her seferinde yeniden çizerdi).
+   */
+  async function handleFiles(list: FileList | File[] | null | undefined) {
+    let dosyalar = Array.from(list ?? []);
+    if (dosyalar.length === 0) return;
+
+    const bosYer = max - value.length;
+    if (bosYer <= 0) {
       toast.error(`En fazla ${max} görsel ekleyebilirsiniz.`);
       return;
     }
+    if (dosyalar.length > bosYer) {
+      toast.error(`Sınır ${max} görsel — ilk ${bosYer} tanesi alınıyor.`);
+      dosyalar = dosyalar.slice(0, bosYer);
+    }
+
     setBusy(true);
+    setSira(dosyalar.length > 1 ? { simdi: 1, toplam: dosyalar.length } : null);
+    const yeni: string[] = [];
+    const hatalar: string[] = [];
     try {
-      const url = await uploadImage(file);
-      onChange([...value, url]);
-      toast.success("Görsel yüklendi.");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Görsel yüklenemedi.");
+      for (let i = 0; i < dosyalar.length; i++) {
+        setSira(dosyalar.length > 1 ? { simdi: i + 1, toplam: dosyalar.length } : null);
+        try {
+          yeni.push(await uploadImage(dosyalar[i]!));
+        } catch (e) {
+          hatalar.push(`"${dosyalar[i]!.name}": ${e instanceof Error ? e.message : "yüklenemedi"}`);
+        }
+      }
+      if (yeni.length) {
+        onChange([...value, ...yeni]);
+        toast.success(
+          dosyalar.length > 1 ? `${yeni.length}/${dosyalar.length} görsel yüklendi.` : "Görsel yüklendi.",
+        );
+      }
+      for (const h of hatalar.slice(0, 3)) toast.error(h);
+      if (hatalar.length > 3) toast.error(`ve ${hatalar.length - 3} görsel daha yüklenemedi.`);
     } finally {
       setBusy(false);
+      setSira(null);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -212,8 +250,9 @@ export function ImageGallery({
         ref={inputRef}
         type="file"
         accept={ACCEPT}
+        multiple
         className="hidden"
-        onChange={(e) => handleFile(e.target.files?.[0])}
+        onChange={(e) => handleFiles(e.target.files)}
       />
       <div className="grid grid-cols-3 gap-2">
         {value.map((img, i) => (
@@ -310,7 +349,11 @@ export function ImageGallery({
             className="aspect-square flex flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-paper-200 text-[10px] text-ink-500 hover:border-ink-300 hover:bg-paper-100 disabled:opacity-60"
           >
             {busy ? (
-              <CircleNotch size={18} className="animate-spin" />
+              <>
+                <CircleNotch size={18} className="animate-spin" />
+                {/* Çoklu yüklemede kaçıncı dosyada olduğumuz görünsün. */}
+                {sira && <span className="tabular-nums">{sira.simdi}/{sira.toplam}</span>}
+              </>
             ) : (
               <>
                 <UploadSimple size={18} /> Ekle
@@ -320,7 +363,8 @@ export function ImageGallery({
         )}
       </div>
       <p className="mt-2 text-[10px] text-ink-400">
-        Sürükleyerek sıralayın — baştaki görsel kapak olur · JPG/PNG/WEBP · max 5MB
+        Birden fazla görsel seçebilirsiniz · sürükleyerek sıralayın — baştaki görsel kapak
+        olur · JPG/PNG/WEBP · max 5MB
       </p>
     </div>
   );
