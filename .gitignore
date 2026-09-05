@@ -114,3 +114,8 @@ markala.com.tr-audit/home.html
 markala.com.tr-audit/sitemap.xml
 markala.com.tr-audit/sitemap_fresh.xml
 markala.com.tr-audit/all-urls.txt
+
+# Playwright (e2e/ kendi bagimliliklariyla calisir)
+e2e/node_modules/
+e2e/playwright-report/
+e2e/test-results/

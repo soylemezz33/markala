@@ -19,6 +19,7 @@ import { StatsModule } from "./stats/stats.module";
 import { AdminUsersModule } from "./admin-users/admin-users.module";
 import { CouponsModule } from "./coupons/coupons.module";
 import { ReviewsModule } from "./reviews/reviews.module";
+import { SurveysModule } from "./surveys/surveys.module";
 import { BlogModule } from "./blog/blog.module";
 import { BannersModule } from "./banners/banners.module";
 import { FaqsModule } from "./faqs/faqs.module";
@@ -63,6 +64,7 @@ import { FavoritesModule } from "./favorites/favorites.module";
     AdminUsersModule,
     CouponsModule,
     ReviewsModule,
+    SurveysModule,
     BlogModule,
     BannersModule,
     FaqsModule,
