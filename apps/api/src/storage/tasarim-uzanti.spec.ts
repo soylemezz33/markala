@@ -66,10 +66,31 @@ describe("putDesign — uzantı kuralı", () => {
     );
   });
 
-  it("ZIP hâlâ reddedilir (keyfi arşiv barındırma riski)", async () => {
-    await expect(svc.putDesign(dosya("dosyalar.zip", "application/zip"))).rejects.toThrow(
-      /Kabul edilen formatlar/,
-    );
+  it("MÜŞTERİ yolunda ZIP/RAR reddedilir (kimliksiz uç, keyfi arşiv barındırma riski)", async () => {
+    for (const ad of ["dosyalar.zip", "dosyalar.rar", "dosyalar.7z"]) {
+      await expect(svc.putDesign(dosya(ad, "application/zip"))).rejects.toThrow(
+        /Kabul edilen formatlar/,
+      );
+    }
+  });
+
+  /**
+   * 2026-09-05 (Hasan): "grafikerler zip ve rar da yüklemek istedi". Ayrım kasıtlı:
+   * personel yolu panel arkasında (ORDERS_DESIGN) ve dosya yalnız yetkiliye,
+   * indirmeye zorlanarak servis ediliyor; müşteri yolu ise kimlik doğrulaması istemiyor.
+   */
+  it("PERSONEL yolunda ZIP/RAR/7Z kabul edilir", async () => {
+    for (const ad of ["kaynaklar.zip", "kaynaklar.rar", "kaynaklar.7z"]) {
+      await expect(
+        svc.putDesign({ ...dosya(ad, "application/octet-stream"), personel: true }),
+      ).resolves.toBeTruthy();
+    }
+  });
+
+  it("personel yolunda bile SVG reddedilir (XSS riski arşivden bağımsız)", async () => {
+    await expect(
+      svc.putDesign({ ...dosya("logo.svg", "image/svg+xml"), personel: true }),
+    ).rejects.toThrow(/Kabul edilen formatlar/);
   });
 
   it("uzantısız dosyada mesaj dosya ADINI uzantı gibi göstermez", async () => {

@@ -121,7 +121,13 @@ export class OrderDesignService {
   ) {}
 
   /** Doğrudan Drive yüklemesinde kabul edilen uzantılar (çalışma/baskı). */
-  private static readonly DRIVE_EXT = new Set(["ai", "eps", "pdf", "cdr", "psd", "tif", "tiff", "jpg", "jpeg", "png", "zip", "indd", "svg"]);
+  // rar/7z eklendi (2026-09-05, Hasan: "grafikerler zip ve rar da yüklemek istedi").
+  // zip zaten vardı. Bu yol PERSONELE ait: panel arkasında, dosya Drive'a gidiyor ve
+  // müşteriye açılan hiçbir uçtan servis edilmiyor — müşteri yolunda arşivler kapalı kalır.
+  /** Baskıya hazır alanda kabul edilenler: tek dosyada PDF, çok dosyalı işte arşiv. */
+  private static readonly BASKI_EXT = new Set(["pdf", "zip", "rar", "7z"]);
+
+  private static readonly DRIVE_EXT = new Set(["ai", "eps", "pdf", "cdr", "psd", "tif", "tiff", "jpg", "jpeg", "png", "zip", "rar", "7z", "indd", "svg"]);
   static readonly DRIVE_MAX_BYTES = 1000 * 1024 * 1024;
 
   private async kalemVeSiparis(orderId: string, itemId: string) {
@@ -150,7 +156,14 @@ export class OrderDesignService {
     if (dto.kind !== "calisma" && dto.kind !== "baski") throw new BadRequestException("Bu yol yalnız çalışma/baskı dosyaları içindir.");
     const ext = (dto.fileName.split(".").pop() ?? "").toLowerCase();
     if (!OrderDesignService.DRIVE_EXT.has(ext)) throw new BadRequestException("Desteklenmeyen dosya türü.");
-    if (dto.kind === "baski" && ext !== "pdf") throw new BadRequestException("Baskı dosyası PDF olmalı.");
+    // Baskıya hazır alan: PDF veya ARŞİV (2026-09-05, Hasan iletti — grafikerler bir işte
+    // onlarca baskı dosyası olduğunda tek tek yüklemek yerine zip'liyor). Arşiv, içindeki
+    // dosyaların CMYK/taşma payı/sayfa sayısı açısından DOĞRULANAMADIĞI için bilinçli bir
+    // takas: kolaylık kazanılıyor, "bu slottaki şey basılacak dosyanın kendisidir"
+    // güvencesi kaybediliyor. Baskıyı açan kişinin arşivi açıp doğru dosyayı seçmesi gerekir.
+    if (dto.kind === "baski" && !OrderDesignService.BASKI_EXT.has(ext)) {
+      throw new BadRequestException("Baskı dosyası PDF ya da arşiv (ZIP/RAR/7Z) olmalı.");
+    }
     if (dto.size > OrderDesignService.DRIVE_MAX_BYTES) throw new BadRequestException("Dosya en fazla 1000 MB olabilir.");
     const item = await this.kalemVeSiparis(orderId, itemId);
     const musteri =
@@ -247,6 +260,9 @@ export class OrderDesignService {
       buffer: file.buffer,
       mimetype: file.mimetype,
       originalName: file.originalname,
+      // Bu uç PANEL arkasında (ORDERS_DESIGN); arşivlere yalnız burada izin var.
+      // Müşterinin /uploads/design ucu bu bayrağı GEÇİRMEZ (2026-09-05).
+      personel: true,
     });
 
     let row: DesignRowRaw;

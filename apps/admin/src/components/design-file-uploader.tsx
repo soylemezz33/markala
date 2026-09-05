@@ -13,7 +13,7 @@ import { toast } from "./toast";
  *
  * Üç tür (API ile aynı liste, orders.dto.ts DESIGN_KINDS):
  *   onizleme — küçük RGB JPG/PNG (≤ 2 MB). Sunucuya gider; panelde her kartta gösterilir.
- *   calisma  — AI/PSD/CDR/EPS/TIF çalışma dosyası (≤ 1000 MB) → DOĞRUDAN Drive
+ *   calisma  — AI/PSD/CDR/EPS/TIF/ZIP/RAR çalışma dosyası (≤ 1000 MB) → DOĞRUDAN Drive
  *   baski    — baskıya hazır PDF (≤ 1000 MB) → DOĞRUDAN Drive
  *
  * 1000 MB NEDEN DOĞRUDAN DRIVE: Cloudflare ücretsiz plan tek istekte 100 MB geçirir, sunucu
@@ -33,8 +33,14 @@ const PARCA = 8 * MB;
 
 const KINDS: Array<{ id: DesignKind; label: string; hint: string; accept: string; max: number; Icon: typeof ImageIcon }> = [
   { id: "onizleme", label: "Önizleme", hint: "JPG/PNG · RGB · ≤ 2 MB", accept: ".jpg,.jpeg,.png", max: 2 * MB, Icon: ImageIcon },
-  { id: "calisma", label: "Çalışma dosyası", hint: "AI · PSD · CDR · EPS · TIF · ≤ 1000 MB", accept: ".ai,.psd,.cdr,.eps,.tif,.tiff,.pdf,.jpg,.jpeg,.png,.zip", max: DRIVE_MAX, Icon: FileText },
-  { id: "baski", label: "Baskıya hazır PDF", hint: "PDF · CMYK · taşma paylı · ≤ 1000 MB", accept: ".pdf", max: DRIVE_MAX, Icon: FilePdf },
+    // ZIP/RAR/7Z (2026-09-05, Hasan: "grafikerler zip ve rar da yüklemek istedi"):
+  // çalışma dosyası çoğu zaman arşivli geliyor — bağlı fontlar, linkli görseller,
+  // katman klasörleri. Yalnız BU türde; baskıya hazır dosya PDF olmak zorunda.
+  { id: "calisma", label: "Çalışma dosyası", hint: "AI · PSD · CDR · EPS · TIF · ZIP · RAR · ≤ 1000 MB", accept: ".ai,.psd,.cdr,.eps,.tif,.tiff,.pdf,.jpg,.jpeg,.png,.zip,.rar,.7z", max: DRIVE_MAX, Icon: FileText },
+    // Arşiv (2026-09-05, Hasan iletti): bir işte onlarca baskı dosyası olduğunda tek tek
+  // yüklemek yerine zip'lensin. Yükleyici tek seferde TEK dosya alıyor, o yüzden gerçek
+  // bir ihtiyaç. Etiket "PDF" değil "dosya": slotta artık arşiv de olabilir.
+  { id: "baski", label: "Baskıya hazır dosya", hint: "PDF (CMYK, taşma paylı) · çok dosyalıysa ZIP/RAR · ≤ 1000 MB", accept: ".pdf,.zip,.rar,.7z", max: DRIVE_MAX, Icon: FilePdf },
 ];
 
 /** Drive resumable oturumuna parça parça PUT; dosya kimliğini döner. */

@@ -191,7 +191,7 @@ function tasarimAnahtari(url: string | null | undefined): string | undefined {
   return key && /^[0-9a-f-]{36}\.[a-z0-9]{1,5}$/i.test(key) ? key : undefined;
 }
 
-const KIND_ETIKET: Record<string, string> = { onizleme: "Önizleme", calisma: "Çalışma", baski: "Baskı PDF", musteri: "Müşteri dosyası" };
+const KIND_ETIKET: Record<string, string> = { onizleme: "Önizleme", calisma: "Çalışma", baski: "Baskı dosyası", musteri: "Müşteri dosyası" };
 const boyut = (b: number) => (b >= 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 function tasarimIndirmeYolu(

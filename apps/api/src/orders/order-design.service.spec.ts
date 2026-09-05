@@ -215,7 +215,6 @@ describe("OrderDesignService — doğrudan Drive yüklemesi (2026-09-03, 1000 MB
     const { svc } = makeService({ drive: true, item });
     await expect(svc.driveOturum("o1", "it1", { ...dto, kind: "onizleme" })).rejects.toBeInstanceOf(BadRequestException);
     await expect(svc.driveOturum("o1", "it1", { ...dto, size: 1000 * 1024 * 1024 + 1 })).rejects.toBeInstanceOf(BadRequestException);
-    await expect(svc.driveOturum("o1", "it1", { ...dto, fileName: "final.ai" })).rejects.toBeInstanceOf(BadRequestException);
   });
   it("driveOturum: klasörü açar, panel origin'iyle resumable oturum döner", async () => {
     const { svc, drive } = makeService({ drive: true, item });
@@ -224,6 +223,48 @@ describe("OrderDesignService — doğrudan Drive yüklemesi (2026-09-03, 1000 MB
     expect(drive.ensureOrderFolder).toHaveBeenCalledWith("MK-77", "Ayşe");
     expect(drive.createResumableSession).toHaveBeenCalledWith(expect.objectContaining({ folderId: "FOLDER", name: "MK-77__cin-vinil-branda__baski__final.pdf", size: 12345, origin: "https://admin.test" }));
   });
+  /**
+   * 2026-09-05 (Hasan): "grafikerler zip ve rar da yüklemek istedi". zip zaten açıktı,
+   * rar/7z eklendi. Bu yol PERSONELE ait (panel arkasında, dosya Drive'a gider) —
+   * müşteri yolunda arşivler KAPALI kalır, onu storage.service testleri çakıyor.
+   */
+  it("çalışma dosyası olarak zip/rar/7z kabul edilir", async () => {
+    const { svc } = makeService({ drive: true, item });
+    for (const ad of ["kaynaklar.zip", "kaynaklar.rar", "kaynaklar.7z"]) {
+      await expect(
+        svc.driveOturum("o1", "it1", { ...dto, kind: "calisma", fileName: ad }),
+      ).resolves.toMatchObject({ uploadUrl: expect.any(String) });
+    }
+  });
+
+  /**
+   * 2026-09-05: baskıya hazır alan da arşiv kabul ediyor. Grafikerler bir işte onlarca
+   * baskı dosyası olduğunda tek tek yüklemek yerine arşivliyor (yükleyici tek seferde
+   * tek dosya alıyor). Takas bilinçli: arşivin içi doğrulanamaz.
+   */
+  it("baskıya hazır alan PDF ve arşiv kabul eder", async () => {
+    const { svc } = makeService({ drive: true, item });
+    for (const ad of ["final.pdf", "baskilar.zip", "baskilar.rar", "baskilar.7z"]) {
+      await expect(
+        svc.driveOturum("o1", "it1", { ...dto, kind: "baski", fileName: ad }),
+      ).resolves.toMatchObject({ uploadUrl: expect.any(String) });
+    }
+  });
+
+  it("baskıya hazır alan hâlâ keyfi tür kabul etmez (ör. .ai)", async () => {
+    const { svc } = makeService({ drive: true, item });
+    await expect(
+      svc.driveOturum("o1", "it1", { ...dto, kind: "baski", fileName: "final.ai" }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("bilinmeyen arşiv türü (.tar.gz) hâlâ reddedilir", async () => {
+    const { svc } = makeService({ drive: true, item });
+    await expect(
+      svc.driveOturum("o1", "it1", { ...dto, kind: "calisma", fileName: "kaynak.gz" }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it("driveTamamla: Drive'da doğrular (klasör + boyut), kaydı Drive kimliğiyle açar", async () => {
     const { svc, prisma } = makeService({ drive: true, item });
     const r = await svc.driveTamamla("o1", "it1", { ...dto, driveFileId: "DRV9" }, actor);

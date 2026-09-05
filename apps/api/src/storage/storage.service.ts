@@ -53,6 +53,13 @@ const DESIGN_ALLOWED_EXT = new Set([
  * "application/octet-stream" veya sahte Content-Type ile gönderir → tüm mimetype'lar kabul edilir.
  * Sadece standart görsel/belge formatları kısıtlanır.
  */
+/**
+ * Yalnız PERSONELİN yükleyebildiği ek uzantılar (2026-09-05). Grafiker çalışma dosyalarını
+ * çoğu zaman arşivleyerek gönderiyor: bağlı fontlar, linkli görseller, katman klasörleri.
+ * Müşteri yolunda AÇILMAZ — bkz. DesignUploadInput.personel.
+ */
+const PERSONEL_EK_EXT = new Set(["zip", "rar", "7z"]);
+
 const DESIGN_MIME_WHITELIST: Record<string, Set<string>> = {
   pdf: new Set(["application/pdf"]),
   jpg: new Set(["image/jpeg"]),
@@ -122,6 +129,17 @@ export interface DesignUploadInput {
   buffer: Buffer;
   mimetype: string;
   originalName: string;
+  /**
+   * PERSONEL YÜKLEMESİ (2026-09-05, Hasan: "grafikerler zip ve rar da yüklemek istedi").
+   *
+   * Arşivler MÜŞTERİ yolunda BİLEREK kapalı: orası kimlik doğrulaması istemeyen bir uç ve
+   * keyfi arşiv barındırmaya açılırsa kötüye kullanılır. Grafikerin yolu ise panel
+   * arkasında (ORDERS_DESIGN izni) ve dosya yalnız yetkili panele servis ediliyor
+   * (Content-Disposition: attachment + nosniff) — risk profili tamamen farklı.
+   *
+   * Bu bayrağı YALNIZ order-design.service (personel yolu) geçirir.
+   */
+  personel?: boolean;
 }
 
 export interface DesignUploadResult {
@@ -213,15 +231,17 @@ export class StorageService {
     const ext = input.originalName.includes(".")
       ? (input.originalName.split(".").pop() ?? "").toLowerCase()
       : "";
-    if (!ext || !DESIGN_ALLOWED_EXT.has(ext)) {
+    const izinli = DESIGN_ALLOWED_EXT.has(ext) || (!!input.personel && PERSONEL_EK_EXT.has(ext));
+    if (!ext || !izinli) {
       // Hangi uzantıların denendiğini görebilelim: 2026-09-04'e kadar reddin sebebi
       // hiçbir yere yazılmıyordu, müşteri "yükleme çalışmıyor" derken neyi denediğini
       // bilemiyorduk. Dosya ADI loglanmaz (müşteri verisi), yalnız uzantı.
       this.logger.warn(`tasarım yükleme reddedildi: uzantı "${ext || "(yok)"}"`);
       const neden = ext ? `".${ext}" dosyası yüklenemiyor` : "Dosyanın uzantısı yok";
-      throw new BadRequestException(
-        `${neden}. Kabul edilen formatlar: PDF, AI, EPS, CDR, PSD, JPG, PNG, WEBP, TIFF.`,
-      );
+      const liste = input.personel
+        ? "PDF, AI, EPS, CDR, PSD, JPG, PNG, WEBP, TIFF, ZIP, RAR, 7Z"
+        : "PDF, AI, EPS, CDR, PSD, JPG, PNG, WEBP, TIFF";
+      throw new BadRequestException(`${neden}. Kabul edilen formatlar: ${liste}.`);
     }
     // Mimetype doğrulama: PDF/JPG/PNG/TIFF için izin verilen mimetype listesi kontrol edilir.
     // CDR/AI/EPS/PSD gibi vendor formatlar için whitelist yoksa herhangi mimetype kabul edilir
