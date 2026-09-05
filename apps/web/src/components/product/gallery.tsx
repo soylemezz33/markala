@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { cn } from "@markala/ui";
 import { ProductImageFallback } from "@/components/product/product-image-fallback";
+import { GalleryLightbox } from "@/components/product/gallery-lightbox";
+import { MagnifyingGlassPlus } from "@phosphor-icons/react";
 
 /**
  * Ürün galerisi.
@@ -32,6 +34,21 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
   const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
   /** İndirmesi BAŞLATILMIŞ görseller: ilk görsel + ön-yüklenenler. */
   const [mounted, setMounted] = useState<Set<number>>(() => new Set([0]));
+  /**
+   * GÖRSEL İNCELEME (2026-09-05, Hasan: "üstüne gelince zoom yapmıyor, tıklayınca
+   * açılmıyor"). İki ayrı davranış:
+   *  - Masaüstünde imleci takip eden BÜYÜTEÇ: kutunun içinde kalır, sayfayı bozmaz.
+   *  - Her cihazda tıklayınca TAM EKRAN pencere (gallery-lightbox.tsx).
+   * Büyüteç yalnız gerçek imleçli cihazlarda: dokunmatikte "hover" bir kez takılıp
+   * kalıyor ve görsel yakınlaşmış hâlde donuyordu — orada doğru davranış tam ekran.
+   */
+  const [lightbox, setLightbox] = useState(false);
+  const [imlecliCihaz, setImlecliCihaz] = useState(false);
+  const [buyutec, setBuyutec] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    setImlecliCihaz(window.matchMedia?.("(hover: hover) and (pointer: fine)").matches ?? false);
+  }, []);
 
   const hasImages = images.length > 0;
 
@@ -103,7 +120,27 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
           de aynı ölçüye clamp'lenir; yükseklik sınırı (fiyat+CTA scroll'suz görünsün,
           2026-08-07) böylece korunur, kırpma biter. mx-auto: küçük resimler de
           büyük görselle aynı hizada kalsın diye sarmalayıcıya uygulanır. */}
-      <div className="relative aspect-square bg-paper-100 rounded-lg overflow-hidden">
+      {/*
+        Kutunun kendisi artık bir DÜĞME: tıklayınca tam ekran açılır, klavyeyle de
+        erişilebilir. Büyüteç imleç konumunu transform-origin'e çevirir — tek bir CSS
+        dönüşümü, ek görsel indirilmez, düzen (layout) hiç değişmez.
+      */}
+      <button
+        type="button"
+        onClick={() => hasImages && !showFallback && setLightbox(true)}
+        onMouseEnter={(e) => {
+          if (!imlecliCihaz || showFallback) return;
+          const r = e.currentTarget.getBoundingClientRect();
+          setBuyutec({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
+        }}
+        onMouseMove={(e) => {
+          if (!imlecliCihaz || showFallback) return;
+          const r = e.currentTarget.getBoundingClientRect();
+          setBuyutec({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
+        }}
+        onMouseLeave={() => setBuyutec(null)}
+        aria-label={hasImages ? `${alt} — görseli büyüt` : alt}
+        className="group relative block w-full aspect-square bg-paper-100 rounded-lg overflow-hidden cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-900 focus-visible:ring-offset-2">
         {hasImages
           ? images.map((src, i) =>
               mounted.has(i) && !brokenImages.has(i) ? (
@@ -120,9 +157,16 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
                   className={cn(
                     // contain: kare olmayan bir görsel yüklenirse de HİÇBİR ŞEY kırpılmaz;
                     // kare görselde kare kutuda cover ile birebir aynı sonucu verir.
-                    "object-contain transition-opacity duration-300 ease-out",
+                    "object-contain transition-[opacity,transform] duration-300 ease-out",
                     i === visible ? "opacity-100" : "opacity-0",
                   )}
+                  // Büyüteç YALNIZ görünen görsele uygulanır; diğerleri boşuna
+                  // dönüştürülüp GPU katmanı açmasın.
+                  style={
+                    i === visible && buyutec
+                      ? { transform: "scale(1.9)", transformOrigin: `${buyutec.x}% ${buyutec.y}%` }
+                      : undefined
+                  }
                   onLoad={() => setLoaded((prev) => (prev.has(i) ? prev : new Set(prev).add(i)))}
                   onError={() => markBroken(i)}
                 />
@@ -152,7 +196,22 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
             className="absolute inset-x-0 top-0 h-0.5 bg-brand-500/70 animate-pulse"
           />
         )}
-      </div>
+
+        {/* Yapılabilirlik işareti: büyütülebildiği görünsün. Yalnız hover'da belirir,
+            dokunmatikte sürekli durur (orada hover yok, ipucu olmadan anlaşılmaz). */}
+        {hasImages && !showFallback && (
+          <span
+            aria-hidden
+            className={cn(
+              "absolute bottom-2.5 right-2.5 inline-flex items-center gap-1.5 rounded-full bg-ink-900/70 px-2.5 py-1.5 text-[11px] font-medium text-paper-50 backdrop-blur-sm transition-opacity duration-200",
+              imlecliCihaz ? "opacity-0 group-hover:opacity-100" : "opacity-90",
+            )}
+          >
+            <MagnifyingGlassPlus size={13} weight="bold" />
+            <span className="hidden sm:inline">Büyüt</span>
+          </span>
+        )}
+      </button>
 
       {hasImages && images.length > 1 && (
         <div className="mt-2.5 grid grid-cols-6 lg:grid-cols-7 gap-2">
@@ -193,6 +252,19 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
             </button>
           ))}
         </div>
+      )}
+
+      {lightbox && hasImages && (
+        <GalleryLightbox
+          images={images}
+          alt={alt}
+          index={active}
+          onIndexChange={(i) => {
+            prefetch(i);
+            setActive(i);
+          }}
+          onClose={() => setLightbox(false)}
+        />
       )}
     </div>
   );
