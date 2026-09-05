@@ -23,6 +23,13 @@ import { PrismaService } from "../prisma/prisma.service";
  */
 
 export const ARIZA_PENCERESI_MS = 15 * 60 * 1000;
+/**
+ * Panel şeridinde "son hata" YALNIZ bu pencere içindeyse anılır (2026-09-05, Hasan:
+ * "her gün hata varmış gibi gözüküyor"). Şerit `lastFailureAt`i yaşına bakmadan
+ * basıyordu: haftalar önceki tek bir hata her gün "son hata 14:47" olarak duruyor,
+ * uyarı anlamını yitiriyordu. 24 saat, "bugün bir sorun oldu mu?" sorusunun karşılığı.
+ */
+export const SERIT_HATA_PENCERESI_MS = 24 * 60 * 60 * 1000;
 export const UYARI_ARALIGI_MS = 30 * 60 * 1000;
 
 export interface MailDurumu {
@@ -30,6 +37,8 @@ export interface MailDurumu {
   lastFailureAt: string | null;
   lastSentAt: string | null;
   failedLast15m: number;
+  /** Son 24 saatteki başarısız gönderim sayısı — şerit bunu gösterir (tek zaman damgası değil). */
+  failedLast24h: number;
   lastError: string | null;
 }
 
@@ -109,10 +118,12 @@ export class MailHealthService {
   /** DB'den anlık durum — GET /health/mail ve panel şeridi. */
   async durum(): Promise<MailDurumu> {
     const since = new Date(Date.now() - ARIZA_PENCERESI_MS);
-    const [sonHata, sonBasari, sayi] = await Promise.all([
+    const gunluk = new Date(Date.now() - SERIT_HATA_PENCERESI_MS);
+    const [sonHata, sonBasari, sayi, gunlukSayi] = await Promise.all([
       this.prisma.notificationLog.findFirst({ where: { status: "failed" }, orderBy: { createdAt: "desc" }, select: { createdAt: true, metadata: true } }),
       this.prisma.notificationLog.findFirst({ where: { status: "sent" }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
       this.prisma.notificationLog.count({ where: { status: "failed", createdAt: { gte: since } } }),
+      this.prisma.notificationLog.count({ where: { status: "failed", createdAt: { gte: gunluk } } }),
     ]);
     const meta = (sonHata?.metadata ?? null) as { error?: string } | null;
     return {
@@ -120,6 +131,7 @@ export class MailHealthService {
       lastFailureAt: sonHata?.createdAt?.toISOString() ?? null,
       lastSentAt: sonBasari?.createdAt?.toISOString() ?? null,
       failedLast15m: sayi,
+      failedLast24h: gunlukSayi,
       // Gizli veri sızmasın: hata metninin yalnız başı (535 Authentication failed vb.).
       lastError: typeof meta?.error === "string" ? meta.error.slice(0, 120) : null,
     };

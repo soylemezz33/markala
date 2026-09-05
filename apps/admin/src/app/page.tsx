@@ -52,18 +52,42 @@ export const revalidate = 0;
 const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 /** E-posta gönderim sağlığı (2026-09-03, Hasan: "panoda kırmızıya çeksin"). Herkese açık uç; 503 = arızalı. */
-async function mailSagligi(): Promise<{ ok: boolean; failedLast15m?: number; lastError?: string | null; lastFailureAt?: string | null; lastSentAt?: string | null } | null> {
+async function mailSagligi(): Promise<{ ok: boolean; failedLast15m?: number; failedLast24h?: number; lastError?: string | null; lastFailureAt?: string | null; lastSentAt?: string | null } | null> {
   try {
     const r = await fetch(`${API_URL}/api/health/mail`, { cache: "no-store" });
     const j = (await r.json().catch(() => null)) as Record<string, unknown> | null;
     if (!j) return { ok: r.ok };
-    return { ok: typeof j.ok === "boolean" ? j.ok : r.ok, failedLast15m: Number(j.failedLast15m ?? 0), lastError: (j.lastError as string) ?? null, lastFailureAt: (j.lastFailureAt as string) ?? null, lastSentAt: (j.lastSentAt as string) ?? null };
+    return {
+      ok: typeof j.ok === "boolean" ? j.ok : r.ok,
+      failedLast15m: Number(j.failedLast15m ?? 0),
+      failedLast24h: Number(j.failedLast24h ?? 0),
+      lastError: (j.lastError as string) ?? null,
+      lastFailureAt: (j.lastFailureAt as string) ?? null,
+      lastSentAt: (j.lastSentAt as string) ?? null,
+    };
   } catch {
     return null;
   }
 }
 
 const saat = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : "—");
+
+/**
+ * Zamanı GÜNÜYLE birlikte yazar: "bugün 14:47", "dün 09:12", "3 Eyl 14:47".
+ * Şerit eskiden yalnız saat basıyordu; haftalar önceki bir hata bugünmüş gibi
+ * görünüyordu (2026-09-05, Hasan: "her gün hata varmış gibi gözüküyor").
+ */
+function gunSaat(iso?: string | null): string {
+  if (!iso) return "—";
+  const t = new Date(iso);
+  const s = t.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  const bugun = new Date();
+  const ayniGun = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (ayniGun(t, bugun)) return `bugün ${s}`;
+  const dun = new Date(bugun.getTime() - 86400000);
+  if (ayniGun(t, dun)) return `dün ${s}`;
+  return `${t.toLocaleDateString("tr-TR", { day: "numeric", month: "short" })} ${s}`;
+}
 
 export default async function DashboardPage() {
   // 2026-08-21 (Hasan, tasarimci hesabiyla test): parasal kutular herkese gorunuyor ve
@@ -183,9 +207,19 @@ export default async function DashboardPage() {
             E-posta gönderimi: {mail.ok ? "Sağlıklı" : "ARIZALI"}
           </span>
           <span className={mail.ok ? "text-ink-500" : "text-paper-50/90"}>
+            {/*
+              Sağlıklıyken hata SATIRI, yalnız SON 24 SAATTE hata varsa yazılır. Eskiden
+              `lastFailureAt` yaşına bakılmadan basılıyordu: aylar önceki tek bir hata her
+              gün "son hata 14:47" olarak duruyor, şerit "hep bir sorun var" gibi okunup
+              anlamını yitiriyordu. Artık sayı + gün ile: "son 24 saatte 2 hata (bugün 14:47)".
+            */}
             {mail.ok
-              ? `Son gönderim ${saat(mail.lastSentAt)}${mail.lastFailureAt ? ` · son hata ${saat(mail.lastFailureAt)}` : ""}`
-              : `Son 15 dk ${mail.failedLast15m ?? "?"} başarısız · ${mail.lastError ?? "hata"} (${saat(mail.lastFailureAt)}) → kayıtlara git`}
+              ? `Son gönderim ${gunSaat(mail.lastSentAt)}${
+                  (mail.failedLast24h ?? 0) > 0
+                    ? ` · son 24 saatte ${mail.failedLast24h} hata (${gunSaat(mail.lastFailureAt)})`
+                    : ""
+                }`
+              : `Son 15 dk ${mail.failedLast15m ?? "?"} başarısız · ${mail.lastError ?? "hata"} (${gunSaat(mail.lastFailureAt)}) → kayıtlara git`}
           </span>
         </Link>
       )}
