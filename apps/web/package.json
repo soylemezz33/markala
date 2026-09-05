@@ -15,6 +15,7 @@
     "test:visual:update": "playwright test tests/visual --update-snapshots"
   },
   "dependencies": {
+    "@formbricks/js": "^4.4.0",
     "@markala/api-client": "workspace:*",
     "@markala/mock-data": "workspace:*",
     "@markala/types": "workspace:*",

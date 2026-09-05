@@ -15,6 +15,7 @@ import { CookieConsent } from "@/components/cookie-consent";
 import { WhatsAppOlcum } from "@/components/whatsapp-olcum";
 import { FloatingActions } from "@/components/floating-actions";
 import { WebVitals } from "@/components/web-vitals";
+import { FeedbackWidget } from "@/components/feedback-widget";
 import { AuthBootstrap } from "@/components/auth-bootstrap";
 import { WishlistSync } from "@/components/wishlist-sync";
 import "./globals.css";
@@ -172,6 +173,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <AttributionCapture />
         </Suspense>
         <WebVitals />
+        {/* Formbricks site içi anketi — env tanımlı değilse hiç yüklenmez */}
+        <FeedbackWidget />
       </body>
     </html>
   );
