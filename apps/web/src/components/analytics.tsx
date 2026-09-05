@@ -13,6 +13,8 @@ import Script from "next/script";
  *   NEXT_PUBLIC_CLARITY_ID     — Microsoft Clarity proje ID
  *   NEXT_PUBLIC_HOTJAR_ID      — (opsiyonel) Hotjar site ID
  *   NEXT_PUBLIC_GTM_ID         — (opsiyonel) Google Tag Manager
+ *   NEXT_PUBLIC_UMAMI_WEBSITE_ID — Umami site id (self-host: analytics.324ajans.com)
+ *   NEXT_PUBLIC_UMAMI_SRC        — (opsiyonel) script adresi; varsayılan 324ajans kurulumu
  *
  * NOT: Script'ler consent-aware değil — fbq/gtag objeleri her zaman yüklenir.
  * Consent kontrolü lib/analytics.ts'deki track()/fbtrack() wrapper'larındadır.
@@ -30,6 +32,10 @@ export function Analytics() {
   const clarity = process.env.NEXT_PUBLIC_CLARITY_ID;
   const hotjar = process.env.NEXT_PUBLIC_HOTJAR_ID;
   const gtm = process.env.NEXT_PUBLIC_GTM_ID;
+  // Umami (self-host, analytics.324ajans.com). Çerez kullanmaz, kişisel veri toplamaz —
+  // bu yüzden Consent Mode akışına dahil DEĞİL, onay beklemeden yüklenir (KVKK/GDPR uyumlu).
+  const umamiId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+  const umamiSrc = process.env.NEXT_PUBLIC_UMAMI_SRC || "https://analytics.324ajans.com/script.js";
 
   return (
     <>
@@ -161,6 +167,15 @@ export function Analytics() {
             } catch (e) {}
           `}
         </Script>
+      )}
+      {umamiId && (
+        <Script
+          id="umami"
+          src={umamiSrc}
+          data-website-id={umamiId}
+          strategy="afterInteractive"
+          defer
+        />
       )}
     </>
   );
