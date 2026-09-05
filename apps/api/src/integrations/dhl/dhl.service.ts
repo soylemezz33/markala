@@ -93,6 +93,15 @@ export class DhlService {
     return Boolean(this.apiKey && this.accountNumber);
   }
 
+  /**
+   * TAKİP sorgusu yapılabilir mi? Yalnız API anahtarı yeter — gönderi OLUŞTURMA (isLive)
+   * ayrıca hesap numarası ister. İkisi karıştırılırsa anahtar tanımlıyken takip taraması
+   * sessizce atlanırdı (2026-09-05, kargo teslim taraması).
+   */
+  takipYapilabilir(): boolean {
+    return Boolean(this.apiKey);
+  }
+
   /** Yeni gönderi oluştur, tracking no + label döner */
   async createShipment(input: DhlShipmentInput): Promise<DhlShipmentResult> {
     if (this.isLive()) {

@@ -36,6 +36,7 @@ import { OrderDesignService } from "./order-design.service";
 import { OrderDriveService } from "../storage/order-drive.service";
 import { izinliDurumGecisi } from "./status-yetki";
 import { OrderNoteService } from "./order-note.service";
+import { KargoTakipService } from "./kargo-takip.service";
 import type { Request } from "express";
 
 
@@ -67,6 +68,9 @@ export class OrdersController {
     private orderDrive: OrderDriveService,
     // İç not defteri — aynı gerekçeyle ayrı servis (bkz. order-note.service.ts başlığı).
     private notes: OrderNoteService,
+    // Kargo teslim taraması — cron'un çalıştırdığı kodun elle tetiklenebilir kopyası değil,
+    // AYNISI (bkz. kargo-takip.service.ts başlığı).
+    private kargoTakip: KargoTakipService,
   ) {}
 
   /**
@@ -258,6 +262,20 @@ export class OrdersController {
       { trackingNumber: dto.trackingNumber, trackingCarrier: dto.trackingCarrier },
       { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null, role: req.user?.role },
     );
+  }
+
+  /**
+   * Kargo teslim taramasını ELLE tetikler (2026-09-05). Cron her akşam 19:00'da aynı
+   * kodu çalıştırır; bu uç yalnız "şimdi bak" demek için — davranışın tek bir yolu olsun.
+   * Yetki ORDERS_STATUS: uç, siparişleri TESLİM EDİLDİ'ye çekip müşteriye mail attırır.
+   */
+  @Post("kargo-taramasi")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_STATUS)
+  @ApiBearerAuth()
+  kargoTaramasi() {
+    return this.kargoTakip.tara();
   }
 
   /**
