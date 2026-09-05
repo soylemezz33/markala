@@ -1,0 +1,14 @@
+{
+  "name": "@markala/e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Playwright uçtan uca testleri — monorepo bağımlılıklarından ayrı tutulur",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "codegen": "playwright codegen https://markala.com.tr"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
+}

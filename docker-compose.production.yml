@@ -93,6 +93,9 @@ services:
       N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}
       # n8n -> Markala geri-cagri paylasimli gizli anahtari (POST /internal/cart-reminder).
       INTERNAL_WEBHOOK_SECRET: ${INTERNAL_WEBHOOK_SECRET:-}
+      # Formbricks anket yaniti webhook'unun paylasimli anahtari (POST /api/webhooks/formbricks).
+      # Bos ise endpoint 401 doner - kazara korumasiz kalmaz.
+      FORMBRICKS_WEBHOOK_SECRET: ${FORMBRICKS_WEBHOOK_SECRET:-}
       TZ: Europe/Istanbul
     networks:
       - markala

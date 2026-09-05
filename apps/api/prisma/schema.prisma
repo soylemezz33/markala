@@ -686,6 +686,35 @@ model Review {
   @@map("reviews")
 }
 
+// === Anket yanıtları (Formbricks) ===
+
+/// Teslimat sonrası müşteri anketinin ham yanıtları.
+/// Review tablosundan AYRI tutulur: Review tek `rating` + zorunlu `productId` ile
+/// ürün yorumu içindir; anket ise sipariş bazlı ve iki ayrı puan taşır (ürün + kargo).
+/// Yüksek puanlı yorumlar buradan Review'a taşınabilir (şimdilik elle).
+model SurveyResponse {
+  id         String  @id @default(cuid())
+  surveyId   String  @map("survey_id")
+  /// Formbricks response id — webhook tekrarına karşı idempotency anahtarı.
+  responseId String  @unique @map("response_id")
+
+  orderId    String? @map("order_id")
+  customerId String? @map("customer_id")
+
+  urunPuan   Int?    @map("urun_puan")
+  kargoPuan  Int?    @map("kargo_puan")
+  yorum      String? @db.Text
+
+  /// Ham payload — soru seti değişirse veri kaybı olmasın diye saklanır.
+  raw        Json?
+
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("survey_responses")
+}
+
 // === Blog ===
 
 enum BlogStatus {

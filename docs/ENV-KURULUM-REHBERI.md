@@ -510,3 +510,65 @@ console.log('Hedef adres:', getContactTo());
 ---
 
 *Son güncelleme: Ağustos 2026 — Hasan Söylemez*
+
+---
+
+## Ops Yığını Entegrasyonu (2026-09-05)
+
+324 Ajans ops yığını kuruldu (`ops.324ajans.com` üzerinde Coolify). Aşağıdaki değişkenler
+o kurulumla ilgilidir. Servisler Cloudflare Tunnel arkasında çalışır; markala'dan giden
+istekler için ek bir ağ ayarı gerekmez (veri yolları Access bypass'lıdır).
+
+### `apps/web` — Umami (trafik ölçümü)
+
+```bash
+# Self-host Umami — analytics.324ajans.com
+# Çerez kullanmaz, kişisel veri toplamaz → Consent Mode akışına dahil DEĞİL.
+NEXT_PUBLIC_UMAMI_WEBSITE_ID=33847906-97a8-4ffc-9445-ab96bba5eb2d
+# Opsiyonel; tanımsızsa varsayılan https://analytics.324ajans.com/script.js kullanılır
+NEXT_PUBLIC_UMAMI_SRC=https://analytics.324ajans.com/script.js
+```
+
+Değişken tanımlı değilse script hiç render edilmez — mevcut `Analytics` bileşeninin
+davranışıyla aynı.
+
+### `apps/web` + `apps/admin` — GlitchTip (hata takibi)
+
+**Kod değişikliği gerekmez.** Sentry SDK zaten kurulu; yalnızca DSN'i GlitchTip
+kurulumuna çevirmek yeterli (GlitchTip, Sentry protokolüyle uyumludur):
+
+```bash
+NEXT_PUBLIC_SENTRY_DSN=https://b5f0a340-bf59-48aa-b48c-5e64a17a3e3f@errors.324ajans.com/1
+SENTRY_DSN=https://b5f0a340-bf59-48aa-b48c-5e64a17a3e3f@errors.324ajans.com/1
+```
+
+Öneri: `tracesSampleRate: 0.1`, `replaysSessionSampleRate: 0`
+(session replay PostHog tarafında planlanıyor, GlitchTip'te değil).
+
+### `apps/api` — Formbricks webhook
+
+```bash
+# Anket yanıtı webhook'unu doğrulayan paylaşılan anahtar.
+# TANIMLI DEĞİLSE endpoint 401 döner (kazara korumasız kalmasın diye).
+# Üret: openssl rand -hex 32
+FORMBRICKS_WEBHOOK_SECRET=
+```
+
+Formbricks tarafındaki webhook adresi şu biçimde olmalıdır:
+
+```
+https://api.markala.com.tr/api/webhooks/formbricks?secret=<FORMBRICKS_WEBHOOK_SECRET>
+```
+
+> Formbricks self-host HMAC imzası göndermiyor; doğrulamanın tek yolu bu paylaşılan
+> anahtardır. Anahtar query string'de taşınır çünkü Formbricks webhook tanımında
+> özel header alanı yoktur.
+
+### Uçtan uca testler (`e2e/`)
+
+CI'da `E2E_BASE_URL` repo değişkeni tanımlıysa testler oraya, tanımsızsa canlı siteye
+koşar. Yerelde:
+
+```bash
+cd e2e && npm install && npx playwright install chromium && npm test
+```
