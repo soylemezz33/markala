@@ -104,6 +104,37 @@ done
 [ "$stale" = "0" ] || { echo "❌ Deploy uygulanmadı (konteyner yenilenmedi)"; geri_al; exit 1; }
 
 # Buraya YALNIZ her şey sağlıklıyken gelinir; artık geri alma imajını tutmaya gerek yok.
+# ─────────────────────────────────────────────────────────────────────────────
+# ÇALIŞAN SÜRÜMÜ .env.production'A YAZ (2026-09-05 olayı)
+#
+# .env.production'da TAG=latest sabitti. Deploy doğru etiketle ayağa kaldırıyor, ama
+# SONRADAN elle çalıştırılan herhangi bir `docker compose up -d api` TAG'i env dosyasından
+# okuyup "latest"e düşüyor — ve sunucudaki yerel "latest" etiketi bayat olduğu için
+# uygulama SESSİZCE eski sürüme dönüyordu.
+#
+# Gerçekten yaşandı: 4 Eylül 18:21'de deploy web/admin/api'yi main-f319bea ile kaldırdı,
+# 18:24'te elle yapılan bir compose komutu YALNIZ api'yi 41 saat eski "latest" imajına
+# geri aldı. Deploy yeşil raporlandı, panelde tasarım dosyası indirilemez oldu.
+#
+# Çözüm: deploy, uyguladığı etiketi env dosyasına yazar. Böylece daha sonra elle
+# çalıştırılan compose komutları AYNI sürümü ayağa kaldırır.
+if grep -q '^TAG=' .env.production 2>/dev/null; then
+  sed -i "s|^TAG=.*|TAG=${TAG}|" .env.production
+else
+  printf '
+TAG=%s
+' "$TAG" >> .env.production
+fi
+echo "→ .env.production TAG=${TAG} olarak sabitlendi (elle compose de aynı sürümü kaldırır)"
+
+# Sürüklenme bekçisi: üç servis de beklenen etiketle mi koşuyor?
+surukleme=0
+for s in web admin api; do
+  calisan="$(docker inspect -f '{{.Config.Image}}' "markala-$s" 2>/dev/null | sed 's/.*://')"
+  [ "$calisan" = "$TAG" ] || { echo "  ⚠ markala-$s beklenen '$TAG' yerine '$calisan' çalıştırıyor"; surukleme=1; }
+done
+[ "$surukleme" = "0" ] && echo "→ Üç servis de $TAG çalışıyor" || echo "⚠ Sürüm sürüklenmesi var (yukarıda)"
+
 echo "→ Eski imaj temizliği (volume/DB DOKUNULMAZ)..."
 docker image prune -f >/dev/null 2>&1 || true
 df -h / | tail -1
