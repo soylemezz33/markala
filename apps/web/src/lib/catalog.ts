@@ -343,16 +343,20 @@ export async function getHeaderNav(): Promise<NavCategory[] | null> {
     // tahmin edip (uploads/products/<slug>.webp) çoğu üründe 404 → mockup basıyordu (Çin Vinil
     // Branda'nın görseli vinil-branda-440gr.webp adında). Kayıtta image yoksa ürünün gerçek ilk
     // görseliyle SUNUCUDA doldurulur; fetchJson 300 sn önbellekli, 16 kart için maliyet düşük.
-    // Ürün bulunamazsa/hata olursa alan boş kalır, kart eski tahmin+mockup davranışına düşer.
-    const eksik = nav.flatMap((c) => (c.featured ?? []).filter((f) => !f.image));
+    // Ürün bulunamazsa/hata olursa kayıttaki değer (varsa) kalır, o da yoksa tahmin+mockup.
+    //
+    // 2026-09-04 ikinci düzeltme (Hasan: "yeni görseller yüklendi, menü hâlâ eskisini gösteriyor"):
+    // kayıttaki `image` bir SNAPSHOT'tır; admin ürün görselini değiştirince bayatlar. Kural:
+    // ürünün GÜNCEL ilk görseli her zaman kazanır, kayıttaki değer yalnız yedektir.
+    const featured = nav.flatMap((c) => c.featured ?? []);
     await Promise.all(
-      eksik.map(async (f) => {
+      featured.map(async (f) => {
         try {
           const p = (await fetchJson(`/products/${encodeURIComponent(f.slug)}`)) as { images?: unknown };
           const img = Array.isArray(p?.images) ? p.images.find((x) => typeof x === "string" && x) : null;
           if (typeof img === "string") f.image = img;
         } catch {
-          /* kart tahmin+mockup'a düşer */
+          /* kayıttaki image (varsa) kalır; yoksa kart tahmin+mockup'a düşer */
         }
       }),
     );
