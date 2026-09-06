@@ -22,8 +22,13 @@ export class LoyaltyService {
 
   static readonly EARN_POINTS_PER_TL = 1;
   static readonly REDEEM_POINTS_PER_TL = 10; // 10 puan = 1 TL → 100 puan = 10 TL indirim
-  /** Bir siparişte puanla karşılanabilecek azami oran (ara toplamın yüzdesi). */
-  static readonly MAX_REDEEM_RATIO = 0.5;
+  /**
+   * Bir siparişte puanla karşılanabilecek azami oran (ara toplamın yüzdesi).
+   * 2026-09-06 ortak kararı (karar 2): tavan KALDIRILDI — müşteri puanıyla sepetin tamamını
+   * ödeyebilir (puan müşterinin kazanılmış hakkı; kupon/kurumsal tavanı ayrı, orders.service).
+   * Eski değer 0,5 idi.
+   */
+  static readonly MAX_REDEEM_RATIO = 1;
 
   constructor(private prisma: PrismaService) {}
 

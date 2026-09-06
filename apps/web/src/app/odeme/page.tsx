@@ -299,7 +299,7 @@ export default function CheckoutPage() {
     couponInfo && couponInfo.code === couponCode && !hosgeldinBlocked ? couponInfo : null;
   const appliedCoupon =
     couponCode && !hosgeldinBlocked && (backendCoupon || KNOWN_COUPONS[couponCode]) ? couponCode : null;
-  const discount = backendCoupon
+  const discountRaw = backendCoupon
     ? backendCoupon.discount
     : appliedCoupon
       ? indirimTabani * (KNOWN_COUPONS[appliedCoupon] ?? 0)
@@ -312,7 +312,12 @@ export default function CheckoutPage() {
     user && user.accountType === "corporate" && user.corporateStatus === "approved" && accountType === "corporate"
       ? Number(user.corporateDiscount ?? 0) || 0
       : 0;
-  const corpDiscount = corpPct > 0 ? Math.round(indirimTabani * corpPct) / 100 : 0;
+  const corpDiscountRaw = corpPct > 0 ? Math.round(indirimTabani * corpPct) / 100 : 0;
+  // Kupon + kurumsal iskonto toplam tavanı %25 (2026-09-06 ortak kararı; sunucu
+  // orders.service KUPON_KURUMSAL_TAVAN_YUZDE ile aynı). Havale ve puan tavana dahil değil.
+  const kuponKurumsalTavan = Math.round(indirimTabani * 25) / 100;
+  const discount = Math.min(discountRaw, kuponKurumsalTavan);
+  const corpDiscount = Math.min(corpDiscountRaw, Math.max(0, kuponKurumsalTavan - discount));
 
   // === Sadakat puanı harcama (önizleme; gerçek indirim siparişte sunucuda yeniden doğrulanır) ===
   // Sunucu kuralıyla aynı sınır: bakiye (tam TL), ara toplamın %50'si ve kupon/kurumsal sonrası
@@ -328,12 +333,10 @@ export default function CheckoutPage() {
       : 0;
 
   const roomBeforeRedeem = Math.max(0, indirimTabani - discount - corpDiscount - havaleDiscount);
+  // 2026-09-06 ortak kararı: sepet tavanı (%50) KALDIRILDI — puan, indirim tabanının kalan
+  // tamamına kadar kullanılabilir (sunucu maxRedeemablePoints ile aynı kural).
   const maxRedeemTl = loyaltyOn
-    ? Math.min(
-        Math.floor(indirimTabani * 0.5),
-        Math.floor(roomBeforeRedeem),
-        Math.floor((loyalty?.balance ?? 0) / redeemPerTl),
-      )
+    ? Math.min(Math.floor(roomBeforeRedeem), Math.floor((loyalty?.balance ?? 0) / redeemPerTl))
     : 0;
   const maxRedeemPoints = Math.max(0, maxRedeemTl * redeemPerTl);
   const redeemApplied = Math.max(0, Math.min(redeemPoints, maxRedeemPoints));
@@ -1598,7 +1601,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="mt-1.5 flex items-center justify-between">
                       <p className="text-[11px] text-ink-500">
-                        {redeemPerTl} puan = 1 TL · en fazla sepetin %50'si
+                        {redeemPerTl} puan = 1 TL · sepetin tamamına kadar kullanılabilir
                       </p>
                       {redeemApplied > 0 && (
                         <button

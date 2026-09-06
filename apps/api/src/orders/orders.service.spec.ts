@@ -620,9 +620,10 @@ describe("OrdersService.create — indirim subtotal clamp (#1)", () => {
     maxUses: null, usedCount: 0, minOrderAmount: null, firstOrderOnly: false,
   };
 
-  it("kupon+kurumsal yığılaması subtotal'ı aşarsa discount subtotal'a sınırlanır", async () => {
-    // Ürün 290₺. %80 kupon = 232₺, ardından %50 kurumsal = 145₺ → toplam 377₺ > 290₺.
-    // Clamp sonrası discount = 290₺ (subtotal), taxableGross = 0, total = kargo.
+  it("kupon+kurumsal yığılaması %25 tavanına kırpılır (2026-09-06 ortak kararı, karar 4)", async () => {
+    // Ürün 290₺. %80 kupon = 232₺, ardından %50 kurumsal = 145₺ → toplam 377₺.
+    // Önce (2026-09-06 öncesi) yalnız subtotal'a (290₺) kırpılıyordu; artık kupon+kurumsal
+    // toplamı indirim tabanının %25'ini (72,50₺) geçemez → taxableGross 217,50, total 296,50.
     const prisma = makePrisma();
     prisma.coupon.findUnique.mockResolvedValue({ ...COUPON_BASE, type: "percentage", value: "80" });
     prisma.user.findUnique.mockResolvedValue({
@@ -636,11 +637,11 @@ describe("OrdersService.create — indirim subtotal clamp (#1)", () => {
     const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
     const subtotal = Number(createCall.subtotal); // 290
     const discount = Number(createCall.discount);
-    // Discount, subtotal'ı geçemez.
+    // Discount, subtotal'ı geçemez ve kupon+kurumsal tavanı (%25) uygulanır.
     expect(discount).toBeLessThanOrEqual(subtotal);
-    expect(discount).toBeCloseTo(subtotal, 2); // bu senaryoda tam subtotal'a sınırlanır
-    // taxableGross = max(0, subtotal - discount) = 0; total = 0 + kargo
-    expect(Number(createCall.total)).toBeCloseTo(79, 2);
+    expect(discount).toBeCloseTo(subtotal * 0.25, 2); // 72,50₺
+    // taxableGross = 290 − 72,50 = 217,50; total = 217,50 + kargo 79
+    expect(Number(createCall.total)).toBeCloseTo(296.5, 2);
   });
 
   it("düşük indirim clamp'a takılmaz (normal yüzde)", async () => {

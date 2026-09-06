@@ -28,19 +28,15 @@ describe("LoyaltyService", () => {
     delete process.env.LOYALTY_ENABLED;
   });
 
-  it("maxRedeemablePoints: bakiye, %50 tavan ve tam TL ile sınırlar", () => {
+  it("maxRedeemablePoints: bakiye, sepet tavanı (%100) ve tam TL ile sınırlar", () => {
     const svc = new LoyaltyService({} as never);
-    // 2026-08-20: bu test 2026-08-03'ten beri KIRIKTI (CI'ı kırmızı tutan sebeplerden biri).
-    // Sebep: REDEEM_POINTS_PER_TL o gün bilerek 100→10 düşürüldü (commit cba3bc7,
-    // "REDEEM_POINTS_PER_TL 100->10 düzeltmesi") ama beklentiler 100 varsayımında kaldı.
-    // Kod doğru; beklentiler güncel sabitlere hizalandı.
-    // Sabitler: 10 puan = 1 TL · tavan = ara toplamın %50'si.
+    // Sabitler: 10 puan = 1 TL · tavan = ara toplamın %100'ü (2026-09-06 ortak kararı; eskiden %50).
     //
-    // subtotal 1000 TL → %50 tavan = 500 TL = 5.000 puan.
+    // subtotal 1000 TL → tavan = 1.000 TL = 10.000 puan.
     // (a) BAKİYE bağlayıcı: 3.000 puan (=300 TL) tavanın altında → 3.000
     expect(svc.maxRedeemablePoints(3_000, 1000)).toBe(3_000);
-    // (b) TAVAN bağlayıcı: bakiye 100.000 (=10.000 TL) ama tavan 5.000 puan → 5.000
-    expect(svc.maxRedeemablePoints(100_000, 1000)).toBe(5_000);
+    // (b) TAVAN bağlayıcı: bakiye 100.000 (=10.000 TL) ama sepet 1.000 TL → 10.000 puan
+    expect(svc.maxRedeemablePoints(100_000, 1000)).toBe(10_000);
     // (c) TAM TL'ye aşağı yuvarlama: 12.345 → 12.340 (1.234 TL); tavan burada bağlayıcı değil
     expect(svc.maxRedeemablePoints(12_345, 100_000)).toBe(12_340);
   });

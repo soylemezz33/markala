@@ -13,6 +13,12 @@ import { computeItemCostTotal } from "./costing";
 import { iptalMailiGonderilirMi } from "./iptal-mail-kurali";
 import { PERM, roleHasPerm } from "../auth/permissions";
 import { ODEME_YONTEMI, HAVALE_INDIRIM_YUZDE } from "../common/banka";
+
+/**
+ * Kupon + kurumsal iskonto toplam tavanı (indirim tabanının yüzdesi). 2026-09-06 ortak kararı
+ * (sadakat karar dokümanı, karar 4). Havale indirimi ve puan bu tavana dahil değildir.
+ */
+export const KUPON_KURUMSAL_TAVAN_YUZDE = 25;
 import { DESIGN_ROW_SELECT, designRowToPublic } from "./order-design.service";
 import { driveFileUrl } from "../storage/drive.service";
 import { musteriDosyaSatirlari, ilkDosya } from "./musteri-dosyalari";
@@ -714,6 +720,14 @@ export class OrdersService {
       }
     }
 
+    // === İndirim tavanı (2026-09-06 ortak kararı, karar 4) ===
+    // Kupon + kurumsal iskonto toplamı indirim tabanının %25'ini geçemez. Havale indirimi
+    // (ödeme yöntemi) ve puan (müşterinin kazanılmış hakkı) bu tavana DAHİL DEĞİLDİR.
+    // Kampanyalı ürünler zaten tabana girmez. Tavan aşılırsa indirim tavana kırpılır; kupon
+    // reddedilmez (müşteri "kupon geçersiz" görmez, sadece indirim %25'te durur).
+    const indirimTavani = round2((indirimTabani * KUPON_KURUMSAL_TAVAN_YUZDE) / 100);
+    if (discount > indirimTavani) discount = indirimTavani;
+
     // === Havale/EFT indirimi ===
     // Kart komisyonu ödenmediği için müşteriye yansıtılır (Hasan, 2026-09-02).
     // KUPON VE KURUMSAL İNDİRİMDEN SONRA kalan tutara uygulanır: subtotal'ın
@@ -1212,6 +1226,10 @@ export class OrdersService {
       where: { id },
       data: { paymentStatus: "basarili" },
     });
+
+    // Sadakat puanı: havaleyle ödenen sipariş de kazandırır (2026-09-06; kart ödemesinde
+    // payments.service aynı kancayı çağırır). Best-effort, idempotent (orderId+earn unique).
+    void this.loyalty.earnForOrder(id).catch(() => undefined);
 
     // Denetim kaydı — parayı kimin onayladığı izlenebilir olmalı (mali sorumluluk).
     // Yazım hatası onayı bozmaz.
