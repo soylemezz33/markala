@@ -29,11 +29,17 @@ export class NotificationLogsController {
     @Query("skip") skipRaw?: string,
     @Query("q") q?: string,
     @Query("status") status?: string,
+    @Query("channel") channel?: string,
   ) {
     const take = Math.min(Math.max(Number(takeRaw) || 100, 1), 500);
     const skip = Math.max(Number(skipRaw) || 0, 0);
+    // 2026-09-06: yeni sipariş bildirimi WhatsApp'tan da gidiyor. Kanal sabit "email" kalsaydı
+    // bu gönderimler hiçbir yerden görünmez, sessizce başarısız olabilirdi. `channel` sorgu
+    // parametresiyle tek kanala daraltılabilir; verilmezse ikisi de listelenir.
+    const kanallar = ["email", "whatsapp"] as const;
+    const secilenKanal = kanallar.find((k) => k === channel);
     const where = {
-      channel: "email" as const,
+      channel: secilenKanal ? secilenKanal : { in: [...kanallar] },
       ...(status && ["sent", "failed", "skipped"].includes(status) ? { status } : {}),
       ...(q?.trim()
         ? { recipient: { contains: q.trim(), mode: "insensitive" as const } }
@@ -49,6 +55,7 @@ export class NotificationLogsController {
         select: {
           id: true,
           createdAt: true,
+          channel: true,
           recipient: true,
           template: true,
           subject: true,
@@ -62,6 +69,7 @@ export class NotificationLogsController {
       rows: rows.map((r) => ({
         id: r.id,
         createdAt: r.createdAt,
+        channel: r.channel,
         recipient: r.recipient,
         template: r.template,
         subject: r.subject,
