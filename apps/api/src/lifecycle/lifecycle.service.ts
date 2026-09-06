@@ -3,6 +3,11 @@ import { randomUUID } from "crypto";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
+import {
+  yorumDavetiKararlari,
+  YORUM_SESSIZLIK_GUN,
+  type YorumAdayi,
+} from "./yorum-daveti-kurali";
 
 /** Kurtarma penceresi sınırları (saat). 72 saatten eski siparişe DOKUNULMAZ. */
 const STAGE1_MIN_AGE_H = 2; // çok taze siparişi dürtme — müşteri hâlâ ödeme akışında olabilir
@@ -106,7 +111,16 @@ export class LifecycleService {
   // Yorum daveti (review invitation) — teslimattan 24 saat sonra saatlik cron.
   // ---------------------------------------------------------------------------
 
-  @Cron(CronExpression.EVERY_HOUR)
+  /**
+   * Günde BİR kez, 11:00 (Europe/Istanbul).
+   *
+   * Eskiden saatlik koşuyordu. İşin kendisi idempotent olduğu için mükerrer mail üretmiyordu
+   * ama daveti "teslimattan tam 24 saat sonra" atıyordu: teslimat 05:51'de işaretlenmişse
+   * davet ertesi sabah 06:00'da düşüyordu. Sabahın köründe gelen pazarlama-benzeri bir mail
+   * hem okunmuyor hem şikâyet üretiyor. Saat dilimi AÇIKÇA veriliyor — ortam sessizce UTC'ye
+   * düşerse davet 14:00'da değil 11:00'da kalsın.
+   */
+  @Cron("0 11 * * *", { name: "yorum-daveti", timeZone: "Europe/Istanbul" })
   async handleReviewInvitationCron(): Promise<void> {
     try {
       await this.runReviewInvitation();
@@ -116,9 +130,10 @@ export class LifecycleService {
   }
 
   /** Test edilebilirlik için cron sarmalayıcısından ayrı tutulur. */
-  async runReviewInvitation(): Promise<{ sent: number }> {
+  async runReviewInvitation(): Promise<{ sent: number; susturulan: number }> {
     const h = 60 * 60 * 1000;
-    const threshold = new Date(Date.now() - 24 * h); // 24 saati geçmiş teslim tarihi
+    const simdi = new Date();
+    const threshold = new Date(simdi.getTime() - 24 * h); // 24 saati geçmiş teslim tarihi
 
     // Aday siparişler: teslim edildi + 24 saat geçti + yorum daveti gönderilmemiş + silinmemiş.
     // deliveredAt: siparişin teslim-edildi statüsüne geçtiği an (orders.service.ts'te set edilir).
@@ -134,25 +149,88 @@ export class LifecycleService {
       take: 100, // SMTP karantina riski; saatlik cron → artan iş sonraki turda erir
     });
 
+    // MÜŞTERİ BAŞINA TEK DAVET: aynı kişinin birden çok siparişi uygun olduğunda yalnız en
+    // eski teslimat davet alır (bkz. yorum-daveti-kurali.ts). "Daha önce davet edildi mi"
+    // sorusunun kaynağı bilerek notification_logs — yani GERÇEKTEN gönderilmiş mailler.
+    // Order.reviewEmailSentAt kullanılsaydı susturulan siparişler de "gönderilmiş" sayılıp
+    // sessizlik penceresini kendi kendine ileri sarardı.
+    const kararlar = yorumDavetiKararlari(
+      candidates as YorumAdayi[],
+      await this.sonYorumDavetleri(candidates, simdi),
+      simdi,
+    );
+
     let sent = 0;
-    for (const order of candidates) {
-      if (!order.email) continue;
+    let susturulan = 0;
+    for (const karar of kararlar) {
+      if (!karar.gonder) {
+        // Susturulan sipariş de işaretlenir: aksi hâlde her gün yeniden aday olur ve
+        // sessizlik penceresi dolduğunda aylar öncesine ait bir teslimat için davet gider.
+        await this.prisma.order.update({
+          where: { id: karar.id },
+          data: { reviewEmailSentAt: simdi },
+        });
+        susturulan++;
+        continue;
+      }
 
       // Token DB'ye yaz — idempotens için önce işaretle, sonra mail gönder.
       // reviewEmailSentAt set edildikten sonra cron bu siparişe bir daha dokunmaz.
       // Mail gönderilemezse davet "atlandı" sayılır (at-most-once kabul edilebilir).
       const token = randomUUID();
       await this.prisma.order.update({
-        where: { id: order.id },
-        data: { reviewToken: token, reviewEmailSentAt: new Date() },
+        where: { id: karar.id },
+        data: { reviewToken: token, reviewEmailSentAt: simdi },
       });
 
-      const mailSent = await this.mail.sendReviewInvitationEmail(order.id, token);
+      const mailSent = await this.mail.sendReviewInvitationEmail(karar.id, token);
       if (mailSent) sent++;
     }
 
-    if (sent || candidates.length)
-      this.logger.log(`review-invitation: ${sent}/${candidates.length} yorum daveti gönderildi`);
-    return { sent };
+    if (sent || susturulan)
+      this.logger.log(
+        `review-invitation: ${sent}/${candidates.length} davet gönderildi` +
+          (susturulan ? ` · ${susturulan} sipariş susturuldu (müşteri başına tek davet)` : ""),
+      );
+    return { sent, susturulan };
+  }
+
+  /**
+   * Son YORUM_SESSIZLIK_GUN içinde GERÇEKTEN gönderilmiş yorum davetleri:
+   * e-posta (küçük harf) → son gönderim anı.
+   *
+   * Alıcıya göre filtre SQL'de değil bellekte yapılır: adres eşleşmesinin büyük/küçük harften
+   * bağımsız olması gerekiyor ve Prisma'nın `in` filtresi `mode: "insensitive"` kabul etmiyor.
+   * 14 günlük pencerede bu tabloda birkaç düzine satır oluyor — tümünü çekmek ucuz.
+   */
+  private async sonYorumDavetleri(
+    adaylar: { email: string | null }[],
+    simdi: Date,
+  ): Promise<Map<string, Date>> {
+    const harita = new Map<string, Date>();
+    const aranan = new Set(
+      adaylar
+        .map((a) => a.email?.trim().toLowerCase())
+        .filter((e): e is string => Boolean(e)),
+    );
+    if (!aranan.size) return harita;
+
+    const pencereBasi = new Date(simdi.getTime() - YORUM_SESSIZLIK_GUN * 24 * 60 * 60 * 1000);
+    const kayitlar = await this.prisma.notificationLog.findMany({
+      where: {
+        template: "review-invitation",
+        status: "sent",
+        createdAt: { gte: pencereBasi },
+      },
+      select: { recipient: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // orderBy asc → aynı adresin son kaydı sona yazılır.
+    for (const k of kayitlar) {
+      const anahtar = k.recipient.trim().toLowerCase();
+      if (aranan.has(anahtar)) harita.set(anahtar, k.createdAt);
+    }
+    return harita;
   }
 }

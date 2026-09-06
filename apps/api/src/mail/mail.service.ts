@@ -780,6 +780,13 @@ Markala`;
       include: { user: { select: { fullName: true } } },
     });
     if (!order || !order.email) { this.logger.warn(`mail.orderDelivered: sipariş/e-posta yok order=${orderId}`); return false; }
+    // Teslimat bildirimi sipariş başına bir kezdir. Durum "teslim edildi"ye ikinci kez
+    // çekilirse (elle tıklama + 19:00 kargo taraması, ya da panelde çift tıklama) müşteri
+    // aynı maili tekrar almasın.
+    if (await this.dahaOnceGonderildiMi("order-delivered", order.orderNumber)) {
+      this.logger.log(`mail.orderDelivered: zaten gönderilmiş → atlandı order=${order.orderNumber}`);
+      return false;
+    }
     const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     const name = (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
     const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
@@ -788,25 +795,23 @@ Markala`;
     // sepete ekler. Teslim anı, tekrar alım niyetinin en yüksek olduğu an (retention dokunuşu).
     const reorderUrl = `${webUrl}/hesabim/siparislerim/${order.id}`;
 
-    // Değerlendirme daveti WhatsApp üzerinden. Numara env ile configurable; fallback = markala
-    // mobil hattı (apps/web/src/lib/whatsapp.ts MARKALA_WHATSAPP_NUMBER ile aynı — 0324 sabit
-    // hat WhatsApp'a kayıtlı DEĞİL). Ön-doldurulmuş mesaj müşteri-kaynaklı değer içermediğinden
-    // (yalnız orderNumber) güvenli; encodeURIComponent Türkçe + boşlukları güvenle kodlar.
-    const waNumber = (this.config.get<string>("WHATSAPP_NUMBER") ?? "905319004102").replace(/\D/g, "");
-    const waMessage = `Sipariş ${order.orderNumber} için değerlendirmemi paylaşıyorum: `;
-    const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
-
-    const subject = "Siparişiniz teslim edildi - Değerlendirmenizi paylaşır mısınız?";
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişiniz teslim edildi. Umarız beğenirsiniz!\nBaskı kalitesinden memnunsanız, değerlendirmenizi WhatsApp üzerinden bizimle paylaşır mısınız:\n${waUrl}\nAynı ürünlere yeniden ihtiyacınız olursa tek tıkla tekrar sipariş verebilirsiniz: ${reorderUrl}\nBir sorun varsa hemen bize yazın.\n\nMarkala`;
+    // DEĞERLENDİRME İSTEĞİ BU MAİLDE YOK (2026-09-06). Eskiden burada WhatsApp'tan yorum
+    // isteniyordu; 24 saat sonra review-invitation maili aynı şeyi bir kez daha istiyordu.
+    // Müşteri, konusu neredeyse aynı ("...teslim edildi, ...paylaşır mısınız?") iki mail
+    // alıyor ve bunu mükerrer gönderim sanıyordu. Artık iş bölümü net:
+    //   bu mail  = teslimat bildirimi (+ tekrar sipariş)
+    //   24s sonra = tek yorum daveti (tokenlı bağlantı, site üzerinden)
+    // Konuya sipariş numarası eklendi: birden çok siparişi olan müşteri hangi siparişin
+    // teslim edildiğini gelen kutusunda ayırt edebilsin.
+    const subject = `Siparişiniz teslim edildi ✅ ${order.orderNumber}`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişiniz teslim edildi. Umarız beğenirsiniz!\nAynı ürünlere yeniden ihtiyacınız olursa tek tıkla tekrar sipariş verebilirsiniz: ${reorderUrl}\nBir sorun varsa hemen bize yazın.\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişiniz Teslim Edildi ✅",
       intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişiniz teslim edildi, umarız beğenirsiniz!`,
-      preheader: `${order.orderNumber} teslim edildi, değerlendirmeniz bizim için değerli`,
-      bodyHtml: `<p style="margin:0 0 14px">Baskı kalitesinden memnun kaldıysanız, değerlendirmenizi <strong>WhatsApp</strong> üzerinden bizimle paylaşır mısınız? Görüşünüz hem bize hem yeni müşterilere yol gösterir.</p>
-        ${emailButtonColored("💬 WhatsApp'tan değerlendir", waUrl)}
-        ${emailFallbackLink(waUrl)}
-        <p style="margin:14px 0 0;font-size:13px;color:#78716c">Aynı ürünlere yeniden mi ihtiyacınız var? <a href="${reorderUrl}" style="color:#5C4100;font-weight:700">Tekrar sipariş ver →</a></p>
-        <p style="margin:10px 0 0;color:#78716c;font-size:13px">Bir sorun varsa hemen bize yazın.</p>`,
+      preheader: `${order.orderNumber} numaralı siparişiniz teslim edildi`,
+      bodyHtml: `<p style="margin:0 0 14px">Paketiniz elinize ulaştı. Baskıyla ilgili en ufak bir sorun görürseniz bu e-postayı yanıtlamanız yeterli — hemen ilgileniriz.</p>
+        ${emailButton("Tekrar sipariş ver", reorderUrl)}
+        ${emailFallbackLink(reorderUrl)}`,
     });
 
     // Nodemailer yalnız SMTP_HOST varsa gerçek gönderim yapar. Yoksa localhost:1025'e düşüp
@@ -1075,6 +1080,12 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
       this.logger.warn(`mail.reviewInvitation: sipariş/e-posta yok order=${orderId}`);
       return false;
     }
+    // Yorum daveti de sipariş başına bir kezdir (cron zaten reviewEmailSentAt ile korunuyor;
+    // bu, o alan elle sıfırlanırsa ya da ileride ikinci bir tetikleyici eklenirse son savunma).
+    if (await this.dahaOnceGonderildiMi("review-invitation", order.orderNumber)) {
+      this.logger.log(`mail.reviewInvitation: zaten gönderilmiş → atlandı order=${order.orderNumber}`);
+      return false;
+    }
     if (!this.config.get<string>("SMTP_HOST")) {
       this.logger.log(
         `mail.reviewInvitation: SMTP_HOST yok → atlandı order=${order.orderNumber} to=${order.email}`,
@@ -1132,6 +1143,37 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
         template: "review-invitation",
         orderNumber: order.orderNumber,
       }, subject);
+      return false;
+    }
+  }
+
+  /**
+   * "Bu sipariş için bu mail zaten gitti mi?" (2026-09-06, Hasan: "gönderildiyse bir daha
+   * göndermememiz lazım").
+   *
+   * Yalnız HAYAT BOYU BİR KEZ olan bildirimlerde kullanılır (teslimat, yorum daveti). Kaynak
+   * notification_logs + status='sent': başarısız gönderim engel değildir, yeniden denenebilir
+   * — 3 Eylül'de SMTP şifresi değişince kaybolan 25 mail elle yeniden gönderilmişti, o yol
+   * kapanmamalı.
+   *
+   * Kargo/üretim gibi tekrarlanabilir bildirimlere BİLEREK uygulanmıyor: iade sonrası yeniden
+   * kargolanan bir siparişte ikinci "kargoda" maili gürültü değil, gerekli bilgidir.
+   *
+   * Sorgu düşerse (DB hıçkırığı) false döner: koruma amacıyla gerçek bir bildirimi yutmaktansa
+   * göndermek yeğdir.
+   */
+  private async dahaOnceGonderildiMi(template: string, orderNumber: string): Promise<boolean> {
+    try {
+      const adet = await this.prisma.notificationLog.count({
+        where: {
+          template,
+          status: "sent",
+          metadata: { path: ["orderNumber"], equals: orderNumber },
+        },
+      });
+      return adet > 0;
+    } catch (e) {
+      this.logger.warn(`mükerrer kontrolü yapılamadı (${template}/${orderNumber}): ${(e as Error).message}`);
       return false;
     }
   }
