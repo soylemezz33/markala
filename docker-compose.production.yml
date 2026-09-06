@@ -88,6 +88,9 @@ services:
       # Token yoksa MetaCapiService sessizce no-op olur (checkout etkilenmez).
       META_CAPI_TOKEN: ${META_CAPI_TOKEN:-}
       META_PIXEL_ID: ${META_PIXEL_ID:-1112404194692078}
+      # Sadakat (puan) programı bayrağı (2026-09-06 ortak kararı). Varsayılan KAPALI; canlıda
+      # .env.production'da true. Kapalıyken kazanım/harcama/gösterim ve süre cron'u çalışmaz.
+      LOYALTY_ENABLED: ${LOYALTY_ENABLED:-false}
       # WhatsApp yeni sipariş bildirimi (2026-09-06). Token gizli → yalnız VPS .env.production'da.
       # Env eksikse WhatsappService sessizce kapalı kalır; sipariş akışı etkilenmez.
       WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
