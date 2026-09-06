@@ -5,6 +5,7 @@ import { Coins, ArrowUp, ArrowDown, Gift } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { MarkaPuanIcon } from "@/components/account/markapuan-icon";
 
 type LoyaltyMe = Awaited<ReturnType<typeof apiClient.loyalty.me>>;
 
@@ -36,7 +37,7 @@ export default function LoyaltyPage() {
       <header>
         <h2 className="text-xl md:text-2xl font-semibold text-ink-900 flex items-center gap-2">
           <Coins size={24} weight="bold" className="text-brand-700" />
-          Puanlarım
+          MarkaPuan
         </h2>
         <p className="mt-1 text-sm text-ink-500">
           Her siparişte puan kazanın, sonraki alışverişlerinizde indirim olarak kullanın.
@@ -63,8 +64,9 @@ export default function LoyaltyPage() {
       ) : data ? (
         <>
           {/* Bakiye kartı */}
-          <div className="p-6 md:p-8 bg-ink-900 text-paper-50 rounded-xl">
-            <div className="text-sm text-paper-300">Kullanılabilir puan</div>
+          <div className="relative overflow-hidden p-6 md:p-8 text-paper-50 rounded-2xl bg-[radial-gradient(120%_120%_at_100%_0%,#3b2a7a_0%,#1c1a2e_55%)]">
+            <MarkaPuanIcon size={72} className="absolute right-6 top-6 drop-shadow-[0_4px_10px_rgba(0,0,0,0.45)]" />
+            <div className="text-sm text-paper-300">Kullanılabilir MarkaPuan</div>
             <div className="mt-1 flex items-baseline gap-2">
               <span className="text-4xl md:text-5xl font-semibold">
                 {data.balance.toLocaleString("tr-TR")}
@@ -76,7 +78,7 @@ export default function LoyaltyPage() {
               {(data.balance / data.redeemPerTl).toLocaleString("tr-TR", {
                 maximumFractionDigits: 2,
               })}{" "}
-              TL indirim değerinde · {data.redeemPerTl} puan = 1 TL
+              ₺ indirim değerinde · {data.redeemPerTl} MarkaPuan = 1 ₺ · sepette istediğin kadarını kullan
             </p>
           </div>
 

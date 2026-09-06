@@ -81,8 +81,8 @@ export const ACCOUNT_NAV: AccountNavItem[] = [
   },
   {
     href: "/hesabim/puanlarim",
-    label: "Puanlarım",
-    desc: "Kazanılan ve harcanan",
+    label: "MarkaPuan",
+    desc: "Kazandığın puanlar ve indirim karşılığı",
     icon: Coins,
     group: "odeme",
     when: (c) => c.loyaltyEnabled === true,

@@ -1571,7 +1571,7 @@ export default function CheckoutPage() {
                 {loyaltyOn && maxRedeemPoints > 0 && (
                   <div className="mt-4 pt-4 border-t border-paper-200">
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-xs font-medium text-ink-700">Puanlarımı kullan</label>
+                      <label className="text-xs font-medium text-ink-700">MarkaPuan kullan</label>
                       <span className="text-[11px] text-ink-500">
                         {(loyalty?.balance ?? 0).toLocaleString("tr-TR")} puan · en fazla{" "}
                         {maxRedeemPoints.toLocaleString("tr-TR")}

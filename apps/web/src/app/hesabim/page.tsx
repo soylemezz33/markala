@@ -8,6 +8,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { gorunurNav, type AccountNavContext } from "@/components/account/account-nav";
+import { MarkaPuanIcon } from "@/components/account/markapuan-icon";
 import type { Order, OrderStatus } from "@markala/types";
 
 const normStatus = (s: string): OrderStatus => s.replace(/_/g, "-") as OrderStatus;
@@ -80,23 +81,67 @@ export default function AccountOverviewPage() {
         <p className="mt-1 text-sm text-ink-500">Siparişlerini ve hesap bilgilerini buradan yönetirsin.</p>
       </header>
 
-      {/* METRİK ŞERİDİ — sıfır değerler basılmaz (yeni üyede şerit hiç görünmez) */}
-      {!yukleniyor && list.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4 bg-paper-100 border border-paper-200 rounded-xl">
-          <Metrik etiket="Sipariş" deger={String(list.length)} />
-          {acikSiparis > 0 && <Metrik etiket="Devam eden" deger={String(acikSiparis)} vurgu />}
-          <Metrik etiket="Toplam harcama" deger={<Price amount={toplamHarcama} />} />
-          {loyalty?.enabled && loyalty.balance > 0 && (
-            <Link href="/hesabim/puanlarim" className="group">
-              <Metrik
-                etiket="Puan"
-                deger={
-                  <span className="inline-flex items-center gap-1 group-hover:text-brand-700">
-                    {loyalty.balance.toLocaleString("tr-TR")}
-                    <ArrowRight size={13} weight="bold" className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </span>
-                }
-              />
+      {/* ÖZET KARTLARI (2026-09-06 yeniden tasarım, Hasan: "kullanıcıya bir şey anlatmıyor").
+          Üç kart: siparişler (devam eden sayısıyla), toplam harcama (son sipariş tarihiyle) ve
+          MarkaPuan (bakiye + ₺ karşılığı; sıfırsa nasıl kazanılacağını söyler). Sipariş yoksa
+          yalnız MarkaPuan kartı görünür — yeni üye programın var olduğunu ilk günden görür. */}
+      {!yukleniyor && (list.length > 0 || loyalty?.enabled) && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {list.length > 0 && (
+            <Link href="/hesabim/siparislerim" className="group rounded-2xl border border-paper-200 bg-paper-50 p-5 transition-colors hover:border-ink-300">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">Siparişlerim</span>
+                <ShoppingBagOpen size={18} className="text-ink-400" />
+              </div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums text-ink-900">{list.length}</div>
+              <div className="mt-1 text-sm text-ink-500">
+                {acikSiparis > 0 ? <span className="text-brand-700 font-medium">{acikSiparis} sipariş devam ediyor</span> : "Hepsi teslim edildi"}
+              </div>
+            </Link>
+          )}
+          {list.length > 0 && (
+            <div className="rounded-2xl border border-paper-200 bg-paper-50 p-5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">Toplam harcama</span>
+                <Sparkle size={18} className="text-ink-400" />
+              </div>
+              <div className="mt-2 text-3xl font-semibold tabular-nums text-ink-900"><Price amount={toplamHarcama} /></div>
+              <div className="mt-1 text-sm text-ink-500">{list[0] ? `Son sipariş ${formatDate(list[0].createdAt)}` : ""}</div>
+            </div>
+          )}
+          {loyalty?.enabled && (
+            <Link
+              href="/hesabim/puanlarim"
+              className={cn(
+                "group relative overflow-hidden rounded-2xl p-5 text-paper-50 transition-transform hover:-translate-y-0.5",
+                "bg-[radial-gradient(120%_120%_at_100%_0%,#3b2a7a_0%,#1c1a2e_55%)]",
+                list.length === 0 && "sm:col-span-3 sm:flex sm:items-center sm:gap-6",
+              )}
+            >
+              <div className="flex items-center justify-between sm:shrink-0">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-paper-300">MarkaPuan</span>
+                <MarkaPuanIcon size={34} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] sm:hidden" />
+              </div>
+              <div className="sm:flex sm:items-center sm:gap-4">
+                <MarkaPuanIcon size={44} className="hidden sm:block drop-shadow-[0_3px_8px_rgba(0,0,0,0.4)]" />
+                <div>
+                  <div className="mt-2 sm:mt-0 flex items-baseline gap-2">
+                    <span className="text-3xl font-semibold tabular-nums">{loyalty.balance.toLocaleString("tr-TR")}</span>
+                    <span className="text-sm text-paper-300">puan</span>
+                    {loyalty.balance > 0 && (
+                      <span className="ml-1 rounded-full bg-brand-500/20 px-2 py-0.5 text-xs font-semibold text-brand-300">
+                        ≈ {Math.floor(loyalty.balance / loyalty.redeemPerTl).toLocaleString("tr-TR")} ₺
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 text-sm text-paper-300">
+                    {loyalty.balance > 0
+                      ? "Sepette indirim olarak kullanabilirsin"
+                      : "Her 1 ₺ alışveriş = 1 MarkaPuan · 10 puan = 1 ₺ indirim"}
+                  </div>
+                </div>
+              </div>
+              <ArrowRight size={16} weight="bold" className="absolute right-4 bottom-4 text-paper-300 opacity-0 transition-opacity group-hover:opacity-100" />
             </Link>
           )}
         </div>
@@ -189,16 +234,5 @@ export default function AccountOverviewPage() {
         </ul>
       </section>
     </div>
-  );
-}
-
-function Metrik({ etiket, deger, vurgu }: { etiket: string; deger: React.ReactNode; vurgu?: boolean }) {
-  return (
-    <span className="block">
-      <span className="block text-[11px] font-semibold uppercase tracking-wider text-ink-500">{etiket}</span>
-      <span className={cn("block text-lg font-semibold tabular-nums", vurgu ? "text-brand-700" : "text-ink-900")}>
-        {deger}
-      </span>
-    </span>
   );
 }
