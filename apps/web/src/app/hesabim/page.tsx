@@ -119,7 +119,7 @@ export default function AccountOverviewPage() {
               )}
             >
               <div className="flex items-center justify-between sm:shrink-0">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-paper-300">MarkaPuan</span>
+                <span className="text-xs font-semibold tracking-wide text-paper-300">MarkaPuan</span>
                 <MarkaPuanIcon size={34} className="drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)] sm:hidden" />
               </div>
               <div className="sm:flex sm:items-center sm:gap-4">
