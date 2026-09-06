@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto, UpdateProductDto } from "./products.dto";
 import { SettingsService } from "../settings/settings.service";
-import { areaStartingPrice, type AreaDisplayOption } from "./display-price";
+import { areaStartingPrice, additiveStartingPrice, type AreaDisplayOption } from "./display-price";
 
 /**
  * HALKA AÇIK yanıtlardan ticari sırları ayıklar (2026-08-31 denetim bulgusu).
@@ -168,25 +168,28 @@ export class ProductsService {
       }) as { id: string; [key: string]: unknown }[];
     }
     const ids = products.map((p) => p.id);
-    const mins = ids.length
-      ? await this.prisma.productPrice.groupBy({ by: ["productId"], where: { productId: { in: ids } }, _min: { price: true } })
-      : [];
-    const minMap = new Map(mins.map((m: { productId: string; _min: { price: unknown } }) => [m.productId, m._min.price == null ? null : Number(m._min.price)]));
 
-    // area ürünleri: ProductPrice.price=0 → minMap işe yaramaz. displayPrice = en ucuz ana
-    // malzeme × 1 m² (KDV dahil), motordan. Sadece area ürünleri için ek hafif sorgu.
-    const areaIds = products.filter((p) => p.pricingMode === "area").map((p) => p.id);
-    const areaDisplay = new Map<string, number | null>();
-    if (areaIds.length) {
-      const pricing = await this.settings.getPricing();
-      const areaProducts = await this.prisma.product.findMany({
-        where: { id: { in: areaIds } },
-        select: { id: true, options: true, prices: true },
+    // displayPrice ("…₺'den başlar") — display-price.ts TEK KAYNAK, kategori kartıyla aynı:
+    //  • area: en ucuz ana malzeme × 1 m² (KDV dahil), motordan;
+    //  • toplamsal: EN UCUZ TAM KONFİGÜRASYON (eskiden MIN(price>0) idi → Makam Bayrağı'nda
+    //    105 ₺'lik saçak satırını gösteriyordu, 2026-09-05).
+    // Bunun için tüm ürünlerin options/prices'ı tek sorguda çekilir; liste ISR ile 5 dk
+    // önbellekli olduğu için yük kabul edilebilir.
+    const display = new Map<string, number | null>();
+    if (ids.length) {
+      const areaVar = products.some((p) => p.pricingMode === "area");
+      const pricing = areaVar ? await this.settings.getPricing() : null;
+      const fiyatli = await this.prisma.product.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, pricingMode: true, options: true, prices: { select: { groupKey: true, optionKey: true, dimKey: true, price: true, cost: true } } },
       });
-      for (const ap of areaProducts) {
-        const opts = ap.options as unknown as AreaDisplayOption[];
+      for (const ap of fiyatli) {
         const rows = ap.prices.map((pr) => ({ groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey, price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost) }));
-        areaDisplay.set(ap.id, areaStartingPrice(opts, ap.options, rows, pricing));
+        if (ap.pricingMode === "area") {
+          display.set(ap.id, pricing ? areaStartingPrice(ap.options as unknown as AreaDisplayOption[], ap.options, rows, pricing) : null);
+        } else {
+          display.set(ap.id, rows.length ? additiveStartingPrice(ap.options, rows) : null);
+        }
       }
     }
 
@@ -196,7 +199,7 @@ export class ProductsService {
       const temel = opts.includeInactive ? p : gizliTicariAlanlariAyikla(p);
       return {
         ...temel,
-        displayPrice: p.pricingMode === "area" ? (areaDisplay.get(p.id) ?? null) : (minMap.get(p.id) ?? null),
+        displayPrice: display.get(p.id) ?? null,
       };
     });
 
@@ -219,8 +222,9 @@ export class ProductsService {
     if (!product) throw new NotFoundException(`Ürün bulunamadı: ${slug}`);
 
     // displayPrice — liste endpoint'iyle AYNI tanım (kart/JSON-LD ile tutarlı): non-area =
-    // MIN(ProductPrice.price > 0); area = en ucuz priced malzeme × 1 m² (KDV dahil). Fiyatsız
-    // ("Teklif Al") üründe null. Detay yanıtında eksikti → JSON-LD Offer price:0'a düşüyordu.
+    // en ucuz TAM konfigürasyon (additiveStartingPrice); area = en ucuz priced malzeme × 1 m²
+    // (KDV dahil). Fiyatsız ("Teklif Al") üründe null. Detay yanıtında eksikti → JSON-LD Offer
+    // price:0'a düşüyordu.
     const priceRows = product.prices ?? [];
     let displayPrice: number | null = null;
     if (product.pricingMode === "area") {
@@ -231,8 +235,8 @@ export class ProductsService {
         displayPrice = areaStartingPrice(opts, product.options, rows, pricing);
       }
     } else if (priceRows.length) {
-      const positive = priceRows.map((pr) => Number(pr.price)).filter((v) => v > 0);
-      displayPrice = positive.length ? Math.min(...positive) : null;
+      const rows = priceRows.map((pr) => ({ groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey, price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost) }));
+      displayPrice = additiveStartingPrice(product.options, rows);
     }
     return { ...gizliTicariAlanlariAyikla(product), displayPrice };
   }

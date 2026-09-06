@@ -133,20 +133,28 @@ describe("CategoriesService.update", () => {
  * 150 ₺'den başlıyordu). Artık aktif ürünlerden hesaplanıyor.
  */
 describe("CategoriesService.findAll — başlangıç fiyatı ürünlerden hesaplanır", () => {
+  type Fiyatli = { id: string; pricingMode: string; options: unknown[]; prices: unknown[] };
   function prismaWithProducts() {
-    const p = makePrisma();
+    const p = makePrisma() as ReturnType<typeof makePrisma> & { fiyatli: Fiyatli[] };
     p.category.findMany.mockResolvedValue([
       { id: "cat1", slug: "masa-bayragi", startingPrice: 450, _count: { products: 1 } },
       { id: "cat2", slug: "bos-kategori", startingPrice: 999, _count: { products: 0 } },
     ]);
-    p.product.findMany.mockResolvedValue([
-      { id: "u1", categoryId: "cat1", pricingMode: "additive" },
-      { id: "u2", categoryId: "cat1", pricingMode: "additive" },
-    ]);
-    p.productPrice.groupBy.mockResolvedValue([
-      { productId: "u1", _min: { price: 150 } },
-      { productId: "u2", _min: { price: 430 } },
-    ]);
+    // İki findMany çağrısı: aktif ürün listesi, sonra (select.prices ile) options/prices.
+    const satir = (groupKey: string, optionKey: string, price: number) => ({ groupKey, optionKey, dimKey: null, price, cost: null });
+    const secenek = (groupKey: string, groupSort: number, optionKey: string, optionSort: number) =>
+      ({ groupKey, groupRole: "priced", groupSort, optionKey, optionSort });
+    p.fiyatli = [
+      { id: "u1", pricingMode: "additive", options: [secenek("g", 0, "a", 0)], prices: [satir("g", "a", 150)] },
+      { id: "u2", pricingMode: "additive", options: [secenek("g", 0, "a", 0)], prices: [satir("g", "a", 430)] },
+    ];
+    p.product.findMany.mockImplementation((args: { select?: { prices?: unknown } }) =>
+      Promise.resolve(args?.select?.prices
+        ? p.fiyatli
+        : [
+          { id: "u1", categoryId: "cat1", pricingMode: "additive" },
+          { id: "u2", categoryId: "cat1", pricingMode: "additive" },
+        ]));
     return p;
   }
 
@@ -164,12 +172,32 @@ describe("CategoriesService.findAll — başlangıç fiyatı ürünlerden hesapl
 
   it("fiyatı 0 olan satır aday olmaz (0 ₺ gösterilmez)", async () => {
     const p = prismaWithProducts();
-    p.productPrice.groupBy.mockResolvedValue([
-      { productId: "u1", _min: { price: 0 } },
-      { productId: "u2", _min: { price: 430 } },
-    ]);
+    (p.fiyatli[0].prices[0] as { price: number }).price = 0;
     const svc = new CategoriesService(p as never, settingsMock() as never);
     const res = (await svc.findAll()) as { slug: string; startingPrice: number }[];
     expect(res.find((c) => c.slug === "masa-bayragi")!.startingPrice).toBe(430);
+  });
+
+  // 2026-09-05: Makam Bayrağı "105 ₺'den başlayan" yazıyordu — 105 ₺ saçak (ek grup) satırıydı.
+  it("birden fazla fiyatlı grubu olan üründe EK seçeneğin satırına değil, en ucuz TAM konfigürasyona iner", async () => {
+    const p = prismaWithProducts();
+    p.fiyatli[0] = {
+      id: "u1", pricingMode: "additive",
+      options: [
+        { groupKey: "icindekiler", groupRole: "priced", groupSort: 0, optionKey: "sadece-bayrak", optionSort: 0 },
+        { groupKey: "puskul", groupRole: "priced", groupSort: 1, optionKey: "yok", optionSort: 0 },
+        { groupKey: "puskul", groupRole: "priced", groupSort: 1, optionKey: "sarmasi", optionSort: 1 },
+      ],
+      prices: [
+        { groupKey: "icindekiler", optionKey: "sadece-bayrak", dimKey: null, price: 2116.8, cost: null },
+        { groupKey: "puskul", optionKey: "sarmasi", dimKey: null, price: 105, cost: null },
+      ],
+    };
+    const svc = new CategoriesService(p as never, settingsMock() as never);
+    const res = (await svc.findAll()) as { slug: string; startingPrice: number }[];
+    expect(res.find((c) => c.slug === "masa-bayragi")!.startingPrice).toBe(430); // u2 (430) < u1 (2116.8); 105 asla aday değil
+    p.fiyatli[1].prices = [];
+    const res2 = (await new CategoriesService(p as never, settingsMock() as never).findAll()) as { slug: string; startingPrice: number }[];
+    expect(res2.find((c) => c.slug === "masa-bayragi")!.startingPrice).toBe(2116.8);
   });
 });
