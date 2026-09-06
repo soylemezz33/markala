@@ -108,19 +108,20 @@ export class LifecycleService {
   }
 
   // ---------------------------------------------------------------------------
-  // Yorum daveti (review invitation) — teslimattan 24 saat sonra saatlik cron.
+  // Yorum daveti (review invitation) — teslimatın üzerinden 24 saat geçen siparişler,
+  // her akşam 18:30'da koşan günlük cron ile.
   // ---------------------------------------------------------------------------
 
   /**
-   * Günde BİR kez, 11:00 (Europe/Istanbul).
+   * Günde BİR kez, 18:30 (Europe/Istanbul) — Hasan'ın seçtiği saat (2026-09-06).
    *
    * Eskiden saatlik koşuyordu. İşin kendisi idempotent olduğu için mükerrer mail üretmiyordu
    * ama daveti "teslimattan tam 24 saat sonra" atıyordu: teslimat 05:51'de işaretlenmişse
    * davet ertesi sabah 06:00'da düşüyordu. Sabahın köründe gelen pazarlama-benzeri bir mail
    * hem okunmuyor hem şikâyet üretiyor. Saat dilimi AÇIKÇA veriliyor — ortam sessizce UTC'ye
-   * düşerse davet 14:00'da değil 11:00'da kalsın.
+   * düşerse davet 21:30'da değil 18:30'da kalsın.
    */
-  @Cron("0 11 * * *", { name: "yorum-daveti", timeZone: "Europe/Istanbul" })
+  @Cron("30 18 * * *", { name: "yorum-daveti", timeZone: "Europe/Istanbul" })
   async handleReviewInvitationCron(): Promise<void> {
     try {
       await this.runReviewInvitation();
