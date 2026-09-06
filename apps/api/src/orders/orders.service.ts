@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException, ConflictException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException, ConflictException, Optional } from "@nestjs/common";
 import { Prisma, OrderStatus } from "@prisma/client";
 import { createHash } from "crypto";
 import { PrismaService } from "../prisma/prisma.service";
 import { ParasutService } from "../integrations/parasut/parasut.service";
 import { MetaCapiService } from "../integrations/meta/meta-capi.service";
+import { WhatsappService } from "../integrations/whatsapp/whatsapp.service";
 import { SettingsService } from "../settings/settings.service";
 import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
@@ -306,7 +307,7 @@ export function siparisAnindaMailGonderilir(
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService, private loyalty: LoyaltyService, private metaCapi: MetaCapiService) {}
+  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService, private loyalty: LoyaltyService, private metaCapi: MetaCapiService, @Optional() private whatsapp?: WhatsappService) {}
 
   /**
    * Public kargo takibi — sipariş no + e-posta eşleşmesiyle GERÇEK durum + zaman damgaları döner
@@ -923,6 +924,10 @@ export class OrdersService {
       // bağlansaydı terk edilmiş ödemeler de bildirim üretirdi (2026-08-18'de panelde
       // ödemesiz siparişlerin görünmesi zaten sorun olmuştu).
       void this.mail.sendNewOrderAdminEmail((placed as { id: string }).id).catch(() => undefined);
+      // WhatsApp bildirimi — yönetici e-postasıyla AYNI koşulda (2026-09-06, Hasan).
+      // Mail kutusu geç açılıyor; sipariş bildiriminin anında görülmesi gerekiyor.
+      // Fire-and-forget: WhatsApp kesintisi sipariş akışını ASLA etkilemez.
+      void this.whatsapp?.bildirYeniSiparis((placed as { id: string }).id).catch(() => undefined);
       // Meta CAPI Purchase: cari sipariş iyzico callback'inden GEÇMEZ → burada tetiklenmezse
       // kurumsal dönüşümler Meta'da hiç görünmüyordu. event_id=orderNumber olduğundan tarayıcı
       // Pixel'iyle dedup korunur (handleCallback'teki çağrı deseninin aynısı, fire-and-forget).

@@ -88,6 +88,12 @@ services:
       # Token yoksa MetaCapiService sessizce no-op olur (checkout etkilenmez).
       META_CAPI_TOKEN: ${META_CAPI_TOKEN:-}
       META_PIXEL_ID: ${META_PIXEL_ID:-1112404194692078}
+      # WhatsApp yeni sipariş bildirimi (2026-09-06). Token gizli → yalnız VPS .env.production'da.
+      # Env eksikse WhatsappService sessizce kapalı kalır; sipariş akışı etkilenmez.
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_ADMIN_TO: ${WHATSAPP_ADMIN_TO:-}
+      WHATSAPP_TEMPLATE: ${WHATSAPP_TEMPLATE:-yeni_siparis_bildirimi}
       # n8n webhook'lari (Trello kart otomasyonu + sepet terk hatirlaticisi). Bos ise no-op.
       N8N_ORDER_WEBHOOK_URL: ${N8N_ORDER_WEBHOOK_URL:-}
       N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}

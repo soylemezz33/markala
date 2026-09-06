@@ -11,6 +11,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { IyzicoService } from "../integrations/iyzico/iyzico.service";
 import { MetaCapiService } from "../integrations/meta/meta-capi.service";
+import { WhatsappService } from "../integrations/whatsapp/whatsapp.service";
 import { verifyPaymentNonce, paymentNonce } from "./payment-nonce";
 import { MailService } from "../mail/mail.service";
 import { LoyaltyService } from "../loyalty/loyalty.service";
@@ -38,6 +39,9 @@ export class PaymentsService implements OnModuleInit {
     private loyalty: LoyaltyService,
     // Drive sipariş klasörü (2026-09-03). @Optional + son parametre: spec'ler 6 argümanla kuruyor.
     @Optional() private orderDrive?: OrderDriveService,
+    // WhatsApp yeni sipariş bildirimi (2026-09-06). @Optional + son parametre: spec'ler
+    // servisi daha az argümanla kuruyor, bildirim eklemek onları bozmamalı.
+    @Optional() private whatsapp?: WhatsappService,
   ) {}
 
   /**
@@ -601,6 +605,9 @@ export class PaymentsService implements OnModuleInit {
         // Yöneticiye "yeni sipariş" bildirimi — kaçan callback kurtarıldığında da gitsin,
         // yoksa o sipariş hiç haber vermeden panele düşerdi.
         void this.mail.sendNewOrderAdminEmail(o.id).catch(() => undefined);
+        // WhatsApp bildirimi — yönetici e-postasıyla AYNI koşulda (2026-09-06, Hasan).
+        // Kaçan callback kurtarıldığında da gitsin; mükerrer koruması servisin içinde.
+        void this.whatsapp?.bildirYeniSiparis(o.id).catch(() => undefined);
         void this.metaCapi.sendPurchase(o.id).catch(() => undefined);
         // Sadakat kazanımı (idempotent + best-effort) — callback kaçmış siparişte de kazanım kaybolmasın.
         void this.loyalty.earnForOrder(o.id).catch(() => undefined);
@@ -706,6 +713,9 @@ export class PaymentsService implements OnModuleInit {
         // Yöneticiye "yeni sipariş" bildirimi. Müşteri onayıyla AYNI koşulda (upd.count>0)
         // → yinelenen callback'te çift bildirim gitmez.
         void this.mail.sendNewOrderAdminEmail(orderId).catch(() => undefined);
+        // WhatsApp bildirimi — yönetici e-postasıyla AYNI koşulda (2026-09-06, Hasan).
+        // Fire-and-forget: ödeme sonrası yönlendirmeyi geciktirmez.
+        void this.whatsapp?.bildirYeniSiparis(orderId).catch(() => undefined);
         // Meta Conversions API: sunucu-taraflı Purchase (KVKK onay-gate'li, event_id=orderNumber
         // ile tarayıcı Pixel'ine dedup). Fire-and-forget: redirect'i geciktirmez, akışı bloke etmez.
         void this.metaCapi.sendPurchase(orderId).catch(() => undefined);

@@ -780,6 +780,9 @@ enum NotificationChannel {
   email
   sms
   push
+  // 2026-09-06: yeni sipariş bildirimi Meta WhatsApp Cloud API üzerinden yöneticiye gider.
+  // Kanal enum'a eklendi ki gönderimler notification_logs'ta "e-posta" gibi görünmesin.
+  whatsapp
 }
 
 model NotificationLog {
