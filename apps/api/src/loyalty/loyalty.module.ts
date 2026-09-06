@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { LoyaltyController } from "./loyalty.controller";
+import { LoyaltyController, LoyaltyPublicController } from "./loyalty.controller";
 import { LoyaltyService } from "./loyalty.service";
 
 @Module({
-  controllers: [LoyaltyController],
+  controllers: [LoyaltyPublicController, LoyaltyController],
   providers: [LoyaltyService],
   // OrdersModule (harcama) ve PaymentsModule (kazanım) LoyaltyService'i enjekte eder.
   exports: [LoyaltyService],

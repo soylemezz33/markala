@@ -5,8 +5,10 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  Optional,
   UnauthorizedException,
 } from "@nestjs/common";
+import { LoyaltyService } from "../loyalty/loyalty.service";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
@@ -58,7 +60,36 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private mail: MailService,
+    /** Misafir siparişlerini hesaba bağlayınca geriye dönük puan (karar 6). Spec uyumu için opsiyonel. */
+    @Optional() private loyalty?: LoyaltyService,
   ) {}
+
+  /**
+   * Misafir → üye dönüşümü (2026-09-06 ortak kararı, karar 6). Kayıt anında aynı e-postayla
+   * verilmiş misafir siparişleri hesaba bağlanır; son 48 saat içinde verilmiş ödenmiş sipariş
+   * varsa `guestConvertedAt` yazılır (HOSGELDIN bir sonraki siparişte bir kez geçerli olur) ve
+   * bağlanan ödenmiş siparişlerin puanı geriye dönük kazandırılır. Best-effort: hata kaydı bozmaz.
+   */
+  private async misafirSiparisleriniBagla(userId: string, email: string): Promise<void> {
+    try {
+      const adaylar = await this.prisma.order.findMany({
+        where: { userId: null, email: { equals: email, mode: "insensitive" }, deletedAt: null },
+        select: { id: true, createdAt: true, paymentStatus: true },
+      });
+      if (adaylar.length === 0) return;
+      await this.prisma.order.updateMany({ where: { id: { in: adaylar.map((o) => o.id) } }, data: { userId } });
+      const esik = Date.now() - 48 * 3_600_000;
+      const tazeOdenmis = adaylar.filter((o) => o.paymentStatus === "basarili" && o.createdAt.getTime() >= esik);
+      if (tazeOdenmis.length > 0) {
+        await this.prisma.user.update({ where: { id: userId }, data: { guestConvertedAt: new Date() } });
+      }
+      const odenmis = adaylar.filter((o) => o.paymentStatus === "basarili").map((o) => o.id);
+      if (odenmis.length > 0) await this.loyalty?.earnForOrders(odenmis);
+      this.logger.log(`register.misafir-baglama userId=${userId} siparis=${adaylar.length} odenmis=${odenmis.length} donusum=${tazeOdenmis.length > 0}`);
+    } catch (err) {
+      this.logger.warn(`register.misafir-baglama başarısız userId=${userId}: ${(err as Error).message}`);
+    }
+  }
 
   /**
    * Şifre sıfırlama TALEBİ — daima sessizce başarılı döner (user enumeration koruması).
@@ -222,6 +253,8 @@ export class AuthService {
       // Hoş geldin maili (HOSGELDIN kuponu) artık ilk doğrulamada değil kayıtta gider.
       // Fire-and-forget: mail hatası kaydı bloke etmez.
       void this.mail.sendWelcomeEmail(user.email, user.fullName);
+      // Misafir siparişleri hesaba bağla + geriye dönük puan (karar 6) — fire-and-forget.
+      void this.misafirSiparisleriniBagla(user.id, user.email);
       this.logger.log(`register.ok userId=${user.id}`);
       // Oto-giriş: login ile aynı oturum çifti döner (controller cookie'yi yazar).
       return this.issueTokenPair(user, context);

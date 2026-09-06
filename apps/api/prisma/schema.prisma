@@ -78,6 +78,15 @@ model User {
   // Sadakat programı — denormalize puan bakiyesi (tek doğruluk kaynağı LoyaltyLedger).
   // Kazanım/harcama ledger yazımıyla birlikte atomik güncellenir.
   loyaltyPoints Int @default(0) @map("loyalty_points")
+  /// Puan süresi (2026-09-06 ortak kararı, karar 2): son kazanımdan 12 ay sonra bakiye sıfırlanır.
+  /// earnForOrder her kazanımda ileri alır; RetentionService günlük cron ile 1 ay / 1 hafta önce
+  /// hatırlatır (loyaltyExpiryMailStage 0→1→2) ve süre dolunca bakiyeyi `expire` defter kaydıyla düşer.
+  loyaltyExpiresAt       DateTime? @map("loyalty_expires_at")
+  loyaltyExpiryMailStage Int       @default(0) @map("loyalty_expiry_mail_stage")
+  /// Misafir siparişinden 48 saat içinde üye olan müşteri (karar 6): siparişleri hesaba bağlanır,
+  /// puanı geriye dönük yazılır ve HOSGELDIN kuponu bir sonraki siparişte bir kez kullanılabilir
+  /// (ilk-sipariş kontrolü bu tarihten önceki siparişleri saymaz).
+  guestConvertedAt DateTime? @map("guest_converted_at")
 
   emailVerifiedAt DateTime? @map("email_verified_at")
   lastLoginAt     DateTime? @map("last_login_at")
@@ -502,6 +511,14 @@ model Order {
   reviewToken       String?   @unique @map("review_token")
   reviewEmailSentAt DateTime? @map("review_email_sent_at")
 
+  // Sadakat / tekrar sipariş mailleri (2026-09-06 ortak kararları, RetentionService).
+  // retentionMailStage: 0 yok · 1 ikinci-sipariş kuponu gönderildi (teslim+1 gün) · 2 hatırlatma
+  // gönderildi (teslim+3 gün) · 9 uygun değil (izin yok / ikinci sipariş değil). Tek yönlü.
+  retentionMailStage  Int       @default(0) @map("retention_mail_stage")
+  retentionCouponCode String?   @map("retention_coupon_code")
+  // Ürün döngüsüne göre "tekrar sipariş" hatırlatması gönderildi mi (kartvizit 90 gün vb.).
+  reorderMailSentAt   DateTime? @map("reorder_mail_sent_at")
+
   notes String? @db.Text
 
   createdAt DateTime  @default(now()) @map("created_at")
@@ -658,11 +675,15 @@ model Coupon {
   /// true ise kupon YALNIZCA müşterinin İLK siparişinde geçerli (HOSGELDIN gibi). Önceki siparişi
   /// olan kullanıcı/e-posta reddedilir. Tekrar kullanımı engeller.
   firstOrderOnly Boolean    @default(false) @map("first_order_only")
+  /// Kişiye özel kupon (2026-09-06, karar 1): doluysa yalnız bu e-posta (küçük harf) kullanabilir.
+  /// İkinci-sipariş teşvik kodları böyle üretilir; herkese açık kod kupon sitelerine düşmesin.
+  assignedEmail  String?    @map("assigned_email")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([code, isActive])
+  @@index([assignedEmail])
   @@map("coupons")
 }
 
@@ -1062,6 +1083,8 @@ enum LoyaltyEntryKind {
   earn
   spend
   adjust
+  /// Süre dolumu: 12 ay hareket olmayan bakiye sıfırlanır (2026-09-06). orderId NULL.
+  expire
 }
 
 /// Puan hareketleri. userId/orderId plain string (FK YOK — AnalyticsEvent deseni): kullanıcı/sipariş

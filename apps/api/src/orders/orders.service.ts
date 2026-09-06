@@ -660,12 +660,29 @@ export class OrdersService {
       // İlk-sipariş kuralı (HOSGELDIN gibi): kullanıcının/e-postanın önceki siparişi varsa reddet
       // → tekrar kullanımı engeller. (Beklemede sipariş "Ödeme Yap" ile aynı sipariş üzerinden öder,
       //  yeni sipariş açmaz; bu yüzden önceki sipariş = ilk değil.)
+      // Kişiye özel kupon (2026-09-06, karar 1): yalnız atanmış e-posta. Giriş yapmışsa hesap
+      // e-postası, misafirse sipariş e-postası; ikisi de küçük harfle karşılaştırılır.
+      if (coupon.assignedEmail) {
+        let eposta: string | null = null;
+        if (input.userId) {
+          const u = await this.prisma.user.findUnique({ where: { id: input.userId }, select: { email: true } });
+          eposta = u?.email?.toLowerCase() ?? null;
+        }
+        if (!eposta && input.email) eposta = input.email.trim().toLowerCase();
+        if (!eposta || eposta !== coupon.assignedEmail.toLowerCase()) {
+          throw new BadRequestException("Bu kod başka bir müşteriye özel; kendi e-postanızla giriş yapın.");
+        }
+      }
       if (coupon.firstOrderOnly) {
         // İlk-sipariş kuponu HESABA bağlıdır — misafir kullanamaz. /orders/guest kaldırıldığı için
         // normalde userId hep dolu gelir; bu, API doğrudan çağrılsa bile taze e-posta ile istismarı kapatır.
         if (!input.userId) {
           throw new BadRequestException("Bu kupon yalnızca giriş yapan üyelerin ilk siparişinde geçerlidir.");
         }
+        // Misafirken sipariş verip 48 saat içinde üye olan müşteri (karar 6): dönüşümden önceki
+        // siparişler ilk-sipariş hakkını yakmaz (coupons.service.validate ile aynı kural).
+        const donusum = await this.prisma.user.findUnique({ where: { id: input.userId }, select: { guestConvertedAt: true } });
+        const donusumSonrasi = donusum?.guestConvertedAt ? { createdAt: { gt: donusum.guestConvertedAt } } : {};
         // userId VEYA e-posta ile önceki TAMAMLANMIŞ sipariş varsa reddet (aynı e-postayla
         // 2. hesap denemesini de yakalar). "Tamamlanmış" = ödemesi başarılı YA DA cari
         // (açık hesap) siparişi. Ödenmemiş/başarısız/iptal denemeler SAYILMAZ — aksi halde
@@ -674,6 +691,7 @@ export class OrdersService {
         const priorCount = await this.prisma.order.count({
           where: {
             OR: [{ userId: input.userId }, ...(input.email ? [{ email: input.email }] : [])],
+            ...donusumSonrasi,
             AND: [
               {
                 OR: [

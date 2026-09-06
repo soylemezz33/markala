@@ -338,6 +338,9 @@ export class MarkalaApiClient {
 
   // === Sadakat (puan) ===
   loyalty = {
+    /** Program bilgisi — public (misafir sipariş sonrası "üye ol, puan kazan" satırı). */
+    program: () =>
+      this.request<{ enabled: boolean; earnPerTl: number; redeemPerTl: number }>("GET", "/loyalty/program"),
     /** Müşteri puan durumu: bakiye + geçmiş. Program kapalıysa enabled=false, balance=0. */
     me: () =>
       this.request<{

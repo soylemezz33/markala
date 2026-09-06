@@ -9,6 +9,25 @@ import { LoyaltyService } from "./loyalty.service";
  * GET /loyalty/me → { enabled, balance, redeemPerTl, history }.
  * Program kapalıysa enabled=false, balance=0, history=[] döner (storefront göstermez).
  */
+/**
+ * Program bilgisi — PUBLIC (misafir sipariş sonrası ekran "üye olursan X puan" satırı için).
+ * Kişisel veri yok: yalnız açık/kapalı ve oranlar.
+ */
+@ApiTags("loyalty")
+@Controller("loyalty")
+export class LoyaltyPublicController {
+  constructor(private service: LoyaltyService) {}
+
+  @Get("program")
+  program() {
+    return {
+      enabled: this.service.isEnabled(),
+      earnPerTl: LoyaltyService.EARN_POINTS_PER_TL,
+      redeemPerTl: LoyaltyService.REDEEM_POINTS_PER_TL,
+    };
+  }
+}
+
 @ApiTags("loyalty")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)

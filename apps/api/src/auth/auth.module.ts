@@ -7,11 +7,13 @@ import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./jwt.strategy";
 import { MailModule } from "../mail/mail.module";
 import { CaptchaModule } from "../captcha/captcha.module";
+import { LoyaltyModule } from "../loyalty/loyalty.module";
 
 @Module({
   imports: [
     MailModule,
     CaptchaModule,
+    LoyaltyModule, // misafir siparişlerini bağlayınca geriye dönük puan (karar 6)
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       inject: [ConfigService],

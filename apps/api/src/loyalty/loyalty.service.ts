@@ -84,9 +84,13 @@ export class LoyaltyService {
       const userId = order.userId;
       await this.prisma.$transaction(async (tx) => {
         // Idempotency: bu sipariş için earn zaten varsa unique ihlali → yakalanır, atlanır.
+        // Puan süresi (2026-09-06, karar 2): her kazanım son tarihi 12 ay ileri alır, hatırlatma
+        // aşaması sıfırlanır. Ledger create'i unique ihlaliyle düşerse tx geri sarılır.
+        const sonTarih = new Date();
+        sonTarih.setMonth(sonTarih.getMonth() + 12);
         const user = await tx.user.update({
           where: { id: userId },
-          data: { loyaltyPoints: { increment: points } },
+          data: { loyaltyPoints: { increment: points }, loyaltyExpiresAt: sonTarih, loyaltyExpiryMailStage: 0 },
           select: { loyaltyPoints: true },
         });
         await tx.loyaltyLedger.create({
@@ -214,5 +218,34 @@ export class LoyaltyService {
         this.logger.error(`refundForOrder başarısız (order=${orderId}): ${(err as Error).message}`);
       }
     }
+  }
+
+  /**
+   * Puan süresi doldu (2026-09-06, karar 2): bakiye sıfırlanır, `expire` defter kaydı yazılır,
+   * süre ve hatırlatma aşaması temizlenir. RetentionService günlük cron'dan çağrılır. Atomik.
+   */
+  async expireForUser(userId: string): Promise<void> {
+    if (!this.isEnabled()) return;
+    await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: userId }, select: { loyaltyPoints: true } });
+      const bakiye = user?.loyaltyPoints ?? 0;
+      await tx.user.update({
+        where: { id: userId },
+        data: { loyaltyPoints: 0, loyaltyExpiresAt: null, loyaltyExpiryMailStage: 0 },
+      });
+      if (bakiye > 0) {
+        await tx.loyaltyLedger.create({
+          data: { userId, orderId: null, kind: "expire", points: bakiye, balanceAfter: 0, description: `Süre dolumu (-${bakiye} puan, 12 ay hareket yok)` },
+        });
+      }
+    });
+  }
+
+  /**
+   * Misafir siparişleri hesaba bağlandığında (auth.register, karar 6) geriye dönük kazanım:
+   * bağlanan her ödenmiş sipariş için earnForOrder (idempotent) çağrılır.
+   */
+  async earnForOrders(orderIds: string[]): Promise<void> {
+    for (const id of orderIds) await this.earnForOrder(id);
   }
 }

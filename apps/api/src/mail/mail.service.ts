@@ -1209,4 +1209,104 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
       error: typeof metadata.error === "string" ? metadata.error : undefined,
     });
   }
+
+  // ===========================================================================
+  // SADAKAT PROGRAMI MAİLLERİ (2026-09-06 ortak kararları) — RetentionService çağırır.
+  // Hepsi pazarlama iletisidir: çağıran taraf pazarlama iznini kontrol eder.
+  // ===========================================================================
+
+  /** Ortak gönderim: SMTP yoksa "skipped" kaydı; hata fırlatmaz, boolean döner. */
+  private async sadakatGonder(to: string, subject: string, text: string, html: string, template: string, extra: Record<string, unknown> = {}): Promise<boolean> {
+    if (!this.config.get<string>("SMTP_HOST")) {
+      this.logger.log(`mail.${template}: SMTP_HOST yok → atlandı to=${to}`);
+      await this.logNotification(to, "skipped", { template, reason: "smtp-not-configured", ...extra }, subject);
+      return false;
+    }
+    try {
+      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      await this.logNotification(to, "sent", { messageId: info.messageId, template, ...extra }, subject);
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.${template} failed to=${to}: ${(err as Error).message}`);
+      await this.logNotification(to, "failed", { error: (err as Error).message, template, ...extra }, subject);
+      return false;
+    }
+  }
+
+  private sadakatIsim(order: { user?: { fullName?: string | null } | null; shippingAddressSnapshot?: unknown }): string | undefined {
+    return (order.user?.fullName?.trim() || (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) || undefined;
+  }
+
+  /**
+   * Karar 1 — ikinci sipariş teşviki. stage 1: kişiye özel kod (teslim+1 gün); stage 2: hatırlatma
+   * (teslim+3 gün, kod kullanılmadıysa). Kod %10, min 750 ₺, tek kullanım, 21 gün.
+   */
+  async sendIkinciSiparisKuponEmail(orderId: string, code: string, validUntil: Date | null, stage: 1 | 2): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { user: { select: { fullName: true } } } });
+    if (!order?.email) return false;
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = this.sadakatIsim(order);
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const sonTarih = validUntil ? validUntil.toLocaleDateString("tr-TR", { day: "numeric", month: "long" }) : "";
+    const url = `${webUrl}/urunler?kupon=${encodeURIComponent(code)}`;
+    const subject = stage === 1
+      ? `Teşekkürler ${name ? name.split(" ")[0] : ""} — ikinci siparişine özel %10`.replace(/\s+—/, " —")
+      : `Hatırlatma: %10 kodun ${sonTarih} tarihine kadar geçerli`;
+    const govde = stage === 1
+      ? `${order.orderNumber} numaralı siparişini teslim aldın, umarız beğendin. Bizi tercih ettiğin için teşekkür olarak ikinci siparişine özel bir kod hazırladık: ${code}. 750 ₺ ve üzeri sepette %10 indirim sağlar, ${sonTarih} tarihine kadar geçerli, yalnız senin e-postanla kullanılabilir.`
+      : `Sana özel ${code} kodu ${sonTarih} tarihine kadar geçerli; 750 ₺ ve üzeri sepette %10 indirim. Sonrasında kod kapanacak.`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${govde}\n\nKodu kullan: ${url}\n\nMarkala`;
+    const html = renderEmail({
+      title: stage === 1 ? "İkinci siparişine özel %10" : "Kodun süresi dolmadan",
+      intro: `${name ? `Merhaba ${esc(name)},` : "Merhaba,"} ${esc(govde)}`,
+      preheader: `${code} · %10 · ${sonTarih} tarihine kadar`,
+      bodyHtml: `<p style="margin:0 0 14px;text-align:center"><span style="display:inline-block;font-family:monospace;font-size:22px;letter-spacing:2px;padding:10px 18px;border:2px dashed #4B3AA0;border-radius:8px">${esc(code)}</span></p>
+        ${emailButtonColored("Kodu kullan", url)}
+        ${emailFallbackLink(url)}
+        <p style="margin:14px 0 0;font-size:13px;color:#78716c">Kod sepette "kupon" alanına girilir; puanlarınla birlikte kullanılabilir, kampanyalı ürünlerde geçmez.</p>`,
+    });
+    return this.sadakatGonder(order.email, subject, text, html, stage === 1 ? "ikinci-siparis-kod" : "ikinci-siparis-hatirlatma", { orderNumber: order.orderNumber, code });
+  }
+
+  /** Karar 5 — tekrar sipariş hatırlatması: tek ürün, tek buton, indirim yok. */
+  async sendTekrarSiparisEmail(orderId: string, urun: { productSlug: string; productName: string }): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { user: { select: { fullName: true } } } });
+    if (!order?.email) return false;
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = this.sadakatIsim(order);
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    // Üye: sipariş detayındaki "Tekrar Sipariş Et" aynı konfigürasyonu sepete koyar. Misafir: ürün sayfası.
+    const url = order.userId ? `${webUrl}/hesabim/siparislerim/${order.id}` : `${webUrl}/urun/${encodeURIComponent(urun.productSlug)}`;
+    const subject = `${urun.productName} bitmek üzere olabilir — tek tıkla yenile`;
+    const govde = `${order.orderNumber} numaralı siparişindeki ${urun.productName} üzerinden bir süre geçti; stokun azaldıysa aynı tasarım ve ölçüyle tek tıkla yeniden sipariş verebilirsin. Fiyat ürün sayfasında güncel olarak hesaplanır.`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${govde}\n\n${order.userId ? "Tekrar sipariş ver" : "Ürünü aç"}: ${url}\n\nMarkala`;
+    const html = renderEmail({
+      title: "Yeniden sipariş zamanı mı?",
+      intro: `${name ? `Merhaba ${esc(name)},` : "Merhaba,"} ${esc(govde)}`,
+      preheader: `${urun.productName} · tek tıkla yenile`,
+      bodyHtml: `${emailButtonColored(order.userId ? "Tekrar sipariş ver" : "Ürünü aç", url)}${emailFallbackLink(url)}
+        <p style="margin:14px 0 0;font-size:13px;color:#78716c">Bu hatırlatma ürünün ortalama kullanım süresine göre gönderildi; ihtiyacın yoksa görmezden gelebilirsin.</p>`,
+    });
+    return this.sadakatGonder(order.email, subject, text, html, "tekrar-siparis", { orderNumber: order.orderNumber, productSlug: urun.productSlug });
+  }
+
+  /** Karar 2 — puan süresi: 30 gün kala (1) ve 7 gün kala (2) hatırlatma. */
+  async sendPuanSuresiEmail(to: string, fullName: string | null, puan: number, expiresAt: Date, stage: 1 | 2): Promise<boolean> {
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = fullName?.trim() || undefined;
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const tarih = expiresAt.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+    const tl = Math.floor(puan / 10);
+    const url = `${webUrl}/hesabim/puanlarim`;
+    const subject = stage === 1 ? `${puan.toLocaleString("tr-TR")} puanın ${tarih} tarihinde silinecek` : `Son 7 gün: ${puan.toLocaleString("tr-TR")} puanın ${tarih} tarihinde silinecek`;
+    const govde = `Hesabında ${puan.toLocaleString("tr-TR")} puan (${tl.toLocaleString("tr-TR")} ₺ değerinde) var. Son siparişinin üzerinden 12 ay geçeceği için puanlar ${tarih} tarihinde sıfırlanacak. O tarihe kadar verdiğin herhangi bir siparişte kullanabilir ya da yeni siparişle süreyi 12 ay uzatabilirsin.`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${govde}\n\nPuanlarım: ${url}\n\nMarkala`;
+    const html = renderEmail({
+      title: stage === 1 ? "Puanların bir ay sonra silinecek" : "Puanların için son 7 gün",
+      intro: `${name ? `Merhaba ${esc(name)},` : "Merhaba,"} ${esc(govde)}`,
+      preheader: `${puan.toLocaleString("tr-TR")} puan · ${tarih}`,
+      bodyHtml: `${emailButtonColored("Puanlarımı kullan", url)}${emailFallbackLink(url)}`,
+    });
+    return this.sadakatGonder(to, subject, text, html, stage === 1 ? "puan-suresi-30" : "puan-suresi-7", { puan, expiresAt: expiresAt.toISOString() });
+  }
 }

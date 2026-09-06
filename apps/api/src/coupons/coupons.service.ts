@@ -39,10 +39,21 @@ export class CouponsService {
     if (subtotal < minOrder) {
       return { valid: false as const, reason: `Bu kupon ${minOrder.toLocaleString("tr-TR")} ₺ ve üzeri siparişlerde geçerli.` };
     }
+    // Kişiye özel kupon (2026-09-06, karar 1): yalnız atanmış e-posta kullanabilir.
+    if (c.assignedEmail) {
+      const eposta = await this.kullaniciEpostasi(opts);
+      if (!eposta || eposta !== c.assignedEmail.toLowerCase()) {
+        return { valid: false as const, reason: "Bu kod başka bir müşteriye özel; kendi e-postanızla giriş yapın." };
+      }
+    }
     if (c.firstOrderOnly) {
       const or: Array<{ userId?: string; email?: string }> = [];
       if (opts.userId) or.push({ userId: opts.userId });
       if (opts.email) or.push({ email: opts.email });
+      // Misafirken sipariş verip 48 saat içinde üye olan müşteri (karar 6): dönüşümden ÖNCEKİ
+      // siparişler ilk-sipariş hakkını yakmaz → HOSGELDIN bir sonraki siparişte bir kez kullanılır.
+      const donusum = opts.userId ? await this.prisma.user.findUnique({ where: { id: opts.userId }, select: { guestConvertedAt: true } }) : null;
+      const donusumSonrasi = donusum?.guestConvertedAt ? { createdAt: { gt: donusum.guestConvertedAt } } : {};
       // orders.service.create ile BİREBİR aynı "tamamlanmış sipariş" tanımı (2026-08-01):
       // ödenmemiş/başarısız/iptal denemeler İLK SİPARİŞ hakkını yakmaz — aksi halde ödeme
       // hatası sonrası sepette validate reddeder, checkout kabul ederdi (uç ayrışması).
@@ -50,6 +61,7 @@ export class CouponsService {
         ? await this.prisma.order.count({
             where: {
               OR: or,
+              ...donusumSonrasi,
               AND: [
                 {
                   OR: [
@@ -75,6 +87,15 @@ export class CouponsService {
       discount,
       freeShipping: c.type === "free_shipping",
     };
+  }
+
+  /** Kişiye özel kupon kontrolü için alıcının e-postası: giriş yapmışsa hesaptaki, değilse formdaki. */
+  private async kullaniciEpostasi(opts: { userId?: string; email?: string }): Promise<string | null> {
+    if (opts.userId) {
+      const u = await this.prisma.user.findUnique({ where: { id: opts.userId }, select: { email: true } });
+      if (u?.email) return u.email.toLowerCase();
+    }
+    return opts.email ? opts.email.trim().toLowerCase() : null;
   }
 
   create(dto: CreateCouponDto) {

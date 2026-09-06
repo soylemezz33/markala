@@ -12,7 +12,40 @@ import { useCartStore, unitCountFromSummary } from "@/lib/cart-store";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { trackPurchase } from "@/lib/analytics";
 import { apiClient, withRefresh } from "@/lib/api";
+import { useAuthStore } from "@/lib/auth-store";
 import type { Order } from "@markala/types";
+
+/**
+ * Misafir → üye daveti (2026-09-06 ortak kararı, karar 6). Sipariş sonrası ekranda, üye olmayan
+ * müşteriye: üye olursa HOŞGELDİN %10 + bu siparişten kazanacağı puan (48 saat içinde kayıt olunca
+ * sipariş hesaba bağlanır, puan geriye dönük yazılır). Program kapalıysa hiç görünmez.
+ */
+function UyeOlDaveti({ order }: { order: Order }) {
+  const user = useAuthStore((s) => s.user);
+  const isBootstrapping = useAuthStore((s) => s.isBootstrapping);
+  const [program, setProgram] = useState<{ enabled: boolean; earnPerTl: number; redeemPerTl: number } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    apiClient.loyalty.program().then((p) => { if (!cancelled) setProgram(p); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  if (user || isBootstrapping || !program?.enabled) return null;
+  const puan = Math.floor((Number(order.total) || 0) * program.earnPerTl);
+  const tl = Math.floor(puan / program.redeemPerTl);
+  if (puan <= 0) return null;
+  const kayitHref = order.email ? `/kayit?email=${encodeURIComponent(order.email)}` : "/kayit";
+  return (
+    <div className="mx-auto mt-8 max-w-xl rounded-xl border-2 border-brand-400 bg-brand-50 p-5 text-left">
+      <p className="font-semibold text-ink-900 text-lg">Bu siparişten {puan.toLocaleString("tr-TR")} puan kazanabilirdin ({tl.toLocaleString("tr-TR")} ₺ değerinde).</p>
+      <p className="mt-2 text-ink-700">
+        48 saat içinde aynı e-postayla üye ol: bu sipariş hesabına bağlanır, puanın yazılır, bir sonraki siparişte
+        <strong> HOŞGELDİN %10</strong> indirimin de hazır olur. Ve evet, puanla kuponu birlikte kullanabilirsin;
+        “kampanyaları birleştiremezsin” demeyeceğiz.
+      </p>
+      <Link href={kayitHref}><Button className="mt-4">30 saniyede üye ol</Button></Link>
+    </div>
+  );
+}
 
 // useSearchParams Suspense sınırı içinde okunmalı (next build prerender hatası önlenir) — repo deseni.
 export default function OrderSuccessPage({ params }: { params: { orderId: string } }) {
@@ -174,6 +207,8 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
           <Receipt size={16} className="text-ink-700" />
           Sipariş No: <span className="font-mono font-medium text-ink-900">{order.orderNumber}</span>
         </div>
+
+        {paymentConfirmed !== false && <UyeOlDaveti order={order} />}
 
         {isHavale && !paymentConfirmed && (
           <div className="mx-auto mt-8 max-w-xl rounded-xl border border-paper-200 bg-paper-50 p-5 text-left">

@@ -45,7 +45,12 @@ export default function RegisterPage() {
   // hydration uyumsuzluğu yapar → mount'ta state'e al.
   const [nextParam, setNextParam] = useState<string | null>(null);
   useEffect(() => {
-    setNextParam(safeNextPath(new URLSearchParams(window.location.search).get("next")));
+    const q = new URLSearchParams(window.location.search);
+    setNextParam(safeNextPath(q.get("next")));
+    // Misafir sipariş sonrası "üye ol" bağlantısı e-postayı taşır (2026-09-06, karar 6):
+    // aynı e-postayla kayıt olunca sipariş hesaba bağlanır ve puan yazılır.
+    const e = q.get("email");
+    if (e && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) setEmail(e);
   }, []);
   const girisHref = nextParam ? `/giris?next=${encodeURIComponent(nextParam)}` : "/giris";
 
