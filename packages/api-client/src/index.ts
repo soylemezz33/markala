@@ -182,7 +182,10 @@ export class MarkalaApiClient {
    * Şekil bilerek gevşek: rapora yeni bölüm eklendiğinde istemci paketini güncellemek
    * gerekmesin, panel bilmediği alanı görmezden gelsin.
    */
-  sistemSagligi = () => this.request<Record<string, any>>("GET", "/health/sistem");
+  // auth: true ZORUNLU — request() Authorization başlığını yalnız bu bayrakla ekler.
+  // İlk sürümde unutulmuştu ve uç, token hiç gitmediği için 401 "Unauthorized" döndü.
+  sistemSagligi = () =>
+    this.request<Record<string, any>>("GET", "/health/sistem", undefined, { auth: true });
 
   // === Auth ===
   auth = {
