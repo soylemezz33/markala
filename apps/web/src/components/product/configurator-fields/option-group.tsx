@@ -563,22 +563,12 @@ function OptionGroupInner({ groupKey, groupLabel, options, selected, locked, dis
     selectedOpt ? `${selectedOpt.optionLabel} ${selectedOpt.optionSublabel ?? ""}` : null,
   );
 
-  if (disabled && !locked) {
-    return (
-      <div className="opacity-50 pointer-events-none select-none">
-        <label className="block text-sm font-medium text-ink-900 mb-3">
-          {groupLabel}
-        </label>
-        <div
-          aria-label={`${groupLabel}: bu seçenek aktif konfigürasyonda geçersiz`}
-          aria-disabled="true"
-          className="px-4 py-3 rounded-md border border-paper-200 bg-paper-100 text-center text-sm text-ink-400"
-        >
-          -
-        </div>
-      </div>
-    );
-  }
+  // Kural ile devre dışı kalan grup (rules.disablesGroups) HİÇ ÇİZİLMEZ (2026-09-07). Eskiden
+  // soluk bir "-" kutusu kalıyordu; bloknot ürünlerinde ebat seçimine göre iki ayrı "Kapak Türü"
+  // grubundan biri devreye girdiği için soluk kutu ikinci bir "Kapak Türü" gibi görünüp kafa
+  // karıştırıyordu (Hasan: "çok karışık duruyor"). Fiyat motoru devre dışı grubun seçimini zaten
+  // düşürür (effectiveSelections) — görünmemesi doğru olanı yansıtır.
+  if (disabled && !locked) return null;
 
   if (locked) {
     const displayOpt =
