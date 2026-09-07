@@ -176,6 +176,14 @@ export class MarkalaApiClient {
   // === Health ===
   health = () => this.request<{ status: string; checks: { db: string } }>("GET", "/health");
 
+  /**
+   * Panel "Sistem Sağlığı" sayfası (2026-09-07). Yetkili uç — bağlantı havuzu, disk,
+   * zamanlanmış işler, e-posta ve entegrasyon yapılandırması. Sır DÖNMEZ.
+   * Şekil bilerek gevşek: rapora yeni bölüm eklendiğinde istemci paketini güncellemek
+   * gerekmesin, panel bilmediği alanı görmezden gelsin.
+   */
+  sistemSagligi = () => this.request<Record<string, any>>("GET", "/health/sistem");
+
   // === Auth ===
   auth = {
     /** Kayıt = OTO-GİRİŞ (doğrulama kaldırıldı 2026-07-31): login ile aynı oturum çifti döner. */

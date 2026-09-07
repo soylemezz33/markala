@@ -14,8 +14,13 @@ const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http:
 export async function GET() {
   try {
     const api = await getAdminApi();
-    const res = await api.health();
-    const ok = res?.status === "ok";
+    // 2026-09-07 DÜZELTMESİ: burada SIĞ /health çağrılıyordu ve o uç yalnız "süreç ayakta mı"
+    // diye bakıyordu. 7 Eylül sabahı bağlantı havuzu tükendi, site 45 dakika 500 döndü ve bu
+    // rozet tüm o süre boyunca YEŞİL kaldı. Artık veritabanını gerçekten yoklayan rapor
+    // kullanılıyor; DB düştüğünde rozet de düşer.
+    const rapor = (await api.sistemSagligi()) as { toplam?: string; veritabani?: { baglanti?: boolean } };
+    const ok = rapor?.toplam === "saglikli" || rapor?.toplam === "uyari";
+    const res = { status: rapor?.veritabani?.baglanti === false ? "db_down" : (rapor?.toplam ?? "unknown") };
     // E-posta arızası (2026-09-03): herkese açık /api/health/mail; 503 = arızalı. Gövde her iki
     // durumda da JSON (ok, lastFailureAt, failedLast15m, lastError).
     let mail: Record<string, unknown> | null = null;

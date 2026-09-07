@@ -1,4 +1,7 @@
-import { Controller, Get, HttpException, HttpStatus } from "@nestjs/common";
+import { Controller, Get, HttpException, HttpStatus, UseGuards } from "@nestjs/common";
+import { JwtAuthGuard } from "../auth/jwt.guard";
+import { RolesGuard, Roles } from "../auth/roles.guard";
+import { SistemSagligiService } from "./sistem-sagligi.service";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
 import * as net from "net";
 import { PrismaService } from "../prisma/prisma.service";
@@ -11,7 +14,26 @@ type CheckStatus = "ok" | "error" | "not_configured";
 export class HealthController {
   private readonly startedAt = Date.now();
 
-  constructor(private readonly prisma: PrismaService, private readonly mailHealth: MailHealthService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailHealth: MailHealthService,
+    private readonly sistemSagligi: SistemSagligiService,
+  ) {}
+
+  /**
+   * Panel "Sistem Sağlığı" sayfasının veri kaynağı (2026-09-07).
+   *
+   * YETKİLİ UÇ: bağlantı havuzu doluluğu, disk, zamanlanmış işler ve entegrasyon
+   * yapılandırması operasyonel iç bilgidir; herkese açık /health uçlarına konmaz.
+   * Yalnız yönetici rolleri — sır DÖNMEZ, yalnız "yapılandırıldı mı" bilgisi.
+   */
+  @Get("sistem")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiOperation({ summary: "Panel sistem sağlığı raporu (yetkili)" })
+  async sistem() {
+    return this.sistemSagligi.rapor();
+  }
 
   /**
    * E-posta gönderim sağlığı (2026-09-03): son 15 dk'da başarısız gönderim var ve sonrasında

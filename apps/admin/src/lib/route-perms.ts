@@ -52,6 +52,9 @@ export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]>
   ["/yorumlar", "reviews.manage"],
   ["/yasal", "settings.manage"],
   ["/ayarlar", "settings.manage"],
+  // Sistem sağlığı (2026-09-07): bağlantı havuzu/disk/cron gibi operasyonel iç bilgi —
+  // API ucu da admin+super_admin ile sınırlı, menü ve URL erişimi onunla hizalı olsun.
+  ["/sistem-sagligi", "settings.manage"],
   ["/ayarlar/fiyat", "pricing.manage"],
 ] as const;
 

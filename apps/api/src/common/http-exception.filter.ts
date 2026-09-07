@@ -7,6 +7,7 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import type { Request, Response } from "express";
+import { sunucuHatasiKaydet } from "../health/hata-sayaci";
 
 /**
  * Tüm API hatalarını TEK bir zarfa normalize eden global filtre.
@@ -79,6 +80,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // 5xx → tam stack logla (observability). 4xx beklenen istemci hatası, gürültü yapma.
     // GÜVENLİK: log satırında URL'den hassas sorgu parametreleri maskelenir (token/secret/key/password).
     if (body.statusCode >= 500) {
+      // Sağlık sayfası "şu an hata alıyor muyuz?" sorusunu buradan cevaplıyor (2026-09-07
+      // kesintisi 45 dakika görünmeden sürmüştü). Bellekte, DB'ye yazmadan sayılır.
+      sunucuHatasiKaydet(redactSensitivePath(rawPath), body.statusCode);
       this.logger.error(
         `${req?.method ?? "?"} ${redactSensitivePath(rawPath)} → ${body.statusCode} ${body.code}`,
         exception instanceof Error ? exception.stack : String(exception),
