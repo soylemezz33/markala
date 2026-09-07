@@ -18,7 +18,13 @@ export class CategoriesController {
    */
   @Get()
   @Header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300")
-  async list(@Query("includeInactive") includeInactive?: string) {
+  async list(
+    @Query("includeInactive") includeInactive?: string,
+    // lite=true → başlangıç fiyatı HESAPLANMAZ (bkz. findAllLite). Açılır liste dolduran
+    // çağrılar için; 895 ms'lik hesabı boşuna ödemesinler.
+    @Query("lite") lite?: string,
+  ) {
+    if (lite === "true") return this.service.findAllLite(includeInactive === "true");
     const kategoriler = await this.service.findAll(includeInactive === "true");
     return kategoriler.map(({ profitMargin: _m, ...kalan }) => kalan);
   }

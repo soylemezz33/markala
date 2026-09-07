@@ -49,6 +49,22 @@ export class CategoriesService {
     return katMin;
   }
 
+  /**
+   * HAFİF LİSTE (2026-09-07): yalnız açılır listeler için — id/slug/ad.
+   *
+   * NEDEN: `findAll` her çağrıda TÜM aktif ürünlerin fiyat matrisini yükleyip kategori
+   * başlangıç fiyatlarını hesaplıyor. Ölçtük: 895 ms ve 232 KB. Panelde ürünler sayfası ve
+   * ürün düzenleme ekranı bu ucu SADECE açılır liste doldurmak için çağırıyordu; başlangıç
+   * fiyatı orada hiç kullanılmıyor. Sayfa açılışındaki beklemenin büyük kısmı buydu.
+   */
+  async findAllLite(includeInactive = false) {
+    return this.prisma.category.findMany({
+      where: includeInactive ? {} : { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, slug: true, name: true, isActive: true, sortOrder: true },
+    });
+  }
+
   async findAll(includeInactive = false) {
     const [cats, hesap] = await Promise.all([
       this.prisma.category.findMany({

@@ -160,6 +160,10 @@ export class ProductsService {
           ratingAverage: true,
           ratingCount: true,
           category: { select: { slug: true, name: true } },
+          // PANEL EK ALANLARI (2026-09-07): admin ürün tablosu bunları gösterir ama
+          // vitrin listesi kullanmaz. `includeInactive` yalnız guard'lı /admin-list'ten
+          // geldiği için koşul tam olarak "panel mi?" demek — vitrin payload'ı büyümez.
+          ...(opts.includeInactive ? { isActive: true, sku: true, categoryId: true } : {}),
         },
       }) as { id: string; [key: string]: unknown }[];
     } else {

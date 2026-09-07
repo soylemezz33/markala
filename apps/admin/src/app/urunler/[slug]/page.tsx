@@ -21,47 +21,43 @@ export default async function ProductEditPage({ params }: Props) {
 
   if (!product) notFound();
 
-  // Kategoriler ikincil — geçici hatada ürün düzenleme yine açılsın (boş kategori listesiyle).
-  let categories: unknown[] = [];
-  try {
-    categories = await api.categories.list(true);
-  } catch {
-    categories = [];
-  }
+  // 2026-09-07: bu dört çağrı SIRAYLA bekleniyordu; hiçbiri diğerine bağlı değil (üçü
+  // yalnız product.id'ye ihtiyaç duyar, o da yukarıda hazır). Paralel çalıştırılıyor.
+  // allSettled: biri düşerse diğerleri yine gelsin — hepsi ikincil, sayfa açılmaya devam
+  // etmeli (kategori listesi boş, fiyat matrisi boş vb. tolere edilir).
+  const urunId = (product as unknown as { id: string }).id;
+  const [katSonuc, fiyatSonuc, kardesSonuc, ayarSonuc] = await Promise.allSettled([
+    api.categories.listLite(true),
+    api.products.getPrices(urunId),
+    api.prices.structureSiblings(urunId),
+    api.settings.get("pricing"),
+  ]);
+
+  const categories: unknown[] = katSonuc.status === "fulfilled" ? katSonuc.value : [];
 
   // Fiyatlama yapısı (options + prices) — hata toleranslı, boş yapıyla açılsın.
-  let pricing: { options: unknown[]; prices: unknown[] } = { options: [], prices: [] };
-  let pricingLoadError = false;
-  try {
-    pricing = await api.products.getPrices((product as unknown as { id: string }).id);
-  } catch {
-    pricingLoadError = true;
-  }
+  const pricingLoadError = fiyatSonuc.status !== "fulfilled";
+  const pricing: { options: unknown[]; prices: unknown[] } =
+    fiyatSonuc.status === "fulfilled"
+      ? (fiyatSonuc.value as never)
+      : { options: [], prices: [] };
 
-  // Aynı kategori+yapıdaki kardeş sayısı ("Kategoriye Uygula" rozeti) — ikincil, hata yutulur.
-  let siblingCount = 0;
-  try {
-    const r = await api.prices.structureSiblings((product as unknown as { id: string }).id);
-    siblingCount = r.count;
-  } catch {
-    siblingCount = 0;
-  }
+  // Aynı kategori+yapıdaki kardeş sayısı ("Kategoriye Uygula" rozeti) — ikincil.
+  const siblingCount = kardesSonuc.status === "fulfilled" ? kardesSonuc.value.count : 0;
 
   // m² motoru global ayarları (area editör satış önizlemesi) — eksikse default.
   let pricingSettings = { kur: 46, marj: 1.5, kdv: 0.2 };
-  try {
-    const s = (await api.settings.get("pricing")) as Record<string, unknown>;
+  if (ayarSonuc.status === "fulfilled") {
+    const sAyar = ayarSonuc.value as Record<string, unknown>;
     const num = (v: unknown, d: number) => {
       const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : NaN;
       return Number.isFinite(n) && n > 0 ? n : d;
     };
     pricingSettings = {
-      kur: num(s["pricing.kur"], 46),
-      marj: num(s["pricing.marj"], 1.5),
-      kdv: num(s["pricing.kdv"], 0.2),
+      kur: num(sAyar["pricing.kur"], 46),
+      marj: num(sAyar["pricing.marj"], 1.5),
+      kdv: num(sAyar["pricing.kdv"], 0.2),
     };
-  } catch {
-    // default kalır
   }
 
   return (

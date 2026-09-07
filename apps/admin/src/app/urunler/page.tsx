@@ -10,7 +10,7 @@ export default async function ProductsAdminPage() {
     const api = await getAdminApi();
     [products, categories] = await Promise.all([
       api.products.adminList({ take: 5000 }), // pasif ürünler dahil tüm ürünler
-      api.categories.list(true),
+      api.categories.listLite(true),
     ]);
   } catch {
     loadError = true;

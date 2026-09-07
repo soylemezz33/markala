@@ -87,12 +87,17 @@ export class ProductsController {
     @Query("skip") skip?: string,
     @Query("q") q?: string,
   ) {
+    // list:true → AĞIR alanlar (content JSON, uzun açıklama, SEO) çıkarılır.
+    // 2026-09-07 ölçümü: bu olmadan yanıt 793 üründe 9,7 MB idi (ürün başına 12,6 KB) ve
+    // panel ürünler sayfası 3-4 saniye açılıyordu. Tablo yalnız 9 alan kullanıyor;
+    // düzenleme ekranı zaten ürünü ayrı ayrı (/products/:slug) tam veriyle çekiyor.
     return this.service.findAll({
       categorySlug: category,
       take: take ? parseInt(take) : undefined,
       skip: skip ? parseInt(skip) : undefined,
       q,
       includeInactive: true,
+      list: true,
     });
   }
 

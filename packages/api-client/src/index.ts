@@ -241,6 +241,17 @@ export class MarkalaApiClient {
   categories = {
     list: (includeInactive = false) =>
       this.request<Category[]>("GET", "/categories", undefined, { query: { includeInactive } }),
+    /**
+     * Açılır liste için hafif kategori listesi (id/slug/ad). Başlangıç fiyatı HESAPLANMAZ —
+     * o hesap tüm ürünlerin fiyat matrisini yüklüyor ve 895 ms sürüyor (2026-09-07 ölçümü).
+     */
+    listLite: (includeInactive = false) =>
+      this.request<Array<{ id: string; slug: string; name: string; isActive: boolean; sortOrder: number }>>(
+        "GET",
+        "/categories",
+        undefined,
+        { query: { includeInactive, lite: true } },
+      ),
     /** Panel listesi — profitMargin DAHİL. Public `list()` marjı ayıklar (ticari sır). */
     adminList: (includeInactive = false) =>
       this.request<Category[]>("GET", "/categories/admin-list", undefined, {

@@ -7,7 +7,7 @@ export default async function NewProductPage() {
   let loadError = false;
   try {
     const api = await getAdminApi();
-    categories = await api.categories.list(true);
+    categories = await api.categories.listLite(true);
   } catch {
     loadError = true;
   }
