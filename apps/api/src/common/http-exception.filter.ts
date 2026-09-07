@@ -82,7 +82,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (body.statusCode >= 500) {
       // Sağlık sayfası "şu an hata alıyor muyuz?" sorusunu buradan cevaplıyor (2026-09-07
       // kesintisi 45 dakika görünmeden sürmüştü). Bellekte, DB'ye yazmadan sayılır.
-      sunucuHatasiKaydet(redactSensitivePath(rawPath), body.statusCode);
+      // P2024 = "Timed out fetching a new connection from the connection pool" — 7 Eylül
+      // kesintisinin imzası. Açık bağlantı saymak yanıltıcı olduğu için sağlık sayfası
+      // ARIZA kararını doğrudan bu hataya dayandırıyor.
+      const havuzZamanAsimi =
+        (exception as { code?: string })?.code === "P2024" ||
+        /connection pool/i.test((exception as Error)?.message ?? "");
+      sunucuHatasiKaydet(redactSensitivePath(rawPath), body.statusCode, havuzZamanAsimi);
       this.logger.error(
         `${req?.method ?? "?"} ${redactSensitivePath(rawPath)} → ${body.statusCode} ${body.code}`,
         exception instanceof Error ? exception.stack : String(exception),

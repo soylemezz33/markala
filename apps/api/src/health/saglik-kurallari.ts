@@ -12,9 +12,11 @@
 
 export type Seviye = "saglikli" | "uyari" | "arizali";
 
-/** Havuz kullanımı bu oranı aşarsa uyarı; aşağıdaki oran arızaya yaklaştığımızı gösterir. */
-export const HAVUZ_UYARI_ORANI = 0.7;
-export const HAVUZ_ARIZA_ORANI = 0.9;
+/**
+ * "İşlem içinde bekleyen" (idle in transaction) bağlantı sayısı bu eşiği aşarsa uyarı:
+ * açık kalmış işlemler havuzu gerçekten kilitler.
+ */
+export const ISLEMDE_BEKLEYEN_UYARI = 3;
 /** Veritabanı yanıtı bu süreyi aşarsa yavaş sayılır (ms). */
 export const DB_YAVAS_MS = 1000;
 
@@ -26,23 +28,27 @@ export function enKotuSeviye(seviyeler: Seviye[]): Seviye {
 }
 
 /**
- * Veritabanı seviyesi. `acik`/`limit` Prisma havuzunun doluluğudur — 7 Eylül kesintisinde
- * tam olarak bu doldu ve hiçbir yerde görünmüyordu.
+ * Veritabanı seviyesi.
  *
- * Bağlanamıyorsak "arızalı"; ölçemiyorsak (limit bilinmiyor) "uyarı" — sessizce yeşil değil.
+ * DÜZELTME (2026-09-07, ilk sürümden birkaç saat sonra): ilk hâli "açık bağlantı / limit"
+ * oranına bakıyordu ve 17/17'yi ARIZA sayıyordu. Bu YANLIŞTI — üretimde ölçtük: Prisma
+ * havuzunu ısındıkça limite kadar açar ve bağlantıları AÇIK TUTAR, hepsi `idle` görünür.
+ * Yani 17/17 sağlıklı bir sistemin normal görüntüsü; o kural sayfayı sürekli kırmızı
+ * gösterip tam da güvenilmesi gereken göstergeyi değersizleştirirdi.
+ *
+ * Arızanın gerçek imzası havuz ZAMAN AŞIMI hatasıdır (Prisma P2024) — istek bağlantı
+ * bekleyip 10 saniyede pes ettiğinde. 7 Eylül'de site 45 dakika bunu verdi.
  */
 export function veritabaniSeviyesi(g: {
   baglanti: boolean;
   gecikmeMs: number | null;
-  acik: number | null;
-  limit: number | null;
+  havuzZamanAsimi15dk?: number;
+  islemdeBosta?: number | null;
 }): Seviye {
   if (!g.baglanti) return "arizali";
-  if (g.acik !== null && g.limit !== null && g.limit > 0) {
-    const oran = g.acik / g.limit;
-    if (oran >= HAVUZ_ARIZA_ORANI) return "arizali";
-    if (oran >= HAVUZ_UYARI_ORANI) return "uyari";
-  }
+  // Havuzdan bağlantı alamayan istek varsa site fiilen hizmet veremiyor demektir.
+  if ((g.havuzZamanAsimi15dk ?? 0) > 0) return "arizali";
+  if ((g.islemdeBosta ?? 0) >= ISLEMDE_BEKLEYEN_UYARI) return "uyari";
   if (g.gecikmeMs !== null && g.gecikmeMs > DB_YAVAS_MS) return "uyari";
   return "saglikli";
 }

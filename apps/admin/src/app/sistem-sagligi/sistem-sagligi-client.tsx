@@ -115,11 +115,18 @@ export function SistemSagligiClient() {
           { ad: "Çalışan sorgu", deger: sayi(havuz.aktif) },
           { ad: "İşlem içinde bekleyen", deger: sayi(havuz.islemdeBosta) },
           { ad: "Sunucu bağlantı tavanı", deger: sayi(havuz.sunucuTavani) },
+          {
+            ad: "Havuz zaman aşımı (15 dk)",
+            deger: sayi(db.havuzZamanAsimi15dk),
+            vurgu: Number(db.havuzZamanAsimi15dk) > 0,
+          },
         ],
+        // Havuzun DOLU görünmesi normaldir: Prisma bağlantıları limite kadar açar ve açık
+        // tutar. Uyarı yalnız gerçek arıza imzasında (havuz zaman aşımı) gösterilir.
         not:
-          havuz.acik !== null && havuz.limit && havuz.acik / havuz.limit >= 0.7
-            ? "Havuz doluyor. Dolduğunda tüm site 500 vermeye başlar (7 Eylül 2026 kesintisi)."
-            : null,
+          Number(db.havuzZamanAsimi15dk) > 0
+            ? `Son 15 dakikada ${sayi(db.havuzZamanAsimi15dk)} istek havuzdan bağlantı alamadı — site şu anda hizmet veremiyor olabilir (7 Eylül 2026 kesintisi böyle başladı).`
+            : "Havuzun limite kadar dolu görünmesi normaldir; bağlantılar açık tutulur. Arıza göstergesi, zaman aşımı hatalarıdır.",
       },
       {
         anahtar: "eposta",

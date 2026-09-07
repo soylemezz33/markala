@@ -28,28 +28,30 @@ describe("enKotuSeviye", () => {
 
 describe("veritabaniSeviyesi", () => {
   it("bağlanamıyorsa ARIZALI", () => {
-    expect(veritabaniSeviyesi({ baglanti: false, gecikmeMs: null, acik: null, limit: 17 })).toBe("arizali");
+    expect(veritabaniSeviyesi({ baglanti: false, gecikmeMs: null })).toBe("arizali");
   });
 
-  it("7 EYLÜL SENARYOSU: havuz dolduğunda ARIZALI", () => {
-    // 17/17 — o gün tam olarak bu oldu ve hiçbir gösterge kırmızıya dönmedi.
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, acik: 17, limit: 17 })).toBe("arizali");
+  it("7 EYLÜL SENARYOSU: havuz zaman aşımı varsa ARIZALI", () => {
+    // Kesintinin imzası bu hatadır; site 45 dakika bunu verdi ve panel yeşil kaldı.
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, havuzZamanAsimi15dk: 3 })).toBe("arizali");
   });
 
-  it("havuz dolmaya yaklaşınca UYARI (kesintiden ÖNCE görünsün)", () => {
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, acik: 13, limit: 17 })).toBe("uyari");
+  it("HAVUZ DOLU AMA HATA YOKSA SAĞLIKLI — 17/17 normal çalışmanın görüntüsü", () => {
+    // İlk sürüm bunu ARIZA sayıyordu ve sayfa sürekli kırmızı yanardı. Üretimde ölçtük:
+    // Prisma havuzu ısındıkça limite kadar açar ve açık tutar, hepsi 'idle' görünür.
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 6, havuzZamanAsimi15dk: 0 })).toBe("saglikli");
   });
 
-  it("havuz rahatken SAĞLIKLI", () => {
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, acik: 4, limit: 17 })).toBe("saglikli");
+  it("işlem içinde bekleyen bağlantı birikirse UYARI (gerçek kilitlenme sinyali)", () => {
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, islemdeBosta: 4 })).toBe("uyari");
   });
 
   it("yavaş veritabanı UYARI verir", () => {
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 3000, acik: 2, limit: 17 })).toBe("uyari");
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 3000 })).toBe("uyari");
   });
 
-  it("limit ölçülemediyse havuz sessizce yok sayılır ama bağlantı yine değerlendirilir", () => {
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, acik: 99, limit: null })).toBe("saglikli");
+  it("her şey yolundaysa SAĞLIKLI", () => {
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, havuzZamanAsimi15dk: 0, islemdeBosta: 0 })).toBe("saglikli");
   });
 });
 
@@ -125,6 +127,13 @@ describe("hata sayacı", () => {
     sunucuHatasiKaydet("/api/eski", 500);
     const ileri = Date.now() + 61 * 60 * 1000;
     expect(hataOzeti(ileri).son1saat).toBe(0);
+  });
+
+  it("havuz zaman aşımını AYRICA sayar (7 Eylül kesintisinin imzası)", () => {
+    hataSayaciniSifirla();
+    sunucuHatasiKaydet("/api/products", 500, true);
+    sunucuHatasiKaydet("/api/categories", 500, false);
+    expect(hataOzeti().havuzZamanAsimi15dk).toBe(1);
   });
 
   it("hata fırtınasında bellek sınırsız büyümez", () => {

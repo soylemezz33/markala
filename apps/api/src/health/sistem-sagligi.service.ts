@@ -48,13 +48,14 @@ export class SistemSagligiService {
 
   async rapor() {
     // Bloklar paralel: rapor tek tek beklenirse sayfa yavaşlar.
+    const hatalarOn = hataOzeti();
     const [veritabani, eposta, isler] = await Promise.all([
-      this.veritabani(),
+      this.veritabani(hatalarOn.havuzZamanAsimi15dk),
       this.eposta(),
       Promise.resolve(this.zamanlanmisIsler()),
     ]);
     const depolama = this.depolama();
-    const hatalar = hataOzeti();
+    const hatalar = hatalarOn;
     const api = this.apiDurumu();
     const entegrasyonlar = this.entegrasyonlar();
 
@@ -98,15 +99,19 @@ export class SistemSagligiService {
 
   // ── Veritabanı + BAĞLANTI HAVUZU ────────────────────────────────────────────────────
   /**
-   * 7 Eylül kesintisinin tam kalbi. `acik` sayısı Prisma'nın `connection_limit`ine
-   * dayandığında yeni sorgular "Timed out fetching a new connection" ile düşer.
+   * 7 Eylül kesintisinin tam kalbi.
+   *
+   * DİKKAT: `acik` sayısı tek başına arıza göstergesi DEĞİLDİR. Prisma havuzunu ısındıkça
+   * limite kadar açar ve bağlantıları AÇIK TUTAR; sağlıklı bir sistemde de "17/17" görürsünüz
+   * (üretimde ölçüldü). Sayılar burada BİLGİ olarak gösterilir, ARIZA kararı havuz zaman
+   * aşımı hatasından (P2024) gelir — bkz. saglik-kurallari.ts.
    *
    * NOT: pg_stat_activity bu veritabanına açılmış TÜM bağlantıları sayar (yedekleme
    * konteyneri, elle açılmış psql oturumları dahil), yalnız API'ninkileri değil. Sayı bu
    * yüzden hafif yüksek çıkabilir; yön göstergesi olarak doğrudur ve fazla saymak, eksik
    * saymaktan iyidir.
    */
-  private async veritabani(): Promise<BilesenDurumu> {
+  private async veritabani(havuzZamanAsimi15dk: number): Promise<BilesenDurumu> {
     const t0 = Date.now();
     let baglanti = false;
     let gecikmeMs: number | null = null;
@@ -154,7 +159,8 @@ export class SistemSagligiService {
 
     const limit = this.havuzLimiti();
     return {
-      seviye: veritabaniSeviyesi({ baglanti, gecikmeMs, acik, limit }),
+      seviye: veritabaniSeviyesi({ baglanti, gecikmeMs, havuzZamanAsimi15dk, islemdeBosta }),
+      havuzZamanAsimi15dk,
       baglanti,
       gecikmeMs,
       havuz: {
