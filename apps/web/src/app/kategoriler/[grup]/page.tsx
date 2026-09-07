@@ -36,7 +36,10 @@ export const revalidate = 300;
  * /urun/[slug] ve /kategori/[slug] verisini DB'den aldığı için aynı satır oraya konulamaz —
  * yeni eklenen ürün bir sonraki build'e kadar 404 olurdu. Aynı desen /matbaa/[city]'de var.
  */
-export const dynamicParams = false;
+// dynamicParams=false KALDIRILDI (2026-09-07): Next 14.2'de on-demand revalidatePath sonrası
+// bu bayraklı rota kalıcı 404 döndürdü (7 grup sayfası 12:18-12:45 arası kapalı kaldı;
+// dosya önbelleğinde 200 html dururken sunucu render etmeden 404 verdi). Bilinmeyen slug
+// için gerçek 404 zaten aşağıdaki getProductGroup → notFound() ile korunuyor.
 
 /** 7 grup da build'de üretilir — sayı sabit ve küçük, dinamik bırakmanın anlamı yok. */
 export function generateStaticParams() {

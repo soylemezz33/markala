@@ -7,16 +7,14 @@ function makePrisma() {
     productPrice: {
       groupBy: vi.fn().mockResolvedValue([]),
     },
+    productOption: {
+      groupBy: vi.fn().mockResolvedValue([]), // fiyatlı grup yok → ucuz MIN(price) yolu
+    },
     product: {
-      // findAll iki kez findMany çağırır: ürün listesi + (select.prices ile) options/prices.
-      findMany: vi.fn().mockImplementation((args: { select?: { prices?: unknown } }) =>
-        Promise.resolve(args?.select?.prices
-          ? [{ id: "p1", pricingMode: "additive", options: [], prices: [] }, { id: "p2", pricingMode: "additive", options: [], prices: [] }]
-          : [
-            { id: "p1", slug: "kartvizit", name: "Kartvizit", basePrice: "290", isActive: true, category: { slug: "kartvizit" } },
-            { id: "p2", slug: "etiket", name: "Etiket", basePrice: "150", isActive: true, category: { slug: "etiket" } },
-          ]),
-      ),
+      findMany: vi.fn().mockResolvedValue([
+        { id: "p1", slug: "kartvizit", name: "Kartvizit", basePrice: "290", isActive: true, category: { slug: "kartvizit" } },
+        { id: "p2", slug: "etiket", name: "Etiket", basePrice: "150", isActive: true, category: { slug: "etiket" } },
+      ]),
       findUnique: vi.fn().mockResolvedValue({
         id: "p1", slug: "kartvizit", name: "Kartvizit", basePrice: "290", isActive: true, category: { slug: "kartvizit" },
       }),
@@ -158,15 +156,11 @@ describe("ProductsService.findBySlug options+prices", () => {
 });
 
 describe("ProductsService.findAll displayPrice", () => {
-  it("findAll displayPrice = en ucuz tam konfigürasyon, satır yoksa null", async () => {
+  it("findAll displayPrice: tek fiyatlı grup → MIN(price) yolu; satır yoksa null", async () => {
     const prisma = makePrisma();
-    prisma.product.findMany.mockImplementation((args: { select?: { prices?: unknown } }) =>
-      Promise.resolve(args?.select?.prices
-        ? [
-          { id: "a", pricingMode: "additive", options: [{ groupKey: "g", groupRole: "priced", groupSort: 0, optionKey: "x", optionSort: 0 }], prices: [{ groupKey: "g", optionKey: "x", dimKey: null, price: "30", cost: null }] },
-          { id: "b", pricingMode: "additive", options: [], prices: [] },
-        ]
-        : [{ id: "a" }, { id: "b" }]) as any);
+    prisma.product.findMany.mockResolvedValue([{ id: "a" }, { id: "b" }] as any);
+    prisma.productOption.groupBy.mockResolvedValue([{ productId: "a", groupKey: "g" }] as any);
+    prisma.productPrice.groupBy.mockResolvedValue([{ productId: "a", _min: { price: "30" } }] as any);
     const svc = new ProductsService(prisma as never, makeSettings() as never);
     const r = await svc.findAll({ list: true });
     expect(r.find((x: any) => x.id === "a")!.displayPrice).toBe(30);

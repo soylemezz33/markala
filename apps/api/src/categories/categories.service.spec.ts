@@ -19,6 +19,7 @@ function makePrisma() {
     // sorgu da mocklanmalı, yoksa findAll mock eksikliğinden patlar.
     product: { findMany: vi.fn().mockResolvedValue([]) },
     productPrice: { groupBy: vi.fn().mockResolvedValue([]) },
+    productOption: { groupBy: vi.fn().mockResolvedValue([]) },
   };
 }
 
@@ -148,13 +149,23 @@ describe("CategoriesService.findAll — başlangıç fiyatı ürünlerden hesapl
       { id: "u1", pricingMode: "additive", options: [secenek("g", 0, "a", 0)], prices: [satir("g", "a", 150)] },
       { id: "u2", pricingMode: "additive", options: [secenek("g", 0, "a", 0)], prices: [satir("g", "a", 430)] },
     ];
-    p.product.findMany.mockImplementation((args: { select?: { prices?: unknown } }) =>
-      Promise.resolve(args?.select?.prices
-        ? p.fiyatli
+    // starting-prices.ts yolu: fiyatlı grup sayısı (productOption.groupBy) → çok gruplu ürün
+    // motordan (product.findMany select.prices), tek gruplu ürün MIN(price) (productPrice.groupBy).
+    // Üç mock da p.fiyatli'den türetilir; test yalnız p.fiyatli'yi değiştirir.
+    p.productOption.groupBy.mockImplementation(async () =>
+      p.fiyatli.flatMap((f) => [...new Set((f.options as { groupKey: string; groupRole: string }[]).filter((o) => o.groupRole === "priced").map((o) => o.groupKey))].map((groupKey) => ({ productId: f.id, groupKey }))));
+    p.productPrice.groupBy.mockImplementation(async (args: { where: { productId: { in: string[] } } }) =>
+      p.fiyatli.filter((f) => args.where.productId.in.includes(f.id)).map((f) => {
+        const pos = (f.prices as { price: number }[]).map((r) => Number(r.price)).filter((v) => v > 0);
+        return pos.length ? { productId: f.id, _min: { price: Math.min(...pos) } } : null;
+      }).filter(Boolean));
+    p.product.findMany.mockImplementation(async (args: { select?: { prices?: unknown }; where?: { id?: { in: string[] } } }) =>
+      args?.select?.prices
+        ? p.fiyatli.filter((f) => args.where?.id?.in.includes(f.id))
         : [
           { id: "u1", categoryId: "cat1", pricingMode: "additive" },
           { id: "u2", categoryId: "cat1", pricingMode: "additive" },
-        ]));
+        ]);
     return p;
   }
 

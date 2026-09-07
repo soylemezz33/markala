@@ -4,6 +4,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto, UpdateProductDto } from "./products.dto";
 import { SettingsService } from "../settings/settings.service";
 import { areaStartingPrice, additiveStartingPrice, type AreaDisplayOption } from "./display-price";
+import { topluBaslangicFiyatlari } from "./starting-prices";
 
 /**
  * HALKA AÇIK yanıtlardan ticari sırları ayıklar (2026-08-31 denetim bulgusu).
@@ -173,25 +174,15 @@ export class ProductsService {
     //  • area: en ucuz ana malzeme × 1 m² (KDV dahil), motordan;
     //  • toplamsal: EN UCUZ TAM KONFİGÜRASYON (eskiden MIN(price>0) idi → Makam Bayrağı'nda
     //    105 ₺'lik saçak satırını gösteriyordu, 2026-09-05).
-    // Bunun için tüm ürünlerin options/prices'ı tek sorguda çekilir; liste ISR ile 5 dk
-    // önbellekli olduğu için yük kabul edilebilir.
-    const display = new Map<string, number | null>();
-    if (ids.length) {
-      const areaVar = products.some((p) => p.pricingMode === "area");
-      const pricing = areaVar ? await this.settings.getPricing() : null;
-      const fiyatli = await this.prisma.product.findMany({
-        where: { id: { in: ids } },
-        select: { id: true, pricingMode: true, options: true, prices: { select: { groupKey: true, optionKey: true, dimKey: true, price: true, cost: true } } },
-      });
-      for (const ap of fiyatli) {
-        const rows = ap.prices.map((pr) => ({ groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey, price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost) }));
-        if (ap.pricingMode === "area") {
-          display.set(ap.id, pricing ? areaStartingPrice(ap.options as unknown as AreaDisplayOption[], ap.options, rows, pricing) : null);
-        } else {
-          display.set(ap.id, rows.length ? additiveStartingPrice(ap.options, rows) : null);
-        }
-      }
-    }
+    // starting-prices.ts: area + çok gruplu ürünler motordan, geri kalanı ucuz groupBy MIN
+    // (2026-09-07: tüm ürünleri motordan geçirmek listeyi 3,5 sn, kategorileri 10 sn yapmıştı).
+    const display = ids.length
+      ? await topluBaslangicFiyatlari(
+          this.prisma,
+          products.map((p) => ({ id: p.id, pricingMode: (p.pricingMode as string | null) ?? null })),
+          () => this.settings.getPricing(),
+        )
+      : new Map<string, number | null>();
 
     // opts.includeInactive YALNIZ guard'lı /products/admin-list'ten geliyor (controller:42-49).
     // Panel marj ekranı profitMargin'e ORADAN ulaşır; halka açık çağrılarda ayıklanır.

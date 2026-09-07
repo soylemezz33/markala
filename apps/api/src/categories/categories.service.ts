@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { SettingsService } from "../settings/settings.service";
-import { areaStartingPrice, additiveStartingPrice, type AreaDisplayOption } from "../products/display-price";
+import { topluBaslangicFiyatlari } from "../products/starting-prices";
 import { CreateCategoryDto, UpdateCategoryDto } from "./categories.dto";
 
 @Injectable()
@@ -21,10 +21,10 @@ export class CategoriesService {
    * ürünlerden hesaplanır, sütun yalnız YEDEK olarak kullanılır (hiç fiyatlı ürünü
    * olmayan kategoriler için).
    *
-   * MALİYET: iki sorgu; tüm aktif ürünlerin options/prices'ı çekilir. Eskiden toplamsal
-   * ürünler için groupBy min(price) yetiyordu; ama birden fazla fiyatlı grubu olan üründe
-   * bu EK SEÇENEĞİN satırını yakalıyor (Makam Bayrağı "105 ₺'den" = saçak satırı, gerçek
-   * başlangıç 2.116,80 ₺; 2026-09-05). Artık ürün kartıyla aynı helper: additiveStartingPrice.
+   * MALİYET: ürün listesi + fiyatlı grup sayısı groupBy + (yalnız area/çok gruplu ürünler
+   * için) options/prices + geri kalan için groupBy MIN(price). Birden fazla fiyatlı grubu
+   * olan üründe MIN(price) EK SEÇENEĞİN satırını yakalıyordu (Makam Bayrağı "105 ₺'den" =
+   * saçak satırı, gerçek başlangıç 2.116,80 ₺; 2026-09-05) → o ürünler motordan hesaplanır.
    */
   private async hesaplananBaslangicFiyatlari(): Promise<Map<string, number>> {
     const urunler = await this.prisma.product.findMany({
@@ -33,25 +33,11 @@ export class CategoriesService {
     });
     if (!urunler.length) return new Map();
 
+    // starting-prices.ts: area + çok gruplu ürünler motordan, geri kalanı ucuz groupBy MIN.
+    // (2026-09-07: tüm ürünleri motordan geçirmek /api/categories'i 10 sn'ye çıkarmıştı.)
     const minPrice = new Map<string, number>();
-    const areaVar = urunler.some((u) => u.pricingMode === "area");
-    const pricing = areaVar ? await this.settings.getPricing() : null;
-    const fiyatli = await this.prisma.product.findMany({
-      where: { id: { in: urunler.map((u) => u.id) } },
-      select: { id: true, pricingMode: true, options: true, prices: { select: { groupKey: true, optionKey: true, dimKey: true, price: true, cost: true } } },
-    });
-    for (const ap of fiyatli) {
-      if (!ap.prices.length) continue; // fiyatsız ("Teklif Al") ürün kategori minimumuna girmez
-      const rows = ap.prices.map((pr) => ({
-        groupKey: pr.groupKey, optionKey: pr.optionKey, dimKey: pr.dimKey,
-        price: Number(pr.price), cost: pr.cost == null ? null : Number(pr.cost),
-      }));
-      // m² ürünlerde ProductPrice.price = 0 (satış maliyetten türetilir) → motordan hesapla.
-      const v = ap.pricingMode === "area"
-        ? (pricing ? areaStartingPrice(ap.options as unknown as AreaDisplayOption[], ap.options, rows, pricing) : null)
-        : additiveStartingPrice(ap.options, rows);
-      if (v && v > 0) minPrice.set(ap.id, v);
-    }
+    const hesap = await topluBaslangicFiyatlari(this.prisma, urunler, () => this.settings.getPricing());
+    for (const [id, v] of hesap) if (v && v > 0) minPrice.set(id, v); // fiyatsız ("Teklif Al") ürün kategori minimumuna girmez
 
     const katMin = new Map<string, number>();
     for (const u of urunler) {
