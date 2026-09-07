@@ -58,10 +58,10 @@ export function consumeReorderNotice(): ReorderNotice | null {
   }
 }
 
-/** Pricing ayarları (kur/marj/kdv) — yalnız area üründe gerekir, tembel + tek sefer çekilir. */
+/** Pricing ayarları (kur/kdv/minM2) — yalnız area üründe gerekir, tembel + tek sefer çekilir. */
 export async function fetchPricingSettings(): Promise<PricingSettings> {
-  // Ürün sayfasıyla aynı fallback mantığı (canlı işletme değeri marj 1.2).
-  const fallback: PricingSettings = { ...DEFAULT_PRICING, marj: 1.2 };
+  // Ürün sayfasıyla aynı fallback mantığı. marj artık yok (ticari bilgi, 2026-09-07).
+  const fallback: PricingSettings = { ...DEFAULT_PRICING };
   const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "https://api.markala.com.tr").replace(/\/$/, "");
   try {
     const res = await fetch(`${apiBase}/api/settings/pricing`);
@@ -69,7 +69,6 @@ export async function fetchPricingSettings(): Promise<PricingSettings> {
     const d = (await res.json()) as Partial<PricingSettings>;
     return {
       kur: typeof d.kur === "number" ? d.kur : fallback.kur,
-      marj: typeof d.marj === "number" ? d.marj : fallback.marj,
       kdv: typeof d.kdv === "number" ? d.kdv : fallback.kdv,
       minM2: typeof d.minM2 === "number" ? d.minM2 : fallback.minM2,
     };

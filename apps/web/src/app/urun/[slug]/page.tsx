@@ -119,17 +119,16 @@ async function getShippingThreshold(): Promise<number> {
   }
 }
 
-async function getPricingSettings(): Promise<{ kur: number; marj: number; kdv: number; minM2: number }> {
-  // Canlı işletme değeriyle eşit (GET /api/settings/pricing → marj 1.2). Settings fetch düşerse
-  // eskiden 1.5 ile %25 şişik başlangıç fiyatı gösteriliyordu.
-  const fallback = { kur: 46, marj: 1.2, kdv: 0.2, minM2: 1 };
+async function getPricingSettings(): Promise<{ kur: number; kdv: number; minM2: number }> {
+  // marj ARTIK ALINMIYOR (2026-09-07): hesapta kullanılmıyordu ama sayfa kaynağına düşüp
+  // kâr çarpanını herkese açık ediyordu. Public uç da artık döndürmüyor.
+  const fallback = { kur: 46, kdv: 0.2, minM2: 1 };
   try {
     const res = await fetch(`${API_BASE}/api/settings/pricing`, { next: { revalidate: 300 } });
     if (!res.ok) return fallback;
     const d = (await res.json()) as Partial<typeof fallback>;
     return {
       kur: typeof d.kur === "number" ? d.kur : fallback.kur,
-      marj: typeof d.marj === "number" ? d.marj : fallback.marj,
       kdv: typeof d.kdv === "number" ? d.kdv : fallback.kdv,
       minM2: typeof d.minM2 === "number" ? d.minM2 : fallback.minM2,
     };

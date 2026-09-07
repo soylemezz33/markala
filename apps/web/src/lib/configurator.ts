@@ -468,8 +468,13 @@ export function getDisplayPrice(product: Product): number {
 // m² Maliyet Motoru (pricingMode="area") — API pricing.ts ile BİREBİR aynı.
 // ---------------------------------------------------------------------------
 
-export interface PricingSettings { kur: number; marj: number; kdv: number; minM2: number }
-export const DEFAULT_PRICING: PricingSettings = { kur: 46, marj: 1.5, kdv: 0.2, minM2: 1 };
+/**
+ * m² konfigüratör ayarları. `marj` BİLEREK YOK (2026-09-07): hesapta hiç kullanılmıyordu
+ * ama tarayıcıya gönderiliyordu ve kâr çarpanı sayfa kaynağından okunabiliyordu.
+ * Fiyatlar zaten açık olduğundan çarpanı bilen maliyeti geri hesaplayabilir.
+ */
+export interface PricingSettings { kur: number; kdv: number; minM2: number }
+export const DEFAULT_PRICING: PricingSettings = { kur: 46, kdv: 0.2, minM2: 1 };
 export interface AreaOptionRules {
   effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
   birim?: "dolar" | "tl";
@@ -497,7 +502,6 @@ export function computeAreaPrice(
   const sels = selections && typeof selections === "object" ? selections : {};
   const opts = Array.isArray(options) ? options : [];
   const rows = Array.isArray(prices) ? prices : [];
-  // marj BİLEREK kullanılmıyor — aşağıdaki KDV dahil son fiyat notuna bak.
   const { kur, kdv, minM2 } = settings;
 
   const en = _num(sels.en);
