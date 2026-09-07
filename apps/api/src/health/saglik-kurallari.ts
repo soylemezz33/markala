@@ -38,16 +38,25 @@ export function enKotuSeviye(seviyeler: Seviye[]): Seviye {
  *
  * Arızanın gerçek imzası havuz ZAMAN AŞIMI hatasıdır (Prisma P2024) — istek bağlantı
  * bekleyip 10 saniyede pes ettiğinde. 7 Eylül'de site 45 dakika bunu verdi.
+ *
+ * İKİNCİ DÜZELTME (aynı gün, Hasan sordu: "az önce sağlıklıydı, neden şimdi arızalı?"):
+ * "arızalı" YALNIZCA sorun DEVAM EDİYORSA gösterilir (son 3 dk). Deploy sonrası önbellekler
+ * boşken gelen bir trafik dalgası birkaç isteği zaman aşımına düşürebilir; bu geçmiş olay
+ * 15 dakika boyunca sayfayı kırmızı tutuyordu — site çalışırken. Geçmiş dalgalanma artık
+ * "Dikkat" olarak, zamanıyla birlikte görünür.
  */
 export function veritabaniSeviyesi(g: {
   baglanti: boolean;
   gecikmeMs: number | null;
-  havuzZamanAsimi15dk?: number;
+  havuzZamanAsimiSuAn?: number;
+  havuzZamanAsimi1saat?: number;
   islemdeBosta?: number | null;
 }): Seviye {
   if (!g.baglanti) return "arizali";
-  // Havuzdan bağlantı alamayan istek varsa site fiilen hizmet veremiyor demektir.
-  if ((g.havuzZamanAsimi15dk ?? 0) > 0) return "arizali";
+  // ŞU AN bağlantı alamayan istek varsa site fiilen hizmet veremiyor demektir.
+  if ((g.havuzZamanAsimiSuAn ?? 0) > 0) return "arizali";
+  // Yakın geçmişte yaşandıysa haber ver ama alarm çalma.
+  if ((g.havuzZamanAsimi1saat ?? 0) > 0) return "uyari";
   if ((g.islemdeBosta ?? 0) >= ISLEMDE_BEKLEYEN_UYARI) return "uyari";
   if (g.gecikmeMs !== null && g.gecikmeMs > DB_YAVAS_MS) return "uyari";
   return "saglikli";

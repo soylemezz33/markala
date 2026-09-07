@@ -50,7 +50,7 @@ export class SistemSagligiService {
     // Bloklar paralel: rapor tek tek beklenirse sayfa yavaşlar.
     const hatalarOn = hataOzeti();
     const [veritabani, eposta, isler] = await Promise.all([
-      this.veritabani(hatalarOn.havuzZamanAsimi15dk),
+      this.veritabani(hatalarOn),
       this.eposta(),
       Promise.resolve(this.zamanlanmisIsler()),
     ]);
@@ -111,7 +111,7 @@ export class SistemSagligiService {
    * yüzden hafif yüksek çıkabilir; yön göstergesi olarak doğrudur ve fazla saymak, eksik
    * saymaktan iyidir.
    */
-  private async veritabani(havuzZamanAsimi15dk: number): Promise<BilesenDurumu> {
+  private async veritabani(hatalar: HataOzeti): Promise<BilesenDurumu> {
     const t0 = Date.now();
     let baglanti = false;
     let gecikmeMs: number | null = null;
@@ -159,8 +159,16 @@ export class SistemSagligiService {
 
     const limit = this.havuzLimiti();
     return {
-      seviye: veritabaniSeviyesi({ baglanti, gecikmeMs, havuzZamanAsimi15dk, islemdeBosta }),
-      havuzZamanAsimi15dk,
+      seviye: veritabaniSeviyesi({
+        baglanti,
+        gecikmeMs,
+        havuzZamanAsimiSuAn: hatalar.havuzZamanAsimiSuAn,
+        havuzZamanAsimi1saat: hatalar.havuzZamanAsimi1saat,
+        islemdeBosta,
+      }),
+      havuzZamanAsimiSuAn: hatalar.havuzZamanAsimiSuAn,
+      havuzZamanAsimi1saat: hatalar.havuzZamanAsimi1saat,
+      sonHavuzZamanAsimi: hatalar.sonHavuzZamanAsimi,
       baglanti,
       gecikmeMs,
       havuz: {

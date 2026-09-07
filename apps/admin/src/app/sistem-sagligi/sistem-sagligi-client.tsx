@@ -116,17 +116,21 @@ export function SistemSagligiClient() {
           { ad: "İşlem içinde bekleyen", deger: sayi(havuz.islemdeBosta) },
           { ad: "Sunucu bağlantı tavanı", deger: sayi(havuz.sunucuTavani) },
           {
-            ad: "Havuz zaman aşımı (15 dk)",
-            deger: sayi(db.havuzZamanAsimi15dk),
-            vurgu: Number(db.havuzZamanAsimi15dk) > 0,
+            ad: "Havuz zaman aşımı — şu an",
+            deger: sayi(db.havuzZamanAsimiSuAn),
+            vurgu: Number(db.havuzZamanAsimiSuAn) > 0,
           },
+          { ad: "Havuz zaman aşımı — son 1 saat", deger: sayi(db.havuzZamanAsimi1saat) },
+          { ad: "En son ne zaman", deger: tarih(db.sonHavuzZamanAsimi) },
         ],
         // Havuzun DOLU görünmesi normaldir: Prisma bağlantıları limite kadar açar ve açık
-        // tutar. Uyarı yalnız gerçek arıza imzasında (havuz zaman aşımı) gösterilir.
+        // tutar. "Arızalı" YALNIZ sorun sürüyorsa (son 3 dk); geçmiş dalgalanma "Dikkat".
         not:
-          Number(db.havuzZamanAsimi15dk) > 0
-            ? `Son 15 dakikada ${sayi(db.havuzZamanAsimi15dk)} istek havuzdan bağlantı alamadı — site şu anda hizmet veremiyor olabilir (7 Eylül 2026 kesintisi böyle başladı).`
-            : "Havuzun limite kadar dolu görünmesi normaldir; bağlantılar açık tutulur. Arıza göstergesi, zaman aşımı hatalarıdır.",
+          Number(db.havuzZamanAsimiSuAn) > 0
+            ? `ŞU ANDA ${sayi(db.havuzZamanAsimiSuAn)} istek havuzdan bağlantı alamıyor — site hizmet veremiyor olabilir (7 Eylül 2026 kesintisi böyle başladı).`
+            : Number(db.havuzZamanAsimi1saat) > 0
+              ? `Son 1 saatte ${sayi(db.havuzZamanAsimi1saat)} istek etkilendi ama şu an sorun yok. Kısa trafik dalgalanmalarında (örn. deploy sonrası önbellekler boşken) olabilir.`
+              : "Havuzun limite kadar dolu görünmesi normaldir; bağlantılar açık tutulur. Arıza göstergesi, zaman aşımı hatalarıdır.",
       },
       {
         anahtar: "eposta",

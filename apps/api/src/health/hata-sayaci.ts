@@ -49,8 +49,18 @@ export function sunucuHatasiKaydet(yol: string, durum: number, havuzZamanAsimi =
 export type HataOzeti = {
   son5dk: number;
   son1saat: number;
-  /** Son 15 dakikada kaç istek bağlantı havuzu zaman aşımına düştü (Prisma P2024). */
-  havuzZamanAsimi15dk: number;
+  /**
+   * ŞU AN havuzdan bağlantı alamayan istek var mı (son 3 dk). "Arızalı" kararı buna bakar.
+   *
+   * DÜZELTME (2026-09-07, Hasan sordu): ilk sürüm 15 dakikalık pencereye bakıyordu ve
+   * 3 isteklik anlık bir dalgalanma sayfayı 15 dakika boyunca "Arızalı" gösteriyordu —
+   * olay bitmiş, site çalışıyorken. Yanlış alarm, göstergeyi işe yaramaz hâle getirir.
+   */
+  havuzZamanAsimiSuAn: number;
+  /** Son 1 saatte toplam — geçmiş dalgalanma "Dikkat" olarak görünür, arıza olarak değil. */
+  havuzZamanAsimi1saat: number;
+  /** En son ne zaman yaşandı — "ne zamandı?" sorusu sayı kadar önemli. */
+  sonHavuzZamanAsimi: string | null;
   /** En sık hata veren yollar (en fazla 5) — teşhis buradan başlar. */
   enSikYollar: Array<{ yol: string; adet: number }>;
   sonHataAni: string | null;
@@ -63,13 +73,19 @@ export function hataOzeti(simdi = Date.now()): HataOzeti {
   while (kayitlar.length && kayitlar[0]!.an < sinir) kayitlar.shift();
 
   const besDk = simdi - 5 * 60 * 1000;
-  const onBesDk = simdi - 15 * 60 * 1000;
+  const ucDk = simdi - 3 * 60 * 1000;
   const sayim = new Map<string, number>();
   let son5dk = 0;
-  let havuzZamanAsimi15dk = 0;
+  let havuzZamanAsimiSuAn = 0;
+  let havuzZamanAsimi1saat = 0;
+  let sonHavuzAni: number | null = null;
   for (const k of kayitlar) {
     if (k.an >= besDk) son5dk++;
-    if (k.havuzZamanAsimi && k.an >= onBesDk) havuzZamanAsimi15dk++;
+    if (k.havuzZamanAsimi) {
+      havuzZamanAsimi1saat++;
+      if (k.an >= ucDk) havuzZamanAsimiSuAn++;
+      if (sonHavuzAni === null || k.an > sonHavuzAni) sonHavuzAni = k.an;
+    }
     sayim.set(k.yol, (sayim.get(k.yol) ?? 0) + 1);
   }
 
@@ -81,7 +97,9 @@ export function hataOzeti(simdi = Date.now()): HataOzeti {
   return {
     son5dk,
     son1saat: kayitlar.length,
-    havuzZamanAsimi15dk,
+    havuzZamanAsimiSuAn,
+    havuzZamanAsimi1saat,
+    sonHavuzZamanAsimi: sonHavuzAni === null ? null : new Date(sonHavuzAni).toISOString(),
     enSikYollar,
     sonHataAni: kayitlar.length ? new Date(kayitlar[kayitlar.length - 1]!.an).toISOString() : null,
   };

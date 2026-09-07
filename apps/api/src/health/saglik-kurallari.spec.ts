@@ -31,15 +31,21 @@ describe("veritabaniSeviyesi", () => {
     expect(veritabaniSeviyesi({ baglanti: false, gecikmeMs: null })).toBe("arizali");
   });
 
-  it("7 EYLÜL SENARYOSU: havuz zaman aşımı varsa ARIZALI", () => {
+  it("7 EYLÜL SENARYOSU: ŞU AN zaman aşımı yaşanıyorsa ARIZALI", () => {
     // Kesintinin imzası bu hatadır; site 45 dakika bunu verdi ve panel yeşil kaldı.
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, havuzZamanAsimi15dk: 3 })).toBe("arizali");
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, havuzZamanAsimiSuAn: 3, havuzZamanAsimi1saat: 3 })).toBe("arizali");
+  });
+
+  it("GEÇMİŞ dalgalanma ARIZA değil DİKKAT — site şu an çalışıyor", () => {
+    // Hasan sordu: "az önce sağlıklıydı, neden 08:23'teki bir olay için arızalı oldu?"
+    // Biten bir olay sayfayı kırmızı tutmamalı; yanlış alarm göstergeyi değersizleştirir.
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, havuzZamanAsimiSuAn: 0, havuzZamanAsimi1saat: 3 })).toBe("uyari");
   });
 
   it("HAVUZ DOLU AMA HATA YOKSA SAĞLIKLI — 17/17 normal çalışmanın görüntüsü", () => {
     // İlk sürüm bunu ARIZA sayıyordu ve sayfa sürekli kırmızı yanardı. Üretimde ölçtük:
     // Prisma havuzu ısındıkça limite kadar açar ve açık tutar, hepsi 'idle' görünür.
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 6, havuzZamanAsimi15dk: 0 })).toBe("saglikli");
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 6, havuzZamanAsimiSuAn: 0, havuzZamanAsimi1saat: 0 })).toBe("saglikli");
   });
 
   it("işlem içinde bekleyen bağlantı birikirse UYARI (gerçek kilitlenme sinyali)", () => {
@@ -51,7 +57,7 @@ describe("veritabaniSeviyesi", () => {
   });
 
   it("her şey yolundaysa SAĞLIKLI", () => {
-    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, havuzZamanAsimi15dk: 0, islemdeBosta: 0 })).toBe("saglikli");
+    expect(veritabaniSeviyesi({ baglanti: true, gecikmeMs: 5, havuzZamanAsimiSuAn: 0, havuzZamanAsimi1saat: 0, islemdeBosta: 0 })).toBe("saglikli");
   });
 });
 
@@ -133,7 +139,10 @@ describe("hata sayacı", () => {
     hataSayaciniSifirla();
     sunucuHatasiKaydet("/api/products", 500, true);
     sunucuHatasiKaydet("/api/categories", 500, false);
-    expect(hataOzeti().havuzZamanAsimi15dk).toBe(1);
+    const o = hataOzeti();
+    expect(o.havuzZamanAsimiSuAn).toBe(1);
+    expect(o.havuzZamanAsimi1saat).toBe(1);
+    expect(o.sonHavuzZamanAsimi).not.toBeNull();
   });
 
   it("hata fırtınasında bellek sınırsız büyümez", () => {
