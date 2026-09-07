@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
-import { Container } from "@markala/ui";
+import { Container, eksikPaketiKurtarmayiDene } from "@markala/ui";
 import { Warning, ArrowClockwise, House, ChatCircle } from "@phosphor-icons/react";
 
 interface Props {
@@ -13,6 +13,10 @@ interface Props {
 
 export default function GlobalError({ error, reset }: Props) {
   useEffect(() => {
+    // Eksik paket (chunk) hatası: deploy sonrası eski sayfası açık kalan ziyaretçi artık
+    // var olmayan dosyaları ister ve site hiç açılmaz. Sayfayı bir kez yenilemek çözer;
+    // sıradan bir müşteriden Ctrl+Shift+R bilmesi beklenemez. Oturum başına TEK deneme.
+    if (eksikPaketiKurtarmayiDene(error)) return;
     Sentry.captureException(error);
     console.error("[Markala Error Boundary]", error);
   }, [error]);
