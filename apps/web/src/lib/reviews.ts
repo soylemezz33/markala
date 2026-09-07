@@ -1,4 +1,3 @@
-import { cache } from "react";
 /**
  * Yorum veri katmanı.
  *
@@ -92,17 +91,26 @@ function computeStats(list: Review[]): ProductRatingStats {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * TÜM onaylı yorumlar, ürün slug'ına göre gruplanmış — SÜREÇ BAŞINA TEK istek.
+ * SÜREÇ-İÇİ BELLEK (2026-09-07, ikinci deneme).
  *
- * NEDEN (2026-09-07 ölçümü): her ürün sayfası yorumlarını ayrı ayrı çekiyordu. Bir ürün
- * sayfası bu veriyi ÜÇ ayrı yerden istiyor (sayfa + yorum bölümü + puan özeti) ve CI'da
- * build iki kez koşuyor; 793 ürünle her deploy canlı API'ye ~4.000 istek gönderiyordu.
- * Üstelik o gün sitede onaylı yorum sayısı SIFIRDI — dört bin istek boş dizi için.
+ * İlk deneme yalnız React `cache()` kullanıyordu; ölçtük, yetmedi: `cache()` TEK BİR
+ * render'ın kapsamıdır, sayfalar arasında paylaşılmaz. Build sırasında 792 ürün sayfası
+ * ayrı ayrı render edildiği için hâlâ sayfa başına istek çıkıyordu (deploy başına ~1.600).
+ * Next'in fetch veri önbelleğine güvenmek de işe yaramadı — build ortamında sayfalar
+ * arasında paylaşılmıyor.
  *
- * `cache()` React'in istek-başına belleğidir: aynı render içinde kaç kez çağrılırsa
- * çağrılsın ağa BİR kez çıkılır. `revalidate` ile de süreç boyunca tazelik korunur.
+ * Bu yüzden önbellek burada, modül kapsamında tutuluyor: aynı Node süreci içinde kaç sayfa
+ * render edilirse edilsin ağa TTL başına bir kez çıkılır. Build'de de, çalışan sunucuda da
+ * aynı şekilde davranır ve hiçbir çatı davranışına bağlı değildir.
+ *
+ * UÇUŞTAKİ İSTEK PAYLAŞILIR: aynı anda başlayan render'lar tek bir isteği bekler, yoksa
+ * ilk saniyede yine onlarca paralel istek çıkardı.
  */
-const tumYorumlar = cache(async (): Promise<Map<string, Review[]>> => {
+const BELLEK_TTL_MS = 60_000;
+let bellek: { an: number; harita: Map<string, Review[]> } | null = null;
+let ucustaki: Promise<Map<string, Review[]>> | null = null;
+
+async function yorumlariCek(): Promise<Map<string, Review[]>> {
   const harita = new Map<string, Review[]>();
   try {
     const data = (await fetchJson("/reviews/public/tumu")) as {
@@ -120,8 +128,23 @@ const tumYorumlar = cache(async (): Promise<Map<string, Review[]>> => {
     // Uç erişilemezse boş harita: yorum bölümü kendini gizler, sayfa yine açılır.
   }
   return harita;
-});
+}
 
+async function tumYorumlar(): Promise<Map<string, Review[]>> {
+  const simdi = Date.now();
+  if (bellek && simdi - bellek.an < BELLEK_TTL_MS) return bellek.harita;
+  if (ucustaki) return ucustaki;
+
+  ucustaki = yorumlariCek()
+    .then((harita) => {
+      bellek = { an: Date.now(), harita };
+      return harita;
+    })
+    .finally(() => {
+      ucustaki = null;
+    });
+  return ucustaki;
+}
 /**
  * Bir ürünün ONAYLI yorumları (en yeni önce). API hatası/yorum yoksa → BOŞ dizi.
  * Mock'a DÜŞMEZ (sahte yorum gösterme); UI boş durumu kendi yönetir.
