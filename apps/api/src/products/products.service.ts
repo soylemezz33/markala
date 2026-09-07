@@ -163,7 +163,12 @@ export class ProductsService {
           // PANEL EK ALANLARI (2026-09-07): admin ürün tablosu bunları gösterir ama
           // vitrin listesi kullanmaz. `includeInactive` yalnız guard'lı /admin-list'ten
           // geldiği için koşul tam olarak "panel mi?" demek — vitrin payload'ı büyümez.
-          ...(opts.includeInactive ? { isActive: true, sku: true, categoryId: true } : {}),
+          // DİKKAT: `sku` BURAYA EKLENEMEZ — Product modelinde böyle bir sütun YOK, o değer
+          // content JSON'unun içinde yaşıyor. 2026-09-07'de eklenip canlıya çıktı ve
+          // PrismaClientValidationError üretti: admin-list her istekte 400 döndü, panel
+          // ürünler sayfası tamamen açılmaz oldu. Panel tablosundaki SKU sütunu zaten
+          // eskiden de boştu (tam veri modunda da sütun yoktu), davranış değişmiyor.
+          ...(opts.includeInactive ? { isActive: true, categoryId: true } : {}),
         },
       }) as { id: string; [key: string]: unknown }[];
     } else {
