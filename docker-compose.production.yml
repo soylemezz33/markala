@@ -97,6 +97,9 @@ services:
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
       WHATSAPP_ADMIN_TO: ${WHATSAPP_ADMIN_TO:-}
       WHATSAPP_TEMPLATE: ${WHATSAPP_TEMPLATE:-yeni_siparis_bildirimi}
+      # Puan süresi işi (her sabah 08:30) — 7 Eylül kesinti şüphesi nedeniyle GEÇİCİ KAPALI.
+      # Açmak için .env.production'da PUAN_SURESI_CRON=true yapıp api'yi yeniden başlatın.
+      PUAN_SURESI_CRON: ${PUAN_SURESI_CRON:-false}
       # n8n webhook'lari (Trello kart otomasyonu + sepet terk hatirlaticisi). Bos ise no-op.
       N8N_ORDER_WEBHOOK_URL: ${N8N_ORDER_WEBHOOK_URL:-}
       N8N_LEAD_WEBHOOK_URL: ${N8N_LEAD_WEBHOOK_URL:-}

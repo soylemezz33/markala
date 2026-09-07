@@ -6,6 +6,7 @@ import { LoyaltyService } from "../loyalty/loyalty.service";
 import {
   IKINCI_SIPARIS_KUPON, ikinciSiparisAsamasi, ikinciSiparisKodu, puanSuresiAsamasi, tekrarSiparisZamaniMi,
 } from "./sadakat-kurallari";
+import { cronAcikMi } from "./cron-anahtari";
 
 /**
  * Sadakat programı zamanlanmış işleri (2026-09-06 ortak kararları):
@@ -133,8 +134,25 @@ export class RetentionService {
   // ---------------------------------------------------------------------------
   // Karar 2 — puan süresi (her sabah 08:30)
   // ---------------------------------------------------------------------------
+  /**
+   * GEÇİCİ OLARAK KAPALI (2026-09-07, Hasan kararı).
+   *
+   * 7 Eylül 08:40'ta bağlantı havuzu tükendi, site 45 dakika 500 döndü. Kök neden
+   * kanıtlanamadı; tek ipucu bu işin 08:30'da koşup on dakika sonra havuzun ölmesi.
+   * 500 kullanıcıya kadar döngüde tek tek SMTP maili gönderdiği için şüpheli.
+   *
+   * AÇMAK İÇİN: sunucuda `PUAN_SURESI_CRON=true` yapıp api konteynerini yeniden başlatın.
+   * Kod değişikliği ya da deploy GEREKMEZ. Açarken bağlantı havuzunu izleyin:
+   * Panel > Sistem Sağlığı > "Havuz zaman aşımı".
+   */
   @Cron("30 8 * * *")
   async handlePuanSuresiCron(): Promise<void> {
+    if (!cronAcikMi(process.env.PUAN_SURESI_CRON)) {
+      this.logger.warn(
+        "puan-suresi cron ATLANDI: PUAN_SURESI_CRON kapalı (7 Eylül kesinti şüphesi, geçici).",
+      );
+      return;
+    }
     try { await this.runPuanSuresi(); } catch (e) { this.logger.error(`puan-suresi cron hatası: ${(e as Error).message}`); }
   }
 
