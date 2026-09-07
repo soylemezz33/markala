@@ -80,6 +80,28 @@ export class ReviewsService {
     });
   }
 
+  /**
+   * TÜM onaylı yorumlar, ürün slug'ıyla birlikte — TEK sorgu (2026-09-07).
+   *
+   * NEDEN VAR: vitrin her ürün sayfası için ayrı ayrı yorum çekiyordu. 793 ürün var ve
+   * sayfa üretimi sırasında (CI build + ISR) her deploy'da ~4.000 istek üretiyordu; üstelik
+   * o gün sitede ONAYLI YORUM SAYISI SIFIRDI — dört bin istek boş dizi için atılıyordu.
+   * Bu uç aynı bilgiyi tek çağrıda verir; vitrin ürün başına filtreler.
+   *
+   * TAVAN: yanıt sınırsız büyümesin. Tavana dayanılırsa çağıran ürün-başına uca dönmeli —
+   * `tavanAsildi` bayrağı bunu söyler, sessizce eksik veri dönmez.
+   */
+  async findAllApproved(tavan = 2000) {
+    const kayitlar = await this.prisma.review.findMany({
+      where: { isApproved: true },
+      orderBy: { createdAt: "desc" },
+      include: { product: { select: { slug: true, name: true } } },
+      take: tavan + 1,
+    });
+    const tavanAsildi = kayitlar.length > tavan;
+    return { tavanAsildi, yorumlar: tavanAsildi ? kayitlar.slice(0, tavan) : kayitlar };
+  }
+
   /** Kullanıcı bu ürüne yorum yapabilir mi? = ürünü içeren (silinmemiş) bir siparişi var mı. */
   async canUserReview(userId: string, productSlug: string): Promise<boolean> {
     const product = await this.prisma.product.findUnique({

@@ -1,3 +1,4 @@
+import { cache } from "react";
 /**
  * Yorum veri katmanı.
  *
@@ -91,20 +92,46 @@ function computeStats(list: Review[]): ProductRatingStats {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * TÜM onaylı yorumlar, ürün slug'ına göre gruplanmış — SÜREÇ BAŞINA TEK istek.
+ *
+ * NEDEN (2026-09-07 ölçümü): her ürün sayfası yorumlarını ayrı ayrı çekiyordu. Bir ürün
+ * sayfası bu veriyi ÜÇ ayrı yerden istiyor (sayfa + yorum bölümü + puan özeti) ve CI'da
+ * build iki kez koşuyor; 793 ürünle her deploy canlı API'ye ~4.000 istek gönderiyordu.
+ * Üstelik o gün sitede onaylı yorum sayısı SIFIRDI — dört bin istek boş dizi için.
+ *
+ * `cache()` React'in istek-başına belleğidir: aynı render içinde kaç kez çağrılırsa
+ * çağrılsın ağa BİR kez çıkılır. `revalidate` ile de süreç boyunca tazelik korunur.
+ */
+const tumYorumlar = cache(async (): Promise<Map<string, Review[]>> => {
+  const harita = new Map<string, Review[]>();
+  try {
+    const data = (await fetchJson("/reviews/public/tumu")) as {
+      tavanAsildi?: boolean;
+      yorumlar?: Record<string, unknown>[];
+    };
+    for (const ham of data?.yorumlar ?? []) {
+      const yorum = mapReview(ham);
+      if (!yorum.productSlug) continue;
+      const mevcut = harita.get(yorum.productSlug);
+      if (mevcut) mevcut.push(yorum);
+      else harita.set(yorum.productSlug, [yorum]);
+    }
+  } catch {
+    // Uç erişilemezse boş harita: yorum bölümü kendini gizler, sayfa yine açılır.
+  }
+  return harita;
+});
+
+/**
  * Bir ürünün ONAYLI yorumları (en yeni önce). API hatası/yorum yoksa → BOŞ dizi.
  * Mock'a DÜŞMEZ (sahte yorum gösterme); UI boş durumu kendi yönetir.
  */
 export async function getProductReviews(productSlug: string, limit?: number): Promise<Review[]> {
-  try {
-    const data = await fetchJson(`/reviews/public?productSlug=${encodeURIComponent(productSlug)}`);
-    if (!Array.isArray(data)) return [];
-    const list = (data as Record<string, unknown>[])
-      .map(mapReview)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return limit ? list.slice(0, limit) : list;
-  } catch {
-    return [];
-  }
+  const harita = await tumYorumlar();
+  const list = [...(harita.get(productSlug) ?? [])].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+  return limit ? list.slice(0, limit) : list;
 }
 
 /** Ürün rating istatistikleri — GERÇEK onaylı yorumlardan. Yorum yoksa count=0. */

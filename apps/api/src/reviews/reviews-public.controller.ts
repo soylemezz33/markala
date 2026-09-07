@@ -43,6 +43,15 @@ export class ReviewsPublicController {
     return { canReview: await this.service.canUserReview(req.user.sub, productSlug) };
   }
 
+  /**
+   * TÜM onaylı yorumlar tek çağrıda (2026-09-07). Vitrin sayfa üretiminde ürün başına
+   * ayrı istek atmak yerine bunu bir kez çeker — 793 üründe ~4.000 istek yerine 1.
+   */
+  @Get("tumu")
+  tumu() {
+    return this.service.findAllApproved();
+  }
+
   /** Bir ürünün onaylanmış yorumları. productSlug zorunlu; yoksa 400. */
   @Get()
   list(@Query("productSlug") productSlug?: string) {
