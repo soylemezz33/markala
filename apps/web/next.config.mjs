@@ -186,6 +186,13 @@ const nextConfig = {
         destination: "/kategori/folyo-film",
         permanent: true,
       },
+      // 2026-09-07: Hasan ürün adını "Folyo (Yapışkanlı Folyo)" yaptı ve menüde /urun/folyo'ya
+      // bağladı; slug da "folyo" oldu. Eski slug GSC'de indeksli → kalıcı 301.
+      {
+        source: "/urun/kesim-folyo",
+        destination: "/urun/folyo",
+        permanent: true,
+      },
       {
         source: "/urun/folyo-cesitleri",
         destination: "/kategori/folyo-film",

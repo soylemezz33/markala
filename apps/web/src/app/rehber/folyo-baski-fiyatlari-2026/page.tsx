@@ -40,11 +40,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Folyo türleri — hangi iş için. Fiyat canlı katalogdan, burada YAZILMAZ. */
 const TURLER = [
-  { ad: "Normal Folyo", href: "/urun/kesim-folyo", ne: "Standart beyaz yapışkanlı folyo. Vitrin yazısı, tabela kaplaması ve genel amaçlı kullanımın çoğu bununla yapılır." },
-  { ad: "Mat Folyo", href: "/urun/kesim-folyo", ne: "Parlama yapmaz. Işık altında okunacak yönlendirme ve iç mekan uygulamalarında yansıma sorununu çözer." },
+  { ad: "Normal Folyo", href: "/urun/folyo", ne: "Standart beyaz yapışkanlı folyo. Vitrin yazısı, tabela kaplaması ve genel amaçlı kullanımın çoğu bununla yapılır." },
+  { ad: "Mat Folyo", href: "/urun/folyo", ne: "Parlama yapmaz. Işık altında okunacak yönlendirme ve iç mekan uygulamalarında yansıma sorununu çözer." },
   { ad: "Şeffaf Folyo", href: "/urun/seffaf-folyo", ne: "Cam üstüne uygulanır, arkası görünür. Vitrin camına yazı ve logo giydirmede kullanılır." },
-  { ad: "Arkası Gri Folyo", href: "/urun/kesim-folyo", ne: "Arka yüzü gri olduğu için ışık geçirmez. Altındaki eski yazı veya renk görünmesin isteniyorsa bu tercih edilir." },
-  { ad: "Arkası Gri Mat Folyo", href: "/urun/kesim-folyo", ne: "Hem ışık geçirmez hem parlama yapmaz. Üstü kaplanacak eski tabelalarda en güvenli seçim." },
+  { ad: "Arkası Gri Folyo", href: "/urun/arkasi-gri-folyo", ne: "Arka yüzü gri olduğu için ışık geçirmez. Altındaki eski yazı veya renk görünmesin isteniyorsa bu tercih edilir." },
+  { ad: "Arkası Gri Mat Folyo", href: "/urun/arkasi-gri-folyo", ne: "Hem ışık geçirmez hem parlama yapmaz. Üstü kaplanacak eski tabelalarda en güvenli seçim." },
   { ad: "Kumlama Folyo", href: "/urun/kumlama-buzlu-cam-folyosu", ne: "Buzlu cam görünümü verir. Ofis bölme camları, toplantı odası ve banyo camlarında mahremiyet sağlar." },
   { ad: "Laminasyonlu Folyo", href: "/urun/laminasyonlu-folyo", ne: "Üzeri koruyucu filmle kaplanır. Elle temas eden, çizilme riski olan yüzeylerde ömrü uzatır." },
   { ad: "Reflektif Folyo", href: "/urun/reflektif-folyo", ne: "Işığı geri yansıtır. Gece görünürlüğü gereken araç, güvenlik ve yol uygulamalarında kullanılır." },
@@ -54,17 +54,18 @@ const TURLER = [
 export default async function FolyoBaskiFiyatlariPage() {
   // Taban fiyat kaynağı "folyo-cesitleri" (toplayıcı ürün) DEĞİL: 2026-09-03'te pasife
   // alındı (10 folyo türü ayrı ürünlere bölündüğü için — bkz. next.config.mjs redirect
-  // notu). "kesim-folyo" bu türlerin dördünü (normal/mat/arkası gri/arkası gri mat)
-  // taşıyan, en ekonomik ve hâlâ AKTİF üründür; sayfanın "en ekonomik folyo" iddiasıyla
-  // tutarlı taban fiyat kaynağı budur.
+  // notu). "folyo" (eski slug "kesim-folyo", 2026-09-07'de Hasan'ın isteğiyle kısaltıldı;
+  // next.config 301) normal/mat türlerini taşıyan, en ekonomik ve hâlâ AKTİF üründür; sayfanın
+  // "en ekonomik folyo" iddiasıyla tutarlı taban fiyat kaynağı budur. Arkası gri türleri aynı
+  // gün AYRI ürüne (arkasi-gri-folyo) taşındı.
   const [folyo, baskes, owv] = await Promise.all([
-    getProductBySlug("kesim-folyo"),
+    getProductBySlug("folyo"),
     getProductBySlug("baskes-folyo"),
     getProductBySlug("one-way-vision-baski"),
   ]);
   // Fiyatsız/boş dönerse THROW — ISR son başarılı sayfayı korur, uydurma fiyat yayınlanmaz.
   if (!folyo || getDisplayPrice(folyo) <= 0) {
-    throw new Error("rehber/folyo: Kesim Folyo fiyatsız/boş döndü (API blip?), stale ISR korunur");
+    throw new Error("rehber/folyo: Folyo fiyatsız/boş döndü (API blip?), stale ISR korunur");
   }
   const m2Ham = folyo.displayPrice ?? 0;
   const m2 = getDisplayPrice(folyo);
@@ -299,7 +300,7 @@ export default async function FolyoBaskiFiyatlariPage() {
               // "folyo-cesitleri" pasife alındı (2026-09-03) ve artık /kategori/folyo-film'e
               // 301 yönlendiriliyor — hesap makinesi olmayan bir listeleme sayfası. Bu CTA
               // "ölçünü gir, fiyatı hesapla" vaat ettiği için doğrudan aktif ürün sayfasına gider.
-              href="/urun/kesim-folyo"
+              href="/urun/folyo"
               className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-brand-500 text-ink-900 text-sm font-bold hover:bg-brand-400 transition-colors"
             >
               Folyo fiyatı hesapla <ArrowRight size={15} weight="bold" />

@@ -39,11 +39,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function UvDtfFiyatlariPage() {
   // "folyo-cesitleri" (toplayıcı ürün) 2026-09-03'te pasife alındı; karşılaştırma metni
-  // için hâlâ AKTİF olan "kesim-folyo" kullanılır (bkz. rehber/folyo-baski-fiyatlari-2026'daki
+  // için hâlâ AKTİF olan "folyo" (eski slug kesim-folyo, 2026-09-07) kullanılır (bkz. rehber/folyo-baski-fiyatlari-2026'daki
   // aynı düzeltme). Bu ürün opsiyonel — eksikse aşağıdaki karşılaştırma cümlesi sessizce atlanır.
   const [dtf, folyo] = await Promise.all([
     getProductBySlug("uv-dtf-baski"),
-    getProductBySlug("kesim-folyo"),
+    getProductBySlug("folyo"),
   ]);
   if (!dtf || getDisplayPrice(dtf) <= 0) {
     throw new Error("rehber/uv-dtf: ürün fiyatsız/boş döndü (API blip?), stale ISR korunur");
