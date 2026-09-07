@@ -84,6 +84,10 @@ for (const slug of SLUGS) {
     const taban = eskiFiyat(e, "nk", t);
     if (!taban) { console.error(`✗ ${slug}: ${e}-nk @${t} satırı yok`); process.exit(1); }
     yeniRows.push({ groupKey: "ebat", optionKey: `e${e}`, dimKey: t, price: taban.price, cost: taban.cost ?? undefined });
+    // NK için AÇIK 0 ₺ satırı: web ipuçları (optionPriceHints) yalnız satırı olan seçenekleri
+    // kıyaslar; satırsız NK dışarıda kalınca taban Parlak Selefon oluyor ve "+1.656 ₺" yerine
+    // hiç fark görünmüyordu (7 Eyl canlı ekran görüntüsü). Fiyata etkisi yok.
+    yeniRows.push({ groupKey: `kapak${e}`, optionKey: "nk", dimKey: t, price: 0, cost: 0 });
     for (const o of yeniOpts.filter((x) => x.groupKey === `kapak${e}` && x.optionKey !== "nk")) {
       const r = eskiFiyat(e, o.optionKey, t);
       if (!r) continue;
