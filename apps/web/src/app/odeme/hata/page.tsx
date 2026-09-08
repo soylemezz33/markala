@@ -7,7 +7,7 @@ import { Container, Button } from "@markala/ui";
 import { XCircle, ClipboardText, WhatsappLogo } from "@phosphor-icons/react";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { useAuthStore } from "@/lib/auth-store";
-import { odemeHataMesaji } from "./odeme-hata-mesaji";
+import { odemeHataMesaji } from "@/lib/odeme-hata-mesaji";
 
 /**
  * iyzico ödeme başarısız/iptal yönlendirmesi.

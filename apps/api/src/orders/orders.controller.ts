@@ -172,7 +172,8 @@ export class OrdersController {
    * "kargoya-verildi"ye çekebilir; iptal, geri adım ve diğer geçişler kapalı.
    */
   /**
-   * Havale/EFT ödemesini onayla — para hesaba geçtiğinde admin işaretler.
+   * Banka hesabına gelen ödemeyi onayla — havale siparişi VE kartı geçmeyip parayı
+   * IBAN'a gönderen sipariş için (2026-09-08). Para hesaba geçtiğinde admin işaretler.
    * ORDERS_STATUS izni şart: tutar/ödeme kararı kargo rolünün işi değil.
    */
   @Patch(":id/odeme-onayla")

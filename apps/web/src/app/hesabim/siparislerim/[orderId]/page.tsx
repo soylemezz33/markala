@@ -12,6 +12,7 @@ import { apiClient, withRefresh } from "@/lib/api";
 import { formatDate, orderStatusLabel } from "@/lib/format";
 import { unitCountFromSummary } from "@/lib/cart-store";
 import { buildTrackingEvents } from "@/lib/tracking-events";
+import { odemeHataMesaji } from "@/lib/odeme-hata-mesaji";
 import { TrackingTimeline } from "@/components/tracking/timeline";
 import { ReorderButton } from "@/components/account/reorder-button";
 import type { Address, Order, OrderStatus } from "@markala/types";
@@ -74,6 +75,26 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
     );
   }
 
+  const durum = normStatus(order.status as unknown as string);
+  const odemeDurumu = String(order.paymentStatus ?? "");
+  const iptalEdildi = durum === "iptal-edildi";
+  const odemeTamamlandi = odemeDurumu === "basarili";
+  // Prisma enum "iade_edildi", API slug "iade-edildi" — ikisi de gelebilir.
+  const iadeEdildi = odemeDurumu === "iade_edildi" || odemeDurumu === "iade-edildi";
+  /**
+   * Ödemesi TAMAMLANMAMIŞ sipariş = tekrar ödemeye açıktır.
+   *
+   * 2026-09-08 DÜZELTMESİ: koşul yalnız paymentStatus==="beklemede" idi. Kart reddedilince
+   * backend siparişi "basarisiz" yapıyor (payments.service handleCallback), dolayısıyla
+   * ödemesi başarısız müşteri bu sayfada HİÇBİR ödeme bandı görmüyordu — /odeme/hata
+   * sayfası "dilediğin zaman tamamlayabilirsin" deyip buraya yolluyor, burada da çıkış
+   * yolu yoktu (canlıda MK-MTLKC7SW-RWUT). API zaten açıktı: retryCheckoutForOwner yalnız
+   * ödenmiş ve iptal edilmiş siparişi reddeder.
+   */
+  const odemeBekliyor = !odemeTamamlandi && !iadeEdildi && !iptalEdildi;
+  /** Başarısızlıkta banka red sebebi müşteriye de yazılır (kod → metin, tek kaynak). */
+  const odemeHatasi = odemeDurumu === "basarisiz" ? odemeHataMesaji(order.paymentErrorCode) : null;
+
   return (
     <div className="space-y-6">
       <Link href="/hesabim/siparislerim" className="inline-flex items-center gap-1.5 text-sm text-ink-700 hover:text-ink-900">
@@ -91,7 +112,8 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
       </header>
 
       {/* Ödeme durumu. Açık hesap (cari) siparişlerinde kartla ödeme YOK → borç cari hesaba
-          işlenir, ödeme oradan yapılır. Diğerlerinde beklemede→"Ödeme Yap", başarılı→onay. */}
+          işlenir, ödeme oradan yapılır. Havalede hesap bilgileri gösterilir. Kartlı ödemede
+          ödemesi TAMAMLANMAMIŞ her sipariş "Ödeme Yap" bandını görür. */}
       {order.paymentMethod === "cari" ? (
         <section className="p-5 bg-brand-50 border border-brand-200 rounded-xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -109,34 +131,12 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
             </Link>
           </div>
         </section>
-      ) : order.paymentMethod === "havale" &&
-        order.paymentStatus !== "basarili" &&
-        normStatus(order.status as unknown as string) !== "iptal-edildi" ? (
-        /* HAVALE: kartlı "Ödeme Yap" butonu BURAYA UYMAZ — müşteri havaleyi seçti,
-           iyzico'ya yönlendirmek kafa karıştırır. Onun yerine hesap bilgileri ve
-           açıklamaya yazması gereken sipariş numarası gösterilir (Hasan istedi). */
-        <HavaleOdemeBekliyor order={order} />
-      ) : order.paymentStatus === "beklemede" && normStatus(order.status as unknown as string) !== "iptal-edildi" ? (
-        <section className="p-5 bg-warning/10 border border-warning/30 rounded-xl">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-semibold text-ink-900 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-warning" /> Ödeme Bekliyor
-              </p>
-              <p className="mt-1 text-sm text-ink-700">
-                Bu siparişin ödemesi henüz tamamlanmadı. Aşağıdaki butonla güvenli ödeme sayfasından tamamlayabilirsiniz.
-              </p>
-              {payError && <p className="mt-2 text-sm text-error">{payError}</p>}
-            </div>
-            <Button onClick={() => handleRetryPayment(order.id)} disabled={paying}>
-              {paying ? "Yönlendiriliyor…" : `Ödeme Yap - ${Number(order.total).toLocaleString("tr-TR")} ₺`}
-            </Button>
-          </div>
-        </section>
-      ) : order.paymentStatus === "iade_edildi" || order.paymentStatus === "iade-edildi" ? (
+      ) : iadeEdildi ? (
         /* İade bandı (2026-08-29 UX denetimi İş 5): iadesi yapılmış sipariş müşteriye
            net söylenir — eskiden hiçbir ibare yoktu, sipariş "Kargoda" görünmeye devam
-           ediyordu ve müşteri parasının döndüğünü siteden göremiyordu. */
+           ediyordu ve müşteri parasının döndüğünü siteden göremiyordu.
+           SIRA ÖNEMLİ: ödenmemiş bandından ÖNCE gelir, yoksa "basarili değil" koşuluna
+           iade edilmiş sipariş de takılır ve müşteriye ikinci kez ödeme teklif edilir. */
         <section className="p-5 bg-paper-100 border border-paper-200 rounded-xl">
           <p className="font-semibold text-ink-900 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-ink-400" /> Ödemesi İade Edildi
@@ -150,7 +150,64 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
             .
           </p>
         </section>
-      ) : order.paymentStatus === "basarili" ? (
+      ) : order.paymentMethod === "havale" && odemeBekliyor ? (
+        /* HAVALE: kartlı "Ödeme Yap" butonu BURAYA UYMAZ — müşteri havaleyi seçti,
+           iyzico'ya yönlendirmek kafa karıştırır. Onun yerine hesap bilgileri ve
+           açıklamaya yazması gereken sipariş numarası gösterilir (Hasan istedi). */
+        <HavaleOdemeBekliyor order={order} />
+      ) : odemeBekliyor ? (
+        <section
+          className={`p-5 border rounded-xl ${
+            odemeHatasi ? "bg-error/5 border-error/30" : "bg-warning/10 border-warning/30"
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-semibold text-ink-900 flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${odemeHatasi ? "bg-error" : "bg-warning"}`} />
+                {odemeHatasi ? odemeHatasi.baslik : "Ödeme Bekliyor"}
+              </p>
+              <p className="mt-1 text-sm text-ink-700">
+                {odemeHatasi ? (
+                  <>
+                    {odemeHatasi.aciklama} <strong>Kartından tahsilat yapılmadı.</strong>{" "}
+                    Siparişin duruyor, aşağıdaki butonla ödemeyi tekrar deneyebilirsin.
+                  </>
+                ) : (
+                  "Bu siparişin ödemesi henüz tamamlanmadı. Aşağıdaki butonla güvenli ödeme sayfasından tamamlayabilirsin."
+                )}
+              </p>
+              {/* Somut çıkış yolu — /odeme/hata sayfasındaki aynı metin, aynı gerekçe:
+                  müşteri "ne yapacağım?" diye destek yazmak zorunda kalmasın. */}
+              {odemeHatasi?.oneri && (
+                <p className="mt-2 text-sm text-ink-700 bg-paper-50 border border-paper-200 rounded-lg px-3 py-2">
+                  {odemeHatasi.oneri}
+                </p>
+              )}
+              {payError && <p className="mt-2 text-sm text-error">{payError}</p>}
+            </div>
+            <Button onClick={() => handleRetryPayment(order.id)} disabled={paying}>
+              {paying
+                ? "Yönlendiriliyor…"
+                : `${odemeHatasi ? "Tekrar Öde" : "Ödeme Yap"} - ${Number(order.total).toLocaleString("tr-TR")} ₺`}
+            </Button>
+          </div>
+          {/* Kart ısrarla reddediliyorsa müşterinin elinde kalan tek yol destek olmasın diye
+              WhatsApp bağlantısı bandın içinde durur (sipariş numarası mesaja gömülü). */}
+          {odemeHatasi && (
+            <a
+              href={whatsappUrl(
+                `Merhaba, ${order.orderNumber} numaralı siparişimin ödemesini tamamlayamadım. Yardımcı olur musunuz?`,
+              )}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-[#1FB358] hover:underline"
+            >
+              <WhatsappLogo size={16} weight="fill" /> WhatsApp'tan yardım al
+            </a>
+          )}
+        </section>
+      ) : odemeTamamlandi ? (
         <section className="p-4 bg-success/10 border border-success/30 rounded-xl">
           <p className="text-sm font-medium text-success flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-success" /> Ödeme Yapıldı

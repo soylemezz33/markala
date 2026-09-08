@@ -41,3 +41,22 @@ export function havaleOnayBekliyorMu(order: HavaleOnayDurumu): boolean {
   if (iptalMi(order.status)) return false;
   return true;
 }
+
+/**
+ * "IBAN'dan alındı, ödemeyi kaydet" butonu hangi siparişte görünür? (2026-09-08)
+ *
+ * Neden gerekti: kartı reddedilen müşteri (kod 10202) parayı IBAN'a gönderdi, panelde
+ * bunu "ödendi" işaretleyecek hiçbir yol yoktu — havale onay butonu yalnız
+ * paymentMethod="havale" siparişlerde çıkıyor, bu sipariş kartlı açılmıştı.
+ *
+ * Havale siparişlerini KAPSAMAZ: onların kendi butonu var (havaleOnayBekliyorMu) ve
+ * iki buton yan yana çıkarsa hangisine basılacağı belirsizleşir.
+ */
+export function ibandanTahsilEdilebilirMi(order: HavaleOnayDurumu): boolean {
+  if (order.paymentMethod === "havale") return false; // kendi butonu var
+  if (order.paymentMethod === "cari") return false; // tahsilat cari defterden yürür
+  if (order.paymentStatus === "basarili") return false; // zaten ödenmiş
+  if (iadeMi(order.paymentStatus)) return false;
+  if (iptalMi(order.status)) return false;
+  return true;
+}

@@ -119,6 +119,17 @@ export default function OrdersPage() {
                     Ödemesi iade edildi
                   </span>
                 )}
+                {/* Ödeme BAŞARISIZ rozeti (2026-09-08): kart reddedilen sipariş listede
+                    normal görünüyordu, müşteri ödemesinin geçmediğini fark etmiyordu.
+                    Rozet tıklanabilir — tek adımda ödemeyi tamamlayacağı sayfaya götürür. */}
+                {o.paymentStatus === "basarisiz" && st !== "iptal-edildi" && (
+                  <Link
+                    href={`/hesabim/siparislerim/${o.id}`}
+                    className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-error/10 text-error border border-error/20 hover:bg-error/20 transition-colors"
+                  >
+                    Ödeme tamamlanamadı → Tamamla
+                  </Link>
+                )}
               </span>
             </header>
 

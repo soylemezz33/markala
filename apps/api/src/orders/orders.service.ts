@@ -1213,11 +1213,14 @@ export class OrdersService {
   }
 
   /**
-   * Havale/EFT ödemesini ONAYLA (admin) — para hesaba geçtikten SONRA çağrılır.
+   * Banka hesabına gelen ödemeyi ONAYLA (admin) — para hesaba geçtikten SONRA çağrılır.
    *
-   * Neden ayrı uç: havale siparişi paymentStatus="beklemede" açılır, çünkü para
-   * otomatik gelmiyor; eşleştirmeyi insan yapar (ekstredeki açıklamada sipariş
-   * numarası). Bu uç yalnız ÖDEME durumunu değiştirir, sipariş durumuna DOKUNMAZ:
+   * İki durumu kapsar:
+   *  1. Havale/EFT siparişi — paymentStatus="beklemede" açılır, çünkü para otomatik
+   *     gelmiyor; eşleştirmeyi insan yapar (ekstredeki açıklamada sipariş numarası).
+   *  2. Kartı geçmeyen sipariş — müşteri parayı IBAN'a gönderdiğinde (2026-09-08).
+   *
+   * Bu uç yalnız ÖDEME durumunu değiştirir, sipariş durumuna DOKUNMAZ:
    * üretime alma kararı admin'in mevcut durum akışında kalır (orada zaten üretim
    * e-postası gidiyor — burada ikinci bir bildirim kurgusu üretmiyoruz).
    *
@@ -1230,19 +1233,43 @@ export class OrdersService {
   ) {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      select: { id: true, orderNumber: true, paymentStatus: true, paymentMethod: true, total: true },
+      select: { id: true, orderNumber: true, paymentStatus: true, paymentMethod: true, status: true, total: true },
     });
     if (!order) throw new NotFoundException("Sipariş bulunamadı.");
-    if (order.paymentMethod !== ODEME_YONTEMI.havale) {
+    /**
+     * KAPSAM 2026-09-08 GENİŞLETİLDİ: havale siparişinin yanı sıra ödemesi geçmemiş
+     * KARTLI sipariş de elle tahsil edilebilir. Gerçek olay (MK-MTLKC7SW-RWUT): kart
+     * reddedildi (kod 10202), müşteri parayı IBAN'a gönderdi, panelde bunu "ödendi"
+     * işaretleyecek hiçbir buton yoktu.
+     *
+     * Kapalı kalanlar — üçü de mali/üretim riski:
+     *  - cari (açık hesap): tahsilat cari defterden yürür, buradan işaretlemek bakiyeyi bozar.
+     *  - iade edilmiş: parası geri gönderilmiş siparişte tahsilat beklenmez.
+     *  - iptal edilmiş: "ödendi" işareti üretim yolunu açar, iptal edilmiş iş üretime girmemeli.
+     */
+    if (order.paymentMethod === ODEME_YONTEMI.cari) {
       throw new BadRequestException(
-        "Bu işlem yalnızca havale/EFT siparişleri içindir; kart ödemeleri otomatik onaylanır.",
+        "Açık hesap (cari) siparişinde tahsilat cari hesaptan yürür; buradan işaretlenemez.",
       );
+    }
+    if (String(order.paymentStatus).replace(/_/g, "-") === "iade-edildi") {
+      throw new BadRequestException("İadesi yapılmış siparişte ödeme onaylanamaz.");
+    }
+    if (String(order.status).replace(/_/g, "-") === "iptal-edildi") {
+      throw new BadRequestException("İptal edilmiş siparişin ödemesi onaylanamaz.");
     }
     if (order.paymentStatus === "basarili") return order;
 
+    // Para BANKA HESABINA geldiyse yöntem de düzeltilir: aksi halde kayıtta "kartla ödendi"
+    // görünen ama iyzico tarafında karşılığı OLMAYAN sipariş kalır — mutabakat ve ciro dökümü
+    // yanılır, "Ödemeyi İade Et" de zaten iyzicoPaymentId olmadığı için çalışmaz.
+    const yontemDuzeltildi = order.paymentMethod !== ODEME_YONTEMI.havale;
     const updated = await this.prisma.order.update({
       where: { id },
-      data: { paymentStatus: "basarili" },
+      data: {
+        paymentStatus: "basarili",
+        ...(yontemDuzeltildi ? { paymentMethod: ODEME_YONTEMI.havale } : {}),
+      },
     });
 
     // Sadakat puanı: havaleyle ödenen sipariş de kazandırır (2026-09-06; kart ödemesinde
@@ -1257,11 +1284,16 @@ export class OrdersService {
           actorId: actor?.actorId ?? null,
           entityType: "Order",
           entityId: id,
-          action: "havale_odeme_onay",
+          // Kartlı siparişin elle tahsil edilmesi AYRI eylem adı alır: mali denetimde
+          // "havale bekleniyordu, geldi" ile "kart reddedildi, para IBAN'dan alındı" karışmasın.
+          action: yontemDuzeltildi ? "manuel_odeme_onay" : "havale_odeme_onay",
           diff: {
             orderNumber: order.orderNumber,
             tutar: String(order.total),
             paymentStatus: { from: order.paymentStatus, to: "basarili" },
+            ...(yontemDuzeltildi
+              ? { paymentMethod: { from: order.paymentMethod, to: ODEME_YONTEMI.havale } }
+              : {}),
             role: actor?.role ?? null,
           },
           ipAddress: actor?.ipAddress ?? null,

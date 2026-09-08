@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { odemeHataMesaji, bilinenHataKodu } from "@/app/odeme/hata/odeme-hata-mesaji";
+import { odemeHataMesaji, bilinenHataKodu } from "@/lib/odeme-hata-mesaji";
 
 describe("odemeHataMesaji", () => {
   it("limit yetersizliğinde somut sebep ve çıkış yolu verir", () => {

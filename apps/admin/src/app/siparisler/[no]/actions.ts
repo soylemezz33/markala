@@ -57,6 +57,26 @@ export async function confirmHavalePayment(
 }
 
 /**
+ * Kartı geçmeyen siparişin parası IBAN'a geldiğinde ödemeyi elle kaydeder (2026-09-08).
+ * Aynı ucu kullanır (PATCH :id/odeme-onayla); API tarafı yöntemi "havale" olarak düzeltir
+ * ve denetim kaydını "manuel_odeme_onay" adıyla yazar.
+ */
+export async function confirmManualPayment(
+  id: string,
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  try {
+    const api = await getAdminApi();
+    await api.orders.odemeOnayla(id);
+    revalidatePath("/siparisler");
+    revalidatePath(`/siparisler/${id}`);
+    return { ok: true, message: "Ödeme IBAN'dan alındı olarak kaydedildi." };
+  } catch (e) {
+    const msg = (e as { message?: string })?.message ?? "Ödeme kaydedilemedi";
+    return { ok: false, error: msg };
+  }
+}
+
+/**
  * Sipariş durumunu günceller. "kargoya-verildi"ye geçerken takip bilgisi de gönderilir —
  * müşteriye giden kargo e-postası takip numarasını İÇİNDE taşısın diye (2026-08-29).
  * Takip alanları opsiyonel: diğer durum geçişlerinde boş geçilir.

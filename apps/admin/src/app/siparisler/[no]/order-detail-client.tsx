@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { havaleOnayBekliyorMu } from "./havale-onay-kurali";
+import { havaleOnayBekliyorMu, ibandanTahsilEdilebilirMi } from "./havale-onay-kurali";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DesignFileUploader } from "@/components/design-file-uploader";
@@ -35,6 +35,7 @@ import {
   updateOrderTracking,
   refundOrder,
   confirmHavalePayment,
+  confirmManualPayment,
   deleteOrderDesign,
   addOrderNote,
   deleteOrderNote,
@@ -299,6 +300,7 @@ export function OrderDetailClient({
   const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [refunding, setRefunding] = useState(false);
   const [havaleOnayliyor, setHavaleOnayliyor] = useState(false);
+  const [ibanKaydediliyor, setIbanKaydediliyor] = useState(false);
 
   // Kargo takip bilgisi (2026-08-29). İki giriş noktası var:
   //  · "kargoya-verildi"ye geçerken açılan pencere → numara müşteriye giden maile girer
@@ -366,6 +368,38 @@ export function OrderDetailClient({
     startTransition(async () => {
       const res = await confirmHavalePayment(order.id);
       setHavaleOnayliyor(false);
+      setRefundMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+    });
+  };
+
+  /**
+   * IBAN'dan tahsilat — kartı geçmeyen siparişin parası banka hesabına geldiğinde.
+   * Yetki şartları havale onayıyla AYNI (showMoney + canFullStatus): ikisi de siparişi
+   * "ödendi" sayıp üretim yolunu açan mali karar.
+   */
+  const ibandanTahsil = ibandanTahsilEdilebilirMi(order);
+  const canConfirmManual = showMoney && canFullStatus && ibandanTahsil;
+
+  const handleManualPayment = async () => {
+    if (ibanKaydediliyor) return;
+    const ok = await confirm({
+      title: "Ödeme IBAN'dan alındı olarak kaydedilsin mi?",
+      description:
+        "Kaydetmeden önce banka ekstresinde bu tutarın geldiğini doğrulayın. Sipariş ödendi sayılır ve üretim yolu açılır.",
+      bullets: [
+        `Sipariş: ${order.orderNumber}`,
+        `Beklenen tutar: ${tl(order.total)}`,
+        "Ödeme yöntemi Havale/EFT olarak düzeltilir (kartta karşılığı yok).",
+        "Kart iadesi bu siparişte çalışmaz; iade gerekirse parayı elle geri gönderin.",
+      ],
+      confirmLabel: "Ödemeyi kaydet",
+    });
+    if (!ok) return;
+    setRefundMsg(null);
+    setIbanKaydediliyor(true);
+    startTransition(async () => {
+      const res = await confirmManualPayment(order.id);
+      setIbanKaydediliyor(false);
       setRefundMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
     });
   };
@@ -1061,6 +1095,30 @@ export function OrderDetailClient({
                   <p className="mt-1.5 text-[11px] text-ink-500">
                     Onaylama yetkiniz yok.
                   </p>
+                )}
+              </div>
+            )}
+
+            {/* IBAN'DAN TAHSİLAT (2026-09-08) — kartı geçmeyen sipariş. Müşteri parayı
+                havale ediyor ama sipariş kartlı açıldığı için havale onay butonu çıkmıyordu;
+                ödemeyi "alındı" yapacak hiçbir yol yoktu (MK-MTLKC7SW-RWUT). */}
+            {ibandanTahsil && (
+              <div className="mb-4 rounded-md border border-warning/30 bg-warning/5 px-3 py-2.5">
+                <p className="text-xs font-semibold text-ink-900">Ödeme tamamlanmadı</p>
+                <p className="mt-0.5 text-[11px] text-ink-600">
+                  Kart ödemesi geçmedi. Tutarı IBAN&apos;dan tahsil ettiyseniz ekstrede
+                  gördükten sonra buradan kaydedin.
+                </p>
+                {canConfirmManual ? (
+                  <button
+                    onClick={() => void handleManualPayment()}
+                    disabled={ibanKaydediliyor || isPending}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-success/40 px-3 py-1.5 text-xs font-medium text-success hover:bg-success/10 disabled:opacity-60"
+                  >
+                    {ibanKaydediliyor ? "Kaydediliyor…" : "IBAN'dan alındı, ödemeyi kaydet"}
+                  </button>
+                ) : (
+                  <p className="mt-1.5 text-[11px] text-ink-500">Kaydetme yetkiniz yok.</p>
                 )}
               </div>
             )}
