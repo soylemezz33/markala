@@ -1,6 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NotFoundException } from "@nestjs/common";
 import { ProductsService } from "./products.service";
+
+import { baslangicFiyatBellegiTemizle } from "../products/baslangic-fiyati-bellegi";
+
+// Başlangıç fiyatı 60 sn önbellekli (2026-09-08, bağlantı havuzu tükenmesi düzeltmesi).
+// Önbellek modül kapsamında yaşadığı için testler arasında sızar: aynı ürün kimlikleriyle
+// koşan ikinci senaryo birincinin sonucunu görürdü. Her testte sıfırlanır.
+beforeEach(() => baslangicFiyatBellegiTemizle());
 
 function makePrisma() {
   return {

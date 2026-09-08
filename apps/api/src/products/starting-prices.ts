@@ -1,5 +1,6 @@
 import type { PrismaService } from "../prisma/prisma.service";
 import { areaStartingPrice, additiveStartingPrice, type AreaDisplayOption, type AreaPricingSettings } from "./display-price";
+import { onbellekliBaslangicFiyatlari } from "./baslangic-fiyati-bellegi";
 
 /**
  * Toplu başlangıç fiyatı ("…₺'den başlar") — ürün listesi ve kategori kartı için TEK yol.
@@ -30,7 +31,29 @@ interface LoadedProduct {
   prices: { groupKey: string | null; optionKey: string | null; dimKey: string | null; price: unknown; cost: unknown }[];
 }
 
+/**
+ * ÖNBELLEKLİ giriş (2026-09-08). Hesabın kendisi `hesaplaBaslangicFiyatlari`; burası yalnız
+ * 60 saniyelik belleği ve uçuştaki istek paylaşımını ekler.
+ *
+ * NEDEN: hesap ~950 ms sürüyor ve vitrinde HER sayfa render'ı iki kez tetikliyor
+ * (ürün listesi + kategoriler). 8 Eylül 14:32'de tek bir ziyaretçinin 39 sayfalık gezintisi
+ * bağlantı havuzunu tüketti; 24 istek "connection pool timeout" ile düştü. Trafik 45 istekti,
+ * yani sorun yük değil her isteğin pahalı olmasıydı.
+ */
 export async function topluBaslangicFiyatlari(
+  prisma: Pick<PrismaService, "productOption" | "productPrice" | "product">,
+  urunler: StartingPriceProduct[],
+  getPricing: () => Promise<AreaPricingSettings>,
+): Promise<Map<string, number | null>> {
+  if (!urunler.length) return new Map();
+  return onbellekliBaslangicFiyatlari(
+    urunler.map((u) => u.id),
+    () => hesaplaBaslangicFiyatlari(prisma, urunler, getPricing),
+  );
+}
+
+/** Asıl hesap — önbelleksiz. Testler ve önbellek sarmalayıcısı buraya çağırır. */
+export async function hesaplaBaslangicFiyatlari(
   prisma: Pick<PrismaService, "productOption" | "productPrice" | "product">,
   urunler: StartingPriceProduct[],
   getPricing: () => Promise<AreaPricingSettings>,

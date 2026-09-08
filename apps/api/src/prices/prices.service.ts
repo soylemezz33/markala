@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { SettingsService } from "../settings/settings.service";
 import { resolveMargin, priceFromCost, actualMargin, MIN_MARGIN, MAX_MARGIN } from "./margin";
+import { baslangicFiyatBellegiTemizle } from "../products/baslangic-fiyati-bellegi";
 
 export function adjustPrice(
   price: number,
@@ -116,6 +117,10 @@ export class PricesService {
   }
 
   async setPrices(productId: string, rows: import("./prices.dto").PriceInputDto[]) {
+    // Başlangıç fiyatı önbelleğini düşür (2026-09-08): panelden yapılan değişiklik
+    // vitrinde 60 saniye beklemeden görünsün.
+    baslangicFiyatBellegiTemizle();
+
     await this.assertProduct(productId);
     await this.prisma.productPrice.deleteMany({ where: { productId } });
     if (rows.length === 0) return { count: 0 };
@@ -200,6 +205,10 @@ export class PricesService {
    * 827 İSG ürününün ~10 işlemde fiyatlanmasını sağlar.
    */
   async applyToCategory(sourceProductId: string) {
+    // Başlangıç fiyatı önbelleğini düşür (2026-09-08): kategoriye toplu uygulama
+    // vitrinde 60 saniye beklemeden görünsün.
+    baslangicFiyatBellegiTemizle();
+
     const source = await this.prisma.product.findUnique({
       where: { id: sourceProductId },
       select: { id: true, categoryId: true },

@@ -5,6 +5,7 @@ import { CreateProductDto, UpdateProductDto } from "./products.dto";
 import { SettingsService } from "../settings/settings.service";
 import { areaStartingPrice, additiveStartingPrice, type AreaDisplayOption } from "./display-price";
 import { topluBaslangicFiyatlari } from "./starting-prices";
+import { baslangicFiyatBellegiTemizle } from "./baslangic-fiyati-bellegi";
 
 /**
  * HALKA AÇIK yanıtlardan ticari sırları ayıklar (2026-08-31 denetim bulgusu).
@@ -262,6 +263,10 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto) {
+    // Başlangıç fiyatı önbelleğini düşür (2026-09-08): panelden yapılan değişiklik
+    // vitrinde 60 saniye beklemeden görünsün.
+    baslangicFiyatBellegiTemizle();
+
     const data: Prisma.ProductUpdateInput = {
       ...(dto.slug !== undefined && { slug: dto.slug }),
       ...(dto.name !== undefined && { name: dto.name }),

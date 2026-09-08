@@ -1,6 +1,13 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NotFoundException } from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
+
+import { baslangicFiyatBellegiTemizle } from "../products/baslangic-fiyati-bellegi";
+
+// Başlangıç fiyatı 60 sn önbellekli (2026-09-08, bağlantı havuzu tükenmesi düzeltmesi).
+// Önbellek modül kapsamında yaşadığı için testler arasında sızar: aynı ürün kimlikleriyle
+// koşan ikinci senaryo birincinin sonucunu görürdü. Her testte sıfırlanır.
+beforeEach(() => baslangicFiyatBellegiTemizle());
 
 function makePrisma() {
   return {
@@ -208,6 +215,9 @@ describe("CategoriesService.findAll — başlangıç fiyatı ürünlerden hesapl
     const res = (await svc.findAll()) as { slug: string; startingPrice: number }[];
     expect(res.find((c) => c.slug === "masa-bayragi")!.startingPrice).toBe(430); // u2 (430) < u1 (2116.8); 105 asla aday değil
     p.fiyatli[1].prices = [];
+    // Fiyat verisi değişti → başlangıç fiyatı önbelleği düşmeli. Üretimde bunu
+    // prices.service (setPrices/applyToCategory) yapar; burada elle taklit ediliyor.
+    baslangicFiyatBellegiTemizle();
     const res2 = (await new CategoriesService(p as never, settingsMock() as never).findAll()) as { slug: string; startingPrice: number }[];
     expect(res2.find((c) => c.slug === "masa-bayragi")!.startingPrice).toBe(2116.8);
   });
