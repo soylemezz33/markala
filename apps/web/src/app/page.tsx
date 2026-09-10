@@ -19,6 +19,7 @@ import { GuidesRail } from "@/components/home/guides-rail";
 import { HomeJsonLd, LocalBusinessJsonLd } from "@/components/seo/json-ld";
 import { ProcessTimeline } from "@/components/home/process-timeline";
 import { PromoBanner } from "@/components/promo-banner";
+import { KampanyaSeridi } from "@/components/home/kampanya-seridi";
 
 // ISR — katalog fetch'iyle (lib/catalog.ts revalidate:30) aynı pencere; bayat anasayfa cache'ini önler.
 export const revalidate = 300;
@@ -139,6 +140,8 @@ export default async function HomePage() {
       {/* İlk ekranda katalog girişi — mobilde kategori menüsü hamburger arkasında olduğu
           için burası masaüstünden daha kritik. */}
       <CategoryTiles nav={headerNav} products={products} categories={categories} />
+      {/* Sezonluk kampanya şeridi — 31 Ekim 2026'dan sonra kendini gizler. */}
+      <KampanyaSeridi />
       <PromoBanner location="hero" />
       {/* TrustBadges 2026-08-31'de KALDIRILDI: dört rozetten üçü ("Ücretsiz Tasarım Desteği",
           "2-3 İş Günü Üretim", "81 İle Kargo") artık HeroSplit'in güven satırında, hemen
