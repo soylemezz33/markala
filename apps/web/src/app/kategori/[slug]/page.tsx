@@ -5,7 +5,6 @@ import { Container, Price } from "@markala/ui";
 import { BookOpen, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
 import { AllProductsClient } from "@/app/urunler/all-products-client";
-import { toListProduct } from "@/lib/list-product";
 import { CategoryJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/seo/json-ld";
 import { SeoSections } from "@/components/seo-sections";
 import { formatPriceDisplay } from "@/lib/format";
@@ -260,9 +259,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       ) : (
         /* /urunler ile aynı çalışan toolbar/sort/fiyat/arama/sayfalama — ürünler zaten kategoriye
            kapsamlı (API), hero ve kategori filtresi gizli. */
-        /* İstemciye ince ürün: /urunler ile aynı gerekçe (bkz. lib/list-product.ts). */
         <AllProductsClient
-          products={products.map(toListProduct)}
+          products={products}
           categories={allCategories}
           hideHero
           hideCategoryFilter
