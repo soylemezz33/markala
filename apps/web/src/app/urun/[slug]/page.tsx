@@ -31,6 +31,7 @@ import { TrackRecentlyViewed, RecentlyViewedRail } from "@/components/product/re
 import { TrackViewItem } from "@/components/product/track-view-item";
 import { ProductViewTracker } from "@/components/product-view-tracker";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { SeoSections } from "@/components/seo-sections";
 import { kategoriyeGoreGrup } from "@/lib/product-groups";
 import type { Metadata } from "next";
 
@@ -394,6 +395,13 @@ export default async function ProductPage({ params }: Props) {
           <h2 className="text-2xl font-semibold text-ink-900 mb-4">Ürün Detayları</h2>
           <ProductTabs specifications={product.specifications ?? []} />
         </div>
+
+        {/* TEKNİK BÖLÜMLER (2026-09-10, Faz 1 son parça): kategori bazlı şablonla üretilen
+            malzeme/ölçü/montaj/mevzuat metinleri (content.seoBolumler). Kategori sayfasındaki
+            bileşenin aynısı; SSS'nin ÜSTÜNDE, satın alma alanının altında. */}
+        {product.seoBolumler && product.seoBolumler.length > 0 && (
+          <SeoSections bolumler={product.seoBolumler} className="mt-14 border-t border-paper-200 pt-8" />
+        )}
 
         {/* SSS — tam genişlik. FAQPage şeması JSON-LD'de (ProductJsonLd graph'ı) —
             microdata BİLEREK yok, çift işaretleme Google'da tutarsızlık riski yaratır.

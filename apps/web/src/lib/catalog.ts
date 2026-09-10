@@ -79,6 +79,7 @@ function mapProduct(p: ApiProduct): Product {
     useCases: content.useCases as string[] | undefined,
     specifications: content.specifications as Product["specifications"] | undefined,
     faqs: content.faqs as Product["faqs"] | undefined,
+    seoBolumler: content.seoBolumler as Product["seoBolumler"] | undefined,
     relatedSlugs: content.relatedSlugs as string[] | undefined,
     birlikteSlugs: content.birlikteSlugs as string[] | undefined,
     seo: content.seo as Product["seo"] | undefined,

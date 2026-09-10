@@ -30,7 +30,9 @@ const ISG_PREFIX = "is-guvenligi-";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "İSG Uyarı Levhaları | Renk Anlamları ve Zorunlu İşaretler",
+    // 2026-09-10 CTR: "emredici işaret rengi" 11. sıra 43 gst 0 tık, "ilk yardım dolabı işareti hangi
+    // renk" 9. sıra 30 gst 0 tık → başlık sorunun cevabını verir, açıklama iki rengi açıkça söyler.
+    title: "İSG İşaret Renkleri: Emredici Mavi, Uyarı Sarı, Yasak Kırmızı, Acil Yeşil (Zorunlu Liste)",
     description:
       "Zorunluluk (emredici) işaretleri mavi, uyarı sarı, yasak kırmızı, acil çıkış yeşildir. İşyeri tipine göre zorunlu İSG levhası kontrol listeleri ve güncel fiyatlar.",
     alternates: { canonical: PAGE_PATH },

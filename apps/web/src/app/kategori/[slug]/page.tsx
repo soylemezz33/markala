@@ -5,7 +5,9 @@ import { Container, Price } from "@markala/ui";
 import { BookOpen, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getProductsByCategory, getCategories, getCategoryBySlug } from "@/lib/catalog";
 import { AllProductsClient } from "@/app/urunler/all-products-client";
+import { toListProduct } from "@/lib/list-product";
 import { CategoryJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/components/seo/json-ld";
+import { SeoSections } from "@/components/seo-sections";
 import { formatPriceDisplay } from "@/lib/format";
 import type { Metadata } from "next";
 import { kategoriyeGoreGrup } from "@/lib/product-groups";
@@ -258,8 +260,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       ) : (
         /* /urunler ile aynı çalışan toolbar/sort/fiyat/arama/sayfalama — ürünler zaten kategoriye
            kapsamlı (API), hero ve kategori filtresi gizli. */
+        /* İstemciye ince ürün: /urunler ile aynı gerekçe (bkz. lib/list-product.ts). */
         <AllProductsClient
-          products={products}
+          products={products.map(toListProduct)}
           categories={allCategories}
           hideHero
           hideCategoryFilter
@@ -283,57 +286,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       */}
       {cat.seoBolumler && cat.seoBolumler.length > 0 && (
         <Container className="pb-12">
-          <div className="max-w-3xl space-y-8 border-t border-paper-200 pt-8">
-            {cat.seoBolumler.map((b, i) => (
-              <section key={i}>
-                <h2 className="text-xl md:text-2xl font-semibold text-ink-900 mb-3">{b.baslik}</h2>
-                {b.paragraflar?.map((p, j) => (
-                  <p key={j} className="text-sm text-ink-700 leading-relaxed mb-3">
-                    {p}
-                  </p>
-                ))}
-                {b.liste && b.liste.length > 0 && (
-                  <ul className="list-disc pl-5 space-y-1.5 text-sm text-ink-700 mb-3">
-                    {b.liste.map((m, j) => (
-                      <li key={j}>{m}</li>
-                    ))}
-                  </ul>
-                )}
-                {b.tablo && (
-                  <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                    <table className="w-full text-sm border-collapse min-w-[480px]">
-                      <thead>
-                        <tr>
-                          {b.tablo.basliklar.map((h, j) => (
-                            <th
-                              key={j}
-                              className="text-left font-semibold text-ink-900 border-b-2 border-ink-900 py-2 pr-4"
-                            >
-                              {h}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {b.tablo.satirlar.map((satir, j) => (
-                          <tr key={j} className="border-b border-paper-200">
-                            {satir.map((h, k) => (
-                              <td key={k} className="py-2 pr-4 text-ink-700 align-top">
-                                {h}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {b.tablo.not && (
-                      <p className="mt-2 text-xs text-ink-500">{b.tablo.not}</p>
-                    )}
-                  </div>
-                )}
-              </section>
-            ))}
-          </div>
+          <SeoSections bolumler={cat.seoBolumler} className="border-t border-paper-200 pt-8" />
         </Container>
       )}
 

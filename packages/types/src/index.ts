@@ -210,6 +210,8 @@ export interface Product {
   specifications?: SpecItem[];
   /** Ürüne özel sık sorulan sorular */
   faqs?: FaqItem[];
+  /** Kategori bazlı teknik bölümler (malzeme/ölçü/montaj/mevzuat) — kategoriyle aynı yapı (2026-09-10) */
+  seoBolumler?: CategorySeoSection[];
   /**
    * BENZER ürünler — aynı işi gören alternatifler (ör. Çin branda ↔ Avrupa branda).
    * Doluysa "Benzer ürünler" bölümü bunu gösterir; boşsa aynı kategoriden doldurulur.
