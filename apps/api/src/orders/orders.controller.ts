@@ -14,11 +14,13 @@ import {
   Headers,
   ForbiddenException,
   BadRequestException,
+  Res,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ApiTags, ApiBearerAuth, ApiConsumes } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
 import { OrdersService } from "./orders.service";
+import { InvoiceService } from "./invoice.service";
 import { JwtAuthGuard } from "../auth/jwt.guard";
 import { RolesGuard, Roles } from "../auth/roles.guard";
 import { Perms, PERM, roleHasPerm } from "../auth/permissions";
@@ -38,6 +40,7 @@ import { izinliDurumGecisi } from "./status-yetki";
 import { OrderNoteService } from "./order-note.service";
 import { KargoTakipService } from "./kargo-takip.service";
 import type { Request } from "express";
+import type { Response } from "express";
 
 
 /*
@@ -59,7 +62,7 @@ import type { Request } from "express";
 @Controller("orders")
 export class OrdersController {
   constructor(
-    private service: OrdersService,
+    private service: OrdersService, private readonly invoice: InvoiceService,
     private config: ConfigService,
     // Satıra tasarım dosyası ekleme/silme (2026-09-02) — OrdersService'e enjekte edilmedi,
     // bkz. order-design.service.ts başlığı (36 spec çağrısı ctor'u elle kuruyor).
@@ -152,6 +155,38 @@ export class OrdersController {
    * "customer" listede çünkü müşteri kendi siparişini görmeye devam etmeli; sahiplik
    * kontrolü aşağıdaki userId parametresiyle zaten yapılıyor.
    */
+  /** e-Arşiv / e-Fatura PDF'i (2026-09-11). Müşteri yalnız kendi siparişi; panel rolleri ORDERS_READ. */
+  @Get(":id/fatura.pdf")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("customer", "admin", "super_admin")
+  @Perms(PERM.ORDERS_READ)
+  @ApiBearerAuth()
+  async faturaPdf(@Req() req: Request & { user: { sub: string; role: string } }, @Param("id") id: string, @Res() res: Response) {
+    const { buffer, fileName } = await this.invoice.getPdf(id, req.user.role === "customer" ? req.user.sub : undefined, req.user.role);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.send(buffer);
+  }
+
+  /** Bekleyen faturaları hemen tamamla (panel/manuel). Cron 15. dakikada zaten dener. */
+  @Post("fatura/bekleyenler")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  faturaBekleyenler() {
+    return this.invoice.retryPending();
+  }
+
+  /** Tek siparişin faturasını yeniden dene / maili yeniden gönder. */
+  @Post(":id/fatura/yeniden")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  faturaYeniden(@Param("id") id: string) {
+    return this.invoice.finalize(id);
+  }
+
   @Get(":id")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("customer", "admin", "super_admin")

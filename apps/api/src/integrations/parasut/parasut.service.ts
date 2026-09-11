@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "../../prisma/prisma.service";
+import { eBelgeKararla, type EBelgeTuru } from "./parasut-kural";
 
 /**
  * Paraşüt e-Fatura/e-Arşiv entegrasyonu — GERÇEK (API v4, JSON:API).
@@ -310,6 +311,14 @@ export class ParasutService implements OnModuleInit {
             description: `Markala sipariş ${order.orderNumber}`,
             issue_date: today,
             currency: "TRL",
+            // Resmileştirme için order_no ve order_date birlikte zorunlu (Paraşüt şeması).
+            order_no: order.orderNumber,
+            order_date: new Date(order.createdAt).toISOString().slice(0, 10),
+            invoice_note: `markala.com.tr sipariş no: ${order.orderNumber}`,
+            ...(bill?.fullAddress ? { billing_address: String(bill.fullAddress).slice(0, 250) } : {}),
+            ...(bill?.city ? { city: String(bill.city) } : {}),
+            ...(bill?.district ? { district: String(bill.district) } : {}),
+            ...(isCorporate ? { tax_number: String(bill.taxNumber), ...(bill?.taxOffice ? { tax_office: String(bill.taxOffice) } : {}) } : {}),
           },
           relationships: {
             contact: { data: { type: "contacts", id: contactId } },
@@ -328,6 +337,77 @@ export class ParasutService implements OnModuleInit {
       this.logger.error(`Paraşüt fatura hatası [${reason}] order=${orderId}: ${err.message}`);
       return { invoiceId: "", status: "failed" };
     }
+  }
+
+  // === Resmileştirme: e-Arşiv / e-Fatura + PDF (2026-09-11) ===
+  /**
+   * Taslak sales_invoice'ı GİB belgesine çevirir ve PDF'i indirir. Tekrar denemede ikinci belge
+   * ÜRETMEZ: faturada active_e_document varsa onu kullanır. Kurumsal VKN GİB e-Fatura
+   * sisteminde kayıtlıysa e-Fatura (temel), değilse e-Arşiv (internet satışı + gönderi bilgisiyle).
+   * Paraşüt işi asenkron (trackable_jobs) → 2 sn aralıkla en çok 40 sn beklenir.
+   */
+  async finalizeEDocument(orderId: string): Promise<{ type: EBelgeTuru; invoiceNumber: string; pdf: Buffer }> {
+    if (!this.isConfigured()) throw new Error("Paraşüt yapılandırılmamış");
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { billingAddress: true } });
+    if (!order?.parasutInvoiceId) throw new Error("taslak fatura yok");
+    const bill: any = order.billingAddress ?? (order.billingAddressSnapshot as any) ?? {};
+    const kurumsal = Boolean(bill?.type === "corporate" && bill?.taxNumber);
+    const invId = order.parasutInvoiceId;
+    type EDoc = { id: string; type: string; attributes?: { invoice_number?: string; status?: string } };
+    type InvShow = { data?: { attributes?: { invoice_no?: string } }; included?: EDoc[] };
+    const belgeBul = (inv: InvShow) => (inv.included || []).find((x) => x.type === "e_archives" || x.type === "e_invoices");
+
+    let inv = await this.api<InvShow>("GET", `/sales_invoices/${invId}?include=active_e_document`);
+    let doc = belgeBul(inv);
+    if (!doc) {
+      let kutu: string | null = null;
+      if (kurumsal) {
+        const vkn = String(bill.taxNumber).replace(/\D/g, "");
+        if (vkn.length === 10) {
+          const inb = await this.api<{ data?: Array<{ attributes?: { e_invoice_address?: string } }> }>("GET", `/e_invoice_inboxes?filter[vkn]=${vkn}&page[size]=1`);
+          kutu = inb.data?.[0]?.attributes?.e_invoice_address ?? null;
+        }
+      }
+      const karar = eBelgeKararla({
+        kurumsal, vergiNo: bill?.taxNumber, eFaturaKutusu: kutu, paymentMethod: order.paymentMethod,
+        odemeTarihi: order.createdAt, kargoFirmasi: order.trackingCarrier, kargoTarihi: order.shippedAt ?? new Date(), kargoVkn: this.kargoVknMap(),
+      });
+      const body = karar.tur === "e_invoice"
+        ? { data: { type: "e_invoices", attributes: { scenario: "basic", to: karar.kutu }, relationships: { invoice: { data: { type: "sales_invoices", id: invId } } } } }
+        : { data: { type: "e_archives", attributes: { internet_sale: karar.internetSatisi, ...(karar.gonderi ? { shipment: karar.gonderi } : {}) }, relationships: { sales_invoice: { data: { type: "sales_invoices", id: invId } } } } };
+      const job = await this.api<{ data: { id: string; type: string } }>("POST", karar.tur === "e_invoice" ? "/e_invoices" : "/e_archives", body);
+      this.logger.log(`Paraşüt ${karar.tur} işi başladı: order=${order.orderNumber} job=${job.data?.id}`);
+      await this.waitJob(job.data.id);
+      inv = await this.api<InvShow>("GET", `/sales_invoices/${invId}?include=active_e_document`);
+      doc = belgeBul(inv);
+      if (!doc) throw new Error("e-belge işi bitti ama faturaya bağlı belge bulunamadı");
+    }
+    const type: EBelgeTuru = doc.type === "e_invoices" ? "e_invoice" : "e_archive";
+    const invoiceNumber = doc.attributes?.invoice_number || inv.data?.attributes?.invoice_no || `${doc.type}-${doc.id}`;
+    const pdfRes = await this.api<{ data?: { attributes?: { url?: string } } }>("GET", `/${doc.type}/${doc.id}/pdf`);
+    const url = pdfRes.data?.attributes?.url;
+    if (!url) throw new Error("PDF adresi alınamadı");
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`PDF indirilemedi (${r.status})`);
+    const pdf = Buffer.from(await r.arrayBuffer());
+    if (pdf.length < 1000) throw new Error("PDF boş/geçersiz");
+    return { type, invoiceNumber, pdf };
+  }
+
+  /** env PARASUT_KARGO_VKN = {"dhl":"1234567890"} — firma adı alt dizesi → VKN. */
+  private kargoVknMap(): Record<string, string> | undefined {
+    try { const v = this.cfg("PARASUT_KARGO_VKN"); return v ? (JSON.parse(v) as Record<string, string>) : undefined; } catch { return undefined; }
+  }
+
+  private async waitJob(id: string): Promise<void> {
+    for (let i = 0; i < 20; i++) {
+      const j = await this.api<{ data?: { attributes?: { status?: string; errors?: unknown[] } } }>("GET", `/trackable_jobs/${id}`);
+      const s = j.data?.attributes?.status;
+      if (s === "done") return;
+      if (s === "error") throw new Error("Paraşüt iş hatası: " + JSON.stringify(j.data?.attributes?.errors ?? []).slice(0, 300));
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    throw new Error("Paraşüt işi zaman aşımı (40 sn)");
   }
 
   // === Cari hesap (B2B açık hesap) — aylık toplu ekstre faturası ===

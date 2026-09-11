@@ -1178,6 +1178,48 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
     }
   }
 
+  /**
+   * e-Arşiv / e-Fatura maili — PDF ekli (2026-09-11). Kargoya verildikten sonra belge
+   * resmileşince gönderilir. HATA FIRLATMAZ.
+   */
+  async sendInvoiceEmail(orderId: string, input: { pdf: Buffer; invoiceNumber: string; invoiceType?: string }): Promise<boolean> {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { user: { select: { fullName: true } } } });
+    if (!order || !order.email) { this.logger.warn(`mail.invoice: sipariş/e-posta yok order=${orderId}`); return false; }
+    const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const name = (order.user?.fullName?.trim() || (order.billingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim()) ?? undefined;
+    const greeting = name ? `Merhaba ${esc(name)},` : "Merhaba,";
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
+    const tur = input.invoiceType === "e_invoice" ? "e-Fatura" : "e-Arşiv fatura";
+    const subject = `Markala - ${order.orderNumber} siparişinizin ${tur}sı`;
+    const tutar = Number(order.total).toLocaleString("tr-TR", { minimumFractionDigits: 2 });
+    const text = `${greeting}\n\n${order.orderNumber} numaralı siparişinizin ${tur}sı ekte. Belge no: ${input.invoiceNumber}. Tutar: ${tutar} ₺ (KDV dahil).\n\nFaturalarınıza istediğiniz zaman hesabınızdan ulaşabilirsiniz: ${webUrl}/hesabim/faturalarim\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
+    const html = renderEmail({
+      title: "Faturanız hazır 🧾",
+      intro: `${order.orderNumber} numaralı siparişinizin ${tur}sı ekte.`,
+      preheader: `${tur} · ${input.invoiceNumber} · ${tutar} ₺`,
+      bodyHtml: `<p style="margin:0 0 12px">${greeting}</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate"><tr><td bgcolor="#FAFAF9" style="background:#FAFAF9;border:1px solid #e7e5e4;border-radius:10px;padding:14px 16px">
+          <p style="margin:0;font-size:11px;color:#78716c;font-weight:700;letter-spacing:0.5px">BELGE NO</p>
+          <p style="margin:2px 0 10px;font-size:16px;color:#1A1410;font-weight:700;font-family:'Courier New',monospace">${esc(input.invoiceNumber)}</p>
+          <p style="margin:0;font-size:13px;color:#57534e">Sipariş ${esc(order.orderNumber)} · Tutar ${esc(tutar)} ₺ (KDV dahil)</p>
+        </td></tr></table>
+        <p style="margin:14px 0 0;color:#57534e;font-size:13px;line-height:1.5">PDF bu e-postanın ekindedir. Tüm faturalarınız hesabınızda da saklanır.</p>
+        ${emailButton("Faturalarım", `${webUrl}/hesabim/faturalarim`)}`,
+    });
+    try {
+      const info = await this.transporter.sendMail({
+        from: this.from, to: order.email, subject, text, html,
+        attachments: [{ filename: `Fatura-${input.invoiceNumber}.pdf`, content: input.pdf, contentType: "application/pdf" }],
+      });
+      await this.logNotification(order.email, "sent", { messageId: info.messageId, orderId, invoiceNumber: input.invoiceNumber }, subject);
+      return true;
+    } catch (err) {
+      this.logger.warn(`mail.invoice failed order=${orderId}: ${(err as Error).message}`);
+      await this.logNotification(order.email, "failed", { error: (err as Error).message, orderId }, subject);
+      return false;
+    }
+  }
+
   private async logNotification(
     recipient: string,
     status: "sent" | "failed" | "skipped",

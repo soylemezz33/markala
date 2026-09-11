@@ -497,8 +497,19 @@ model Order {
   clientUserAgent  String? @map("client_user_agent")
   clientIp         String? @map("client_ip")
 
-  // Paraşüt e-fatura
+  // Paraşüt e-fatura (taslak sales_invoice) + resmileştirme (2026-09-11: e-Arşiv / e-Fatura)
   parasutInvoiceId String? @map("parasut_invoice_id")
+  /// GİB belge numarası (ör. MRK2026000000123). Doluysa belge resmileşmiş ve PDF alınmıştır.
+  invoiceNumber    String?   @map("invoice_number")
+  /// "e_archive" (bireysel / e-fatura mükellefi olmayan) | "e_invoice" (mükellef kurumsal)
+  invoiceType      String?   @map("invoice_type")
+  /// Sunucudaki PDF anahtarı (secure/fatura-<siparişNo>.pdf) — public URL değil.
+  invoicePdfKey    String?   @map("invoice_pdf_key")
+  invoiceIssuedAt  DateTime? @map("invoice_issued_at")
+  invoiceMailedAt  DateTime? @map("invoice_mailed_at")
+  /// Son resmileştirme hatası (saatlik cron 5 denemeye kadar tekrar eder)
+  invoiceError     String?   @map("invoice_error") @db.Text
+  invoiceAttempts  Int       @default(0) @map("invoice_attempts")
 
   // Bekleyen-ödeme kurtarma maili aşaması (LifecycleService saatlik cron).
   // 0 = hiç gönderilmedi, 1 = ilk hatırlatma (2-24 saat), 2 = son hatırlatma (24-72 saat).

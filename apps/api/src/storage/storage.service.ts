@@ -304,6 +304,20 @@ export class StorageService {
   }
 
   /**
+   * Paraşüt'ten indirilen e-Arşiv/e-Fatura PDF'i (2026-09-11). Kurumsal belgelerle aynı
+   * kalıcı secure/ dizini; anahtar sipariş numarasından türetilir (tekrar yükleme üzerine yazar).
+   * getSecure ile servis edilir; public URL DEĞİL.
+   */
+  async putInvoicePdf(orderNumber: string, buffer: Buffer): Promise<string> {
+    const safe = orderNumber.replace(/[^A-Za-z0-9-]/g, "");
+    if (!safe) throw new BadRequestException("Geçersiz sipariş numarası.");
+    const key = `secure/fatura-${safe}.pdf`;
+    await mkdir(join(this.uploadDir, "secure"), { recursive: true });
+    await writeFile(join(this.uploadDir, key), buffer);
+    return key;
+  }
+
+  /**
    * Hassas belgeyi diskten oku — YALNIZCA auth-korumalı controller çağırır.
    * Key formatı katı doğrulanır (path traversal'a kapalı). Yoksa 404.
    */

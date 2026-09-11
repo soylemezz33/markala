@@ -311,6 +311,16 @@ export class MarkalaApiClient {
     create: (data: any) => this.request<Order>("POST", "/orders", data, { auth: true }),
     // createGuest kaldırıldı — sipariş vermek için giriş zorunlu (misafir sipariş yolu yok).
     listMine: () => this.request<Order[]>("GET", "/orders/mine", undefined, { auth: true }),
+    /** e-Arşiv/e-Fatura PDF'i (Blob). Tarayıcıda object URL ile indirilir; 404 = henüz hazır değil. */
+    invoicePdf: async (orderId: string): Promise<Blob> => {
+      const token = this.config.getToken?.();
+      const res = await fetch(`${this.config.baseUrl.replace(/\/$/, "")}/api/orders/${encodeURIComponent(orderId)}/fatura.pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(res.status === 404 ? "Fatura henüz hazır değil." : `Fatura indirilemedi (${res.status})`);
+      return res.blob();
+    },
     listAll: (opts: { status?: string; take?: number; skip?: number } = {}) =>
       this.request<Order[]>("GET", "/orders", undefined, { auth: true, query: opts }),
     detail: (id: string) => this.request<Order>("GET", `/orders/${id}`, undefined, { auth: true }),

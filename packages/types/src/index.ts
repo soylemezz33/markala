@@ -501,6 +501,11 @@ export interface Order {
   /** Mock kargo takip no */
   trackingNumber?: string;
   trackingCarrier?: string;
+  /** Paraşüt e-Arşiv/e-Fatura (2026-09-11): belge no doluysa PDF /orders/:id/fatura.pdf'ten indirilir */
+  invoiceNumber?: string | null;
+  invoiceType?: "e_archive" | "e_invoice" | null;
+  invoiceIssuedAt?: string | null;
+  invoiceMailedAt?: string | null;
 }
 
 /** Havale/EFT banka bilgileri ve ödeme yöntemi sabitleri. */
