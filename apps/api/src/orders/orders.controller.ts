@@ -174,8 +174,9 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")
   @ApiBearerAuth()
-  faturaBekleyenler() {
-    return this.invoice.retryPending();
+  faturaBekleyenler(@Query("hepsi") hepsi?: string) {
+    // hepsi=1: 11 Eyl 2026 öncesi taslaklar da (çift fatura riski → yalnız bilinçli çağrı)
+    return this.invoice.retryPending({ hepsi: hepsi === "1" });
   }
 
   /** Tek siparişin faturasını yeniden dene / maili yeniden gönder. */

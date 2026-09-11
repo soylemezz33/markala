@@ -39,9 +39,12 @@ const gun = (d: Date) => d.toISOString().slice(0, 10);
 
 export function eBelgeKararla(g: EBelgeGirdi): EBelgeKarari {
   const vkn = (g.vergiNo ?? "").replace(/\D/g, "");
+  // Gönderi bloğu YALNIZ kargo firmasının VKN'si biliniyorsa gider: Paraşüt, VKN'siz gönderi
+  // bloğunu "E-arşiv kurye VKN/TCKN geçersiz" ile reddediyor (11 Eyl canlı test). VKN yoksa blok
+  // hiç gönderilmez; belge yine kesilir. VKN env PARASUT_KARGO_VKN'den gelir.
   const kargoVkn = g.kargoFirmasi ? kargoVknBul(g.kargoFirmasi, g.kargoVkn) : undefined;
-  const gonderi = g.kargoFirmasi
-    ? { title: g.kargoFirmasi.trim(), ...(kargoVkn ? { vkn: kargoVkn } : {}), date: gun(g.kargoTarihi) }
+  const gonderi = g.kargoFirmasi && kargoVkn
+    ? { title: g.kargoFirmasi.trim(), vkn: kargoVkn, date: gun(g.kargoTarihi) }
     : undefined;
   if (g.kurumsal && vkn.length === 10 && g.eFaturaKutusu) {
     return { tur: "e_invoice", kutu: g.eFaturaKutusu, gonderi };

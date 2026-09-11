@@ -21,6 +21,12 @@ import { MailService } from "../mail/mail.service";
  * işleri asenkron, GİB gecikmeleri olağan). Sipariş akışı HİÇBİR koşulda bloke olmaz.
  */
 const MAX_ATTEMPTS = 5;
+/**
+ * Otomatik tamamlama YALNIZ bu tarihten sonraki siparişler için (cron + varsayılan tekrar).
+ * Öncesindeki 34 taslak (21 Ağu-10 Eyl) muhasebe elle kesmiş olabilir → çift fatura riski;
+ * onlar ancak Hasan onayıyla, POST /orders/fatura/bekleyenler?hepsi=1 ile işlenir.
+ */
+const OTOMATIK_BASLANGIC = new Date("2026-09-11T00:00:00+03:00");
 
 @Injectable()
 export class InvoiceService {
@@ -72,15 +78,22 @@ export class InvoiceService {
   }
 
   /** Bekleyenler: taslağı var, belge no veya maili eksik, deneme sınırı altında. */
-  async retryPending(): Promise<{ denenen: number; basarili: number }> {
+  async retryPending(opts: { hepsi?: boolean } = {}): Promise<{ denenen: number; basarili: number }> {
     const list = await this.prisma.order.findMany({
-      where: { parasutInvoiceId: { not: null }, deletedAt: null, invoiceAttempts: { lt: MAX_ATTEMPTS }, OR: [{ invoiceNumber: null }, { invoiceMailedAt: null }] },
+      where: {
+        parasutInvoiceId: { not: null }, deletedAt: null, invoiceAttempts: { lt: MAX_ATTEMPTS },
+        OR: [{ invoiceNumber: null }, { invoiceMailedAt: null }],
+        ...(opts.hepsi ? {} : { createdAt: { gte: OTOMATIK_BASLANGIC } }),
+      },
       select: { id: true },
-      take: 50,
+      take: 15, // Paraşüt hız sınırı: parti küçük, siparişler arası bekleme (cron her saat gelir)
       orderBy: { createdAt: "asc" },
     });
     let basarili = 0;
-    for (const o of list) if ((await this.finalize(o.id)).ok) basarili++;
+    for (const o of list) {
+      if ((await this.finalize(o.id)).ok) basarili++;
+      await new Promise((r) => setTimeout(r, 2500));
+    }
     if (list.length) this.logger.log(`Fatura tamamlama: ${basarili}/${list.length}`);
     return { denenen: list.length, basarili };
   }

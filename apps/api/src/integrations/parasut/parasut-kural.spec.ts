@@ -9,7 +9,7 @@ describe("eBelgeKararla — e-Fatura mı e-Arşiv mi", () => {
     expect(k.tur).toBe("e_invoice");
     expect(k.kutu).toBe("urn:mail:pk@firma.com");
     expect(k.internetSatisi).toBeUndefined();
-    expect(k.gonderi).toEqual({ title: "DHL eCommerce", date: "2026-09-11" });
+    expect(k.gonderi).toBeUndefined(); // VKN bilinmiyor → gönderi bloğu yok
   });
 
   it("kurumsal ama gelen kutusu yok → e_archive (mükellef değil)", () => {
@@ -26,6 +26,11 @@ describe("eBelgeKararla — e-Fatura mı e-Arşiv mi", () => {
     const k = eBelgeKararla({ kurumsal: false, paymentMethod: "havale", odemeTarihi: T, kargoTarihi: T });
     expect(k.internetSatisi?.payment_type).toBe("EFT/HAVALE");
     expect(k.internetSatisi?.payment_platform).toBeUndefined();
+  });
+
+  it("VKN'siz kargo firması → gönderi bloğu gönderilmez (Paraşüt reddi)", () => {
+    const k = eBelgeKararla({ kurumsal: false, paymentMethod: "iyzico", odemeTarihi: T, kargoFirmasi: "DHL eCommerce", kargoTarihi: T });
+    expect(k.gonderi).toBeUndefined();
   });
 
   it("kargo VKN eşlemesi alt dizeyle, yalnız 10 haneli", () => {

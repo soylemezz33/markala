@@ -116,7 +116,7 @@ export class ParasutService implements OnModuleInit {
   }
 
   /** v4 JSON:API çağrısı. Fix 3: AbortController timeout eklendi. */
-  private async api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+  private async api<T = any>(method: string, path: string, body?: unknown, deneme = 0): Promise<T> {
     const token = await this.getAccessToken();
 
     const controller = new AbortController();
@@ -133,6 +133,14 @@ export class ParasutService implements OnModuleInit {
         signal: controller.signal,
       });
       const text = await res.text();
+      // Hız sınırı (11 Eyl canlı: "Too many requests, try again in 2 seconds") → bekle ve tekrarla.
+      if (res.status === 429 && deneme < 3) {
+        clearTimeout(timer);
+        const bekle = Math.max(2000, Number(res.headers.get("retry-after") || 0) * 1000);
+        this.logger.warn(`Paraşüt 429 (${method} ${path}) — ${bekle} ms bekleyip tekrar (${deneme + 1}/3)`);
+        await new Promise((r) => setTimeout(r, bekle));
+        return this.api<T>(method, path, body, deneme + 1);
+      }
       if (!res.ok) {
         // Ham yanıt gövdesini Error mesajına KOYMA (logger.error'a sızmasın) — debug'da ayrı tut.
         this.logger.debug(`Paraşüt API hata gövdesi (${method} ${path}): ${text.slice(0, 300)}`);
