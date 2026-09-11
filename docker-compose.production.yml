@@ -60,6 +60,8 @@ services:
       # aktif olur (GERÇEK PARA etkisi: ~%1 geri kazanım). Varsayılan false → dark-launch güvenli.
       # Go-live: VPS .env'de LOYALTY_ENABLED=true set edip yeniden deploy et.
       LOYALTY_ENABLED: ${LOYALTY_ENABLED:-false}
+      # Kargo firması → VKN (e-Arşiv gönderi bloğu; 2026-09-11). Sunucuda: {"dhl":"6080712084","mng":"6080712084"}
+      PARASUT_KARGO_VKN: ${PARASUT_KARGO_VKN:-}
       # Google Drive aktarimi (2026-09-03): tasarimci calisma/baski dosyalari siparis klasorune tasinir.
       # Dordu de doluysa acik, biri bossa KAPALI (dosyalar sunucuda kalir). Degerler .env.production icinde.
       GOOGLE_DRIVE_CLIENT_ID: ${GOOGLE_DRIVE_CLIENT_ID:-}
@@ -91,6 +93,8 @@ services:
       # Sadakat (puan) programı bayrağı (2026-09-06 ortak kararı). Varsayılan KAPALI; canlıda
       # .env.production'da true. Kapalıyken kazanım/harcama/gösterim ve süre cron'u çalışmaz.
       LOYALTY_ENABLED: ${LOYALTY_ENABLED:-false}
+      # Kargo firması → VKN (e-Arşiv gönderi bloğu; 2026-09-11). Sunucuda: {"dhl":"6080712084","mng":"6080712084"}
+      PARASUT_KARGO_VKN: ${PARASUT_KARGO_VKN:-}
       # WhatsApp yeni sipariş bildirimi (2026-09-06). Token gizli → yalnız VPS .env.production'da.
       # Env eksikse WhatsappService sessizce kapalı kalır; sipariş akışı etkilenmez.
       WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
