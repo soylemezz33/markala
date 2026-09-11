@@ -13,7 +13,7 @@ import { track } from "@/lib/analytics";
  */
 const GIZLI_YOLLAR = ["/sepet", "/odeme"];
 
-const WHATSAPP_NUMBER = "905319004102"; // mobil hat — sabit hat (0324) WhatsApp'a kayıtlı değil
+const WHATSAPP_NUMBER = "903244333351"; // sabit hat 0324 433 33 51 — Cloud API + Chatwoot (2026-09-11)
 const PHONE_NUMBER = "+903244333351"; // arama için sabit hat
 const QUICK_MESSAGE = "Merhaba, Markala'dan bilgi almak istiyorum.";
 

@@ -1,9 +1,11 @@
 /**
  * Markala iletişim/sipariş kanalları (tek kaynak).
- * WhatsApp = mobil hat (905319004102) — sabit hat (0324) WhatsApp'a kayıtlı DEĞİL.
+ * WhatsApp = sabit hat 0324 433 33 51 (903244333351). 2026-09-11: hat Meta Cloud API'de,
+ * Chatwoot (chat.324ajans.com) gelen kutusuna bağlı; eski mobil hat 0531 900 41 02 artık
+ * yalnız çağrı yönlendirme hedefi, WhatsApp olarak gösterilmez.
  * Arama (tel:) = sabit hat. İkisi ayrı kanaldır; karıştırma.
  */
-export const MARKALA_WHATSAPP_NUMBER = "905319004102";
+export const MARKALA_WHATSAPP_NUMBER = "903244333351";
 export const MARKALA_PHONE_NUMBER = "+903244333351";
 export const MARKALA_PHONE_DISPLAY = "0324 433 33 51";
 
