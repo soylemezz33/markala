@@ -22,9 +22,10 @@ import { MailService } from "../mail/mail.service";
  */
 const MAX_ATTEMPTS = 5;
 /**
- * Otomatik tamamlama YALNIZ bu tarihten sonraki siparişler için (cron + varsayılan tekrar).
- * Öncesindeki 34 taslak (21 Ağu-10 Eyl) muhasebe elle kesmiş olabilir → çift fatura riski;
- * onlar ancak Hasan onayıyla, POST /orders/fatura/bekleyenler?hepsi=1 ile işlenir.
+ * Otomatik tamamlama YALNIZ bu tarihten sonra KARGOYA VERİLEN siparişler için (cron + varsayılan
+ * tekrar). Öncesindeki taslakları (21 Ağu-10 Eyl) Hasan kendisi kesiyor (11 Eyl: "taslakları
+ * göndermene gerek yok") → çift fatura olmasın. Onlar ancak bilinçli çağrıyla:
+ * POST /orders/fatura/bekleyenler?hepsi=1.
  */
 const OTOMATIK_BASLANGIC = new Date("2026-09-11T00:00:00+03:00");
 
@@ -83,7 +84,7 @@ export class InvoiceService {
       where: {
         parasutInvoiceId: { not: null }, deletedAt: null, invoiceAttempts: { lt: MAX_ATTEMPTS },
         OR: [{ invoiceNumber: null }, { invoiceMailedAt: null }],
-        ...(opts.hepsi ? {} : { createdAt: { gte: OTOMATIK_BASLANGIC } }),
+        ...(opts.hepsi ? {} : { shippedAt: { gte: OTOMATIK_BASLANGIC } }),
       },
       select: { id: true },
       take: 15, // Paraşüt hız sınırı: parti küçük, siparişler arası bekleme (cron her saat gelir)
