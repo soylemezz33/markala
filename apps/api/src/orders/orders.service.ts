@@ -23,7 +23,6 @@ export const KUPON_KURUMSAL_TAVAN_YUZDE = 25;
 import { DESIGN_ROW_SELECT, designRowToPublic } from "./order-design.service";
 import { driveFileUrl } from "../storage/drive.service";
 import { musteriDosyaSatirlari, ilkDosya } from "./musteri-dosyalari";
-import { OdemeSonrasiService } from "./odeme-sonrasi.service";
 
 /**
  * PARASAL ALAN TEMİZLİĞİ — 2026-09-01, kargo rolü için.
@@ -315,7 +314,7 @@ export function siparisAnindaMailGonderilir(
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService, private loyalty: LoyaltyService, private metaCapi: MetaCapiService, @Optional() private whatsapp?: WhatsappService, @Optional() private odemeSonrasi?: OdemeSonrasiService, @Optional() private invoice?: InvoiceService) {}
+  constructor(private prisma: PrismaService, private parasut: ParasutService, private settings: SettingsService, private mail: MailService, private loyalty: LoyaltyService, private metaCapi: MetaCapiService, @Optional() private whatsapp?: WhatsappService, @Optional() private invoice?: InvoiceService) {}
 
   /**
    * Public kargo takibi — sipariş no + e-posta eşleşmesiyle GERÇEK durum + zaman damgaları döner
@@ -1222,11 +1221,9 @@ export class OrdersService {
    *     gelmiyor; eşleştirmeyi insan yapar (ekstredeki açıklamada sipariş numarası).
    *  2. Kartı geçmeyen sipariş — müşteri parayı IBAN'a gönderdiğinde (2026-09-08).
    *
-   * 2026-09-08 (Hasan) ÖNCESİNDE bu uç sipariş durumuna DOKUNMUYORDU. Artık ödeme
-   * tamamlanan sipariş otomatik "Tasarım Bekleniyor"a alınır ve o numaraya WhatsApp
-   * bildirimi gider (OdemeSonrasiService). Yalnız "Sipariş Alındı"daki sipariş ilerler:
-   * üretime/kargoya girmiş bir işi geç gelen tahsilat geri çekmez. Üretime alma kararı
-   * yine admin'in durum akışında (orada zaten üretim e-postası gidiyor).
+   * Bu uç yalnız ÖDEME durumunu değiştirir, sipariş durumuna DOKUNMAZ:
+   * üretime alma kararı admin'in mevcut durum akışında kalır (orada zaten üretim
+   * e-postası gidiyor — burada ikinci bir bildirim kurgusu üretmiyoruz).
    *
    * Idempotent: zaten onaylanmış siparişte hata vermez, kaydı aynen döndürür
    * (panelde çift tıklama kazası ↔ çift onay logu üretmesin).
@@ -1279,11 +1276,6 @@ export class OrdersService {
     // Sadakat puanı: havaleyle ödenen sipariş de kazandırır (2026-09-06; kart ödemesinde
     // payments.service aynı kancayı çağırır). Best-effort, idempotent (orderId+earn unique).
     void this.loyalty.earnForOrder(id).catch(() => undefined);
-
-    // Ödeme tamamlandı → sipariş otomatik "Tasarım Bekleniyor"a alınır + WhatsApp bildirimi
-    // (2026-09-08, Hasan). Kart ödemesinde payments.service aynı kancayı çağırır.
-    // Buraya YALNIZ ilk onayda gelinir (zaten "basarili" ise yukarıda erken dönüldü).
-    void this.odemeSonrasi?.odemeAlindi(id).catch(() => undefined);
 
     // Denetim kaydı — parayı kimin onayladığı izlenebilir olmalı (mali sorumluluk).
     // Yazım hatası onayı bozmaz.
