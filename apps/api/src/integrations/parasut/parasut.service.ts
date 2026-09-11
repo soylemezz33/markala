@@ -392,9 +392,15 @@ export class ParasutService implements OnModuleInit {
     }
     const type: EBelgeTuru = doc.type === "e_invoices" ? "e_invoice" : "e_archive";
     const invoiceNumber = doc.attributes?.invoice_number || inv.data?.attributes?.invoice_no || `${doc.type}-${doc.id}`;
-    const pdfRes = await this.api<{ data?: { attributes?: { url?: string } } }>("GET", `/${doc.type}/${doc.id}/pdf`);
-    const url = pdfRes.data?.attributes?.url;
-    if (!url) throw new Error("PDF adresi alınamadı");
+    // PDF, belge oluştuktan ~20-30 sn sonra hazır olur (11 Eyl canlı: ilk çağrıda url boş, 24 sn
+    // sonra dolu). 5 sn aralıkla en çok 12 deneme (60 sn).
+    let url: string | undefined;
+    for (let i = 0; i < 12 && !url; i++) {
+      if (i > 0) await new Promise((r) => setTimeout(r, 5000));
+      const pdfRes = await this.api<{ data?: { attributes?: { url?: string } } }>("GET", `/${doc.type}/${doc.id}/pdf`);
+      url = pdfRes.data?.attributes?.url;
+    }
+    if (!url) throw new Error("PDF adresi alınamadı (60 sn)");
     const r = await fetch(url);
     if (!r.ok) throw new Error(`PDF indirilemedi (${r.status})`);
     const pdf = Buffer.from(await r.arrayBuffer());
