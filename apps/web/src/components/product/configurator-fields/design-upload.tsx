@@ -63,8 +63,9 @@ export function DesignUpload({ slotCount = 1 }: { slotCount?: number }) {
           onChange={(designs) => dispatch({ type: "SET_DESIGNS", designs })}
           onUploadingChange={(n) => dispatch({ type: "SET_UPLOADING", value: n })}
           idPrefix="urun"
-          etiket={needsDesign ? "Elinizdeki materyaller (isteğe bağlı)" : undefined}
-          ipucu={needsDesign ? "Logo, görsel, metin · AI, PDF, JPG, PNG, WEBP · dosya başına ≤ 50 MB" : undefined}
+          etiket={needsDesign ? "Elinizdeki materyaller" : undefined}
+          etiketCoklu={needsDesign ? "Materyal" : undefined}
+          ipucu={needsDesign ? "İsteğe bağlı · logo, görsel, metin · AI, PDF, JPG, PNG, WEBP · dosya başına ≤ 50 MB" : undefined}
         />
       </div>
 

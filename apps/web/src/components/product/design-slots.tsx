@@ -53,6 +53,7 @@ export function DesignSlots({
   compact = false,
   idPrefix = "tasarim",
   etiket,
+  etiketCoklu,
   ipucu,
 }: {
   /** Sepet set adedi = alan sayısı (1..20). */
@@ -66,6 +67,8 @@ export function DesignSlots({
   idPrefix?: string;
   /** Tek slot başlığı (varsayılan "Tasarım dosyanız"); tasarım desteği açıkken "Elinizdeki materyaller". */
   etiket?: string;
+  /** Çoklu slot başlık öneki (varsayılan "Tasarım" → "Tasarım 1, 2…"). */
+  etiketCoklu?: string;
   /** Boş slot alt yazısı (varsayılan format listesi). */
   ipucu?: string;
 }) {
@@ -165,7 +168,7 @@ export function DesignSlots({
           >
             <div className="flex items-center justify-between gap-3">
               <span className={cn("font-medium text-ink-900", compact ? "text-xs" : "text-sm")}>
-                {cokSlot ? `${etiket ?? "Tasarım"} ${i + 1}` : (etiket ?? "Tasarım dosyanız")}
+                {cokSlot ? `${etiketCoklu ?? "Tasarım"} ${i + 1}` : (etiket ?? "Tasarım dosyanız")}
                 <span className="ml-1.5 text-xs font-normal text-ink-500">
                   {slot.files.length ? `${slot.files.length} dosya` : (ipucu ?? "AI, PDF, CDR, PSD, JPG, PNG, WEBP · dosya başına ≤ 50 MB")}
                 </span>

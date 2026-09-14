@@ -32,7 +32,7 @@ export function CartDesignSlots({ item, compact = false }: { item: CartItem; com
       <button
         type="button"
         onClick={() => setAcik((a) => !a)}
-        className={`inline-flex items-center gap-1.5 text-xs ${eksik > 0 ? "text-warning font-medium" : "text-success"}`}
+        className={`inline-flex items-center gap-1.5 text-xs ${eksik > 0 ? "text-warning font-medium" : toplam === 0 ? "text-ink-500" : "text-success"}`}
         aria-expanded={acik}
       >
         <Paperclip size={13} />
@@ -53,8 +53,9 @@ export function CartDesignSlots({ item, compact = false }: { item: CartItem; com
             onChange={(designs) => setDesigns(item.id, designs)}
             compact
             idPrefix={`sepet-${item.id}`}
-            etiket={materyal ? "Elinizdeki materyaller (isteğe bağlı)" : undefined}
-            ipucu={materyal ? "Logo, görsel, metin · AI, PDF, JPG, PNG, WEBP" : undefined}
+            etiket={materyal ? "Elinizdeki materyaller" : undefined}
+            etiketCoklu={materyal ? "Materyal" : undefined}
+            ipucu={materyal ? "İsteğe bağlı · logo, görsel, metin · AI, PDF, JPG, PNG, WEBP" : undefined}
           />
         </div>
       )}
