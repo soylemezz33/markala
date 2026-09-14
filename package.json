@@ -17,7 +17,7 @@
   },
   "packageManager": "pnpm@10.33.3",
   "devDependencies": {
-    "prettier": "^3.8.4"
+    "prettier": "^3.9.6"
   },
   "pnpm": {
     "overrides": {
