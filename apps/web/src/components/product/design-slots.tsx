@@ -52,6 +52,8 @@ export function DesignSlots({
   onUploadingChange,
   compact = false,
   idPrefix = "tasarim",
+  etiket,
+  ipucu,
 }: {
   /** Sepet set adedi = alan sayısı (1..20). */
   count: number;
@@ -62,6 +64,10 @@ export function DesignSlots({
   /** Sepet satırında daha küçük görünüm. */
   compact?: boolean;
   idPrefix?: string;
+  /** Tek slot başlığı (varsayılan "Tasarım dosyanız"); tasarım desteği açıkken "Elinizdeki materyaller". */
+  etiket?: string;
+  /** Boş slot alt yazısı (varsayılan format listesi). */
+  ipucu?: string;
 }) {
   const slots = slotlariNormalize(designs, count);
   const [hata, setHata] = useState<Record<number, string | null>>({});
@@ -159,9 +165,9 @@ export function DesignSlots({
           >
             <div className="flex items-center justify-between gap-3">
               <span className={cn("font-medium text-ink-900", compact ? "text-xs" : "text-sm")}>
-                {cokSlot ? `Tasarım ${i + 1}` : "Tasarım dosyanız"}
+                {cokSlot ? `${etiket ?? "Tasarım"} ${i + 1}` : (etiket ?? "Tasarım dosyanız")}
                 <span className="ml-1.5 text-xs font-normal text-ink-500">
-                  {slot.files.length ? `${slot.files.length} dosya` : "AI, PDF, CDR, PSD, JPG, PNG, WEBP · dosya başına ≤ 50 MB"}
+                  {slot.files.length ? `${slot.files.length} dosya` : (ipucu ?? "AI, PDF, CDR, PSD, JPG, PNG, WEBP · dosya başına ≤ 50 MB")}
                 </span>
               </span>
               <label

@@ -303,7 +303,8 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
    * yani bu bayrak kilitli kalmaz.
    */
   // 2026-09-03: çoklu dosya — DesignSlots sürmekte olan yükleme sayısını reducer'a yazar.
-  const uploadPending = !state.needsDesign && state.uploading > 0;
+  // 2026-09-14: tasarım desteği açıkken de dosya (materyal) yüklenebilir → yükleme sürerken kilitle.
+  const uploadPending = state.uploading > 0;
 
   const canBuy = total > 0 && !areaMaxExceeded && !areaMinViolated && !uploadPending;
 
@@ -421,8 +422,9 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         needsDesign: state.needsDesign,
         uploadedFileName: state.uploadedFileName,
         uploadedFileUrl: state.uploadedFileUrl,
-        // Set başına tasarımlar (2026-09-03). Tasarım desteği istendiyse boş.
-        designs: state.needsDesign ? [] : state.designs.map((d) => ({ files: d.files.map((f) => ({ name: f.name, url: f.url, size: f.size, type: f.type })) })),
+        // Set başına tasarımlar (2026-09-03). 2026-09-14: tasarım desteği istense de dosyalar
+        // KORUNUR (logo/görsel/metin materyali) — eskiden burada atılıyordu, Hasan: "dosyalar kayboluyor".
+        designs: state.designs.map((d) => ({ files: d.files.map((f) => ({ name: f.name, url: f.url, size: f.size, type: f.type })) })),
       },
       quantity: areaAdet, // area: girilen adet; additive: 1
     });

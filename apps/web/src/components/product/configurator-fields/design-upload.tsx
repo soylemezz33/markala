@@ -47,17 +47,26 @@ export function DesignUpload({ slotCount = 1 }: { slotCount?: number }) {
         </button>
       </label>
 
-      {!needsDesign && (
-        <div className="mt-4">
-          <DesignSlots
-            count={slotCount}
-            designs={slotlariNormalize(state.designs, slotCount)}
-            onChange={(designs) => dispatch({ type: "SET_DESIGNS", designs })}
-            onUploadingChange={(n) => dispatch({ type: "SET_UPLOADING", value: n })}
-            idPrefix="urun"
-          />
-        </div>
-      )}
+      {/* 2026-09-14 (Hasan): dosya alanı anahtardan BAĞIMSIZ hep görünür. Eskiden anahtar
+          açılınca alan kayboluyor, sepete eklerken yüklenen dosyalar da atılıyordu; oysa tasarım
+          desteği isteyen müşteri de logo/görsel/metin gönderir. Kapalı: baskıya hazır dosya.
+          Açık: elinizdeki materyaller (isteğe bağlı). Yüklenen dosyalar anahtar değişince korunur. */}
+      <div className="mt-4">
+        {needsDesign && (
+          <p className="mb-2 text-xs text-ink-500">
+            Logo, görsel ve metinlerinizi ekleyin; tasarım ekibimiz bunlardan hazırlar. Elinizde yoksa boş bırakın, sipariş notuna yazmanız yeterli.
+          </p>
+        )}
+        <DesignSlots
+          count={slotCount}
+          designs={slotlariNormalize(state.designs, slotCount)}
+          onChange={(designs) => dispatch({ type: "SET_DESIGNS", designs })}
+          onUploadingChange={(n) => dispatch({ type: "SET_UPLOADING", value: n })}
+          idPrefix="urun"
+          etiket={needsDesign ? "Elinizdeki materyaller (isteğe bağlı)" : undefined}
+          ipucu={needsDesign ? "Logo, görsel, metin · AI, PDF, JPG, PNG, WEBP · dosya başına ≤ 50 MB" : undefined}
+        />
+      </div>
 
       {/* Dosya kalitesi bilgilendirmesi (Hasan talebi 2026-08-23): müşteriler yapay zekâ
           çıktısı / düşük çözünürlüklü dosya gönderiyor, baskıda bulanıklık çıkınca itiraz
