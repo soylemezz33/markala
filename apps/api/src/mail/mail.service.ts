@@ -749,7 +749,7 @@ Markala`;
       ? "Ödemen 3-7 iş günü içinde kartına iade edilir; gecikirse bu e-postayı yanıtlaman yeterli."
       : "Bu sipariş için tahsil edilmiş bir ödeme yok.";
     const subject = `Siparişin iptal edildi - ${order.orderNumber}`;
-    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (WhatsApp: 0531 900 41 02).\n\nMarkala`;
+    const text = `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n${order.orderNumber} numaralı siparişin iptal edildi.\n${refundLineText}\n\nYanlışlıkla iptal olduğunu düşünüyorsan ya da sorun yaşadıysan bize yaz: 0324 433 33 51 (telefon ve WhatsApp aynı numara).\n\nMarkala`;
     const html = renderEmail({
       title: "Siparişin İptal Edildi",
       intro: `${greeting} ${esc(order.orderNumber)} numaralı siparişin iptal edildi.`,
