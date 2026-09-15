@@ -24,6 +24,9 @@ const ESLEME = {
   "fosforlu sticker": "cadilar-bayrami-fosforlu-sticker",
   "çanta": "cadilar-bayrami-kraft-canta",
   "ışıklı pano": "cadilar-bayrami-lightbox",
+  // 15 Eyl akşamı, Downloads/halloween-02: eksik iki ürün + fosforlu 2. görsel
+  "etiket": "cadilar-bayrami-etiket",
+  "yelken bayrak": "cadilar-bayrami-yelken-bayrak",
 };
 // dekota-01/02 ayaklı figür (ayaklı bal kabağı), dekota-03/04 figür & tabela (görseller incelendi)
 const OZEL = { "dekota-01": "cadilar-bayrami-ayakli-figur", "dekota-02": "cadilar-bayrami-ayakli-figur", "dekota-03": "cadilar-bayrami-dekota-figur", "dekota-04": "cadilar-bayrami-dekota-figur" };
