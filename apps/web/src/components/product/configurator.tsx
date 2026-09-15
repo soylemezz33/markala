@@ -90,8 +90,8 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
   const addItem = useCartStore((s) => s.addItem);
   const [state, dispatch] = useReducer(configuratorReducer, product, initState);
   // Kargo ücreti buy-box'ta ŞEFFAF gösterilir — sepetteki +79₺ sürprizi terk ettiriyordu
-  // (CRO denetimi 2026-08-01). API düşerse 79/1500 fallback; sepet sayfasıyla aynı kaynak.
-  const [shippingInfo, setShippingInfo] = useState({ fee: 79, freeThreshold: 1500 });
+  // (CRO denetimi 2026-08-01). API düşerse 115/1500 fallback; sepet sayfasıyla aynı kaynak.
+  const [shippingInfo, setShippingInfo] = useState({ fee: 115, freeThreshold: 1500 });
   useEffect(() => {
     apiClient.settings.shipping().then(setShippingInfo).catch(() => {});
   }, []);

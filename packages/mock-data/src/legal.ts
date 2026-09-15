@@ -934,7 +934,7 @@ export const legalPages: Record<string, LegalPage> = {
       <h2>2. Kargo Ücreti</h2>
       <ul>
         <li><strong>1.500 TL ve üzeri siparişler:</strong> Kargo ücretsiz</li>
-        <li><strong>1.500 TL altı siparişler:</strong> 79 TL standart kargo ücreti</li>
+        <li><strong>1.500 TL altı siparişler:</strong> 115 TL standart kargo ücreti</li>
         <li>Kargo ücreti sepet ve ödeme adımında şeffaf şekilde gösterilir</li>
       </ul>
 

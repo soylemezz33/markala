@@ -56,8 +56,8 @@ export default function CartPage() {
   // Backend-doğrulanmış kupon (gerçek indirim + ücretsiz kargo). Sepette de checkout ile AYNI
   // /api/coupons/validate kullanılır → tüm DB kuponları çalışır (yalnız HOSGELDIN değil).
   const [couponInfo, setCouponInfo] = useState<{ code: string; discount: number; freeShipping: boolean } | null>(null);
-  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/1500 fallback korunur. */
-  const [shipping, setShipping] = useState({ fee: 79, freeThreshold: 1500 });
+  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 115/1500 fallback korunur. */
+  const [shipping, setShipping] = useState({ fee: 115, freeThreshold: 1500 });
   useEffect(() => {
     apiClient.settings.shipping().then(setShipping).catch(() => {});
   }, []);

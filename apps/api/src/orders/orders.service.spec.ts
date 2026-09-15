@@ -51,7 +51,7 @@ function makeParasut(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** SettingsService mock — varsayılan 79₺ kargo / 750₺ ücretsiz eşiği. */
+/** SettingsService mock — varsayılan 115₺ kargo / 750₺ ücretsiz eşiği. */
 function makeSettings() {
   return { getShipping: vi.fn().mockResolvedValue({ fee: 79, freeThreshold: 750 }) };
 }

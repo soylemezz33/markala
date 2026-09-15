@@ -115,8 +115,8 @@ export default function CheckoutPage() {
   // enabled=false → hiçbir puan UI'ı görünmez, redeemPoints gönderilmez (checkout değişmez).
   const [loyalty, setLoyalty] = useState<{ enabled: boolean; balance: number; redeemPerTl: number } | null>(null);
   const [redeemPoints, setRedeemPoints] = useState(0);
-  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 79/1500 fallback korunur. */
-  const [shippingConfig, setShippingConfig] = useState({ fee: 79, freeThreshold: 1500 });
+  /** Kargo ayarları /settings/shipping'ten çekilir; API hatasında 115/1500 fallback korunur. */
+  const [shippingConfig, setShippingConfig] = useState({ fee: 115, freeThreshold: 1500 });
   useEffect(() => {
     apiClient.settings.shipping().then(setShippingConfig).catch(() => {});
   }, []);

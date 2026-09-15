@@ -367,13 +367,13 @@ export const HELP_CATEGORIES: HelpCategory[] = [
       {
         slug: "kargo-ucreti-ne-kadar",
         question: "Kargo ücreti ne kadar?",
-        description: "Kargo ücretleri: 1.500 TL üzeri ücretsiz, standart 79 TL, hızlı kargo seçeneği.",
+        description: "Kargo ücretleri: 1.500 TL üzeri ücretsiz, standart 115 TL, hızlı kargo seçeneği.",
         shortAnswer:
-          "1.500 TL ve üzeri siparişlerde kargo ücretsizdir. Altındaki siparişlerde 79 TL standart kargo ücreti uygulanır. Acil işleriniz için +89 TL ile hızlı kargo (1 iş günü) talep edebilirsiniz.",
+          "1.500 TL ve üzeri siparişlerde kargo ücretsizdir. Altındaki siparişlerde 115 TL standart kargo ücreti uygulanır. Acil işleriniz için +89 TL ile hızlı kargo (1 iş günü) talep edebilirsiniz.",
         keywords: ["kargo ücreti", "ücretsiz kargo", "kargo bedava"],
         sections: [
           { heading: "Ücretsiz Kargo Eşiği", body: "Sepet tutarınız 1.500 TL ve üzerindeyse kargo ücretsizdir; eşiğe ne kadar kaldığı sepette gösterilir." },
-          { heading: "Standart ve Hızlı Kargo", body: "1.500 TL altı siparişlerde 79 TL standart kargo ücreti alınır. Hızlı kargo (1 iş günü teslim) +89 TL'dir; sipariş notunda belirtmeniz yeterli." },
+          { heading: "Standart ve Hızlı Kargo", body: "1.500 TL altı siparişlerde 115 TL standart kargo ücreti alınır. Hızlı kargo (1 iş günü teslim) +89 TL'dir; sipariş notunda belirtmeniz yeterli." },
         ],
       },
       {

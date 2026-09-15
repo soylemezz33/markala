@@ -417,7 +417,7 @@ export default async function PriceListPage() {
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
                 <strong className="text-ink-900">Kargo:</strong> 1.500 ₺ üzeri sipariş Türkiye geneli
-                ücretsiz. Altında 79 ₺ kargo ücreti eklenir.
+                ücretsiz. Altında 115 ₺ kargo ücreti eklenir.
               </span>
             </li>
             <li className="flex gap-2">
