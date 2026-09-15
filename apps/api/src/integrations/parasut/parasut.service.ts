@@ -21,6 +21,9 @@ import { eBelgeKararla, type EBelgeTuru } from "./parasut-kural";
 /** Fix 3: OAuth2/API fetch için timeout süresi (ms). Turnstile pattern'ı ile aynı yaklaşım. */
 const PARASUT_FETCH_TIMEOUT_MS = 12_000;
 
+/** GİB: TCKN'si bilinmeyen bireysel alıcı için e-Arşiv'de kullanılan sabit kimlik no. */
+const BIREYSEL_TCKN = "11111111111";
+
 @Injectable()
 export class ParasutService implements OnModuleInit {
   private readonly logger = new Logger(ParasutService.name);
@@ -365,9 +368,30 @@ export class ParasutService implements OnModuleInit {
     type InvShow = { data?: { attributes?: { invoice_no?: string } }; included?: EDoc[] };
     const belgeBul = (inv: InvShow) => (inv.included || []).find((x) => x.type === "e_archives" || x.type === "e_invoices");
 
-    let inv = await this.api<InvShow>("GET", `/sales_invoices/${invId}?include=active_e_document`);
+    let inv = await this.api<InvShow>("GET", `/sales_invoices/${invId}?include=active_e_document,contact`);
     let doc = belgeBul(inv);
     if (!doc) {
+      // BİREYSEL ALICI DÜZELTMESİ (15 Eyl canlı: 14 Eyl kargolanan 5 bireysel fatura 5 denemede de
+      // "Alıcı VKN/TCKN bilgisi geçersiz" ve "Alıcı ünvanı en az 2 kelimeden oluşmalı" ile
+      // reddedildi; 11 Eyl'de kesilen tek bireysel faturanın contact'ında TCKN elle 11111111111
+      // yazılmıştı). GİB kuralı: TCKN'si bilinmeyen bireysel alıcıda 11111111111; ad soyad ≥ 2 kelime.
+      const contact = (inv.included || []).find((x) => x.type === "contacts") as
+        { id: string; attributes?: { name?: string; contact_type?: string; tax_number?: string } } | undefined;
+      if (contact && !kurumsal) {
+        const patch: Record<string, string> = {};
+        if (!contact.attributes?.tax_number) patch.tax_number = BIREYSEL_TCKN;
+        const ad = String(contact.attributes?.name ?? "").trim();
+        const kelime = (s: string) => s.split(/\s+/).filter(Boolean).length;
+        if (kelime(ad) < 2) {
+          const aday = [bill?.fullName, (order.shippingAddressSnapshot as any)?.fullName]
+            .map((x) => String(x ?? "").trim()).find((x) => kelime(x) >= 2);
+          patch.name = aday ?? `${ad} (Bireysel)`;
+        }
+        if (Object.keys(patch).length) {
+          await this.api("PATCH", `/contacts/${contact.id}`, { data: { type: "contacts", id: contact.id, attributes: patch } });
+          this.logger.log(`Paraşüt contact düzeltildi: order=${order.orderNumber} alanlar=${Object.keys(patch).join(",")}`);
+        }
+      }
       let kutu: string | null = null;
       if (kurumsal) {
         const vkn = String(bill.taxNumber).replace(/\D/g, "");
@@ -386,8 +410,14 @@ export class ParasutService implements OnModuleInit {
       const job = await this.api<{ data: { id: string; type: string } }>("POST", karar.tur === "e_invoice" ? "/e_invoices" : "/e_archives", body);
       this.logger.log(`Paraşüt ${karar.tur} işi başladı: order=${order.orderNumber} job=${job.data?.id}`);
       await this.waitJob(job.data.id);
-      inv = await this.api<InvShow>("GET", `/sales_invoices/${invId}?include=active_e_document`);
-      doc = belgeBul(inv);
+      // Fatura numarası iş bittikten birkaç sn sonra yazılıyor (12 Eyl e-Fatura: numara yerine
+      // "e_invoices-<id>" kaydedildi, MR02026000000022 sonradan geldi) → 5 sn aralıkla 6 deneme.
+      for (let i = 0; i < 6; i++) {
+        if (i > 0) await new Promise((r) => setTimeout(r, 5000));
+        inv = await this.api<InvShow>("GET", `/sales_invoices/${invId}?include=active_e_document`);
+        doc = belgeBul(inv);
+        if (doc && (doc.attributes?.invoice_number || inv.data?.attributes?.invoice_no)) break;
+      }
       if (!doc) throw new Error("e-belge işi bitti ama faturaya bağlı belge bulunamadı");
     }
     const type: EBelgeTuru = doc.type === "e_invoices" ? "e_invoice" : "e_archive";

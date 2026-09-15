@@ -22,10 +22,10 @@ describe("eBelgeKararla — e-Fatura mı e-Arşiv mi", () => {
     expect(k.gonderi).toBeUndefined();
   });
 
-  it("havale → EFT/HAVALE, platform yok", () => {
+  it("havale → EFT/HAVALE, platform banka adı (Paraşüt boş platformu reddediyor)", () => {
     const k = eBelgeKararla({ kurumsal: false, paymentMethod: "havale", odemeTarihi: T, kargoTarihi: T });
     expect(k.internetSatisi?.payment_type).toBe("EFT/HAVALE");
-    expect(k.internetSatisi?.payment_platform).toBeUndefined();
+    expect(k.internetSatisi?.payment_platform).toBe("Enpara Havale/EFT");
   });
 
   it("VKN'siz kargo firması → gönderi bloğu gönderilmez (Paraşüt reddi)", () => {

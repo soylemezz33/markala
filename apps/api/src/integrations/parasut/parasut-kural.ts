@@ -55,7 +55,9 @@ export function eBelgeKararla(g: EBelgeGirdi): EBelgeKarari {
     internetSatisi: {
       url: "https://markala.com.tr",
       payment_type: havale ? "EFT/HAVALE" : "KREDIKARTI/BANKAKARTI",
-      ...(havale ? {} : { payment_platform: "iyzico" }),
+      // 15 Eyl canlı: havalede platform boş bırakılınca Paraşüt "E-arşiv ödeme platformu
+      // doldurulmalı" ile reddetti → EFT/HAVALE için de doldurulur (banka adı).
+      payment_platform: havale ? "Enpara Havale/EFT" : "iyzico",
       payment_date: gun(g.odemeTarihi),
     },
     gonderi,
