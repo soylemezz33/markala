@@ -101,6 +101,12 @@ services:
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
       WHATSAPP_ADMIN_TO: ${WHATSAPP_ADMIN_TO:-}
       WHATSAPP_TEMPLATE: ${WHATSAPP_TEMPLATE:-yeni_siparis_bildirimi}
+      # Chatwoot sipariş konuşması (2026-09-15): ödeme alınınca WhatsApp kutusunda konuşma + tasarım takımı
+      CHATWOOT_URL: ${CHATWOOT_URL:-}
+      CHATWOOT_ACCOUNT_ID: ${CHATWOOT_ACCOUNT_ID:-1}
+      CHATWOOT_API_TOKEN: ${CHATWOOT_API_TOKEN:-}
+      CHATWOOT_INBOX_ID: ${CHATWOOT_INBOX_ID:-}
+      CHATWOOT_TEAM_ID: ${CHATWOOT_TEAM_ID:-}
       # Puan süresi işi (her sabah 08:30) — 7 Eylül kesinti şüphesi nedeniyle GEÇİCİ KAPALI.
       # Açmak için .env.production'da PUAN_SURESI_CRON=true yapıp api'yi yeniden başlatın.
       PUAN_SURESI_CRON: ${PUAN_SURESI_CRON:-false}
