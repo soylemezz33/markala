@@ -198,6 +198,14 @@ const nextConfig = {
         destination: "/kategori/folyo-film",
         permanent: true,
       },
+      // 2026-09-15 (Hasan): "bizdeki model damla değil" — ürün slug'ı yelken-bayrak-damla →
+      // yelken-bayrak (DB'de slug, menü, relatedSlugs, order_items.product_slug aynı gün
+      // güncellendi). Eski URL GSC'de indeksli ve reklam/blog bağlantılarında olabilir → 301.
+      {
+        source: "/urun/yelken-bayrak-damla",
+        destination: "/urun/yelken-bayrak",
+        permanent: true,
+      },
       // Mükerrer KVKK sayfası → DB-yönetimli kanonik yasal sayfa
       {
         source: "/kvkk-aydinlatma",

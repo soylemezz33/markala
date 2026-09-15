@@ -64,10 +64,10 @@ const SETLER = {
   makbuz: ["antetli-kagit", "klasik-kartvizit", "zarf-diplomat-tek-renk"],
 
   // Fuar / tanıtım standı: birlikte kurulur
-  "yelken-bayrak-damla": ["rollup-standart", "masa-bayragi-krom", "kirlangic-bayrak-3m"],
-  "kirlangic-bayrak-3m": ["yelken-bayrak-damla", "rollup-standart", "masa-bayragi-krom"],
-  "rollup-standart": ["yelken-bayrak-damla", "masa-bayragi-krom", "brosur"],
-  "masa-bayragi-krom": ["makam-bayragi-puskullu", "yelken-bayrak-damla", "klasik-kartvizit"],
+  "yelken-bayrak": ["rollup-standart", "masa-bayragi-krom", "kirlangic-bayrak-3m"],
+  "kirlangic-bayrak-3m": ["yelken-bayrak", "rollup-standart", "masa-bayragi-krom"],
+  "rollup-standart": ["yelken-bayrak", "masa-bayragi-krom", "brosur"],
+  "masa-bayragi-krom": ["makam-bayragi-puskullu", "yelken-bayrak", "klasik-kartvizit"],
 
   // Matbaa tanıtım seti
   brosur: ["el-ilani", "afis-105gr", "kapi-aski-brosur"],
@@ -75,9 +75,9 @@ const SETLER = {
   "afis-105gr": ["brosur", "el-ilani", "rollup-standart"],
 
   // Dış mekân tanıtım: branda alan afiş/bayrak da alır
-  "avrupa-vinil-branda": ["mesh-branda", "yelken-bayrak-damla", "afis-105gr"],
-  "cin-vinil-branda": ["avrupa-vinil-branda", "yelken-bayrak-damla", "afis-105gr"],
-  "mesh-branda": ["avrupa-vinil-branda", "yelken-bayrak-damla", "rollup-standart"],
+  "avrupa-vinil-branda": ["mesh-branda", "yelken-bayrak", "afis-105gr"],
+  "cin-vinil-branda": ["avrupa-vinil-branda", "yelken-bayrak", "afis-105gr"],
+  "mesh-branda": ["avrupa-vinil-branda", "yelken-bayrak", "rollup-standart"],
 
   // Araç giydirme seti
   "arac-magneti-30x40": ["arac-sticker-yan", "kesim-folyo", "one-way-vision-baski"],

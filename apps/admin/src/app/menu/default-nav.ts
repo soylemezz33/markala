@@ -74,7 +74,7 @@ export const DEFAULT_NAV: NavCategory[] = [
       {
         title: "Bayrak",
         items: [
-          { label: "Yelken Bayrak", href: "/urun/yelken-bayrak-damla" },
+          { label: "Yelken Bayrak", href: "/urun/yelken-bayrak" },
           { label: "Kırlangıç Bayrak", href: "/urun/kirlangic-bayrak-3m" },
           { label: "Masa Bayrağı", href: "/urun/masa-bayragi-krom" },
           { label: "Makam Bayrağı", href: "/urun/makam-bayragi-puskullu" },
@@ -86,7 +86,7 @@ export const DEFAULT_NAV: NavCategory[] = [
       },
     ],
     featured: [
-      { slug: "yelken-bayrak-damla", label: "Yelken Bayrak", theme: "ink" },
+      { slug: "yelken-bayrak", label: "Yelken Bayrak", theme: "ink" },
       { slug: "rollup-standart", label: "Roll-Up Banner", theme: "brand" },
     ],
   },

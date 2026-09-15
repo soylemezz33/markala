@@ -30,7 +30,7 @@ function htmlToMd(html) {
 
 /** slug → kapak görseli kaynağı: ["product", slug] veya ["category", slug] */
 const KAPAK = {
-  "yelken-bayrak-olculeri-ve-secim-rehberi": ["product", "yelken-bayrak-damla"],
+  "yelken-bayrak-olculeri-ve-secim-rehberi": ["product", "yelken-bayrak"],
   "branda-afis-olcusu-nasil-secilir-440-510-gr": ["product", "vinil-branda-440gr"],
   "el-ilani-mi-brosur-mu-hangisi-ne-zaman": ["category", "brosur"],
   "ges-uyari-etiketleri-gunes-santrali-zorunlu-isaretler": ["category", "is-guvenligi-ges"],

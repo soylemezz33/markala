@@ -48,7 +48,7 @@ const VITRIN_SIRASI = [
   "cin-vinil-branda",
   "avrupa-vinil-branda",
   "kirlangic-bayrak-3m",
-  "yelken-bayrak-damla",
+  "yelken-bayrak",
   "makam-bayragi-puskullu",
   "brosur",
   "rollup-standart",

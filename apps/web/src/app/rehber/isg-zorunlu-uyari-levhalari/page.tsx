@@ -32,9 +32,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     // 2026-09-10 CTR: "emredici işaret rengi" 11. sıra 43 gst 0 tık, "ilk yardım dolabı işareti hangi
     // renk" 9. sıra 30 gst 0 tık → başlık sorunun cevabını verir, açıklama iki rengi açıkça söyler.
-    title: "İSG İşaret Renkleri: Emredici Mavi, Uyarı Sarı, Yasak Kırmızı, Acil Yeşil (Zorunlu Liste)",
+    // 2026-09-15 CTR 2: 5 gün sonra hâlâ 66 gst / 0 tık (11,3). Sorgu "emredici işaret rengi"
+    // başlığın BAŞINA alındı; açıklama tek cümlede cevabı + listeyi veriyor.
+    title: "Emredici İşaret Rengi Nedir? İSG İşaret Renkleri ve Anlamları (Mavi, Sarı, Kırmızı, Yeşil)",
     description:
-      "Zorunluluk (emredici) işaretleri mavi, uyarı sarı, yasak kırmızı, acil çıkış yeşildir. İşyeri tipine göre zorunlu İSG levhası kontrol listeleri ve güncel fiyatlar.",
+      "Emredici işaret rengi mavidir; uyarı sarı, yasak kırmızı, acil çıkış yeşil. Her rengin anlamı, ISO 7010 örnekleri ve işyeri tipine göre zorunlu İSG levhası listesi.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",

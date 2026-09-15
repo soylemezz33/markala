@@ -238,6 +238,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             )}
           </span>
         </div>
+        {/* 2026-09-15: Ads kalite puanında "açılış sayfası ortalama altı" (dekota, vinil branda,
+            ikaz levhaları). H1'in altına TEK satır kısa açıklama — anahtar kelime ve ürün
+            kapsamı ilk ekranda görünsün; 8 Ağustos'ta kaldırılan büyük hero geri GELMEZ. */}
+        {cat.shortDescription && (
+          <p className="mt-1.5 max-w-3xl text-sm text-ink-600 leading-relaxed">{cat.shortDescription}</p>
+        )}
       </Container>
 
       {products.length === 0 ? (
