@@ -49,7 +49,7 @@ describe("ozelNotMetni", () => {
     expect(siparisNotuTemizle(null)).toBe("");
   });
   it("icNotMetni öneki aranabilir", () => {
-    expect(icNotMetni(18, "https://chat.x/app/accounts/1/conversations/18")).toMatch(/^Chatwoot konuşması #18 (yeni açıldı/);
+    expect(icNotMetni(18, "https://chat.x/app/accounts/1/conversations/18")).toMatch(/^Chatwoot konuşması #18 \(yeni açıldı/);
     expect(icNotMetni(15, "u", false)).toContain("mevcut konuşmasına eklendi");
   });
 });
