@@ -329,7 +329,11 @@ export class ParasutService implements OnModuleInit {
             ...(bill?.fullAddress ? { billing_address: String(bill.fullAddress).slice(0, 250) } : {}),
             ...(bill?.city ? { city: String(bill.city) } : {}),
             ...(bill?.district ? { district: String(bill.district) } : {}),
-            ...(isCorporate ? { tax_number: String(bill.taxNumber), ...(bill?.taxOffice ? { tax_office: String(bill.taxOffice) } : {}) } : {}),
+            // e-Arşiv, contact'a değil FATURADAKİ tax_number'a bakıyor (15 Eyl canlı: contact'a
+            // 11111111111 yazılınca da ret; faturaya yazılınca geçti). Bireyselde GİB sabiti.
+            ...(isCorporate
+              ? { tax_number: String(bill.taxNumber), ...(bill?.taxOffice ? { tax_office: String(bill.taxOffice) } : {}) }
+              : { tax_number: BIREYSEL_TCKN }),
           },
           relationships: {
             contact: { data: { type: "contacts", id: contactId } },
@@ -365,7 +369,7 @@ export class ParasutService implements OnModuleInit {
     const kurumsal = Boolean(bill?.type === "corporate" && bill?.taxNumber);
     const invId = order.parasutInvoiceId;
     type EDoc = { id: string; type: string; attributes?: { invoice_number?: string; status?: string } };
-    type InvShow = { data?: { attributes?: { invoice_no?: string } }; included?: EDoc[] };
+    type InvShow = { data?: { attributes?: { invoice_no?: string; tax_number?: string } }; included?: EDoc[] };
     const belgeBul = (inv: InvShow) => (inv.included || []).find((x) => x.type === "e_archives" || x.type === "e_invoices");
 
     let inv = await this.api<InvShow>("GET", `/sales_invoices/${invId}?include=active_e_document,contact`);
@@ -390,6 +394,12 @@ export class ParasutService implements OnModuleInit {
         if (Object.keys(patch).length) {
           await this.api("PATCH", `/contacts/${contact.id}`, { data: { type: "contacts", id: contact.id, attributes: patch } });
           this.logger.log(`Paraşüt contact düzeltildi: order=${order.orderNumber} alanlar=${Object.keys(patch).join(",")}`);
+        }
+        // Asıl belirleyici: FATURADAKİ tax_number. Eski taslaklarda boş → yalnız bu alanla PUT
+        // (kalemler/tutarlar korunuyor; 15 Eyl canlı test).
+        if (!inv.data?.attributes?.tax_number) {
+          await this.api("PUT", `/sales_invoices/${invId}`, { data: { id: invId, type: "sales_invoices", attributes: { tax_number: BIREYSEL_TCKN } } });
+          this.logger.log(`Paraşüt fatura tax_number dolduruldu (bireysel): order=${order.orderNumber}`);
         }
       }
       let kutu: string | null = null;
