@@ -102,6 +102,16 @@ export class ChatwootService {
     }
   }
 
+  /** Müşterinin bu kutuda açık/bekleyen konuşması varsa (en son etkinlik) id'sini döner. */
+  private async acikKonusma(contactId: number, inboxId: number): Promise<number | null> {
+    type K = { id: number; inbox_id: number; status: string; last_activity_at?: number };
+    const r = await this.api<{ payload?: K[] }>("GET", `/contacts/${contactId}/conversations`);
+    const uygun = (r.payload ?? [])
+      .filter((k) => k.inbox_id === inboxId && ["open", "pending", "snoozed"].includes(k.status))
+      .sort((x, y) => (y.last_activity_at ?? 0) - (x.last_activity_at ?? 0));
+    return uygun[0]?.id ?? null;
+  }
+
   /**
    * TARAMA (2 dk): ödemesi alınmış, iptal olmamış, Chatwoot notu olmayan siparişler. "Ödeme
    * alındı" olayına doğrudan bağlanmadı çünkü ödeme üç ayrı yolda işaretleniyor (iyzico
@@ -182,17 +192,32 @@ export class ChatwootService {
       const panelUrl = `${this.cfg("ADMIN_PANEL_URL") || "https://admin.markala.com.tr"}/siparisler/${order.id}`;
 
       const contactId = await this.contactBul(kimlik, musteriAdi, order.email);
+      const inboxId = Number(this.cfg("CHATWOOT_INBOX_ID"));
       const teamId = Number(this.cfg("CHATWOOT_TEAM_ID")) || undefined;
-      const conv = await this.api<{ id: number }>("POST", "/conversations", {
-        source_id: kimlik,
-        inbox_id: Number(this.cfg("CHATWOOT_INBOX_ID")),
-        contact_id: contactId,
-        ...(teamId ? { team_id: teamId } : {}),
-        status: "open",
-        custom_attributes: { siparis_no: order.orderNumber },
-        additional_attributes: { siparis_no: order.orderNumber, panel: panelUrl },
-      });
-      await this.api("POST", `/conversations/${conv.id}/messages`, {
+      // Müşteriyle ZATEN açık bir WhatsApp konuşması varsa (15 Eyl, Hasan: "zaten konuştuğum
+      // müşteriyse?") ikinci konuşma AÇILMAZ: sipariş notu o konuşmaya düşer, takım oraya atanır.
+      const mevcut = await this.acikKonusma(contactId, inboxId);
+      let convId: number;
+      if (mevcut) {
+        convId = mevcut;
+        if (teamId) {
+          await this.api("POST", `/conversations/${convId}/assignments`, { team_id: teamId }).catch((e) =>
+            this.logger.warn(`chatwoot takım ataması yapılamadı conv=${convId}: ${(e as Error).message}`),
+          );
+        }
+      } else {
+        const yeniKonusma = await this.api<{ id: number }>("POST", "/conversations", {
+          source_id: kimlik,
+          inbox_id: inboxId,
+          contact_id: contactId,
+          ...(teamId ? { team_id: teamId } : {}),
+          status: "open",
+          custom_attributes: { siparis_no: order.orderNumber },
+          additional_attributes: { siparis_no: order.orderNumber, panel: panelUrl },
+        });
+        convId = yeniKonusma.id;
+      }
+      await this.api("POST", `/conversations/${convId}/messages`, {
         content: ozelNotMetni({
           orderId: order.id, orderNumber: order.orderNumber, musteriAdi, telefon: kimlik, email: order.email,
           paymentMethod: order.paymentMethod, siparisNotu: order.notes, kalemler, panelUrl,
@@ -200,14 +225,14 @@ export class ChatwootService {
         message_type: "outgoing",
         private: true,
       });
-      await this.api("POST", `/conversations/${conv.id}/labels`, { labels: [konusmaEtiketi(kalemler)] }).catch((e) =>
+      await this.api("POST", `/conversations/${convId}/labels`, { labels: [konusmaEtiketi(kalemler)] }).catch((e) =>
         this.logger.warn(`chatwoot etiket yazılamadı order=${order.orderNumber}: ${(e as Error).message}`),
       );
-      const url = this.konusmaUrl(conv.id);
+      const url = this.konusmaUrl(convId);
       await this.prisma.orderNote.create({
-        data: { orderId, authorId: null, authorName: "Sistem", authorRole: "chatwoot", body: icNotMetni(conv.id, url) },
+        data: { orderId, authorId: null, authorName: "Sistem", authorRole: "chatwoot", body: icNotMetni(convId, url, !mevcut) },
       });
-      this.logger.log(`chatwoot konuşması açıldı order=${order.orderNumber} conv=${conv.id}`);
+      this.logger.log(`chatwoot konuşması ${mevcut ? "mevcuda eklendi" : "açıldı"} order=${order.orderNumber} conv=${convId}`);
     } catch (e) {
       this.logger.error(`chatwoot konuşması açılamadı order=${orderId}: ${(e as Error)?.message}`);
     }

@@ -72,6 +72,6 @@ export function ozelNotMetni(g: KonusmaGirdisi): string {
 
 /** Konuşmayı siparişe bağlayan iç not (OrderNote gövdesi) — tekrar açılmasın diye bu önekle aranır. */
 export const CHATWOOT_NOT_ONEKI = "Chatwoot konuşması";
-export function icNotMetni(conversationId: number, url: string): string {
-  return `${CHATWOOT_NOT_ONEKI} #${conversationId} (grafik tasarım ekibine atandı): ${url}`;
+export function icNotMetni(conversationId: number, url: string, yeni = true): string {
+  return `${CHATWOOT_NOT_ONEKI} #${conversationId} (${yeni ? "yeni açıldı" : "müşterinin mevcut konuşmasına eklendi"}, grafik tasarım ekibine atandı): ${url}`;
 }
