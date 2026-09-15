@@ -87,6 +87,13 @@ function geriAdimMi(mevcut: string, hedef: string): boolean {
   return a >= 0 && b >= 0 && b < a;
 }
 
+/** Ödeme yöntemi etiketleri (2026-09-15, Hasan: "ödeme alanına ödeme yöntemini yazalım"). */
+const ODEME_YONTEMI_ETIKET: Record<string, string> = {
+  iyzico: "Kredi / Banka Kartı (iyzico)",
+  havale: "Havale / EFT",
+  cari: "Cari Hesap (vadeli)",
+};
+
 /** Ödeme durumu etiketleri (sipariş durumundan AYRI). */
 const PAYMENT_LABELS: Record<string, { label: string; color: string }> = {
   beklemede: { label: "Ödeme Bekliyor", color: "bg-warning/10 text-warning" },
@@ -110,6 +117,8 @@ export interface OrderDetailProps {
   paymentMethod?: string | null;
   paymentErrorCode?: string | null;
   paymentErrorMessage?: string | null;
+  /** Sipariş notu (müşteri metni + sistem eki: kanal, vergi bilgisi). __idem:…__ öneki gizlenir. */
+  notes?: string | null;
   total: unknown;
   subtotal?: unknown;
   shippingFee?: unknown;
@@ -331,6 +340,9 @@ export function OrderDetailClient({
 
   // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
   const payStatus = String(order.paymentStatus ?? "beklemede");
+  // Sipariş notu: idempotency öneki (__idem:<hash>__) sistem içi, gösterilmez. Panelde bugüne
+  // kadar HİÇ gösterilmiyordu (2026-09-15); kargo dahil tüm roller görür (parasal alan değil).
+  const musteriNotu = String(order.notes ?? "").replace(/__idem:[a-f0-9]+__\s*/i, "").trim();
   // showMoney sarti: iade onay penceresi tutari METIN olarak yaziyor (onay penceresi),
   // yani buton gorunur kalirsa tutar gizlemenin etrafindan dolasilir. API zaten FINANCE
   // istiyor (403) ama sizinti butona basmadan ONCE oluyordu.
@@ -1198,6 +1210,71 @@ export function OrderDetailClient({
               })}
             </ol>
           </Card>
+        </div>
+
+        {/* Sağ: müşteri + adres + ödeme */}
+        <div className="space-y-5">
+          <Card title="Müşteri">
+            <div className="font-semibold text-ink-900">{customer}</div>
+            {/* Üye mi, misafir mi verdi? (Hasan talebi 2026-08-24) — userId üye siparişinde dolu. */}
+            <div className="mt-2">
+              {order.userId ? (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success/10 text-success">
+                  ● Üye siparişi
+                  {order.user?.createdAt && (
+                    <span className="font-normal text-ink-500">
+                      · üyelik: {new Date(order.user.createdAt).toLocaleDateString("tr-TR")}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-paper-200 text-ink-700">
+                  ● Misafir siparişi (üyeliksiz)
+                </span>
+              )}
+            </div>
+            <div className="mt-3 space-y-1.5 text-xs">
+              {order.email && (
+                <div className="flex items-center gap-2 text-ink-700">
+                  <EnvelopeSimple size={12} /> {order.email}
+                </div>
+              )}
+              {order.shippingAddress?.phone && (
+                <div className="flex items-center gap-2 text-ink-700">
+                  <Phone size={12} /> {order.shippingAddress.phone}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {order.shippingAddress && (
+            <Card title="Teslimat Adresi">
+              <div className="text-sm text-ink-900 font-medium">
+                {order.shippingAddress.fullName ?? customer}
+              </div>
+              <div className="text-xs text-ink-700 mt-1 leading-relaxed flex items-start gap-2">
+                <MapPin size={12} className="flex-none mt-0.5 text-ink-500" />
+                <span>
+                  {order.shippingAddress.fullAddress}
+                  {ilceIl && (
+                    <>
+                      <br />
+                      {ilceIl}
+                      {order.shippingAddress.zipCode && ` · ${order.shippingAddress.zipCode}`}
+                    </>
+                  )}
+                </span>
+              </div>
+            </Card>
+          )}
+
+          {/* 2026-09-15 (Hasan): notlar teslimat adresinin ALTINDA, kargo dahil herkes görür;
+              hemen altında ödeme (yöntemiyle). Sipariş notu müşteri/sistem metni, iç not ekibin. */}
+          {musteriNotu && (
+            <Card title="Sipariş Notu">
+              <p className="text-sm text-ink-800 whitespace-pre-wrap break-words">{musteriNotu}</p>
+            </Card>
+          )}
 
           <Card title="İç Not (müşteri görmez)">
             <textarea
@@ -1267,60 +1344,41 @@ export function OrderDetailClient({
               </ul>
             )}
           </Card>
-        </div>
 
-        {/* Sağ: müşteri + adres + ödeme */}
-        <div className="space-y-5">
-          <Card title="Müşteri">
-            <div className="font-semibold text-ink-900">{customer}</div>
-            {/* Üye mi, misafir mi verdi? (Hasan talebi 2026-08-24) — userId üye siparişinde dolu. */}
-            <div className="mt-2">
-              {order.userId ? (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-success/10 text-success">
-                  ● Üye siparişi
-                  {order.user?.createdAt && (
-                    <span className="font-normal text-ink-500">
-                      · üyelik: {new Date(order.user.createdAt).toLocaleDateString("tr-TR")}
+          {/* Ödeme kartının TAMAMI izne bağlı: tutarın yanında ödeme DURUMU da
+              gizlenmeli ("Ödeme Bekliyor" rozeti de yasak kapsamında). */}
+          {showMoney && (
+            <Card title="Ödeme">
+              <div className="mt-1 text-xs">
+                {(() => {
+                  const ps = String(order.paymentStatus ?? "beklemede");
+                  const p = PAYMENT_LABELS[ps] ?? { label: ps, color: "bg-paper-200 text-ink-700" };
+                  return (
+                    <span className={`inline-block px-2 py-0.5 rounded-full font-semibold ${p.color}`}>
+                      {p.label}
                     </span>
-                  )}
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-paper-200 text-ink-700">
-                  ● Misafir siparişi (üyeliksiz)
-                </span>
-              )}
-            </div>
-            <div className="mt-3 space-y-1.5 text-xs">
-              {order.email && (
-                <div className="flex items-center gap-2 text-ink-700">
-                  <EnvelopeSimple size={12} /> {order.email}
-                </div>
-              )}
-              {order.shippingAddress?.phone && (
-                <div className="flex items-center gap-2 text-ink-700">
-                  <Phone size={12} /> {order.shippingAddress.phone}
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {order.shippingAddress && (
-            <Card title="Teslimat Adresi">
-              <div className="text-sm text-ink-900 font-medium">
-                {order.shippingAddress.fullName ?? customer}
+                  );
+                })()}
               </div>
-              <div className="text-xs text-ink-700 mt-1 leading-relaxed flex items-start gap-2">
-                <MapPin size={12} className="flex-none mt-0.5 text-ink-500" />
-                <span>
-                  {order.shippingAddress.fullAddress}
-                  {ilceIl && (
-                    <>
-                      <br />
-                      {ilceIl}
-                      {order.shippingAddress.zipCode && ` · ${order.shippingAddress.zipCode}`}
-                    </>
-                  )}
+              <div className="mt-2 text-xs text-ink-700">
+                Yöntem:{" "}
+                <span className="font-medium text-ink-900">
+                  {ODEME_YONTEMI_ETIKET[String(order.paymentMethod ?? "")] ?? (order.paymentMethod || "—")}
                 </span>
+              </div>
+              {/* Arıza nedeni (2026-09-03, Hasan: "hata mesajını panele anlamlı yazabilir miyiz").
+                  iyzico'nun genel mesajı — kart/PII içermez, doğrudan gösterilebilir. */}
+              {String(order.paymentStatus ?? "") === "basarisiz" && order.paymentErrorMessage && (
+                <p className="mt-2 flex items-start gap-1.5 text-xs text-error leading-snug">
+                  <WarningCircle size={14} weight="fill" className="mt-0.5 flex-none" />
+                  <span>
+                    {order.paymentErrorMessage}
+                    {order.paymentErrorCode ? ` (kod ${order.paymentErrorCode})` : ""}
+                  </span>
+                </p>
+              )}
+              <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
+                ₺ {Number(order.total).toLocaleString("tr-TR")}
               </div>
             </Card>
           )}
@@ -1417,38 +1475,6 @@ export function OrderDetailClient({
                 </>
               )}
               {trackMsg && <p className="mt-2 text-xs text-ink-700">{trackMsg}</p>}
-            </Card>
-          )}
-
-          {/* Ödeme kartının TAMAMI izne bağlı: tutarın yanında ödeme DURUMU da
-              gizlenmeli ("Ödeme Bekliyor" rozeti de yasak kapsamında). */}
-          {showMoney && (
-            <Card title="Ödeme">
-              <div className="mt-1 text-xs">
-                {(() => {
-                  const ps = String(order.paymentStatus ?? "beklemede");
-                  const p = PAYMENT_LABELS[ps] ?? { label: ps, color: "bg-paper-200 text-ink-700" };
-                  return (
-                    <span className={`inline-block px-2 py-0.5 rounded-full font-semibold ${p.color}`}>
-                      {p.label}
-                    </span>
-                  );
-                })()}
-              </div>
-              {/* Arıza nedeni (2026-09-03, Hasan: "hata mesajını panele anlamlı yazabilir miyiz").
-                  iyzico'nun genel mesajı — kart/PII içermez, doğrudan gösterilebilir. */}
-              {String(order.paymentStatus ?? "") === "basarisiz" && order.paymentErrorMessage && (
-                <p className="mt-2 flex items-start gap-1.5 text-xs text-error leading-snug">
-                  <WarningCircle size={14} weight="fill" className="mt-0.5 flex-none" />
-                  <span>
-                    {order.paymentErrorMessage}
-                    {order.paymentErrorCode ? ` (kod ${order.paymentErrorCode})` : ""}
-                  </span>
-                </p>
-              )}
-              <div className="mt-2 text-sm font-semibold text-ink-900 tabular-nums">
-                ₺ {Number(order.total).toLocaleString("tr-TR")}
-              </div>
             </Card>
           )}
         </div>
