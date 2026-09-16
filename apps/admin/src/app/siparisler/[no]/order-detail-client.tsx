@@ -311,6 +311,8 @@ export function OrderDetailClient({
   const [notes, setNotes] = useState<OrderNote[]>(initialNotes);
   // Tasarım Dosyaları kartı: kalem başına açılır/kapanır (2026-09-16, Hasan: "ürüne tıklandığında açılsın, geri kapatılabilsin").
   const [acikTasarim, setAcikTasarim] = useState<Record<string, boolean>>({});
+  // Zaman çizelgesi sekmesi (16 Eyl, Hasan: "çok karışmış; süreç ayrı, e-posta/WhatsApp ayrı sekme").
+  const [zamanSekme, setZamanSekme] = useState<"surec" | "bildirim">("surec");
   const [notEkleniyor, setNotEkleniyor] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -1514,11 +1516,29 @@ export function OrderDetailClient({
           bakmaya gerek kalmasın. Kaynak: API /orders/:id/zaman-cizelgesi (audit + not + bildirim). */}
       <div className="mt-5">
         <Card title="Zaman Çizelgesi">
-          {initialTimeline.length === 0 ? (
-            <p className="text-sm text-ink-500">Henüz hareket kaydı yok.</p>
-          ) : (
+          {(() => {
+            const surec = initialTimeline.filter((z) => z.tur !== "bildirim");
+            const bildirim = initialTimeline.filter((z) => z.tur === "bildirim");
+            const liste = zamanSekme === "surec" ? surec : bildirim;
+            return (
+              <>
+                <div className="mb-3 inline-flex rounded-md border border-paper-200 bg-paper-100 p-0.5 text-xs">
+                  {([["surec", `Süreç (${surec.length})`], ["bildirim", `E-posta & WhatsApp (${bildirim.length})`]] as const).map(([k, ad]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setZamanSekme(k)}
+                      className={`px-3 py-1.5 rounded font-medium ${zamanSekme === k ? "bg-paper-50 text-ink-900 shadow-sm" : "text-ink-500 hover:text-ink-900"}`}
+                    >
+                      {ad}
+                    </button>
+                  ))}
+                </div>
+                {liste.length === 0 ? (
+                  <p className="text-sm text-ink-500">{zamanSekme === "surec" ? "Henüz hareket kaydı yok." : "Bu siparişe bildirim gönderilmemiş."}</p>
+                ) : (
             <ol className="relative border-l border-paper-200 ml-2 space-y-3">
-              {initialTimeline.map((z, i) => {
+              {liste.map((z, i) => {
                 const renk =
                   z.tur === "odeme" ? "bg-success" : z.tur === "kargo" ? "bg-brand-500" : z.tur === "iade" ? "bg-error"
                   : z.tur === "fatura" ? "bg-ink-900" : z.tur === "bildirim" ? "bg-paper-300" : z.tur === "not" ? "bg-warning" : "bg-ink-400";
@@ -1538,7 +1558,10 @@ export function OrderDetailClient({
                 );
               })}
             </ol>
-          )}
+                )}
+              </>
+            );
+          })()}
         </Card>
       </div>
 
