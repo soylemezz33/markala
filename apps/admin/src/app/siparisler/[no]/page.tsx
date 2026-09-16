@@ -25,5 +25,12 @@ export default async function OrderDetailPage({ params }: Props) {
   } catch {
     /* yetkisiz rol veya geçici hata — kart boş açılır */
   }
-  return <OrderDetailClient order={order as never} initialNotes={notes} />;
+  // Zaman çizelgesi (2026-09-16): oluşturma/ödeme/durum/kargo/fatura/bildirim/not hareketleri.
+  let timeline: Awaited<ReturnType<typeof api.orders.timeline>> = [];
+  try {
+    timeline = await api.orders.timeline(id);
+  } catch {
+    /* geçici hata — kart boş açılır */
+  }
+  return <OrderDetailClient order={order as never} initialNotes={notes} initialTimeline={timeline} />;
 }

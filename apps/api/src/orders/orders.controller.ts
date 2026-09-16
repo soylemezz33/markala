@@ -39,6 +39,7 @@ import { OrderDriveService } from "../storage/order-drive.service";
 import { izinliDurumGecisi } from "./status-yetki";
 import { OrderNoteService } from "./order-note.service";
 import { ManuelSiparisService } from "./manuel-siparis.service";
+import { ZamanCizelgesiService } from "./zaman-cizelgesi.service";
 import { ManuelSiparisDto } from "./manuel-siparis.dto";
 import { KargoTakipService } from "./kargo-takip.service";
 import type { Request } from "express";
@@ -74,6 +75,7 @@ export class OrdersController {
     // İç not defteri — aynı gerekçeyle ayrı servis (bkz. order-note.service.ts başlığı).
     private notes: OrderNoteService,
     private manuel: ManuelSiparisService,
+    private zaman: ZamanCizelgesiService,
     // Kargo teslim taraması — cron'un çalıştırdığı kodun elle tetiklenebilir kopyası değil,
     // AYNISI (bkz. kargo-takip.service.ts başlığı).
     private kargoTakip: KargoTakipService,
@@ -186,6 +188,16 @@ export class OrdersController {
     @Req() req: Request & { user?: { sub?: string; role?: string; email?: string }; ip?: string },
   ) {
     return this.manuel.olustur(dto, { actorId: req.user?.sub ?? null, email: req.user?.email ?? null, role: req.user?.role ?? null, ipAddress: req.ip ?? null });
+  }
+
+  /** Sipariş zaman çizelgesi (2026-09-16): oluşturma, ödeme, durumlar, kargo, fatura, bildirimler, notlar. Parasal alan yok → ORDERS_READ. */
+  @Get(":id/zaman-cizelgesi")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_READ)
+  @ApiBearerAuth()
+  zamanCizelgesi(@Param("id") id: string) {
+    return this.zaman.olustur(id);
   }
 
   /** Bekleyen faturaları hemen tamamla (panel/manuel). Cron 15. dakikada zaten dener. */

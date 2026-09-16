@@ -309,6 +309,9 @@ export class MarkalaApiClient {
   // === Orders ===
   orders = {
     create: (data: any) => this.request<Order>("POST", "/orders", data, { auth: true }),
+    /** Panel: sipariş zaman çizelgesi (2026-09-16). */
+    timeline: (orderId: string) =>
+      this.request<Array<{ at: string; tur: string; baslik: string; detay?: string; aktor?: string }>>("GET", `/orders/${encodeURIComponent(orderId)}/zaman-cizelgesi`, undefined, { auth: true }),
     /** Panel: manuel sipariş (yüz yüze / telefon / WhatsApp), 2026-09-16. */
     createManual: (data: any) =>
       this.request<{ id: string; orderNumber: string; total: number; epostaYok: boolean }>("POST", "/orders/manuel", data, { auth: true }),

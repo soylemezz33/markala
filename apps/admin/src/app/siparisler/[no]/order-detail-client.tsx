@@ -295,10 +295,13 @@ th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #eee;font-size:12p
 export function OrderDetailClient({
   order,
   initialNotes = [],
+  initialTimeline = [],
 }: {
   order: OrderDetailProps;
   /** İç notlar sunucuda çekilir (page.tsx) — ilk boyamada dolu gelsin. */
   initialNotes?: OrderNote[];
+  /** Zaman çizelgesi (2026-09-16) — sunucuda çekilir. */
+  initialTimeline?: Array<{ at: string; tur: string; baslik: string; detay?: string; aktor?: string }>;
 }) {
   const [currentStatus, setCurrentStatus] = useState(toSlug(order.status));
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -1480,6 +1483,39 @@ export function OrderDetailClient({
             </Card>
           )}
         </div>
+      </div>
+
+      {/* ZAMAN ÇİZELGESİ (2026-09-16, Hasan): "kargoya hangi gün verildi, ödeme ne zaman alındı,
+          tasarıma ne zaman alındı" — her hareket gün ve saatiyle; Furkan'a ya da mesajlara
+          bakmaya gerek kalmasın. Kaynak: API /orders/:id/zaman-cizelgesi (audit + not + bildirim). */}
+      <div className="mt-5">
+        <Card title="Zaman Çizelgesi">
+          {initialTimeline.length === 0 ? (
+            <p className="text-sm text-ink-500">Henüz hareket kaydı yok.</p>
+          ) : (
+            <ol className="relative border-l border-paper-200 ml-2 space-y-3">
+              {initialTimeline.map((z, i) => {
+                const renk =
+                  z.tur === "odeme" ? "bg-success" : z.tur === "kargo" ? "bg-brand-500" : z.tur === "iade" ? "bg-error"
+                  : z.tur === "fatura" ? "bg-ink-900" : z.tur === "bildirim" ? "bg-paper-300" : z.tur === "not" ? "bg-warning" : "bg-ink-400";
+                const d = new Date(z.at);
+                return (
+                  <li key={`${z.at}-${i}`} className="ml-4">
+                    <span className={`absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full ${renk}`} aria-hidden="true" />
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                      <time dateTime={z.at} className="text-xs text-ink-500 tabular-nums whitespace-nowrap">
+                        {d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short" })} · {d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                      </time>
+                      <span className={`text-sm ${z.tur === "bildirim" ? "text-ink-600" : "font-medium text-ink-900"}`}>{z.baslik}</span>
+                      {z.aktor && <span className="text-[11px] text-ink-400">· {z.aktor}</span>}
+                    </div>
+                    {z.detay && <p className="text-xs text-ink-500 break-words">{z.detay}</p>}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </Card>
       </div>
 
       {/* Kargoya verme penceresi (2026-08-29). Düz onay yerine bu pencere çıkar
