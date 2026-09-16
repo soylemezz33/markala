@@ -3,8 +3,10 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { ChatwootService } from "../integrations/chatwoot/chatwoot.service";
 
 /**
  * Sipariş İÇ NOTU (2026-09-03) — panel personelinin birbirine bıraktığı notlar.
@@ -21,7 +23,12 @@ import { PrismaService } from "../prisma/prisma.service";
  */
 @Injectable()
 export class OrderNoteService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    // 2026-09-16: iç not Chatwoot konuşmasına özel not olarak da düşer (Hasan: "birebir entegre").
+    // @Optional: spec'ler ve Chatwoot env'siz ortam servis olmadan kurulur.
+    @Optional() private chatwoot?: ChatwootService,
+  ) {}
 
   /** Panelde gösterilen alanlar. authorId dışarı çıkmaz (iç kimlik). */
   private static readonly SELECT = {
@@ -47,18 +54,21 @@ export class OrderNoteService {
     // yerden çağrılırsa boş gövdeli not oluşmasın (canlıda bir kez oluştu, 2026-09-03).
     const metin = body.trim();
     if (!metin) throw new BadRequestException("Not boş olamaz.");
-    return this.prisma.orderNote.create({
+    const authorName = await this.yazarAdi(author);
+    const not = await this.prisma.orderNote.create({
       data: {
         orderId,
         body: metin,
         authorId: author.id ?? null,
         // Ad snapshot'ı: personel hesabı silinse/adı değişse bile not okunabilir kalsın.
         // JWT yalnız sub/email/role taşıyor, ad DB'den okunuyor (e-posta yedek).
-        authorName: await this.yazarAdi(author),
+        authorName,
         authorRole: author.role ?? null,
       },
       select: OrderNoteService.SELECT,
     });
+    void this.chatwoot?.panelNotuGonder(orderId, authorName, metin);
+    return not;
   }
 
   private async yazarAdi(author: { id?: string; email?: string }): Promise<string> {

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   whatsappKimligi, konusmaEtiketi, ozelNotMetni, siparisNotuTemizle, icNotMetni,
   durumEtiketleriniUygula, durumEtiketiBul, konusmaIdNottan, durumNotu, CHATWOOTTAN_PANELE, URETIM_SONRASI,
+  chatwootNotuAktarilirMi, chatwootNotuPanele, panelNotuAktarilirMi, panelNotuChatwoota,
 } from "./chatwoot-kural";
 
 describe("whatsappKimligi — telefon → WhatsApp source_id", () => {
@@ -76,5 +77,24 @@ describe("sipariş durumu ↔ konuşma", () => {
     expect(CHATWOOTTAN_PANELE).not.toContain("kargoya-verildi");
     expect(URETIM_SONRASI).toContain("uretimde");
     expect(durumNotu("uretimde")).toContain("Üretimde");
+  });
+});
+
+describe("iç not ↔ Chatwoot özel notu", () => {
+  it("yalnız özel (private) ve sistem dışı Chatwoot notları panele aktarılır", () => {
+    expect(chatwootNotuAktarilirMi("Gül Hanım'ın siparişinde germe payı bırakılmış", true)).toBe(true);
+    expect(chatwootNotuAktarilirMi("müşteriye giden mesaj", false)).toBe(false);
+    expect(chatwootNotuAktarilirMi("🧾 Sipariş MK-1 — ödeme alındı", true)).toBe(false);
+    expect(chatwootNotuAktarilirMi("📦 Sipariş durumu: Üretimde (panel)", true)).toBe(false);
+    expect(chatwootNotuAktarilirMi("📝 Panel notu (Hasan): x", true)).toBe(false);
+    expect(chatwootNotuAktarilirMi("   ", true)).toBe(false);
+  });
+  it("gövde biçimleri ve döngü koruması", () => {
+    const p = chatwootNotuPanele("Hasan Söylemez", "germe payı var");
+    expect(p).toBe("💬 Chatwoot notu (Hasan Söylemez): germe payı var");
+    expect(panelNotuAktarilirMi(p)).toBe(false);
+    expect(panelNotuAktarilirMi("Chatwoot konuşması #15 (yeni açıldı, …): url")).toBe(false);
+    expect(panelNotuAktarilirMi("dekont bekleniyor")).toBe(true);
+    expect(panelNotuChatwoota("Oğuzhan Ateş", "kutu ezik")).toBe("📝 Panel notu (Oğuzhan Ateş): kutu ezik");
   });
 });

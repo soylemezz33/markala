@@ -116,3 +116,28 @@ export function konusmaIdNottan(body: string | null | undefined): number | null 
 export function durumNotu(slug: string, kaynak = "panel"): string {
   return `📦 Sipariş durumu: ${DURUM_BASLIK[slug] ?? slug} (${kaynak})`;
 }
+
+// ── İç not ↔ Chatwoot özel notu (2026-09-16, Hasan: "Chatwoot'a not ekledim, panele düşmedi") ───
+/** Panele düşen Chatwoot notu gövde öneki (döngü ve ayırt etme için). */
+export const CHATWOOT_NOTU_ONEKI = "💬 Chatwoot notu";
+/** Chatwoot'a giden panel notu öneki. */
+export const PANEL_NOTU_ONEKI = "📝 Panel notu";
+/** Sistemin ürettiği Chatwoot özel notları (sipariş özeti, durum) panele KOPYALANMAZ. */
+const SISTEM_NOT_ONEKLERI = ["🧾", "📦", PANEL_NOTU_ONEKI];
+
+export function chatwootNotuAktarilirMi(content: string | null | undefined, priv: boolean): boolean {
+  const c = String(content ?? "").trim();
+  if (!priv || !c) return false;
+  return !SISTEM_NOT_ONEKLERI.some((o) => c.startsWith(o));
+}
+export function chatwootNotuPanele(gonderen: string | null | undefined, content: string): string {
+  return `${CHATWOOT_NOTU_ONEKI} (${(gonderen ?? "").trim() || "ekip"}): ${content.trim()}`;
+}
+/** Panel iç notu Chatwoot'a gider mi? Chatwoot kaynaklı ve sistem notları gitmez. */
+export function panelNotuAktarilirMi(body: string): boolean {
+  const b = body.trim();
+  return Boolean(b) && !b.startsWith(CHATWOOT_NOTU_ONEKI) && !b.startsWith(CHATWOOT_NOT_ONEKI);
+}
+export function panelNotuChatwoota(yazar: string, body: string): string {
+  return `${PANEL_NOTU_ONEKI} (${yazar}): ${body.trim()}`;
+}

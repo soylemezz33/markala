@@ -4,7 +4,7 @@ import { ApiTags } from "@nestjs/swagger";
 import { PrismaService } from "../prisma/prisma.service";
 import { OrdersService } from "./orders.service";
 import { ChatwootService } from "../integrations/chatwoot/chatwoot.service";
-import { CHATWOOT_NOT_ONEKI, CHATWOOTTAN_PANELE, durumEtiketiBul } from "../integrations/chatwoot/chatwoot-kural";
+import { CHATWOOT_NOT_ONEKI, CHATWOOTTAN_PANELE, durumEtiketiBul, chatwootNotuAktarilirMi, chatwootNotuPanele } from "../integrations/chatwoot/chatwoot-kural";
 
 /**
  * CHATWOOT → PANEL (2026-09-16, Hasan: "birebir panelimle entegreli çalışsın, bir yerden çekince
@@ -37,6 +37,7 @@ export class ChatwootWebhookController {
     if (!secret || !token || token.length !== secret.length || !sabitZamanEsit(token, secret)) {
       throw new UnauthorizedException();
     }
+    if (body?.event === "message_created") return this.ozelNot(body);
     if (body?.event !== "conversation_updated") return { ok: true, atlandi: "olay" };
     const convId = Number(body?.id);
     if (!convId) return { ok: true, atlandi: "id yok" };
@@ -54,13 +55,7 @@ export class ChatwootWebhookController {
     if (!CHATWOOTTAN_PANELE.includes(etiket)) return { ok: true, atlandi: "yalnız panelden değişir", etiket };
 
     const siparisNo = typeof k.custom_attributes?.siparis_no === "string" ? k.custom_attributes.siparis_no : null;
-    const order =
-      (siparisNo
-        ? await this.prisma.order.findFirst({ where: { orderNumber: siparisNo, deletedAt: null }, select: { id: true, status: true, orderNumber: true } })
-        : null) ??
-      (await this.prisma.orderNote
-        .findFirst({ where: { body: { startsWith: `${CHATWOOT_NOT_ONEKI} #${convId} ` } }, select: { order: { select: { id: true, status: true, orderNumber: true } } } })
-        .then((n) => n?.order ?? null));
+    const order = await siparisBul(this.prisma, convId, siparisNo);
     if (!order) return { ok: true, atlandi: "sipariş yok" };
 
     const mevcut = String(order.status).replace(/_/g, "-");
@@ -72,6 +67,46 @@ export class ChatwootWebhookController {
     await this.chatwoot.durumIsaretle(convId, etiket).catch(() => undefined);
     return { ok: true, uygulandi: etiket, siparis: order.orderNumber };
   }
+
+  /**
+   * Chatwoot ÖZEL notu → sipariş iç notu (2026-09-16, Hasan: "Chatwoot'a not ekledim, panele
+   * düşmedi"). Müşteriye giden/gelen mesajlar ve sistemin ürettiği notlar (🧾 özet, 📦 durum,
+   * 📝 panel notu) kopyalanmaz; aynı gövde 10 dk içinde tekrar gelirse (webhook tekrarı) atlanır.
+   */
+  private async ozelNot(body: Record<string, unknown>) {
+    const priv = body?.private === true;
+    const content = typeof body?.content === "string" ? body.content : "";
+    if (!chatwootNotuAktarilirMi(content, priv)) return { ok: true, atlandi: "özel not değil / sistem notu" };
+    const conv = body?.conversation as { id?: number; custom_attributes?: Record<string, unknown> } | undefined;
+    const convId = Number(conv?.id);
+    if (!convId) return { ok: true, atlandi: "konuşma id yok" };
+    const siparisNo = typeof conv?.custom_attributes?.siparis_no === "string" ? conv.custom_attributes.siparis_no : null;
+    const order = await siparisBul(this.prisma, convId, siparisNo);
+    if (!order) return { ok: true, atlandi: "sipariş yok" };
+    const sender = body?.sender as { name?: string } | undefined;
+    const govde = chatwootNotuPanele(sender?.name, content);
+    const tekrar = await this.prisma.orderNote.findFirst({
+      where: { orderId: order.id, body: govde, createdAt: { gte: new Date(Date.now() - 10 * 60 * 1000) } },
+      select: { id: true },
+    });
+    if (tekrar) return { ok: true, atlandi: "tekrar" };
+    await this.prisma.orderNote.create({
+      data: { orderId: order.id, body: govde, authorId: null, authorName: (sender?.name ?? "").trim() || "Chatwoot", authorRole: "chatwoot" },
+    });
+    return { ok: true, uygulandi: "not", siparis: order.orderNumber };
+  }
+}
+
+/** Sipariş kaydını konuşma id'sine göre bul: siparis_no özel niteliği, yoksa iç nottaki "#id". */
+async function siparisBul(prisma: PrismaService, convId: number, siparisNo: string | null) {
+  return (
+    (siparisNo
+      ? await prisma.order.findFirst({ where: { orderNumber: siparisNo, deletedAt: null }, select: { id: true, status: true, orderNumber: true } })
+      : null) ??
+    (await prisma.orderNote
+      .findFirst({ where: { body: { startsWith: `${CHATWOOT_NOT_ONEKI} #${convId} ` } }, select: { order: { select: { id: true, status: true, orderNumber: true } } } })
+      .then((n) => n?.order ?? null))
+  );
 }
 
 function sabitZamanEsit(a: string, b: string): boolean {

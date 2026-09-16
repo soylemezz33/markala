@@ -13,6 +13,8 @@ import {
   durumNotu,
   URETIM_SONRASI,
   KAPANIS_DURUMLARI,
+  panelNotuAktarilirMi,
+  panelNotuChatwoota,
   type KonusmaKalemi,
 } from "./chatwoot-kural";
 
@@ -176,6 +178,27 @@ export class ChatwootService {
       } catch (e) {
         this.logger.warn(`chatwoot durum eşitleme order=${o.orderNumber} conv=${convId}: ${(e as Error).message}`);
       }
+    }
+  }
+
+  /** Siparişin Chatwoot konuşma id'si (iç nottan). */
+  async konusmaIdBul(orderId: string): Promise<number | null> {
+    const n = await this.prisma.orderNote.findFirst({
+      where: { orderId, body: { startsWith: `${CHATWOOT_NOT_ONEKI} #` } },
+      select: { body: true },
+    });
+    return konusmaIdNottan(n?.body);
+  }
+
+  /** Panel iç notu → Chatwoot özel notu (2026-09-16). Hata fırlatmaz. */
+  async panelNotuGonder(orderId: string, yazar: string, body: string): Promise<void> {
+    if (!this.isConfigured() || !panelNotuAktarilirMi(body)) return;
+    try {
+      const convId = await this.konusmaIdBul(orderId);
+      if (!convId) return;
+      await this.api("POST", `/conversations/${convId}/messages`, { content: panelNotuChatwoota(yazar, body), message_type: "outgoing", private: true });
+    } catch (e) {
+      this.logger.warn(`chatwoot panel notu gönderilemedi order=${orderId}: ${(e as Error).message}`);
     }
   }
 
