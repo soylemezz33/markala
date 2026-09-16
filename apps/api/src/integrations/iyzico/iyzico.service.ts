@@ -68,45 +68,72 @@ export class IyzicoService {
   }
 
   /** Checkout Form başlat — paymentPageUrl (yönlendirme) + checkoutFormContent (popup) döner. */
+  /**
+   * AĞ HATASI TEKRARI (16 Eyl 2026): sunucu→iyzico yolunda aralıklı TCP/TLS kopmaları ölçüldü
+   * (20 denemede 1; sabah 75 dk tam kesinti). SDK "err" (soket/TLS) verdiğinde 700/1400 ms bekleyip
+   * en çok 3 kez denenir; iyzico İŞ hatası (status=failure, örn. limit 5008) TEKRARLANMAZ.
+   * Init idempotent: token üretir, ödeme almaz → tekrar güvenli. Retrieve salt okunur.
+   */
+  private static readonly AG_DENEME = 3;
+  private static readonly AG_BEKLEME_MS = 700;
+
   async initializeCheckoutForm(request: Record<string, unknown>): Promise<IyzicoInitResult> {
     const client = this.getClient();
-    return new Promise<IyzicoInitResult>((resolve) => {
-      client.checkoutFormInitialize.create(request, (err, result) => {
-        if (err) {
-          this.logger.error(`iyzico init hata: ${(err as Error)?.message ?? String(err)}`);
-          agHatasiKaydet((err as Error)?.message ?? String(err));
-          resolve({ status: "failure", errorMessage: "init_error" });
-          return;
-        }
-        basariKaydet(); // iyzico yanıt verdi → erişim var (iş sonucu ayrı)
-        if (result?.status !== "success") {
-          // errorMessage müşteriye gösterilebilir genel bir mesaj; kart/PII içermez.
-          // errorCode de taşınır → çağıran limit hatasını (5008) net mesaja çevirebilir.
-          this.logger.warn(`iyzico init başarısız: ${result?.errorCode} ${result?.errorMessage}`);
-          resolve({ status: "failure", errorCode: result?.errorCode, errorMessage: result?.errorMessage });
-          return;
-        }
-        resolve({
-          status: "success",
-          token: result.token,
-          checkoutFormContent: result.checkoutFormContent,
-          paymentPageUrl: result.paymentPageUrl,
+    for (let deneme = 1; ; deneme++) {
+      const sonuc = await new Promise<IyzicoInitResult | { agHatasi: string }>((resolve) => {
+        client.checkoutFormInitialize.create(request, (err, result) => {
+          if (err) {
+            resolve({ agHatasi: (err as Error)?.message ?? String(err) });
+            return;
+          }
+          resolve(this.initSonucu(result));
         });
       });
-    });
+      if (!("agHatasi" in sonuc)) return sonuc;
+      this.logger.error(`iyzico init hata (deneme ${deneme}/${IyzicoService.AG_DENEME}): ${sonuc.agHatasi}`);
+      agHatasiKaydet(sonuc.agHatasi);
+      if (deneme >= IyzicoService.AG_DENEME) return { status: "failure", errorMessage: "init_error" };
+      await new Promise((r) => setTimeout(r, IyzicoService.AG_BEKLEME_MS * deneme));
+    }
+  }
+
+  /** iyzico yanıt verdi (erişim var); iş sonucunu IyzicoInitResult biçimine çevirir. */
+  private initSonucu(result: { status?: string; errorCode?: string; errorMessage?: string; token?: string; checkoutFormContent?: string; paymentPageUrl?: string } | undefined): IyzicoInitResult {
+    basariKaydet();
+    if (result?.status !== "success") {
+      // errorMessage müşteriye gösterilebilir genel bir mesaj; kart/PII içermez.
+      // errorCode de taşınır → çağıran limit hatasını (5008) net mesaja çevirebilir.
+      this.logger.warn(`iyzico init başarısız: ${result?.errorCode} ${result?.errorMessage}`);
+      return { status: "failure", errorCode: result?.errorCode, errorMessage: result?.errorMessage };
+    }
+    return {
+      status: "success",
+      token: result.token,
+      checkoutFormContent: result.checkoutFormContent,
+      paymentPageUrl: result.paymentPageUrl,
+    };
   }
 
   /** Ödeme sonucunu token ile doğrula (callback'te çağrılır). */
   async retrieveCheckoutForm(token: string, conversationId?: string): Promise<IyzicoRetrieveResult> {
+    for (let deneme = 1; ; deneme++) {
+      const sonuc = await this.retrieveBirKez(token, conversationId);
+      if (!("agHatasi" in sonuc)) return sonuc;
+      this.logger.error(`iyzico retrieve hata (deneme ${deneme}/${IyzicoService.AG_DENEME}): ${sonuc.agHatasi}`);
+      agHatasiKaydet(sonuc.agHatasi);
+      if (deneme >= IyzicoService.AG_DENEME) return { paymentStatus: "ERROR", status: "failure", errorMessage: "retrieve_error" };
+      await new Promise((r) => setTimeout(r, IyzicoService.AG_BEKLEME_MS * deneme));
+    }
+  }
+
+  private retrieveBirKez(token: string, conversationId?: string): Promise<IyzicoRetrieveResult | { agHatasi: string }> {
     const client = this.getClient();
-    return new Promise<IyzicoRetrieveResult>((resolve) => {
+    return new Promise((resolve) => {
       client.checkoutForm.retrieve(
         { locale: Iyzipay.LOCALE.TR, conversationId: conversationId ?? "", token },
         (err, result) => {
           if (err) {
-            this.logger.error(`iyzico retrieve hata: ${(err as Error)?.message ?? String(err)}`);
-            agHatasiKaydet((err as Error)?.message ?? String(err));
-            resolve({ paymentStatus: "ERROR", status: "failure", errorMessage: "retrieve_error" });
+            resolve({ agHatasi: (err as Error)?.message ?? String(err) });
             return;
           }
           basariKaydet();
