@@ -29,7 +29,7 @@ import {
   Trash,
   TrashSimple,
   NotePencil,
-  Image as ImageIcon, ArrowSquareOut, WarningCircle } from "@phosphor-icons/react";
+  Image as ImageIcon, ArrowSquareOut, WarningCircle, CaretDown, CaretRight } from "@phosphor-icons/react";
 import {
   updateOrderStatus,
   updateOrderTracking,
@@ -309,6 +309,8 @@ export function OrderDetailClient({
   // İç not defteri (2026-09-03). Sunucudan gelenle başlar, ekleme/silmede yerelde güncellenir
   // (router.refresh beklemeden) — not yazmak akıcı olmalı, sayfa yeniden yüklenmemeli.
   const [notes, setNotes] = useState<OrderNote[]>(initialNotes);
+  // Tasarım Dosyaları kartı: kalem başına açılır/kapanır (2026-09-16, Hasan: "ürüne tıklandığında açılsın, geri kapatılabilsin").
+  const [acikTasarim, setAcikTasarim] = useState<Record<string, boolean>>({});
   const [notEkleniyor, setNotEkleniyor] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -877,15 +879,35 @@ export function OrderDetailClient({
                   const hasFile = !musteriSatirVar && /^https?:\/\//i.test(item.uploadedFileUrl ?? "");
                   if (!canDesign && !hasFile && !item.needsDesignSupport && !item.uploadedFileName && !dosyalar.length) return null;
                   const satirNo = i + 1;
+                  const tKey = item.id ?? String(i);
+                  const acik = acikTasarim[tKey] ?? false;
+                  const musteriSayisi = dosyalar.filter((d) => d.kind === "musteri").length + (hasFile ? 1 : 0);
+                  const tasarimciSayisi = dosyalar.filter((d) => d.kind !== "musteri").length;
                   return (
                     <div key={item.id ?? i} className="rounded-lg border border-paper-200 bg-paper-100/40 p-3">
                       {/* Müşterinin dosyası — bu satır DEĞİŞMEDİ */}
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="font-medium text-ink-900 text-sm truncate">
-                            <span className="font-mono text-[11px] text-ink-400 mr-1.5">#{satirNo}</span>
-                            {item.productName}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setAcikTasarim((a) => ({ ...a, [tKey]: !acik }))}
+                            aria-expanded={acik}
+                            className="w-full text-left font-medium text-ink-900 text-sm flex items-start gap-1.5"
+                          >
+                            {acik ? <CaretDown size={14} className="flex-none mt-0.5 text-ink-500" /> : <CaretRight size={14} className="flex-none mt-0.5 text-ink-500" />}
+                            <span className="min-w-0">
+                              <span className="font-mono text-[11px] text-ink-400 mr-1.5">#{satirNo}</span>
+                              {item.productName}
+                              {/* Ölçü/konfigürasyon BURADA da yazılır: aynı üründen iki satır (270×85 ve 280×85)
+                                  yalnız adla ayırt edilemiyordu (Hasan, 16 Eyl). Sıra "Sipariş İçeriği" ile aynı. */}
+                              {item.configurationSummary && (
+                                <span className="block font-normal text-xs text-ink-500 truncate">{item.configurationSummary}</span>
+                              )}
+                              <span className="block font-normal text-[11px] text-ink-400">
+                                müşteri {musteriSayisi} dosya · tasarımcı {tasarimciSayisi} dosya
+                              </span>
+                            </span>
+                          </button>
                           {hasFile ? (
                             <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-500 break-all">
                               <FileText size={12} /> Müşteri dosyası: {item.uploadedFileName ?? "tasarim"}
@@ -933,6 +955,7 @@ export function OrderDetailClient({
                           </a>
                         )}
                       </div>
+                      {acik && (<>
 
                       {/* Tasarımcı dosyaları — önizleme küçük görselle (ASIL tanıma aracı), diğerleri satır */}
                       {dosyalar.length > 0 && (
@@ -1045,6 +1068,7 @@ export function OrderDetailClient({
                       {canDesign && item.id && (
                         <DesignFileUploader orderId={order.id} itemId={item.id} onDone={() => router.refresh()} />
                       )}
+                      </>)}
                     </div>
                   );
                 })}
