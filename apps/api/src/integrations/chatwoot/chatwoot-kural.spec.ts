@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { whatsappKimligi, konusmaEtiketi, ozelNotMetni, siparisNotuTemizle, icNotMetni } from "./chatwoot-kural";
+import {
+  whatsappKimligi, konusmaEtiketi, ozelNotMetni, siparisNotuTemizle, icNotMetni,
+  durumEtiketleriniUygula, durumEtiketiBul, konusmaIdNottan, durumNotu, CHATWOOTTAN_PANELE, URETIM_SONRASI,
+} from "./chatwoot-kural";
 
 describe("whatsappKimligi — telefon → WhatsApp source_id", () => {
   it("+90, 0 ve çıplak biçimleri 905… (12 hane) yapar", () => {
@@ -51,5 +54,27 @@ describe("ozelNotMetni", () => {
   it("icNotMetni öneki aranabilir", () => {
     expect(icNotMetni(18, "https://chat.x/app/accounts/1/conversations/18")).toMatch(/^Chatwoot konuşması #18 \(yeni açıldı/);
     expect(icNotMetni(15, "u", false)).toContain("mevcut konuşmasına eklendi");
+  });
+});
+
+describe("sipariş durumu ↔ konuşma", () => {
+  it("durumEtiketleriniUygula: durum dışı etiketler kalır, tek durum etiketi olur", () => {
+    expect(durumEtiketleriniUygula(["dosya-bekleniyor", "tasarim-bekleniyor"], "uretimde")).toEqual(["dosya-bekleniyor", "uretimde"]);
+    expect(durumEtiketleriniUygula([], "teslim-edildi")).toEqual(["teslim-edildi"]);
+  });
+  it("durumEtiketiBul: tek etiket / işaretli olmayanı seç / yok", () => {
+    expect(durumEtiketiBul(["teklif", "uretimde"])).toBe("uretimde");
+    expect(durumEtiketiBul(["tasarim-bekleniyor", "uretimde"], "tasarim-bekleniyor")).toBe("uretimde");
+    expect(durumEtiketiBul(["teklif"])).toBeNull();
+  });
+  it("konusmaIdNottan yalnız Chatwoot notundan okur", () => {
+    expect(konusmaIdNottan("Chatwoot konuşması #15 (müşterinin mevcut konuşmasına eklendi, grafik tasarım ekibine atandı): https://x")).toBe(15);
+    expect(konusmaIdNottan("Chatwoot konuşması açılamadı: telefon WhatsApp'a uygun değil (-)")).toBeNull();
+    expect(konusmaIdNottan("müşteri aradı #3")).toBeNull();
+  });
+  it("kapsam sabitleri", () => {
+    expect(CHATWOOTTAN_PANELE).not.toContain("kargoya-verildi");
+    expect(URETIM_SONRASI).toContain("uretimde");
+    expect(durumNotu("uretimde")).toContain("Üretimde");
   });
 });

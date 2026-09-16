@@ -75,3 +75,44 @@ export const CHATWOOT_NOT_ONEKI = "Chatwoot konuşması";
 export function icNotMetni(conversationId: number, url: string, yeni = true): string {
   return `${CHATWOOT_NOT_ONEKI} #${conversationId} (${yeni ? "yeni açıldı" : "müşterinin mevcut konuşmasına eklendi"}, grafik tasarım ekibine atandı): ${url}`;
 }
+
+// ── Sipariş durumu ↔ konuşma (2026-09-16, Hasan: "panelle birebir entegre") ─────────────────
+/** Panel sipariş durumu slug'ları = Chatwoot etiket adları (aynı yazım). */
+export const DURUM_ETIKETLERI = [
+  "siparis-alindi", "tasarim-bekleniyor", "tasarim-onaylandi", "uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi",
+] as const;
+/** Bu durumlardan itibaren konuşma üretim sorumlusuna (CHATWOOT_URETIM_AGENT_ID) atanır. */
+export const URETIM_SONRASI = ["uretimde", "kargoya-verildi", "teslim-edildi"];
+/** Bu durumlarda konuşma "çözüldü"ye çekilir. */
+export const KAPANIS_DURUMLARI = ["teslim-edildi", "iptal-edildi"];
+/** Chatwoot'tan etiketle DEĞİŞTİRİLEBİLEN durumlar; kargo/teslim/iptal yalnız panelden. */
+export const CHATWOOTTAN_PANELE = ["tasarim-bekleniyor", "tasarim-onaylandi", "uretimde"];
+
+const DURUM_BASLIK: Record<string, string> = {
+  "siparis-alindi": "Sipariş alındı", "tasarim-bekleniyor": "Tasarım bekleniyor", "tasarim-onaylandi": "Tasarım onaylandı",
+  "uretimde": "Üretimde", "kargoya-verildi": "Kargoya verildi", "teslim-edildi": "Teslim edildi", "iptal-edildi": "İptal edildi",
+};
+
+/** Chatwoot POST /labels listeyi TAMAMEN değiştirir → durum dışı etiketler korunur, tek durum etiketi kalır. */
+export function durumEtiketleriniUygula(mevcut: string[], slug: string): string[] {
+  const durumDisi = mevcut.filter((l) => !(DURUM_ETIKETLERI as readonly string[]).includes(l));
+  return [...durumDisi, slug];
+}
+
+/** Konuşmadaki durum etiketi; birden fazlaysa işaretli (eski) olmayanı tercih eder. */
+export function durumEtiketiBul(labels: string[], isaretli?: string): string | null {
+  const d = labels.filter((l) => (DURUM_ETIKETLERI as readonly string[]).includes(l));
+  if (!d.length) return null;
+  if (d.length === 1) return d[0];
+  return d.find((l) => l !== isaretli) ?? d[0];
+}
+
+/** İç nottan konuşma id'si ("Chatwoot konuşması #15 …"). */
+export function konusmaIdNottan(body: string | null | undefined): number | null {
+  const m = /^Chatwoot konuşması #(\d+)/.exec(String(body ?? ""));
+  return m ? Number(m[1]) : null;
+}
+
+export function durumNotu(slug: string, kaynak = "panel"): string {
+  return `📦 Sipariş durumu: ${DURUM_BASLIK[slug] ?? slug} (${kaynak})`;
+}

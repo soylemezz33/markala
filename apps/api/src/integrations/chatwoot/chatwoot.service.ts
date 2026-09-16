@@ -8,6 +8,11 @@ import {
   konusmaEtiketi,
   ozelNotMetni,
   whatsappKimligi,
+  durumEtiketleriniUygula,
+  konusmaIdNottan,
+  durumNotu,
+  URETIM_SONRASI,
+  KAPANIS_DURUMLARI,
   type KonusmaKalemi,
 } from "./chatwoot-kural";
 
@@ -137,10 +142,68 @@ export class ChatwootService {
         take: 10,
       });
       for (const o of adaylar) await this.siparisKonusmasiAc(o.id);
+      await this.durumlariEsitle();
     } catch (e) {
       this.logger.error(`chatwoot tarama: ${(e as Error)?.message}`);
     } finally {
       this.taramaSuruyor = false;
+    }
+  }
+
+  // ── Panel → Chatwoot durum eşitleme (2026-09-16) ──────────────────────────────────────
+  /**
+   * Son 20 dk'da güncellenen ve Chatwoot konuşması olan siparişler: konuşmadaki
+   * custom_attributes.siparis_durum sipariş durumundan farklıysa etiket/atama/kapanış/not uygulanır.
+   * Tersi yön (Chatwoot etiketi → panel) ChatwootWebhookController'da.
+   */
+  private async durumlariEsitle(): Promise<void> {
+    const since = new Date(Date.now() - 20 * 60 * 1000);
+    const onek = `${CHATWOOT_NOT_ONEKI} #`;
+    const adaylar = await this.prisma.order.findMany({
+      where: { updatedAt: { gte: since }, deletedAt: null, internalNotes: { some: { body: { startsWith: onek } } } },
+      select: { id: true, orderNumber: true, status: true, internalNotes: { where: { body: { startsWith: onek } }, select: { body: true }, take: 1 } },
+      take: 30,
+    });
+    for (const o of adaylar) {
+      const convId = konusmaIdNottan(o.internalNotes[0]?.body);
+      if (!convId) continue;
+      const slug = String(o.status).replace(/_/g, "-");
+      try {
+        const k = await this.konusmaGetir(convId);
+        if (k.custom_attributes?.siparis_durum === slug) continue;
+        await this.durumUygula(convId, slug, k.labels ?? [], k.status);
+        this.logger.log(`chatwoot durum eşitlendi order=${o.orderNumber} conv=${convId} → ${slug}`);
+      } catch (e) {
+        this.logger.warn(`chatwoot durum eşitleme order=${o.orderNumber} conv=${convId}: ${(e as Error).message}`);
+      }
+    }
+  }
+
+  async konusmaGetir(convId: number): Promise<{ id: number; status?: string; labels?: string[]; custom_attributes?: Record<string, unknown> }> {
+    return this.api("GET", `/conversations/${convId}`);
+  }
+
+  /** custom_attributes.siparis_durum: "bu durum konuşmaya işlendi" izi (döngü koruması). */
+  async durumIsaretle(convId: number, slug: string): Promise<void> {
+    await this.api("POST", `/conversations/${convId}/custom_attributes`, { custom_attributes: { siparis_durum: slug } });
+  }
+
+  /** Konuşmaya durumu işler: etiket (durum dışı etiketler korunur), işaret, üretim ataması, özel not, kapanış/yeniden açma. */
+  async durumUygula(convId: number, slug: string, mevcutEtiketler: string[], konusmaDurumu?: string): Promise<void> {
+    await this.api("POST", `/conversations/${convId}/labels`, { labels: durumEtiketleriniUygula(mevcutEtiketler, slug) });
+    await this.durumIsaretle(convId, slug);
+    const uretimAjani = Number(this.cfg("CHATWOOT_URETIM_AGENT_ID"));
+    if (uretimAjani && URETIM_SONRASI.includes(slug)) {
+      await this.api("POST", `/conversations/${convId}/assignments`, { assignee_id: uretimAjani }).catch((e) =>
+        this.logger.warn(`chatwoot üretim ataması conv=${convId}: ${(e as Error).message}`),
+      );
+    }
+    await this.api("POST", `/conversations/${convId}/messages`, { content: durumNotu(slug), message_type: "outgoing", private: true }).catch(() => undefined);
+    const kapat = KAPANIS_DURUMLARI.includes(slug);
+    if (kapat && konusmaDurumu !== "resolved") {
+      await this.api("POST", `/conversations/${convId}/toggle_status`, { status: "resolved" }).catch(() => undefined);
+    } else if (!kapat && konusmaDurumu === "resolved") {
+      await this.api("POST", `/conversations/${convId}/toggle_status`, { status: "open" }).catch(() => undefined);
     }
   }
 
