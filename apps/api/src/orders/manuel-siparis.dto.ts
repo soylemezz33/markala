@@ -8,6 +8,7 @@ import {
   IsIn,
   IsInt,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   Max,
@@ -17,7 +18,11 @@ import {
 } from "class-validator";
 import { MANUEL_KANALLAR, MANUEL_ODEME_YONTEMLERI } from "./manuel-siparis-kural";
 
-/** Manuel sipariş kalemi: katalog ürünü (productId) ya da serbest metin; fiyat KDV dahil elle. */
+/**
+ * Manuel sipariş kalemi. Katalog ürünüyse `selections` (sitedeki konfigüratörle aynı anahtarlar:
+ * grup → seçenek; alan ürünlerinde en/boy cm) verilir ve fiyat SUNUCU motoruyla hesaplanır;
+ * `fiyatElle` işaretliyse ya da ürün katalog dışıysa `unitPrice` (KDV dahil) elle geçerlidir.
+ */
 export class ManuelKalemDto {
   @IsOptional() @IsString() @MaxLength(40)
   productId?: string;
@@ -28,14 +33,22 @@ export class ManuelKalemDto {
   @IsOptional() @IsString() @MaxLength(500)
   configurationSummary?: string;
 
+  /** Konfigüratör seçimleri (grup → seçenek anahtarı; area: en, boy). */
+  @IsOptional() @IsObject()
+  selections?: Record<string, string>;
+
+  /** true → sunucu fiyatı hesaplamaz, unitPrice elle alınır. */
+  @IsOptional() @IsBoolean()
+  fiyatElle?: boolean;
+
   @IsInt() @Min(1) @Max(100000)
   quantity!: number;
 
-  /** KDV dahil birim fiyat (₺). */
-  @IsNumber() @Min(0) @Max(10_000_000)
-  unitPrice!: number;
+  /** KDV dahil birim fiyat (₺) — elle fiyatta zorunlu, otomatikte yok sayılır. */
+  @IsOptional() @IsNumber() @Min(0) @Max(10_000_000)
+  unitPrice?: number;
 
-  /** Tedarikçi maliyeti (opsiyonel; kâr raporları için). */
+  /** Tedarikçi maliyeti (opsiyonel; katalog ürününde motor hesaplar). */
   @IsOptional() @IsNumber() @Min(0)
   costTotal?: number;
 
@@ -61,7 +74,6 @@ export class ManuelAdresDto {
  * kaydeder: ciroya girer, aynı akışta takip edilir (durumlar, Chatwoot, kargoda fatura).
  */
 export class ManuelSiparisDto {
-  /** Kayıtlı müşteri seçildiyse. */
   @IsOptional() @IsString() @MaxLength(40)
   userId?: string;
 
@@ -80,7 +92,6 @@ export class ManuelSiparisDto {
   @IsOptional() @ValidateNested() @Type(() => ManuelAdresDto)
   adres?: ManuelAdresDto;
 
-  /** Fatura adresi/kurumsal bilgiler; yoksa teslimat adresi bireysel fatura sayılır. */
   @IsOptional() @ValidateNested() @Type(() => ManuelAdresDto)
   faturaAdresi?: ManuelAdresDto;
 
@@ -105,7 +116,18 @@ export class ManuelSiparisDto {
   @IsOptional() @IsString() @MaxLength(2000)
   not?: string;
 
-  /** Müşteriye sipariş onay e-postası gönderilsin mi (e-posta varsa). */
   @IsOptional() @IsBoolean()
   musteriyeEposta?: boolean;
+}
+
+/** POST /orders/manuel/fiyatla — tek kalem için sunucu fiyatı (form canlı özet). */
+export class ManuelFiyatDto {
+  @IsString() @MaxLength(40)
+  productId!: string;
+
+  @IsOptional() @IsObject()
+  selections?: Record<string, string>;
+
+  @IsInt() @Min(1) @Max(100000)
+  quantity!: number;
 }

@@ -40,7 +40,7 @@ import { izinliDurumGecisi } from "./status-yetki";
 import { OrderNoteService } from "./order-note.service";
 import { ManuelSiparisService } from "./manuel-siparis.service";
 import { ZamanCizelgesiService } from "./zaman-cizelgesi.service";
-import { ManuelSiparisDto } from "./manuel-siparis.dto";
+import { ManuelFiyatDto, ManuelSiparisDto } from "./manuel-siparis.dto";
 import { KargoTakipService } from "./kargo-takip.service";
 import type { Request } from "express";
 import type { Response } from "express";
@@ -178,6 +178,16 @@ export class OrdersController {
    * MANUEL SİPARİŞ (2026-09-16): yüz yüze / telefon / WhatsApp ile alınan iş. Fiyat elle (KDV
    * dahil), ödeme alındıysa "başarılı" olarak açılır; ciro ve akış normal siparişle aynı.
    */
+  /** Manuel sipariş formu için tek kalem fiyatı (sitedeki motor). */
+  @Post("manuel/fiyatla")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_CREATE)
+  @ApiBearerAuth()
+  manuelFiyatla(@Body() dto: ManuelFiyatDto) {
+    return this.manuel.fiyatla(dto);
+  }
+
   @Post("manuel")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")

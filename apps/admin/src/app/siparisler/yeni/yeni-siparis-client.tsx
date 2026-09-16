@@ -1,38 +1,59 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { ArrowLeft, MagnifyingGlass, Plus, Trash, UserCircle, Package, Truck, CreditCard, Receipt, type Icon } from "@phosphor-icons/react";
-import { manuelSiparisOlustur, musteriAra, urunAra } from "./actions";
+import { kalemFiyatla, manuelSiparisOlustur, musteriAra, urunAra, urunDetay, type UrunSecenek } from "./actions";
 
 /**
- * MANUEL SİPARİŞ FORMU (2026-09-16, Hasan: "yüz yüze iş aldık, havale ile ödendi; panelde manuel
- * sipariş ekle butonu olsun, ciroya dahil olsun, takibi kolay olsun").
+ * MANUEL SİPARİŞ FORMU (2026-09-16, Hasan: "yüz yüze iş aldık; panelde manuel sipariş ekle").
  *
- * Fiyatlar KDV DAHİL girilir (sitedeki gibi). Özet API ile aynı formülle hesaplanır (kural:
- * apps/api/src/orders/manuel-siparis-kural.ts); kesin rakam sunucuda yeniden hesaplanır.
+ * Katalog ürünü seçilince sitedeki konfigüratörle AYNI seçenekler gelir (ölçü en/boy, malzeme,
+ * ek işlem, adet kademesi…) ve fiyat SUNUCUDAKİ motorla hesaplanır (POST /orders/manuel/fiyatla) —
+ * Hasan 14:01: "ölçü giremiyorum, otomatik hesaplamıyor, ek işlem seçemiyorum". Personel isterse
+ * "Fiyatı elle gir" ile ezer; katalog dışı serbest kalem de girilebilir.
  */
-type Kalem = { productId?: string; productName: string; configurationSummary: string; quantity: number; unitPrice: number; needsDesignSupport: boolean };
+type Urun = { id: string; name: string; slug: string; fiyat: number; pricingMode: string };
+type UrunDetayi = { id: string; name: string; slug: string; pricingMode: string; options: UrunSecenek[] };
+type Kalem = {
+  productId?: string; productSlug?: string; productName: string; configurationSummary: string; quantity: number;
+  unitPrice: number; lineTotal: number; needsDesignSupport: boolean;
+  detay?: UrunDetayi | null; selections: Record<string, string>; fiyatElle: boolean; fiyatHata?: string | null; hesaplaniyor?: boolean;
+};
 type Musteri = { id: string; fullName: string; email: string; phone: string; accountType: string; companyName: string | null };
-type Urun = { id: string; name: string; slug: string; fiyat: number; gorsel: string | null };
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const tl = (n: number) => `₺ ${n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const bosKalem = (): Kalem => ({ productName: "", configurationSummary: "", quantity: 1, unitPrice: 0, lineTotal: 0, needsDesignSupport: false, selections: {}, fiyatElle: false });
 
-function hesapla(kalemler: Kalem[], indirim: number, kargo: number) {
-  const satirlar = kalemler.map((k) => round2(Math.max(0, k.unitPrice) * Math.max(0, Math.floor(k.quantity))));
-  const subtotal = round2(satirlar.reduce((s, x) => s + x, 0));
+/** Sipariş özeti: satır toplamları (alan ürünlerinde 1 m² tabanı yüzünden birim×adet ≠ satır olabilir). */
+function ozetHesapla(kalemler: Kalem[], indirim: number, kargo: number) {
+  const subtotal = round2(kalemler.reduce((s, k) => s + (k.lineTotal || 0), 0));
   const discount = round2(Math.min(Math.max(0, indirim), subtotal));
   const shippingFee = round2(Math.max(0, kargo));
   const taxableGross = round2(subtotal - discount);
   const vat = round2(taxableGross - round2(taxableGross / 1.2));
-  return { satirlar, subtotal, discount, shippingFee, vat, total: round2(taxableGross + shippingFee) };
+  return { subtotal, discount, shippingFee, vat, total: round2(taxableGross + shippingFee) };
 }
 
-const input = "w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500";
+/** Sitedeki initSelections ile aynı: gruptaki varsayılan (rules.varsayilan) yoksa en düşük optionSort. */
+function varsayilanSecimler(options: UrunSecenek[], pricingMode: string): Record<string, string> {
+  const seen = new Map<string, { optionKey: string; optionSort: number; isaretli: boolean }>();
+  for (const o of options) {
+    const isaretli = (o.rules as { varsayilan?: boolean } | null)?.varsayilan === true;
+    const m = seen.get(o.groupKey);
+    if (!m || (isaretli && !m.isaretli) || (isaretli === m.isaretli && o.optionSort < m.optionSort)) seen.set(o.groupKey, { optionKey: o.optionKey, optionSort: o.optionSort, isaretli });
+  }
+  const s: Record<string, string> = {};
+  for (const [g, v] of seen) s[g] = v.optionKey;
+  if (pricingMode === "area") { s.en ??= "100"; s.boy ??= "100"; }
+  return s;
+}
+
+const input = "w-full px-3 py-2 rounded-md border border-paper-200 bg-paper-50 text-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 disabled:opacity-60";
 const label = "block text-xs font-medium text-ink-700 mb-1";
 
 function Kart({ baslik, ikon: Ikon, children }: { baslik: string; ikon: Icon; children: React.ReactNode }) {
@@ -47,11 +68,39 @@ function Kart({ baslik, ikon: Ikon, children }: { baslik: string; ikon: Icon; ch
   );
 }
 
+/** Konfigüratör: sitedeki gruplar select olarak; alan ürününde en/boy girişi (adet grubu adet alanında). */
+function Konfigurator({ k, fiyatElle, onSecim }: { k: Kalem; fiyatElle: boolean; onSecim: (groupKey: string, optionKey: string) => void }) {
+  const d = k.detay; if (!d) return null;
+  const isArea = d.pricingMode === "area";
+  const gruplar = new Map<string, { label: string; role: string; sort: number; opts: UrunSecenek[] }>();
+  for (const o of d.options) { const g = gruplar.get(o.groupKey) ?? { label: o.groupLabel, role: o.groupRole, sort: o.groupSort, opts: [] }; g.opts.push(o); gruplar.set(o.groupKey, g); }
+  const sirali = [...gruplar.entries()].sort((a, b) => a[1].sort - b[1].sort).filter(([key]) => !(isArea && key === "adet"));
+  return (
+    <div className="rounded-md bg-paper-100/60 border border-paper-200 p-3 grid sm:grid-cols-3 gap-2">
+      {isArea && (
+        <>
+          <div><label className={label}>En (cm)</label><input type="number" min={1} className={input} value={k.selections.en ?? ""} disabled={fiyatElle} onChange={(e) => onSecim("en", e.target.value)} /></div>
+          <div><label className={label}>Boy (cm)</label><input type="number" min={1} className={input} value={k.selections.boy ?? ""} disabled={fiyatElle} onChange={(e) => onSecim("boy", e.target.value)} /></div>
+        </>
+      )}
+      {sirali.map(([key, g]) => (
+        <div key={key}>
+          <label className={label}>{g.label}</label>
+          <select className={input} value={k.selections[key] ?? ""} disabled={fiyatElle || g.opts.every((o) => o.locked)} onChange={(e) => onSecim(key, e.target.value)}>
+            {[...g.opts].sort((a, b) => a.optionSort - b.optionSort).map((o) => (
+              <option key={o.optionKey} value={o.optionKey}>{o.optionLabel}{o.optionSublabel ? ` — ${o.optionSublabel}` : ""}</option>
+            ))}
+          </select>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function YeniSiparisClient() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  // Müşteri
   const [musteriArama, setMusteriArama] = useState("");
   const [musteriler, setMusteriler] = useState<Musteri[]>([]);
   const [secili, setSecili] = useState<Musteri | null>(null);
@@ -60,19 +109,18 @@ export function YeniSiparisClient() {
   const [email, setEmail] = useState("");
   const [epostaYok, setEpostaYok] = useState(false);
 
-  // Teslimat / fatura
   const [teslimat, setTeslimat] = useState<"elden" | "kargo">("elden");
   const [adres, setAdres] = useState({ city: "", district: "", fullAddress: "", zipCode: "" });
   const [kargoUcreti, setKargoUcreti] = useState(0);
   const [kurumsal, setKurumsal] = useState(false);
   const [fatura, setFatura] = useState({ companyName: "", taxNumber: "", taxOffice: "", fullAddress: "", city: "", district: "" });
 
-  // Kalemler
-  const [kalemler, setKalemler] = useState<Kalem[]>([{ productName: "", configurationSummary: "", quantity: 1, unitPrice: 0, needsDesignSupport: false }]);
+  const [kalemler, setKalemler] = useState<Kalem[]>([bosKalem()]);
   const [urunArama, setUrunArama] = useState<{ i: number; q: string } | null>(null);
   const [urunler, setUrunler] = useState<Urun[]>([]);
+  const fiyatSayac = useRef<Record<number, number>>({});
+  const fiyatZamanlayici = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
-  // Ödeme / kanal
   const [indirim, setIndirim] = useState(0);
   const [odemeYontemi, setOdemeYontemi] = useState<"havale" | "nakit" | "pos">("havale");
   const [odemeAlindi, setOdemeAlindi] = useState(true);
@@ -80,30 +128,65 @@ export function YeniSiparisClient() {
   const [not, setNot] = useState("");
   const [musteriyeEposta, setMusteriyeEposta] = useState(true);
 
-  // Müşteri arama (gecikmeli)
   useEffect(() => {
     if (secili || musteriArama.trim().length < 2) { setMusteriler([]); return; }
     const t = setTimeout(() => { void musteriAra(musteriArama).then(setMusteriler); }, 300);
     return () => clearTimeout(t);
   }, [musteriArama, secili]);
 
-  // Ürün arama (gecikmeli)
   useEffect(() => {
     if (!urunArama || urunArama.q.trim().length < 2) { setUrunler([]); return; }
     const t = setTimeout(() => { void urunAra(urunArama.q).then(setUrunler); }, 300);
     return () => clearTimeout(t);
   }, [urunArama]);
 
-  const ozet = useMemo(() => hesapla(kalemler, indirim, teslimat === "kargo" ? kargoUcreti : 0), [kalemler, indirim, teslimat, kargoUcreti]);
+  const ozet = useMemo(() => ozetHesapla(kalemler, indirim, teslimat === "kargo" ? kargoUcreti : 0), [kalemler, indirim, teslimat, kargoUcreti]);
 
-  function musteriSec(m: Musteri) {
-    setSecili(m); setFullName(m.fullName); setPhone(m.phone || ""); setEmail(m.email); setEpostaYok(false); setMusteriArama("");
-    if (m.accountType === "corporate") { setKurumsal(true); setFatura((f) => ({ ...f, companyName: m.companyName ?? f.companyName })); }
+  function kalemGuncelle(i: number, patch: Partial<Kalem> | ((k: Kalem) => Partial<Kalem>)) {
+    setKalemler((ks) => ks.map((k, j) => (j === i ? { ...k, ...(typeof patch === "function" ? patch(k) : patch) } : k)));
   }
-  function kalemGuncelle(i: number, patch: Partial<Kalem>) { setKalemler((ks) => ks.map((k, j) => (j === i ? { ...k, ...patch } : k))); }
-  function urunSec(i: number, u: Urun) {
-    kalemGuncelle(i, { productId: u.id, productName: u.name, unitPrice: u.fiyat > 0 ? u.fiyat : (kalemler[i]?.unitPrice ?? 0) });
+
+  /** Sunucu fiyatı: 350 ms gecikmeli, eski yanıtlar sayaçla elenir. */
+  function fiyatIste(i: number, k: Kalem) {
+    if (!k.productId || k.fiyatElle) return;
+    kalemGuncelle(i, { hesaplaniyor: true });
+    clearTimeout(fiyatZamanlayici.current[i]);
+    fiyatZamanlayici.current[i] = setTimeout(() => {
+      const sira = (fiyatSayac.current[i] = (fiyatSayac.current[i] ?? 0) + 1);
+      void kalemFiyatla({ productId: k.productId!, selections: k.selections, quantity: Math.max(1, Math.floor(k.quantity)) }).then((r) => {
+        if (fiyatSayac.current[i] !== sira) return;
+        if (!r.ok) { kalemGuncelle(i, { hesaplaniyor: false, fiyatHata: r.error, unitPrice: 0, lineTotal: 0 }); return; }
+        kalemGuncelle(i, { hesaplaniyor: false, fiyatHata: null, unitPrice: r.unitPrice, lineTotal: r.lineTotal, configurationSummary: r.summary });
+      });
+    }, 350);
+  }
+
+  async function urunSec(i: number, u: Urun) {
     setUrunArama(null); setUrunler([]);
+    kalemGuncelle(i, { productId: u.id, productSlug: u.slug, productName: u.name, fiyatElle: false, hesaplaniyor: true, fiyatHata: null });
+    const d = await urunDetay(u.slug);
+    if (!d) { kalemGuncelle(i, { hesaplaniyor: false, fiyatHata: "Ürün seçenekleri alınamadı; fiyatı elle girin.", fiyatElle: true }); return; }
+    const selections = varsayilanSecimler(d.options, d.pricingMode);
+    const mevcut = kalemler[i] ?? bosKalem();
+    const sonraki: Kalem = { ...mevcut, productId: u.id, productSlug: u.slug, productName: u.name, detay: d, selections, fiyatElle: false, quantity: 1 };
+    kalemGuncelle(i, sonraki);
+    fiyatIste(i, sonraki);
+  }
+  function secimDegistir(i: number, groupKey: string, optionKey: string) {
+    const k = kalemler[i]; if (!k) return;
+    const sonraki = { ...k, selections: { ...k.selections, [groupKey]: optionKey } };
+    kalemGuncelle(i, { selections: sonraki.selections });
+    fiyatIste(i, sonraki);
+  }
+  function adetDegistir(i: number, quantity: number) {
+    const k = kalemler[i]; if (!k) return;
+    const q = Math.max(1, Math.floor(Number(quantity) || 1));
+    const sonraki = { ...k, quantity: q };
+    kalemGuncelle(i, { quantity: q, lineTotal: k.fiyatElle || !k.productId ? round2(k.unitPrice * q) : k.lineTotal });
+    fiyatIste(i, sonraki);
+  }
+  function elleFiyat(i: number, unitPrice: number) {
+    kalemGuncelle(i, (k) => ({ unitPrice: round2(unitPrice), lineTotal: round2(round2(unitPrice) * Math.max(1, Math.floor(k.quantity))) }));
   }
 
   const hatalar: string[] = [];
@@ -113,11 +196,12 @@ export function YeniSiparisClient() {
   if (teslimat === "kargo" && (!adres.city.trim() || !adres.district.trim() || !adres.fullAddress.trim())) hatalar.push("Kargo teslimatı için il, ilçe ve adres gerekli.");
   if (kurumsal && !/^\d{10}$/.test(fatura.taxNumber.replace(/\D/g, ""))) hatalar.push("Kurumsal faturada 10 haneli vergi numarası gerekli.");
   if (kurumsal && !fatura.companyName.trim()) hatalar.push("Kurumsal faturada firma unvanı gerekli.");
-  if (kalemler.length === 0) hatalar.push("En az bir kalem ekleyin.");
   kalemler.forEach((k, i) => {
     if (!k.productName.trim()) hatalar.push(`${i + 1}. kalem: ürün adı gerekli.`);
     if (!(k.quantity >= 1)) hatalar.push(`${i + 1}. kalem: adet en az 1.`);
-    if (!(k.unitPrice > 0)) hatalar.push(`${i + 1}. kalem: birim fiyat 0'dan büyük olmalı.`);
+    if (k.hesaplaniyor) hatalar.push(`${i + 1}. kalem: fiyat hesaplanıyor…`);
+    else if (k.fiyatHata && !k.fiyatElle) hatalar.push(`${i + 1}. kalem: ${k.fiyatHata}`);
+    else if (!(k.unitPrice > 0)) hatalar.push(`${i + 1}. kalem: birim fiyat 0'dan büyük olmalı.`);
   });
 
   function gonder() {
@@ -132,7 +216,13 @@ export function YeniSiparisClient() {
         ? { fullName: fullName.trim(), phone: phone.trim(), type: "corporate", companyName: fatura.companyName.trim(), taxNumber: fatura.taxNumber.replace(/\D/g, ""), taxOffice: fatura.taxOffice.trim() || undefined,
             city: (fatura.city || adres.city || "-").trim(), district: (fatura.district || adres.district || "-").trim(), fullAddress: (fatura.fullAddress || adres.fullAddress || "Elden teslim").trim() }
         : undefined,
-      kalemler: kalemler.map((k) => ({ productId: k.productId, productName: k.productName.trim(), configurationSummary: k.configurationSummary.trim() || undefined, quantity: Math.floor(k.quantity), unitPrice: round2(k.unitPrice), needsDesignSupport: k.needsDesignSupport })),
+      kalemler: kalemler.map((k) => ({
+        productId: k.productId, productName: k.productName.trim(),
+        configurationSummary: k.configurationSummary.trim() || undefined,
+        selections: k.productId ? k.selections : undefined,
+        fiyatElle: k.fiyatElle || !k.productId,
+        quantity: Math.floor(k.quantity), unitPrice: round2(k.unitPrice), needsDesignSupport: k.needsDesignSupport,
+      })),
       kargoUcreti: teslimat === "kargo" ? round2(kargoUcreti) : 0,
       indirim: round2(indirim),
       odemeYontemi, odemeAlindi, kanal,
@@ -153,7 +243,7 @@ export function YeniSiparisClient() {
         <div>
           <Link href="/siparisler" className="inline-flex items-center gap-1 text-xs text-ink-500 hover:text-ink-900"><ArrowLeft size={12} /> Siparişler</Link>
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900 mt-1">Manuel Sipariş</h1>
-          <p className="text-ink-500 text-sm mt-1">Yüz yüze, telefon veya WhatsApp ile alınan işi sisteme kaydeder; ciroya ve sipariş akışına dahil olur.</p>
+          <p className="text-ink-500 text-sm mt-1">Yüz yüze, telefon veya WhatsApp ile alınan işi sisteme kaydeder; ciroya ve sipariş akışına dahil olur. Katalog ürününde fiyat sitedeki motorla hesaplanır.</p>
         </div>
       </header>
 
@@ -175,7 +265,7 @@ export function YeniSiparisClient() {
                   <ul className="absolute z-10 mt-1 w-full bg-paper-50 border border-paper-200 rounded-md shadow-lg max-h-56 overflow-auto">
                     {musteriler.map((m) => (
                       <li key={m.id}>
-                        <button type="button" onClick={() => musteriSec(m)} className="w-full text-left px-3 py-2 text-sm hover:bg-paper-100">
+                        <button type="button" onClick={() => { setSecili(m); setFullName(m.fullName); setPhone(m.phone || ""); setEmail(m.email); setEpostaYok(false); setMusteriArama(""); if (m.accountType === "corporate") { setKurumsal(true); setFatura((f) => ({ ...f, companyName: m.companyName ?? f.companyName })); } }} className="w-full text-left px-3 py-2 text-sm hover:bg-paper-100">
                           <span className="font-medium text-ink-900">{m.fullName}</span> <span className="text-ink-500">· {m.email}{m.phone ? ` · ${m.phone}` : ""}</span>
                         </button>
                       </li>
@@ -197,23 +287,23 @@ export function YeniSiparisClient() {
 
           <Kart baslik="Kalemler" ikon={Package}>
             {kalemler.map((k, i) => (
-              <div key={i} className="rounded-lg border border-paper-200 p-3 space-y-2 relative">
+              <div key={i} className="rounded-lg border border-paper-200 p-3 space-y-2">
                 <div className="grid sm:grid-cols-12 gap-2">
-                  <div className="sm:col-span-6 relative">
+                  <div className="sm:col-span-7 relative">
                     <label className={label}>Ürün * <span className="font-normal text-ink-400">(katalogdan seç ya da serbest yaz)</span></label>
                     <input
                       className={input}
                       value={k.productName}
-                      onChange={(e) => { kalemGuncelle(i, { productName: e.target.value, productId: undefined }); setUrunArama({ i, q: e.target.value }); }}
-                      onFocus={() => setUrunArama({ i, q: k.productName })}
+                      onChange={(e) => { kalemGuncelle(i, { productName: e.target.value, productId: undefined, productSlug: undefined, detay: null, selections: {}, fiyatHata: null, fiyatElle: false, hesaplaniyor: false }); setUrunArama({ i, q: e.target.value }); }}
+                      onFocus={() => { if (!k.productId) setUrunArama({ i, q: k.productName }); }}
                       placeholder="ör. Vinil Branda 440 gr"
                     />
-                    {k.productId && <span className="absolute right-2 top-7 text-[10px] text-success">katalog</span>}
+                    {k.productId && <span className="absolute right-2 top-7 text-[10px] text-success">katalog · {k.detay?.pricingMode === "area" ? "m² fiyat" : "seçenekli"}</span>}
                     {urunArama?.i === i && urunler.length > 0 && (
                       <ul className="absolute z-10 mt-1 w-full bg-paper-50 border border-paper-200 rounded-md shadow-lg max-h-56 overflow-auto">
                         {urunler.map((u) => (
                           <li key={u.id}>
-                            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => urunSec(i, u)} className="w-full text-left px-3 py-2 text-sm hover:bg-paper-100 flex justify-between gap-2">
+                            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => void urunSec(i, u)} className="w-full text-left px-3 py-2 text-sm hover:bg-paper-100 flex justify-between gap-2">
                               <span className="text-ink-900">{u.name}</span>
                               {u.fiyat > 0 && <span className="text-ink-500 text-xs">{tl(u.fiyat)}&apos;den</span>}
                             </button>
@@ -222,20 +312,32 @@ export function YeniSiparisClient() {
                       </ul>
                     )}
                   </div>
-                  <div className="sm:col-span-2"><label className={label}>Adet *</label><input type="number" min={1} className={input} value={k.quantity} onChange={(e) => kalemGuncelle(i, { quantity: Number(e.target.value) })} /></div>
-                  <div className="sm:col-span-3"><label className={label}>Birim fiyat (KDV dahil) *</label><input type="number" min={0} step="0.01" className={input} value={k.unitPrice} onChange={(e) => kalemGuncelle(i, { unitPrice: Number(e.target.value) })} /></div>
+                  <div className="sm:col-span-2"><label className={label}>{k.detay?.pricingMode === "area" ? "Adet (parça) *" : "Adet (set) *"}</label><input type="number" min={1} className={input} value={k.quantity} onChange={(e) => adetDegistir(i, Number(e.target.value))} /></div>
+                  <div className="sm:col-span-2">
+                    <label className={label}>Birim fiyat (KDV dahil)</label>
+                    <input type="number" min={0} step="0.01" className={input} value={k.unitPrice} disabled={Boolean(k.productId) && !k.fiyatElle} onChange={(e) => elleFiyat(i, Number(e.target.value))} />
+                  </div>
                   <div className="sm:col-span-1 flex items-end justify-end">
                     <button type="button" aria-label="Kalemi sil" disabled={kalemler.length === 1} onClick={() => setKalemler((ks) => ks.filter((_, j) => j !== i))} className="p-2 rounded text-ink-400 hover:text-error hover:bg-error/10 disabled:opacity-30"><Trash size={14} /></button>
                   </div>
                 </div>
+
+                {k.productId && <Konfigurator k={k} fiyatElle={k.fiyatElle} onSecim={(g, v) => secimDegistir(i, g, v)} />}
+
                 <div className="grid sm:grid-cols-12 gap-2 items-end">
-                  <div className="sm:col-span-9"><label className={label}>Açıklama / ölçü / malzeme</label><input className={input} value={k.configurationSummary} onChange={(e) => kalemGuncelle(i, { configurationSummary: e.target.value })} placeholder="ör. 250×80 cm · kuşgözlü · çift yüz" /></div>
+                  <div className="sm:col-span-7"><label className={label}>{k.productId ? "Özet (otomatik; düzenleyebilirsiniz)" : "Açıklama / ölçü / malzeme"}</label><input className={input} value={k.configurationSummary} onChange={(e) => kalemGuncelle(i, { configurationSummary: e.target.value })} placeholder="ör. 250×80 cm · kuşgözlü · çift yüz" /></div>
                   <label className="sm:col-span-3 inline-flex items-center gap-1.5 text-xs text-ink-700 pb-2"><input type="checkbox" checked={k.needsDesignSupport} onChange={(e) => kalemGuncelle(i, { needsDesignSupport: e.target.checked })} /> Tasarım desteği</label>
+                  {k.productId && (
+                    <label className="sm:col-span-2 inline-flex items-center gap-1.5 text-xs text-ink-700 pb-2"><input type="checkbox" checked={k.fiyatElle} onChange={(e) => { const ac = e.target.checked; kalemGuncelle(i, { fiyatElle: ac, fiyatHata: null }); if (!ac) fiyatIste(i, { ...k, fiyatElle: false }); }} /> Fiyatı elle gir</label>
+                  )}
                 </div>
-                <div className="text-right text-xs text-ink-500">Satır: <strong className="text-ink-900 tabular-nums">{tl(ozet.satirlar[i] ?? 0)}</strong></div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className={k.fiyatHata && !k.fiyatElle ? "text-error" : "text-ink-500"}>{k.hesaplaniyor ? "Fiyat hesaplanıyor…" : k.fiyatHata && !k.fiyatElle ? k.fiyatHata : k.productId && !k.fiyatElle ? "Fiyat sitedeki motorla hesaplandı" : ""}</span>
+                  <span className="text-ink-500">Satır: <strong className="text-ink-900 tabular-nums">{tl(k.lineTotal || 0)}</strong></span>
+                </div>
               </div>
             ))}
-            <button type="button" onClick={() => setKalemler((ks) => [...ks, { productName: "", configurationSummary: "", quantity: 1, unitPrice: 0, needsDesignSupport: false }])} className="inline-flex items-center gap-1.5 text-sm text-brand-700 hover:underline"><Plus size={14} /> Kalem ekle</button>
+            <button type="button" onClick={() => setKalemler((ks) => [...ks, bosKalem()])} className="inline-flex items-center gap-1.5 text-sm text-brand-700 hover:underline"><Plus size={14} /> Kalem ekle</button>
           </Kart>
 
           <Kart baslik="Teslimat" ikon={Truck}>

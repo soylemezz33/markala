@@ -313,6 +313,9 @@ export class MarkalaApiClient {
     timeline: (orderId: string) =>
       this.request<Array<{ at: string; tur: string; baslik: string; detay?: string; aktor?: string }>>("GET", `/orders/${encodeURIComponent(orderId)}/zaman-cizelgesi`, undefined, { auth: true }),
     /** Panel: manuel sipariş (yüz yüze / telefon / WhatsApp), 2026-09-16. */
+    /** Panel: manuel sipariş kalemi için sunucu fiyatı (konfigüratör seçimleriyle). */
+    manualPrice: (data: { productId: string; selections?: Record<string, string>; quantity: number }) =>
+      this.request<{ unitPrice: number; lineTotal: number; costTotal: number | null; summary: string; selections: Record<string, string>; pricingMode: string; productName: string }>("POST", "/orders/manuel/fiyatla", data, { auth: true }),
     createManual: (data: any) =>
       this.request<{ id: string; orderNumber: string; total: number; epostaYok: boolean }>("POST", "/orders/manuel", data, { auth: true }),
     // createGuest kaldırıldı — sipariş vermek için giriş zorunlu (misafir sipariş yolu yok).

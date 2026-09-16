@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { manuelSiparisHesapla, manuelSiparisNotu, epostaYerTutucu, epostaYerTutucuMu, YUZ_YUZE_ODEME } from "./manuel-siparis-kural";
+import { manuelSiparisHesapla, manuelSiparisNotu, epostaYerTutucu, epostaYerTutucuMu, YUZ_YUZE_ODEME, konfigurasyonOzeti } from "./manuel-siparis-kural";
 
 describe("manuelSiparisHesapla — KDV dahil satırlardan ara toplam/KDV/toplam", () => {
   it("2×1000 + 1×500, indirim 100, kargo 115", () => {
@@ -34,5 +34,17 @@ describe("manuelSiparisNotu / e-posta yer tutucu", () => {
   });
   it("yüz yüze ödeme yöntemleri", () => {
     expect(YUZ_YUZE_ODEME).toEqual(["nakit", "pos"]);
+  });
+});
+
+describe("konfigurasyonOzeti — sitedeki buildSelectionSummary eşi", () => {
+  it("en×boy + grup sırasıyla seçenek etiketleri", () => {
+    const opts = [
+      { groupKey: "ekislem", groupSort: 2, optionKey: "germe", optionLabel: "Germe" },
+      { groupKey: "malzeme", groupSort: 1, optionKey: "cin-440gr", optionLabel: "Çin Vinil 440 gr" },
+      { groupKey: "malzeme", groupSort: 1, optionKey: "cin-280gr", optionLabel: "Çin Vinil 280 gr" },
+    ];
+    expect(konfigurasyonOzeti(opts, { en: "270", boy: "85", malzeme: "cin-440gr", ekislem: "germe" })).toBe("270×85 cm · Çin Vinil 440 gr · Germe");
+    expect(konfigurasyonOzeti(opts, { malzeme: "yok-boyle" })).toBe("");
   });
 });

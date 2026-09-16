@@ -64,6 +64,24 @@ export function manuelSiparisNotu(kanal: ManuelKanal, yontem: ManuelOdemeYontemi
 export function epostaYerTutucu(telefon: string): string {
   return `yok+${telefon.replace(/\D/g, "") || "bilinmiyor"}@markala.com.tr`;
 }
+/** Sitedeki buildSelectionSummary'nin sunucu eşi: "en×boy cm · seçenek etiketleri" (grup sırasıyla). */
+export function konfigurasyonOzeti(
+  options: Array<{ groupKey: string; groupSort: number; optionKey: string; optionLabel: string }>,
+  selections: Record<string, string>,
+): string {
+  const parts: string[] = [];
+  if (selections.en && selections.boy) parts.push(`${selections.en}×${selections.boy} cm`);
+  const gruplar = new Map<string, number>();
+  for (const o of options) if (!gruplar.has(o.groupKey)) gruplar.set(o.groupKey, o.groupSort);
+  for (const [groupKey] of [...gruplar.entries()].sort((a, b) => a[1] - b[1])) {
+    const sel = selections[groupKey];
+    if (!sel) continue;
+    const opt = options.find((o) => o.groupKey === groupKey && o.optionKey === sel);
+    if (opt) parts.push(opt.optionLabel);
+  }
+  return parts.join(" · ");
+}
+
 export function epostaYerTutucuMu(email: string | null | undefined): boolean {
   return /^yok\+[^@]*@markala\.com\.tr$/i.test(String(email ?? ""));
 }
