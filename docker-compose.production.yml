@@ -109,6 +109,7 @@ services:
       CHATWOOT_TEAM_ID: ${CHATWOOT_TEAM_ID:-}
       # 2026-09-16: durum eşitleme — üretim sorumlusu ajan id + Chatwoot webhook URL token'ı
       CHATWOOT_URETIM_AGENT_ID: ${CHATWOOT_URETIM_AGENT_ID:-}
+      CHATWOOT_URETIM_TEAM_ID: ${CHATWOOT_URETIM_TEAM_ID:-}
       CHATWOOT_WEBHOOK_SECRET: ${CHATWOOT_WEBHOOK_SECRET:-}
       # Puan süresi işi (her sabah 08:30) — 7 Eylül kesinti şüphesi nedeniyle GEÇİCİ KAPALI.
       # Açmak için .env.production'da PUAN_SURESI_CRON=true yapıp api'yi yeniden başlatın.

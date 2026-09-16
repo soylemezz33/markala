@@ -215,11 +215,19 @@ export class ChatwootService {
   async durumUygula(convId: number, slug: string, mevcutEtiketler: string[], konusmaDurumu?: string): Promise<void> {
     await this.api("POST", `/conversations/${convId}/labels`, { labels: durumEtiketleriniUygula(mevcutEtiketler, slug) });
     await this.durumIsaretle(convId, slug);
-    const uretimAjani = Number(this.cfg("CHATWOOT_URETIM_AGENT_ID"));
-    if (uretimAjani && URETIM_SONRASI.includes(slug)) {
-      await this.api("POST", `/conversations/${convId}/assignments`, { assignee_id: uretimAjani }).catch((e) =>
-        this.logger.warn(`chatwoot üretim ataması conv=${convId}: ${(e as Error).message}`),
-      );
+    // Üretim ve sonrası (16 Eyl, Hasan: takımlar Müşteri Temsilcisi / Grafik Tasarım / Üretim):
+    // konuşma "Üretim" takımına (CHATWOOT_URETIM_TEAM_ID) ve üretim sorumlusuna (Furkan) geçer.
+    if (URETIM_SONRASI.includes(slug)) {
+      const uretimTakimi = Number(this.cfg("CHATWOOT_URETIM_TEAM_ID"));
+      const uretimAjani = Number(this.cfg("CHATWOOT_URETIM_AGENT_ID"));
+      const atama: Record<string, number> = {};
+      if (uretimTakimi) atama.team_id = uretimTakimi;
+      if (uretimAjani) atama.assignee_id = uretimAjani;
+      if (Object.keys(atama).length) {
+        await this.api("POST", `/conversations/${convId}/assignments`, atama).catch((e) =>
+          this.logger.warn(`chatwoot üretim ataması conv=${convId}: ${(e as Error).message}`),
+        );
+      }
     }
     await this.api("POST", `/conversations/${convId}/messages`, { content: durumNotu(slug), message_type: "outgoing", private: true }).catch(() => undefined);
     const kapat = KAPANIS_DURUMLARI.includes(slug);
