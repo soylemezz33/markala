@@ -311,7 +311,10 @@ export class MarkalaApiClient {
     create: (data: any) => this.request<Order>("POST", "/orders", data, { auth: true }),
     /** Panel: sipariş zaman çizelgesi (2026-09-16). */
     timeline: (orderId: string) =>
-      this.request<Array<{ at: string; tur: string; baslik: string; detay?: string; aktor?: string }>>("GET", `/orders/${encodeURIComponent(orderId)}/zaman-cizelgesi`, undefined, { auth: true }),
+      this.request<{
+        olaylar: Array<{ at: string; tur: string; baslik: string; detay?: string; aktor?: string; durum?: string }>;
+        kilometre: Array<{ anahtar: string; ad: string; at?: string; detay?: string; aktor?: string }>;
+      }>("GET", `/orders/${encodeURIComponent(orderId)}/zaman-cizelgesi`, undefined, { auth: true }),
     /** Panel: manuel sipariş (yüz yüze / telefon / WhatsApp), 2026-09-16. */
     /** Panel: manuel sipariş kalemi için sunucu fiyatı (konfigüratör seçimleriyle). */
     manualPrice: (data: { productId: string; selections?: Record<string, string>; quantity: number }) =>

@@ -296,12 +296,15 @@ export function OrderDetailClient({
   order,
   initialNotes = [],
   initialTimeline = [],
+  kilometre = [],
 }: {
   order: OrderDetailProps;
   /** İç notlar sunucuda çekilir (page.tsx) — ilk boyamada dolu gelsin. */
   initialNotes?: OrderNote[];
   /** Zaman çizelgesi (2026-09-16) — sunucuda çekilir. */
-  initialTimeline?: Array<{ at: string; tur: string; baslik: string; detay?: string; aktor?: string }>;
+  initialTimeline?: Array<{ at: string; tur: string; baslik: string; detay?: string; aktor?: string; durum?: string }>;
+  /** Kilometre taşları (16 Eyl): sipariş/ödeme/tasarım onayı/üretim/kargo/teslim/fatura anları — özet şerit. */
+  kilometre?: Array<{ anahtar: string; ad: string; at?: string; detay?: string; aktor?: string }>;
 }) {
   const [currentStatus, setCurrentStatus] = useState(toSlug(order.status));
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -312,7 +315,7 @@ export function OrderDetailClient({
   // Tasarım Dosyaları kartı: kalem başına açılır/kapanır (2026-09-16, Hasan: "ürüne tıklandığında açılsın, geri kapatılabilsin").
   const [acikTasarim, setAcikTasarim] = useState<Record<string, boolean>>({});
   // Zaman çizelgesi sekmesi (16 Eyl, Hasan: "çok karışmış; süreç ayrı, e-posta/WhatsApp ayrı sekme").
-  const [zamanSekme, setZamanSekme] = useState<"surec" | "bildirim">("surec");
+  const [zamanSekme, setZamanSekme] = useState<"surec" | "dosya" | "not" | "bildirim">("surec");
   const [notEkleniyor, setNotEkleniyor] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [refundMsg, setRefundMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -1512,18 +1515,65 @@ export function OrderDetailClient({
       </div>
 
       {/* ZAMAN ÇİZELGESİ (2026-09-16, Hasan): "kargoya hangi gün verildi, ödeme ne zaman alındı,
-          tasarıma ne zaman alındı" — her hareket gün ve saatiyle; Furkan'a ya da mesajlara
-          bakmaya gerek kalmasın. Kaynak: API /orders/:id/zaman-cizelgesi (audit + not + bildirim). */}
+          tasarıma ne zaman alındı". Aynı gün ikinci geri bildirim: "hâlâ çok gürültü var, aradığımı
+          bulamıyorum" → en üstte kilometre taşı şeridi (aranan anlar tek bakışta), altında olaylar
+          Süreç · Dosyalar · Notlar · E-posta & WhatsApp sekmelerinde; art arda aynı dosya hareketleri
+          sunucuda tek satırda toplanır. Kaynak: API /orders/:id/zaman-cizelgesi. */}
       <div className="mt-5">
         <Card title="Zaman Çizelgesi">
           {(() => {
-            const surec = initialTimeline.filter((z) => z.tur !== "bildirim");
-            const bildirim = initialTimeline.filter((z) => z.tur === "bildirim");
-            const liste = zamanSekme === "surec" ? surec : bildirim;
+            const fmtGun = (at: string) => new Date(at).toLocaleDateString("tr-TR", { day: "2-digit", month: "short" });
+            const fmtSaat = (at: string) => new Date(at).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+            const SEKME_TUR: Record<"surec" | "dosya" | "not" | "bildirim", (tur: string) => boolean> = {
+              surec: (t) => !["tasarim", "not", "bildirim"].includes(t),
+              dosya: (t) => t === "tasarim",
+              not: (t) => t === "not",
+              bildirim: (t) => t === "bildirim",
+            };
+            const sayi = (k: keyof typeof SEKME_TUR) => initialTimeline.filter((z) => SEKME_TUR[k](z.tur)).length;
+            const liste = initialTimeline.filter((z) => SEKME_TUR[zamanSekme](z.tur));
+            const BOS: Record<keyof typeof SEKME_TUR, string> = {
+              surec: "Henüz hareket kaydı yok.",
+              dosya: "Bu siparişe tasarım dosyası yüklenmemiş.",
+              not: "Bu siparişte not yok.",
+              bildirim: "Bu siparişe bildirim gönderilmemiş.",
+            };
             return (
               <>
-                <div className="mb-3 inline-flex rounded-md border border-paper-200 bg-paper-100 p-0.5 text-xs">
-                  {([["surec", `Süreç (${surec.length})`], ["bildirim", `E-posta & WhatsApp (${bildirim.length})`]] as const).map(([k, ad]) => (
+                {kilometre.length > 0 && (
+                  <ol className="mb-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2" aria-label="Sipariş aşamaları">
+                    {kilometre.map((k) => {
+                      const iptal = k.anahtar === "iptal";
+                      const stil = iptal
+                        ? "border-error/40 bg-error/5"
+                        : k.at ? "border-paper-200 bg-paper-50" : "border-dashed border-paper-200 opacity-60";
+                      return (
+                        <li key={k.anahtar} className={`rounded-md border px-3 py-2 min-w-0 ${stil}`}>
+                          <div className={`text-[11px] uppercase tracking-wide ${iptal ? "text-error" : "text-ink-500"}`}>{k.ad}</div>
+                          {k.at ? (
+                            <time dateTime={k.at} className="block text-sm font-medium text-ink-900 tabular-nums">
+                              {fmtGun(k.at)} <span className="text-ink-500 font-normal">{fmtSaat(k.at)}</span>
+                            </time>
+                          ) : (
+                            <div className="text-sm text-ink-400">—</div>
+                          )}
+                          {(k.detay || k.aktor) && (
+                            <div className="text-[11px] text-ink-500 truncate" title={[k.detay, k.aktor].filter(Boolean).join(" · ")}>
+                              {k.detay ?? k.aktor}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+                <div className="mb-3 inline-flex flex-wrap rounded-md border border-paper-200 bg-paper-100 p-0.5 text-xs">
+                  {([
+                    ["surec", `Süreç (${sayi("surec")})`],
+                    ["dosya", `Dosyalar (${sayi("dosya")})`],
+                    ["not", `Notlar (${sayi("not")})`],
+                    ["bildirim", `E-posta & WhatsApp (${sayi("bildirim")})`],
+                  ] as const).map(([k, ad]) => (
                     <button
                       key={k}
                       type="button"
@@ -1535,29 +1585,28 @@ export function OrderDetailClient({
                   ))}
                 </div>
                 {liste.length === 0 ? (
-                  <p className="text-sm text-ink-500">{zamanSekme === "surec" ? "Henüz hareket kaydı yok." : "Bu siparişe bildirim gönderilmemiş."}</p>
+                  <p className="text-sm text-ink-500">{BOS[zamanSekme]}</p>
                 ) : (
-            <ol className="relative border-l border-paper-200 ml-2 space-y-3">
-              {liste.map((z, i) => {
-                const renk =
-                  z.tur === "odeme" ? "bg-success" : z.tur === "kargo" ? "bg-brand-500" : z.tur === "iade" ? "bg-error"
-                  : z.tur === "fatura" ? "bg-ink-900" : z.tur === "bildirim" ? "bg-paper-300" : z.tur === "not" ? "bg-warning" : "bg-ink-400";
-                const d = new Date(z.at);
-                return (
-                  <li key={`${z.at}-${i}`} className="ml-4">
-                    <span className={`absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full ${renk}`} aria-hidden="true" />
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                      <time dateTime={z.at} className="text-xs text-ink-500 tabular-nums whitespace-nowrap">
-                        {d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short" })} · {d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
-                      </time>
-                      <span className={`text-sm ${z.tur === "bildirim" ? "text-ink-600" : "font-medium text-ink-900"}`}>{z.baslik}</span>
-                      {z.aktor && <span className="text-[11px] text-ink-400">· {z.aktor}</span>}
-                    </div>
-                    {z.detay && <p className="text-xs text-ink-500 break-words">{z.detay}</p>}
-                  </li>
-                );
-              })}
-            </ol>
+                  <ol className="relative border-l border-paper-200 ml-2 space-y-3">
+                    {liste.map((z, i) => {
+                      const renk =
+                        z.tur === "odeme" ? "bg-success" : z.tur === "kargo" ? "bg-brand-500" : z.tur === "iade" ? "bg-error"
+                        : z.tur === "fatura" ? "bg-ink-900" : z.tur === "bildirim" ? "bg-paper-300" : z.tur === "not" ? "bg-warning" : "bg-ink-400";
+                      return (
+                        <li key={`${z.at}-${i}`} className="ml-4">
+                          <span className={`absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full ${renk}`} aria-hidden="true" />
+                          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                            <time dateTime={z.at} className="text-xs text-ink-500 tabular-nums whitespace-nowrap">
+                              {fmtGun(z.at)} · {fmtSaat(z.at)}
+                            </time>
+                            <span className={`text-sm ${z.tur === "bildirim" ? "text-ink-600" : "font-medium text-ink-900"}`}>{z.baslik}</span>
+                            {z.aktor && <span className="text-[11px] text-ink-400">· {z.aktor}</span>}
+                          </div>
+                          {z.detay && <p className="text-xs text-ink-500 break-words">{z.detay}</p>}
+                        </li>
+                      );
+                    })}
+                  </ol>
                 )}
               </>
             );

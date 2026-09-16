@@ -15,6 +15,8 @@ export interface ZamanOlayi {
   baslik: string;
   detay?: string;
   aktor?: string;
+  /** Durum değişiminde varılan durum (slug) — kilometre taşları bundan türetilir. */
+  durum?: string;
 }
 
 export const DURUM_ADI: Record<string, string> = {
@@ -81,7 +83,7 @@ export function zamanCizelgesiKur(g: ZamanGirdisi): ZamanOlayi[] {
         const tur: ZamanOlayTuru = to === "kargoya-verildi" ? "kargo" : to === "iptal-edildi" ? "iade" : "durum";
         const tracking = d.tracking as { number?: string; carrier?: string } | null | undefined;
         o.push({
-          at: iso(a.createdAt), tur,
+          at: iso(a.createdAt), tur, durum: to,
           baslik: `Durum: ${durumAdi(d.from)} → ${durumAdi(d.to)}`,
           detay: [d.sebep === "odeme_tamamlandi" ? "Ödeme tamamlanınca otomatik" : null, tracking?.number ? `Takip: ${tracking.number}${tracking.carrier ? ` (${tracking.carrier})` : ""}` : null].filter(Boolean).join(" · ") || undefined,
           aktor,
@@ -106,7 +108,7 @@ export function zamanCizelgesiKur(g: ZamanGirdisi): ZamanOlayi[] {
         o.push({ at: iso(a.createdAt), tur: "tasarim", baslik: "Tasarım dosyası silindi", detay: d.fileName ? String(d.fileName) : undefined, aktor }); break;
       case "iptal":
       case "cancel":
-        o.push({ at: iso(a.createdAt), tur: "iade", baslik: "Sipariş iptal edildi", aktor }); break;
+        o.push({ at: iso(a.createdAt), tur: "iade", durum: "iptal-edildi", baslik: "Sipariş iptal edildi", aktor }); break;
       default:
         o.push({ at: iso(a.createdAt), tur: "diger", baslik: a.action, aktor });
     }
@@ -133,10 +135,68 @@ export function zamanCizelgesiKur(g: ZamanGirdisi): ZamanOlayi[] {
   }
 
   const durumVar = (to: string) => g.auditler.some((a) => a.action === "status_change" && String((a.diff as Record<string, unknown> | null)?.to ?? "").replace(/_/g, "-") === to);
-  if (g.order.shippedAt && !durumVar("kargoya-verildi")) o.push({ at: iso(g.order.shippedAt), tur: "kargo", baslik: "Kargoya verildi", detay: [g.order.trackingNumber, g.order.trackingCarrier].filter(Boolean).join(" · ") || undefined });
-  if (g.order.deliveredAt && !durumVar("teslim-edildi")) o.push({ at: iso(g.order.deliveredAt), tur: "durum", baslik: "Teslim edildi" });
+  if (g.order.shippedAt && !durumVar("kargoya-verildi")) o.push({ at: iso(g.order.shippedAt), tur: "kargo", durum: "kargoya-verildi", baslik: "Kargoya verildi", detay: [g.order.trackingNumber, g.order.trackingCarrier].filter(Boolean).join(" · ") || undefined });
+  if (g.order.deliveredAt && !durumVar("teslim-edildi")) o.push({ at: iso(g.order.deliveredAt), tur: "durum", durum: "teslim-edildi", baslik: "Teslim edildi" });
   if (g.order.invoiceIssuedAt) o.push({ at: iso(g.order.invoiceIssuedAt), tur: "fatura", baslik: `${g.order.invoiceType === "e_invoice" ? "e-Fatura" : "e-Arşiv"} kesildi`, detay: g.order.invoiceNumber ?? undefined, aktor: "Sistem (Paraşüt)" });
   if (g.order.invoiceMailedAt) o.push({ at: iso(g.order.invoiceMailedAt), tur: "fatura", baslik: "Fatura e-postası gönderildi (müşteri)", aktor: "Sistem" });
 
-  return o.sort((x, y) => x.at.localeCompare(y.at));
+  return olaylariSadelestir(o.sort((x, y) => x.at.localeCompare(y.at)));
+}
+
+/* ------------------------------------------------------------------------------------------
+ * SADELEŞTİRME + KİLOMETRE TAŞLARI (2026-09-16, Hasan: "zaman çizelgesinde hâlâ çok fazla
+ * gürültü var, aradığımı bulamıyorum"). Aradığı şey: sipariş / ödeme / tasarım onayı / üretim /
+ * kargo / teslim / fatura ANLARI. Bunlar en üstte özet şerit olarak verilir; olay listesi
+ * panelde Süreç · Dosyalar · Notlar · Bildirim sekmelerine ayrılır; art arda aynı dosya
+ * hareketleri tek satırda toplanır.
+ * ------------------------------------------------------------------------------------------ */
+export type KilometreAnahtari = "siparis" | "odeme" | "tasarim" | "uretim" | "kargo" | "teslim" | "fatura" | "iptal";
+export interface KilometreTasi {
+  anahtar: KilometreAnahtari;
+  ad: string;
+  at?: string; // ulaşılmadıysa yok
+  detay?: string;
+  aktor?: string;
+}
+
+/** Art arda gelen aynı tür dosya hareketleri (aynı başlık, aynı kişi, 15 dk içinde) tek satırda toplanır. */
+export function olaylariSadelestir(o: ZamanOlayi[]): ZamanOlayi[] {
+  const out: ZamanOlayi[] = [];
+  const grup: Array<{ temel: string; sayi: number; dosyalar: string[]; sonAt: string }> = [];
+  for (const z of o) {
+    const i = out.length - 1;
+    const p = out[i], g = grup[i];
+    if (p && g && z.tur === "tasarim" && z.baslik === g.temel && z.aktor === p.aktor && Date.parse(z.at) - Date.parse(g.sonAt) <= 15 * 60_000) {
+      g.sayi++; g.sonAt = z.at;
+      if (z.detay) g.dosyalar.push(z.detay);
+      const tekil = [...new Set(g.dosyalar)];
+      p.baslik = g.temel.replace(/^Tasarım dosyası (yüklendi|silindi)/, (_m, f: string) => `${g.sayi} tasarım dosyası ${f}`);
+      p.detay = [tekil.slice(0, 6).join(" · "), tekil.length > 6 ? `+${tekil.length - 6}` : null, tekil.length < g.sayi ? `(${g.sayi} hareket)` : null].filter(Boolean).join(" ");
+      continue;
+    }
+    out.push({ ...z });
+    grup.push({ temel: z.baslik, sayi: 1, dosyalar: z.detay ? [z.detay] : [], sonAt: z.at });
+  }
+  return out;
+}
+
+/** Sipariş özet şeridi: her aşamanın ulaşıldığı an (durum geri alınıp tekrar verildiyse SON an). */
+export function kilometreTaslari(o: ZamanOlayi[]): KilometreTasi[] {
+  const ilk = (f: (z: ZamanOlayi) => boolean) => o.find(f);
+  const son = (f: (z: ZamanOlayi) => boolean) => [...o].reverse().find(f);
+  const tas = (anahtar: KilometreAnahtari, ad: string, z?: ZamanOlayi, detay?: string): KilometreTasi =>
+    z ? { anahtar, ad, at: z.at, detay: detay ?? z.detay, aktor: z.aktor } : { anahtar, ad };
+  const odeme = ilk((z) => z.tur === "odeme");
+  const list: KilometreTasi[] = [
+    tas("siparis", "Sipariş", ilk((z) => z.tur === "olusturma")),
+    tas("odeme", "Ödeme", odeme, /\(([^)]+)\)/.exec(odeme?.baslik ?? "")?.[1]),
+    tas("tasarim", "Tasarım onayı", son((z) => z.durum === "tasarim-onaylandi")),
+    tas("uretim", "Üretim", son((z) => z.durum === "uretimde")),
+    tas("kargo", "Kargo", son((z) => z.durum === "kargoya-verildi")),
+    tas("teslim", "Teslim", son((z) => z.durum === "teslim-edildi")),
+    tas("fatura", "Fatura", ilk((z) => z.tur === "fatura" && z.baslik.includes("kesildi"))),
+  ];
+  const iptal = son((z) => z.durum === "iptal-edildi" || z.baslik === "Sipariş iptal edildi");
+  if (iptal) list.push(tas("iptal", "İptal", iptal));
+  return list;
 }

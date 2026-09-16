@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { zamanCizelgesiKur, type ZamanOlayi } from "./zaman-cizelgesi-kural";
+import { zamanCizelgesiKur, kilometreTaslari, type ZamanOlayi, type KilometreTasi } from "./zaman-cizelgesi-kural";
+
+export interface ZamanCizelgesi { olaylar: ZamanOlayi[]; kilometre: KilometreTasi[] }
 
 /**
  * Sipariş zaman çizelgesi (2026-09-16, Hasan: "her hareketi gün ve saatiyle sipariş detayında
@@ -11,7 +13,7 @@ import { zamanCizelgesiKur, type ZamanOlayi } from "./zaman-cizelgesi-kural";
 export class ZamanCizelgesiService {
   constructor(private prisma: PrismaService) {}
 
-  async olustur(orderId: string): Promise<ZamanOlayi[]> {
+  async olustur(orderId: string): Promise<ZamanCizelgesi> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       select: {
@@ -55,11 +57,12 @@ export class ZamanCizelgesiService {
       : [];
     const ad = new Map(kisiler.map((k) => [k.id, (k.fullName ?? "").trim() || k.email]));
 
-    return zamanCizelgesiKur({
+    const olaylar = zamanCizelgesiKur({
       order,
       auditler: auditler.map((a) => ({ createdAt: a.createdAt, action: a.action, diff: a.diff, entityType: a.entityType, actorAd: a.actorId ? ad.get(a.actorId) ?? "Personel" : null })),
       notlar,
       bildirimler: bildirimler.map((b) => ({ ...b, channel: String(b.channel) })),
     });
+    return { olaylar, kilometre: kilometreTaslari(olaylar) };
   }
 }
