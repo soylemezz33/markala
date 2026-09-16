@@ -41,7 +41,13 @@ export class ChatwootWebhookController {
     const convId = Number(body?.id);
     if (!convId) return { ok: true, atlandi: "id yok" };
 
-    const k = await this.chatwoot.konusmaGetir(convId);
+    // Chatwoot 404 (silinmiş/bilinmeyen konuşma) ya da geçici ağ hatası → 200 + atlandı (webhook tekrarı gereksiz).
+    let k: Awaited<ReturnType<ChatwootService["konusmaGetir"]>>;
+    try {
+      k = await this.chatwoot.konusmaGetir(convId);
+    } catch (e) {
+      return { ok: true, atlandi: "konuşma okunamadı", hata: (e as Error).message.slice(0, 120) };
+    }
     const isaretli = typeof k.custom_attributes?.siparis_durum === "string" ? k.custom_attributes.siparis_durum : undefined;
     const etiket = durumEtiketiBul(k.labels ?? [], isaretli);
     if (!etiket || etiket === isaretli) return { ok: true, atlandi: "değişiklik yok" };
