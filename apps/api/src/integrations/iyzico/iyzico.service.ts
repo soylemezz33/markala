@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { agHatasiKaydet, basariKaydet } from "./iyzico-durum";
 import Iyzipay from "iyzipay";
 
 /**
@@ -73,9 +74,11 @@ export class IyzicoService {
       client.checkoutFormInitialize.create(request, (err, result) => {
         if (err) {
           this.logger.error(`iyzico init hata: ${(err as Error)?.message ?? String(err)}`);
+          agHatasiKaydet((err as Error)?.message ?? String(err));
           resolve({ status: "failure", errorMessage: "init_error" });
           return;
         }
+        basariKaydet(); // iyzico yanıt verdi → erişim var (iş sonucu ayrı)
         if (result?.status !== "success") {
           // errorMessage müşteriye gösterilebilir genel bir mesaj; kart/PII içermez.
           // errorCode de taşınır → çağıran limit hatasını (5008) net mesaja çevirebilir.
@@ -102,9 +105,11 @@ export class IyzicoService {
         (err, result) => {
           if (err) {
             this.logger.error(`iyzico retrieve hata: ${(err as Error)?.message ?? String(err)}`);
+            agHatasiKaydet((err as Error)?.message ?? String(err));
             resolve({ paymentStatus: "ERROR", status: "failure", errorMessage: "retrieve_error" });
             return;
           }
+          basariKaydet();
           const ok = result?.status === "success" && result?.paymentStatus === "SUCCESS";
           resolve({
             paymentStatus: result?.paymentStatus ?? "FAILURE",

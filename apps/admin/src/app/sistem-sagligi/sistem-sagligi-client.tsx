@@ -14,6 +14,7 @@ import {
   XCircle,
   ArrowsClockwise,
   Cpu,
+  CreditCard,
 } from "@phosphor-icons/react";
 
 type Seviye = "saglikli" | "uyari" | "arizali";
@@ -93,6 +94,7 @@ export function SistemSagligiClient() {
     const disk = rapor.depolama ?? {};
     const hatalar = rapor.hatalar ?? {};
     const api = rapor.api ?? {};
+    const odeme = rapor.odeme ?? {};
 
     return [
       {
@@ -200,6 +202,37 @@ export function SistemSagligiClient() {
           { ad: "Sürüm", deger: String(api.imajEtiketi ?? api.surum ?? "—") },
           { ad: "Saat dilimi", deger: String(api.saatDilimi ?? "—") },
         ],
+      },
+      // Ödeme sağlayıcı (16 Eyl 2026): iyzico'ya ~75 dk bağlanılamadı, müşteri kartla ödeyemedi;
+      // kesinti müşteriden öğrenildi. Canlı bağlantı testi + ağ hatası sayaçları burada.
+      {
+        anahtar: "odeme",
+        baslik: "Ödeme sağlayıcı (iyzico)",
+        ikon: CreditCard,
+        seviye: seviye(odeme.seviye),
+        ozet:
+          odeme.yapilandirildi === false
+            ? "Yapılandırılmamış"
+            : odeme.ulasilabilir === true
+              ? `Bağlantı var · ${sayi(odeme.gecikmeMs)} ms`
+              : odeme.ulasilabilir === false
+                ? "BAĞLANTI YOK"
+                : "Test yapılamadı",
+        satirlar: [
+          { ad: "Canlı bağlantı testi", deger: odeme.ulasilabilir === true ? "başarılı" : odeme.ulasilabilir === false ? `başarısız (${String(odeme.testHatasi ?? "?")})` : "—", vurgu: odeme.ulasilabilir === false },
+          { ad: "Ağ hatası — son 5 dk", deger: sayi(odeme.son5dkHata), vurgu: Number(odeme.son5dkHata) > 0 },
+          { ad: "Ağ hatası — son 1 saat", deger: sayi(odeme.son1saatHata) },
+          { ad: "Art arda hata", deger: sayi(odeme.ardArdaHata) },
+          { ad: "Son başarılı çağrı", deger: tarih(odeme.sonBasari) },
+          { ad: "Son hata", deger: odeme.sonHata ? `${tarih(odeme.sonHata)} · ${String(odeme.sonHataMesaji ?? "")}` : "—" },
+          { ad: "Adres", deger: String(odeme.adres ?? "—") },
+        ],
+        not:
+          odeme.ulasilabilir === false || Number(odeme.son5dkHata) > 0
+            ? "ŞU ANDA kart ödemesi başlatılamıyor olabilir; müşteriler havale/EFT ile ödeyebilir. Diğer bloklar sağlıklıysa sorun iyzico tarafında ya da sunucu→iyzico yolundadır (16 Eylül 2026'da 75 dk böyle sürdü)."
+            : Number(odeme.son1saatHata) > 0
+              ? "Son 1 saatte iyzico'ya bağlantı hataları oldu, şu an erişim var. Tekrarlarsa iyzico desteğine sunucu IP'si ve saat aralığıyla başvurun."
+              : "Canlı test iyzico'ya sipariş göndermez; yalnız bağlantıyı yoklar. Sayaçlar gerçek ödeme çağrılarındaki ağ hatalarını sayar.",
       },
     ];
   }, [rapor]);

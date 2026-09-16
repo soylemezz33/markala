@@ -14,7 +14,9 @@ import {
   diskSeviyesi,
   isSeviyesi,
   type Seviye,
+  odemeSeviyesi,
 } from "./saglik-kurallari";
+import { iyzicoDurumu } from "../integrations/iyzico/iyzico-durum";
 
 /**
  * SİSTEM SAĞLIĞI RAPORU (2026-09-07, 7 Eylül kesintisinden sonra).
@@ -49,10 +51,11 @@ export class SistemSagligiService {
   async rapor() {
     // Bloklar paralel: rapor tek tek beklenirse sayfa yavaşlar.
     const hatalarOn = hataOzeti();
-    const [veritabani, eposta, isler] = await Promise.all([
+    const [veritabani, eposta, isler, odeme] = await Promise.all([
       this.veritabani(hatalarOn),
       this.eposta(),
       Promise.resolve(this.zamanlanmisIsler()),
+      this.odeme(),
     ]);
     const depolama = this.depolama();
     const hatalar = hatalarOn;
@@ -65,6 +68,7 @@ export class SistemSagligiService {
       depolama.seviye,
       isler.seviye,
       hataSeviyesi(hatalar),
+      odeme.seviye,
     ]);
 
     return {
@@ -76,7 +80,49 @@ export class SistemSagligiService {
       zamanlanmisIsler: isler,
       depolama,
       hatalar: { seviye: hataSeviyesi(hatalar), ...hatalar },
+      odeme,
       entegrasyonlar,
+    };
+  }
+
+  // ── Ödeme sağlayıcı (iyzico) ────────────────────────────────────────────────────────
+  /**
+   * 16 Eyl 2026: sunucu→iyzico TLS bağlantısı ~75 dk kurulamadı (diğer servisler sağlam), müşteri
+   * kartla ödeyemedi. Canlı bağlantı testi (5 sn) + IyzicoService ağ hatası sayaçları.
+   * Test iyzico'ya sipariş/veri GÖNDERMEZ: yalnız TLS + HTTP GET kökü (her HTTP durumu "erişilebilir").
+   */
+  private async odeme(): Promise<BilesenDurumu> {
+    const yapilandirildi = ["IYZICO_API_KEY", "IYZICO_SECRET"].every((k) => (this.config.get<string>(k) ?? "").trim().length > 0);
+    const url = (this.config.get<string>("IYZICO_BASE_URL") ?? "https://sandbox-api.iyzipay.com").replace(/\/$/, "");
+    let ulasilabilir: boolean | null = null;
+    let gecikmeMs: number | null = null;
+    let testHatasi: string | null = null;
+    const t0 = Date.now();
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      try {
+        await fetch(url + "/", { method: "GET", signal: ctrl.signal, redirect: "manual" });
+        ulasilabilir = true;
+      } finally {
+        clearTimeout(timer);
+      }
+      gecikmeMs = Date.now() - t0;
+    } catch (e) {
+      const err = e as Error & { cause?: { code?: string } };
+      ulasilabilir = false;
+      testHatasi = err.cause?.code ?? (err.name === "AbortError" ? "zaman aşımı (5 sn)" : err.message);
+    }
+    const sayac = iyzicoDurumu();
+    return {
+      seviye: odemeSeviyesi({ yapilandirildi, ulasilabilir, son5dkHata: sayac.son5dkHata, son1saatHata: sayac.son1saatHata }),
+      saglayici: "iyzico",
+      yapilandirildi,
+      ulasilabilir,
+      gecikmeMs,
+      testHatasi,
+      adres: url,
+      ...sayac,
     };
   }
 

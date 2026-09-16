@@ -6,7 +6,9 @@ import {
   hataSeviyesi,
   diskSeviyesi,
   isSeviyesi,
+  odemeSeviyesi,
 } from "./saglik-kurallari";
+import { agHatasiKaydet, basariKaydet, iyzicoDurumu, iyzicoDurumSifirla } from "../integrations/iyzico/iyzico-durum";
 import { sunucuHatasiKaydet, hataOzeti, hataSayaciniSifirla } from "./hata-sayaci";
 
 /**
@@ -149,5 +151,37 @@ describe("hata sayacı", () => {
     hataSayaciniSifirla();
     for (let i = 0; i < 5000; i++) sunucuHatasiKaydet("/api/x", 500);
     expect(hataOzeti().son1saat).toBeLessThanOrEqual(500);
+  });
+});
+
+describe("odemeSeviyesi — iyzico erişimi (16 Eyl 2026 kesintisi)", () => {
+  it("canlı test başarısız → arızalı; son 5 dk ağ hatası → arızalı", () => {
+    expect(odemeSeviyesi({ yapilandirildi: true, ulasilabilir: false, son5dkHata: 0, son1saatHata: 0 })).toBe("arizali");
+    expect(odemeSeviyesi({ yapilandirildi: true, ulasilabilir: true, son5dkHata: 1, son1saatHata: 1 })).toBe("arizali");
+  });
+  it("son 1 saatte hata ama şu an erişim var → uyarı; test yapılamadı → uyarı; env yok → uyarı", () => {
+    expect(odemeSeviyesi({ yapilandirildi: true, ulasilabilir: true, son5dkHata: 0, son1saatHata: 3 })).toBe("uyari");
+    expect(odemeSeviyesi({ yapilandirildi: true, ulasilabilir: null, son5dkHata: 0, son1saatHata: 0 })).toBe("uyari");
+    expect(odemeSeviyesi({ yapilandirildi: false, ulasilabilir: true, son5dkHata: 0, son1saatHata: 0 })).toBe("uyari");
+  });
+  it("erişim var, hata yok → sağlıklı", () => {
+    expect(odemeSeviyesi({ yapilandirildi: true, ulasilabilir: true, son5dkHata: 0, son1saatHata: 0 })).toBe("saglikli");
+  });
+  it("iyzicoDurumu sayaçları: pencere 1 saat, başarı ardArda'yı sıfırlar", () => {
+    iyzicoDurumSifirla();
+    const t = Date.now();
+    agHatasiKaydet("ECONNRESET", t - 70 * 60 * 1000); // pencere dışı
+    agHatasiKaydet("ECONNRESET", t - 30 * 60 * 1000);
+    agHatasiKaydet("TLS", t - 60 * 1000);
+    let d = iyzicoDurumu(t);
+    expect(d.son1saatHata).toBe(2);
+    expect(d.son5dkHata).toBe(1);
+    expect(d.ardArdaHata).toBe(3);
+    expect(d.sonHataMesaji).toBe("TLS");
+    basariKaydet(t);
+    d = iyzicoDurumu(t);
+    expect(d.ardArdaHata).toBe(0);
+    expect(d.sonBasari).not.toBeNull();
+    iyzicoDurumSifirla();
   });
 });

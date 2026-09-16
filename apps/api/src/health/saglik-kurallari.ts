@@ -103,6 +103,28 @@ export function isSeviyesi(isler: Array<{ sonrakiCalisma: string | null }>, simd
 }
 
 /** Seviyeyi insan diline çevirir (panel rozetinde kullanılır). */
+/**
+ * Ödeme sağlayıcı (iyzico) — 16 Eyl 2026 kesintisi: TLS bağlantısı 1 s 15 dk kurulamadı, müşteri
+ * havaleye geçti. Canlı bağlantı testi + IyzicoService'in ağ hatası sayaçları birlikte okunur.
+ *  - env eksik → uyarı (ödeme kapalı sayılır, ama site ayakta)
+ *  - canlı test başarısız VEYA son 5 dk'da ağ hatası → arızalı (şu anda kart ödemesi alınamıyor olabilir)
+ *  - son 1 saatte ağ hatası → uyarı (geçici dalgalanma, izlenmeli)
+ *  - canlı test yapılamadı (null) → uyarı
+ */
+export function odemeSeviyesi(g: {
+  yapilandirildi: boolean;
+  ulasilabilir: boolean | null;
+  son5dkHata: number;
+  son1saatHata: number;
+}): Seviye {
+  if (!g.yapilandirildi) return "uyari";
+  if (g.ulasilabilir === false) return "arizali";
+  if (g.son5dkHata > 0) return "arizali";
+  if (g.son1saatHata > 0) return "uyari";
+  if (g.ulasilabilir === null) return "uyari";
+  return "saglikli";
+}
+
 export function seviyeEtiketi(s: Seviye): string {
   return s === "saglikli" ? "Sağlıklı" : s === "uyari" ? "Dikkat" : "Arızalı";
 }
