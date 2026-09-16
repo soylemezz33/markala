@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useServerPerms } from "@/components/perms-provider";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { MagnifyingGlass, Eye, Download, Package, WarningCircle } from "@phosphor-icons/react";
+import { MagnifyingGlass, Eye, Download, Package, WarningCircle, Plus } from "@phosphor-icons/react";
 import { Pagination, paginate } from "@/components/pagination";
 
 export interface OrderRow {
@@ -189,6 +189,16 @@ export function OrdersClient({ orders }: Props) {
             {showMoney && <strong className="text-ink-900">₺ {totalAmount.toLocaleString("tr-TR")}</strong>}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        {/* 2026-09-16 (Hasan): yüz yüze / telefon işleri sisteme girsin — manuel sipariş. Yalnız admin. */}
+        {(!perms || perms.includes("orders.create")) && (
+          <Link
+            href="/siparisler/yeni"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium bg-ink-900 text-paper-50 hover:bg-ink-800"
+          >
+            <Plus size={14} weight="bold" /> Manuel Sipariş
+          </Link>
+        )}
         <button
           onClick={downloadCsv}
           disabled={sorted.length === 0}
@@ -196,6 +206,7 @@ export function OrdersClient({ orders }: Props) {
         >
           <Download size={14} weight="bold" /> CSV İndir
         </button>
+        </div>
       </header>
 
       <div className="mb-4 flex flex-col md:flex-row gap-3">

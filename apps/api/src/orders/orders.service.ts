@@ -73,7 +73,7 @@ function parasalAlanlariAyikla<T extends object>(order: T, role?: string): T {
   return temiz as T;
 }
 
-function generateOrderNumber(): string {
+export function generateOrderNumber(): string {
   const ts = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `MK-${ts}-${rand}`;

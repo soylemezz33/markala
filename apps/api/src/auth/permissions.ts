@@ -51,6 +51,8 @@ export const PERM = {
    * yazabilmesinden geliyor. Müşteri rolünde YOK, uçlar da panel guard'ının arkasında.
    */
   ORDERS_NOTES: "orders.notes",
+  /** Panelden manuel sipariş oluşturma (2026-09-16: yüz yüze/telefon/WhatsApp işleri). Yalnız admin ("*"). */
+  ORDERS_CREATE: "orders.create",
   /** Müşteri kartı: ad, iletişim, adres. Parasal alanlar ayrıca ORDERS_AMOUNTS ister. */
   CUSTOMERS_READ: "customers.read",
   /**

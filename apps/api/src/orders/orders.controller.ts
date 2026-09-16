@@ -38,6 +38,8 @@ import { OrderDesignService } from "./order-design.service";
 import { OrderDriveService } from "../storage/order-drive.service";
 import { izinliDurumGecisi } from "./status-yetki";
 import { OrderNoteService } from "./order-note.service";
+import { ManuelSiparisService } from "./manuel-siparis.service";
+import { ManuelSiparisDto } from "./manuel-siparis.dto";
 import { KargoTakipService } from "./kargo-takip.service";
 import type { Request } from "express";
 import type { Response } from "express";
@@ -71,6 +73,7 @@ export class OrdersController {
     private orderDrive: OrderDriveService,
     // İç not defteri — aynı gerekçeyle ayrı servis (bkz. order-note.service.ts başlığı).
     private notes: OrderNoteService,
+    private manuel: ManuelSiparisService,
     // Kargo teslim taraması — cron'un çalıştırdığı kodun elle tetiklenebilir kopyası değil,
     // AYNISI (bkz. kargo-takip.service.ts başlığı).
     private kargoTakip: KargoTakipService,
@@ -167,6 +170,22 @@ export class OrdersController {
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
     res.setHeader("Cache-Control", "private, no-store");
     res.send(buffer);
+  }
+
+  /**
+   * MANUEL SİPARİŞ (2026-09-16): yüz yüze / telefon / WhatsApp ile alınan iş. Fiyat elle (KDV
+   * dahil), ödeme alındıysa "başarılı" olarak açılır; ciro ve akış normal siparişle aynı.
+   */
+  @Post("manuel")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_CREATE)
+  @ApiBearerAuth()
+  manuelSiparis(
+    @Body() dto: ManuelSiparisDto,
+    @Req() req: Request & { user?: { sub?: string; role?: string; email?: string }; ip?: string },
+  ) {
+    return this.manuel.olustur(dto, { actorId: req.user?.sub ?? null, email: req.user?.email ?? null, role: req.user?.role ?? null, ipAddress: req.ip ?? null });
   }
 
   /** Bekleyen faturaları hemen tamamla (panel/manuel). Cron 15. dakikada zaten dener. */

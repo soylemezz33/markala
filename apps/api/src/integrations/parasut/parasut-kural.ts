@@ -50,16 +50,21 @@ export function eBelgeKararla(g: EBelgeGirdi): EBelgeKarari {
     return { tur: "e_invoice", kutu: g.eFaturaKutusu, gonderi };
   }
   const havale = g.paymentMethod === "havale" || g.paymentMethod === "cari";
+  // Yüz yüze tahsilat (manuel sipariş: nakit / POS, 16 Eyl 2026): internet satışı DEĞİL →
+  // e-Arşiv'de internet_sale bloğu gönderilmez (GİB: yalnız internet üzerinden satışlarda).
+  const yuzYuze = g.paymentMethod === "nakit" || g.paymentMethod === "pos";
   return {
     tur: "e_archive",
-    internetSatisi: {
-      url: "https://markala.com.tr",
-      payment_type: havale ? "EFT/HAVALE" : "KREDIKARTI/BANKAKARTI",
-      // 15 Eyl canlı: havalede platform boş bırakılınca Paraşüt "E-arşiv ödeme platformu
-      // doldurulmalı" ile reddetti → EFT/HAVALE için de doldurulur (banka adı).
-      payment_platform: havale ? "Enpara Havale/EFT" : "iyzico",
-      payment_date: gun(g.odemeTarihi),
-    },
+    ...(yuzYuze
+      ? {}
+      : {
+          internetSatisi: {
+            url: "https://markala.com.tr",
+            payment_type: havale ? "EFT/HAVALE" : "KREDIKARTI/BANKAKARTI",
+            payment_platform: havale ? "Enpara Havale/EFT" : "iyzico",
+            payment_date: gun(g.odemeTarihi),
+          },
+        }),
     gonderi,
   };
 }

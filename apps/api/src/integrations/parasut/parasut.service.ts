@@ -416,7 +416,7 @@ export class ParasutService implements OnModuleInit {
       });
       const body = karar.tur === "e_invoice"
         ? { data: { type: "e_invoices", attributes: { scenario: "basic", to: karar.kutu }, relationships: { invoice: { data: { type: "sales_invoices", id: invId } } } } }
-        : { data: { type: "e_archives", attributes: { internet_sale: karar.internetSatisi, ...(karar.gonderi ? { shipment: karar.gonderi } : {}) }, relationships: { sales_invoice: { data: { type: "sales_invoices", id: invId } } } } };
+        : { data: { type: "e_archives", attributes: { ...(karar.internetSatisi ? { internet_sale: karar.internetSatisi } : {}), ...(karar.gonderi ? { shipment: karar.gonderi } : {}) }, relationships: { sales_invoice: { data: { type: "sales_invoices", id: invId } } } } };
       const job = await this.api<{ data: { id: string; type: string } }>("POST", karar.tur === "e_invoice" ? "/e_invoices" : "/e_archives", body);
       this.logger.log(`Paraşüt ${karar.tur} işi başladı: order=${order.orderNumber} job=${job.data?.id}`);
       await this.waitJob(job.data.id);

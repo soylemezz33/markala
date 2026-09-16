@@ -28,6 +28,14 @@ describe("eBelgeKararla — e-Fatura mı e-Arşiv mi", () => {
     expect(k.internetSatisi?.payment_platform).toBe("Enpara Havale/EFT");
   });
 
+  it("nakit / POS (yüz yüze) → e_archive, internet satışı bloğu YOK", () => {
+    for (const y of ["nakit", "pos"]) {
+      const k = eBelgeKararla({ kurumsal: false, paymentMethod: y, odemeTarihi: T, kargoTarihi: T });
+      expect(k.tur).toBe("e_archive");
+      expect(k.internetSatisi).toBeUndefined();
+    }
+  });
+
   it("VKN'siz kargo firması → gönderi bloğu gönderilmez (Paraşüt reddi)", () => {
     const k = eBelgeKararla({ kurumsal: false, paymentMethod: "iyzico", odemeTarihi: T, kargoFirmasi: "DHL eCommerce", kargoTarihi: T });
     expect(k.gonderi).toBeUndefined();

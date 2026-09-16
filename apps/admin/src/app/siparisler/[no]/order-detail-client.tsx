@@ -92,6 +92,8 @@ const ODEME_YONTEMI_ETIKET: Record<string, string> = {
   iyzico: "Kredi / Banka Kartı (iyzico)",
   havale: "Havale / EFT",
   cari: "Cari Hesap (vadeli)",
+  nakit: "Nakit (yüz yüze)",
+  pos: "Kart / POS (yüz yüze)",
 };
 
 /** Ödeme durumu etiketleri (sipariş durumundan AYRI). */

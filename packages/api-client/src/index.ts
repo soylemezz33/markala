@@ -309,6 +309,9 @@ export class MarkalaApiClient {
   // === Orders ===
   orders = {
     create: (data: any) => this.request<Order>("POST", "/orders", data, { auth: true }),
+    /** Panel: manuel sipariş (yüz yüze / telefon / WhatsApp), 2026-09-16. */
+    createManual: (data: any) =>
+      this.request<{ id: string; orderNumber: string; total: number; epostaYok: boolean }>("POST", "/orders/manuel", data, { auth: true }),
     // createGuest kaldırıldı — sipariş vermek için giriş zorunlu (misafir sipariş yolu yok).
     listMine: () => this.request<Order[]>("GET", "/orders/mine", undefined, { auth: true }),
     /** e-Arşiv/e-Fatura PDF'i (Blob). Tarayıcıda object URL ile indirilir; 404 = henüz hazır değil. */

@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { OrdersController } from "./orders.controller";
 import { ChatwootWebhookController } from "./chatwoot-webhook.controller";
+import { ManuelSiparisService } from "./manuel-siparis.service";
 import { OrdersService } from "./orders.service";
 import { InvoiceService } from "./invoice.service";
 import { SettingsModule } from "../settings/settings.module";
@@ -15,7 +16,7 @@ import { KargoTakipService } from "./kargo-takip.service";
   // StorageModule (2026-09-02): satıra tasarım dosyası yükleme/silme StorageService'i kullanır.
   imports: [SettingsModule, MailModule, LoyaltyModule, StorageModule],
   controllers: [OrdersController, ChatwootWebhookController],
-  providers: [OrdersService, OrderDesignService, OrderNoteService, KargoTakipService, InvoiceService],
+  providers: [ManuelSiparisService, OrdersService, OrderDesignService, OrderNoteService, KargoTakipService, InvoiceService],
   exports: [OrdersService, InvoiceService],
 })
 export class OrdersModule {}
