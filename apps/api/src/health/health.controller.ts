@@ -48,6 +48,17 @@ export class HealthController {
     return body;
   }
 
+  /**
+   * Kart ödeme sağlayıcısı (iyzico) erişim özeti — HERKESE AÇIK (2026-09-16). Storefront ödeme
+   * sayfası bunu okuyup sağlayıcı arızasında müşteriye "birkaç dakika sonra tekrar dene / havale"
+   * uyarısı basar. Sır ve iç ayrıntı içermez; 60 sn önbellek (bkz. SistemSagligiService.odemeOzet).
+   */
+  @Get("odeme")
+  @ApiOperation({ summary: "Kart ödeme sağlayıcısı erişim özeti (herkese açık, 60 sn önbellek)" })
+  async odeme() {
+    return this.sistemSagligi.odemeOzet();
+  }
+
   /** Shallow: API process ayakta mı? Bağımlılık testi yok. Load-balancer için. */
   @Get()
   @ApiOperation({ summary: "Shallow health check, bağımlılık testi yok" })

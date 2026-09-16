@@ -37,9 +37,14 @@ const DB_ZAMAN_ASIMI_MS = 5000;
 
 export type BilesenDurumu = { seviye: Seviye; [k: string]: unknown };
 
+/** /api/health/odeme herkese açık özeti — sır yok, yalnız 'kartla ödeme şu an güvenilir mi?'. */
+export type OdemeOzet = { durum: "ok" | "sorunlu"; seviye: Seviye; sonHata: string | null; son5dkHata: number; kontrol: string };
+const ODEME_OZET_ONBELLEK_MS = 60_000;
+
 @Injectable()
 export class SistemSagligiService {
   private readonly logger = new Logger(SistemSagligiService.name);
+  private odemeOzetOnbellek: { t: number; v: OdemeOzet } | null = null;
 
   constructor(
     private prisma: PrismaService,
@@ -86,6 +91,34 @@ export class SistemSagligiService {
   }
 
   // ── Ödeme sağlayıcı (iyzico) ────────────────────────────────────────────────────────
+  /**
+   * ÖDEME SAĞLAYICI ÖZETİ (2026-09-16, Hasan: "sorun devam ederse kart ödeme alanında uyarı çıkaralım").
+   * Aynı gün iyzico üretim ucu iki kez (08:58-10:15 ve 16:22'den itibaren) erişilemez oldu; müşteri
+   * kartla ödeyemedi. Storefront /odeme ve /odeme/hata sayfaları bu özeti çekip yalnız "arizali"
+   * seviyesinde uyarı basar. Herkese açık: 60 sn önbellek (canlı test 5 sn sürebilir, iyzico'yu
+   * her ziyaretçide yoklamayız), sır ve iç ayrıntı dönmez.
+   */
+  async odemeOzet(): Promise<OdemeOzet> {
+    const simdi = Date.now();
+    if (this.odemeOzetOnbellek && simdi - this.odemeOzetOnbellek.t < ODEME_OZET_ONBELLEK_MS) return this.odemeOzetOnbellek.v;
+    let v: OdemeOzet;
+    try {
+      const o = await this.odeme();
+      v = {
+        durum: o.seviye === "arizali" ? "sorunlu" : "ok",
+        seviye: o.seviye,
+        sonHata: typeof o.sonHata === "string" ? o.sonHata : null,
+        son5dkHata: typeof o.son5dkHata === "number" ? o.son5dkHata : 0,
+        kontrol: new Date(simdi).toISOString(),
+      };
+    } catch {
+      // Ölçüm patlarsa müşteriyi korkutma: uyarı basma, bir sonraki çağrıda yeniden dene.
+      v = { durum: "ok", seviye: "uyari", sonHata: null, son5dkHata: 0, kontrol: new Date(simdi).toISOString() };
+    }
+    this.odemeOzetOnbellek = { t: simdi, v };
+    return v;
+  }
+
   /**
    * 16 Eyl 2026: sunucu→iyzico TLS bağlantısı ~75 dk kurulamadı (diğer servisler sağlam), müşteri
    * kartla ödeyemedi. Canlı bağlantı testi (5 sn) + IyzicoService ağ hatası sayaçları.

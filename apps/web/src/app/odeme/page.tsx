@@ -26,6 +26,7 @@ import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useOrdersStore } from "@/lib/orders-store";
 import { apiClient, withRefresh } from "@/lib/api";
+import { useOdemeSaglayiciDurumu } from "@/lib/odeme-saglayici-durumu";
 import { adresKaydiSorulsunMu } from "./adres-kaydet-kurali";
 import { generateOrderNumber } from "@/lib/format";
 import { BANKA_HESABI, HAVALE_INDIRIM_YUZDE } from "@/lib/company";
@@ -102,6 +103,8 @@ export default function CheckoutPage() {
   // Ödeme yolu seçimi — kart (iyzico) veya cari (açık hesap). Cari yalnız kurumsal üyeye sunulur;
   // "approved" şartını backend doğrular (uygun değilse anlaşılır hata döner, payError'da gösterilir).
   const [paymentMethod, setPaymentMethod] = useState<"iyzico" | "cari" | "havale">("iyzico");
+  // Kart sağlayıcısı (iyzico) arızalıysa ödeme yöntemi seçiminde uyarı (2026-09-16 kesintisi).
+  const { sorunlu: kartSaglayiciSorunlu } = useOdemeSaglayiciDurumu();
   // Kullanıcının hesabında kayıtlı adresleri — giriş yapmışsa çekilir, seçilebilir + varsayılan otomatik dolar.
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   /**
@@ -1258,6 +1261,16 @@ export default function CheckoutPage() {
                 {!isApprovedCorporate && (
                   <div className="pt-2">
                     <div className="text-sm font-medium text-ink-900 mb-2">Ödeme yöntemi</div>
+                    {kartSaglayiciSorunlu && (
+                      <div
+                        role="status"
+                        className="mb-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-xs leading-relaxed text-ink-700"
+                      >
+                        <strong className="text-ink-900">Kart ödemelerinde geçici sorun:</strong> ödeme sağlayıcımız
+                        iyzico tarafında şu an erişim sorunu yaşanıyor. Kartla ödeme alınamazsa birkaç dakika sonra
+                        tekrar deneyin ya da Havale / EFT ile %{HAVALE_INDIRIM_YUZDE} indirimli ödeyin.
+                      </div>
+                    )}
                     <div className="grid gap-2">
                       <button
                         type="button"

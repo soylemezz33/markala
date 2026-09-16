@@ -8,6 +8,7 @@ import { XCircle, ClipboardText, WhatsappLogo } from "@phosphor-icons/react";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { useAuthStore } from "@/lib/auth-store";
 import { odemeHataMesaji } from "@/lib/odeme-hata-mesaji";
+import { useOdemeSaglayiciDurumu } from "@/lib/odeme-saglayici-durumu";
 
 /**
  * iyzico ödeme başarısız/iptal yönlendirmesi.
@@ -29,6 +30,8 @@ function PaymentFailedContent() {
    * Bilinmeyen kodda uydurma açıklama üretilmez, genel metne düşülür.
    */
   const hata = odemeHataMesaji(params.get("kod"));
+  // Sağlayıcı arızasında hatanın sebebini söyle (2026-09-16): müşteri kartını/kendini suçlamasın.
+  const { sorunlu: saglayiciSorunlu } = useOdemeSaglayiciDurumu();
   const user = useAuthStore((s) => s.user);
   // Hidrasyon güvenliği: sunucu daima "misafir" varyantını basar, üyelik durumu mount sonrası
   // uygulanır (oturum bilgisi yalnız istemcide var).
@@ -59,6 +62,14 @@ function PaymentFailedContent() {
       {hata.oneri && (
         <p className="mt-4 mx-auto max-w-lg rounded-lg border border-paper-200 bg-paper-100/70 px-4 py-3 text-sm text-ink-700">
           {hata.oneri}
+        </p>
+      )}
+
+      {saglayiciSorunlu && (
+        <p className="mt-4 mx-auto max-w-lg rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-ink-700">
+          <strong className="text-ink-900">Not:</strong> Şu an ödeme sağlayıcımız iyzico tarafında geçici bir erişim
+          sorunu var; bu hata büyük olasılıkla ondan kaynaklandı, kartınla ilgili değil. Birkaç dakika sonra tekrar
+          deneyebilir ya da havale/EFT ile ödeyebilirsin.
         </p>
       )}
 
