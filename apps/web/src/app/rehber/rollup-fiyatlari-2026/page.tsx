@@ -16,7 +16,7 @@ import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
 import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
-import { KARGO_SURESI } from "@/lib/delivery";
+import { KARGO_SURESI, URETIM_SURESI } from "@/lib/delivery";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir.
 export const revalidate = 3600;
@@ -109,7 +109,7 @@ export default async function RollupFiyatlariPage() {
     },
     {
       q: "Roll-up kaç günde teslim edilir?",
-      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Fuar/etkinlik tarihin belliyse siparişi birkaç gün önceden vermeni öneririz.`,
+      a: `Üretim süresi ${product.productionTime || URETIM_SURESI}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Fuar/etkinlik tarihin belliyse siparişi birkaç gün önceden vermeni öneririz.`,
     },
     {
       q: "Tasarımım yok, ne yapmalıyım?",
@@ -146,7 +146,7 @@ export default async function RollupFiyatlariPage() {
           </h1>
           <HizliCevap
             soru="Rollup banner fiyatı ne kadar?"
-            cevap="Rollup fiyatı stant kalitesi (ekonomik/premium) ve ebada göre değişir; tabloda güncel seçenekler listelenir. Fiyata baskı, stant ve taşıma çantası dahildir; tutarlar KDV dahil olup üretim 2-3 iş günüdür."
+            cevap={`Rollup fiyatı stant kalitesi (ekonomik/premium) ve ebada göre değişir; tabloda güncel seçenekler listelenir. Fiyata baskı, stant ve taşıma çantası dahildir; tutarlar KDV dahil olup üretim ${product.productionTime || URETIM_SURESI} sürer.`}
           />
           <p className="mt-4 text-lg text-ink-700">
             Baskı dahil komple roll-up{" "}

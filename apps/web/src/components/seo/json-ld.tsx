@@ -1,3 +1,4 @@
+import { URETIM_SURESI } from "@/lib/delivery";
 import type { Product, Category, FaqItem } from "@markala/types";
 import { cities } from "@/lib/cities";
 import { POSTAL_ADDRESS_SCHEMA, GEO, MAPS_SHORT_LINK } from "@/lib/company";
@@ -634,7 +635,7 @@ export function HomeJsonLd({
         url: `${SITE}/`,
         name: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı",
         description:
-          "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo.",
+          "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, " + URETIM_SURESI + " üretim, 81 ile kargo.",
         inLanguage: "tr-TR",
         isPartOf: { "@id": `${SITE}/#website` },
         about: { "@id": `${SITE}/#organization` },

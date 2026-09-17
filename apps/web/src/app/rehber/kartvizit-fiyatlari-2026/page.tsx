@@ -16,7 +16,7 @@ import { calculateTotal } from "@/lib/configurator";
 import { formatPriceWithSymbol, formatPrice } from "@/lib/format";
 import { BreadcrumbJsonLd, ArticleJsonLd } from "@/components/seo/json-ld";
 import { GuideFaqSection, asOfLabel, HizliCevap } from "../_shared";
-import { KARGO_SURESI } from "@/lib/delivery";
+import { KARGO_SURESI, URETIM_SURESI } from "@/lib/delivery";
 
 // Fiyatlar canlı katalogdan SSR — saatte bir tazelenir (rehber içeriği için yeterli).
 export const revalidate = 3600;
@@ -136,7 +136,7 @@ export default async function KartvizitFiyatlariPage() {
     },
     {
       q: "Kartvizit kaç günde teslim edilir?",
-      a: `Üretim süresi ${product.productionTime || "2-3 iş günü"}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Sipariş durumu hesabından ve kargo takip sayfasından izlenebilir.`,
+      a: `Üretim süresi ${product.productionTime || URETIM_SURESI}; kargo Türkiye geneli ${KARGO_SURESI} sürer. Sipariş durumu hesabından ve kargo takip sayfasından izlenebilir.`,
     },
     {
       q: "Tasarımım yok, ne yapmalıyım?",
@@ -180,7 +180,7 @@ export default async function KartvizitFiyatlariPage() {
           </h1>
           <HizliCevap
             soru="1.000 adet kartvizit ne kadar?"
-            cevap="Kartvizit fiyatı gramaj (350/400 gr), selefon/lak tercihi ve adede göre değişir; sayfadaki tablo canlı katalogdan güncel tutarları gösterir. Tüm fiyatlar KDV dahildir ve sepette değişmez; üretim 2-3 iş günü, kargo Türkiye geneline yapılır."
+            cevap={`Kartvizit fiyatı gramaj (350/400 gr), selefon/lak tercihi ve adede göre değişir; sayfadaki tablo canlı katalogdan güncel tutarları gösterir. Tüm fiyatlar KDV dahildir ve sepette değişmez; üretim ${product.productionTime || URETIM_SURESI}, kargo Türkiye geneline yapılır.`}
           />
           <p className="mt-4 text-lg text-ink-700">
             {firstTier.label} kartvizit{" "}
@@ -305,7 +305,7 @@ export default async function KartvizitFiyatlariPage() {
           <h2 className="text-2xl md:text-3xl font-semibold">Kartvizitini şimdi yapılandır</h2>
           <p className="mt-3 text-paper-100/70 max-w-xl mx-auto">
             Paket ve adedi seç, fiyatı anında gör - {formatPriceWithSymbol(minStart)}&apos;den
-            başlayan KDV dahil fiyatlarla, üretim {product.productionTime || "2-3 iş günü"}.
+            başlayan KDV dahil fiyatlarla, üretim {product.productionTime || URETIM_SURESI}.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
