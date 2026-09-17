@@ -760,6 +760,12 @@ export function grupToYuk(
   );
   if (kademeler.length < 2) kademeler = tumKademeler.slice(-2); // emniyet: ürün asla kilitlenmez
 
+  // STOK YETERLİLİĞİ (17 Eyl denetimi): tedarikçi stoğu ilk kademeyi bile karşılamıyorsa
+  // (örn. stok 6, minimum 25) müşteri sipariş verebilir ama ürün TEMİN EDİLEMEZ — ürün
+  // pasife düşer, stok gelince gece senkronu kendiliğinden açar.
+  const toplamStok = stoklular.reduce((a, s) => a + s.stok, 0);
+  const aktifVeTeminEdilebilir = aktif && toplamStok >= kademeler[0];
+
   const renkliSayisi = new Set(varyantlar.map((v) => v.renk).values()).size;
   const coklu = varyantlar.length > 1;
 
@@ -811,7 +817,15 @@ export function grupToYuk(
 
   const ebatlar = [...new Set(grup.skular.map((s) => s.ebat).filter(Boolean))];
   // Kısa açıklamaya ilk GERÇEK özellik alınır — "Minimum sipariş" idari bilgidir, vitrine çıkmaz.
-  const ozellikler = maddeler.filter((s) => s && !/minimum/i.test(s)).slice(0, 7);
+  // Açıklaması yalnız minimum satırından ibaret ürünlerde (17 Eyl denetimi: cetvel, kalemtraş)
+  // özellik listesi ebat/renkten türetilir — features bölümü asla boş kalmaz.
+  let ozellikler = maddeler.filter((s) => s && !/minimum/i.test(s)).slice(0, 7);
+  if (ozellikler.length === 0) {
+    ozellikler = [
+      ...(ebatlar.length > 0 ? [`Ebat: ${ebatlar.join(", ")}`] : []),
+      "Firmanıza özel logo baskılı üretilir",
+    ];
+  }
   const ilkOzellik = ozellikler[0] ?? "";
   const renkAdlari = [...new Set(varyantlar.map((v) => v.renk).filter(Boolean))];
   const minAdet = kademeler[0];
@@ -824,8 +838,9 @@ export function grupToYuk(
 
   // SEO/GEO içeriği (ürün OLUŞTURULURKEN yazılır; senkron var olan içeriği ezmez, panel/SEO
   // oturumu sonradan zenginleştirebilir). SSS cevapları veriden üretilir — uydurma iddia yok.
-  // Başlık 65 karakteri aşarsa kademeli kısaltılır (SERP'te kırpılmasın): önce "Promosyon"
-  // eki, sonra parantezli teknik ek, en son adet bilgisi düşer.
+  // Başlık 60 karakteri aşarsa kademeli kısaltılır: vitrin sayfası " · Markala" şablon
+  // eki + TITLE_MAX=60 bütçesi kullanır (urun/[slug]/page.tsx) — 60'ı aşan başlık
+  // KOMPLE atılıp çıplak ürün adına düşüyordu (17 Eyl denetim bulgusu: 68 ürün).
   const baslikAdaylari = [
     `${grup.isim} ${grup.kodgrup} — Logo Baskılı Promosyon, ${minAdet}+ Adet`,
     `${grup.isim} ${grup.kodgrup} — Logo Baskılı, ${minAdet}+ Adet`,
@@ -837,7 +852,7 @@ export function grupToYuk(
     `Minimum ${minAdet} adet${renkAdlari.length > 1 ? `, ${renkAdlari.length} renk seçeneği` : ""}, ` +
     `${URETIM_SURESI} içinde kargoda. Online fiyat alın, hemen sipariş verin.`;
   const seo = {
-    title: baslikAdaylari.find((b) => b.length <= 65) ?? baslikAdaylari[baslikAdaylari.length - 1],
+    title: baslikAdaylari.find((b) => b.length <= 60) ?? baslikAdaylari[baslikAdaylari.length - 1],
     description:
       uzunAciklama.length <= 170
         ? uzunAciklama
@@ -915,7 +930,7 @@ export function grupToYuk(
     options,
     prices,
     gorselKaynaklari: gorselSirasi(grup),
-    aktif,
+    aktif: aktifVeTeminEdilebilir,
     ozetHash: ozet,
   };
 }

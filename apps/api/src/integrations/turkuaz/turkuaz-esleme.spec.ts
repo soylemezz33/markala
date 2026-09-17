@@ -170,6 +170,13 @@ describe("grupToYuk — fiyat matrisi", () => {
     expect(adetler[0].optionSublabel).toBe("Minimum sipariş");
   });
 
+  it("toplam stok ilk kademenin altındaysa ürün pasife düşer (temin edilemez)", () => {
+    const grup = ornekGrup();
+    grup.skular.forEach((s) => (s.stok = 10)); // toplam 20 < min kademe 45
+    const yuk = grupToYuk(grup, false);
+    expect(yuk.aktif).toBe(false);
+  });
+
   it("tüm SKU'lar stoksuzsa ürün pasife düşer ama yük üretilir", () => {
     const grup = ornekGrup();
     grup.skular.forEach((s) => (s.stok = 0));
