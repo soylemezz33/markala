@@ -1167,6 +1167,39 @@ model ProductPrice {
 // TEKİLLEŞTİRME: satır başına bir olay DEĞİL, (directive, blockedUri) başına bir
 // satır tutulur ve `count` artar. blockedUri sorgu dizesi atılarak normalize edilir —
 // aksi halde ad.doubleclick.net/ccm/s/collect?auid=... her istekte yeni satır açardı.
+// TEDARİKÇİ ÜRÜN EŞLEMESİ (2026-09-17, Turkuaz Promosyon XML entegrasyonu — Hasan kararı:
+// baskısız ürün bize gelir, satış = tedarikçi liste fiyatı, Matbaa kategorisi hariç tüm katalog).
+//
+// Amaç: gece senkronunun idempotency anahtarı. Tedarikçinin ana ürün kodu (kodgrup) ile bizim
+// Product kaydımız arasındaki KALICI bağ burada durur — slug/isim sonradan panelden değişse bile
+// senkron doğru ürünü bulur. `ozet` son senkronun SKU özetini (stok/fiyat) taşır; içerik
+// değişmediyse senkron ürüne hiç dokunmaz (hash karşılaştırması). `gorseller` tedarikçi görsel
+// URL'si → bizim uploads URL'miz eşlemesidir: aynı görsel tedarikçiden İKİNCİ KEZ ASLA çekilmez
+// (Turkuaz kuralı: tekrarlanan görsel isteklerine sistem kapalı, IP bloklanır).
+//
+// Product'a Prisma ilişkisi BİLEREK kurulmadı: Product modeli başka oturumlarca sık düzenleniyor;
+// gevşek String referans şema çakışmasını ve cascade sürprizlerini önler. Ürün panelden silinirse
+// senkron productId'yi slug üzerinden yeniden bağlar ya da ürünü yeniden oluşturur.
+model TedarikciUrun {
+  id        String   @id @default(cuid())
+  /// Tedarikçi anahtarı — şimdilik tek değer: "turkuaz".
+  tedarikci String
+  /// Tedarikçinin ana ürün kodu (Turkuaz: kodgrup; renk varyantları bunun altında SKU'dur).
+  kodgrup   String
+  /// Bizim Product.id — ilişkisiz gevşek referans (üstteki nota bakınız).
+  productId String?  @unique @map("product_id")
+  /// Son senkron özeti: { hash, isim, skuSayisi, stokToplam, minFiyat, kategoriKok }.
+  ozet      Json
+  /// Tedarikçi görsel URL'si → bizim uploads URL'miz. Tekrar indirme yasağının teminatı.
+  gorseller Json     @default("{}")
+  senkronAt DateTime @map("senkron_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([tedarikci, kodgrup])
+  @@map("tedarikci_urunler")
+}
+
 model CspViolation {
   id                String   @id @default(cuid())
 /// effective-directive (yoksa violated-directive): script-src, connect-src, worker-src...

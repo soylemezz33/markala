@@ -7,6 +7,9 @@ import { NetgsmService } from "./netgsm/netgsm.service";
 import { MetaCapiService } from "./meta/meta-capi.service";
 import { WhatsappService } from "./whatsapp/whatsapp.service";
 import { ChatwootService } from "./chatwoot/chatwoot.service";
+import { TurkuazService } from "./turkuaz/turkuaz.service";
+import { TurkuazController } from "./turkuaz/turkuaz.controller";
+import { StorageModule } from "../storage/storage.module";
 
 // NOT: R2 yükleme StorageService.putR2() üzerinden gerçek @aws-sdk/client-s3 ile yapılır
 // (R2_* env'leri girilince aktif). Eski R2Service presigned-URL stub'ı kullanılmadığı için kaldırıldı.
@@ -17,8 +20,10 @@ import { ChatwootService } from "./chatwoot/chatwoot.service";
 // gösterecek şekilde düzeltildi (stats.service.ts integrationStatus).
 @Global()
 @Module({
-  controllers: [CargoTrackingController],
-  providers: [IyzicoService, ParasutService, DhlService, NetgsmService, MetaCapiService, WhatsappService, ChatwootService],
-  exports: [IyzicoService, ParasutService, DhlService, NetgsmService, MetaCapiService, WhatsappService, ChatwootService],
+  // StorageModule: TurkuazService tedarikçi görsellerini WebP hattından geçirip kaydeder.
+  imports: [StorageModule],
+  controllers: [CargoTrackingController, TurkuazController],
+  providers: [IyzicoService, ParasutService, DhlService, NetgsmService, MetaCapiService, WhatsappService, ChatwootService, TurkuazService],
+  exports: [IyzicoService, ParasutService, DhlService, NetgsmService, MetaCapiService, WhatsappService, ChatwootService, TurkuazService],
 })
 export class IntegrationsModule {}
