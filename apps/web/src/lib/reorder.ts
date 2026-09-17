@@ -134,6 +134,8 @@ async function addOrderItemToCart(
       summary: cfg?.summary || item.configurationSummary || "",
       totalPrice,
       needsDesign: Boolean(cfg?.needsDesign),
+      // Sepet teslim aralığı için güncel üretim süresi (2026-09-17).
+      ...(product.productionTime ? { productionTime: product.productionTime } : {}),
       // Aynı tasarım dosyasıyla tekrar sipariş — dosya storage'da durduğu sürece geçerli.
       uploadedFileName: cfg?.uploadedFileName,
       uploadedFileUrl: cfg?.uploadedFileUrl,

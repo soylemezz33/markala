@@ -22,6 +22,12 @@ interface CartState {
   updateQuantityAndPrice: (id: string, quantity: number, unitPrice: number) => void;
   /** Sepet satırındaki set başına tasarım dosyaları (2026-09-03). */
   setDesigns: (id: string, designs: NonNullable<CartItem["configuration"]["designs"]>) => void;
+  /**
+   * Sepet satırını yerinde değiştir (2026-09-17, "sepette düzenle"): ürün sayfası
+   * `?duzenle=<id>` ile açılır, konfigürasyon yeniden kurulur ve aynı id/sıra korunarak
+   * yazılır. Satır yoksa (bu arada silinmişse) eklenir. add_to_cart olayı ATILMAZ.
+   */
+  replaceItem: (id: string, item: Omit<CartItem, "id">) => void;
   setCoupon: (code: string | null) => void;
   clear: () => void;
 
@@ -126,6 +132,14 @@ export const useCartStore = create<CartState>()(
               configuration: {
                 ...i.configuration,
                 designs,
+                // "Sonra göndereceğim" demiş müşteri sepette dosya ekledi → bayrak düşer,
+                // özetteki "Dosya sonra gönderilecek" ibaresi de kalkar.
+                ...(ilk && i.configuration.designLater
+                  ? {
+                      designLater: false,
+                      summary: i.configuration.summary.replace(/\s*·\s*Dosya sonra gönderilecek/, ""),
+                    }
+                  : {}),
                 // Eski tek-dosya alanları ilk dosyadan türetilir (özet/e-posta/eski panel).
                 uploadedFileName: ilk?.name,
                 uploadedFileUrl: ilk?.url,
@@ -133,6 +147,18 @@ export const useCartStore = create<CartState>()(
             };
           }),
         }));
+      },
+
+      replaceItem: (id, item) => {
+        const qty = Math.min(100000, Math.max(1, item.quantity));
+        set((state) => {
+          const varMi = state.items.some((i) => i.id === id);
+          return {
+            items: varMi
+              ? state.items.map((i) => (i.id === id ? { ...item, id, quantity: qty } : i))
+              : [...state.items, { ...item, id, quantity: qty }],
+          };
+        });
       },
 
       setCoupon: (code) => set({ couponCode: code }),

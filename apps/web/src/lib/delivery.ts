@@ -82,3 +82,63 @@ export const KARGO_SURESI = "2-4 iş günü";
 
 /** Üretim + kargo toplamı. URETIM_SURESI ve KARGO_SURESI ile tutarlı olmak ZORUNDA. */
 export const TOPLAM_SURE = "5-9 iş günü";
+
+// ---------------------------------------------------------------------------
+// Ürün bazlı teslim ARALIĞI (2026-09-17, dış rapor 6. bölüm — sepet + ürün sayfası).
+//
+// Tarih DEĞİL aralık: 2026-08-08 kararıyla "en geç X tarihinde kargoda" vaadi kaldırıldı
+// (üretim süresiyle karışıp yanlış beklenti yaratıyordu). Burada yalnız iş günü aralığı
+// verilir: üretim (ürünün productionTime metni) + kargo (KARGO_SURESI) = toplam.
+// Birden çok kalem tek kargoda çıkar → üretim = kalemlerin EN UZUNU.
+// ---------------------------------------------------------------------------
+
+export interface GunAraligi {
+  min: number;
+  max: number;
+}
+
+/** KARGO_SURESI'nin sayısal hâli — ikisi birlikte değişmeli. */
+export const KARGO_ARALIGI: GunAraligi = { min: 2, max: 4 };
+
+/** "6-7 iş günü" → {6,7}; "3 iş günü" → {3,3}; sayı yoksa null. */
+export function parseBusinessDayRange(text: string | null | undefined): GunAraligi | null {
+  const nums = ((text ?? "").match(/\d+/g) ?? []).map(Number).filter((n) => n > 0 && n < 60);
+  if (nums.length === 0) return null;
+  return { min: Math.min(...nums), max: Math.max(...nums) };
+}
+
+/** {3,6} → "3-6 iş günü"; {3,3} → "3 iş günü". */
+export function gunAraligiMetni(a: GunAraligi): string {
+  return a.min === a.max ? `${a.min} iş günü` : `${a.min}-${a.max} iş günü`;
+}
+
+export interface TeslimAraligi {
+  uretim: GunAraligi;
+  kargo: GunAraligi;
+  toplam: GunAraligi;
+  uretimMetni: string;
+  toplamMetni: string;
+}
+
+/**
+ * Kalemlerin üretim sürelerinden toplam teslim aralığı. Boş/çözümlenemeyen metin site geneli
+ * URETIM_SURESI'ne düşer (eski sepet satırlarında productionTime yoktur).
+ */
+export function teslimAraligi(productionTimes: Array<string | null | undefined>): TeslimAraligi {
+  const varsayilan = parseBusinessDayRange(URETIM_SURESI) ?? { min: 1, max: 2 };
+  const araliklar = (productionTimes.length ? productionTimes : [undefined]).map(
+    (t) => parseBusinessDayRange(t) ?? varsayilan,
+  );
+  const uretim = {
+    min: Math.max(...araliklar.map((a) => a.min)),
+    max: Math.max(...araliklar.map((a) => a.max)),
+  };
+  const toplam = { min: uretim.min + KARGO_ARALIGI.min, max: uretim.max + KARGO_ARALIGI.max };
+  return {
+    uretim,
+    kargo: KARGO_ARALIGI,
+    toplam,
+    uretimMetni: gunAraligiMetni(uretim),
+    toplamMetni: gunAraligiMetni(toplam),
+  };
+}

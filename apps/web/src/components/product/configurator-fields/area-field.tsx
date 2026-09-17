@@ -136,7 +136,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
       <div className="grid grid-cols-2 gap-3">
         <label className="block">
           <span className="mb-1 block text-xs text-ink-500">
-            En (cm)
+            En / genişlik (cm)
             {minEn && maxEn ? ` · ${minEn}-${maxEn}` : minEn ? ` · en az ${minEn}` : maxEn ? ` · en fazla ${maxEn}` : ""}
           </span>
           <input
@@ -153,7 +153,7 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
         </label>
         <label className="block">
           <span className="mb-1 block text-xs text-ink-500">
-            Boy (cm){minBoy ? ` · en az ${minBoy}` : ""}
+            Boy / yükseklik (cm){minBoy ? ` · en az ${minBoy}` : ""}
           </span>
           <input
             type="number"
@@ -168,6 +168,44 @@ export function AreaField({ minM2 = 1 }: { minM2?: number }) {
           />
         </label>
       </div>
+
+      {/* Yön önizlemesi (2026-09-17, dış rapor 6. bölüm): "en×boy" sayısının yatay mı dikey mi
+          olduğunu müşteri kutudan görür; "Çevir" en↔boy değiştirir. Özet/sepet/sipariş
+          çıktısında sıra hep genişlik × yükseklik kalır. */}
+      {enN > 0 && boyN > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-paper-200 bg-paper-100/60 px-3 py-2">
+          <div className="grid h-14 w-14 flex-none place-items-center">
+            <div
+              aria-hidden
+              className="rounded-sm border-2 border-[#4B3AA0] bg-[#4B3AA0]/10"
+              style={
+                enN >= boyN
+                  ? { width: 48, height: Math.max(8, Math.round((48 * boyN) / enN)) }
+                  : { height: 48, width: Math.max(8, Math.round((48 * enN) / boyN)) }
+              }
+            />
+          </div>
+          <div className="min-w-0 flex-1 text-xs text-ink-700">
+            <span className="font-medium text-ink-900">
+              {enN === boyN ? "Kare" : enN > boyN ? "Yatay" : "Dikey"}
+            </span>{" "}
+            · {en} cm genişlik × {boy} cm yükseklik
+          </div>
+          {enN !== boyN && (
+            <button
+              type="button"
+              onClick={() => {
+                set("en", clampDim(boy, enCap));
+                set("boy", clampDim(en, HARD_MAX_CM));
+              }}
+              className="flex-none rounded-md border border-paper-300 bg-paper-50 px-2.5 py-1.5 text-xs font-medium text-ink-900 hover:border-ink-500"
+              title="En ve boyu yer değiştir"
+            >
+              Çevir ⇄
+            </button>
+          )}
+        </div>
+      )}
 
       <label className="block">
         <span className="mb-1 block text-xs text-ink-500">Adet</span>

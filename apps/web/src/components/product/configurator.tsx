@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useMemo, useReducer, useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button, Price } from "@markala/ui";
-import { ShoppingBagOpen, CheckCircle, ChatCircleText, Truck, SpinnerGap } from "@phosphor-icons/react";
-import type { Product } from "@markala/types";
+import { ShoppingBagOpen, CheckCircle, ChatCircleText, Truck, SpinnerGap, Clock, PencilSimple } from "@phosphor-icons/react";
+import type { CartItem, Product } from "@markala/types";
+import { KARGO_SURESI, teslimAraligi } from "@/lib/delivery";
 import {
   calculateTotal,
   buildSelectionSummary,
@@ -88,7 +91,33 @@ function buildGroups(raw: unknown[]): OptionGroupData[] {
 
 export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PRICING }: { product: Product; rating?: { average: number; count: number }; pricing?: PricingSettings }) {
   const addItem = useCartStore((s) => s.addItem);
+  const replaceItem = useCartStore((s) => s.replaceItem);
+  const router = useRouter();
   const [state, dispatch] = useReducer(configuratorReducer, product, initState);
+
+  /**
+   * Sepette düzenle (2026-09-17, dış rapor 6. bölüm): /urun/<slug>?duzenle=<sepet satır id>
+   * ile gelindiğinde satır konfigüratöre geri yüklenir; CTA "Sepeti Güncelle" olur ve satır
+   * yerinde değiştirilir. Sayfa statik (revalidate) olduğundan useSearchParams yerine
+   * window.location okunur — Suspense sınırı gerekmez. Zustand persist localStorage'ı senkron
+   * hidrate eder; yine de hidrasyon bitmemişse onFinishHydration beklenir.
+   */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("duzenle");
+    if (!id) return;
+    const yukle = () => {
+      const item = useCartStore.getState().items.find((i) => i.id === id && i.productSlug === product.slug);
+      if (!item) return;
+      dispatch({ type: "LOAD_FROM_CART", item, product });
+      setEditingId(id);
+    };
+    if (useCartStore.persist.hasHydrated()) yukle();
+    else {
+      const unsub = useCartStore.persist.onFinishHydration(yukle);
+      return unsub;
+    }
+  }, [product]);
   // Kargo ücreti buy-box'ta ŞEFFAF gösterilir — sepetteki +79₺ sürprizi terk ettiriyordu
   // (CRO denetimi 2026-08-01). API düşerse 115/1500 fallback; sepet sayfasıyla aynı kaynak.
   const [shippingInfo, setShippingInfo] = useState({ fee: 115, freeThreshold: 1500 });
@@ -401,9 +430,14 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     return () => io.disconnect();
   }, []);
 
-  function handleAddToCart() {
-    if (!canBuy) return;
-    addItem({
+  /** Sepet satırı yükü — hem "Sepete Ekle" hem "Sepeti Güncelle" aynı şekli üretir. */
+  function buildCartPayload(): Omit<CartItem, "id"> {
+    const designLater = state.designMode === "sonra";
+    // Brief'i yalnız dolu alanlarıyla yaz (boş string'ler JSON'a düşmesin).
+    const brief = Object.fromEntries(
+      Object.entries(state.brief).filter(([, v]) => typeof v === "string" && v.trim() !== ""),
+    ) as CartItem["configuration"]["designBrief"];
+    return {
       productSlug: product.slug,
       productName: product.name,
       productImage:
@@ -417,20 +451,38 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         ...(isArea ? { pricingMode: "area" as const } : {}),
         // Kampanyalı ürün: sepet/ödeme indirim tabanından düşer (sunucu da content'ten doğrular).
         ...(product.indirimHaric ? { indirimHaric: true } : {}),
-        summary: buildSelectionSummary(product, effSel, state.needsDesign),
+        summary: buildSelectionSummary(product, effSel, state.needsDesign, designLater),
         totalPrice: isArea ? unitArea : total, // BİRİM fiyat (sepet satırı = totalPrice × quantity)
         needsDesign: state.needsDesign,
+        ...(designLater ? { designLater: true } : {}),
+        ...(state.needsDesign && brief && Object.keys(brief).length ? { designBrief: brief } : {}),
+        // Sepet/ödeme ürün bazlı teslim aralığını buradan hesaplar (2026-09-17).
+        ...(product.productionTime ? { productionTime: product.productionTime } : {}),
         uploadedFileName: state.uploadedFileName,
         uploadedFileUrl: state.uploadedFileUrl,
-        // Set başına tasarımlar (2026-09-03). 2026-09-14: tasarım desteği istense de dosyalar
-        // KORUNUR (logo/görsel/metin materyali) — eskiden burada atılıyordu, Hasan: "dosyalar kayboluyor".
-        designs: state.designs.map((d) => ({ files: d.files.map((f) => ({ name: f.name, url: f.url, size: f.size, type: f.type })) })),
+        // Set başına tasarımlar (2026-09-03). "destek"te logo/referans dosyaları da buradan
+        // gider (tek alan); "sonra"da dosya yok.
+        designs: designLater ? [] : state.designs.map((d) => ({ files: d.files.map((f) => ({ name: f.name, url: f.url, size: f.size, type: f.type })) })),
       },
-      quantity: areaAdet, // area: girilen adet; additive: 1
-    });
+      quantity: areaAdet, // area: girilen adet; additive: sepet set sayısı (düzenlemede korunur)
+    };
+  }
+
+  function handleAddToCart() {
+    if (!canBuy) return;
+    if (editingId) {
+      replaceItem(editingId, buildCartPayload());
+      router.push("/sepet");
+      return;
+    }
+    addItem(buildCartPayload());
     dispatch({ type: "JUST_ADDED", value: true });
     setTimeout(() => dispatch({ type: "JUST_ADDED", value: false }), 1500);
   }
+
+  // Ürün bazlı teslim aralığı (2026-09-17): tarih değil aralık — 2026-08-08 kararı korunur.
+  const teslim = useMemo(() => teslimAraligi([product.productionTime]), [product.productionTime]);
+  const uretimOnaySonrasi = state.designMode !== "hazir";
 
   const handleSelect = useCallback(
     (groupKey: string, optionKey: string) =>
@@ -454,6 +506,17 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6 lg:items-start">
         {/* SOL — başlık + açıklama + seçenekler */}
         <div className="space-y-4 min-w-0">
+          {editingId && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-brand-300 bg-brand-100 px-3 py-2 text-xs text-ink-900">
+              <span className="inline-flex items-center gap-1.5">
+                <PencilSimple size={14} weight="fill" className="text-brand-700" />
+                Sepetteki ürünü düzenliyorsunuz; değişiklik aynı satıra yazılır.
+              </span>
+              <Link href="/sepet" className="flex-none font-medium text-brand-700 underline hover:text-brand-900">
+                Vazgeç
+              </Link>
+            </div>
+          )}
           <div>
             <h1 className="text-2xl md:text-3xl font-serif text-ink-900 leading-tight">{product.name}</h1>
             <div className="mt-1.5 flex items-center gap-2 text-sm text-ink-500">
@@ -510,9 +573,6 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                 />
               );
             })}
-            {/* Set adedi kadar tasarım alanı: m² üründe girilen adet, diğerlerinde 1 (sepette artarsa
-                sepet satırında tamamlanır — CartDesignSlots). */}
-            <DesignUpload slotCount={isArea ? areaAdet : state.quantity} />
           </div>
         </div>
 
@@ -589,7 +649,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                     </>
                   ) : (
                     <>
-                      <ShoppingBagOpen size={20} weight="bold" /> Sepete Ekle
+                      <ShoppingBagOpen size={20} weight="bold" /> {editingId ? "Sepeti Güncelle" : "Sepete Ekle"}
                     </>
                   )}
                 </Button>
@@ -605,9 +665,26 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
               )}
             </div>
 
-            {/* "En geç X kargoda" teslim tahmini KALDIRILDI (2026-08-08 karar): tarihli
-                kargo sözü, üretim süresiyle karışıp yanlış beklenti yaratıyordu. Üretim
-                süresi başlık altında zaten yazıyor; kargo süresi bilinçli olarak verilmiyor. */}
+            {/* "En geç X kargoda" TARİHLİ tahmin 2026-08-08 kararıyla kaldırıldı ve geri
+                gelmedi. 2026-09-17 (dış rapor 6. bölüm): tarih yerine ürün bazlı ARALIK —
+                üretim (ürünün kendi süresi) + kargo (site geneli) = toplam iş günü. Kartvizit
+                6-7 gün olduğundan bu satır ürünler arasında farklıdır. */}
+            {canBuy && (
+              <p className="text-xs text-ink-700 flex items-start gap-1.5">
+                <Clock size={14} weight="fill" className="text-ink-400 mt-0.5 flex-none" />
+                <span>
+                  Tahmini teslim <strong className="text-ink-900">{teslim.toplamMetni}</strong>
+                  <span className="text-ink-500"> · üretim {teslim.uretimMetni} + kargo {KARGO_SURESI}</span>
+                  {uretimOnaySonrasi && (
+                    <span className="block text-ink-500">
+                      {state.designMode === "destek"
+                        ? "Üretim, tasarım onayınızdan sonra başlar."
+                        : "Üretim, dosyanız gelince başlar."}
+                    </span>
+                  )}
+                </span>
+              </p>
+            )}
 
             {/* Kargo şeffaflığı — sepetteki +79₺ sürprizini önler. */}
             {canBuy && (
@@ -623,6 +700,13 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
                 : "Teklif Al'a tıkla, 24 saat içinde sana dönelim, hiçbir ödeme veya taahhüt yok."}
             </p>
           </div>
+
+          {/* Tasarım desteği + dosya alanı (2026-09-05 Hasan talebi): seçeneklerin altından
+              fiyat kartının ALTINA taşındı. Set adedi kadar tasarım alanı: m² üründe girilen
+              adet, diğerlerinde 1 (sepette artarsa sepet satırında tamamlanır — CartDesignSlots). */}
+          <div className="mt-4 rounded-xl border border-paper-200 bg-paper-50 shadow-sm p-5">
+            <DesignUpload slotCount={isArea ? areaAdet : state.quantity} />
+          </div>
         </aside>
       </div>
 
@@ -632,6 +716,7 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         uploading={uploadPending}
         productName={product.name}
         visible={stickyBarVisible}
+        label={editingId ? "Sepeti Güncelle" : "Sepete Ekle"}
         onAddToCart={canBuy ? handleAddToCart : handleQuoteClick}
       />
     </ConfiguratorContext.Provider>

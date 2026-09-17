@@ -8,6 +8,7 @@ import { Button, Price } from "@markala/ui";
 import { useCartStore, itemUnitCount } from "@/lib/cart-store";
 import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartDesignSlots } from "@/components/cart/cart-design-slots";
+import { CartItemMeta } from "@/components/cart/cart-item-meta";
 import { useEffect, useRef } from "react";
 
 export function CartDrawer() {
@@ -148,9 +149,8 @@ export function CartDrawer() {
                           {item.configuration.summary}
                         </p>
                         <CartDesignSlots item={item} compact />
-                        {item.configuration.needsDesign && (
-                          <p className="mt-1 text-xs text-brand-700">✦ Tasarım desteği isteniyor</p>
-                        )}
+                        {/* m²/paket satırı, tasarım durumu, üretim, Düzenle (2026-09-17) */}
+                        <CartItemMeta item={item} compact onNavigate={close} />
                         <div className="mt-2 flex items-center justify-between">
                           {/* Gösterim: parça adedi (set × tiraj); ± bir tiraj setinde adım atar */}
                           <QtyControl
@@ -165,13 +165,7 @@ export function CartDrawer() {
                             className="text-ink-900"
                           />
                         </div>
-                        {/* Kademeli üründe çok set: "2 set × 25 = 50 adet" netleştirmesi */}
-                        {itemUnitCount(item) > 1 && item.quantity > 1 && (
-                          <p className="mt-1.5 text-[11px] text-ink-500">
-                            {item.quantity} set × {itemUnitCount(item)} ={" "}
-                            <span className="font-medium text-ink-700">{item.quantity * itemUnitCount(item)} adet</span>
-                          </p>
-                        )}
+                        {/* "N set × tiraj = adet" satırı CartItemMeta'ya taşındı. */}
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}

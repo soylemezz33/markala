@@ -1454,6 +1454,12 @@ export default function CheckoutPage() {
                         <p className="text-xs text-ink-500 line-clamp-1">
                           {item.configuration.summary}
                         </p>
+                        {/* Tasarım durumu (2026-09-17): üretimin ne zaman başlayacağı ödeme adımında da görünür. */}
+                        {item.configuration.needsDesign ? (
+                          <p className="text-[11px] text-brand-700">✦ Tasarım desteği · üretim onaydan sonra</p>
+                        ) : item.configuration.designLater ? (
+                          <p className="text-[11px] text-warning font-medium">⏳ Dosya sonra · üretim dosya gelince</p>
+                        ) : null}
                         <div className="mt-1 flex items-center justify-between text-xs">
                           {/* Gösterim: parça adedi (set × tiraj) */}
                           <span className="text-ink-500">x{item.quantity * itemUnitCount(item)}</span>

@@ -1,5 +1,4 @@
 "use client";
-import { URETIM_SURESI } from "@/lib/delivery";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -20,6 +19,8 @@ import { FreeShippingBar } from "@/components/cart/free-shipping-bar";
 import { CartCrossSell } from "@/components/cart/cross-sell";
 import { CartEmailCapture } from "@/components/cart/cart-email-capture";
 import { CartDesignSlots } from "@/components/cart/cart-design-slots";
+import { CartItemMeta } from "@/components/cart/cart-item-meta";
+import { KARGO_SURESI, teslimAraligi } from "@/lib/delivery";
 import { VAT_RATE } from "@/lib/vat";
 
 /** Sepette gösterilen tahmini indirim; gerçek indirim sipariş oluşturulurken sunucuda hesaplanır. */
@@ -72,6 +73,9 @@ export default function CartPage() {
   }, []);
 
   const sub = subtotal();
+  // Ürün bazlı teslim aralığı (2026-09-17): kalem snapshot'larındaki productionTime'dan.
+  const teslim = teslimAraligi(items.map((i) => i.configuration.productionTime));
+  const onayBekleyenVar = items.some((i) => i.configuration.needsDesign || i.configuration.designLater);
   // Kampanyalı (indirimHaric) satırlar hariç taban — kupon indirimi yalnız buna hesaplanır.
   const indirimTabani = useCartStore((s) => s.indirimTabani)();
   const kampanyaliVar = sub > 0 && indirimTabani < sub;
@@ -212,9 +216,8 @@ export default function CartPage() {
                   <p className="mt-1 text-sm text-ink-500">{item.configuration.summary}</p>
                   {/* Set başına tasarım dosyaları (2026-09-03): eksikse burada tamamlanır. */}
                   <CartDesignSlots item={item} />
-                  {item.configuration.needsDesign && (
-                    <p className="mt-1 text-xs text-brand-700">✦ Tasarım desteği isteniyor</p>
-                  )}
+                  {/* m²/paket satırı, tasarım durumu, üretim süresi, Düzenle (2026-09-17) */}
+                  <CartItemMeta item={item} />
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                     {/* Gösterim: parça adedi (set × tiraj); ± bir tiraj setinde adım atar */}
                     <QtyControl
@@ -229,29 +232,8 @@ export default function CartPage() {
                       </button>
                     </div>
                   </div>
-                  {/* Tiraj netleştirme — 🔴 tiraj quantity'ye TAŞINAMAZ (mimari kısıt), davranış aynı;
-                      yalnız SUNUM: stepper'daki büyük sayının "paket × set" olduğunu açıkla ve tiraj
-                      değişikliği için ürün sayfasına yönlendir (± yalnız set sayısını değiştirir). */}
-                  {itemUnitCount(item) > 1 && (
-                    <p className="mt-1.5 text-xs text-ink-500">
-                      {itemUnitCount(item).toLocaleString("tr-TR")} adetlik paket × {item.quantity}
-                      {item.quantity > 1 && (
-                        <>
-                          {" "}={" "}
-                          <span className="font-medium text-ink-700">
-                            {(item.quantity * itemUnitCount(item)).toLocaleString("tr-TR")} adet
-                          </span>
-                        </>
-                      )}
-                      {" · "}
-                      <Link
-                        href={`/urun/${item.productSlug}`}
-                        className="underline text-brand-700 hover:text-brand-900"
-                      >
-                        tirajı değiştir
-                      </Link>
-                    </p>
-                  )}
+                  {/* Paket × set satırı ve "tirajı değiştir" bağlantısı CartItemMeta'ya taşındı
+                      (Düzenle → ?duzenle=<id>, satır yerinde güncellenir). */}
                 </div>
               </article>
             ))}
@@ -282,6 +264,24 @@ export default function CartPage() {
                     </p>
                   </div>
                 </dl>
+                {/* Ürün bazlı teslim ARALIĞI (2026-09-17, dış rapor 6. bölüm): kalemlerin en uzun
+                    üretimi + kargo. Tarih verilmez (2026-08-08 kararı). Tasarım desteği / dosya
+                    sonra olan kalem varsa üretimin onay/dosya sonrası başladığı açıkça yazılır. */}
+                <div className="mt-4 rounded-lg border border-paper-200 bg-paper-100/60 px-3 py-2.5 text-xs text-ink-700">
+                  <p className="flex items-center gap-1.5">
+                    <Clock size={14} weight="fill" className="text-ink-400" />
+                    Tahmini teslim <strong className="text-ink-900">{teslim.toplamMetni}</strong>
+                  </p>
+                  <p className="mt-0.5 text-ink-500">
+                    Üretim {teslim.uretimMetni} + kargo {KARGO_SURESI}
+                    {items.length > 1 && " · kalemler tek kargoda, en uzun üretim belirler"}
+                  </p>
+                  {onayBekleyenVar && (
+                    <p className="mt-1 text-warning font-medium">
+                      Üretim, tasarım onayı ya da eksik dosya tamamlanınca başlar.
+                    </p>
+                  )}
+                </div>
                 {/* Bedava kargo çubuğu — ortak bileşen (çekmecede de aynısı); eşik /settings/shipping'ten. */}
                 <FreeShippingBar
                   subtotal={sub}
@@ -406,7 +406,8 @@ export default function CartPage() {
               </div>
 
               <ul className="grid grid-cols-3 gap-2">
-                <Trust icon={<Clock size={18} />} label={`${URETIM_SURESI} üretim`} />
+                {/* Sabit "2-3" yerine sepetteki kalemlerin gerçek üretim aralığı (2026-09-17). */}
+                <Trust icon={<Clock size={18} />} label={`${teslim.uretimMetni} üretim`} />
                 <Trust icon={<Truck size={18} />} label="81 ile kargo" />
                 <Trust icon={<ShieldCheck size={18} />} label="KVKK uyumlu" />
               </ul>

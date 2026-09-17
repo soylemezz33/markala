@@ -13,6 +13,8 @@ interface Props {
   canBuy?: boolean;
   /** Tasarım dosyası yükleniyor — buton kilitli, "Teklif Al"a düşmez (UX denetimi #5). */
   uploading?: boolean;
+  /** Buton metni (varsayılan "Sepete Ekle"; sepetten düzenlemede "Sepeti Güncelle"). */
+  label?: string;
   /** Masaüstü barında solda gösterilir. */
   productName?: string;
   /** Masaüstünde bar yalnızca bu true iken görünür (gerçek CTA ekran dışındayken). Mobilde daima görünür. */
@@ -23,7 +25,7 @@ interface Props {
  * Sabit alt bar — fiyat + Sepete Ekle. Mobilde DAİMA görünür; masaüstünde yalnızca
  * kolon-içi gerçek CTA ekran dışındayken (visible) görünür → footer örtülmez, çift buton olmaz.
  */
-export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName, visible = true, uploading = false }: Props) {
+export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName, visible = true, uploading = false, label = "Sepete Ekle" }: Props) {
   const { state } = useConfigurator();
   const { justAdded } = state;
 
@@ -71,7 +73,7 @@ export function MobileCta({ total, onAddToCart, canBuy = total > 0, productName,
               <>Dosya yükleniyor…</>
             ) : canBuy ? (
               <>
-                <ShoppingBagOpen size={16} weight="bold" /> Sepete Ekle
+                <ShoppingBagOpen size={16} weight="bold" /> {label}
               </>
             ) : (
               <>

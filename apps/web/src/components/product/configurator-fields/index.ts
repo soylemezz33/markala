@@ -1,7 +1,7 @@
 export { ConfiguratorContext, useConfigurator } from "./context";
 export type { ConfiguratorContextValue } from "./context";
 export { configuratorReducer, initState } from "./reducer";
-export type { ConfiguratorAction, ConfiguratorState } from "./reducer";
+export type { ConfiguratorAction, ConfiguratorState, DesignMode } from "./reducer";
 export { OptionGroup } from "./option-group";
 export { RadioCard } from "./radio-card";
 export { DesignUpload } from "./design-upload";

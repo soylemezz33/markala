@@ -204,6 +204,8 @@ export function buildSelectionSummary(
   product: Product,
   selections: Record<string, string>,
   needsDesign: boolean,
+  /** "Dosyayı sonra göndereceğim" seçildi (2026-09-17) — özete düşer, panel/e-posta görür. */
+  designLater = false,
 ): string {
   const opts = (product.options ?? []) as unknown as PricingOption[];
   // Grupları groupSort'a göre sırala
@@ -226,6 +228,7 @@ export function buildSelectionSummary(
     if (opt) parts.push(opt.optionLabel);
   }
   if (needsDesign) parts.push("Tasarım desteği isteniyor");
+  else if (designLater) parts.push("Dosya sonra gönderilecek");
   return parts.join(" · ");
 }
 

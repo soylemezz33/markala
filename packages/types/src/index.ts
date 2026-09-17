@@ -299,6 +299,23 @@ export interface CampaignBundle {
 
 // === Sepet & Sipariş ===
 
+/**
+ * Tasarım desteği brief'i (2026-09-17). Tüm alanlar isteğe bağlı; müşteri doldurduğu kadarı
+ * sipariş kalemi configuration JSON'unda saklanır ve panelde "Tasarım brief'i" olarak görünür.
+ */
+export interface DesignBrief {
+  /** Basılacak metin: isim, unvan, slogan, iletişim bilgileri… */
+  metin?: string;
+  /** Renk tercihi / kurumsal renkler */
+  renkler?: string;
+  /** Yön tercihi */
+  yon?: "yatay" | "dikey" | "farketmez";
+  /** Tek yüz / çift yüz */
+  yuzler?: "tek" | "cift" | "farketmez";
+  /** Serbest not */
+  notlar?: string;
+}
+
 export interface CartItemConfiguration {
   /** Konfigüratör seçimleri — groupKey → optionKey (string) */
   selections: ConfiguratorSelections;
@@ -319,6 +336,21 @@ export interface CartItemConfiguration {
   indirimHaric?: boolean;
   /** Tasarım desteği istendi mi */
   needsDesign: boolean;
+  /**
+   * "Dosyayı sonra göndereceğim" seçildi (2026-09-17, dış rapor 6. bölüm). needsDesign=false iken
+   * anlamlıdır; üretim dosya gelene kadar başlamaz. Sepette dosya eklenirse bayrak düşer.
+   */
+  designLater?: boolean;
+  /**
+   * Tasarım desteği brief'i (2026-09-17): grafik ekibinin WhatsApp'ta topladığı bilgi sipariş
+   * anında alınır. needsDesign=true iken dolu; logo/referans dosyaları `designs[0]`da taşınır.
+   */
+  designBrief?: DesignBrief;
+  /**
+   * Ürünün üretim süresi metni (sipariş anındaki snapshot, ör. "6-7 iş günü"). Sepet ve ödeme
+   * ürün bazlı teslim aralığını buradan hesaplar (2026-09-17). Eski satırlarda eksik olabilir.
+   */
+  productionTime?: string;
   /** Yüklenen tasarım dosyası adı */
   uploadedFileName?: string;
   /** Yüklenen tasarım dosyasının indirilebilir URL'i (backend storage) */

@@ -140,6 +140,20 @@ export interface OrderDetailProps {
     uploadedFileName?: string | null;
     uploadedFileUrl?: string | null;
     uploadedFileDriveUrl?: string | null;
+    /**
+     * Konfigürasyon snapshot'ı (storefront CartItemConfiguration). 2026-09-17: tasarım brief'i
+     * (designBrief) ve "dosya sonra gönderilecek" (designLater) buradan okunur.
+     */
+    configuration?: {
+      designLater?: boolean;
+      designBrief?: {
+        metin?: string;
+        renkler?: string;
+        yon?: "yatay" | "dikey" | "farketmez";
+        yuzler?: "tek" | "cift" | "farketmez";
+        notlar?: string;
+      };
+    } | null;
     /** Satır kimliği — panelden bu satıra tasarım dosyası yüklemek için (2026-09-02). */
     id?: string;
     /** Tasarımcının yüklediği dosyalar (önizleme/çalışma/baskı) — yalnız panel rollerinde gelir. */
@@ -830,6 +844,37 @@ export function OrderDetailClient({
                         <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-500/15 text-brand-700">
                           <PaintBrush size={11} weight="fill" /> Tasarım desteği istendi
                         </div>
+                      )}
+                      {/* "Dosyayı sonra göndereceğim" (2026-09-17): üretim dosya gelene kadar başlamaz. */}
+                      {!item.needsDesignSupport && item.configuration?.designLater && (
+                        <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-warning/15 text-warning">
+                          ⏳ Dosya sonra gönderilecek — üretim dosya gelince
+                        </div>
+                      )}
+                      {/* Tasarım brief'i (2026-09-17): müşterinin sipariş anında girdiği metin/renk/yön/yüz/not.
+                          Logo ve referans dosyaları aşağıdaki "Tasarım Dosyaları" bölümünde (kind=musteri). */}
+                      {item.needsDesignSupport && item.configuration?.designBrief && (
+                        <dl className="mt-1.5 grid gap-1 rounded-md border border-brand-300/60 bg-brand-100/40 px-2.5 py-2 text-[11px] text-ink-700">
+                          <div className="font-medium text-brand-700">Tasarım brief'i</div>
+                          {item.configuration.designBrief.metin && (
+                            <div>
+                              <dt className="font-medium text-ink-900">Basılacak metin</dt>
+                              <dd className="whitespace-pre-wrap">{item.configuration.designBrief.metin}</dd>
+                            </div>
+                          )}
+                          {item.configuration.designBrief.renkler && (
+                            <div><dt className="inline font-medium text-ink-900">Renkler: </dt><dd className="inline">{item.configuration.designBrief.renkler}</dd></div>
+                          )}
+                          {item.configuration.designBrief.yon && item.configuration.designBrief.yon !== "farketmez" && (
+                            <div><dt className="inline font-medium text-ink-900">Yön: </dt><dd className="inline">{item.configuration.designBrief.yon === "yatay" ? "Yatay" : "Dikey"}</dd></div>
+                          )}
+                          {item.configuration.designBrief.yuzler && item.configuration.designBrief.yuzler !== "farketmez" && (
+                            <div><dt className="inline font-medium text-ink-900">Yüz: </dt><dd className="inline">{item.configuration.designBrief.yuzler === "cift" ? "Ön + arka" : "Tek yüz"}</dd></div>
+                          )}
+                          {item.configuration.designBrief.notlar && (
+                            <div><dt className="inline font-medium text-ink-900">Not: </dt><dd className="inline whitespace-pre-wrap">{item.configuration.designBrief.notlar}</dd></div>
+                          )}
+                        </dl>
                       )}
                       {/* Tasarım dosyası gösterimi ayrı "Tasarım Dosyaları" bölümünde (aşağıda). */}
                     </div>
