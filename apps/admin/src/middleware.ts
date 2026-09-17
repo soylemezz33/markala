@@ -20,11 +20,19 @@ const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http:
  * Süreç-içi (tek admin konteyneri) yeterli: yarış aynı örnekte doğuyor. Harita sözden
  * sonra temizlenir, sınırsız büyümez.
  */
-const ucustakiRefresh = new Map<string, Promise<{ accessToken: string; refreshToken: string } | null>>();
+type YenilemeSonucu = {
+  accessToken: string;
+  refreshToken: string;
+  /** API'nin güncel izin listesi (2026-09-17) — panelden değişen rol izinleri çerezde tazelenir. */
+  perms?: string[];
+  role?: AdminSession["role"];
+};
+
+const ucustakiRefresh = new Map<string, Promise<YenilemeSonucu | null>>();
 
 function refreshiPaylas(
   refreshToken: string,
-  calistir: () => Promise<{ accessToken: string; refreshToken: string } | null>,
+  calistir: () => Promise<YenilemeSonucu | null>,
 ) {
   const mevcut = ucustakiRefresh.get(refreshToken);
   if (mevcut) return mevcut;
@@ -119,12 +127,31 @@ async function middlewareInner(req: NextRequest) {
           },
         });
         if (!r.ok) return null;
-        const data = (await r.json()) as { accessToken: string };
+        const data = (await r.json()) as {
+          accessToken: string;
+          permissions?: string[];
+          user?: { role?: string };
+        };
         const newRefresh = parseRefreshFromSetCookie(r.headers.getSetCookie?.() ?? []) ?? session.refreshToken;
-        return { accessToken: data.accessToken, refreshToken: newRefresh };
+        return {
+          accessToken: data.accessToken,
+          refreshToken: newRefresh,
+          perms: Array.isArray(data.permissions) ? data.permissions : undefined,
+          role: typeof data.user?.role === "string" ? (data.user.role as AdminSession["role"]) : undefined,
+        };
       });
       if (yeni) {
-        const updated: AdminSession = { ...session, accessToken: yeni.accessToken, refreshToken: yeni.refreshToken };
+        // İzin ve rol her yenilemede API'den tazelenir (2026-09-17): süper admin bir rolün
+        // izinlerini ya da kişinin rolünü değiştirdiğinde sayfa erişimi en geç 15 dk içinde
+        // yeniden giriş gerekmeden güncellenir. Rol "customer"a düşmüşse API zaten refresh'i
+        // reddeder (oturumlar iptal edilir) → aşağıdaki "refresh başarısız" dalı çalışır.
+        const updated: AdminSession = {
+          ...session,
+          accessToken: yeni.accessToken,
+          refreshToken: yeni.refreshToken,
+          perms: yeni.perms ?? session.perms,
+          role: yeni.role ?? session.role,
+        };
         const newToken = await signSession(updated, secret);
         const res = NextResponse.next();
         res.cookies.set(SESSION_COOKIE, newToken, {

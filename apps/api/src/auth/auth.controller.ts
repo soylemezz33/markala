@@ -16,6 +16,7 @@ import { AuthService } from "./auth.service";
 import { TurnstileService } from "../captcha/turnstile.service";
 import { JwtAuthGuard } from "./jwt.guard";
 import { ChangePasswordDto, ForgotPasswordDto, GoogleLoginDto, LoginDto, RegisterDto, ResetPasswordDto, VerifyEmailDto } from "./dtos";
+import { permsForRole } from "./permissions";
 
 /**
  * SECURITY HARDENING (auth.controller):
@@ -119,6 +120,10 @@ export class AuthController {
     return {
       accessToken: result.accessToken,
       user: result.user,
+      // 2026-09-17: panel middleware'i her yenilemede oturum çerezindeki izin listesini
+      // bununla tazeler → panelden değiştirilen rol izinleri en geç 15 dk içinde (yeniden
+      // giriş gerekmeden) sayfa erişimine yansır. Yalnız arayüz içindir; sınır RolesGuard.
+      permissions: permsForRole(result.user.role),
     };
   }
 

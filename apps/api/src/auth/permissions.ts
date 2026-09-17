@@ -173,9 +173,93 @@ export const ROLE_PERMISSIONS: Record<string, readonly Perm[] | "*"> = {
 
 /** Panele giriş yapabilen roller (müşteri hariç). */
 export const PANEL_ROLES = ["super_admin", "admin", "tasarimci", "muhasebe", "kargo"] as const;
+export type PanelRole = (typeof PANEL_ROLES)[number];
+
+/**
+ * İzin anahtarlarının panelde gösterilen adı/açıklaması (2026-09-17, rol yetki matrisi).
+ * Sıra = ekrandaki sıra. Anahtar listesi PERM ile bire bir; biri eklenip burası unutulursa
+ * aşağıdaki `PERM_LISTESI` derlemede değil testte yakalar (permissions.spec).
+ */
+export const PERM_META: ReadonlyArray<{ key: Perm; grup: string; label: string; aciklama: string }> = [
+  { key: PERM.DASHBOARD, grup: "Genel", label: "Pano", aciklama: "Panel ana sayfası (özet kutular, son siparişler)." },
+  { key: PERM.INBOX, grup: "Genel", label: "Gelen kutusu", aciklama: "E-posta günlüğü, iletişim mesajları, teklif talepleri, kurumsal başvurular. Tüm müşterilerin e-postalarını listeler (KVKK)." },
+  { key: PERM.ORDERS_READ, grup: "Sipariş", label: "Siparişleri görme", aciklama: "Sipariş listesi ve detayı (ürün, adet, alıcı, dosyalar). Tutarlar ayrı izindir." },
+  { key: PERM.ORDERS_AMOUNTS, grup: "Sipariş", label: "Tutarları görme", aciklama: "Sipariş ve müşteri kartındaki parasal alanlar: toplam, KDV, birim fiyat, maliyet, ödeme durumu." },
+  { key: PERM.ORDERS_STATUS, grup: "Sipariş", label: "Durum ilerletme + iptal", aciklama: "Üretim akışında durum değiştirme, geri alma, sipariş iptali ve mail önizleme." },
+  { key: PERM.ORDERS_TRACKING, grup: "Sipariş", label: "Kargo takip", aciklama: "Takip numarası/firma yazma ve siparişi 'Kargoya Verildi' yapma." },
+  { key: PERM.ORDERS_DESIGN, grup: "Sipariş", label: "Tasarım dosyası", aciklama: "Sipariş satırına önizleme/çalışma/baskı dosyası yükleme ve silme." },
+  { key: PERM.ORDERS_NOTES, grup: "Sipariş", label: "İç not", aciklama: "Sipariş iç notu yazma ve silme (müşteriye görünmez)." },
+  { key: PERM.ORDERS_CREATE, grup: "Sipariş", label: "Manuel sipariş", aciklama: "Panelden yüz yüze/telefon/WhatsApp siparişi oluşturma (nakit/POS/havale)." },
+  { key: PERM.CUSTOMERS_READ, grup: "Müşteri", label: "Müşteri kartı", aciklama: "Müşteri listesi: ad, iletişim, adres. Parasal alanlar için ayrıca 'Tutarları görme' gerekir." },
+  { key: PERM.FINANCE, grup: "Finans", label: "Finans", aciklama: "Ciro/kâr, analitik, ödemeler, iade, cari, fatura ve Paraşüt." },
+  { key: PERM.PRICING, grup: "Finans", label: "Fiyat & maliyet", aciklama: "Fiyat/maliyet güncelleme, kâr marjı, kuponlar, kampanya paketleri." },
+  { key: PERM.CATALOG, grup: "İçerik", label: "Katalog içeriği", aciklama: "Ürün/kategori/blog/SSS metinleri ve menü. Fiyat ayrı izindir." },
+  { key: PERM.MEDIA, grup: "İçerik", label: "Medya", aciklama: "Slider, banner, referans görselleri." },
+  { key: PERM.REVIEWS, grup: "İçerik", label: "Yorumlar", aciklama: "Yorumları görme, onaylama, cevaplama." },
+  { key: PERM.SETTINGS, grup: "Sistem", label: "Ayarlar", aciklama: "Site ayarları, entegrasyonlar, bülten, yasal metinler, sistem sağlığı. Yetkili yönetimi buna dahil DEĞİL (yalnız süper admin)." },
+];
+
+/** PERM_META ile senkron tutulan düz anahtar listesi. */
+export const PERM_LISTESI: readonly Perm[] = PERM_META.map((m) => m.key);
+
+/**
+ * ÖZELLEŞTİRİLMİŞ ROL İZİNLERİ (2026-09-17, Hasan: "rollerin yetkilerini panelden ayarlayalım").
+ *
+ * ROLE_PERMISSIONS artık VARSAYILAN'dır; süper admin panelden bir rolü değiştirdiğinde
+ * kayıt `panel_role_permissions` tablosuna yazılır ve RolIzinService bu haritayı besler.
+ * Tüm çağıranlar (guard, /auth/me, tutar filtreleri) senkron kaldı: harita bellekte tutulur,
+ * servis açılışta yükler ve periyodik tazeler → çok örnekli kurulumda da tutarlı.
+ *
+ * KURAL: super_admin ASLA kısıtlanamaz (paneli sahipsiz bırakma engeli); burada bir kayıt
+ * olsa bile yok sayılır.
+ */
+let ozelRolIzinleri: Readonly<Record<string, readonly Perm[]>> = {};
+
+export function setOzelRolIzinleri(harita: Record<string, readonly Perm[]>) {
+  const temiz: Record<string, readonly Perm[]> = {};
+  for (const [rol, izinler] of Object.entries(harita)) {
+    if (rol === "super_admin") continue;
+    if (!(PANEL_ROLES as readonly string[]).includes(rol)) continue;
+    temiz[rol] = izinler.filter((p) => (PERM_LISTESI as readonly string[]).includes(p));
+  }
+  ozelRolIzinleri = temiz;
+}
+
+export function getOzelRolIzinleri(): Readonly<Record<string, readonly Perm[]>> {
+  return ozelRolIzinleri;
+}
+
+/** Rolün panelden özelleştirilmiş bir izin seti var mı? */
+export function rolOzellestirilmis(role: string | undefined): boolean {
+  return !!role && role !== "super_admin" && Object.prototype.hasOwnProperty.call(ozelRolIzinleri, role);
+}
+
+/** Rolün KOD-İÇİ varsayılan izinleri ("*" → tam liste). */
+export function varsayilanIzinler(role: string | undefined): Perm[] {
+  if (!role) return [];
+  const perms = ROLE_PERMISSIONS[role];
+  if (!perms) return [];
+  if (perms === "*") return [...PERM_LISTESI];
+  return [...perms];
+}
+
+/**
+ * Rolün TÜM izinlere sahip olup olmadığı ("joker"). RolesGuard bunu kullanır: joker rol,
+ * `@Perms` işareti olmayan (yalnız @Roles ile korunan) eski uçlara da girer. Panelden
+ * kısıtlanmış admin joker DEĞİLDİR → @Perms taşıyan uçlarda izin aranır.
+ */
+export function rolJokerMi(role: string | undefined): boolean {
+  if (!role) return false;
+  if (role === "super_admin") return true;
+  if (rolOzellestirilmis(role)) return false;
+  return ROLE_PERMISSIONS[role] === "*";
+}
 
 export function roleHasPerm(role: string | undefined, perm: Perm): boolean {
   if (!role) return false;
+  if (role === "super_admin") return true;
+  const ozel = ozelRolIzinleri[role];
+  if (ozel) return ozel.includes(perm);
   const perms = ROLE_PERMISSIONS[role];
   if (!perms) return false;
   if (perms === "*") return true;
@@ -185,10 +269,10 @@ export function roleHasPerm(role: string | undefined, perm: Perm): boolean {
 /** Rolün sahip olduğu izinler — panel menüsünü filtrelemek için /auth/me ile döner. */
 export function permsForRole(role: string | undefined): Perm[] {
   if (!role) return [];
-  const perms = ROLE_PERMISSIONS[role];
-  if (!perms) return [];
-  if (perms === "*") return Object.values(PERM);
-  return [...perms];
+  if (role === "super_admin") return [...PERM_LISTESI];
+  const ozel = ozelRolIzinleri[role];
+  if (ozel) return [...ozel];
+  return varsayilanIzinler(role);
 }
 
 export const PERMS_KEY = "perms";

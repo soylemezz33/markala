@@ -800,8 +800,31 @@ export class MarkalaApiClient {
   /** Panel kullanıcıları — YALNIZ super_admin. Rol atama yetki yükseltmesidir. */
   panelUsers = {
     list: () =>
-      this.request<{ users: Array<{ id: string; email: string; fullName: string | null; role: string; createdAt: string }>; assignableRoles: string[] }>(
+      this.request<{ users: PanelUserDto[]; assignableRoles: string[] }>(
         "GET", "/admin/panel-users", undefined, { auth: true },
+      ),
+    /** Ad / e-posta düzenleme (2026-09-17). Rol ve şifre ayrı uçlardadır. */
+    update: (id: string, data: { fullName?: string; email?: string }) =>
+      this.request<{ ok: boolean; unchanged?: boolean; message?: string; email?: string; fullName?: string }>(
+        "PATCH", `/admin/panel-users/${id}`, data, { auth: true },
+      ),
+    /** Şifre sıfırlama: süper admin yeni şifreyi belirler, kişinin tüm oturumları kapanır. */
+    resetPassword: (id: string, password: string) =>
+      this.request<{ ok: boolean; email: string }>("POST", `/admin/panel-users/${id}/sifre`, { password }, { auth: true }),
+    /** Hesap silme; sipariş geçmişi varsa hesap kalır, yalnız panel yetkisi kaldırılır (deleted=false). */
+    remove: (id: string) =>
+      this.request<{ ok: boolean; deleted: boolean; email: string; message: string }>(
+        "DELETE", `/admin/panel-users/${id}`, undefined, { auth: true },
+      ),
+    /** Rol izin matrisi (2026-09-17): izin tanımları + her rolün mevcut/varsayılan izinleri. */
+    roles: () => this.request<PanelRolMatrisiDto>("GET", "/admin/panel-users/roller", undefined, { auth: true }),
+    saveRole: (rol: string, izinler: string[]) =>
+      this.request<{ ok: boolean; rol: string; izinler: string[]; ozellestirilmis: boolean }>(
+        "PUT", `/admin/panel-users/roller/${rol}`, { izinler }, { auth: true },
+      ),
+    resetRole: (rol: string) =>
+      this.request<{ ok: boolean; rol: string; izinler: string[]; ozellestirilmis: boolean }>(
+        "DELETE", `/admin/panel-users/roller/${rol}`, undefined, { auth: true },
       ),
     /**
      * Panelden yetkili hesabı OLUŞTURUR (e-posta + şifre). E-posta kayıtlıysa 409 döner —
@@ -823,6 +846,33 @@ export class MarkalaApiClient {
     });
 
   adminStats = () => this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+}
+
+/** Panel yetkilisi satırı (GET /admin/panel-users). */
+export interface PanelUserDto {
+  id: string;
+  email: string;
+  fullName: string | null;
+  role: string;
+  createdAt: string;
+  lastLoginAt?: string | null;
+  twoFactorEnabled?: boolean;
+}
+
+/** Rol izin matrisi (GET /admin/panel-users/roller). */
+export interface PanelRolMatrisiDto {
+  izinler: Array<{ key: string; grup: string; label: string; aciklama: string }>;
+  roller: Array<{
+    rol: string;
+    label: string;
+    aciklama: string;
+    /** Şu an geçerli izinler (özelleştirilmişse DB'den, değilse kod-içi varsayılan). */
+    izinler: string[];
+    varsayilan: string[];
+    /** super_admin: kısıtlanamaz. */
+    kilitli: boolean;
+    ozellestirilmis: boolean;
+  }>;
 }
 
 export interface BannerDto {

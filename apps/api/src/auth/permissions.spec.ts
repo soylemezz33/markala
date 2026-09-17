@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { PERM, ROLE_PERMISSIONS, PANEL_ROLES, roleHasPerm, permsForRole } from "./permissions";
+import { describe, it, expect, afterEach } from "vitest";
+import { PERM, ROLE_PERMISSIONS, PANEL_ROLES, roleHasPerm, permsForRole, PERM_LISTESI, setOzelRolIzinleri, getOzelRolIzinleri, rolOzellestirilmis, rolJokerMi, varsayilanIzinler } from "./permissions";
 
 /**
  * ROL YETKİ SINIRLARI — bu testler "sessiz yetki genişlemesine" karşı bir kilit.
@@ -128,5 +128,57 @@ describe("tasarım dosyası izni — orders.design (2026-09-02, üretim ARGE Faz
 
   it("ORDERS_STATUS'tan ayrı bir anahtar — biri diğerini ima etmez", () => {
     expect(PERM.ORDERS_DESIGN).not.toBe(PERM.ORDERS_STATUS);
+  });
+});
+
+/**
+ * PANELDEN ÖZELLEŞTİRİLMİŞ ROL İZİNLERİ (2026-09-17).
+ * Kod-içi varsayılanlar yukarıdaki testlerle kilitli; burada override katmanı doğrulanır.
+ */
+describe("özelleştirilmiş rol izinleri (2026-09-17)", () => {
+  afterEach(() => setOzelRolIzinleri({}));
+
+  it("PERM_META, PERM ile birebir aynı anahtar kümesini taşır (ekran listesi eksik kalmasın)", () => {
+    const meta = new Set(PERM_LISTESI);
+    const hepsi = Object.values(PERM);
+    expect(meta.size).toBe(hepsi.length);
+    for (const p of hepsi) expect(meta.has(p)).toBe(true);
+  });
+
+  it("override yokken varsayılan geçerli", () => {
+    expect(rolOzellestirilmis("kargo")).toBe(false);
+    expect(roleHasPerm("kargo", PERM.ORDERS_STATUS)).toBe(false);
+    expect(rolJokerMi("admin")).toBe(true);
+  });
+
+  it("override rolün izinlerini TAMAMEN değiştirir (varsayılanla birleşmez)", () => {
+    setOzelRolIzinleri({ kargo: [PERM.ORDERS_STATUS] });
+    expect(rolOzellestirilmis("kargo")).toBe(true);
+    expect(roleHasPerm("kargo", PERM.ORDERS_STATUS)).toBe(true);
+    // Varsayılanda vardı; override listesinde yok → artık YOK.
+    expect(roleHasPerm("kargo", PERM.ORDERS_READ)).toBe(false);
+    expect(permsForRole("kargo")).toEqual([PERM.ORDERS_STATUS]);
+  });
+
+  it("admin kısıtlanınca joker olmaktan çıkar; süper admin asla kısıtlanmaz", () => {
+    setOzelRolIzinleri({ admin: [PERM.CATALOG], super_admin: [PERM.CATALOG] });
+    expect(rolJokerMi("admin")).toBe(false);
+    expect(roleHasPerm("admin", PERM.FINANCE)).toBe(false);
+    expect(rolOzellestirilmis("super_admin")).toBe(false);
+    expect(rolJokerMi("super_admin")).toBe(true);
+    expect(roleHasPerm("super_admin", PERM.FINANCE)).toBe(true);
+    expect(permsForRole("super_admin")).toEqual(PERM_LISTESI);
+  });
+
+  it("bilinmeyen rol ve bilinmeyen izin anahtarı elenir", () => {
+    setOzelRolIzinleri({ hayalet: [PERM.FINANCE], kargo: ["uydurma.izin" as never, PERM.ORDERS_READ] });
+    expect(getOzelRolIzinleri()).not.toHaveProperty("hayalet");
+    expect(getOzelRolIzinleri().kargo).toEqual([PERM.ORDERS_READ]);
+  });
+
+  it("varsayilanIzinler override'dan etkilenmez", () => {
+    setOzelRolIzinleri({ kargo: [] });
+    expect(varsayilanIzinler("kargo")).toContain(PERM.ORDERS_READ);
+    expect(permsForRole("kargo")).toEqual([]);
   });
 });

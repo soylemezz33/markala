@@ -1216,3 +1216,16 @@ model CspViolation {
   @@index([lastSeenAt])
   @@map("csp_violations")
 }
+
+/// Panelden özelleştirilmiş rol izinleri (2026-09-17). Kayıt YOKSA kod-içi varsayılan
+/// (apps/api/src/auth/permissions.ts ROLE_PERMISSIONS) geçerlidir. super_admin için kayıt
+/// yazılmaz/okunmaz. SiteSetting yerine ayrı tablo: PATCH /settings admin rolüne açık,
+/// rol izinleri ise YALNIZ süper admin tarafından değiştirilebilmeli.
+model PanelRolePermission {
+  role      String   @id
+  perms     String[] @default([])
+  updatedBy String?  @map("updated_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("panel_role_permissions")
+}

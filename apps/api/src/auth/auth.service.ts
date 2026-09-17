@@ -435,6 +435,14 @@ export class AuthService {
       throw new UnauthorizedException("Geçersiz e-posta veya şifre.");
     }
 
+    // Kapatılmış hesap (deletedAt) şifresi doğru olsa da giremez (2026-09-17). Google
+    // girişinde bu kapı zaten vardı; şifreli girişte eksikti. Şifre doğrulamasından SONRA
+    // kontrol edilir ki "hesap var/yok" zamanlama farkı sızmasın.
+    if (user.deletedAt) {
+      this.logger.warn(`login.deleted_account userId=${user.id} ip=${context.ipAddress ?? "?"}`);
+      throw new ForbiddenException("Bu hesap kapatılmış. Destek ile iletişime geçin.");
+    }
+
     // E-posta doğrulama kapısı KALDIRILDI (2026-07-31): doğrulanmamış eski hesaplar da
     // giriş yapabilir. emailVerifiedAt alanı kayıt/Google/şifre-sıfırlama akışlarında
     // dolmaya devam eder (veri korunur), ama girişte kontrol edilmez.
@@ -464,6 +472,11 @@ export class AuthService {
     }
     // Aile: girişte verilen kimlik; migration öncesi token'larda yoksa o token'ın id'si aile olur.
     const aile = stored.familyId ?? stored.id;
+
+    // Kapatılmış hesabın elindeki refresh token'la oturum uzatması engellenir (2026-09-17).
+    if (stored.user.deletedAt) {
+      throw new UnauthorizedException("Refresh token geçersiz.");
+    }
 
     if (stored.revokedAt) {
       /**
