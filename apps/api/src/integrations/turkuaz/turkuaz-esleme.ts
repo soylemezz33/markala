@@ -798,12 +798,24 @@ export function grupToYuk(
 
   // SEO/GEO içeriği (ürün OLUŞTURULURKEN yazılır; senkron var olan içeriği ezmez, panel/SEO
   // oturumu sonradan zenginleştirebilir). SSS cevapları veriden üretilir — uydurma iddia yok.
+  // Başlık 65 karakteri aşarsa kademeli kısaltılır (SERP'te kırpılmasın): önce "Promosyon"
+  // eki, sonra parantezli teknik ek, en son adet bilgisi düşer.
+  const baslikAdaylari = [
+    `${grup.isim} ${grup.kodgrup} — Logo Baskılı Promosyon, ${minAdet}+ Adet`,
+    `${grup.isim} ${grup.kodgrup} — Logo Baskılı, ${minAdet}+ Adet`,
+    `${grup.isim} ${grup.kodgrup} — Logo Baskılı`,
+    `${grup.isim.replace(/\s*\([^)]*\)/g, "").trim()} ${grup.kodgrup} — Logo Baskılı`,
+  ];
+  const uzunAciklama =
+    `Logo baskılı ${isimKucuk} ${enDusukBirim.toFixed(0)} ₺/adet'ten (KDV dahil). ` +
+    `Minimum ${minAdet} adet${renkAdlari.length > 1 ? `, ${renkAdlari.length} renk seçeneği` : ""}, ` +
+    `${URETIM_SURESI} içinde kargoda. Online fiyat alın, hemen sipariş verin.`;
   const seo = {
-    title: `${grup.isim} ${grup.kodgrup} — Logo Baskılı Promosyon, ${minAdet}+ Adet`,
+    title: baslikAdaylari.find((b) => b.length <= 65) ?? baslikAdaylari[baslikAdaylari.length - 1],
     description:
-      `Logo baskılı ${isimKucuk} ${enDusukBirim.toFixed(0)} ₺/adet'ten (KDV dahil). ` +
-      `Minimum ${minAdet} adet${renkAdlari.length > 1 ? `, ${renkAdlari.length} renk seçeneği` : ""}, ` +
-      `${URETIM_SURESI} içinde kargoda. Online fiyat alın, hemen sipariş verin.`,
+      uzunAciklama.length <= 170
+        ? uzunAciklama
+        : uzunAciklama.replace(" Online fiyat alın, hemen sipariş verin.", " Hemen sipariş verin."),
     keywords: [
       `promosyon ${isimKucuk}`,
       `logo baskılı ${isimKucuk}`,
