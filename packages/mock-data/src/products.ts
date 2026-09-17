@@ -5,6 +5,7 @@ import { matbaaProducts } from "./products-matbaa";
 import { matbaaProducts2 } from "./products-matbaa-2";
 import { matbaaProducts3 } from "./products-matbaa-3";
 import { matbaaProducts4 } from "./products-matbaa-4";
+import { matbaaProducts5 } from "./products-matbaa-5";
 
 /**
  * Ürün görselleri yerel /public/images/products/[slug]/ altında.
@@ -104,12 +105,21 @@ const legacyRaw: ProductWithParams[] = [
         ],
       },
       {
+        // AJA-383 madde 6: vinil branda alt seçeneği — arkası gri (blockout).
+        id: "arka", label: "Arka Yüzey", kind: "radio", required: true, defaultOptionId: "standart",
+        options: [
+          { id: "standart", label: "Standart", priceModifier: 0 },
+          { id: "blockout", label: "Arkası Gri (blockout — ışık geçirmez)", priceModifier: 90 },
+        ],
+      },
+      {
         id: "ebat", label: "Ebat (en × boy cm)", kind: "dimension", required: true,
         pricePerSqm: 138, minDimension: 30, maxDimension: 500, defaultWidth: 100, defaultHeight: 100,
         extras: [
           { id: "kucuk-is-dikis", label: "1 m²'den küçük işler dikiş + kopça", flatFee: 60, autoBelow1Sqm: true },
           { id: "kolon-dikis", label: "Kolon Dikiş (m)", perimeterPricePerM: 30 },
           { id: "germe", label: "Germe + Halkalı Teslim", flatFee: 145 },
+          { id: "uv-lamine", label: "UV Koruyucu Lamine (ömür uzatır)", flatFee: 180 },
         ],
       },
     ],
@@ -506,6 +516,14 @@ const legacyRaw: ProductWithParams[] = [
     relatedSlugs: ["makam-bayragi-puskullu", "kristal-plaket"],
     parameters: [
       {
+        // AJA-383 madde 8: masa bayrağı dikey/çapraz form seçimi.
+        id: "form", label: "Bayrak Formu", kind: "radio", required: true, defaultOptionId: "dikey",
+        options: [
+          { id: "dikey", label: "Dikey (klasik dikdörtgen)", priceModifier: 0 },
+          { id: "capraz", label: "Çapraz Kesim (üçgen uç)", priceModifier: 15 },
+        ],
+      },
+      {
         id: "yon", label: "Baskı Yönü", kind: "radio", required: true, defaultOptionId: "cift",
         options: [
           { id: "tek", label: "Tek Yüz", priceModifier: 0 },
@@ -777,6 +795,7 @@ const legacyRaw: ProductWithParams[] = [
         extras: [
           { id: "kesim", label: "CNC Kesim (yazı/logo)", flatFee: 80 },
           { id: "uygulama-bandi", label: "Uygulama Bandı (transfer tape)", perimeterPricePerM: 8 },
+          { id: "uv-lamine", label: "UV Koruyucu Lamine (çizilme/solma)", flatFee: 90 },
         ],
       },
     ],
@@ -1304,6 +1323,7 @@ export const products: Product[] = [
   ...matbaaProducts2,
   ...matbaaProducts3,
   ...matbaaProducts4,
+  ...matbaaProducts5,
   ...legacyRaw,
 ].map(withFireNote);
 

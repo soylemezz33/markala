@@ -132,7 +132,7 @@ export const categories: Category[] = [
     imageUrl: catImg("folyo"),
     startingPrice: 95,
     productionTime: "1-2 iş günü",
-    productCount: 7,
+    productCount: 10,
   },
   {
     slug: "fosforlu-folyo",
@@ -515,6 +515,89 @@ const newCategories4: Category[] = [
   },
 ];
 categories.push(...newCategories4);
+
+/**
+ * AJA-383 (2026-09-01) — Backend katalog: eksik ürünler için yeni kategoriler.
+ * Site header (site-header.tsx "Dijital Baskı" grubu) bu ürünlere ZATEN link veriyordu;
+ * ürün+kategori kaydı olmadığı için canlıda 404 dönüyorlardı. Bu kategoriler ilgili
+ * ürünleri (products-matbaa-5.ts) barındırır.
+ * startingPrice değerleri TASLAK — Hasan fiyat onayı bekliyor (bkz. PR fiyat tablosu).
+ */
+const catalog383Categories: Category[] = [
+  {
+    slug: "pleksi",
+    name: "Pleksi Baskı",
+    shortDescription: "Şeffaf/renkli pleksiglas üzerine UV baskı ve kesim",
+    longDescription:
+      "3-5-8-10 mm pleksiglas (akrilik) plaka üzerine yüksek çözünürlüklü UV baskı. Şeffaf, opal veya renkli pleksi; lazer kesim ve kenar parlatma seçenekleriyle tabela, kapı isimliği ve dekoratif pano için premium çözüm.",
+    imageUrl: catImg("pleksi"),
+    accentColor: "#00D9FF",
+    startingPrice: 450,
+    productionTime: "2-4 iş günü",
+    productCount: 1,
+  },
+  {
+    slug: "kompozit",
+    name: "Kompozit Baskı",
+    shortDescription: "Alüminyum kompozit (Alkomp) panel üzerine dış mekan baskı",
+    longDescription:
+      "3 mm alüminyum kompozit panel üzerine UV/solvent baskı. Dış mekanda 8-10 yıl dayanıklı; mağaza alın tabelası, cephe giydirme ve yönlendirme panoları için sektörün standart malzemesi. Düz veya CNC form kesim.",
+    imageUrl: catImg("kompozit"),
+    accentColor: "#3D342B",
+    startingPrice: 445,
+    productionTime: "2-4 iş günü",
+    productCount: 1,
+  },
+  {
+    slug: "duratrans",
+    name: "Duratrans (Backlit)",
+    shortDescription: "Işıklı kutu/lightbox için arkadan aydınlatmalı baskı",
+    longDescription:
+      "Backlit (duratrans) film üzerine yüksek yoğunluklu UV baskı — ışıklı kutu, menü board ve lightbox içinde arkadan aydınlatıldığında renkleri canlı tutar. m² hesabı ile özel ebatta üretilir.",
+    imageUrl: catImg("duratrans"),
+    accentColor: "#F5B800",
+    startingPrice: 390,
+    productionTime: "2-3 iş günü",
+    productCount: 1,
+  },
+  {
+    slug: "duvar-kagidi",
+    name: "Duvar Kağıdı Baskı",
+    shortDescription: "Özel tasarım baskılı duvar kağıdı, m² fiyatlandırma",
+    longDescription:
+      "Ofis, mağaza, kafe ve ev için özel tasarım baskılı duvar kağıdı. Dokulu, mat veya silinebilir vinil yüzey seçenekleriyle m² hesabında üretilir; yapıştırma kılavuzu dahil.",
+    imageUrl: catImg("duvar-kagidi"),
+    accentColor: "#D99A00",
+    startingPrice: 320,
+    productionTime: "3-5 iş günü",
+    productCount: 1,
+  },
+  {
+    slug: "x-banner",
+    name: "X-Banner Stand",
+    shortDescription: "Taşınabilir X ayaklı afiş standı + baskı",
+    longDescription:
+      "60x160 cm standart X-banner standı — hafif, katlanır X ayak + su geçirmez afiş baskısı ve taşıma çantası. Fuar, mağaza girişi ve etkinlik yönlendirmesi için ekonomik stand çözümü.",
+    imageUrl: catImg("x-banner"),
+    accentColor: "#1A1410",
+    startingPrice: 480,
+    productionTime: "2 iş günü",
+    productCount: 1,
+  },
+  {
+    slug: "uv-dtf",
+    name: "UV DTF Baskı",
+    shortDescription: "Her yüzeye uygulanabilen UV DTF transfer sticker",
+    longDescription:
+      "UV DTF (Direct-to-Film) transfer teknolojisi — cam, metal, ahşap, plastik ve seramik gibi düz/kavisli yüzeylere kalıcı, kabartmalı doku ile uygulanan tam renkli sticker. Logo, etiket ve dekoratif uygulamalar için.",
+    imageUrl: catImg("uv-dtf"),
+    accentColor: "#00D9FF",
+    startingPrice: 190,
+    productionTime: "2-3 iş günü",
+    productCount: 1,
+  },
+];
+categories.push(...catalog383Categories);
 
 export function getCategoryBySlug(slug: string): Category | undefined {
   return categories.find((c) => c.slug === slug);
