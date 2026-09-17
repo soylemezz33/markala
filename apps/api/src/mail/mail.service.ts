@@ -6,6 +6,15 @@ import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
 import { renderEmail, emailButton, emailButtonColored, emailFallbackLink } from "./email-layout";
 import { BANKA_HESABI, ODEME_YONTEMI } from "../common/banka";
+import { epostaYerTutucuMu } from "../orders/manuel-siparis-kural";
+
+/**
+ * E-postası olmayan manuel siparişlerde adres "yok+<tel>@markala.com.tr" yer tutucusudur
+ * (2026-09-16). Bu adrese gönderim denenirse MDaemon 550 ile reddeder, kayıt "failed" olur ve
+ * sağlık panosu "E-posta gönderimi: ARIZALI" der (Hasan, 17 Eyl: "mail adresi yok seçince bu
+ * hata verilmesin yeterli"). Tek geçit posta(): yer tutucuya hiç gönderilmez, kayıt "skipped".
+ */
+export const YER_TUTUCU_ATLANDI = "yer tutucu adres (e-postası olmayan manuel sipariş) — gönderim atlandı";
 
 /**
  * Konfigürasyon özetindeki paket adedini çıkarır ("2 Adet" → 2, "1.000 Adet" → 1000).
@@ -69,7 +78,7 @@ export class MailService {
     });
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      const info = await this.posta({ from: this.from, to, subject, text, html });
       await this.logNotification(to, "sent", { messageId: info.messageId }, subject);
       return true;
     } catch (err) {
@@ -94,7 +103,7 @@ export class MailService {
     });
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      const info = await this.posta({ from: this.from, to, subject, text, html });
       await this.logNotification(to, "sent", { messageId: info.messageId, template: "password-reset" }, subject);
       return true;
     } catch (err) {
@@ -123,7 +132,7 @@ export class MailService {
     });
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      const info = await this.posta({ from: this.from, to, subject, text, html });
       await this.logNotification(to, "sent", { messageId: info.messageId, template: "corporate-invite" }, subject);
       return true;
     } catch (err) {
@@ -194,7 +203,7 @@ export class MailService {
     });
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: input.to, subject, text, html });
+      const info = await this.posta({ from: this.from, to: input.to, subject, text, html });
       await this.logNotification(input.to, "sent", { messageId: info.messageId, template: "corporate-monthly-statement", period: input.period }, subject);
       return true;
     } catch (err) {
@@ -365,7 +374,7 @@ Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleş
 
     const alici = aliciOverride ?? order.email;
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: alici, subject: aliciOverride ? `[ÖNİZLEME] ${subject}` : subject, text, html });
+      const info = await this.posta({ from: this.from, to: alici, subject: aliciOverride ? `[ÖNİZLEME] ${subject}` : subject, text, html });
       await this.logNotification(alici, "sent", { messageId: info.messageId, template: "order-confirmation", orderNumber: order.orderNumber, onizleme: Boolean(aliciOverride) }, subject);
       return true;
     } catch (err) {
@@ -425,7 +434,7 @@ Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleş
         emailButton("Siparişi aç", detayUrl) + emailFallbackLink(detayUrl),
     });
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      const info = await this.posta({ from: this.from, to, subject, text, html });
       await this.logNotification(to, "sent", { messageId: info.messageId }, subject);
       return true;
     } catch (err) {
@@ -551,7 +560,7 @@ Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleş
     let ok = false;
     for (const to of recipients) {
       try {
-        const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+        const info = await this.posta({ from: this.from, to, subject, text, html });
         await this.logNotification(to, "sent", { messageId: info.messageId, template: "new-order-admin", orderNumber: order.orderNumber }, subject);
         ok = true;
       } catch (err) {
@@ -615,7 +624,7 @@ Markala`;
     });
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      const info = await this.posta({ from: this.from, to: order.email, subject, text, html });
       await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-in-production", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
@@ -722,7 +731,7 @@ Markala`;
     });
     const alici = aliciOverride ?? order.email;
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: alici, subject: aliciOverride ? `[ÖNİZLEME] ${subject}` : subject, text, html });
+      const info = await this.posta({ from: this.from, to: alici, subject: aliciOverride ? `[ÖNİZLEME] ${subject}` : subject, text, html });
       await this.logNotification(alici, "sent", { messageId: info.messageId, template: "order-shipped", orderNumber: order.orderNumber, onizleme: Boolean(aliciOverride) }, subject);
       return true;
     } catch (err) {
@@ -759,7 +768,7 @@ Markala`;
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Yanlışlıkla iptal olduğunu düşünüyorsan bu e-postayı yanıtla ya da WhatsApp'tan yaz, hemen bakalım.</p>`,
     });
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      const info = await this.posta({ from: this.from, to: order.email, subject, text, html });
       await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-cancelled", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
@@ -824,7 +833,7 @@ Markala`;
     }
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      const info = await this.posta({ from: this.from, to: order.email, subject, text, html });
       await this.logNotification(order.email, "sent", { messageId: info.messageId, template: "order-delivered", orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
@@ -960,7 +969,7 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
     });
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      const info = await this.posta({ from: this.from, to: order.email, subject, text, html });
       await this.logNotification(order.email, "sent", { messageId: info.messageId, template, orderNumber: order.orderNumber }, subject);
       return true;
     } catch (err) {
@@ -1019,7 +1028,7 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
     });
 
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      const info = await this.posta({ from: this.from, to, subject, text, html });
       await this.logNotification(to, "sent", { messageId: info.messageId, template }, subject);
       return true;
     } catch (err) {
@@ -1053,7 +1062,7 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">✓ Ücretsiz tasarım desteği &nbsp;·&nbsp; ✓ 1-2 iş günü üretim &nbsp;·&nbsp; ✓ 81 ile kargo</p>`,
     });
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      const info = await this.posta({ from: this.from, to, subject, text, html });
       await this.logNotification(to, "sent", { messageId: info.messageId, template: "welcome" }, subject);
       return true;
     } catch (err) {
@@ -1129,7 +1138,7 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bu bağlantı tek kullanımlıktır ve yalnızca size özeldir.</p>`,
     });
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to: order.email, subject, text, html });
+      const info = await this.posta({ from: this.from, to: order.email, subject, text, html });
       await this.logNotification(order.email, "sent", {
         messageId: info.messageId,
         template: "review-invitation",
@@ -1207,7 +1216,7 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
         ${emailButton("Faturalarım", `${webUrl}/hesabim/faturalarim`)}`,
     });
     try {
-      const info = await this.transporter.sendMail({
+      const info = await this.posta({
         from: this.from, to: order.email, subject, text, html,
         attachments: [{ filename: `Fatura-${input.invoiceNumber}.pdf`, content: input.pdf, contentType: "application/pdf" }],
       });
@@ -1218,6 +1227,13 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
       await this.logNotification(order.email, "failed", { error: (err as Error).message, orderId }, subject);
       return false;
     }
+  }
+
+  /** Tüm gönderimlerin tek geçidi: yer tutucu alıcıya asla gönderme (bkz. YER_TUTUCU_ATLANDI). */
+  private async posta(opts: Parameters<Transporter["sendMail"]>[0]) {
+    const alicilar = ([] as unknown[]).concat(opts.to ?? []).map((t) => (typeof t === "string" ? t : String((t as { address?: string })?.address ?? "")));
+    if (alicilar.length && alicilar.every((a) => epostaYerTutucuMu(a))) throw new Error(YER_TUTUCU_ATLANDI);
+    return this.transporter.sendMail(opts);
   }
 
   private async logNotification(
@@ -1231,6 +1247,8 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
     // template metadata'dan türetilir; yalnız doğrulama mailleri template geçmez (varsayılan).
     // Eskiden her mail "email-verification" olarak loglanıyordu → şablon bazlı rapor kördü.
     const template = typeof metadata.template === "string" ? metadata.template : "email-verification";
+    // Yer tutucu adrese "gönderim" hiç denenmedi → arıza değil, atlama (sağlık sayacına girmez).
+    if (status === "failed" && metadata.error === YER_TUTUCU_ATLANDI) status = "skipped";
     await this.prisma.notificationLog
       .create({
         data: {
@@ -1265,7 +1283,7 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
       return false;
     }
     try {
-      const info = await this.transporter.sendMail({ from: this.from, to, subject, text, html });
+      const info = await this.posta({ from: this.from, to, subject, text, html });
       await this.logNotification(to, "sent", { messageId: info.messageId, template, ...extra }, subject);
       return true;
     } catch (err) {

@@ -147,6 +147,11 @@ export function OrdersClient({ orders }: Props) {
   });
 
   const totalAmount = filtered.reduce((acc, o) => acc + Number(o.total), 0);
+  const iptalMi = (o: OrderRow) => toSlug(o.status) === "iptal-edildi";
+  const odenmis = filtered.filter((o) => !iptalMi(o) && o.paymentStatus === "basarili");
+  const odenmisToplam = odenmis.reduce((acc, o) => acc + Number(o.total), 0);
+  const iptalSayisi = filtered.filter(iptalMi).length;
+  const odemeBekleyen = filtered.filter((o) => !iptalMi(o) && o.paymentStatus !== "basarili").length;
 
   // Filtre/arama/sıralama değişince ilk sayfaya dön.
   useEffect(() => {
@@ -184,9 +189,17 @@ export function OrdersClient({ orders }: Props) {
       <header className="mb-6 flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold text-ink-900">Siparişler</h1>
+          {/* 2026-09-17 (Hasan): eski "Toplam" iptal ve ödenmemiş siparişleri de topluyordu (99.469 vs
+              pano 84.943). Artık pano ile aynı tanım: yalnız ödenmiş + iptal edilmemiş; kalanlar ayrı sayılır. */}
           <p className="text-ink-500 text-sm mt-1">
-            {filtered.length} sipariş · Toplam{" "}
-            {showMoney && <strong className="text-ink-900">₺ {totalAmount.toLocaleString("tr-TR")}</strong>}
+            {filtered.length} sipariş · Ödenmiş {odenmis.length}
+            {showMoney && <> · <strong className="text-ink-900">₺ {odenmisToplam.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></>}
+            {(iptalSayisi > 0 || odemeBekleyen > 0) && (
+              <span className="text-ink-400"> (
+                {[iptalSayisi > 0 ? `iptal ${iptalSayisi}` : null, odemeBekleyen > 0 ? `ödeme bekleyen ${odemeBekleyen}` : null].filter(Boolean).join(", ")}
+                {showMoney && totalAmount !== odenmisToplam ? ` · listelenen tutar ₺ ${totalAmount.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}` : ""})
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">

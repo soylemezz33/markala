@@ -15,6 +15,24 @@ describe("MailService", () => {
     );
   });
 
+  it("yer tutucu alıcı (e-postası olmayan manuel sipariş) → SMTP'ye hiç gidilmez, kayıt 'skipped', arıza sayılmaz", async () => {
+    const prisma = {
+      order: { findUnique: vi.fn().mockResolvedValue({ id: "o1", orderNumber: "MK-2026-0009", email: "yok+905551112233@markala.com.tr", user: { fullName: "Ali" } }) },
+      notificationLog: { create: vi.fn().mockResolvedValue({}), count: vi.fn().mockResolvedValue(0) },
+    } as any;
+    const health = { kaydet: vi.fn().mockResolvedValue(undefined) };
+    const svc = new MailService(cfg({ SMTP_HOST: "localhost", SMTP_PORT: "1025", MAIL_FROM: "x" }), prisma, health as any);
+    const sendMail = vi.fn().mockResolvedValue({ messageId: "x" });
+    (svc as any).transporter = { sendMail };
+    const ok = await svc.sendOrderInProductionEmail("o1");
+    expect(ok).toBe(false);
+    expect(sendMail).not.toHaveBeenCalled();
+    expect(prisma.notificationLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: "skipped", recipient: "yok+905551112233@markala.com.tr" }) }),
+    );
+    expect(health.kaydet).toHaveBeenCalledWith("skipped", expect.anything());
+  });
+
   it("SMTP hatası → throw ETMEZ, false döner + NotificationLog failed", async () => {
     const prisma = { notificationLog: { create: vi.fn().mockResolvedValue({}) } } as any;
     const svc = new MailService(cfg({ SMTP_HOST: "localhost", SMTP_PORT: "1025", MAIL_FROM: "x" }), prisma);
