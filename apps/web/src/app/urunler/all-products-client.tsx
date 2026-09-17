@@ -60,6 +60,34 @@ const VITRIN_SIRASI = [
 /** slug → vitrin sırası; listede olmayan ürün Infinity alır (arkaya düşer). */
 const VITRIN_RANK = new Map(VITRIN_SIRASI.map((slug, i) => [slug, i]));
 
+/**
+ * PROMOSYON KATEGORİ SIRASI (2026-09-17, Hasan: "en çok satan sıralaması doğru mu?").
+ *
+ * Turkuaz'dan gelen 500+ promosyon ürününün henüz SATIŞ VERİSİ YOK — bestseller bayrağı
+ * haftalık ciro senkronuyla gerçek satıştan yazılır ve bu ürünler sattıkça kendiliğinden
+ * öne geçer (bayrak karşılaştırması bu sıradan ÖNCE gelir). O güne kadar "En çok satan"
+ * görünümünde promosyon ürünleri ürün kodu tesadüfüne düşmesin diye kategoriler GERÇEK
+ * arama hacmi sırasına dizilir (DataForSEO TR, Eyl 2026: kalem 1.900 · çakmak 1.600 ·
+ * anahtarlık 1.000 · tekstil 1.360 · çanta 880 · ajanda 1.180 · saat 1.070 · teknoloji
+ * 760 · bardak 800), kategori içinde ucuzdan pahalıya (klasik ekonomik modeller önde).
+ * Yalnız varsayılan sıralamayı etkiler; promosyon dışı ürünlerin sırasına DOKUNMAZ.
+ */
+const PROMOSYON_KATEGORI_SIRASI = new Map(
+  [
+    "promosyon-kalem",
+    "promosyon-cakmak",
+    "promosyon-anahtarlik",
+    "promosyon-tekstil",
+    "promosyon-canta",
+    "promosyon-defter-ajanda",
+    "promosyon-saat",
+    "promosyon-teknoloji",
+    "promosyon-bardak-termos",
+    "promosyon-vip-set",
+    "promosyon-cesitli",
+  ].map((slug, i) => [slug, i] as const),
+);
+
 /** Ürünler API'den (server parent) props ile gelir; filtreleme/sıralama client-side. */
 export function AllProductsClient({
   products,
@@ -175,12 +203,20 @@ export function AllProductsClient({
         list = list.sort((a, b) => getDisplayPrice(b) - getDisplayPrice(a));
         break;
       default:
-        // Önce vitrin sırası (sabitlenmiş ürünler), sonra eski davranış (bestseller bayrağı).
+        // Önce vitrin sırası (sabitlenmiş ürünler), sonra gerçek satış (bestseller bayrağı),
+        // sonra promosyon kategorilerinin arama-hacmi sırası + kategori içinde artan fiyat
+        // (bkz. PROMOSYON_KATEGORI_SIRASI). Promosyon dışı ürünlerde davranış değişmez.
         list = list.slice().sort((a, b) => {
           const ra = VITRIN_RANK.get(a.slug) ?? Number.POSITIVE_INFINITY;
           const rb = VITRIN_RANK.get(b.slug) ?? Number.POSITIVE_INFINITY;
           if (ra !== rb) return ra - rb;
-          return (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0);
+          const best = (b.bestseller ? 1 : 0) - (a.bestseller ? 1 : 0);
+          if (best !== 0) return best;
+          const pa = PROMOSYON_KATEGORI_SIRASI.get(a.categorySlug) ?? Number.POSITIVE_INFINITY;
+          const pb = PROMOSYON_KATEGORI_SIRASI.get(b.categorySlug) ?? Number.POSITIVE_INFINITY;
+          if (pa !== pb) return pa - pb;
+          if (pa !== Number.POSITIVE_INFINITY) return getDisplayPrice(a) - getDisplayPrice(b);
+          return 0; // promosyon dışı: mevcut kararlı sıra korunur
         });
     }
 
