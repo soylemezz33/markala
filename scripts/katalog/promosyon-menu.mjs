@@ -80,6 +80,16 @@ if (!Array.isArray(nav) || nav.length === 0) {
   process.exit(1);
 }
 
+// Sekmenin KENDİ bağlantısı: tüm promosyon kategorilerini kapsayan /urunler filtresi.
+// (17 Eyl, Hasan: sekmeye basınca eski 6 kategorilik liste açılıyordu, yeni kategoriler yoktu.)
+const TUM_KATEGORILER = [
+  "kupa", "magnet", "plaket", "madalya", "bloknot", "kase",
+  "promosyon-kalem", "promosyon-cakmak", "promosyon-anahtarlik", "promosyon-tekstil",
+  "promosyon-canta", "promosyon-defter-ajanda", "promosyon-saat", "promosyon-teknoloji",
+  "promosyon-bardak-termos", "promosyon-vip-set", "promosyon-cesitli",
+];
+const SEKME_HREF = `/urunler?kategoriler=${encodeURIComponent(TUM_KATEGORILER.join(","))}&grup=${encodeURIComponent("Promosyon & Hediye")}`;
+
 let sekme = nav.find((c) => c.label === SEKME_ETIKETI);
 let degisti = false;
 if (!sekme) {
@@ -104,6 +114,11 @@ if (!sekme) {
     }
   }
   console.log(degisti ? "Promosyon sekmesi eksikleri tamamlanacak." : "Menü zaten güncel.");
+}
+if (sekme.href !== SEKME_HREF) {
+  console.log(`Sekme bağlantısı güncellenecek:\n  eski: ${sekme.href}\n  yeni: ${SEKME_HREF}`);
+  sekme.href = SEKME_HREF;
+  degisti = true;
 }
 
 for (const g of sekme.groups ?? []) {
