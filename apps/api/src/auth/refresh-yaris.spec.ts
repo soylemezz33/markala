@@ -12,11 +12,12 @@ import { AuthService } from "./auth.service";
  * (üretim logunda 72 saatte 5 kez, biri aynı saniyede iki kez).
  *
  * Bu testler İKİSİNİ AYIRT ETTİĞİNİ çakıyor: yarış tolere edilir, gerçek replay
- * hâlâ tüm oturumları düşürür.
+ * o cihazın AİLESİNİ düşürür (2026-09-17: hesap geneli iptal kaldırıldı — ortak hesabı
+ * kullanan diğer cihazlar etkilenmez).
  */
 const KULLANICI = { id: "u1", email: "a@b.c", role: "admin" };
 
-function makeService(stored: { revokedAt: Date | null; expiresAt: Date } | null) {
+function makeService(stored: { revokedAt: Date | null; expiresAt: Date; familyId?: string | null } | null) {
   const updateMany = vi.fn().mockResolvedValue({ count: 2 });
   const prisma = {
     refreshToken: {
@@ -57,13 +58,32 @@ describe("refresh — eşzamanlılık payı", () => {
     expect(updateMany).not.toHaveBeenCalled();
   });
 
-  it("ESKİ revoke edilmiş token (gerçek replay) → tüm oturumlar iptal + 401", async () => {
-    const { svc, updateMany } = makeService({ revokedAt: new Date(Date.now() - 600_000), expiresAt: ILERIDE });
+  it("ESKİ revoke edilmiş token (gerçek replay) → YALNIZ o aile iptal + 401; diğer cihazlar düşmez", async () => {
+    const { svc, updateMany } = makeService({ revokedAt: new Date(Date.now() - 600_000), expiresAt: ILERIDE, familyId: "fam9" });
     await expect(svc.refresh("ham-token", {})).rejects.toThrow(UnauthorizedException);
     expect(updateMany).toHaveBeenCalledWith({
-      where: { userId: "u1", revokedAt: null },
+      where: { userId: "u1", revokedAt: null, familyId: "fam9" },
       data: { revokedAt: expect.any(Date) },
     });
+  });
+
+  it("migration öncesi (ailesiz) token replay → aile = token id'si", async () => {
+    const { svc, updateMany } = makeService({ revokedAt: new Date(Date.now() - 600_000), expiresAt: ILERIDE, familyId: null });
+    await expect(svc.refresh("ham-token", {})).rejects.toThrow(UnauthorizedException);
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { userId: "u1", revokedAt: null, familyId: "rt1" },
+      data: { revokedAt: expect.any(Date) },
+    });
+  });
+
+  it("rotasyon aileyi yeni token'a taşır; girişte yeni aile üretilir", async () => {
+    const { svc, prisma } = makeService({ revokedAt: null, expiresAt: ILERIDE, familyId: "fam9" });
+    await svc.refresh("ham-token", {});
+    expect(prisma.refreshToken.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ familyId: "fam9" }) }));
+    const { svc: svc2, prisma: prisma2 } = makeService({ revokedAt: null, expiresAt: ILERIDE, familyId: null });
+    await svc2.refresh("ham-token", {});
+    const data = prisma2.refreshToken.create.mock.calls[0]?.[0]?.data as { familyId?: string };
+    expect(data.familyId).toBe("rt1");
   });
 
   it("süresi geçmiş token → 401, ama aileyi iptal ETMEZ (replay değil, sadece eski)", async () => {

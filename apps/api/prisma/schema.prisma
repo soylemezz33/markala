@@ -123,12 +123,16 @@ model RefreshToken {
   revokedAt DateTime? @map("revoked_at")
   userAgent String?   @map("user_agent")
   ipAddress String?   @map("ip_address")
+  /// Cihaz zinciri (2026-09-17): girişte doğar, her rotasyonda taşınır. Replay tespiti
+  /// yalnız bu aileyi iptal eder — aynı hesabı kullanan diğer cihazlar düşmez.
+  familyId  String?   @map("family_id")
   createdAt DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
+  @@index([familyId])
   @@map("refresh_tokens")
 }
 

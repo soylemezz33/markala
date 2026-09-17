@@ -462,6 +462,8 @@ export class AuthService {
     if (!stored || stored.expiresAt < new Date()) {
       throw new UnauthorizedException("Refresh token geçersiz.");
     }
+    // Aile: girişte verilen kimlik; migration öncesi token'larda yoksa o token'ın id'si aile olur.
+    const aile = stored.familyId ?? stored.id;
 
     if (stored.revokedAt) {
       /**
@@ -488,27 +490,38 @@ export class AuthService {
         this.logger.warn(
           `refresh.race_tolerated userId=${stored.userId} yas=${revokeYasiMs}ms ip=${context.ipAddress ?? "?"}`,
         );
-        return this.issueTokenPair(stored.user, context);
+        return this.issueTokenPair(stored.user, context, aile);
       }
 
-      // Pencere DIŞI: gerçek replay — kullanıcının tüm aktif refresh'lerini iptal et.
+      /**
+       * Pencere DIŞI: gerçek replay. AİLE BAZLI İPTAL (2026-09-17, Hasan: "panel bizi sürekli
+       * atıyor; farklı PC'ler aynı hesaba giriyor, tek kişiyken de atıyor").
+       *
+       * Eski davranış kullanıcının TÜM refresh'lerini iptal ediyordu. Ortak süper admin hesabı
+       * 6 cihazdan kullanılınca tek bir bayat çerez (uyuyan telefon sekmesi, 2,7 günlük eski
+       * token) herkesi düşürüyor, sonra her cihaz sırayla "replay" üretip zincirleme atılıyordu
+       * (17 Eyl logu: 10:16 → 10:19 → 10:23 → 10:30 → 10:33, hep aynı userId, farklı IP'ler).
+       *
+       * Şimdi yalnız bayat token'ın ailesi (o cihazın zinciri) iptal edilir; diğer cihazlar
+       * kendi zincirleriyle devam eder. Çalınan bir token'ın ailesi yine yakalanır.
+       */
       await this.prisma.refreshToken.updateMany({
-        where: { userId: stored.userId, revokedAt: null },
+        where: { userId: stored.userId, revokedAt: null, familyId: aile },
         data: { revokedAt: new Date() },
       });
       this.logger.warn(
-        `refresh.replay_detected userId=${stored.userId} yas=${revokeYasiMs}ms ip=${context.ipAddress ?? "?"}`,
+        `refresh.replay_detected userId=${stored.userId} family=${aile} yas=${revokeYasiMs}ms ip=${context.ipAddress ?? "?"}`,
       );
       throw new UnauthorizedException("Refresh token geçersiz.");
     }
 
-    // Rotation: eskiyi revoke et, yeni çift üret.
+    // Rotation: eskiyi revoke et, yeni çift üret (aile korunur).
     await this.prisma.refreshToken.update({
       where: { id: stored.id },
       data: { revokedAt: new Date() },
     });
 
-    return this.issueTokenPair(stored.user, context);
+    return this.issueTokenPair(stored.user, context, aile);
   }
 
   async logout(rawRefreshToken: string | undefined) {
@@ -588,6 +601,7 @@ export class AuthService {
   private async issueTokenPair(
     user: { id: string; email: string; role: string },
     context: { userAgent?: string; ipAddress?: string },
+    familyId?: string,
   ) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwt.sign(payload, {
@@ -605,6 +619,8 @@ export class AuthService {
         expiresAt,
         userAgent: context.userAgent?.slice(0, 500),
         ipAddress: context.ipAddress?.slice(0, 64),
+        // Girişte yeni aile; rotasyonda mevcut aile taşınır (cihaz zinciri).
+        familyId: familyId ?? crypto.randomBytes(12).toString("hex"),
       },
     });
 
