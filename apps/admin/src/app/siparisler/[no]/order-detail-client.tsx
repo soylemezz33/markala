@@ -810,17 +810,22 @@ export function OrderDetailClient({
                             ))}
                         </ul>
                       )}
-                      {item.quantity != null && (
-                        <div className="text-[11px] text-ink-500 mt-1">
-                          {/* GERÇEK parça sayısı: satır adedi × konfigürasyondaki paket adedi
-                              ("2 Adet"lik yelken takımı × 1 satır = 2). Web müşteri paneliyle
-                              aynı kural (unitCountFromSummary) — 2026-08-29 tutarsızlık düzeltmesi. */}
-                          Adet: {item.quantity * birimAdet(item.configurationSummary)}
-                          {birimAdet(item.configurationSummary) > 1 && (
-                            <span className="text-ink-400"> ({item.quantity} satır × {birimAdet(item.configurationSummary)}'li)</span>
-                          )}
-                        </div>
-                      )}
+                      {item.quantity != null && (() => {
+                        /* GERÇEK parça sayısı: sepet adedi × seçenekteki paket adedi ("2 Adet"lik yelken
+                           paketi × sepette 2 = 4 bayrak). Web müşteri paneliyle aynı kural (unitCountFromSummary).
+                           2026-09-17 (Hasan, MK-MU1JR0WY-Q39B: 4 ödenmiş 2 gönderilmiş; "(2 satır × 2'li)"
+                           anlaşılmıyordu): paket × sepet çarpanı varsa toplam açık yazılır + turuncu uyarı. */
+                        const paket = birimAdet(item.configurationSummary);
+                        const toplam = item.quantity * paket;
+                        if (paket <= 1) return <div className="text-[11px] text-ink-500 mt-1">Adet: {toplam}</div>;
+                        if (item.quantity <= 1) return <div className="text-[11px] text-ink-500 mt-1">Toplam {toplam} adet <span className="text-ink-400">({paket}'li paket)</span></div>;
+                        return (
+                          <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 px-2 py-1 rounded-md bg-warning/15 text-[11px] text-ink-900" role="note">
+                            <span className="font-semibold">Toplam {toplam} adet</span>
+                            <span className="text-ink-600">— müşteri {paket}'li paketi sepette {item.quantity} kez aldı ({item.quantity} × {paket}). Üretim ve kargo {toplam} adet üzerinden.</span>
+                          </div>
+                        );
+                      })()}
                       {item.needsDesignSupport && (
                         <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-500/15 text-brand-700">
                           <PaintBrush size={11} weight="fill" /> Tasarım desteği istendi
