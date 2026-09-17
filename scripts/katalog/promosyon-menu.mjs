@@ -27,26 +27,33 @@ const DRY = process.argv.includes("--dry");
 // Menüde YENİ sekme AÇILMAZ: "Promosyon & Hediye" sekmesi zaten var (içinde Markala'nın
 // kendi ürettiği kupa/magnet/plaket/madalya/kaşe grubu). Turkuaz kategorileri bu sekmeye
 // iki yeni grup olarak eklenir; mevcut grup ve öne çıkanlara DOKUNULMAZ.
+//
+// SIRA = GERÇEK ARAMA HACMİ (DataForSEO, Türkiye, Eyl 2026 — Hasan: "en çok aratılanlar
+// önde, sığmayanlar diğer"): kalem 1.900 · çakmak 1.600 · anahtarlık 1.000 · şapka 880 +
+// tişört 480 · çanta 880 (+bez çanta baskı 880) · ajanda 590 + defter 590 · duvar saati
+// 590 + saat 480 · powerbank 590 + usb 170 · termos 480 + kupa 320 · vip 0 (menüde kalır,
+// "kurumsal hediye" 1.600 hedefli). "Tüm Promosyon Ürünleri" jenerik 9.900'lük terimi taşır.
 const SEKME_ETIKETI = "Promosyon & Hediye";
 const GRUPLAR = [
   {
-    title: "Ofis & Kırtasiye",
+    title: "En Çok Aranan Promosyonlar",
     items: [
       { label: "Promosyon Kalem", href: "/kategori/promosyon-kalem" },
-      { label: "Defter & Ajanda", href: "/kategori/promosyon-defter-ajanda" },
+      { label: "Promosyon Çakmak", href: "/kategori/promosyon-cakmak" },
+      { label: "Anahtarlık & Rozet", href: "/kategori/promosyon-anahtarlik" },
+      { label: "Tişört & Şapka", href: "/kategori/promosyon-tekstil" },
       { label: "Çanta & Sekreterlik", href: "/kategori/promosyon-canta" },
-      { label: "Duvar & Masa Saati", href: "/kategori/promosyon-saat" },
     ],
   },
   {
-    title: "Hediyelik & Teknoloji",
+    title: "Ofis & Hediyelik",
     items: [
-      { label: "Bardak & Termos", href: "/kategori/promosyon-bardak-termos" },
-      { label: "USB & Teknoloji", href: "/kategori/promosyon-teknoloji" },
-      { label: "Anahtarlık & Rozet", href: "/kategori/promosyon-anahtarlik" },
-      { label: "Tişört & Şapka", href: "/kategori/promosyon-tekstil" },
+      { label: "Ajanda & Defter", href: "/kategori/promosyon-defter-ajanda" },
+      { label: "Duvar & Masa Saati", href: "/kategori/promosyon-saat" },
+      { label: "Powerbank & USB Bellek", href: "/kategori/promosyon-teknoloji" },
+      { label: "Termos & Kupa", href: "/kategori/promosyon-bardak-termos" },
       { label: "VIP Hediye Setleri", href: "/kategori/promosyon-vip-set" },
-      { label: "Tüm Promosyon Çeşitleri", href: "/kategori/promosyon-cesitli" },
+      { label: "Tüm Promosyon Ürünleri →", href: "/kategori/promosyon-cesitli" },
     ],
   },
 ];

@@ -42,6 +42,8 @@ const KATEGORI_ESLEME: ReadonlyArray<readonly [kokAdi: string, slug: string]> = 
   ["Sekreterlikler ve Çantalar", "promosyon-canta"],
   ["Duvar Saatleri", "promosyon-saat"],
   ["Vip Hediyelik Set", "promosyon-vip-set"],
+  // "promosyon çakmak" ayda 1.600 arama (DataForSEO, Eyl 2026) — çeşitliye gömülmez, kendi sayfası olur.
+  ["Çakmaklar", "promosyon-cakmak"],
 ] as const;
 const VARSAYILAN_SLUG = "promosyon-cesitli";
 const HARIC_KOKLER = ["Matbaa Ürünleri"];
@@ -154,10 +156,10 @@ export const KATEGORI_TANIMLARI: Record<
       "Kurumsal logolu USB bellekler, powerbank'ler, kablosuz şarj üniteleri ve teknoloji aksesuarları. Kapasite ve model seçenekleriyle bütçenize uygun teknolojik promosyon.",
     content: {
       seo: {
-        title: "Promosyon USB Bellek & Teknoloji — Logo Baskılı Fiyatlar",
+        title: "Promosyon Powerbank & USB Bellek — Logo Baskılı Fiyatlar",
         description:
-          "Logo baskılı USB bellek (8-128 GB), powerbank ve teknoloji hediyeleri. Kapasite seçenekli toptan fiyat, KDV dahil, 5-7 iş gününde kargoda. Kurumsal sipariş için ideal.",
-        keywords: ["promosyon usb bellek", "logo baskılı usb", "kurumsal powerbank", "promosyon teknoloji", "usb bellek baskı"],
+          "Logo baskılı powerbank ve USB bellek (8-128 GB) ile teknoloji hediyeleri. Kapasite seçenekli toptan fiyat, KDV dahil, 5-7 iş gününde kargoda. Kurumsal sipariş için ideal.",
+        keywords: ["promosyon powerbank", "promosyon usb bellek", "logo baskılı usb", "kurumsal powerbank", "promosyon teknoloji"],
       },
       faqs: [
         {
@@ -265,10 +267,10 @@ export const KATEGORI_TANIMLARI: Record<
       "Logo baskılı tişörtler, şapkalar, yağmurluklar ve polarlar. Organizasyon, saha ekibi ve etkinlikler için beden seçenekli, dayanıklı kurumsal tekstil ürünleri.",
     content: {
       seo: {
-        title: "Promosyon Tişört & Şapka — Logo Baskılı Tekstil Fiyatları",
+        title: "Promosyon Şapka & Tişört — Logo Baskılı Tekstil Fiyatları",
         description:
-          "Logo baskılı tişört, şapka, yağmurluk ve polar. Saha ekibi, etkinlik ve sponsorluk için beden seçenekli toptan tekstil; KDV dahil fiyat, 5-7 iş gününde kargoda.",
-        keywords: ["promosyon tişört", "logo baskılı tişört", "firma şapkası", "baskılı yağmurluk", "kurumsal tekstil"],
+          "Logo baskılı şapka, tişört, yağmurluk ve polar. Saha ekibi, etkinlik ve sponsorluk için beden seçenekli toptan tekstil; KDV dahil fiyat, 5-7 iş gününde kargoda.",
+        keywords: ["promosyon şapka", "promosyon tişört", "logo baskılı tişört", "firma şapkası", "kurumsal tekstil"],
       },
       faqs: [
         {
@@ -379,7 +381,7 @@ export const KATEGORI_TANIMLARI: Record<
         title: "VIP Kurumsal Hediye Setleri — Logo Baskılı Premium Kutular",
         description:
           "Yönetici ve VIP müşteriler için premium hediye setleri: deri cüzdan, kalem, ajanda kombinleri özel kutusunda, logo baskılı. Tek adetten sipariş, KDV dahil fiyat.",
-        keywords: ["vip hediye seti", "kurumsal hediye seti", "yönetici hediyesi", "premium promosyon", "deri hediye seti"],
+        keywords: ["kurumsal hediye", "kurumsal hediye seti", "vip hediye seti", "yönetici hediyesi", "premium promosyon"],
       },
       faqs: [
         {
@@ -401,6 +403,43 @@ export const KATEGORI_TANIMLARI: Record<
           paragraflar: [
             "Yılbaşı ve özel dönem siparişlerinde set içeriği stok durumuna göre planlanır; erken sipariş renk ve model garantisi sağlar.",
             "İsteğe bağlı isme özel baskı (ör. yöneticinin adı) bazı setlerde uygulanabilir; sipariş notunuza ekleyin, üretim öncesi teyit edelim.",
+          ],
+        },
+      ],
+    },
+  },
+  "promosyon-cakmak": {
+    name: "Promosyon Çakmak",
+    shortDescription: "Logo baskılı çakmaklar — kafe, büfe ve fuar dağıtımının klasiği.",
+    longDescription:
+      "Firmanıza özel logo baskılı çakmaklar: taşlı ve manyetolu modeller, renk seçenekleriyle. Kafe, restoran, büfe ve fuar dağıtımlarında en çok tercih edilen ekonomik promosyon ürünü.",
+    content: {
+      seo: {
+        title: "Promosyon Çakmak — Logo Baskılı Toptan Çakmak Fiyatları",
+        description:
+          "Logo baskılı promosyon çakmak: taşlı ve manyetolu modeller, renk seçenekli. Kafe, büfe ve fuar dağıtımı için KDV dahil toptan fiyat, 5-7 iş gününde kargoda.",
+        keywords: ["promosyon çakmak", "logo baskılı çakmak", "toptan çakmak", "firma çakmağı", "çakmak baskı"],
+      },
+      faqs: [
+        {
+          q: "Çakmaklara logo nasıl basılır?",
+          a: "Plastik gövdeye tampon baskı ya da UV tekniğiyle uygulanır; tek renk logo fiyata dahildir. Çok renkli logolar için ürün sayfasından adetle birlikte seçim yapabilirsiniz.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Elden Ele Dolaşan Reklam",
+          paragraflar: [
+            "Çakmak, promosyon dünyasının en hızlı el değiştiren ürünüdür: kafe masasında, büfe tezgâhında ve fuar standında logonuz gün boyu farklı ellerde dolaşır. Adet maliyetinin düşüklüğü, yüksek adetli dağıtımları en ekonomik tanıtım kanallarından biri yapar.",
+            "Taşlı ve manyetolu modeller, şeffaf ve opak gövde renkleriyle stok durumuna göre listelenir.",
+          ],
+        },
+        {
+          baslik: "Kimler İçin Uygun?",
+          paragraflar: [
+            "Restoran, kafe, büfe ve tekel noktaları müşterisine küçük bir jest olarak; nakliye, inşaat ve sanayi firmaları ise saha ekiplerine dağıtım için tercih eder.",
+            "Minimum sipariş adetleri ürün sayfasında yazar; yüksek adetlerde birim fiyat belirgin şekilde düşer.",
           ],
         },
       ],
@@ -496,6 +535,11 @@ const KULLANIM_SENARYOLARI: Record<string, string[]> = {
     "Yönetici ve VIP müşteri hediyesi",
     "Yılbaşı premium kurumsal hediye",
     "Protokol ve iş ortağı hediyeleri",
+  ],
+  "promosyon-cakmak": [
+    "Kafe, restoran ve büfe dağıtımı",
+    "Fuar ve etkinliklerde geniş kitle tanıtımı",
+    "Bayi ve tekel noktası hediyesi",
   ],
   "promosyon-cesitli": [
     "Kurumsal tanıtım ve etkinlik dağıtımı",
