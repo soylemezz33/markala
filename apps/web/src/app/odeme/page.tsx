@@ -1,4 +1,5 @@
 "use client";
+import { URETIM_SURESI } from "@/lib/delivery";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -1631,7 +1632,7 @@ export default function CheckoutPage() {
               </div>
 
               <ul className="grid grid-cols-3 gap-2 text-xs text-ink-500">
-                <Trust icon={<Clock size={18} />} label="2-3 iş günü üretim" />
+                <Trust icon={<Clock size={18} />} label={`${URETIM_SURESI} üretim`} />
                 <Trust icon={<Truck size={18} />} label="81 ile kargo" />
                 <Trust icon={<ShieldCheck size={18} />} label="KVKK uyumlu" />
               </ul>

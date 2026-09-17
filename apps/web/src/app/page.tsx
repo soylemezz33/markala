@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   // SERP bütçesi: title ≤60 kr, description ≤160 kr (kelime sınırında biter) — 2026-08-01 SEO denetimi.
   title: { absolute: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı" },
   description:
-    "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
+    "Kartvizit, broşür, afiş, branda ve 750+ matbaa ürünü online. Ücretsiz tasarım desteği, 3-5 iş günü üretim, 81 ile kargo. 324 Ajans güvencesiyle.",
   alternates: { canonical: "/" },
   // OG/Twitter başlıkları BURADA tekrar yazılıyor (2026-09-01 SEO denetimi): denetimde
   // <title> özenle yazılmışken paylaşım başlığının kök layout'un jenerik varsayılanında
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     url: "https://markala.com.tr",
     title: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı",
     description:
-      "750+ matbaa ürünü online. Ebadını ve adedini seç, fiyatı anında gör. Ücretsiz tasarım desteği, 2-3 iş günü üretim, 81 ile kargo.",
+      "750+ matbaa ürünü online. Ebadını ve adedini seç, fiyatı anında gör. Ücretsiz tasarım desteği, 3-5 iş günü üretim, 81 ile kargo.",
     images: [
       {
         url: "/og-default.png",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Markala, Online Matbaa: Kartvizit, Broşür & Branda Baskı",
     description:
-      "750+ matbaa ürünü online. Fiyatı anında gör, ücretsiz tasarım desteği al, 2-3 iş gününde üretilsin.",
+      "750+ matbaa ürünü online. Fiyatı anında gör, ücretsiz tasarım desteği al, 3-5 iş gününde üretilsin.",
     images: ["/og-default.png"],
   },
 };

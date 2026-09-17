@@ -1,5 +1,5 @@
 import { Container } from "@markala/ui";
-import { KARGO_SURESI, TOPLAM_SURE } from "@/lib/delivery";
+import { KARGO_SURESI, TOPLAM_SURE, URETIM_SURESI } from "@/lib/delivery";
 import {
   CursorClick, PaintBrush, Printer, Package as PackageIcon, Truck,
   ArrowRight,
@@ -24,7 +24,7 @@ const steps = [
     icon: PaintBrush,
     title: "Tasarım",
     desc: "Hazır dosyanı yükle veya ücretsiz tasarım desteği iste.",
-    duration: "0-24 sa",
+    duration: "24 saat",
     grad: "from-[#FF6B9D] to-[#C94BC9]",
     glow: "shadow-[0_8px_24px_rgba(201,75,201,0.35)]",
   },
@@ -33,7 +33,7 @@ const steps = [
     icon: Printer,
     title: "Üretim",
     desc: "Onaylı tasarım kalite kontrolünden geçer, üretime alınır.",
-    duration: "2-3 iş günü",
+    duration: URETIM_SURESI,
     grad: "from-[#00D9FF] to-[#0091FF]",
     glow: "shadow-[0_8px_24px_rgba(0,217,255,0.35)]",
   },
@@ -42,7 +42,7 @@ const steps = [
     icon: PackageIcon,
     title: "Paketleme",
     desc: "Hasarsız ulaşması için özel ambalaj. Fotoğraflı tutanak.",
-    duration: "Üretim sonrası",
+    duration: "1 iş günü",
     grad: "from-[#9F7BFF] to-[#6C4BE0]",
     glow: "shadow-[0_8px_24px_rgba(159,123,255,0.35)]",
   },
@@ -50,7 +50,7 @@ const steps = [
     n: "05",
     icon: Truck,
     title: "Kargo",
-    desc: "DHL veya Aras Kargo ile 81 ile teslim. Takip linki SMS/e-posta.",
+    desc: "DHL veya Aras Kargo ile 81 ile teslim. Takip linki e-posta ile.",
     duration: KARGO_SURESI,
     grad: "from-[#3DDC84] to-[#00A86B]",
     glow: "shadow-[0_8px_24px_rgba(61,220,132,0.35)]",
@@ -88,7 +88,7 @@ export function ProcessTimeline() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-paper-100/80">
-            5 adımlık şeffaf süreç. Her aşamada SMS ve e-posta ile bilgilendirme.
+            5 adımlık şeffaf süreç. Her aşamada e-posta ile bilgilendirme.
             Üretimi atölyemizde, denetimi 324 Ajans disipliniyle yapıyoruz.
           </p>
         </div>

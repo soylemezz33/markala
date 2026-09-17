@@ -75,10 +75,10 @@ export function estimateDelivery(productionTime: string, now: Date = new Date())
  */
 
 /** Üretim süresi — ürün bazında DB'den gelebilir; bu, site geneli standart iddiadır. */
-export const URETIM_SURESI = "2-3 iş günü";
+export const URETIM_SURESI = "3-5 iş günü"; // 2026-09-17 Hasan: "üretim başlayıp bitişine 3-5 iş günü"
 
 /** Kargo süresi — 81 ilin tamamı için aynı (Hasan kararı, 2026-09-02). */
 export const KARGO_SURESI = "2-4 iş günü";
 
 /** Üretim + kargo toplamı. URETIM_SURESI ve KARGO_SURESI ile tutarlı olmak ZORUNDA. */
-export const TOPLAM_SURE = "4-7 iş günü";
+export const TOPLAM_SURE = "5-9 iş günü";
