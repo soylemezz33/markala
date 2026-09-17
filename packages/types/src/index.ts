@@ -501,6 +501,9 @@ export interface Order {
   /** Mock kargo takip no */
   trackingNumber?: string;
   trackingCarrier?: string;
+  /** Kargoya verilme / teslim anı (ISO) — API findById tüm kolonları döner; müşteri takip çizgisi bunları gösterir (2026-09-17). */
+  shippedAt?: string | null;
+  deliveredAt?: string | null;
   /** Paraşüt e-Arşiv/e-Fatura (2026-09-11): belge no doluysa PDF /orders/:id/fatura.pdf'ten indirilir */
   invoiceNumber?: string | null;
   invoiceType?: "e_archive" | "e_invoice" | null;

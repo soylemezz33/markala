@@ -280,7 +280,14 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           <Truck size={18} /> Kargo Takibi
         </h3>
         <TrackingTimeline
-          events={buildTrackingEvents({ status: normStatus(order.status as unknown as string), createdAt: order.createdAt })}
+          events={buildTrackingEvents({
+            status: normStatus(order.status as unknown as string),
+            createdAt: order.createdAt,
+            // 2026-09-17 (Hasan): kargoya verilme ve teslim tarihleri müşteriye görünsün.
+            // Adımlar bilerek 4 tane (alındı → üretimde → kargoda → teslim); tasarım aşamaları gösterilmez.
+            shippedAt: order.shippedAt ?? null,
+            deliveredAt: order.deliveredAt ?? null,
+          })}
           trackingNumber={order.trackingNumber ?? undefined}
           carrier={order.trackingCarrier ?? "Kargo"}
         />
