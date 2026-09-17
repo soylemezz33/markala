@@ -391,12 +391,24 @@ export function grupToYuk(
   };
 }
 
-/** Grup görselleri: kodgrup görseli önce, sonra SKU görselleri — tekrarsız, en fazla 6. */
+/**
+ * Grup görselleri — tekrarsız, en fazla 6. SIRA BİLİNÇLİ (2026-09-17 örnek incelemesi):
+ * SKU görseli (resim1) DÜZ ürün fotoğrafıdır → ana görsel olur; kodgrup görseli ise
+ * Turkuaz'ın ESKİ MÜŞTERİLERİNİN logolu baskı örneklerini içeren kolajdır → galeriye
+ * 2. sıraya gider. Ana görselde üçüncü taraf logosu görünmesin (Hasan, görsel sorusu).
+ */
 export function gorselSirasi(grup: TurkuazGrup): string[] {
   const out: string[] = [];
   const ekle = (u: string) => {
     if (u && !out.includes(u) && out.length < 6) out.push(u);
   };
+  for (const s of grup.skular) {
+    const ilk = s.resimler.find((u) => !u.includes("/kodgrup/"));
+    if (ilk) {
+      ekle(ilk);
+      break; // ana görsel: ilk SKU'nun düz fotoğrafı
+    }
+  }
   const kodgrupResmi = grup.skular
     .flatMap((s) => s.resimler)
     .find((u) => u.includes("/kodgrup/"));
