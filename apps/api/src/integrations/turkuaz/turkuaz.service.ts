@@ -191,6 +191,9 @@ export class TurkuazService {
           productionTime: URETIM_SURESI,
           sortOrder: sira++,
           isActive: true,
+          // SEO/GEO içeriği (seo + faqs + seoBolumler — 41 kategoriyle aynı şema).
+          // Yalnız OLUŞTURMADA yazılır; SEO oturumunun sonraki düzenlemeleri ezilmez.
+          ...(tanim.content ? { content: tanim.content as never } : {}),
         },
       });
       map.set(slug, yeni.id);

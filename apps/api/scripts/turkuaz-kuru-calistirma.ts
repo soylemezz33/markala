@@ -79,3 +79,8 @@ for (const g of [gruplar[0], gruplar[Math.floor(gruplar.length / 2)], gruplar[gr
   console.log("  adet:", y.options.filter((o) => o.groupKey === "adet").map((o) => o.optionLabel).join(", "));
   console.log("  görsel:", y.gorselKaynaklari.length);
 }
+
+// SEO örneği: bir ürünün üretilen içeriği (göz kontrolü)
+const seoOrnek = grupToYuk(gruplar.find((g) => g.kodgrup === "5322") ?? gruplar[0], false);
+console.log("\n=== SEO ÖRNEĞİ ===", seoOrnek.slug);
+console.log(JSON.stringify(seoOrnek.content, null, 1).slice(0, 1800));

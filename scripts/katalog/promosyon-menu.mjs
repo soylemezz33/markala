@@ -24,8 +24,10 @@ try {
 const API = process.env.API_URL || "https://api.markala.com.tr";
 const DRY = process.argv.includes("--dry");
 
-const SEKME_ETIKETI = "Promosyon";
-// Gruplama vitrin mantığıyla: en çok aranan başlıklar önde, kalabalık tek grupta boğulmaz.
+// Menüde YENİ sekme AÇILMAZ: "Promosyon & Hediye" sekmesi zaten var (içinde Markala'nın
+// kendi ürettiği kupa/magnet/plaket/madalya/kaşe grubu). Turkuaz kategorileri bu sekmeye
+// iki yeni grup olarak eklenir; mevcut grup ve öne çıkanlara DOKUNULMAZ.
+const SEKME_ETIKETI = "Promosyon & Hediye";
 const GRUPLAR = [
   {
     title: "Ofis & Kırtasiye",
@@ -33,21 +35,16 @@ const GRUPLAR = [
       { label: "Promosyon Kalem", href: "/kategori/promosyon-kalem" },
       { label: "Defter & Ajanda", href: "/kategori/promosyon-defter-ajanda" },
       { label: "Çanta & Sekreterlik", href: "/kategori/promosyon-canta" },
-      { label: "Saat", href: "/kategori/promosyon-saat" },
+      { label: "Duvar & Masa Saati", href: "/kategori/promosyon-saat" },
     ],
   },
   {
-    title: "Mutfak & Teknoloji",
+    title: "Hediyelik & Teknoloji",
     items: [
       { label: "Bardak & Termos", href: "/kategori/promosyon-bardak-termos" },
-      { label: "Teknoloji & USB", href: "/kategori/promosyon-teknoloji" },
-    ],
-  },
-  {
-    title: "Hediyelik",
-    items: [
-      { label: "Anahtarlık", href: "/kategori/promosyon-anahtarlik" },
-      { label: "Tekstil", href: "/kategori/promosyon-tekstil" },
+      { label: "USB & Teknoloji", href: "/kategori/promosyon-teknoloji" },
+      { label: "Anahtarlık & Rozet", href: "/kategori/promosyon-anahtarlik" },
+      { label: "Tişört & Şapka", href: "/kategori/promosyon-tekstil" },
       { label: "VIP Hediye Setleri", href: "/kategori/promosyon-vip-set" },
       { label: "Tüm Promosyon Çeşitleri", href: "/kategori/promosyon-cesitli" },
     ],

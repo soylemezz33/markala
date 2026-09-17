@@ -46,71 +46,461 @@ const KATEGORI_ESLEME: ReadonlyArray<readonly [kokAdi: string, slug: string]> = 
 const VARSAYILAN_SLUG = "promosyon-cesitli";
 const HARIC_KOKLER = ["Matbaa Ürünleri"];
 
+export interface KategoriIcerik {
+  seo: { title: string; description: string; keywords: string[] };
+  faqs: Array<{ q: string; a: string }>;
+  seoBolumler: Array<{ baslik: string; paragraflar: string[] }>;
+}
+
+/** Tüm promosyon kategorilerinde ortak, dürüst SSS'ler (kategoriye özel olanlar ayrıca eklenir). */
+const ORTAK_SSS: Array<{ q: string; a: string }> = [
+  {
+    q: "Fiyatlara logo baskısı dahil mi?",
+    a: "Evet. Listelenen fiyatlara firmanıza özel logo baskısı dahildir; sipariş sonrası logonuzu iletirsiniz, tasarım baskı öncesi onayınıza sunulur.",
+  },
+  {
+    q: "Minimum sipariş adedi nedir?",
+    a: "Ürüne göre değişir ve her ürünün sayfasında açıkça yazar; adet seçici zaten minimumun altını göstermez. Kalem ve anahtarlık gibi ürünlerde genellikle 25-100 adet, VIP setlerde tek adet sipariş verilebilir.",
+  },
+  {
+    q: "Teslimat ne kadar sürer?",
+    a: "Tasarım onayınızdan sonra üretim 5-7 iş günüdür; kargoya verildiğinde takip numaranız e-posta ile gelir.",
+  },
+];
+
 /** Yeni kategori oluştururken kullanılacak vitrin metinleri (senkron var olanı EZMEZ). */
 export const KATEGORI_TANIMLARI: Record<
   string,
-  { name: string; shortDescription: string; longDescription: string }
+  { name: string; shortDescription: string; longDescription: string; content?: KategoriIcerik }
 > = {
   "promosyon-kalem": {
     name: "Promosyon Kalem",
     shortDescription: "Logo baskılı plastik, metal ve roller kalemler — kurumsal hediyenin klasiği.",
     longDescription:
       "Firmanıza özel logo baskılı promosyon kalemler: plastik, metal, roller ve dokunmatik uçlu modeller, kalem setleri. Fuar, tanıtım ve kurumsal hediye için yüksek adetlerde uygun fiyat.",
+    content: {
+      seo: {
+        title: "Promosyon Kalem — Logo Baskılı Toptan Kalem Fiyatları",
+        description:
+          "Logo baskılı promosyon kalem: plastik, metal, roller ve dokunmatik modeller. 100 adetten başlayan toptan fiyat, KDV dahil, 5-7 iş gününde kargoda. Online sipariş verin.",
+        keywords: ["promosyon kalem", "logo baskılı kalem", "toptan kalem", "firma kalemi", "metal kalem baskı"],
+      },
+      faqs: [
+        {
+          q: "Plastik ve metal kalem arasında nasıl seçim yapmalıyım?",
+          a: "Fuar ve geniş kitle dağıtımında adet maliyeti düşük plastik kalemler tercih edilir; müşteri ve iş ortağı hediyesinde lazer kazımalı metal kalemler daha kalıcı bir izlenim bırakır. Roller ve jel refilli modeller yazım kalitesiyle üst segmenttir.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Promosyon Kalem Fiyatını Ne Belirler?",
+          paragraflar: [
+            "Promosyon kalem fiyatı üç değişkene bağlıdır: gövde malzemesi (plastik, metal, geri dönüşümlü), baskı tekniği (tampon baskı, UV, lazer kazıma) ve sipariş adedi. Adet arttıkça birim maliyet belirgin şekilde düşer; bu yüzden listelerimizde 100'den 2.500 adede kadar kademeli fiyat görürsünüz.",
+            "Tüm fiyatlara tek renk logo baskısı ve KDV dahildir. Lazer kazımalı metal kalemlerde logo silinmez; yoğun kullanımda bile marka görünürlüğü yıllarca sürer.",
+          ],
+        },
+        {
+          baslik: "Hangi Kalem Hangi Kullanıma Uygun?",
+          paragraflar: [
+            "Fuar, kongre ve seminer dağıtımları için plastik ve geri dönüşümlü kalemler en ekonomik seçimdir. Banka, sigorta ve otomotiv gibi sektörlerde müşteriyle imza anında buluşan roller ve jel kalemler tercih edilir.",
+            "Kalem setleri ise yılbaşı ve bayi hediyelerinde kutusuyla sunulabilen, ajanda ile kombinlenebilen bir üst seviyedir. Kararsızsanız ürün sayfalarındaki ebat ve baskı bilgilerini karşılaştırın ya da bize danışın.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-bardak-termos": {
     name: "Promosyon Bardak & Termos",
     shortDescription: "Baskılı kupa, termos ve mataralar — her gün elde taşınan reklam.",
     longDescription:
       "Logo baskılı porselen kupalar, çelik termoslar, mataralar ve kahve bardakları. Süblimasyon ve UV baskı ile kalıcı görsel; ofis ve saha ekipleri için ideal kurumsal hediye.",
+    content: {
+      seo: {
+        title: "Promosyon Kupa & Termos — Logo Baskılı Bardak Fiyatları",
+        description:
+          "Logo baskılı porselen kupa, çelik termos ve matara. Süblimasyon baskıyla kalıcı görsel, KDV dahil toptan fiyat, 5-7 iş gününde kargoda. Kurumsal hediyede en çok tercih edilen ürün grubu.",
+        keywords: ["promosyon kupa", "logo baskılı kupa", "kurumsal termos", "baskılı bardak", "firma kupası"],
+      },
+      faqs: [
+        {
+          q: "Kupalar bulaşık makinesinde yıkanabilir mi?",
+          a: "Porselen kupalarımız bulaşık makinesine uygundur; üretici notu olarak, makine kimyasalları nedeniyle her üründe olduğu gibi zamanla solma görülebilir. Elde yıkama baskı ömrünü uzatır.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Neden Kupa ve Termos En Etkili Promosyon Ürünlerindendir?",
+          paragraflar: [
+            "Kupa ve termos, promosyon ürünleri içinde kullanım sıklığı en yüksek gruptur: masada ve elde her gün görünür, logonuz çöpe gitmez. Araştırmalar içecek kaplarının ortalama iki yıldan uzun süre kullanıldığını gösterir — adet başına maliyeti en verimli reklamlardan biridir.",
+            "Çift renk iç-kulp kombinli porselen kupalardan çelik termoslara kadar seçenekler, bütçenize göre 45 adetten başlayan siparişlerle üretilir.",
+          ],
+        },
+        {
+          baslik: "Baskı Tekniği: Süblimasyon ve UV",
+          paragraflar: [
+            "Kupalarda süblimasyon (dijital) baskı kullanılır: görsel yüzeye değil sırrın altına işlenir, bulaşıkta çıkmaz. Çelik termos ve mataralarda UV ya da lazer teknikleri yüzeye göre seçilir.",
+            "Çok renkli logolar ve fotoğraflı tasarımlar dahil hemen her görsel uygulanabilir; sipariş sonrası tasarımınız onayınıza sunulur.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-teknoloji": {
     name: "Promosyon Teknoloji",
     shortDescription: "USB bellek, powerbank, kablosuz şarj ve masaüstü teknoloji hediyeleri.",
     longDescription:
       "Kurumsal logolu USB bellekler, powerbank'ler, kablosuz şarj üniteleri ve teknoloji aksesuarları. Kapasite ve model seçenekleriyle bütçenize uygun teknolojik promosyon.",
+    content: {
+      seo: {
+        title: "Promosyon USB Bellek & Teknoloji — Logo Baskılı Fiyatlar",
+        description:
+          "Logo baskılı USB bellek (8-128 GB), powerbank ve teknoloji hediyeleri. Kapasite seçenekli toptan fiyat, KDV dahil, 5-7 iş gününde kargoda. Kurumsal sipariş için ideal.",
+        keywords: ["promosyon usb bellek", "logo baskılı usb", "kurumsal powerbank", "promosyon teknoloji", "usb bellek baskı"],
+      },
+      faqs: [
+        {
+          q: "USB belleklerde hangi kapasiteler var?",
+          a: "Modele göre 8 GB'tan 128 GB'a kadar kapasite seçenekleri bulunur; her ürünün sayfasındaki seçenek listesinde stokta olan kapasiteler görünür. Kapasite arttıkça birim fiyat yükselir.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Kurumsal Hediyede Teknoloji Neden Öne Çıkıyor?",
+          paragraflar: [
+            "USB bellek ve powerbank, alan kişinin gerçekten kullandığı promosyon ürünleridir: çantada ve masada taşınır, logonuz her kullanımda görünür. Özellikle fuar ve kongrelerde sunum dosyalarının yüklenmiş USB ile dağıtılması hem pratik hem akılda kalıcıdır.",
+            "Metal gövdeli modellerde logo lazerle kazınır ve silinmez; deri kapaklı modellerde sıcak baskı uygulanır.",
+          ],
+        },
+        {
+          baslik: "Sipariş ve Kapasite Seçimi",
+          paragraflar: [
+            "Aynı modelin farklı kapasiteleri farklı fiyatlandırılır; ürün sayfasında kapasiteyi ve adedi seçtiğinizde toplam fiyat anında hesaplanır.",
+            "Kurumsal veri güvenliği gerektiren dağıtımlar için siparişinizle birlikte dosya yükleme talebinizi iletebilirsiniz; üretim öncesi netleştirilir.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-defter-ajanda": {
     name: "Promosyon Defter & Ajanda",
     shortDescription: "Logo baskılı tarihli ajandalar, tarihsiz defterler ve organizerlar.",
     longDescription:
       "Firmanıza özel tarihli ajanda, tarihsiz defter, bloknot ve organizer modelleri. Termo deri kapaklar, sıcak baskı ve gofre logo seçenekleriyle yıl boyu masada kalan tanıtım.",
+    content: {
+      seo: {
+        title: "Promosyon Ajanda & Defter — Logo Baskılı 2027 Ajanda Fiyatları",
+        description:
+          "Logo baskılı tarihli ajanda, tarihsiz defter ve organizer. Termo deri kapak, gofre/sıcak baskı logo, KDV dahil toptan fiyat. Yılbaşı kurumsal hediyesinin vazgeçilmezi.",
+        keywords: ["promosyon ajanda", "logo baskılı ajanda", "kurumsal ajanda", "tarihsiz defter baskı", "yılbaşı ajanda"],
+      },
+      faqs: [
+        {
+          q: "Ajandalara logo nasıl uygulanır?",
+          a: "Termo ve PU deri kapaklara gofre (kabartma), sıcak baskı ya da UV teknikleriyle uygulanır; ürün sayfasındaki baskı bilgisi hangi tekniğin kullanıldığını belirtir. Gofre baskı mürekkepsizdir ve kapak ömrü boyunca kalır.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Yılbaşı Ajanda Siparişini Ne Zaman Vermeli?",
+          paragraflar: [
+            "Tarihli ajandalar yılın son çeyreğinde yoğun talep görür ve popüler modellerin stokları kasım ayında tükenmeye başlar. Kurumsal dağıtım planlıyorsanız siparişi ekim sonuna kadar vermek hem model hem renk seçeneği açısından en garantili yoldur.",
+            "Tarihsiz defterler ise yıl boyu dağıtılabilir; eğitim, toplantı ve seminer setlerinde tarihli ajandanın esnek alternatifidir.",
+          ],
+        },
+        {
+          baslik: "Kapak ve Kâğıt Kalitesi",
+          paragraflar: [
+            "Modellerimizde termo PU sert kapaklar ve 70 gr ivory (krem) kâğıt standarttır; sayfa sayısı ve çizgi düzeni her ürünün özelliklerinde yazar.",
+            "Kalem yuvalı, lastikli ve organizer bölmeli modeller yönetici segmenti için uygundur; kalem setiyle kombinleyerek kutulu hediye oluşturabilirsiniz.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-anahtarlik": {
     name: "Promosyon Anahtarlık",
     shortDescription: "Metal, deri ve plastik logo baskılı anahtarlıklar ve rozetler.",
     longDescription:
       "Metal döküm, deri ve plastik anahtarlıklar, açacaklı ve ledli modeller, rozetler. Düşük maliyetle geniş kitleye ulaşan, en çok tercih edilen promosyon kalemlerinden.",
+    content: {
+      seo: {
+        title: "Promosyon Anahtarlık — Logo Baskılı Toptan Fiyatlar",
+        description:
+          "Logo baskılı metal, deri ve plastik anahtarlıklar, rozetler. Düşük birim maliyetle geniş kitleye tanıtım; KDV dahil toptan fiyat, 5-7 iş gününde kargoda.",
+        keywords: ["promosyon anahtarlık", "logo baskılı anahtarlık", "metal anahtarlık", "toptan anahtarlık", "firma anahtarlığı"],
+      },
+      faqs: [
+        {
+          q: "Metal anahtarlıklara logo nasıl işlenir?",
+          a: "Metal yüzeylere lazer kazıma ya da domeks (damla) etiket uygulanır; deri modellerde sıcak baskı kullanılır. Hangi tekniğin kullanıldığı her ürünün sayfasında yazar.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "En Düşük Maliyetli Kalıcı Tanıtım",
+          paragraflar: [
+            "Anahtarlık, adet başına maliyeti en düşük promosyon ürünlerinden biridir ve alan kişinin gün boyu yanında taşıdığı ender eşyalardandır. Açılış, fuar ve kampanya dağıtımlarında yüksek adetli siparişlerde birim fiyat belirgin şekilde düşer.",
+            "Metal döküm modeller premium algı oluştururken, plastik ve açacaklı modeller geniş kitle dağıtımının ekonomik tercihi olur.",
+          ],
+        },
+        {
+          baslik: "Rozet ve Yaka Aksesuarları",
+          paragraflar: [
+            "Kurum logolu rozetler personel ve üye aidiyetinin klasik simgesidir; damla etiketli ve mineli seçeneklerle üretilir.",
+            "Dernek, okul ve federasyon siparişlerinde kurumsal amblem birebir uygulanır; tasarım onayı olmadan üretime geçilmez.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-tekstil": {
     name: "Promosyon Tekstil",
     shortDescription: "Baskılı tişört, şapka, yağmurluk ve polar — giyilebilir reklam.",
     longDescription:
       "Logo baskılı tişörtler, şapkalar, yağmurluklar ve polarlar. Organizasyon, saha ekibi ve etkinlikler için beden seçenekli, dayanıklı kurumsal tekstil ürünleri.",
+    content: {
+      seo: {
+        title: "Promosyon Tişört & Şapka — Logo Baskılı Tekstil Fiyatları",
+        description:
+          "Logo baskılı tişört, şapka, yağmurluk ve polar. Saha ekibi, etkinlik ve sponsorluk için beden seçenekli toptan tekstil; KDV dahil fiyat, 5-7 iş gününde kargoda.",
+        keywords: ["promosyon tişört", "logo baskılı tişört", "firma şapkası", "baskılı yağmurluk", "kurumsal tekstil"],
+      },
+      faqs: [
+        {
+          q: "Beden dağılımını nasıl bildiririm?",
+          a: "Sipariş notunda ya da sipariş sonrası iletişimde S-M-L-XL dağılımınızı iletirsiniz; toplam adet sipariş adedinizle eşleşir. Beden seçenekleri ürün sayfasındaki listede yazar.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Giyilebilir Reklamın Gücü",
+          paragraflar: [
+            "Baskılı tişört ve şapka, markanızı taşıyan kişiyi gönüllü bir reklam yüzüne çevirir: festivaller, saha ekipleri ve mağaza personeli için hem üniforma hem tanıtım işlevi görür.",
+            "Penye tişörtlerde serigrafi ve transfer baskı, şapkalarda nakış ve transfer teknikleri kullanılır; yıkamaya dayanıklıdır.",
+          ],
+        },
+        {
+          baslik: "Etkinlik ve Sponsorluk Siparişleri",
+          paragraflar: [
+            "Koşu, turnuva ve festival gibi organizasyonlarda yüksek adetli tişört siparişlerinde birim fiyat belirgin şekilde düşer; renk ve beden karışımı tek siparişte toplanabilir.",
+            "Kurumsal renklerinize en yakın kumaş renkleri stok durumuna göre ürün sayfasında listelenir.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-canta": {
     name: "Promosyon Çanta & Sekreterlik",
     shortDescription: "Evrak çantaları, sekreterlikler, bez ve termo çantalar.",
     longDescription:
       "Kurumsal logolu evrak çantaları, sekreterlikler, bez çantalar ve termo çantalar. Toplantı, fuar ve kongre setleri için şık ve işlevsel promosyon çözümleri.",
+    content: {
+      seo: {
+        title: "Promosyon Çanta & Sekreterlik — Logo Baskılı Fiyatlar",
+        description:
+          "Logo baskılı evrak çantası, sekreterlik, bez ve termo çanta. Kongre-fuar setleri ve kurumsal hediye için KDV dahil toptan fiyat, 5-7 iş gününde kargoda.",
+        keywords: ["promosyon çanta", "logo baskılı çanta", "sekreterlik", "kongre çantası", "bez çanta baskı"],
+      },
+      faqs: [
+        {
+          q: "Kongre seti için hangi ürünler kombinlenebilir?",
+          a: "Evrak çantası ya da sekreterlik; ajanda, kalem ve USB bellek ile kombinlenerek tek pakette katılımcı seti oluşturulabilir. Set siparişleri için teklif isteyebilirsiniz.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Toplantıdan Fuara: Doğru Çanta Seçimi",
+          paragraflar: [
+            "Sekreterlik ve evrak çantaları kurumsal toplantıların klasiğidir; deri ve termo yüzeylere gofre veya sıcak baskı ile logo uygulanır. Bez çantalar ise market, kitap fuarı ve etkinlik dağıtımlarında sürdürülebilir ve ekonomik alternatiftir.",
+            "Termo çantalar saha ekipleri ve gıda sektöründe işlevsel bir tanıtım aracı olarak öne çıkar.",
+          ],
+        },
+        {
+          baslik: "Baskı ve Dayanıklılık",
+          paragraflar: [
+            "Bez çantalarda serigrafi baskı yıkamaya dayanıklıdır; deri yüzeylerde kabartma logo çantanın ömrü boyunca kalır.",
+            "Yüksek adetli kongre siparişlerinde teslim programı üretim planına göre netleştirilir; erken sipariş her zaman daha geniş renk seçeneği demektir.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-saat": {
     name: "Promosyon Saat",
     shortDescription: "Logo baskılı duvar ve masa saatleri — ofiste kalıcı görünürlük.",
     longDescription:
       "Firmanıza özel duvar saatleri ve masa saatleri; plastik, alüminyum ve ahşap kasa seçenekleri. Ofis duvarında yıllarca kalan etkili bir tanıtım aracı.",
+    content: {
+      seo: {
+        title: "Promosyon Duvar Saati — Logo Baskılı Saat Fiyatları",
+        description:
+          "Logo baskılı duvar ve masa saatleri; plastik, alüminyum ve ahşap kasa. Ofis duvarında yıllarca kalan tanıtım; KDV dahil toptan fiyat, 5-7 iş gününde kargoda.",
+        keywords: ["promosyon duvar saati", "logo baskılı saat", "kurumsal saat", "duvar saati baskı", "masa saati promosyon"],
+      },
+      faqs: [
+        {
+          q: "Saat kadranına logo nasıl uygulanır?",
+          a: "Kadran, logonuz ve kurumsal renklerinizle dijital baskıyla özel üretilir; çerçeve rengini stoktaki seçeneklerden belirlersiniz. Tasarım baskı öncesi onayınıza sunulur.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Duvarda Yıllarca Kalan Reklam",
+          paragraflar: [
+            "Duvar saati, hediye edildiği ofisin veya dükkânın duvarında yıllarca kalır ve her bakışta markanızı hatırlatır — kalıcılığı en yüksek promosyon ürünlerinden biridir.",
+            "Açılış, yıldönümü ve bayi hediyelerinde plastik kasalı ekonomik modellerden alüminyum ve ahşap premium modellere kadar seçenek sunuyoruz.",
+          ],
+        },
+        {
+          baslik: "Kadran Tasarımı ve Mekanizma",
+          paragraflar: [
+            "Kadran tamamen kurumsal kimliğinize göre tasarlanır: logo, renk ve istenirse iletişim bilgileri. Sessiz akar mekanizma seçenekleri ofis kullanımında tercih edilir.",
+            "Masa saatleri ve gemici takvimli modeller, masaüstü setlerin tamamlayıcısı olarak kombinlenebilir.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-vip-set": {
     name: "VIP Hediye Setleri",
     shortDescription: "Deri, kalem ve aksesuar kombinli premium kurumsal hediye kutuları.",
     longDescription:
       "Yönetici ve önemli müşterileriniz için premium VIP hediye setleri: deri cüzdan, kalem, ajanda ve aksesuar kombinasyonları, özel kutularında logo baskılı olarak hazırlanır.",
+    content: {
+      seo: {
+        title: "VIP Kurumsal Hediye Setleri — Logo Baskılı Premium Kutular",
+        description:
+          "Yönetici ve VIP müşteriler için premium hediye setleri: deri cüzdan, kalem, ajanda kombinleri özel kutusunda, logo baskılı. Tek adetten sipariş, KDV dahil fiyat.",
+        keywords: ["vip hediye seti", "kurumsal hediye seti", "yönetici hediyesi", "premium promosyon", "deri hediye seti"],
+      },
+      faqs: [
+        {
+          q: "VIP setler tek adet sipariş edilebilir mi?",
+          a: "Evet — VIP setlerin çoğu tek adetten itibaren sipariş edilebilir; protokol ve özel gün hediyeleri için idealdir. Adet seçenekleri her setin sayfasında görünür.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Premium Hediye Ne Zaman Doğru Tercihtir?",
+          paragraflar: [
+            "Kilit müşteriler, iş ortakları ve yöneticilere verilen hediye, markanızın algısını doğrudan taşır. VIP setler; deri cüzdan, metal kalem, ajanda ve aksesuarların özel kutuda birleştiği, ilk açılışta etki bırakan kombinlerdir.",
+            "Setlerin kutusuna ve ürünlerine logo uygulanır; kabartma ve lazer teknikleri premium yüzeylerde kalıcıdır.",
+          ],
+        },
+        {
+          baslik: "Kurumsal Sipariş ve Kişiselleştirme",
+          paragraflar: [
+            "Yılbaşı ve özel dönem siparişlerinde set içeriği stok durumuna göre planlanır; erken sipariş renk ve model garantisi sağlar.",
+            "İsteğe bağlı isme özel baskı (ör. yöneticinin adı) bazı setlerde uygulanabilir; sipariş notunuza ekleyin, üretim öncesi teyit edelim.",
+          ],
+        },
+      ],
+    },
   },
   "promosyon-cesitli": {
     name: "Promosyon Çeşitleri",
     shortDescription: "Çakmak, masaüstü, kişisel ve geri dönüşümlü promosyon ürünleri.",
     longDescription:
       "Çakmaklar, masaüstü ürünler, kişisel aksesuarlar, geri dönüşümlü ve tohumlu ürünler dahil geniş promosyon yelpazesi. Aradığınız ürünü bulamadıysanız bize ulaşın; tedarik ağımızla temin edelim.",
+    content: {
+      seo: {
+        title: "Promosyon Ürünleri — Logo Baskılı Kurumsal Hediye Çeşitleri",
+        description:
+          "Çakmak, masaüstü set, takvim, geri dönüşümlü ve tohumlu ürünler dahil yüzlerce logo baskılı promosyon çeşidi. KDV dahil toptan fiyat, 5-7 iş gününde kargoda.",
+        keywords: ["promosyon ürünleri", "kurumsal hediye", "logo baskılı ürünler", "toptan promosyon", "geri dönüşümlü promosyon"],
+      },
+      faqs: [
+        {
+          q: "Aradığım ürün listede yoksa temin edebilir misiniz?",
+          a: "Evet — geniş tedarik ağımızla katalogda olmayan promosyon ürünlerini de temin edebiliyoruz. İletişim sayfamızdan ürünü ve adedi yazın, aynı gün fiyat dönelim.",
+        },
+        ...ORTAK_SSS,
+      ],
+      seoBolumler: [
+        {
+          baslik: "Doğru Promosyon Ürünü Nasıl Seçilir?",
+          paragraflar: [
+            "İyi bir promosyon ürünü üç şartı sağlar: hedef kitleniz onu gerçekten kullanmalı, logonuz kullanım sırasında görünmeli ve birim maliyet dağıtım ölçeğinize uymalı. Masaüstü ürünler ofiste, çakmak ve kişisel aksesuarlar günlük hayatta görünürlük sağlar.",
+            "Geri dönüşümlü ve tohumlu ürünler, sürdürülebilirlik mesajı vermek isteyen kurumların son yıllardaki ilk tercihi.",
+          ],
+        },
+        {
+          baslik: "Toptan Fiyat ve Sipariş Kolaylığı",
+          paragraflar: [
+            "Tüm ürünlerde fiyatlar adet kademeli ve KDV dahildir; ürün sayfasında adedi seçtiğinizde toplam anında hesaplanır, sürpriz maliyet çıkmaz.",
+            "Sipariş sonrası logonuzu iletirsiniz; tasarım onayınız alınmadan baskıya geçilmez, üretim 5-7 iş günüdür.",
+          ],
+        },
+      ],
+    },
   },
+};
+
+/**
+ * Kategori bazlı kullanım senaryoları — ürün sayfasındaki "Nerede kullanılır?" bölümü
+ * ve yapay zekâ aramaları (GEO) için alıntılanabilir, DÜRÜST genel senaryolar.
+ */
+const KULLANIM_SENARYOLARI: Record<string, string[]> = {
+  "promosyon-kalem": [
+    "Fuar ve etkinliklerde ziyaretçi dağıtımı",
+    "Ofis içi kullanım ve müşteri ikramı",
+    "Kongre, seminer ve eğitim katılımcı setleri",
+    "Bayi ve müşteri ziyaret hediyesi",
+  ],
+  "promosyon-bardak-termos": [
+    "Ofis çalışanlarına kurumsal hediye",
+    "Yılbaşı ve özel gün hediye setleri",
+    "Müşteri ve bayi hediyesi",
+    "Etkinlik ve sponsorluk dağıtımları",
+  ],
+  "promosyon-teknoloji": [
+    "Kurumsal sunum ve veri paylaşımı (USB bellek)",
+    "Fuarlarda premium ziyaretçi hediyesi",
+    "Yönetici ve önemli müşteri hediyesi",
+  ],
+  "promosyon-defter-ajanda": [
+    "Yılbaşında kurumsal ajanda dağıtımı",
+    "Toplantı ve eğitim setleri",
+    "Bayi ve müşteri hediyesi",
+  ],
+  "promosyon-anahtarlik": [
+    "Geniş kitleye düşük maliyetli tanıtım dağıtımı",
+    "Fuar ve tanıtım standı hediyesi",
+    "Açılış ve organizasyon hatırası",
+  ],
+  "promosyon-tekstil": [
+    "Saha ekibi ve personel giyimi",
+    "Etkinlik ve festival dağıtımı",
+    "Sponsorluk ve takım kıyafetleri",
+  ],
+  "promosyon-canta": [
+    "Kongre ve fuar katılımcı çantası",
+    "Kurumsal evrak ve toplantı setleri",
+    "Mağaza ve etkinlik dağıtımı",
+  ],
+  "promosyon-saat": [
+    "Ofis ve mağaza duvarında kalıcı marka görünürlüğü",
+    "Açılış ve yıldönümü hediyesi",
+    "Bayi ve iş ortağı hediyesi",
+  ],
+  "promosyon-vip-set": [
+    "Yönetici ve VIP müşteri hediyesi",
+    "Yılbaşı premium kurumsal hediye",
+    "Protokol ve iş ortağı hediyeleri",
+  ],
+  "promosyon-cesitli": [
+    "Kurumsal tanıtım ve etkinlik dağıtımı",
+    "Müşteri ve personel hediyeleri",
+  ],
 };
 
 export interface TurkuazGrup {
@@ -349,12 +739,66 @@ export function grupToYuk(
 
   const ebatlar = [...new Set(grup.skular.map((s) => s.ebat).filter(Boolean))];
   const temizAciklama = aciklamaTemizle(grup.aciklama);
+  const maddeler = temizAciklama.split("\n").map((s) => s.replace(/^•\s*/, "").trim());
   // Kısa açıklamaya ilk GERÇEK özellik alınır — "Minimum sipariş" idari bilgidir, vitrine çıkmaz.
-  const ilkOzellik =
-    temizAciklama
-      .split("\n")
-      .map((s) => s.replace(/^•\s*/, ""))
-      .find((s) => s && !/minimum/i.test(s)) ?? "";
+  const ozellikler = maddeler.filter((s) => s && !/minimum/i.test(s)).slice(0, 7);
+  const ilkOzellik = ozellikler[0] ?? "";
+  const baskiTeknigi = maddeler
+    .find((s) => /^bask[ıi]\s*:/i.test(s))
+    ?.replace(/^bask[ıi]\s*:\s*/i, "");
+  const renkAdlari = [...new Set(varyantlar.map((v) => v.renk).filter(Boolean))];
+  const minAdet = kademeler[0];
+  const enDusukBirim = yuvarla2(listeHaric(minListe) * kdvCarpan);
+  // Anahtar kelime/tanımda parantezli teknik ekler atılır: "Metal Kalem (Jel Refil)" → "metal kalem".
+  const isimKucuk = grup.isim.replace(/\s*\([^)]*\)/g, "").trim().toLocaleLowerCase("tr");
+
+  // SEO/GEO içeriği (ürün OLUŞTURULURKEN yazılır; senkron var olan içeriği ezmez, panel/SEO
+  // oturumu sonradan zenginleştirebilir). SSS cevapları veriden üretilir — uydurma iddia yok.
+  const seo = {
+    title: `${grup.isim} ${grup.kodgrup} — Logo Baskılı Promosyon, ${minAdet}+ Adet`,
+    description:
+      `Logo baskılı ${isimKucuk} ${enDusukBirim.toFixed(0)} ₺/adet'ten (KDV dahil). ` +
+      `Minimum ${minAdet} adet${renkAdlari.length > 1 ? `, ${renkAdlari.length} renk seçeneği` : ""}, ` +
+      `${URETIM_SURESI} içinde kargoda. Online fiyat alın, hemen sipariş verin.`,
+    keywords: [
+      `promosyon ${isimKucuk}`,
+      `logo baskılı ${isimKucuk}`,
+      `${isimKucuk} baskı`,
+      `toptan ${isimKucuk}`,
+      "kurumsal hediye",
+    ],
+  };
+  const faqs: Array<{ q: string; a: string }> = [
+    {
+      q: "Fiyata logo baskısı dahil mi?",
+      a: "Evet — listelenen fiyata firmanıza özel logo baskısı dahildir. Sipariş sonrası logonuzu iletirsiniz; tasarım baskı öncesi onayınıza sunulur.",
+    },
+    {
+      q: "Minimum sipariş adedi nedir?",
+      a: `Bu ürün en az ${minAdet} adet sipariş edilebilir. Adet seçenekleri: ${kademeler.join(", ")}. Daha yüksek adetler için teklif isteyebilirsiniz.`,
+    },
+    {
+      q: "Kargoya ne zaman verilir?",
+      a: `Tasarım onayınızdan sonra ${URETIM_SURESI} içinde üretilip kargoya verilir; kargoya verildiğinde takip numaranız e-posta ile iletilir.`,
+    },
+    {
+      q: "Fiyatlara KDV dahil mi?",
+      a: "Evet, sitede gördüğünüz tüm fiyatlar KDV dahildir; ödeme adımında ek vergi eklenmez.",
+    },
+  ];
+  if (renkAdlari.length > 1) {
+    faqs.push({
+      q: "Hangi renk seçenekleri var?",
+      a: `Şu an stokta olan renkler: ${renkAdlari.join(", ")}. Stok durumu güncellendikçe seçenekler değişebilir.`,
+    });
+  }
+  const specifications: Array<{ label: string; value: string }> = [
+    ...(ebatlar.length > 0 ? [{ label: ebatlar.length > 1 ? "Ebatlar" : "Ebat", value: ebatlar.join(", ") }] : []),
+    ...(renkAdlari.length > 0 ? [{ label: "Renk seçenekleri", value: renkAdlari.join(", ") }] : []),
+    ...(baskiTeknigi ? [{ label: "Baskı tekniği", value: baskiTeknigi }] : []),
+    { label: "Minimum sipariş", value: `${minAdet} adet` },
+    { label: "Ürün kodu", value: grup.kodgrup },
+  ];
 
   // Hash SÜRÜM + KDV bayrağı taşır: eşleme kuralları ya da KDV yorumu değişirse
   // "değişmeyen" hızlı yolu düşer ve tüm fiyat matrisi yeniden yazılır.
@@ -379,9 +823,11 @@ export function grupToYuk(
       sku: grup.kodgrup,
       brand: "Markala Promosyon",
       supplier: { name: TEDARIKCI, kodgrup: grup.kodgrup },
-      ...(ebatlar.length > 0
-        ? { specifications: ebatlar.map((e) => ({ label: "Ebat", value: e })) }
-        : {}),
+      seo,
+      faqs,
+      specifications,
+      features: ozellikler,
+      useCases: KULLANIM_SENARYOLARI[grup.kategoriSlug] ?? KULLANIM_SENARYOLARI["promosyon-cesitli"],
     },
     options,
     prices,
