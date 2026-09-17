@@ -15,12 +15,24 @@
  *  - Minimum sipariş, KÜÇÜK KADEMENİN HİÇ SUNULMAMASI ile uygulanır (emlak-afişi deseni):
  *    en düşük adet seçeneği = minimum; müşteri altını seçemez.
  *
- * KDV: beslemedeki <fiyat> KDV HARİÇ varsayılır (<kdv> oranının ayrıca verilmesi bunu işaret
- * eder) → satış = liste × (1 + kdv/100). Bayi panelinden aksi doğrulanırsa servis
- * `fiyatKdvDahil: true` geçirir ve liste önce KDV'den arındırılır. Maliyet HER ZAMAN KDV
- * hariç yazılır (kâr motoru maliyetleri KDV'siz bekler): maliyet = liste_hariç × 0,60.
+ * KDV: beslemedeki <fiyat> KDV HARİÇ (17 Eyl, Gönül teyidi: "baskısız fiyatlardır" + PDF
+ * dipnotu "Fiyatlara KDV dahil değildir") → satış = liste × (1 + kdv/100). `fiyatKdvDahil`
+ * bayrağı ters durum için durur. Maliyet HER ZAMAN KDV hariç yazılır: maliyet =
+ * liste_hariç × 0,60 + baskı tarifesi.
+ *
+ * BASKI PAYI (17 Eyl, Hasan onayı "Uygula"): Turkuaz liste fiyatları BASKISIZ olduğundan
+ * satışa TEK YÖN logo baskı payı eklenir: satış = (ürün_hariç × adet + baskı(kategori,
+ * teknik, adet)) × KDV. Kaynak tarife: turkuaz-baski-tarifesi.ts (bayi PDF'i = herkese
+ * açık liste, iskonto yok). İstisna: açıklamasında "baskı dahildir" yazan ürünler (15).
+ * KADEME ELEME KURALI: baskı payı ürün bedelinin %60'ını aşan adet kademesi HİÇ sunulmaz
+ * (25 kalemtraşa 900 ₺ tampon parti ücreti gibi anlamsız fiyatlar oluşmasın); simülasyon
+ * (17 Eyl): 345 ürün tam, 77 üründe alt kademeler düşer, 0 ürün satılamaz kalır. Yine de
+ * tüm kademeler elenirse SON İKİ kademe kuralsız korunur — ürün asla kilitlenmez.
  */
+/** Kademe eleme eşiği: baskı payı / ürün bedeli (KDV hariç) bu oranı aşarsa kademe sunulmaz. */
+export const BASKI_ORAN_TAVANI = 0.6;
 import { TurkuazKategori, TurkuazSku, kokKategori } from "./turkuaz-xml";
+import { baskiUcreti } from "./turkuaz-baski-tarifesi";
 
 export const TEDARIKCI = "turkuaz";
 /** Bayi iskontosu sonrası maliyet çarpanı (%40 iskonto → liste × 0,60). */
@@ -730,8 +742,23 @@ export function grupToYuk(
   const minListe = Math.min(...varyantlar.map((s) => s.fiyat));
   const listeHaric = (liste: number) => (fiyatKdvDahil ? liste / kdvCarpan : liste);
 
+  const temizAciklama = aciklamaTemizle(grup.aciklama);
+  const maddeler = temizAciklama.split("\n").map((s) => s.replace(/^•\s*/, "").trim());
+  const baskiTeknigi = maddeler
+    .find((s) => /^bask[ıi]\s*:/i.test(s))
+    ?.replace(/^bask[ıi]\s*:\s*/i, "");
+  // "Belirtilen fiyata ... baskı dahildir" yazan ~15 ürün: tedarikçi fiyatı baskılı → pay yok.
+  const baskiDahil = /bask[ıi]\s+dahil|dahil.{0,20}bask[ıi]|bask[ıi]l[ıi] fiyat/i.test(grup.aciklama);
+  const baskiPayi = (adet: number): number =>
+    baskiDahil ? 0 : baskiUcreti(grup.kategoriSlug, baskiTeknigi, grup.isim, adet)?.toplam ?? 0;
+
   const minSiparis = minSiparisAyikla(grup.aciklama);
-  const kademeler = adetKademeleri(minSiparis, yuvarla2(listeHaric(minListe) * kdvCarpan));
+  const tumKademeler = adetKademeleri(minSiparis, yuvarla2(listeHaric(minListe) * kdvCarpan));
+  // Kademe eleme: parti ücretli baskı düşük adette fiyatı anlamsızlaştırır (bkz. üst yorum).
+  let kademeler = tumKademeler.filter(
+    (a) => baskiPayi(a) <= listeHaric(minListe) * a * BASKI_ORAN_TAVANI,
+  );
+  if (kademeler.length < 2) kademeler = tumKademeler.slice(-2); // emniyet: ürün asla kilitlenmez
 
   const renkliSayisi = new Set(varyantlar.map((v) => v.renk).values()).size;
   const coklu = varyantlar.length > 1;
@@ -771,28 +798,27 @@ export function grupToYuk(
   for (const v of varyantlar) {
     const haric = listeHaric(v.fiyat);
     for (const k of kademeler) {
+      const payi = baskiPayi(k); // KDV hariç, tek yön logo (adet bazlı — varyanttan bağımsız)
       prices.push({
         groupKey: "renk",
         optionKey: v.kod,
         dimKey: String(k),
-        price: yuvarla2(haric * kdvCarpan * k),
-        cost: yuvarla2(haric * MALIYET_CARPANI * k),
+        price: yuvarla2((haric * k + payi) * kdvCarpan),
+        cost: yuvarla2(haric * MALIYET_CARPANI * k + payi),
       });
     }
   }
 
   const ebatlar = [...new Set(grup.skular.map((s) => s.ebat).filter(Boolean))];
-  const temizAciklama = aciklamaTemizle(grup.aciklama);
-  const maddeler = temizAciklama.split("\n").map((s) => s.replace(/^•\s*/, "").trim());
   // Kısa açıklamaya ilk GERÇEK özellik alınır — "Minimum sipariş" idari bilgidir, vitrine çıkmaz.
   const ozellikler = maddeler.filter((s) => s && !/minimum/i.test(s)).slice(0, 7);
   const ilkOzellik = ozellikler[0] ?? "";
-  const baskiTeknigi = maddeler
-    .find((s) => /^bask[ıi]\s*:/i.test(s))
-    ?.replace(/^bask[ıi]\s*:\s*/i, "");
   const renkAdlari = [...new Set(varyantlar.map((v) => v.renk).filter(Boolean))];
   const minAdet = kademeler[0];
-  const enDusukBirim = yuvarla2(listeHaric(minListe) * kdvCarpan);
+  // "X ₺/adet'ten" birimi: ilk kademedeki baskı payı dahil gerçek birim fiyat.
+  const enDusukBirim = yuvarla2(
+    ((listeHaric(minListe) * minAdet + baskiPayi(minAdet)) / minAdet) * kdvCarpan,
+  );
   // Anahtar kelime/tanımda parantezli teknik ekler atılır: "Metal Kalem (Jel Refil)" → "metal kalem".
   const isimKucuk = grup.isim.replace(/\s*\([^)]*\)/g, "").trim().toLocaleLowerCase("tr");
 
@@ -858,8 +884,9 @@ export function grupToYuk(
 
   // Hash SÜRÜM + KDV bayrağı taşır: eşleme kuralları ya da KDV yorumu değişirse
   // "değişmeyen" hızlı yolu düşer ve tüm fiyat matrisi yeniden yazılır.
+  // v2 (17 Eyl): baskı payı + kademe eleme — tüm matrisler yeniden yazılsın.
   const ozet =
-    `v1:${fiyatKdvDahil ? "D" : "H"}:` +
+    `v2:${fiyatKdvDahil ? "D" : "H"}:` +
     varyantlar
       .map((v) => `${v.kod}:${v.stok}:${v.fiyat}`)
       .sort()
@@ -873,7 +900,7 @@ export function grupToYuk(
       `Logo baskılı ${grup.isim}${ilkOzellik ? ` — ${ilkOzellik}` : ""}`.slice(0, 160),
     description:
       `${temizAciklama}\n• Fiyata firmanıza özel logo baskısı dahildir.\n• Ürün kodu: ${grup.kodgrup}`,
-    basePrice: yuvarla2(listeHaric(minListe) * kdvCarpan),
+    basePrice: enDusukBirim,
     productionTime: URETIM_SURESI,
     content: {
       sku: grup.kodgrup,

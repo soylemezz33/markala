@@ -17,6 +17,7 @@ const ORNEK_URUN_XML = `<?xml version="1.0" encoding="utf-8"?>
     <uid>5518</uid><kid>27</kid><kategori>Seramik ve Porselen Bardaklar</kategori>
     <isim>Porselen Kupa</isim><baslik>7275SYH Porselen Kupa</baslik>
     <aciklama>*Minimum sipariş 45 adettir.
+*Belirtilen fiyata çift yön renkli baskı dahildir.
 *Porselen Kupa &amp; Kutu</aciklama>
     <kod>7275SYH</kod><kodgrup>7275</kodgrup><renk>Siyah</renk><ebat>280 ml</ebat>
     <imalat>1</imalat>
@@ -175,6 +176,55 @@ describe("grupToYuk — fiyat matrisi", () => {
     const yuk = grupToYuk(grup, false);
     expect(yuk.aktif).toBe(false);
     expect(yuk.options.length).toBeGreaterThan(0);
+  });
+
+  it("'baskı dahildir' yazan üründe baskı payı EKLENMEZ (kupa fixture'ı)", () => {
+    const yuk = grupToYuk(ornekGrup(), false);
+    const satir = yuk.prices.find((p) => p.dimKey === "45");
+    expect(satir?.price).toBe(190 * 1.2 * 45); // pay eklenseydi bundan büyük olurdu
+  });
+
+  it("baskısız üründe TEK YÖN baskı payı fiyata ve maliyete eklenir (metal kalem, lazer)", () => {
+    const kalemXml = ORNEK_URUN_XML
+      .replace(/Porselen Kupa/g, "Metal Kalem")
+      .replace(/<kategori>Seramik ve Porselen Bardaklar<\/kategori>/g, "<kategori>Metal Kalemler</kategori>")
+      .replace(/<kid>27<\/kid>/g, "<kid>3</kid>")
+      .replace("*Belirtilen fiyata çift yön renkli baskı dahildir.\n", "*Baskı: Lazer\n")
+      .replace(/Minimum sipariş 45 adettir/g, "Minimum Sipariş 100 Adettir")
+      .replace(/<fiyat>190\.00<\/fiyat>/g, "<fiyat>33.00</fiyat>");
+    const kalemKat = `<?xml version="1.0" encoding="utf-8" ?><turkuaz>
+      <kategoriler><kid>1</kid><ustkid>0</ustkid><isim>Kalemler</isim><durum>1</durum></kategoriler>
+      <kategoriler><kid>3</kid><ustkid>1</ustkid><isim>Metal Kalemler</isim><durum>1</durum></kategoriler>
+    </turkuaz>`;
+    const grup = gruplaVeEsle(urunleriAyristir(kalemXml), kategorileriAyristir(kalemKat)).gruplar[0];
+    expect(grup.kategoriSlug).toBe("promosyon-kalem");
+    const yuk = grupToYuk(grup, false);
+    const satir = yuk.prices.find((p) => p.dimKey === "100");
+    // Bayi tarifesi: metal kalem lazer 0-100 adet = 500 ₺ (KDV hariç parti ücreti).
+    expect(satir?.price).toBe((33 * 100 + 500) * 1.2); // 4.560
+    expect(satir?.cost).toBe(33 * 0.6 * 100 + 500); // 2.480
+  });
+
+  it("baskı payı ürün bedelinin %60'ını aşan kademe elenir", () => {
+    // 5 ₺'lik plastik kalem: tampon parti ücreti 900 ₺ → 100 adet (500 ₺ ürün) elenir,
+    // 300 adet (1.500 ₺ ürün, pay 900 = %60) kalır.
+    const ucuzXml = ORNEK_URUN_XML
+      .replace(/Porselen Kupa/g, "Plastik Kalem")
+      .replace(/<kategori>Seramik ve Porselen Bardaklar<\/kategori>/g, "<kategori>Plastik Kalemler</kategori>")
+      .replace(/<kid>27<\/kid>/g, "<kid>2</kid>")
+      .replace("*Belirtilen fiyata çift yön renkli baskı dahildir.\n", "*Baskı: Tampon\n")
+      .replace(/Minimum sipariş 45 adettir/g, "Minimum Sipariş 100 Adettir")
+      .replace(/<fiyat>190\.00<\/fiyat>/g, "<fiyat>5.00</fiyat>");
+    const kalemKat = `<?xml version="1.0" encoding="utf-8" ?><turkuaz>
+      <kategoriler><kid>1</kid><ustkid>0</ustkid><isim>Kalemler</isim><durum>1</durum></kategoriler>
+      <kategoriler><kid>2</kid><ustkid>1</ustkid><isim>Plastik Kalemler</isim><durum>1</durum></kategoriler>
+    </turkuaz>`;
+    const grup = gruplaVeEsle(urunleriAyristir(ucuzXml), kategorileriAyristir(kalemKat)).gruplar[0];
+    const yuk = grupToYuk(grup, false);
+    const adetler = yuk.options.filter((o) => o.groupKey === "adet").map((o) => o.optionKey);
+    expect(adetler).not.toContain("100"); // pay 900 > 500×0,6=300 → elendi
+    expect(adetler).not.toContain("250"); // pay 900 > 1.250×0,6=750 → elendi
+    expect(adetler[0]).toBe("500"); // pay 1.100 ≤ 2.500×0,6=1.500 → ilk kalan kademe
   });
 
   it("slug ve isim kodgrup'u taşır (benzersizlik + müşteri araması)", () => {
