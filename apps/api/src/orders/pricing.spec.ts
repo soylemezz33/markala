@@ -360,3 +360,80 @@ describe("normalizeSelections (web parity — uçtan uca)", () => {
     expect(price).toBe(200);
   });
 });
+
+/**
+ * KADEMELİ ÇEVRE — kanvas tablo şasisi (2026-09-20).
+ *
+ * Neden var: kanvas tablo m² fiyatı YALNIZ kumaşı kapsıyordu; ahşap çıta hiç fiyatlanmıyordu
+ * ve büyük ölçüler zararına satılıyordu (120×170'te 720 ₺ satışta çıta maliyeti tek başına
+ * 696 ₺). Çıta metre fiyatı çevreye göre kademeli olduğu için (tek sabit metre fiyatı 50×70'i
+ * %60 pahalılaştırıp 120×170'i %33 eksik fiyatlıyordu) motora kademe desteği eklendi.
+ *
+ * Kademeler KDV DAHİL SATIŞ (maliyet × 1,5): 50→75, 60→90, 80→120, 100→150, 120→180 ₺/m.
+ */
+describe("perPerimeterKademeli — kanvas şasisi (2026-09-20)", () => {
+  const TEST_PRICING = { ...DEFAULT_PRICING };
+  const KADEMELER = [
+    { maxM: 2.5, tl: 75 },
+    { maxM: 3, tl: 90 },
+    { maxM: 3.5, tl: 120 },
+    { maxM: 5.5, tl: 150 },
+    { tl: 180 },
+  ];
+  // Şasi grubu fiyat satırı OLMADAN çalışır: metre fiyatı rules.kademeler'den okunur.
+  const sasi = {
+    options: [aopt("sasi", "priced", "standart", { effect: "perPerimeterKademeli", birim: "tl", kademeler: KADEMELER })],
+    prices: [] as never[],
+  };
+  const hesapla = (en: string, boy: string, adet = "1") =>
+    computeAreaPrice(sasi.options, sasi.prices, { sasi: "standart", en, boy, adet }, TEST_PRICING).dahil;
+
+  it("50×70 → çevre 2,4 m → 75 ₺/m → 180 ₺", () => {
+    expect(hesapla("50", "70")).toBe(180);
+  });
+
+  it("70×100 → çevre 3,4 m → 120 ₺/m → 408 ₺", () => {
+    expect(hesapla("70", "100")).toBe(408);
+  });
+
+  it("120×150 → çevre 5,4 m → 150 ₺/m → 810 ₺", () => {
+    expect(hesapla("120", "150")).toBe(810);
+  });
+
+  it("120×170 → çevre 5,8 m → üst kademe 180 ₺/m → 1.044 ₺", () => {
+    expect(hesapla("120", "170")).toBe(1044);
+  });
+
+  it("kademe sınırı DAHİLDİR: çevre tam 2,5 m (55×70) → 75 ₺/m, 2,6 m'de bir üst kademe", () => {
+    expect(hesapla("55", "70")).toBe(187.5);   // 2,5 × 75
+    expect(hesapla("60", "70")).toBe(234);     // 2,6 × 90 (bir üst kademe)
+  });
+
+  it("adet çarpar: her tablonun kendi şasisi var (50×70 × 3 = 540 ₺)", () => {
+    expect(hesapla("50", "70", "3")).toBe(540);
+  });
+
+  it("kademe tanımlı değilse fiyat EKLENMEZ (sessiz 0 ₺ yerine kalem atlanır)", () => {
+    const opts = [aopt("sasi", "priced", "standart", { effect: "perPerimeterKademeli", birim: "tl" })];
+    const r = computeAreaPrice(opts, [], { sasi: "standart", en: "50", boy: "70", adet: "1" }, TEST_PRICING);
+    expect(r.dahil).toBe(0);
+  });
+
+  it("kumaş + şasi birlikte: 120×170 solvent (7,20$ × kur) + şasi 1.044 ₺", () => {
+    const opts = [
+      aopt("malzeme", "priced", "solvent", { effect: "perM2", birim: "dolar" }),
+      aopt("sasi", "priced", "standart", { effect: "perPerimeterKademeli", birim: "tl", kademeler: KADEMELER }),
+    ];
+    const prices = [{ groupKey: "malzeme", optionKey: "solvent", dimKey: null, price: 0, cost: 7.2 }];
+    const r = computeAreaPrice(opts, prices, { malzeme: "solvent", sasi: "standart", en: "120", boy: "170", adet: "1" }, TEST_PRICING);
+    const kumas = 7.2 * TEST_PRICING.kur * 2.04; // 2,04 m²
+    expect(r.dahil).toBeCloseTo(kumas + 1044, 2);
+  });
+
+  it("mevcut perPerimeter (branda kolon-dikiş) ETKİLENMEZ — tek metre fiyatı sürer", () => {
+    const opts = [aopt("ekislem", "priced", "kolon-dikis", { effect: "perPerimeter", birim: "tl" })];
+    const prices = [{ groupKey: "ekislem", optionKey: "kolon-dikis", dimKey: null, price: 0, cost: 10 }];
+    const r = computeAreaPrice(opts, prices, { ekislem: "kolon-dikis", en: "100", boy: "100", adet: "1" }, TEST_PRICING);
+    expect(r.dahil).toBe(40); // çevre 4 m × 10 ₺
+  });
+});

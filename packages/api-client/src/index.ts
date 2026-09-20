@@ -29,9 +29,15 @@ export interface OptionRules {
   disablesGroups?: string[];
   forcesOption?: { groupKey: string; optionKey: string };
   // m² (area) modu meta'sı — computeAreaPrice bunları okur.
-  effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
+  effect?: "perM2" | "perM2Add" | "perPerimeter" | "perPerimeterKademeli" | "conditional" | "perPiece";
   birim?: "dolar" | "tl";
   maxM2?: number;
+  /**
+   * effect="perPerimeterKademeli" (2026-09-20, kanvas şasisi): çevreye göre değişen metre
+   * fiyatı. `maxM` dahil üst sınır, `maxM` yoksa üst kademe; ilk eşleşen uygulanır.
+   * `tl` KDV DAHİL satış fiyatıdır. Fiyat product_prices'tan DEĞİL buradan okunur.
+   */
+  kademeler?: Array<{ maxM?: number; tl: number }>;
 }
 
 export interface ApiOption {

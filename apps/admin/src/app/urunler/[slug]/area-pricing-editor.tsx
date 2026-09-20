@@ -52,7 +52,11 @@ export function AreaPricingEditor({ productId, initialPricingMode, initialOption
 
   // SADECE area ekstralarını koru (dikiş/kesim/kuşgözü...). Eski additive yapı (ebat/baskı
   // vb.) area'ya TAŞINMAZ — aksi halde string/null fiyatları validasyona takılır + yapı bozulur.
-  const AREA_EFFECTS = new Set(["perM2Add", "perPerimeter", "conditional", "perPiece"]);
+  // perPerimeterKademeli (2026-09-20, kanvas şasisi) BU LİSTEDE OLMAK ZORUNDA: burada olmayan
+  // efektli gruplar kaydederken korunmaz, yani m² ekranından bir kayıt yapılınca şasi grubu
+  // sessizce SİLİNİR ve kanvas tekrar çıtasız (zararına) fiyattan satılır.
+  // Not: metre fiyatları rules.kademeler içindedir, bu ekrandan düzenlenmez — yalnız korunur.
+  const AREA_EFFECTS = new Set(["perM2Add", "perPerimeter", "perPerimeterKademeli", "conditional", "perPiece"]);
   const preservedOptions = initialOptions.filter(
     (o) => o.groupRole === "priced" && o.groupKey !== "malzeme" && AREA_EFFECTS.has((o.rules?.effect as string) ?? ""),
   );

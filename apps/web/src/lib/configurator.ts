@@ -478,10 +478,39 @@ export function getDisplayPrice(product: Product): number {
  */
 export interface PricingSettings { kur: number; kdv: number; minM2: number }
 export const DEFAULT_PRICING: PricingSettings = { kur: 46, kdv: 0.2, minM2: 1 };
+/**
+ * Çevre KADEMESİ — api/src/orders/pricing.ts CevreKademesi ile BİREBİR.
+ * `maxM` dahil üst sınır; `maxM` yoksa üst (sınırsız) kademe. İlk eşleşen uygulanır.
+ */
+export interface CevreKademesi {
+  maxM?: number;
+  /** Metre başına KDV DAHİL satış fiyatı, TL. */
+  tl: number;
+}
+
+/** Çevreye göre metre fiyatı. Eşleşme yoksa null → kalem fiyata katılmaz. */
+export function kademeMetreFiyati(
+  kademeler: readonly CevreKademesi[] | undefined | null,
+  cevre: number,
+): number | null {
+  if (!Array.isArray(kademeler) || kademeler.length === 0) return null;
+  for (const k of kademeler) {
+    const tl = _num(k?.tl);
+    if (typeof k?.maxM !== "number") return tl;
+    if (cevre <= k.maxM) return tl;
+  }
+  return null;
+}
+
 export interface AreaOptionRules {
-  effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
+  effect?: "perM2" | "perM2Add" | "perPerimeter" | "perPerimeterKademeli" | "conditional" | "perPiece";
   birim?: "dolar" | "tl";
   maxM2?: number;
+  /**
+   * effect="perPerimeterKademeli" için çevre kademeleri — metre fiyatı buradan okunur,
+   * fiyat satırından değil. KDV DAHİL SON SATIŞ (TL).
+   */
+  kademeler?: CevreKademesi[];
   /** En (genişlik) tavanı cm — örn. araç magneti 60. UI'da giriş bu değere clamp edilir. */
   maxEn?: number;
   /**
@@ -530,10 +559,12 @@ export function computeAreaPrice(
     const sel = sels[gKey];
     if (!sel) continue;
     const optMeta = opts.find((o) => o.groupKey === gKey && o.optionKey === sel);
-    const row = rows.find((p) => p.groupKey === gKey && p.optionKey === sel);
-    if (!row) continue;
-    const cost = _num(row.cost ?? row.price);
     const rules: AreaOptionRules = optMeta?.rules ?? {};
+    const row = rows.find((p) => p.groupKey === gKey && p.optionKey === sel);
+    // Kademeli çevrede metre fiyatı rules'tan gelir → fiyat satırı şart değil.
+    const kademeli = rules.effect === "perPerimeterKademeli";
+    if (!row && !kademeli) continue;
+    const cost = _num(row?.cost ?? row?.price);
     const tl = rules.birim === "tl" ? cost : cost * kur;
     switch (rules.effect ?? "perM2") {
       case "perM2":
@@ -543,6 +574,12 @@ export function computeAreaPrice(
       case "perPerimeter":
         maliyet += tl * cevre * adet;
         break;
+      case "perPerimeterKademeli": {
+        // Kademe TEK PARÇANIN çevresine göre seçilir, sonra adetle çarpılır.
+        const metreFiyati = kademeMetreFiyati(rules.kademeler, cevre);
+        if (metreFiyati !== null) maliyet += metreFiyati * cevre * adet;
+        break;
+      }
       case "conditional":
         if (alan < 1) maliyet += tl * adet;
         break;

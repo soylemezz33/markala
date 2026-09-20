@@ -197,10 +197,45 @@ export function pickConfigurationSummary(config: unknown, fallback: string): str
 export interface PricingSettings { kur: number; marj: number; kdv: number; minM2: number }
 // Fallback yalnız settings fetch düşerse kullanılır; canlı işletme değeriyle eşit tutulur (marj 1.2).
 export const DEFAULT_PRICING: PricingSettings = { kur: 46, marj: 1.2, kdv: 0.2, minM2: 1 };
+/**
+ * Çevre KADEMESİ (2026-09-20, kanvas tablo şasisi): metre fiyatı, parçanın çevresine göre
+ * değişir. `maxM` DAHİL üst sınırdır (çevre <= maxM ise bu kademe); `maxM` verilmeyen kayıt
+ * son/üst kademedir. Sıra önemlidir — ilk eşleşen kademe uygulanır.
+ */
+export interface CevreKademesi {
+  /** Bu kademenin üst sınırı, metre (dahil). Verilmezse: üstü kalan her çevre. */
+  maxM?: number;
+  /** Metre başına KDV DAHİL satış fiyatı, TL. */
+  tl: number;
+}
+
+/**
+ * Çevreye göre metre fiyatını seçer. Kademe yoksa/eşleşme bulunamazsa null → fiyat eklenmez
+ * (sessizce 0 TL eklemek yerine kalemin hiç işlenmemesi, yanlış ucuz fiyattan güvenlidir).
+ */
+export function kademeMetreFiyati(
+  kademeler: readonly CevreKademesi[] | undefined | null,
+  cevre: number,
+): number | null {
+  if (!Array.isArray(kademeler) || kademeler.length === 0) return null;
+  for (const k of kademeler) {
+    const tl = num(k?.tl);
+    if (typeof k?.maxM !== "number") return tl; // üst kademe (sınırsız)
+    if (cevre <= k.maxM) return tl;
+  }
+  return null;
+}
+
 export interface AreaOptionRules {
-  effect?: "perM2" | "perM2Add" | "perPerimeter" | "conditional" | "perPiece";
+  effect?: "perM2" | "perM2Add" | "perPerimeter" | "perPerimeterKademeli" | "conditional" | "perPiece";
   birim?: "dolar" | "tl";
   maxM2?: number;
+  /**
+   * effect="perPerimeterKademeli" için çevre kademeleri. Metre fiyatı BURADAN okunur,
+   * product_prices satırından DEĞİL (tek satır 5 farklı metre fiyatını taşıyamaz).
+   * Değerler KDV DAHİL SON SATIŞ, TL — motor üstüne marj/KDV eklemez.
+   */
+  kademeler?: CevreKademesi[];
   /**
    * Bu seçeneğe özel minimum faturalanabilir m² — işletme geneli ayarı (pricing.minM2, 1 m²)
    * EZER. 2026-09-01: kırlangıç bayrakta tedarikçi 60×150'yi (0,90 m²) gerçek alanı üzerinden
@@ -256,10 +291,13 @@ export function computeAreaPrice(
     const sel = sels[gKey];
     if (!sel) continue;
     const optMeta = opts.find((o) => o.groupKey === gKey && o.optionKey === sel);
-    const row = rows.find((p) => p.groupKey === gKey && p.optionKey === sel);
-    if (!row) continue;
-    const cost = num(row.cost ?? row.price);
     const rules: AreaOptionRules = optMeta?.rules ?? {};
+    const row = rows.find((p) => p.groupKey === gKey && p.optionKey === sel);
+    // Kademeli çevre, metre fiyatını rules'tan okur → product_prices satırı ŞART DEĞİL.
+    // Diğer tüm etkiler için davranış aynen korunur: satır yoksa kalem atlanır.
+    const kademeli = rules.effect === "perPerimeterKademeli";
+    if (!row && !kademeli) continue;
+    const cost = num(row?.cost ?? row?.price);
     const tl = rules.birim === "tl" ? cost : cost * kur;
     switch (rules.effect ?? "perM2") {
       case "perM2":
@@ -269,6 +307,13 @@ export function computeAreaPrice(
       case "perPerimeter":
         maliyet += tl * cevre * adet;
         break;
+      case "perPerimeterKademeli": {
+        // Kademe, TEK PARÇANIN çevresine göre seçilir; sonra adetle çarpılır
+        // (her tablo kendi şasisine sahip). Ör. 120×170 → çevre 5,8 m → 180 ₺/m → 1.044 ₺.
+        const metreFiyati = kademeMetreFiyati(rules.kademeler, cevre);
+        if (metreFiyati !== null) maliyet += metreFiyati * cevre * adet;
+        break;
+      }
       case "conditional":
         if (alan < 1) maliyet += tl * adet;
         break;
