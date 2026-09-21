@@ -337,11 +337,17 @@ Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleş
     // sözleşme m.7.C ile aynı kurgu): yalnız tasarım dosyası yüklenmiş siparişlerde eklenir.
     // E-postada yer alması, müşterinin elinde tarihli yazılı bildirim kalmasını sağlar.
     const hasUploadedFile = (order.items ?? []).some((i) => i.uploadedFileName);
+    // 2026-09-21 DÜZELTME: eski metin "üretim, tasarım onayınızdan sonra başlar" diye bitiyordu
+    // ve dosyasını YÜKLEMİŞ müşteri bunu "benden hâlâ tasarım bekleniyor" diye okuyordu
+    // (MK-MUAB1TTU-34TT: müşteri PDF'ini yüklemiş, sonra "bir sıkıntı mı var?" diye yazdı).
+    // Yeni metin ÖNCE dosyanın ulaştığını teyit eder, sonra onaylanacak şeyin BİZİM
+    // hazırladığımız baskı provası olduğunu söyler. Kalite uyarısı (sözleşme m.7.C ayağı)
+    // aynen korunur — yazılı bildirim olma işlevi sürüyor.
     const fileQualityText = hasUploadedFile
-      ? "\n\nYüklediğiniz tasarım dosyası hakkında: Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından markala.com.tr sorumlu değildir. Gerekirse grafik ekibimiz görselinize istinaden vektörel çizimi ücretsiz hazırlayıp onayınıza sunar; üretim, tasarım onayınızdan sonra başlar."
+      ? "\n\nTasarım dosyanız bize ulaştı — sizden başka bir dosya beklemiyoruz. Ekibimiz dosyanızı baskıya hazırlayıp onayınız için size gönderecek; üretim, bu provayı onayladıktan sonra başlar.\n\nDosya kalitesi hakkında: Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından markala.com.tr sorumlu değildir. Gerekirse grafik ekibimiz görselinize istinaden vektörel çizimi ücretsiz hazırlar."
       : "";
     const fileQualityHtml = hasUploadedFile
-      ? `<p style="margin:14px 0 0;padding:10px 12px;background:#FDF3E7;border:1px solid #F5D7B2;border-radius:8px;color:#57534e;font-size:13px;line-height:1.5"><strong style="color:#1A1410">Yüklediğiniz tasarım dosyası hakkında:</strong> Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından markala.com.tr sorumlu değildir. Gerekirse grafik ekibimiz görselinize istinaden <strong style="color:#1A1410">vektörel çizimi ücretsiz hazırlayıp onayınıza sunar</strong>; üretim, tasarım onayınızdan sonra başlar.</p>`
+      ? `<p style="margin:14px 0 0;padding:10px 12px;background:#FDF3E7;border:1px solid #F5D7B2;border-radius:8px;color:#57534e;font-size:13px;line-height:1.5"><strong style="color:#1A1410">Tasarım dosyanız bize ulaştı</strong> — sizden başka bir dosya beklemiyoruz. Ekibimiz dosyanızı baskıya hazırlayıp <strong style="color:#1A1410">onayınız için size gönderecek</strong>; üretim, bu provayı onayladıktan sonra başlar.<br /><br /><strong style="color:#1A1410">Dosya kalitesi hakkında:</strong> Yapay zekâ ile üretilmiş, düşük çözünürlüklü veya vektörel olmayan dosyalarda baskıda bulanıklık ve metin bozulmaları oluşabilir; bu tür dosyalardan kaynaklanan kalite sorunlarından markala.com.tr sorumlu değildir. Gerekirse grafik ekibimiz görselinize istinaden vektörel çizimi ücretsiz hazırlar.</p>`
       : "";
 
     const subject = `Markala - Siparişiniz alındı (${order.orderNumber})`;
