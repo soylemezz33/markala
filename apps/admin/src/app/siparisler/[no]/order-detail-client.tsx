@@ -29,7 +29,7 @@ import {
   Trash,
   TrashSimple,
   NotePencil,
-  Image as ImageIcon, ArrowSquareOut, WarningCircle, CaretDown, CaretRight } from "@phosphor-icons/react";
+  Image as ImageIcon, ArrowSquareOut, WarningCircle, CaretDown, CaretRight, WhatsappLogo } from "@phosphor-icons/react";
 import {
   updateOrderStatus,
   updateOrderTracking,
@@ -37,6 +37,7 @@ import {
   confirmHavalePayment,
   confirmManualPayment,
   deleteOrderDesign,
+  sendDesignApproval,
   addOrderNote,
   deleteOrderNote,
 } from "./actions";
@@ -362,6 +363,34 @@ export function OrderDetailClient({
   // Yükleme/silme sonrası sayfa RSC'den yeniden çekilsin (api.orders.detail) — optimistik
   // liste tutmak yerine kaynağa dönüyoruz; dosya listesi küçük, gecikme fark edilmez.
   const router = useRouter();
+
+  // TASARIM ONAYI (2026-09-21) — ayrı bekleme durumu: isPending durum/kargo işlemleriyle
+  // paylaşılsaydı onay gönderirken ilgisiz butonlar da kilitlenirdi.
+  const [onayGonderiliyor, setOnayGonderiliyor] = useState(false);
+  const tasarimOnayiGonder = async () => {
+    const ok = await confirm({
+      title: "Tasarım onayı WhatsApp'tan gönderilecek",
+      description: `${order.orderNumber} · ${order.shippingAddress?.phone ?? "kayıtlı numara"}`,
+      bullets: [
+        "En son yüklenen ÖNİZLEME görseli müşteriye gider.",
+        "Müşteri son 24 saatte yazmamış olsa bile ulaşır (onaylı şablon).",
+        "Revize gerekirse yeni önizleme yükleyip tekrar gönderebilirsiniz.",
+      ],
+      confirmLabel: "Gönder",
+    });
+    if (!ok) return;
+    setOnayGonderiliyor(true);
+    const r = await sendDesignApproval(order.id);
+    setOnayGonderiliyor(false);
+    if (r.ok) {
+      toast.success(`Tasarım onayı gönderildi${r.alici ? ` (${r.alici})` : ""}.`);
+      router.refresh();
+    } else {
+      // Meta hatası AYNEN gösterilir: "#132001 template not found" şablonun henüz
+      // onaylanmadığını, "önizleme yok" ise dosya eksiğini söyler.
+      toast.error(r.error);
+    }
+  };
 
 
   // İade edilebilir mi: ödemesi başarılı + online (cari değil). Zaten iade edilmişse buton yok.
@@ -926,6 +955,30 @@ export function OrderDetailClient({
             )) && (
             <Card title="Tasarım Dosyaları">
               <div className="space-y-3">
+                {/* TASARIM ONAYI (2026-09-21, Oğuzhan talebi) — müşteri 24 saattir yazmamış olsa
+                    bile tasarımı WhatsApp'tan gönderip onay ister. Görsel, onaylı şablonun
+                    başlığına basıldığı için Meta'nın 24 saat penceresi engel olmaz.
+                    Yalnız önizleme (JPG/PNG) varken görünür: gönderilecek görsel odur. */}
+                {canDesign && order.items.some((it) => (it.designUploads ?? []).some((d) => d.kind === "onizleme")) && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-700/20 bg-brand-700/5 px-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-ink-900">Tasarımı müşteriye onaya gönder</p>
+                      <p className="text-[11px] text-ink-500">
+                        En son yüklenen önizleme WhatsApp&apos;tan {order.shippingAddress?.phone || "müşteriye"} gönderilir. Müşteri
+                        daha önce yazmamış olsa da ulaşır.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={onayGonderiliyor}
+                      onClick={tasarimOnayiGonder}
+                      className="inline-flex flex-none items-center gap-1.5 rounded-md bg-brand-700 px-3 py-2 text-xs font-medium text-paper-50 disabled:opacity-60"
+                    >
+                      <WhatsappLogo size={15} weight="fill" />
+                      {onayGonderiliyor ? "Gönderiliyor…" : "WhatsApp ile onaya gönder"}
+                    </button>
+                  </div>
+                )}
                 {order.items.map((item, i) => {
                   const dosyalar = item.designUploads ?? [];
                   // Set başına müşteri dosyaları satır olarak geliyorsa (2026-09-03) eski tek-dosya

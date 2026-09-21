@@ -148,3 +148,145 @@ describe("WhatsappService", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
+
+/**
+ * TASARIM ONAYI (2026-09-21) — görsel başlıklı şablon.
+ *
+ * Korunan davranış: müşteri 24 saattir yazmamış olsa bile tasarım ULAŞSIN. Bunun tek yolu
+ * görselin şablonun HEADER bileşenine media id olarak basılmasıdır; gövdeye düşerse ya da
+ * görsel ayrı mesaj olarak gönderilirse Meta pencere dışında reddeder (#131047).
+ */
+describe("WhatsappService — tasarım onayı", () => {
+  const ONAY_ENV = {
+    WHATSAPP_TOKEN: "tok",
+    WHATSAPP_PHONE_NUMBER_ID: "1284746154722193",
+  };
+  const MUSTERI_SIPARIS = {
+    orderNumber: "MK-TEST-9001",
+    email: "musteri@x.com",
+    phone: "0531 900 41 02",
+    shippingAddressSnapshot: null,
+    user: { fullName: "Ayşe Yılmaz" },
+  };
+  const gorsel = () => ({
+    buffer: Buffer.from("sahte-jpeg"),
+    mimetype: "image/jpeg",
+    dosyaAdi: "onizleme.jpg",
+  });
+
+  function onayPrisma(siparis: unknown = MUSTERI_SIPARIS) {
+    return {
+      order: { findUnique: vi.fn().mockResolvedValue(siparis) },
+      notificationLog: { count: vi.fn().mockResolvedValue(0), create: vi.fn().mockResolvedValue({}) },
+    } as never;
+  }
+
+  /** Önce /media (yükleme) sonra /messages (gönderim) yanıtı verir. */
+  function ikiAsamaliFetch() {
+    return vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: "MEDIA-1" }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ messages: [{ id: "wamid.9" }] }) });
+  }
+
+  it("görseli önce /media'ya yükler, sonra şablonu HEADER'da media id ile gönderir", async () => {
+    const f = ikiAsamaliFetch();
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(cfg(ONAY_ENV), onayPrisma());
+
+    const r = await svc.tasarimOnayiGonder("o1", gorsel());
+    expect(r.ok).toBe(true);
+    expect(r.messageId).toBe("wamid.9");
+    expect(r.alici).toBe("905319004102"); // 0531… → ülke kodlu
+
+    expect(f).toHaveBeenCalledTimes(2);
+    expect(String(f.mock.calls[0][0])).toContain("/media");
+
+    const govde = JSON.parse(String(f.mock.calls[1][1].body));
+    expect(String(f.mock.calls[1][0])).toContain("/messages");
+    expect(govde.type).toBe("template");
+    expect(govde.template.name).toBe("tasarim_onay");
+    const header = govde.template.components.find((c: { type: string }) => c.type === "header");
+    expect(header.parameters[0]).toEqual({ type: "image", image: { id: "MEDIA-1" } });
+    const body = govde.template.components.find((c: { type: string }) => c.type === "body");
+    expect(body.parameters.map((p: { text: string }) => p.text)).toEqual(["Ayşe Yılmaz", "MK-TEST-9001"]);
+  });
+
+  it("JPG/PNG dışı dosya GÖNDERİLMEZ — müşteri WhatsApp'ta göremez", async () => {
+    const f = ikiAsamaliFetch();
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(cfg(ONAY_ENV), onayPrisma());
+    const r = await svc.tasarimOnayiGonder("o1", { ...gorsel(), mimetype: "application/pdf" });
+    expect(r.ok).toBe(false);
+    expect(r.hata).toContain("JPG/PNG");
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it("telefon yoksa gönderim denenmez", async () => {
+    const f = ikiAsamaliFetch();
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(cfg(ONAY_ENV), onayPrisma({ ...MUSTERI_SIPARIS, phone: "" }));
+    const r = await svc.tasarimOnayiGonder("o1", gorsel());
+    expect(r.ok).toBe(false);
+    expect(r.hata).toContain("telefon");
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it("telefon boşsa teslimat adresindeki numaraya düşer", async () => {
+    const f = ikiAsamaliFetch();
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(
+      cfg(ONAY_ENV),
+      onayPrisma({ ...MUSTERI_SIPARIS, phone: "", shippingAddressSnapshot: { phone: "5319004102" } }),
+    );
+    const r = await svc.tasarimOnayiGonder("o1", gorsel());
+    expect(r.ok).toBe(true);
+    expect(r.alici).toBe("905319004102");
+  });
+
+  it("medya yüklenemezse şablon HİÇ gönderilmez (görselsiz onay istenmez)", async () => {
+    const f = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({ error: { code: 131052, message: "media upload failed" } }),
+    });
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(cfg(ONAY_ENV), onayPrisma());
+    const r = await svc.tasarimOnayiGonder("o1", gorsel());
+    expect(r.ok).toBe(false);
+    expect(r.hata).toContain("131052");
+    expect(f).toHaveBeenCalledTimes(1); // /messages'a HİÇ gidilmedi
+  });
+
+  it("Meta şablon hatası operatöre AYNEN döner (#132001 = şablon henüz onaylanmadı)", async () => {
+    const f = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ id: "MEDIA-1" }) })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: { code: 132001, message: "template name does not exist" } }),
+      });
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(cfg(ONAY_ENV), onayPrisma());
+    const r = await svc.tasarimOnayiGonder("o1", gorsel());
+    expect(r.ok).toBe(false);
+    expect(r.hata).toContain("132001");
+  });
+
+  it("env yoksa istek yapılmaz", async () => {
+    const f = ikiAsamaliFetch();
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(cfg({}), onayPrisma());
+    const r = await svc.tasarimOnayiGonder("o1", gorsel());
+    expect(r.ok).toBe(false);
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it("WHATSAPP_ADMIN_TO gerekmez — alıcı müşterinin kendisidir", async () => {
+    const f = ikiAsamaliFetch();
+    vi.stubGlobal("fetch", f);
+    const svc = new WhatsappService(cfg(ONAY_ENV), onayPrisma());
+    expect(svc.gonderebilir()).toBe(false); // yönetici bildirimi kapalı
+    const r = await svc.tasarimOnayiGonder("o1", gorsel()); // ama onay yine de gider
+    expect(r.ok).toBe(true);
+  });
+});

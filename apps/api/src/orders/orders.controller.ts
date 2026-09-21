@@ -434,6 +434,25 @@ export class OrdersController {
    * Doğrudan Drive yüklemesi (2026-09-03, 1000 MB): 1) oturum aç → tarayıcı Drive'a PUT eder,
    * 2) tamamla → API Drive'da doğrular ve kaydı yazar. Dosya sunucuya hiç uğramaz.
    */
+  /**
+   * Tasarım onayını müşteriye WhatsApp'tan gönder (2026-09-21, Oğuzhan talebi).
+   *
+   * Siparişin EN SON önizlemesi (JPG/PNG), onaylı `tasarim_onay` şablonunun GÖRSEL
+   * başlığına basılarak gönderilir. Böylece müşteri son 24 saatte hiç yazmamış olsa bile
+   * tasarımı görüp onaylayabilir — ekip artık müşterinin yazmasını beklemiyor.
+   *
+   * Yetki ORDERS_DESIGN: tasarımcı + admin. Mükerrer engellenmez; revize sonrası yeni
+   * önizleme yüklenip tekrar gönderilebilir.
+   */
+  @Post(":id/tasarim-onay")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_DESIGN)
+  @ApiBearerAuth()
+  tasarimOnayiGonder(@Param("id") id: string, @Req() req: Request & { user?: { sub?: string } }) {
+    return this.design.tasarimOnayiGonder(id, { userId: req.user?.sub ?? null });
+  }
+
   @Post(":id/items/:itemId/tasarim/drive-oturum")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")

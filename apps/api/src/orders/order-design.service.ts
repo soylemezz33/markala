@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, BadRequestException, ConflictException, Optional } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { StorageService } from "../storage/storage.service";
 import { DriveService, driveFileUrl } from "../storage/drive.service";
 import { DESIGN_KINDS, type DesignKind } from "./orders.dto";
 import { ConfigService } from "@nestjs/config";
+import { WhatsappService } from "../integrations/whatsapp/whatsapp.service";
 
 /**
  * Sipariş SATIRINA tasarımcı dosyası ekleme/silme (2026-09-02, üretim ARGE Faz 2).
@@ -118,6 +119,9 @@ export class OrderDesignService {
     private storage: StorageService,
     private drive: DriveService,
     private config?: ConfigService,
+    // @Optional: 36 spec ctor'u ELLE kuruyor (bkz. orders.controller.ts notu); zorunlu
+    // yapmak hepsini kırardı. Yokluğunda onay gönderimi net bir hata döner, sessizce yutmaz.
+    @Optional() private whatsapp?: WhatsappService,
   ) {}
 
   /** Doğrudan Drive yüklemesinde kabul edilen uzantılar (çalışma/baskı). */
@@ -371,5 +375,84 @@ export class OrderDesignService {
       .catch((e) => this.logger.error(`[audit] design_delete yazılamadı: ${e?.message}`));
 
     return { ok: true as const, id: row.id };
+  }
+
+  /**
+   * TASARIM ONAYINI MÜŞTERİYE WHATSAPP'TAN GÖNDER (2026-09-21, Oğuzhan talebi).
+   *
+   * SORUN: tasarım bitince müşteriden onay almak için ekip müşterinin WhatsApp'tan yazmasını
+   * bekliyordu — Cloud API'de 24 saatlik pencere kapalıysa serbest mesaj reddediliyor
+   * (#131047). İş baskıya geç gidiyordu, en çok kartvizitte.
+   *
+   * ÇÖZÜM: pencere kapalıyken de onaylı ŞABLON gönderilebilir ve şablonun başlığı GÖRSEL
+   * olabilir. Bu uç, satıra yüklenmiş ÖNİZLEMEYİ şablonun başlığına basıp gönderir; müşteri
+   * hiç yazmamış olsa bile tasarımı görür ve onaylar.
+   *
+   * ÖNİZLEME BİLEREK SEÇİLDİ (çalışma/baskı değil): önizleme zaten JPG/PNG + en çok 2 MB
+   * olarak doğrulanıyor ve Drive'a taşınmayıp sunucuda kalıyor — yani WhatsApp'ın kabul
+   * ettiği tek biçim ve elimizde bayt olarak var. Çalışma dosyası PDF/AI olabilir, müşteri
+   * WhatsApp'ta göremez.
+   *
+   * Dosya Meta'ya media olarak YÜKLENİR; herkese açık bir link üretilmez, tasarımlar sızmaz.
+   */
+  async tasarimOnayiGonder(orderId: string, actor: { userId?: string | null }) {
+    if (!this.whatsapp) {
+      throw new BadRequestException("WhatsApp entegrasyonu bu ortamda kapalı.");
+    }
+
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, orderNumber: true, status: true },
+    });
+    if (!order) throw new NotFoundException("Sipariş bulunamadı.");
+    if (order.status === "iptal_edildi") {
+      throw new BadRequestException("İptal edilmiş sipariş için onay gönderilemez.");
+    }
+
+    // EN SON yüklenen önizleme: revizede yeni görsel yüklenir, onay her zaman güncel
+    // tasarımı taşımalı. Drive'a taşınmış kayıtlar (storageKey null) elenir.
+    const onizleme = await this.prisma.designUpload.findFirst({
+      where: { orderId, kind: "onizleme", storageKey: { not: null } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, storageKey: true, fileName: true, mimeType: true },
+    });
+    if (!onizleme?.storageKey) {
+      throw new BadRequestException(
+        "Bu siparişte önizleme görseli yok. Önce sipariş satırına JPG/PNG önizleme yükleyin.",
+      );
+    }
+
+    const { buffer, mimetype } = await this.storage.getDesign(onizleme.storageKey);
+    const sonuc = await this.whatsapp.tasarimOnayiGonder(orderId, {
+      buffer,
+      mimetype: onizleme.mimeType || mimetype,
+      dosyaAdi: onizleme.fileName || "onizleme.jpg",
+    });
+
+    if (!sonuc.ok) {
+      // Meta hatası operatöre AYNEN gösterilir: "#132001 template not found" gibi kodlar
+      // teşhisin tamamıdır (şablon henüz onaylanmadıysa tam bu hata gelir).
+      throw new BadRequestException(sonuc.hata ?? "Tasarım onayı gönderilemedi.");
+    }
+
+    await this.prisma.auditLog
+      .create({
+        data: {
+          actorId: actor.userId ?? null,
+          entityType: "Order",
+          entityId: orderId,
+          action: "design_approval_sent",
+          diff: {
+            orderNumber: order.orderNumber,
+            alici: sonuc.alici,
+            uploadId: onizleme.id,
+            ...(sonuc.messageId ? { messageId: sonuc.messageId } : {}),
+          },
+        },
+      })
+      .catch((e) => this.logger.error(`[audit] design_approval_sent yazılamadı: ${e?.message}`));
+
+    this.logger.log(`tasarım onayı gönderildi order=${order.orderNumber} to=${sonuc.alici}`);
+    return { ok: true as const, alici: sonuc.alici, messageId: sonuc.messageId };
   }
 }
