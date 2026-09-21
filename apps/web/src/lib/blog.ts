@@ -26,6 +26,8 @@ export interface BlogPost {
   excerpt: string;
   content: string;
   coverTheme: string; // /api/mockup?theme=...
+  /** Kapak görselinin alt metni — görsel aramada başlık yerine görseli tarif eder. */
+  coverImageAlt?: string;
   authorName: string;
   authorRole: string;
   categorySlug: string;
@@ -65,6 +67,7 @@ function mapPost(p: Record<string, unknown>): BlogPost {
     excerpt: String(p.excerpt ?? ""),
     content,
     coverTheme: String(p.coverImage || "brand"),
+    coverImageAlt: (p.coverImageAlt as string | null) ?? undefined,
     authorName: String(p.authorName ?? "Markala"),
     authorRole: String(p.authorRole ?? ""),
     categorySlug: String(category.slug ?? p.categorySlug ?? ""),

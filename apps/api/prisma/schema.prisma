@@ -749,6 +749,7 @@ model BlogPost {
   excerpt    String     @db.Text
   content    String     @db.Text
   coverImage String?    @map("cover_image")
+  coverImageAlt String? @map("cover_image_alt")
   authorName String     @map("author_name")
   authorRole String?    @map("author_role")
   categoryId String?    @map("category_id")

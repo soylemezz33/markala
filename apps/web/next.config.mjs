@@ -157,6 +157,14 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // Hiç yayımlanmamış blog slug'ı: adres HTTP 200 + "Yazı bulunamadı" döndürüyordu
+      // (soft-404) ve Google'da indeksliydi. Aynı konunun yayımlanmış yazısına 301
+      // (2026-09-22 CTR denetimi).
+      {
+        source: "/blog/dekota-levha-nerelerde-kullanilir",
+        destination: "/blog/dekota-levha-nedir-nerelerde-kullanilir",
+        permanent: true,
+      },
       // Eski URL'ler → yeni
       {
         source: "/anasayfa",

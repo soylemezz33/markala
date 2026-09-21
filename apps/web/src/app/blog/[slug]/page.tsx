@@ -95,6 +95,25 @@ function safeUrl(raw: string): string {
   return "#";
 }
 
+/**
+ * Attribute kaçışı. escapeHtml yalnız & < > kaçışlar; tırnak kaçışlanmadığı için
+ * alt="${...}" içine " onerror=... enjekte edilebilirdi — görsel etiketi bu yüzden
+ * kendi kaçışını yapar.
+ */
+function attrEscape(s: string): string {
+  return s.replace(/"/g, "&quot;");
+}
+
+/**
+ * Görsel kaynağı allowlist — yalnız http(s) ve kök-göreli yollar. mailto:/tel:/data:
+ * bir görsel için anlamsız, javascript: ise saldırı vektörü; hepsi boşa düşürülür.
+ */
+function safeImageUrl(raw: string): string | null {
+  const u = raw.trim();
+  if (/^https?:\/\//i.test(u) || u.startsWith("/")) return u;
+  return null;
+}
+
 function renderMarkdown(md: string): string {
   // Markdown'a çevirmeden ÖNCE ham HTML'i kaçışla → stored-XSS (<script>, <img onerror>) etkisiz.
   // Regexler yalnızca güvenli tag EKLER; kaçışlanmış <>& sayesinde girdiden tag sızmaz.
@@ -111,6 +130,20 @@ function renderMarkdown(md: string): string {
   // **bold** ve *italic*
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+
+  // ![alt](url "başlık") — görsel. Link kuralından ÖNCE çalışmalı: aksi hâlde link
+  // regexi [alt](url) kısmını yer ve başta yalnız "!" kalır. escapeHtml yalnız & < >
+  // kaçışladığı için isteğe bağlı başlık (caption) düz tırnakla gelir.
+  html = html.replace(
+    /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
+    (_m, alt: string, url: string, baslik?: string) => {
+      const src = safeImageUrl(url);
+      if (!src) return "";
+      const altMetni = attrEscape(alt.trim());
+      const caption = baslik ? `<figcaption>${baslik}</figcaption>` : "";
+      return `<figure><img src="${attrEscape(src)}" alt="${altMetni}" loading="lazy" decoding="async" />${caption}</figure>`;
+    },
+  );
 
   // [text](url)
   html = html.replace(
@@ -164,6 +197,7 @@ function renderMarkdown(md: string): string {
         !trimmed ||
         trimmed.startsWith("<h") ||
         trimmed.startsWith("<table") ||
+        trimmed.startsWith("<figure") ||
         trimmed.startsWith("<ul") ||
         trimmed.startsWith("<blockquote")
       ) {
@@ -283,7 +317,9 @@ export default async function BlogPostPage({ params }: Props) {
           <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-paper-100">
             <Image
               src={blogCoverSrc(post.coverTheme, 1200, 675)}
-              alt={post.title}
+              // Görsel aramada başlık tekrarı değer taşımaz; alt, GÖRSELİ tarif etmeli
+              // (ör. "Topraklama işareti sembolü"). Alan boşsa başlığa düşer.
+              alt={post.coverImageAlt || post.title}
               fill unoptimized
               priority
               className="object-cover"

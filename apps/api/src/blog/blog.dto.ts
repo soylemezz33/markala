@@ -2,6 +2,7 @@ import {
   IsIn,
   IsInt,
   IsOptional,
+  MaxLength,
   IsString,
   Matches,
   MinLength,
@@ -25,6 +26,11 @@ export class CreateBlogPostDto {
 
   @IsString() @IsOptional()
   coverImage?: string;
+
+
+  /** Kapak görselinin alt metni — görsel aramasında başlık tekrarı yerine görseli tarif eder. */
+  @IsString() @IsOptional() @MaxLength(200)
+  coverImageAlt?: string;
 
   @IsString()
   authorName!: string;
@@ -68,6 +74,11 @@ export class UpdateBlogPostDto {
 
   @IsString() @IsOptional()
   coverImage?: string;
+
+
+  /** Kapak görselinin alt metni — görsel aramasında başlık tekrarı yerine görseli tarif eder. */
+  @IsString() @IsOptional() @MaxLength(200)
+  coverImageAlt?: string;
 
   @IsString() @IsOptional()
   authorName?: string;
