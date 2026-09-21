@@ -449,8 +449,19 @@ export class OrdersController {
   @Roles("admin", "super_admin")
   @Perms(PERM.ORDERS_DESIGN)
   @ApiBearerAuth()
-  tasarimOnayiGonder(@Param("id") id: string, @Req() req: Request & { user?: { sub?: string } }) {
-    return this.design.tasarimOnayiGonder(id, { userId: req.user?.sub ?? null });
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 6 * 1024 * 1024 } }))
+  tasarimOnayiGonder(
+    @Param("id") id: string,
+    @Req() req: Request & { user?: { sub?: string } },
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    // Dosya OPSİYONEL: tasarımcı görseli o an seçer (asıl akış). Seçmezse siparişte duran
+    // en son önizlemeye düşülür. multer 6 MB = önizlemenin 2 MB iş kuralının üstünde emniyet.
+    return this.design.tasarimOnayiGonder(
+      id,
+      { actorId: req.user?.sub ?? null, ipAddress: req.ip ?? null },
+      file,
+    );
   }
 
   @Post(":id/items/:itemId/tasarim/drive-oturum")

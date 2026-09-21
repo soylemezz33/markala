@@ -147,30 +147,6 @@ export async function deleteOrderDesign(
 }
 
 /**
- * Tasarım onayını müşteriye WhatsApp'tan gönderir (2026-09-21, Oğuzhan talebi).
- *
- * Siparişin EN SON önizleme JPG/PNG'si, onaylı `tasarim_onay` şablonunun GÖRSEL başlığına
- * basılarak gider. Böylece müşteri son 24 saatte yazmamış olsa bile tasarımı görüp
- * onaylayabilir — ekip artık müşterinin yazmasını beklemiyor (işler baskıya daha hızlı gider).
- *
- * Hata mesajı AYNEN taşınır: "önizleme yok", "#132001 şablon bulunamadı" gibi cevaplar
- * operatörün ne yapacağını söyleyen tek ipucu.
- */
-export async function sendDesignApproval(
-  orderId: string,
-): Promise<{ ok: true; alici?: string } | { ok: false; error: string }> {
-  try {
-    const api = await getAdminApi();
-    const r = await api.orders.tasarimOnayiGonder(orderId);
-    revalidatePath(`/siparisler/${orderId}`);
-    return { ok: true, alici: r.alici };
-  } catch (e) {
-    const msg = (e as { message?: string })?.message ?? "Tasarım onayı gönderilemedi";
-    return { ok: false, error: msg };
-  }
-}
-
-/**
  * Sipariş iç notu ekle (2026-09-03). Panel personeli arası; müşteri bu notu görmez.
  * Order.notes'a DOKUNMAZ — ayrı tabloya yazar (o kolon idempotency etiketi taşıyor).
  */

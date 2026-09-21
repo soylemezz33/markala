@@ -281,3 +281,80 @@ describe("OrderDesignService — doğrudan Drive yüklemesi (2026-09-03, 1000 MB
     expect(prisma.designUpload.create).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * TASARIM ONAYI — dosya kaynağı (2026-09-21).
+ *
+ * İlk sürüm panelde ZATEN duran bir önizleme arıyordu. Ama gerçek akışta önizleme onaydan
+ * SONRA kayıt için yükleniyor; onay anında dosya tasarımcının bilgisayarında (veriyle
+ * doğrulandı: "Tasarım Onayında" siparişlerde yalnız müşteri dosyası var). Bu yüzden dosya
+ * doğrudan alınır. Aşağıdakiler iki yolu da kilitler: verilen dosya kullanılır VE siparişe
+ * kaydedilir; dosya verilmezse eski davranış (en son önizleme) korunur.
+ */
+describe("tasarimOnayiGonder — dosya kaynağı", () => {
+  const SIPARIS = { id: "o1", orderNumber: "MK-1", status: "tasarim-onayindi", items: [{ id: "i1" }] };
+
+  function kur(opts: { onizleme?: unknown } = {}) {
+    const wa = { tasarimOnayiGonder: vi.fn().mockResolvedValue({ ok: true, alici: "905551112233", messageId: "wamid.1" }) };
+    const prisma = {
+      order: { findUnique: vi.fn().mockResolvedValue(SIPARIS) },
+      designUpload: { findFirst: vi.fn().mockResolvedValue(opts.onizleme ?? null) },
+      auditLog: { create: vi.fn().mockResolvedValue({}) },
+    };
+    const storage = { getDesign: vi.fn().mockResolvedValue({ buffer: Buffer.from("eski"), mimetype: "image/png" }) };
+    const svc = new OrderDesignService(prisma as never, storage as never, { enabled: false } as never, undefined, wa as never);
+    // add() gerçek yolu diske yazar; burada davranışı izlemek yeterli.
+    const add = vi.spyOn(svc, "add").mockResolvedValue({ ok: true } as never);
+    return { svc, wa, prisma, storage, add };
+  }
+
+  it("dosya verilince O dosya gönderilir ve siparişe önizleme olarak KAYDEDİLİR", async () => {
+    const { svc, wa, add, storage } = kur();
+    const f = dosya("tasarim.jpg", "image/jpeg", 2048);
+    const r = await svc.tasarimOnayiGonder("o1", { actorId: "u1" }, f);
+
+    expect(r.ok).toBe(true);
+    // kayıt: ilk kaleme, önizleme türünde
+    expect(add).toHaveBeenCalledWith("o1", "i1", "onizleme", f, { actorId: "u1" });
+    // gönderim: seçilen dosyanın baytları
+    expect(wa.tasarimOnayiGonder).toHaveBeenCalledWith("o1", {
+      buffer: f.buffer, mimetype: "image/jpeg", dosyaAdi: "tasarim.jpg",
+    });
+    // diskteki eski önizlemeye HİÇ bakılmaz
+    expect(storage.getDesign).not.toHaveBeenCalled();
+  });
+
+  it("dosya verilmezse en son önizlemeye düşer (eski davranış korunur)", async () => {
+    const { svc, wa, add, storage } = kur({
+      onizleme: { id: "d1", storageKey: "abc.png", fileName: "eski.png", mimeType: "image/png" },
+    });
+    const r = await svc.tasarimOnayiGonder("o1", { actorId: "u1" });
+
+    expect(r.ok).toBe(true);
+    expect(add).not.toHaveBeenCalled();
+    expect(storage.getDesign).toHaveBeenCalledWith("abc.png");
+    expect(wa.tasarimOnayiGonder).toHaveBeenCalledWith("o1", {
+      buffer: Buffer.from("eski"), mimetype: "image/png", dosyaAdi: "eski.png",
+    });
+  });
+
+  it("ne dosya ne önizleme varsa NET hata verir", async () => {
+    const { svc, wa } = kur();
+    await expect(svc.tasarimOnayiGonder("o1", { actorId: "u1" })).rejects.toThrow(BadRequestException);
+    expect(wa.tasarimOnayiGonder).not.toHaveBeenCalled();
+  });
+
+  it("iptal edilmiş siparişte gönderim YAPILMAZ", async () => {
+    const { svc, wa, prisma } = kur();
+    prisma.order.findUnique.mockResolvedValue({ ...SIPARIS, status: "iptal_edildi" });
+    await expect(svc.tasarimOnayiGonder("o1", { actorId: "u1" }, dosya("a.jpg", "image/jpeg"))).rejects.toThrow(BadRequestException);
+    expect(wa.tasarimOnayiGonder).not.toHaveBeenCalled();
+  });
+
+  it("Meta reddederse hata operatöre AYNEN iletilir (#132001 = şablon onaylı değil)", async () => {
+    const { svc, wa } = kur();
+    wa.tasarimOnayiGonder.mockResolvedValue({ ok: false, hata: "132001: template name does not exist" });
+    await expect(svc.tasarimOnayiGonder("o1", { actorId: "u1" }, dosya("a.jpg", "image/jpeg")))
+      .rejects.toThrow(/132001/);
+  });
+});

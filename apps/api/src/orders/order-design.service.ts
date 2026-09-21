@@ -395,39 +395,71 @@ export class OrderDesignService {
    *
    * Dosya Meta'ya media olarak YÜKLENİR; herkese açık bir link üretilmez, tasarımlar sızmaz.
    */
-  async tasarimOnayiGonder(orderId: string, actor: { userId?: string | null }) {
+  async tasarimOnayiGonder(
+    orderId: string,
+    actor: Actor,
+    /**
+     * Tasarımcının o an seçtiği görsel. 2026-09-21 DÜZELTMESİ: ilk sürüm panelde ZATEN
+     * duran bir önizlemeyi arıyordu, ama gerçek akışta önizleme onaydan SONRA kayıt
+     * amaçlı yükleniyor — onay anında tasarımcının dosyası paneldeyken değil kendi
+     * bilgisayarında oluyor (veri doğruladı: "Tasarım Onayında" siparişlerde yalnız
+     * müşteri dosyası var). Bu yüzden dosya doğrudan burada alınır.
+     * Verilmezse eski davranış sürer: sipariştekilerin EN SONuncusu kullanılır.
+     */
+    file?: { buffer: Buffer; mimetype: string; originalname: string },
+  ) {
     if (!this.whatsapp) {
       throw new BadRequestException("WhatsApp entegrasyonu bu ortamda kapalı.");
     }
 
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, orderNumber: true, status: true },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        items: { select: { id: true }, orderBy: { id: "asc" }, take: 1 },
+      },
     });
     if (!order) throw new NotFoundException("Sipariş bulunamadı.");
     if (order.status === "iptal_edildi") {
       throw new BadRequestException("İptal edilmiş sipariş için onay gönderilemez.");
     }
 
-    // EN SON yüklenen önizleme: revizede yeni görsel yüklenir, onay her zaman güncel
-    // tasarımı taşımalı. Drive'a taşınmış kayıtlar (storageKey null) elenir.
-    const onizleme = await this.prisma.designUpload.findFirst({
-      where: { orderId, kind: "onizleme", storageKey: { not: null } },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, storageKey: true, fileName: true, mimeType: true },
-    });
-    if (!onizleme?.storageKey) {
-      throw new BadRequestException(
-        "Bu siparişte önizleme görseli yok. Önce sipariş satırına JPG/PNG önizleme yükleyin.",
-      );
+    let buffer: Buffer;
+    let mimetype: string;
+    let dosyaAdi: string;
+
+    if (file) {
+      // Gönderilen görsel siparişe de KAYDEDİLİR: müşterinin tam olarak neyi onayladığı
+      // sonradan kanıtlanabilsin ve tasarımcı ayrıca ikinci kez yüklemek zorunda kalmasın.
+      // add() JPG/PNG + 2 MB kuralını ve sahiplik kontrolünü zaten uyguluyor.
+      const ilkKalem = order.items[0];
+      if (!ilkKalem) throw new BadRequestException("Siparişte ürün satırı yok.");
+      await this.add(orderId, ilkKalem.id, "onizleme", file, actor);
+      buffer = file.buffer;
+      mimetype = file.mimetype;
+      dosyaAdi = file.originalname || "onizleme.jpg";
+    } else {
+      // EN SON yüklenen önizleme: revizede yeni görsel yüklenir, onay her zaman güncel
+      // tasarımı taşımalı. Drive'a taşınmış kayıtlar (storageKey null) elenir.
+      const onizleme = await this.prisma.designUpload.findFirst({
+        where: { orderId, kind: "onizleme", storageKey: { not: null } },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, storageKey: true, fileName: true, mimeType: true },
+      });
+      if (!onizleme?.storageKey) {
+        throw new BadRequestException(
+          "Gönderilecek görsel yok. Tasarım görselini (JPG/PNG) seçip tekrar deneyin.",
+        );
+      }
+      const okunan = await this.storage.getDesign(onizleme.storageKey);
+      buffer = okunan.buffer;
+      mimetype = onizleme.mimeType || okunan.mimetype;
+      dosyaAdi = onizleme.fileName || "onizleme.jpg";
     }
 
-    const { buffer, mimetype } = await this.storage.getDesign(onizleme.storageKey);
-    const sonuc = await this.whatsapp.tasarimOnayiGonder(orderId, {
-      buffer,
-      mimetype: onizleme.mimeType || mimetype,
-      dosyaAdi: onizleme.fileName || "onizleme.jpg",
-    });
+    const sonuc = await this.whatsapp.tasarimOnayiGonder(orderId, { buffer, mimetype, dosyaAdi });
 
     if (!sonuc.ok) {
       // Meta hatası operatöre AYNEN gösterilir: "#132001 template not found" gibi kodlar
@@ -438,14 +470,14 @@ export class OrderDesignService {
     await this.prisma.auditLog
       .create({
         data: {
-          actorId: actor.userId ?? null,
+          actorId: actor.actorId ?? null,
           entityType: "Order",
           entityId: orderId,
           action: "design_approval_sent",
           diff: {
             orderNumber: order.orderNumber,
             alici: sonuc.alici,
-            uploadId: onizleme.id,
+            dosya: dosyaAdi,
             ...(sonuc.messageId ? { messageId: sonuc.messageId } : {}),
           },
         },

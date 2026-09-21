@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useRef, useTransition } from "react";
 import { havaleOnayBekliyorMu, ibandanTahsilEdilebilirMi } from "./havale-onay-kurali";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -37,7 +37,6 @@ import {
   confirmHavalePayment,
   confirmManualPayment,
   deleteOrderDesign,
-  sendDesignApproval,
   addOrderNote,
   deleteOrderNote,
 } from "./actions";
@@ -364,31 +363,57 @@ export function OrderDetailClient({
   // liste tutmak yerine kaynağa dönüyoruz; dosya listesi küçük, gecikme fark edilmez.
   const router = useRouter();
 
-  // TASARIM ONAYI (2026-09-21) — ayrı bekleme durumu: isPending durum/kargo işlemleriyle
-  // paylaşılsaydı onay gönderirken ilgisiz butonlar da kilitlenirdi.
+  /**
+   * TASARIM ONAYI (2026-09-21) — tasarımcı görseli O AN seçer.
+   *
+   * İlk sürüm panelde zaten duran bir önizleme arıyordu; ama gerçek akışta önizleme onaydan
+   * SONRA kayıt için yükleniyor, onay anında dosya tasarımcının bilgisayarında oluyor
+   * (Hasan: "benim bu aşamam tasarım öncesi"). Bu yüzden dosya seçtiriliyor; seçilen görsel
+   * hem müşteriye gider hem siparişe önizleme olarak kaydedilir (neyin onaylandığının kaydı).
+   *
+   * Ayrı bekleme durumu: isPending durum/kargo işlemleriyle paylaşılsaydı onay gönderirken
+   * ilgisiz butonlar da kilitlenirdi.
+   */
   const [onayGonderiliyor, setOnayGonderiliyor] = useState(false);
-  const tasarimOnayiGonder = async () => {
+  const onayDosyaRef = useRef<HTMLInputElement>(null);
+
+  const onaySecildi = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const dosya = e.target.files?.[0];
+    e.target.value = ""; // aynı dosya tekrar seçilebilsin
+    if (!dosya) return;
+
     const ok = await confirm({
       title: "Tasarım onayı WhatsApp'tan gönderilecek",
       description: `${order.orderNumber} · ${order.shippingAddress?.phone ?? "kayıtlı numara"}`,
       bullets: [
-        "En son yüklenen ÖNİZLEME görseli müşteriye gider.",
+        `Gönderilecek görsel: ${dosya.name}`,
         "Müşteri son 24 saatte yazmamış olsa bile ulaşır (onaylı şablon).",
-        "Revize gerekirse yeni önizleme yükleyip tekrar gönderebilirsiniz.",
+        "Görsel siparişe önizleme olarak da kaydedilir.",
       ],
       confirmLabel: "Gönder",
     });
     if (!ok) return;
+
     setOnayGonderiliyor(true);
-    const r = await sendDesignApproval(order.id);
-    setOnayGonderiliyor(false);
-    if (r.ok) {
-      toast.success(`Tasarım onayı gönderildi${r.alici ? ` (${r.alici})` : ""}.`);
-      router.refresh();
-    } else {
-      // Meta hatası AYNEN gösterilir: "#132001 template not found" şablonun henüz
-      // onaylanmadığını, "önizleme yok" ise dosya eksiğini söyler.
-      toast.error(r.error);
+    try {
+      // Server action DEĞİL: bodySizeLimit varsayılanı 1 MB, görsel oradan geçmez.
+      // Dosya yükleyen diğer akışlarla aynı desen (BFF route → API).
+      const fd = new FormData();
+      fd.append("file", dosya, dosya.name);
+      const res = await fetch(`/api/siparis-tasarim-onay/${order.id}`, { method: "POST", body: fd });
+      const veri = (await res.json().catch(() => ({}))) as { message?: string; alici?: string };
+      if (!res.ok) {
+        // Meta hatası AYNEN gösterilir: "#132001 template not found" şablonun henüz
+        // onaylanmadığını söyler.
+        toast.error(veri.message ?? "Tasarım onayı gönderilemedi.");
+      } else {
+        toast.success(`Tasarım onayı gönderildi${veri.alici ? ` (${veri.alici})` : ""}.`);
+        router.refresh();
+      }
+    } catch {
+      toast.error("Sunucuya ulaşılamadı.");
+    } finally {
+      setOnayGonderiliyor(false);
     }
   };
 
@@ -958,24 +983,32 @@ export function OrderDetailClient({
                 {/* TASARIM ONAYI (2026-09-21, Oğuzhan talebi) — müşteri 24 saattir yazmamış olsa
                     bile tasarımı WhatsApp'tan gönderip onay ister. Görsel, onaylı şablonun
                     başlığına basıldığı için Meta'nın 24 saat penceresi engel olmaz.
-                    Yalnız önizleme (JPG/PNG) varken görünür: gönderilecek görsel odur. */}
-                {canDesign && order.items.some((it) => (it.designUploads ?? []).some((d) => d.kind === "onizleme")) && (
+                    Dosya BURADA seçilir: onay anında tasarım henüz panelde değil, tasarımcının
+                    bilgisayarında (önizleme onaydan sonra kayıt için yükleniyor). */}
+                {canDesign && (
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-700/20 bg-brand-700/5 px-3 py-2.5">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-ink-900">Tasarımı müşteriye onaya gönder</p>
                       <p className="text-[11px] text-ink-500">
-                        En son yüklenen önizleme WhatsApp&apos;tan {order.shippingAddress?.phone || "müşteriye"} gönderilir. Müşteri
-                        daha önce yazmamış olsa da ulaşır.
+                        Tasarım görselini seçin (JPG/PNG, en fazla 2 MB). WhatsApp&apos;tan{" "}
+                        {order.shippingAddress?.phone || "müşteriye"} gider; müşteri daha önce yazmamış olsa da ulaşır.
                       </p>
                     </div>
+                    <input
+                      ref={onayDosyaRef}
+                      type="file"
+                      accept="image/jpeg,image/png"
+                      className="hidden"
+                      onChange={onaySecildi}
+                    />
                     <button
                       type="button"
                       disabled={onayGonderiliyor}
-                      onClick={tasarimOnayiGonder}
+                      onClick={() => onayDosyaRef.current?.click()}
                       className="inline-flex flex-none items-center gap-1.5 rounded-md bg-brand-700 px-3 py-2 text-xs font-medium text-paper-50 disabled:opacity-60"
                     >
                       <WhatsappLogo size={15} weight="fill" />
-                      {onayGonderiliyor ? "Gönderiliyor…" : "WhatsApp ile onaya gönder"}
+                      {onayGonderiliyor ? "Gönderiliyor…" : "Tasarım seç ve onaya gönder"}
                     </button>
                   </div>
                 )}

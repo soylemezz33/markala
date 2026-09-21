@@ -366,21 +366,6 @@ export class MarkalaApiClient {
       ),
 
     /**
-     * Tasarım onayını müşteriye WhatsApp'tan gönder (2026-09-21).
-     *
-     * Siparişin EN SON önizlemesi, onaylı `tasarim_onay` şablonunun GÖRSEL başlığına basılır.
-     * Böylece müşteri son 24 saatte yazmamış olsa bile tasarımı görür — ekip artık müşterinin
-     * yazmasını beklemez. Önizleme yoksa ya da Meta reddederse 400 + açıklama döner.
-     */
-    tasarimOnayiGonder: (orderId: string) =>
-      this.request<{ ok: true; alici?: string; messageId?: string }>(
-        "POST",
-        `/orders/${orderId}/tasarim-onay`,
-        undefined,
-        { auth: true },
-      ),
-
-    /**
      * Havale/EFT ödemesini onayla (admin) — para hesaba geçtiğinde çağrılır.
      * Yalnız paymentStatus'ü "basarili" yapar; sipariş durumuna dokunmaz.
      */
