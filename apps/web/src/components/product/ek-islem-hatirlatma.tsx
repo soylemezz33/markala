@@ -122,16 +122,19 @@ export function EkIslemHatirlatma({
           })}
         </div>
 
-        <div className="px-5 py-4 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 border-t border-paper-200 mt-2">
+        {/* 2026-09-22 Hasan: devam etmek ASIL eylem — sağda büyük düğme. "Seçeneklere dön"
+            solda küçük bağlantı; modal bir engel değil, hatırlatma. Mobilde büyük düğme
+            altta (başparmak mesafesi), bağlantı üstte. */}
+        <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-paper-200 mt-2">
           <button
             type="button"
-            onClick={onDevam}
-            className="text-sm text-ink-600 underline underline-offset-4 hover:text-ink-900 py-1"
+            onClick={onKapat}
+            className="text-sm text-ink-600 underline underline-offset-4 hover:text-ink-900 py-1 self-start sm:self-auto"
           >
-            İşlemsiz devam et
-          </button>
-          <Button variant="outline" onClick={onKapat}>
             Seçeneklere dön
+          </button>
+          <Button onClick={onDevam} className="w-full sm:w-auto">
+            İşlemsiz devam et
           </Button>
         </div>
       </div>
