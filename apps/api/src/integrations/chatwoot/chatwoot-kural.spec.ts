@@ -1,7 +1,9 @@
+import { OrderStatus } from "@prisma/client";
 import { describe, it, expect } from "vitest";
 import {
   whatsappKimligi, konusmaEtiketi, ozelNotMetni, siparisNotuTemizle, icNotMetni,
   durumEtiketleriniUygula, durumEtiketiBul, konusmaIdNottan, durumNotu, CHATWOOTTAN_PANELE, URETIM_SONRASI,
+  DURUM_ETIKETLERI,
   chatwootNotuAktarilirMi, chatwootNotuPanele, panelNotuAktarilirMi, panelNotuChatwoota,
 } from "./chatwoot-kural";
 
@@ -59,9 +61,22 @@ describe("ozelNotMetni", () => {
 });
 
 describe("sipariş durumu ↔ konuşma", () => {
+  // 22 Eyl 2026: listede "tasarim-onayindi" yoktu; eski etiket silinmeyip konuşmada üç
+  // durum etiketi birikti ve Chatwoot→panel yönü o durumu hiç tanımadı. Liste OrderStatus
+  // enumundan sapmasın diye şema doğrudan okunuyor.
+  it("DURUM_ETIKETLERI, OrderStatus enumunun tamamını kapsar", () => {
+    // Prisma üye adları alt çizgili (tasarim_onayindi), DB/slug karşılıkları tireli
+    // (@map("tasarim-onayindi")) — dönüşüm birebir bu kuralla yapılıyor.
+    const durumlar = Object.values(OrderStatus).map((d) => String(d).replace(/_/g, "-"));
+    expect(durumlar.length).toBeGreaterThan(5);
+    expect([...DURUM_ETIKETLERI].sort()).toEqual([...durumlar].sort());
+  });
   it("durumEtiketleriniUygula: durum dışı etiketler kalır, tek durum etiketi olur", () => {
     expect(durumEtiketleriniUygula(["dosya-bekleniyor", "tasarim-bekleniyor"], "uretimde")).toEqual(["dosya-bekleniyor", "uretimde"]);
     expect(durumEtiketleriniUygula([], "teslim-edildi")).toEqual(["teslim-edildi"]);
+    // onaydan onaylandıya geçiş: eski durum etiketi silinmeli
+    expect(durumEtiketleriniUygula(["tasarim-asamasina-hazir", "tasarim-onayindi"], "tasarim-onaylandi"))
+      .toEqual(["tasarim-asamasina-hazir", "tasarim-onaylandi"]);
   });
   it("durumEtiketiBul: tek etiket / işaretli olmayanı seç / yok", () => {
     expect(durumEtiketiBul(["teklif", "uretimde"])).toBe("uretimde");

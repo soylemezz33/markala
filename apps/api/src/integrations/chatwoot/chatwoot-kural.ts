@@ -79,7 +79,9 @@ export function icNotMetni(conversationId: number, url: string, yeni = true): st
 // ── Sipariş durumu ↔ konuşma (2026-09-16, Hasan: "panelle birebir entegre") ─────────────────
 /** Panel sipariş durumu slug'ları = Chatwoot etiket adları (aynı yazım). */
 export const DURUM_ETIKETLERI = [
-  "siparis-alindi", "tasarim-bekleniyor", "tasarim-onaylandi", "uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi",
+  // OrderStatus enumunun TAMAMI burada olmalı; eksik bir durum (22 Eyl: "tasarim-onayindi")
+  // eski etiketin silinmemesine ve konuşmada durum etiketlerinin üst üste yığılmasına yol açar.
+  "siparis-alindi", "tasarim-bekleniyor", "tasarim-onayindi", "tasarim-onaylandi", "uretimde", "kargoya-verildi", "teslim-edildi", "iptal-edildi",
 ] as const;
 /** Bu durumlardan itibaren konuşma üretim sorumlusuna (CHATWOOT_URETIM_AGENT_ID) atanır. */
 export const URETIM_SONRASI = ["uretimde", "kargoya-verildi", "teslim-edildi"];
@@ -89,7 +91,7 @@ export const KAPANIS_DURUMLARI = ["teslim-edildi", "iptal-edildi"];
 export const CHATWOOTTAN_PANELE = ["tasarim-bekleniyor", "tasarim-onaylandi", "uretimde"];
 
 const DURUM_BASLIK: Record<string, string> = {
-  "siparis-alindi": "Sipariş alındı", "tasarim-bekleniyor": "Tasarım bekleniyor", "tasarim-onaylandi": "Tasarım onaylandı",
+  "siparis-alindi": "Sipariş alındı", "tasarim-bekleniyor": "Tasarım bekleniyor", "tasarim-onayindi": "Tasarım onayında", "tasarim-onaylandi": "Tasarım onaylandı",
   "uretimde": "Üretimde", "kargoya-verildi": "Kargoya verildi", "teslim-edildi": "Teslim edildi", "iptal-edildi": "İptal edildi",
 };
 
