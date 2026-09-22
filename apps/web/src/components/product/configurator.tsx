@@ -35,6 +35,23 @@ import {
   AreaField,
   MobileCta,
 } from "./configurator-fields";
+import { EkIslemHatirlatma, type EkIslemSecenegi } from "./ek-islem-hatirlatma";
+
+/**
+ * Branda ailesinde ÜCRETSİZ kenar işlemleri (2026-09-22, Hasan). Varsayılan "Yok"
+ * olduğu için müşteri farkında olmadan işlemsiz sipariş veriyor ve branda eline
+ * asılamaz hâlde geçiyor. Sepete eklerken bir kez hatırlatılır.
+ *
+ * Tetikleyici "germe" seçeneğinin varlığı: folyo (laminasyon/iç mekân) ve dekota
+ * (CNC kesim) ek işlemleri ÜCRETLİ, orada uyarı satış baskısı olurdu.
+ */
+const EK_ISLEM_ACIKLAMA: Record<string, string> = {
+  germe: "Kenarlar düz bırakılır, delik açılmaz. Demir profile, tabela kasasına veya çerçeveye gerdirerek monte etmek için.",
+  "dikis-kopca": "Kenarlar katlanıp dikilir, 4 köşeye metal kopça (kuşgözü) takılır. Halat veya kelepçeyle asmak için.",
+  "kolon-dikis": "Üst ve alt kenara boru ya da direk geçecek tünel dikilir. Pankart askısı ve direkli kullanım için.",
+};
+const EK_ISLEM_GRUP = "ekislem";
+const EK_ISLEM_YOK = "yok";
 
 // Tip — API'den gelen product.options her satırı bu şekildedir
 interface RawOption {
@@ -468,8 +485,24 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     };
   }
 
-  function handleAddToCart() {
-    if (!canBuy) return;
+  /** Branda ailesi mi + ek işlem seçilmemiş mi? Seçilmişse/ürün uygun değilse boş liste. */
+  const ekIslemSecenekleri = useMemo<EkIslemSecenegi[]>(() => {
+    const opts = ((product.options ?? []) as unknown as RawOption[]).filter(
+      (o) => o.groupKey === EK_ISLEM_GRUP && o.optionKey !== EK_ISLEM_YOK,
+    );
+    if (!opts.some((o) => o.optionKey === "germe")) return [];
+    return opts
+      .sort((a, b) => a.optionSort - b.optionSort)
+      .map((o) => ({
+        key: o.optionKey,
+        label: o.optionLabel,
+        aciklama: EK_ISLEM_ACIKLAMA[o.optionKey] ?? o.optionSublabel ?? "",
+      }));
+  }, [product.options]);
+
+  const [ekIslemSoruluyor, setEkIslemSoruluyor] = useState(false);
+
+  function sepeteYaz() {
     if (editingId) {
       replaceItem(editingId, buildCartPayload());
       router.push("/sepet");
@@ -479,6 +512,30 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
     dispatch({ type: "JUST_ADDED", value: true });
     setTimeout(() => dispatch({ type: "JUST_ADDED", value: false }), 1500);
   }
+
+  function handleAddToCart() {
+    if (!canBuy) return;
+    const secili = state.selections[EK_ISLEM_GRUP];
+    if (ekIslemSecenekleri.length > 0 && (!secili || secili === EK_ISLEM_YOK)) {
+      setEkIslemSoruluyor(true);
+      return;
+    }
+    sepeteYaz();
+  }
+
+  /**
+   * Modalda bir işlem seçildi: önce seçimi işle, sonra sepete yaz. dispatch eşzamanlı
+   * değil, bu yüzden payload'ı aynı turda GÜNCEL seçimle kuramayız — seçim state'e
+   * düştükten sonra çalışacak bir bayrak bırakılır (aşağıdaki effect).
+   */
+  const [sepeteYazBekliyor, setSepeteYazBekliyor] = useState(false);
+  useEffect(() => {
+    if (!sepeteYazBekliyor) return;
+    setSepeteYazBekliyor(false);
+    sepeteYaz();
+    // sepeteYaz her renderda yeniden kurulur; bağımlılığa eklemek döngü yapar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sepeteYazBekliyor]);
 
   // Ürün bazlı teslim aralığı (2026-09-17): tarih değil aralık — 2026-08-08 kararı korunur.
   const teslim = useMemo(() => teslimAraligi([product.productionTime]), [product.productionTime]);
@@ -719,6 +776,22 @@ export function Configurator({ product, rating: ratingProp, pricing = DEFAULT_PR
         label={editingId ? "Sepeti Güncelle" : "Sepete Ekle"}
         onAddToCart={canBuy ? handleAddToCart : handleQuoteClick}
       />
+
+      {ekIslemSoruluyor && (
+        <EkIslemHatirlatma
+          secenekler={ekIslemSecenekleri}
+          onSec={(optionKey) => {
+            dispatch({ type: "SET_SELECTION", groupKey: EK_ISLEM_GRUP, optionKey });
+            setEkIslemSoruluyor(false);
+            setSepeteYazBekliyor(true);
+          }}
+          onDevam={() => {
+            setEkIslemSoruluyor(false);
+            sepeteYaz();
+          }}
+          onKapat={() => setEkIslemSoruluyor(false)}
+        />
+      )}
     </ConfiguratorContext.Provider>
   );
 }
