@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Button } from "@markala/ui";
-import { X, Scissors, Circle, Rows } from "@phosphor-icons/react";
+import { useEffect, useRef, useState } from "react";
+import { Button, cn } from "@markala/ui";
+import { X } from "@phosphor-icons/react";
 
 /**
  * BRANDA EK İŞLEM HATIRLATMASI (2026-09-22, Hasan).
@@ -16,17 +16,13 @@ import { X, Scissors, Circle, Rows } from "@phosphor-icons/react";
  * bulunmasıdır. Folyo (laminasyon/iç mekân) ve dekota (CNC kesim) ek işlemleri
  * ÜCRETLİ; orada böyle bir uyarı satış baskısı olurdu.
  *
- * Müşteriyi kilitlemez: "İşlemsiz devam et" her zaman açık ve aynı ağırlıkta durur.
+ * SEÇ-SONRA-ONAYLA (2026-09-22 ikinci tur, Hasan): kartlar tek tıkla sepete
+ * EKLEMEZ. Soldaki yuvarlak işaretlenir, kart markanın sarısına döner, sağdaki
+ * "Devam et" ile onaylanır. Yanlış kutuya dokunan müşteri siparişini istemediği
+ * bir işlemle kapatmıyor; seçimini görüp değiştirebiliyor.
  */
 
 export type EkIslemSecenegi = { key: string; label: string; aciklama: string };
-
-/** Seçenek anahtarına göre ikon — görsel ayırt edicilik, anlam taşımaz. */
-const IKON: Record<string, typeof Scissors> = {
-  germe: Rows,
-  "dikis-kopca": Circle,
-  "kolon-dikis": Scissors,
-};
 
 export function EkIslemHatirlatma({
   secenekler,
@@ -35,7 +31,7 @@ export function EkIslemHatirlatma({
   onKapat,
 }: {
   secenekler: EkIslemSecenegi[];
-  /** Seçeneği işaretle ve sepete ekle. */
+  /** Seçilen işlemi uygula ve sepete ekle. */
   onSec: (optionKey: string) => void;
   /** Ek işlemsiz sepete ekle. */
   onDevam: () => void;
@@ -43,6 +39,7 @@ export function EkIslemHatirlatma({
 }) {
   const kutuRef = useRef<HTMLDivElement>(null);
   const oncekiOdak = useRef<HTMLElement | null>(null);
+  const [secili, setSecili] = useState<string | null>(null);
 
   useEffect(() => {
     oncekiOdak.current = document.activeElement as HTMLElement | null;
@@ -95,18 +92,32 @@ export function EkIslemHatirlatma({
           </button>
         </div>
 
-        <div className="px-5 pb-2 grid gap-2">
+        <div className="px-5 pb-2 grid gap-2" role="radiogroup" aria-label="Ücretsiz kenar işlemleri">
           {secenekler.map((s) => {
-            const Ikon = IKON[s.key] ?? Scissors;
+            const isaretli = secili === s.key;
             return (
               <button
                 key={s.key}
                 type="button"
-                onClick={() => onSec(s.key)}
-                className="group flex items-start gap-3 rounded-xl border border-paper-200 bg-white p-3.5 text-left transition hover:border-brand-500 hover:bg-brand-100/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500"
+                role="radio"
+                aria-checked={isaretli}
+                onClick={() => setSecili(s.key)}
+                className={cn(
+                  "flex items-start gap-3 rounded-xl border p-3.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand-500",
+                  isaretli
+                    ? "border-brand-500 bg-brand-100/40"
+                    : "border-paper-200 bg-white hover:border-ink-300",
+                )}
               >
-                <span className="mt-0.5 shrink-0 rounded-lg bg-paper-100 p-2 text-ink-700 group-hover:bg-brand-500 group-hover:text-ink-900">
-                  <Ikon size={18} weight="bold" />
+                {/* Radyo yuvarlağı — işaretlenince markanın sarısıyla dolar. */}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "mt-0.5 shrink-0 grid place-items-center h-5 w-5 rounded-full border-2 transition",
+                    isaretli ? "border-brand-500 bg-brand-500" : "border-paper-200 bg-white",
+                  )}
+                >
+                  {isaretli && <span className="h-2 w-2 rounded-full bg-ink-900" />}
                 </span>
                 <span className="min-w-0">
                   <span className="flex items-center gap-2">
@@ -122,19 +133,22 @@ export function EkIslemHatirlatma({
           })}
         </div>
 
-        {/* 2026-09-22 Hasan: devam etmek ASIL eylem — sağda büyük düğme. "Seçeneklere dön"
-            solda küçük bağlantı; modal bir engel değil, hatırlatma. Mobilde büyük düğme
-            altta (başparmak mesafesi), bağlantı üstte. */}
+        {/* Solda işlemsiz çıkış, sağda seçimi onaylayan asıl düğme. Seçim yapılmadan
+            "Devam et" anlamsız olur → işaretlenene kadar kapalı. */}
         <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-paper-200 mt-2">
           <button
             type="button"
-            onClick={onKapat}
+            onClick={onDevam}
             className="text-sm text-ink-600 underline underline-offset-4 hover:text-ink-900 py-1 self-start sm:self-auto"
           >
-            Seçeneklere dön
+            Ek işlemsiz devam et
           </button>
-          <Button onClick={onDevam} className="w-full sm:w-auto">
-            İşlemsiz devam et
+          <Button
+            onClick={() => secili && onSec(secili)}
+            disabled={!secili}
+            className="w-full sm:w-auto"
+          >
+            Devam et
           </Button>
         </div>
       </div>
