@@ -263,6 +263,14 @@ export function Gallery({ images, alt, fallbackSrc }: { images: string[]; alt: s
         </div>
       )}
 
+      {/* Görseller temsilidir (2026-09-22, Hasan): ürünler ölçüye/seçeneğe göre
+          üretiliyor, fotoğraf bire bir teslim edilecek işi göstermiyor. Beklenti
+          farkını kapatır ama satın almanın önüne geçmemeli — bu yüzden küçük ve
+          sessiz, galerinin altında. */}
+      {hasImages && (
+        <p className="mt-2 text-[11px] leading-snug text-ink-400">Görseller temsilidir.</p>
+      )}
+
       {lightbox && hasImages && (
         <GalleryLightbox
           images={images}
