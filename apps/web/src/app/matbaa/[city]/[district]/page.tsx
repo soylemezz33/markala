@@ -10,6 +10,7 @@ import {
   getCityBySlug, getDistrictBySlug, getAllDistrictParams,
 } from "@/lib/cities";
 import { getProducts } from "@/lib/catalog";
+import { matbaaBaslik, matbaaIlceAciklama } from "@/lib/matbaa-meta";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
@@ -45,10 +46,9 @@ export function generateMetadata({ params }: Props): Metadata {
   // CTR düzeni (2026-08-20): şehir sayfalarıyla aynı gerekçe — "Fiyatları" + teslim vaadi
   // başlıkta, ansiklopedik intro yerine eylem çağrılı açıklama.
   const teslim = district.sameDayDelivery ? "Aynı Gün Motor Kurye" : "1 Günde Kapında";
-  const title = `${district.name} ${city.name} Matbaa & Baskı Fiyatları - ${teslim}`;
-  const description = `${district.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün - ${
-    district.sameDayDelivery ? "aynı gün motor kurye ile teslim" : "2-4 iş gününde kapınızda"
-  }.`;
+  const teslimKisa = district.sameDayDelivery ? "Aynı Gün Kurye" : "1 Gün";
+  const title = matbaaBaslik(`${district.name} ${city.name}`, teslim, teslimKisa);
+  const description = matbaaIlceAciklama(district.name, !!district.sameDayDelivery);
 
   return {
     title,

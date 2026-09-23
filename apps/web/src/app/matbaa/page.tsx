@@ -12,9 +12,9 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 const SITE = "https://markala.com.tr";
 
 export const metadata: Metadata = {
-  title: "Türkiye Geneli Matbaa Hizmeti | 81 İl, Hızlı Üretim",
+  title: "Türkiye Geneli Matbaa Hizmeti | 81 İl",
   description:
-    "Mersin merkezli matbaa atölyemizden 81 ile kartvizit, broşür, afiş, branda, kupa baskı. Türkiye'nin her iline 2-4 iş günü kargo, tek fiyat. İlinizi seçip ilçe kapsamını ve sık sorulanları görün.",
+    "Mersin merkezli matbaa atölyemizden 81 ile kartvizit, broşür, afiş, branda ve kupa baskı. Her ile 2-4 iş günü kargo, tek fiyat. İlinizi seçin, kapsamı görün.",
   alternates: { canonical: "/matbaa" },
   openGraph: {
     type: "website",

@@ -8,9 +8,9 @@ import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 const SITE = "https://markala.com.tr";
 
 export const metadata: Metadata = {
-  title: "Matbaa Terimleri Sözlüğü | CMYK, Gramaj, Selefon ve 30+ Terim",
+  title: "Matbaa Terimleri Sözlüğü: CMYK, Gramaj, Selefon",
   description:
-    "Matbaa ve baskı sektörünün tüm terimleri tek sayfada: CMYK, gramaj, kuşe, bristol, selefon, UV lak, yaldız, taşma payı, fire, hard proof. SEO-optimize sözlük.",
+    "Matbaa ve baskı terimleri tek sayfada: CMYK, gramaj, kuşe, bristol, selefon, UV lak, yaldız, taşma payı, fire ve hard proof — kısa, net açıklamalar.",
   alternates: { canonical: "/sozluk" },
   openGraph: {
     type: "website",

@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
 import { REGION_LABEL } from "@/lib/cities-generated";
+import { matbaaBaslik, matbaaTeslim, matbaaIlAciklama } from "@/lib/matbaa-meta";
 import { trLoc, trLocAdj, trDat, trAbl, trGen } from "@/lib/tr-suffix";
 import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
@@ -49,21 +50,9 @@ export function generateMetadata({ params }: Props): Metadata {
   // (intro.slice). Yeni düzen: başlıkta "Fiyatları" ("gaziantep matbaa fiyat listesi"
   // sorguları) + net teslim vaadi; açıklamada ürün sayımı + eylem çağrısı.
   const { min, max } = city.deliveryDays;
-  const teslim =
-    min === 0 || city.sameDayCourier
-      ? "Aynı Gün Teslim"
-      : min === max
-        ? `${min} Günde Kapında`
-        : `${min}-${max} Günde Kapında`;
-  const teslimCumle =
-    min === 0 || city.sameDayCourier
-      ? "aynı gün"
-      : min === max
-        ? `${min} iş gününde`
-        : `${min}-${max} iş gününde`;
-  const title = `${city.name} Matbaa & Baskı Fiyatları - ${teslim}`;
-
-  const description = `${city.name} için online matbaa: kartvizit, broşür, afiş, etiket ve İSG levhaları. KDV dahil fiyatı anında görün, siparişiniz ${teslimCumle} DHL ile kapınızda.`;
+  const { teslim, teslimKisa, teslimCumle } = matbaaTeslim(min, max, !!city.sameDayCourier);
+  const title = matbaaBaslik(city.name, teslim, teslimKisa);
+  const description = matbaaIlAciklama(city.name, teslimCumle);
 
   return {
     title,

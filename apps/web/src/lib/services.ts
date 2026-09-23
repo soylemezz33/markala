@@ -26,7 +26,7 @@ export const services: ServiceData[] = [
   {
     slug: "tasarim-destegi",
     title: "Ücretsiz Tasarım Desteği",
-    metaTitle: "Ücretsiz Matbaa Tasarım Desteği | Profesyonel Grafik Ekibi",
+    metaTitle: "Ücretsiz Matbaa Tasarım Desteği | Grafik Ekibimiz",
     metaDescription:
       "Markala matbaa siparişlerinizde ücretsiz tasarım desteği. Profesyonel grafik tasarımcı ekibimizle kartvizit, broşür, logo ve kurumsal kimlik tasarımı.",
     keywords: [
@@ -122,9 +122,9 @@ export const services: ServiceData[] = [
   {
     slug: "toplu-baski",
     title: "Toplu Baskı & Kurumsal İndirim",
-    metaTitle: "Toplu Matbaa Siparişi | Avantajlı Fiyat, Açık Fatura, B2B",
+    metaTitle: "Toplu Matbaa Siparişi | Avantajlı Fiyat, B2B Fatura",
     metaDescription:
-      "Toplu matbaa siparişlerinde firmanıza özel avantajlı fiyatlandırma, açık fatura, dedicated müşteri temsilcisi. Kurumsal hesap başvurusu 1-2 iş gününde onaylanır.",
+      "Toplu matbaa siparişlerinde firmanıza özel fiyat, açık fatura ve size ayrılmış müşteri temsilcisi. Kurumsal hesap başvurusu 1-2 iş gününde onaylanır.",
     keywords: [
       "toplu matbaa siparişi",
       "toplu baskı indirim",

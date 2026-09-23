@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Kategoriler | Matbaa ve Reklam Ürünleri",
   description:
-    "Markala'da hizmet verdiğimiz tüm kategoriler: kartvizit, broşür, kapı askı broşür, el ilanı, afiş, antetli kağıt, zarf, magnet, etiket, makbuz, bloknot, çanta, branda, rollup, yelken bayrak ve daha fazlası.",
+    "Tüm kategoriler: kartvizit, broşür, el ilanı, afiş, antetli kağıt, zarf, magnet, etiket, bloknot, çanta, branda, rollup ve yelken bayrak.",
   alternates: { canonical: "/kategoriler" },
   openGraph: {
     type: "website",

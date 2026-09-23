@@ -5,7 +5,7 @@ import { whatsappUrl } from "@/lib/whatsapp";
 export const metadata: Metadata = {
   title: "Kurumsal Baskı Çözümleri | Markala",
   description:
-    "Şirketiniz için toplu baskı hizmetleri. Kartvizit, broşür, katalog, afiş ve daha fazlası. %10–30 toplu indirim, e-arşiv fatura, anlaşmalı kargo, 81 ile teslimat.",
+    "Şirketiniz için toplu baskı: kartvizit, broşür, katalog, afiş ve dahası. %10–30 toplu indirim, e-arşiv fatura, anlaşmalı kargo, 81 ile teslimat.",
   openGraph: {
     title: "Kurumsal Baskı Çözümleri | Markala",
     description:

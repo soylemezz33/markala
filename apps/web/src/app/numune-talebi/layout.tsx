@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Ücretsiz Numune Kutusu Talebi | Kağıt & Baskı Örnekleri",
+  title: "Ücretsiz Numune Kutusu | Kağıt Örnekleri",
   description:
-    "Sipariş öncesi kâğıt gramajlarını, selefon ve baskı kalitesini elinizle görün. Markala numune kutusunu adresinize ücretsiz gönderelim; 81 ile kargo, 2-3 iş günü.",
+    "Sipariş öncesi kâğıt gramajını, selefon ve baskı kalitesini elinizle görün. Numune kutusunu adresinize ücretsiz gönderelim; 81 ile 2-3 iş günü.",
   alternates: { canonical: "/numune-talebi" },
   openGraph: {
     type: "website",

@@ -49,7 +49,7 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
     h1: "Matbaa ve broşür baskı",
     title: "Matbaa ve Broşür Baskı — Broşür, Afiş, Antetli",
     description:
-      `Broşür, el ilanı, afiş, etiket, antetli kağıt, zarf, cepli dosya, makbuz ve bloknot baskısı. Ebadını ve adedini seç, fiyatı anında gör. ${URETIM_SURESI} üretim, 81 ile kargo.`,
+      `Broşür, el ilanı, afiş, etiket, antetli kağıt, zarf, dosya ve bloknot baskısı. Ebat ve adedi seç, fiyatı anında gör. ${URETIM_SURESI} üretim, 81 ile kargo.`,
     intro:
       "Klasik matbaa işlerinin tamamı bu başlık altında: kuşe ve 1. hamur kâğıda broşür, el ilanı, afiş; kurumsal kırtasiye tarafında antetli kağıt, diplomat ve torba zarf, cepli dosya, NCR makbuz; yapışkanlı etiket ve bloknot çeşitleri. Her üründe gramaj, ebat, tek/çift yön ve selefon seçenekleri konfigüratörden seçilir; tutar KDV dahil anında görünür.",
     categorySlugs: [
@@ -154,7 +154,7 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
     h1: "İş güvenliği uyarı levhaları",
     title: "İSG Uyarı Levhaları — Yasaklayıcı, Emredici",
     description:
-      "Yönetmeliğe uygun iş güvenliği levhaları: uyarı, yasaklayıcı, emredici/KKD, acil çıkış, yangın, elektrik, GES ve trafik levhaları. Dekota, folyo ve fosforlu seçenek.",
+      "Yönetmeliğe uygun iş güvenliği levhaları: uyarı, yasaklayıcı, emredici/KKD, acil çıkış, yangın, elektrik ve GES. Dekota, folyo ve fosforlu seçenek.",
     intro:
       "Sağlık ve Güvenlik İşaretleri Yönetmeliği'nin istediği renk ve şekil kurallarına göre üretilen levhalar: yasaklayıcı işaretler kırmızı, uyarı işaretleri sarı, emredici (KKD) işaretler mavi, acil çıkış ve ilk yardım işaretleri yeşil. Her levha üç malzemede sunulur — iç ve dış mekân için sert PVC dekota, düz yüzeye yapıştırma için yapışkanlı folyo, karanlıkta görünürlük gereken kaçış yolları için fosforlu.",
     categorySlugs: [

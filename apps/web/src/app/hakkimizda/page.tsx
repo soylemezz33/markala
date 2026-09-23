@@ -11,7 +11,7 @@ import { KARGO_SURESI, TOPLAM_SURE } from "@/lib/delivery";
 export const metadata: Metadata = {
   title: "Hakkımızda | Markala & 324 Ajans",
   description:
-    "Markala, 324 Ajans çatısı altında matbaa ve reklam ürünlerinde 10+ yıllık tecrübeyi e-ticaret modeline taşıyan butik markadır. Mersin merkezli, Türkiye geneli teslimat.",
+    "Markala, 324 Ajans çatısı altında matbaa ve reklam ürünlerindeki 10+ yıllık tecrübeyi e-ticarete taşıyan butik markadır. Mersin merkezli, 81 ile teslimat.",
   alternates: { canonical: "/hakkimizda" },
   openGraph: {
     title: "Markala Hakkında | 324 Ajans Çatısı",

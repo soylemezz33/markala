@@ -56,7 +56,7 @@ export async function generateMetadata({
   return {
     title: `Tüm Ürünler | 30+ Matbaa & Reklam Ürünü Kategorisi${suffix}`,
     description:
-      "Matbaa baskıdan büyük format reklam ürünlerine: tüm Markala kataloğu tek ekranda. Kartvizit, broşür, branda, tabela ve daha fazlası. Tasarım desteği her siparişte ücretsiz.",
+      "Matbaa baskıdan büyük format reklam ürünlerine: tüm Markala kataloğu tek ekranda. Kartvizit, broşür, branda, tabela ve dahası. Tasarım desteği ücretsiz.",
     alternates: { canonical },
     openGraph: {
       type: "website",

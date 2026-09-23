@@ -28,26 +28,11 @@ const DESC_MAX = 160;
 const SABLON_EKI = " · Markala";
 
 /**
- * Henüz düzeltilmemiş sayfalar (2026-08-31 itibarıyla). Buraya YENİ giriş EKLEME —
- * liste yalnız küçülmek için var; bir sayfanın metni kısaltıldığında buradan çıkarılır
- * ve ikinci test bunu zaten zorunlu kılar.
+ * Muaf tutulan sayfalar. 2026-09-23 itibarıyla BOŞ: çırçırdaki 14 sayfanın tamamı
+ * elden geçirildi ve borç kapandı. Buraya YENİ giriş EKLEME — liste yalnız küçülmek
+ * için var; boş kalması hedeftir.
  */
-const BILINEN_UZUN = new Set<string>([
-  "hakkimizda/page.tsx",
-  "kampanyalar/layout.tsx",
-  "kategoriler/layout.tsx",
-  "kurumsal/basvuru/layout.tsx",
-  "kurumsal/page.tsx",
-  "kvkk-basvuru/layout.tsx",
-  "matbaa/page.tsx",
-  "numune-talebi/layout.tsx",
-  "referanslar/layout.tsx",
-  "sozluk/page.tsx",
-  "teklif-al/layout.tsx",
-  "urunler/layout.tsx",
-  "yardim/page.tsx",
-  "yardim/sss/page.tsx",
-]);
+const BILINEN_UZUN = new Set<string>([]);
 
 function dosyalariTopla(dir: string, out: string[] = []): string[] {
   for (const ad of fs.readdirSync(dir)) {

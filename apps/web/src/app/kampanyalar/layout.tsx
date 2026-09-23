@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "İndirimli Paketler | Esnaf, Kurumsal, Açılış Paketleri",
+  title: "İndirimli Paketler | Esnaf ve Kurumsal",
   description:
     "Markala'nın indirimli hazır paketleri: esnaf başlangıç seti, kurumsal kimlik paketi, açılış paketi, etkinlik ve promosyon paketleri. Tek tek almaktan daha ucuz.",
   alternates: { canonical: "/kampanyalar" },

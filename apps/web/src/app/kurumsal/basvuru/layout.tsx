@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 // Sayfa "use client" olduğu için metadata page.tsx'te tanımlanamaz;
 // diğer public rotalarla tutarlı şekilde sibling layout'tan veriliyor.
 export const metadata: Metadata = {
-  title: "Kurumsal Hesap Başvurusu | Cari Hesap & Açık Fatura",
+  title: "Kurumsal Hesap Başvurusu | Açık Fatura",
   description:
-    "Markala kurumsal hesap başvuru formu. Vergi levhası ve imza sirküleri ile başvurun; cari hesap, 30 gün açık fatura ve firmanıza özel avantajlı fiyatlandırmadan yararlanın.",
+    "Kurumsal hesap başvuru formu. Vergi levhası ve imza sirküleriyle başvurun; cari hesap, 30 gün açık fatura ve firmanıza özel fiyattan yararlanın.",
   alternates: { canonical: "/kurumsal/basvuru" },
   openGraph: {
     type: "website",

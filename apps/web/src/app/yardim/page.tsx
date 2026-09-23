@@ -18,9 +18,9 @@ import { CATEGORY_ICONS } from "./_components";
  */
 
 export const metadata: Metadata = {
-  title: "Yardım Merkezi | Sipariş, Dosya Hazırlama, Kargo, İade",
+  title: "Yardım Merkezi | Sipariş, Dosya, Kargo, İade",
   description:
-    "Markala yardım merkezi: sipariş süreci, dosya hazırlama, üyelik, kampanyalar, ödeme ve fatura, kargo ve teslimat, iade, kurumsal hesap: tüm sorularınızın cevabı.",
+    "Markala yardım merkezi: sipariş süreci, dosya hazırlama, üyelik, kampanya, ödeme ve fatura, kargo, iade ve kurumsal hesap sorularının cevabı.",
   alternates: { canonical: "/yardim" },
   openGraph: {
     type: "website",

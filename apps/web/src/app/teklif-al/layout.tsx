@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Teklif Al | İşletmenize Özel Matbaa Teklifi",
   description:
-    "İşletmenize özel matbaa & reklam ürünleri teklifi alın. Sektörünüzü ve ihtiyacınızı belirtin, 24 saat içinde özel fiyat + ücretsiz tasarım önerisi hazırlayalım. Toplu işlerde indirim, kurumsal cari hesap.",
+    "İşletmenize özel matbaa ve reklam ürünleri teklifi alın. İhtiyacınızı yazın, 24 saat içinde özel fiyat ve ücretsiz tasarım önerisi hazırlayalım.",
   alternates: { canonical: "/teklif-al" },
   openGraph: {
     type: "website",

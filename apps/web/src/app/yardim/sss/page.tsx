@@ -53,7 +53,7 @@ async function sssGetir(): Promise<Faq[]> {
 }
 
 export const metadata: Metadata = {
-  title: "Sıkça Sorulan Sorular | Baskı, Kargo, Ödeme ve İade",
+  title: "Sıkça Sorulan Sorular | Baskı, Kargo, Ödeme",
   description:
     "Online matbaa hakkında merak edilenler: dosya formatı, üretim ve kargo süreleri, KDV dahil fiyatlar, ödeme güvenliği, kişiye özel üründe iade koşulları.",
   alternates: { canonical: "/yardim/sss" },
