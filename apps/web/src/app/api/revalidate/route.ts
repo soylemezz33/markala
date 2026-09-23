@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
+import { revalideEdilebilir } from "@/lib/revalidate-guard";
 
 export const runtime = "nodejs";
 
@@ -23,9 +24,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Katalog değişiklikleri tüm ürün-içeren sayfaları etkileyebilir → topluca tazele.
-  const staticPaths = body.paths?.length
+  const istenen = body.paths?.length
     ? body.paths
     : ["/", "/urunler", "/kategoriler", "/fiyat-listesi"];
+  const staticPaths = istenen.filter(revalideEdilebilir);
+  const atlanan = istenen.filter((p) => !revalideEdilebilir(p));
   for (const p of staticPaths) {
     try {
       revalidatePath(p);
@@ -41,5 +44,5 @@ export async function POST(req: NextRequest) {
     /* yoksay */
   }
 
-  return NextResponse.json({ ok: true, revalidated: staticPaths });
+  return NextResponse.json({ ok: true, revalidated: staticPaths, atlanan });
 }
