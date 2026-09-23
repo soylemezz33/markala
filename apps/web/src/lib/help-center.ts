@@ -392,7 +392,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
       {
         slug: "teslimat-suresi-ne-kadar",
         question: "Teslimat süresi ne kadar?",
-        description: `Üretim + kargo süresi: çoğu üründe toplam ${TOPLAM_SURE}.`,
+        description: `Çoğu üründe üretim ${URETIM_SURESI}, DHL kargo ${KARGO_SURESI}; toplam ${TOPLAM_SURE}. Büyük ebatlı ve özel üretim işlerde süre uzayabilir.`,
         shortAnswer:
           `Çoğu üründe üretim ${URETIM_SURESI} sürer; buna DHL kargo süresi (${KARGO_SURESI}) eklenir. Toplamda siparişiniz genellikle ${TOPLAM_SURE} içinde elinizde olur. Büyük ebatlı veya özel üretim işlerde süre daha uzun olabilir.`,
         keywords: ["teslimat süresi", "kaç günde gelir", "ne zaman gelir", "üretim süresi"],
