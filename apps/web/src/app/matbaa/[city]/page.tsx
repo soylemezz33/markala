@@ -10,6 +10,7 @@ import {
 import { cities, getCityBySlug, getNearbyCities } from "@/lib/cities";
 import { REGION_LABEL } from "@/lib/cities-generated";
 import { matbaaBaslik, matbaaTeslim, matbaaIlAciklama } from "@/lib/matbaa-meta";
+import { ilIndekslenir, NOINDEX } from "@/lib/seo-index";
 import { trLoc, trLocAdj, trDat, trAbl, trGen } from "@/lib/tr-suffix";
 import { getProducts } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
@@ -57,6 +58,8 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title,
     description,
+    // Şablonla üretilen iller indekse sunulmuyor — gerekçe lib/seo-index.ts.
+    ...(ilIndekslenir(city.curated) ? {} : { robots: NOINDEX }),
     alternates: { canonical: `/matbaa/${city.slug}` },
     openGraph: {
       type: "website",

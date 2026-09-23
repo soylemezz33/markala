@@ -12,6 +12,7 @@ import {
   Question,
 } from "@phosphor-icons/react/dist/ssr";
 import { PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
+import { urunIndekslenir, NOINDEX } from "@/lib/seo-index";
 import {
   getCategoryBySlug,
   getProductBySlug,
@@ -91,6 +92,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: seoTitle,
     description: clip(seoDesc, 160),
     keywords: product.seo?.keywords,
+    // Toptancı promosyon SKU'ları indekse sunulmuyor — gerekçe lib/seo-index.ts.
+    ...(urunIndekslenir(product.slug) ? {} : { robots: NOINDEX }),
     alternates: { canonical: url },
     openGraph: {
       type: "website",

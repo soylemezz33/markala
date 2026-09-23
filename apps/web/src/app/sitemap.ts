@@ -2,7 +2,8 @@ import type { MetadataRoute } from "next";
 import { getProducts, getCategories } from "@/lib/catalog";
 import { getBlogPosts, getBlogCategories } from "@/lib/blog";
 import { getLegalSlugs } from "@/lib/legal";
-import { cities, getAllDistrictParams } from "@/lib/cities";
+import { cities, getAllDistrictParams, getCityBySlug } from "@/lib/cities";
+import { ilIndekslenir, urunIndekslenir } from "@/lib/seo-index";
 import { services } from "@/lib/services";
 import { getHelpPaths } from "@/lib/help-center";
 import { PRODUCT_GROUPS } from "@/lib/product-groups";
@@ -86,12 +87,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // lastModified artık API'den gelen gerçek updatedAt (ISO). Yoksa alan atlanır —
   // bugünün tarihini sahte yazmak tüm kataloğu her gün güncelleniyor gibi gösterir
   // (crawl budget israfı). isoDate() geçersiz/eksik değeri undefined'a indirir.
-  const productEntries: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${SITE}/urun/${p.slug}`,
-    ...(p.updatedAt ? { lastModified: new Date(p.updatedAt) } : {}),
-    changeFrequency: "weekly",
-    priority: p.bestseller ? 0.85 : 0.7,
-  }));
+  // lib/seo-index.ts dışarıda bıraktığı ürünler sitemap'e de GİRMEZ — sayfa noindex
+  // verirken sitemap'in onu sunması karışık sinyaldir (gerekçe o dosyada).
+  const productEntries: MetadataRoute.Sitemap = products
+    .filter((p) => urunIndekslenir(p.slug))
+    .map((p) => ({
+      url: `${SITE}/urun/${p.slug}`,
+      ...(p.updatedAt ? { lastModified: new Date(p.updatedAt) } : {}),
+      changeFrequency: "weekly",
+      priority: p.bestseller ? 0.85 : 0.7,
+    }));
 
   // Ürün grubu hub'ları (2026-09-01): anasayfa kutularının yeni hedefi. lastModified YOK —
   // içerikleri kod tarafında sabit (intro metinleri), her üretimde tarih yazmak sahte
@@ -136,23 +141,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: h.priority,
   }));
 
-  // Şehir landing'leri — 81 il. Öncelik kademeli: Mersin (atölye) > elle
-  // yazılmış 6 komşu il > şablonla üretilen 74 il. Şablon sayfalar da
-  // indekslenmeli ama tarama bütçesinde öne geçmemeli.
-  const cityEntries: MetadataRoute.Sitemap = cities.map((c) => ({
-    url: `${SITE}/matbaa/${c.slug}`,
-    changeFrequency: c.curated ? "weekly" : "monthly",
-    priority: c.slug === "mersin" ? 0.95 : c.curated ? 0.85 : 0.6,
-  }));
+  // Şehir landing'leri — yalnız elle yazılmış (curated) iller sitemap'e girer;
+  // şablonla üretilen 74 il noindex (gerekçe lib/seo-index.ts). Öncelik: Mersin
+  // (atölye) > diğer curated iller.
+  const cityEntries: MetadataRoute.Sitemap = cities
+    .filter((c) => ilIndekslenir(c.curated))
+    .map((c) => ({
+      url: `${SITE}/matbaa/${c.slug}`,
+      changeFrequency: "weekly",
+      priority: c.slug === "mersin" ? 0.95 : 0.85,
+    }));
 
-  // İlçe landing'leri — sadece Mersin ilçeleri var şu an
-  const districtEntries: MetadataRoute.Sitemap = getAllDistrictParams().map(
-    ({ city, district }) => ({
+  // İlçe landing'leri — sadece Mersin ilçeleri var şu an; ilin indeks kararını izler.
+  const districtEntries: MetadataRoute.Sitemap = getAllDistrictParams()
+    .filter(({ city }) => ilIndekslenir(getCityBySlug(city)?.curated ?? false))
+    .map(({ city, district }) => ({
       url: `${SITE}/matbaa/${city}/${district}`,
       changeFrequency: "monthly",
       priority: 0.75,
-    }),
-  );
+    }));
 
   // Hizmet sayfaları
   const serviceEntries: MetadataRoute.Sitemap = services.map((s) => ({

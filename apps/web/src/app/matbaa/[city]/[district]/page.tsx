@@ -11,6 +11,7 @@ import {
 } from "@/lib/cities";
 import { getProducts } from "@/lib/catalog";
 import { matbaaBaslik, matbaaIlceAciklama } from "@/lib/matbaa-meta";
+import { ilIndekslenir, NOINDEX } from "@/lib/seo-index";
 import { ProductCard } from "@/components/product-card";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
@@ -53,6 +54,8 @@ export function generateMetadata({ params }: Props): Metadata {
   return {
     title,
     description,
+    // İlçe, bağlı olduğu ilin indeks kararını izler — gerekçe lib/seo-index.ts.
+    ...(ilIndekslenir(city.curated) ? {} : { robots: NOINDEX }),
     alternates: { canonical: `/matbaa/${city.slug}/${district.slug}` },
     openGraph: {
       type: "website",
