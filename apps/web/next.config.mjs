@@ -157,6 +157,25 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // İSG levha kataloğunda aynı levha iki kez kayıtlıydı (biri "…-levhasi" ekli
+      // slug’la). Mükerrer içerik hem Google sinyalini bölüyor hem müşteriyi
+      // ikiye ayırıyordu. Hiçbirinde sipariş yoktu; zayıf olan pasife alındı,
+      // URL’si kalanına 301 (2026-09-23, Hasan onaylı).
+      { source: "/urun/yerlere-sigara-ve-cop-atmayiniz", destination: "/urun/yerlere-sigara-ve-cop-atmayiniz-levhasi", permanent: true },
+      { source: "/urun/yasak-bolgelerde-sigara-icmeyiniz-icenleri-uyariniz", destination: "/urun/yasak-bolgelerde-sigara-icmeyiniz-icenleri-uyariniz-levhasi", permanent: true },
+      { source: "/urun/tehlike-sinirlanmis-alan-kesinlikle-sigara-icilmez", destination: "/urun/tehlike-sinirlanmis-alan-kesinlikle-sigara-icilmez-levhasi", permanent: true },
+      { source: "/urun/sigara-icmek-ve-acik-alev-yasaktir", destination: "/urun/sigara-icmek-ve-acik-alev-yasaktir-levhasi", permanent: true },
+      { source: "/urun/sigara-icilmez-tehlikeli-alan-levhasi", destination: "/urun/sigara-icilmez-tehlikeli-alan", permanent: true },
+      { source: "/urun/patlayici-gazlar-sigara-icilmez-acik-alev-yasaktir", destination: "/urun/patlayici-gazlar-sigara-icilmez-acik-alev-yasaktir-levhasi", permanent: true },
+      { source: "/urun/kibrit-cakmak-yakarak-gaz-kacagi-aramak-kesinlikle-yasaktir-levhasi-2", destination: "/urun/kibrit-cakmak-yakarak-gaz-kacagi-aramak-kesinlikle-yasaktir-levhasi", permanent: true },
+      { source: "/urun/dogalgaz-sigara-icilmez-acik-alev-yasaktir-levhasi", destination: "/urun/dogalgaz-sigara-icilmez-acik-alev-yasaktir", permanent: true },
+      { source: "/urun/dikkat-tehlikeli-alan-sigara-icilmez-acik-alev-ve-atesle", destination: "/urun/dikkat-tehlikeli-alan-sigara-icilmez-acik-alev-ve-atesle-yaklasma-levhasi", permanent: true },
+      { source: "/urun/benzin-vernik-tiner-boya-ile-calisirken-sigara-icme-levhasi", destination: "/urun/benzin-vernik-tiner-boya-ile-calisirken-sigara-icme", permanent: true },
+      // "Çıkış Sağ Aşağı Ok" adlı ürün cikis-SOL-… slug’ında duruyordu, gerçek
+      // "Sol" ürünü ise …-2 adresindeydi: sol ok arayan müşteri sağ ok sayfasına
+      // düşüyordu. Slug’lar doğru ürünlere verildi; artık boşta kalan …-2 adresi
+      // sol ürününün yeni adresine 301 (2026-09-23).
+      { source: "/urun/cikis-sol-asagi-ok-fotolumenli-dekota-12x295-cm-2", destination: "/urun/cikis-sol-asagi-ok-fotolumenli-dekota-12x295-cm", permanent: true },
       // Hiç yayımlanmamış blog slug'ı: adres HTTP 200 + "Yazı bulunamadı" döndürüyordu
       // (soft-404) ve Google'da indeksliydi. Aynı konunun yayımlanmış yazısına 301
       // (2026-09-22 CTR denetimi).
