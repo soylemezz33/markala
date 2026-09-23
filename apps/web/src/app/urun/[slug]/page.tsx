@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { PRODUCTION_TOLERANCE_NOTE } from "@markala/mock-data";
 import { urunIndekslenir, NOINDEX } from "@/lib/seo-index";
+import { metaKirp } from "@/lib/meta-kirp";
 import {
   getCategoryBySlug,
   getProductBySlug,
@@ -78,9 +79,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     product.seo?.description ??
     `${product.name} baskı ${product.displayPrice ? `${product.displayPrice} TL'den` : ""}. ${product.shortDescription}`;
   // SERP description'ı kelime ortasından kesmesin ("...koruyucu donan" gibi) — son tam
-  // kelimede bırak. OG/Twitter için de aynı kural (limitleri farklı).
-  const clip = (s: string, max: number) =>
-    s.length <= max ? s : s.slice(0, max).replace(/\s+\S*$/, "");
+  // kelimede bırak. Kural lib/meta-kirp.ts'te; kategori ve hizmet sayfaları da aynı
+  // yardımcıyı kullanıyor (2026-09-23: kategoride ham slice 35 sayfayı bölüyordu).
+  const clip = metaKirp;
   const url = `/urun/${product.slug}`;
   // og:image = GERÇEK ürün görseli (raster JPEG) varsa onu kullan; gerçek foto yoksa
   // (images[0] bir /api/mockup SVG fallback'i ise) markalı PNG. Sosyal crawler SVG'yi reddeder.

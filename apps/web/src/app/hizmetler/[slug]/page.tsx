@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { metaKirp } from "@/lib/meta-kirp";
 import { Container } from "@markala/ui";
 import {
   ArrowRight,
@@ -49,14 +50,14 @@ export function generateMetadata({ params }: Props): Metadata {
     openGraph: {
       type: "website",
       title: s.title,
-      description: s.intro.slice(0, 200),
+      description: metaKirp(s.intro, 200),
       url: `/hizmetler/${s.slug}`,
       images: [{ url: "/og-default.png", width: 1200, height: 630, alt: s.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: s.title,
-      description: s.intro.slice(0, 200),
+      description: metaKirp(s.intro, 200),
       images: ["/og-default.png"],
     },
   };

@@ -10,6 +10,7 @@ import { SeoSections } from "@/components/seo-sections";
 import { formatPriceDisplay } from "@/lib/format";
 import type { Metadata } from "next";
 import { kategoriyeGoreGrup } from "@/lib/product-groups";
+import { metaKirp } from "@/lib/meta-kirp";
 
 interface Props {
   params: { slug: string };
@@ -130,19 +131,19 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     cat.imageUrl && !cat.imageUrl.includes("/api/mockup") ? cat.imageUrl : "/og-default.png";
   return {
     title: seoTitle,
-    description: seoDesc.slice(0, 160),
+    description: metaKirp(seoDesc, 160),
     alternates: { canonical: url },
     openGraph: {
       type: "website",
       title: seoTitle,
-      description: seoDesc.slice(0, 200),
+      description: metaKirp(seoDesc, 200),
       url,
       images: [{ url: ogImage, width: 1200, height: 630, alt: cat.name }],
     },
     twitter: {
       card: "summary_large_image",
       title: seoTitle,
-      description: seoDesc.slice(0, 200),
+      description: metaKirp(seoDesc, 200),
       images: [ogImage],
     },
   };
