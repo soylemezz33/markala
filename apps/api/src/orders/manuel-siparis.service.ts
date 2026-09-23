@@ -205,6 +205,8 @@ export class ManuelSiparisService {
         vat: new Prisma.Decimal(vat),
         total: new Prisma.Decimal(total),
         marketingConsent: false,
+        // Fatura önden elle kesildiyse sistem ikinci kez kesmesin (2026-09-23).
+        invoiceSkip: dto.faturaKesilmesin === true,
         shippingAddressSnapshot: teslimatSnap as unknown as Prisma.InputJsonValue,
         billingAddressSnapshot: faturaSnap as unknown as Prisma.InputJsonValue,
         notes,
@@ -237,6 +239,7 @@ export class ManuelSiparisService {
           diff: {
             orderNumber: created.orderNumber, kanal: dto.kanal, odemeYontemi: dto.odemeYontemi, odemeAlindi: dto.odemeAlindi,
             tutar: String(created.total), kalem: kalemler.length, userId, epostaYok, role: actor.role ?? null,
+            faturaKesilmesin: dto.faturaKesilmesin === true,
           },
           ipAddress: actor.ipAddress ?? null,
         },

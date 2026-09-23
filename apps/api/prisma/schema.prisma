@@ -514,6 +514,11 @@ model Order {
   /// Son resmileştirme hatası (saatlik cron 5 denemeye kadar tekrar eder)
   invoiceError     String?   @map("invoice_error") @db.Text
   invoiceAttempts  Int       @default(0) @map("invoice_attempts")
+  /// FATURA KESİLMEYECEK (2026-09-23, Hasan): manuel siparişlerin çoğunda fatura ÖNDEN elle
+  /// kesiliyor; sipariş kargoya verilince sistem ikinci kez kesmemeli. true ise Paraşüt
+  /// taslağı hiç oluşturulmaz, dolayısıyla resmileştirme cron'u da bu siparişi hiç görmez.
+  /// Web siparişlerinde daima false — bayrak yalnız panelden işaretlenir.
+  invoiceSkip      Boolean   @default(false) @map("invoice_skip")
 
   // Bekleyen-ödeme kurtarma maili aşaması (LifecycleService saatlik cron).
   // 0 = hiç gönderilmedi, 1 = ilk hatırlatma (2-24 saat), 2 = son hatırlatma (24-72 saat).

@@ -181,3 +181,24 @@ export async function deleteOrderNote(
     return { ok: false, error: (e as { message?: string })?.message ?? "Not silinemedi" };
   }
 }
+
+/**
+ * "Fatura kesilmesin" bayrağını aç/kapat (2026-09-23, Hasan).
+ *
+ * Manuel siparişte kutu oluştururken işaretlenir; sonradan fark edilirse buradan düzeltilir.
+ * Taslak zaten oluşmuşsa API `taslakVar: true` döner — o durumda bayrak faturayı geri almaz,
+ * Paraşüt tarafından iptal gerekir. Bunu operatöre AYNEN söylüyoruz.
+ */
+export async function setFaturaKesilmesin(
+  orderId: string,
+  deger: boolean,
+): Promise<{ ok: true; taslakVar: boolean; invoiceNumber: string | null } | { ok: false; error: string }> {
+  try {
+    const api = await getAdminApi();
+    const r = await api.orders.faturaKesilmesinAyarla(orderId, deger);
+    revalidatePath(`/siparisler/${orderId}`);
+    return { ok: true, taslakVar: r.taslakVar, invoiceNumber: r.invoiceNumber };
+  } catch (e) {
+    return { ok: false, error: (e as { message?: string })?.message ?? "Ayar değiştirilemedi" };
+  }
+}

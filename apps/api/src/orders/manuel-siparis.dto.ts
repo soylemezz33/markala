@@ -118,6 +118,14 @@ export class ManuelSiparisDto {
 
   @IsOptional() @IsBoolean()
   musteriyeEposta?: boolean;
+
+  /**
+   * FATURA KESİLMESİN (2026-09-23, Hasan: "manuellerin birçoğunu önden fatura kesiyorum,
+   * tekrar kesinlikle fatura kesmemeli"). true → sipariş kargoya verilince Paraşüt taslağı
+   * HİÇ oluşturulmaz; taslak olmadığı için resmileştirme cronu da bu siparişi hiç görmez.
+   */
+  @IsOptional() @IsBoolean()
+  faturaKesilmesin?: boolean;
 }
 
 /** POST /orders/manuel/fiyatla — tek kalem için sunucu fiyatı (form canlı özet). */

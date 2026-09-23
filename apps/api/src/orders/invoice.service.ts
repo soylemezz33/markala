@@ -43,9 +43,13 @@ export class InvoiceService {
   async finalize(orderId: string): Promise<{ ok: boolean; invoiceNumber?: string; reason?: string }> {
     const o = await this.prisma.order.findUnique({
       where: { id: orderId },
-      select: { id: true, orderNumber: true, parasutInvoiceId: true, invoiceNumber: true, invoiceAttempts: true, invoiceMailedAt: true, invoicePdfKey: true },
+      select: { id: true, orderNumber: true, parasutInvoiceId: true, invoiceNumber: true, invoiceAttempts: true, invoiceMailedAt: true, invoicePdfKey: true, invoiceSkip: true },
     });
     if (!o) return { ok: false, reason: "sipariş yok" };
+    // İKİNCİ KALKAN (2026-09-23): taslak zaten oluşturulmadığı için buraya normalde hiç
+    // düşmez; bayrak sonradan işaretlenmiş ya da elle taslak açılmış olabilir diye burada da
+    // durdurulur. Mükerrer fatura geri alınamaz, iki kontrol bir kontrolden iyidir.
+    if (o.invoiceSkip) return { ok: false, reason: "fatura kesilmeyecek (elle kesilmiş)" };
     if (!o.parasutInvoiceId) return { ok: false, reason: "taslak yok" };
     if (o.invoiceNumber && o.invoiceMailedAt) return { ok: true, invoiceNumber: o.invoiceNumber };
     if (o.invoiceAttempts >= MAX_ATTEMPTS) return { ok: false, reason: "deneme sınırı" };
@@ -83,6 +87,7 @@ export class InvoiceService {
     const list = await this.prisma.order.findMany({
       where: {
         parasutInvoiceId: { not: null }, deletedAt: null, invoiceAttempts: { lt: MAX_ATTEMPTS },
+        invoiceSkip: false,
         OR: [{ invoiceNumber: null }, { invoiceMailedAt: null }],
         ...(opts.hepsi ? {} : { shippedAt: { gte: OTOMATIK_BASLANGIC } }),
       },

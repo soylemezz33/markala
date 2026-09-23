@@ -1487,9 +1487,16 @@ export class OrdersService {
     try {
       const o = await this.prisma.order.findUnique({
         where: { id: orderId },
-        select: { parasutInvoiceId: true },
+        select: { parasutInvoiceId: true, invoiceSkip: true, orderNumber: true },
       });
       if (!o || o.parasutInvoiceId) return; // zaten fatura var → çift kesme
+      // FATURA KESİLMEYECEK (2026-09-23, Hasan): manuel siparişlerin çoğunda fatura ÖNDEN elle
+      // kesiliyor. Taslağı hiç oluşturmuyoruz; böylece resmileştirme cron'u da (parasutInvoiceId
+      // dolu olanları tarar) bu siparişi hiç görmez — mükerrer fatura yapısal olarak imkânsız.
+      if (o.invoiceSkip) {
+        this.logger.log(`Fatura atlandı (elle kesilmiş işaretli): order=${o.orderNumber}`);
+        return;
+      }
 
       const res = await this.parasut.createInvoiceFromOrder(orderId);
       if (res.status === "issued" && res.invoiceId) {
@@ -1509,6 +1516,50 @@ export class OrdersService {
       this.logger.error(`issueInvoiceIfNeeded beklenmedik hata order=${orderId}: ${(e as Error).message}`);
     }
   }
+  /**
+   * "Fatura kesilmesin" bayrağını ayarlar (2026-09-23, Hasan).
+   *
+   * Manuel siparişte kutu oluştururken işaretlenir; sonradan fark edilirse buradan düzeltilir.
+   * TASLAK ZATEN OLUŞMUŞSA bayrak onu geri ALMAZ — Paraşüt tarafındaki belge buradan silinemez.
+   * O durumda `taslakVar: true` döner ki panel "fatura zaten kesilmiş, Paraşüt'ten iptal edin"
+   * diyebilsin; sessizce "tamam" demek operatöre yanlış güven verirdi.
+   */
+  async faturaKesilmesinAyarla(
+    orderId: string,
+    deger: boolean,
+    actor: { actorId?: string | null; ipAddress?: string | null },
+  ): Promise<{ ok: true; invoiceSkip: boolean; taslakVar: boolean; invoiceNumber: string | null }> {
+    const o = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, orderNumber: true, invoiceSkip: true, parasutInvoiceId: true, invoiceNumber: true },
+    });
+    if (!o) throw new NotFoundException("Sipariş bulunamadı.");
+
+    if (o.invoiceSkip !== deger) {
+      await this.prisma.order.update({ where: { id: orderId }, data: { invoiceSkip: deger } });
+      await this.prisma.auditLog
+        .create({
+          data: {
+            actorId: actor.actorId ?? null,
+            entityType: "Order",
+            entityId: orderId,
+            action: "fatura_kesilmesin",
+            diff: { orderNumber: o.orderNumber, from: o.invoiceSkip, to: deger, taslakVar: !!o.parasutInvoiceId },
+            ipAddress: actor.ipAddress ?? null,
+          },
+        })
+        .catch((e) => this.logger.error(`[audit] fatura_kesilmesin yazılamadı: ${(e as Error).message}`));
+      this.logger.log(`Fatura kesilmesin=${deger} order=${o.orderNumber}`);
+    }
+
+    return {
+      ok: true as const,
+      invoiceSkip: deger,
+      taslakVar: !!o.parasutInvoiceId,
+      invoiceNumber: o.invoiceNumber ?? null,
+    };
+  }
+
   /** Admin mail-önizleme köprüleri — müşteriye değil, verilen adrese gönderir (controller: mail-onizleme). */
   async mailOnizlemeSiparisAlindi(orderId: string, alici: string): Promise<boolean> {
     return this.mail.sendOrderConfirmationEmail(orderId, alici);

@@ -127,6 +127,9 @@ export function YeniSiparisClient() {
   const [kanal, setKanal] = useState<"yuz-yuze" | "telefon" | "whatsapp" | "diger">("yuz-yuze");
   const [not, setNot] = useState("");
   const [musteriyeEposta, setMusteriyeEposta] = useState(true);
+  // Manuel siparislerin cogunda fatura ONDEN elle kesiliyor (2026-09-23, Hasan): isaretliyse
+  // sistem kargoya verilince ikinci kez kesmez. Varsayilan KAPALI - web akisi degismesin.
+  const [faturaKesilmesin, setFaturaKesilmesin] = useState(false);
 
   useEffect(() => {
     if (secili || musteriArama.trim().length < 2) { setMusteriler([]); return; }
@@ -228,6 +231,7 @@ export function YeniSiparisClient() {
       odemeYontemi, odemeAlindi, kanal,
       not: not.trim() || undefined,
       musteriyeEposta: musteriyeEposta && !epostaYok,
+      faturaKesilmesin,
     };
     startTransition(async () => {
       const r = await manuelSiparisOlustur(govde);
@@ -394,6 +398,7 @@ export function YeniSiparisClient() {
             <div><label className={label}>İndirim (₺, KDV dahil)</label><input type="number" min={0} step="0.01" className={input} value={indirim} onChange={(e) => setIndirim(Number(e.target.value))} /></div>
             <div><label className={label}>Not (iç kullanım; sipariş notuna eklenir)</label><textarea rows={3} className={input} value={not} onChange={(e) => setNot(e.target.value)} placeholder="ör. ölçü müşteriyle teyit edildi, montaj yok" /></div>
             <label className="inline-flex items-center gap-1.5 text-sm"><input type="checkbox" checked={musteriyeEposta && !epostaYok} disabled={epostaYok} onChange={(e) => setMusteriyeEposta(e.target.checked)} /> Müşteriye sipariş e-postası gönder</label>
+            <label className="inline-flex items-start gap-1.5 text-sm"><input type="checkbox" className="mt-0.5" checked={faturaKesilmesin} onChange={(e) => setFaturaKesilmesin(e.target.checked)} /> <span>Fatura kesilmesin (önden elle kesildi)<br /><span className="text-[11px] text-ink-500">İşaretlerseniz sipariş kargoya verildiğinde sistem Paraşüt faturası oluşturmaz.</span></span></label>
           </Kart>
 
           <section className="bg-ink-900 text-paper-50 rounded-xl p-4 space-y-1.5 text-sm">

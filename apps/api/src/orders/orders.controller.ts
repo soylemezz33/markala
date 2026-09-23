@@ -32,7 +32,7 @@ import {
   MailOnizlemeDto,
   TrackOrderDto,
   UploadItemDesignDto,
-  CreateOrderNoteDto, DriveOturumDto, DriveTamamlaDto } from "./orders.dto";
+  CreateOrderNoteDto, DriveOturumDto, DriveTamamlaDto, FaturaKesilmesinDto } from "./orders.dto";
 import { paymentNonce } from "../payments/payment-nonce";
 import { OrderDesignService } from "./order-design.service";
 import { OrderDriveService } from "../storage/order-drive.service";
@@ -227,6 +227,28 @@ export class OrdersController {
   @ApiBearerAuth()
   faturaYeniden(@Param("id") id: string) {
     return this.invoice.finalize(id);
+  }
+
+  /**
+   * "Fatura kesilmesin" bayrağını aç/kapat (2026-09-23, Hasan).
+   *
+   * Manuel siparişte bu kutu oluştururken işaretlenir; sonradan fark edilirse buradan
+   * değiştirilir. Taslak ZATEN oluşmuşsa bayrak onu geri almaz — o durumda yanıt
+   * `taslakVar: true` döner ve faturanın Paraşüt tarafında iptali gerekir.
+   */
+  @Patch(":id/fatura-kesilmesin")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @ApiBearerAuth()
+  faturaKesilmesin(
+    @Param("id") id: string,
+    @Body() dto: FaturaKesilmesinDto,
+    @Req() req: Request & { user?: { sub?: string } },
+  ) {
+    return this.service.faturaKesilmesinAyarla(id, dto.deger, {
+      actorId: req.user?.sub ?? null,
+      ipAddress: req.ip ?? null,
+    });
   }
 
   @Get(":id")

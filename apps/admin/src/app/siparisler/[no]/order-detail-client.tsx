@@ -37,6 +37,7 @@ import {
   confirmHavalePayment,
   confirmManualPayment,
   deleteOrderDesign,
+  setFaturaKesilmesin,
   addOrderNote,
   deleteOrderNote,
 } from "./actions";
@@ -116,6 +117,8 @@ export interface OrderDetailProps {
   createdAt: string;
   status: string;
   paymentStatus?: string | null;
+  /** Fatura önden elle kesildi → sistem ikinci kez kesmez (2026-09-23). */
+  invoiceSkip?: boolean;
   paymentMethod?: string | null;
   paymentErrorCode?: string | null;
   paymentErrorMessage?: string | null;
@@ -358,6 +361,33 @@ export function OrderDetailClient({
   const canFullStatus = !perms || perms.includes("orders.status");
   // Satıra tasarım dosyası yükleme/silme (2026-09-02): tasarımcı + admin. Kargo/muhasebe
   // yalnız görür/indirir; API 403 döner ama butonu göstermek kullanıcıyı hataya sürükler.
+  // FATURA KESILMESIN (2026-09-23): manuel siparislerin cogunda fatura onden elle kesiliyor.
+  const [faturaKapali, setFaturaKapali] = useState(!!order.invoiceSkip);
+  const [faturaIsleniyor, setFaturaIsleniyor] = useState(false);
+  const faturaBayragiDegistir = async () => {
+    const yeni = !faturaKapali;
+    const ok = await confirm({
+      title: yeni ? "Bu siparis icin fatura kesilmeyecek" : "Fatura yeniden kesilecek",
+      description: order.orderNumber,
+      bullets: yeni
+        ? ["Siparis kargoya verildiginde sistem Parasut faturasi olusturmaz.", "Faturayi elle kestiyseniz bunu isaretleyin."]
+        : ["Siparis kargoya verildiginde sistem otomatik fatura kesecek."],
+      confirmLabel: yeni ? "Fatura kesilmesin" : "Fatura kesilsin",
+    });
+    if (!ok) return;
+    setFaturaIsleniyor(true);
+    const r = await setFaturaKesilmesin(order.id, yeni);
+    setFaturaIsleniyor(false);
+    if (!r.ok) { toast.error(r.error); return; }
+    setFaturaKapali(yeni);
+    if (yeni && r.taslakVar) {
+      toast.error(`Ayar kaydedildi ama bu siparise ZATEN fatura kesilmis${r.invoiceNumber ? " (" + r.invoiceNumber + ")" : ""}. Parasut tarafindan iptal etmeniz gerekir.`);
+    } else {
+      toast.success(yeni ? "Bu siparis icin fatura kesilmeyecek." : "Fatura otomatik kesilecek.");
+    }
+    router.refresh();
+  };
+
   const canDesign = !perms || perms.includes("orders.design");
   // Yükleme/silme sonrası sayfa RSC'den yeniden çekilsin (api.orders.detail) — optimistik
   // liste tutmak yerine kaynağa dönüyoruz; dosya listesi küçük, gecikme fark edilmez.
@@ -834,6 +864,18 @@ export function OrderDetailClient({
           {showMoney && (
             <button onClick={printInvoice} className="inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border border-paper-200 hover:bg-paper-100">
               <FileText size={14} /> Fatura Kes
+            </button>
+          )}
+          {/* Otomatik Parasut faturasini kapat/ac (2026-09-23). Manuel siparislerde fatura
+              cogu zaman onden elle kesiliyor; bu isaretliyken sistem ikinci kez kesmez. */}
+          {showMoney && (
+            <button
+              onClick={faturaBayragiDegistir}
+              disabled={faturaIsleniyor}
+              title={faturaKapali ? "Sistem bu siparise fatura kesmeyecek" : "Kargoya verilince sistem otomatik fatura kesecek"}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium border disabled:opacity-60 ${faturaKapali ? "border-warning/40 bg-warning/10 text-warning" : "border-paper-200 hover:bg-paper-100"}`}
+            >
+              <FileText size={14} /> {faturaKapali ? "Otomatik fatura KAPALI" : "Otomatik fatura açık"}
             </button>
           )}
         </div>

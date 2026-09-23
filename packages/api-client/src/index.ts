@@ -325,6 +325,14 @@ export class MarkalaApiClient {
     /** Panel: manuel sipariş kalemi için sunucu fiyatı (konfigüratör seçimleriyle). */
     manualPrice: (data: { productId: string; selections?: Record<string, string>; quantity: number }) =>
       this.request<{ unitPrice: number; lineTotal: number; costTotal: number | null; summary: string; selections: Record<string, string>; pricingMode: string; productName: string }>("POST", "/orders/manuel/fiyatla", data, { auth: true }),
+    /**
+     * "Fatura kesilmesin" bayragini ac/kapat (2026-09-23). Taslak zaten olustuysa yanit
+     * taslakVar:true doner - bayrak Parasut tarafindaki belgeyi geri ALMAZ.
+     */
+    faturaKesilmesinAyarla: (id: string, deger: boolean) =>
+      this.request<{ ok: true; invoiceSkip: boolean; taslakVar: boolean; invoiceNumber: string | null }>(
+        "PATCH", `/orders/${id}/fatura-kesilmesin`, { deger }, { auth: true },
+      ),
     createManual: (data: any) =>
       this.request<{ id: string; orderNumber: string; total: number; epostaYok: boolean }>("POST", "/orders/manuel", data, { auth: true }),
     // createGuest kaldırıldı — sipariş vermek için giriş zorunlu (misafir sipariş yolu yok).

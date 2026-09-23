@@ -469,3 +469,12 @@ export class CreateOrderNoteDto {
   @MaxLength(2000, { message: "Not en fazla 2000 karakter olabilir." })
   body!: string;
 }
+
+/**
+ * "Fatura kesilmesin" bayrağını aç/kapat (2026-09-23, Hasan: manuel siparişlerin çoğunda
+ * fatura önden elle kesiliyor, sistem ikinci kez kesmemeli).
+ */
+export class FaturaKesilmesinDto {
+  @IsBoolean()
+  deger!: boolean;
+}
