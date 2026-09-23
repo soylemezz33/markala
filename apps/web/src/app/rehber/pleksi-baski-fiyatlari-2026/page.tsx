@@ -24,9 +24,9 @@ const BASLIK = "Pleksi Baskı Fiyatları 2026: m² Hesabı ve Kalınlık Seçimi
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Pleksi Baskı Fiyatları 2026 | m² Fiyatı, 3 mm ve 5 mm Farkı",
+    title: "Pleksi Baskı Fiyatları 2026 — 3 mm ve 5 mm m²",
     description:
-      "2026 güncel pleksi (akrilik) UV baskı m² fiyatları: 3 mm mi 5 mm mi, beyaz/siyah/şeffaf hangi işe uygun, CNC kesim ne kadar tutar ve örnek ebat hesap tablosu. KDV dahil.",
+      "Pleksi (akrilik) UV baskı m² fiyatları: 3 mm mi 5 mm mi, beyaz, siyah ve şeffaf hangi işe uygun, CNC kesim ne kadar tutar.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",

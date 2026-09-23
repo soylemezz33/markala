@@ -23,9 +23,9 @@ const PAGE_PATH = "/rehber/branda-baski-m2-fiyati-2026";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Branda Baskı m² Fiyatı 2026 | 2×1 m Branda Ne Kadar? (KDV Dahil)",
+    title: "Branda Baskı m² Fiyatı 2026 — 2×1 m Ne Kadar?",
     description:
-      "2026 güncel branda afiş m² fiyatları: vinil ve mesh branda için m² hesabının mantığı, 2×1 / 3×2 m örnek hesap tablosu, kenar detayı ve montaj SSS'i. KDV dahil fiyatlar.",
+      "Branda baskı m² fiyatı ve örnek hesap: 280 gr ile 440 gr farkı, kuşgözü ve kolon dikişi, ölçüye göre anında fiyat.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",

@@ -26,7 +26,7 @@ const PRODUCT_SLUG = "afis-105gr";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Afiş Baskı Fiyatları 2026 | Ebat × Adet Tablosu (KDV Dahil)",
+    title: "Afiş Baskı Fiyatları 2026 — Ebat × Adet Tablosu",
     description:
       "2026 güncel afiş bastırma fiyatları: 34×49 ve 49×69 cm ebat, 250–1.000 adet tiraj tablosu. Kuşe kağıda renkli baskı, tüm fiyatlar KDV dahil, sepette değişmez.",
     alternates: { canonical: PAGE_PATH },

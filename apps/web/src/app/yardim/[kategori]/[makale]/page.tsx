@@ -34,7 +34,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category, article } = found;
   const url = `/yardim/${category.slug}/${article.slug}`;
   return {
-    title: `${article.question} - ${category.title}`,
+    // 2026-09-23: "- <Kategori>" eki başlığı 65 karakterin üstüne çıkarıyordu (14 makalede
+    // SERP'te kesiliyordu) ve hiçbir arama sorgusunda geçmiyor. Sorunun kendisi zaten sorgu.
+    title: article.question,
     description: article.description,
     alternates: { canonical: url },
     openGraph: {

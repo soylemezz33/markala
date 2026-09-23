@@ -22,7 +22,7 @@ const BASLIK = "Kanvas Tablo Baskı Fiyatları 2026: Ebat Seçimi ve Fotoğraf K
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Kanvas Tablo Baskı Fiyatları 2026 | m² Fiyatı ve Ebat Rehberi",
+    title: "Kanvas Tablo Baskı Fiyatları 2026 — Şasili Tuval",
     description:
       "Kanvas (tuval) tablo baskı fiyatları 2026: hangi ebat nereye uyar, fotoğrafın kaç piksel olmalı, solvent mi UV mi? Popüler ebat fiyat tablosu, KDV dahil.",
     alternates: { canonical: PAGE_PATH },

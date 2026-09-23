@@ -22,9 +22,9 @@ const BASLIK = "UV DTF Baskı Fiyatları 2026: Nedir, Nereye Yapışır, m² Ka�
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "UV DTF Baskı Fiyatları 2026 | Nedir ve m² Fiyatı Ne Kadar?",
+    title: "UV DTF Baskı Fiyatları 2026 — Transfer Sticker",
     description:
-      "UV DTF transfer sticker nedir, cam-metal-ahşap-plastik hangi yüzeye yapışır, folyodan farkı nedir? 2026 güncel m² fiyatları ve metraja göre kademeli fiyatlandırma. KDV dahil.",
+      "UV DTF transfer sticker baskı fiyatları: hangi yüzeye uygulanır, dayanıklılığı ne kadar, ölçüye göre m² hesabı ve teslim süresi.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",

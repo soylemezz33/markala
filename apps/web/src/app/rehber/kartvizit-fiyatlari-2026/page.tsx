@@ -25,7 +25,7 @@ const PAGE_PATH = "/rehber/kartvizit-fiyatlari-2026";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Kartvizit Fiyatları 2026 | 1.000 Adet Kartvizit Ne Kadar? (KDV Dahil)",
+    title: "Kartvizit Fiyatları 2026 — 1.000 Adet Ne Kadar?",
     description:
       "2026 güncel kartvizit fiyatları: selefonlu, laklı, yaldızlı ve sıvama paketlerin 1.000–10.000 adet tiraj tablosu. Tüm fiyatlar KDV dahil, sepette değişmez.",
     alternates: { canonical: PAGE_PATH },

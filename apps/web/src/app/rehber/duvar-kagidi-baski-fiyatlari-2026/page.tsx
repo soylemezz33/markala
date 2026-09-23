@@ -23,9 +23,9 @@ const BASLIK = "Duvar Kağıdı Baskı Fiyatları 2026: Ölçü Alma ve m² Hesa
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Duvar Kağıdı Baskı Fiyatları 2026 | Özel Ölçü m² Fiyatı",
+    title: "Duvar Kağıdı Baskı Fiyatları 2026 — m² Fiyatı",
     description:
-      "Özel tasarım duvar kağıdı baskı m² fiyatları 2026: duvar ölçüsü nasıl alınır, kaç m² çıkar, solvent mi UV mi, çözünürlük kaç olmalı? Örnek oda hesapları, KDV dahil.",
+      "Özel ölçü duvar kağıdı baskı m² fiyatı: solvent ve UV baskı farkı, duvar ölçüsü nasıl alınır, kaç m² çıkar, ek payı ne kadar.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",

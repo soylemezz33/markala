@@ -26,7 +26,7 @@ const PRODUCT_SLUG = "rollup-standart";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Roll-Up Fiyatları 2026 | 85x200 Banner Ne Kadar? (KDV Dahil)",
+    title: "Roll-Up Fiyatları 2026 — 85×200 cm Stand",
     description:
       "2026 güncel roll-up banner fiyatları: 85x200 cm standart ölçü, mekanizma + baskı ve adet kırılımıyla tablo. Tüm fiyatlar KDV dahil, sepette değişmez.",
     alternates: { canonical: PAGE_PATH },

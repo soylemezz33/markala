@@ -23,9 +23,9 @@ const BASLIK = "Folyo Baskı Fiyatları 2026: Çeşitleri, Baskes ve One Way Vis
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Folyo Baskı Fiyatları 2026 | Hangi Folyo, m² Kaç TL?",
+    title: "Folyo Baskı Fiyatları 2026 — m² Kaç TL?",
     description:
-      "2026 güncel folyo baskı m² fiyatları: normal, mat, şeffaf, arkası gri, kumlama, laminasyonlu, reflektif ve lümen folyo farkları. Baskes (kontür kesim) ve One Way Vision ne zaman kullanılır? KDV dahil.",
+      "Folyo baskı m² fiyatları: normal, mat, şeffaf, arkası gri, kumlama ve laminasyonlu. Hangisi nerede kullanılır, ölçüye göre anında fiyat.",
     alternates: { canonical: PAGE_PATH },
     openGraph: {
       type: "article",

@@ -58,10 +58,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = await getCategoryBySlug(product.categorySlug);
   // Layout zaten "%s · Markala" template'ine sahip, "| Markala" eklemeyelim.
   // Kategori adı yoksa "X —  Baskı" (çift boşluk) yerine sade "X Baskı" fallback'i.
-  // Title bütçesi: template " · Markala" +10 karakter ekler; SERP/Ahrefs ~70 sınırı için
-  // seoTitle ≤60 hedeflenir. İSG levhaları gibi cümle uzunluğunda adlarda önce kategori
-  // eki atılır, ad hâlâ uzunsa kelime sınırında kırpılır. H1 ve JSON-LD tam adı kullanır.
-  const TITLE_MAX = 60;
+  // Title bütçesi: template " · Markala" +10 karakter ekler. 2026-09-23 ÖLÇÜM: 60 hedefi
+  // toplamı 70 karaktere çıkarıyordu, Google ise ~65'ten sonrasını kesiyor — 1.222 ürünün
+  // 265'inde başlık SERP'te yarım görünüyordu. Bütçe 55'e indirildi: 55 + 10 = 65.
+  // İSG levhaları gibi cümle uzunluğunda adlarda önce kategori eki atılır, ad hâlâ uzunsa
+  // kelime sınırında kırpılır. H1 ve JSON-LD tam adı kullanır.
+  const TITLE_MAX = 55;
   const fullTitle =
     product.seo?.title?.replace(/\s*[|·]\s*Markala\s*$/i, "") ??
     (category?.name ? `${product.name} - ${category.name} Baskı` : `${product.name} Baskı`);
