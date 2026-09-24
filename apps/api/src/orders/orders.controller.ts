@@ -17,7 +17,7 @@ import {
   Res,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiTags, ApiBearerAuth, ApiConsumes } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth, ApiConsumes, ApiQuery } from "@nestjs/swagger";
 import { ConfigService } from "@nestjs/config";
 import { OrdersService } from "./orders.service";
 import { InvoiceService } from "./invoice.service";
@@ -138,8 +138,10 @@ export class OrdersController {
   @Roles("admin", "super_admin")
   @Perms(PERM.ORDERS_READ)
   @ApiBearerAuth()
+  @ApiQuery({ name: "list", required: false, description: "true → hafif liste yanıtı (sipariş kalemleri hariç)" })
   async listAll(
     @Query() query: ListOrdersQueryDto,
+    @Query("list") list: string | undefined,
     @Req() req: Request & { user?: { role?: string } },
   ) {
     return this.service.listAll({
@@ -147,6 +149,7 @@ export class OrdersController {
       take: query.take,
       skip: query.skip,
       role: req.user?.role,
+      list: list === "true",
     });
   }
 

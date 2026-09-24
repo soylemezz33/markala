@@ -347,7 +347,11 @@ export class MarkalaApiClient {
       if (!res.ok) throw new Error(res.status === 404 ? "Fatura henüz hazır değil." : `Fatura indirilemedi (${res.status})`);
       return res.blob();
     },
-    listAll: (opts: { status?: string; take?: number; skip?: number } = {}) =>
+    /**
+     * `list: true` → sipariş KALEMLERİ gelmez (hafif liste yanıtı). Kalemleri kullanan
+     * ekranlar (ör. /kargoda) bu bayrağı GEÇMEMELİ. Gerekçe: orders.service.listAll.
+     */
+    listAll: (opts: { status?: string; take?: number; skip?: number; list?: boolean } = {}) =>
       this.request<Order[]>("GET", "/orders", undefined, { auth: true, query: opts }),
     detail: (id: string) => this.request<Order>("GET", `/orders/${id}`, undefined, { auth: true }),
     updateStatus: (

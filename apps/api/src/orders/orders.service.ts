@@ -1110,7 +1110,17 @@ export class OrdersService {
     });
   }
 
-  async listAll(opts: { status?: string; take?: number; skip?: number; role?: string } = {}) {
+  /**
+   * `list: true` → HAFİF liste yanıtı: sipariş KALEMLERİ hiç yüklenmez.
+   *
+   * 2026-09-24 (Hasan: "siparişler sayfası çok geç açılıyor"): panel sipariş listesi
+   * 100 siparişi çekiyordu ve yanıt 493 KB'ydi; bunun ~400 KB'ı kalemlerdi (configuration
+   * JSON + designUploads). Oysa o ekran kalemleri HİÇ kullanmıyor — veri API'den panele,
+   * panelden RSC yüküyle tarayıcıya iki kez taşınıp atılıyordu. `/kargoda` kalemleri
+   * gerçekten kullandığı için varsayılan davranış değişmedi; hafif yanıt opt-in.
+   * (Aynı kalıp ürünlerde `GET /products?list=true` olarak zaten var.)
+   */
+  async listAll(opts: { status?: string; take?: number; skip?: number; role?: string; list?: boolean } = {}) {
     // Geçersiz/bilinmeyen status filtresi → filtre uygulanmaz (eskiden Prisma'da 500'e yol açıyordu).
     const status = slugToOrderStatus(opts.status);
     // designUploads (2026-09-03, "Kargodaki ürünler" ekranı): panel listesi kalem başına
@@ -1121,9 +1131,13 @@ export class OrdersService {
       // Soft-delete edilmiş sipariş panel listesinde de görünmez (bkz. listMine notu).
       where: status ? { status, deletedAt: null } : { deletedAt: null },
       include: {
-        items: panelRolu
-          ? { include: { designUploads: { orderBy: { createdAt: "asc" }, select: DESIGN_ROW_SELECT } } }
-          : true,
+        ...(opts.list
+          ? {}
+          : {
+              items: panelRolu
+                ? { include: { designUploads: { orderBy: { createdAt: "asc" }, select: DESIGN_ROW_SELECT } } }
+                : true,
+            }),
         user: { select: { email: true, fullName: true } },
         shippingAddress: true,
         billingAddress: true,
@@ -1136,7 +1150,8 @@ export class OrdersService {
     // Admin sipariş tablolarında e-posta yerine isim göstermek için.
     return orders.map((o) => {
       const nameOf = (a: unknown) => (a as { fullName?: string } | null)?.fullName || undefined;
-      const items = (o.items as Array<Record<string, unknown> & { designUploads?: unknown[] }>).map((it) => {
+      const hamKalemler = (o as { items?: Array<Record<string, unknown> & { designUploads?: unknown[] }> }).items;
+      const items = (hamKalemler ?? []).map((it) => {
         const { designUploads: ham, ...kalem } = it;
         const driveId = (kalem as { uploadedFileDriveId?: string | null }).uploadedFileDriveId;
         return panelRolu
@@ -1150,7 +1165,9 @@ export class OrdersService {
       return parasalAlanlariAyikla(
         {
           ...o,
-          items,
+          // list modunda kalem hiç yüklenmedi → alanı UYDURMA, yanıttan tamamen çıksın.
+          // Boş dizi dönmek "bu siparişin kalemi yok" gibi okunur, yanıltıcı olur.
+          ...(hamKalemler ? { items } : {}),
           customerName:
             o.user?.fullName ||
             nameOf(o.shippingAddress) ||

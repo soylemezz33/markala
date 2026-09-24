@@ -19,7 +19,9 @@ export interface OrderRow {
   paymentStatus?: string | null;
   paymentMethod?: string | null;
   paymentErrorMessage?: string | null;
-  items: unknown[];
+  // `items` BİLEREK YOK: bu ekran sipariş kalemlerini kullanmıyor ve sayfa onları
+  // `?list=true` ile hiç çekmiyor (yanıt 493 KB → ~90 KB). Kalem gerekirse önce
+  // page.tsx'teki list bayrağı kaldırılmalı, yoksa alan undefined gelir.
 }
 
 interface Props {
