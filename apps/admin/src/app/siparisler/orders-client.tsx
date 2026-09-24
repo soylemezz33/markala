@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { siparisListedeGorunur, IPTAL_DURUMU } from "./liste-gorunurluk-kurali";
 import { useServerPerms } from "@/components/perms-provider";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
@@ -123,16 +124,27 @@ export function OrdersClient({ orders }: Props) {
     return d >= from;
   };
 
-  const filtered = orders.filter((o) => {
+  const iptalMi = (o: OrderRow) => toSlug(o.status) === IPTAL_DURUMU;
+
+  // Durum dışındaki filtreler ayrı tutuluyor: "kaç iptal gizlendi" sayısını bunun
+  // üzerinden hesaplıyoruz, yoksa arama/tarih daraltması sayıyı yanlış gösterirdi.
+  const aramaVeTarih = orders.filter((o) => {
     const customer = o.customerName ?? o.email ?? "";
     const matchSearch =
       !search ||
       o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
       customer.toLowerCase().includes(search.toLowerCase()) ||
       (o.email ?? "").toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || toSlug(o.status) === statusFilter;
-    return matchSearch && matchStatus && inRange(o.createdAt);
+    return matchSearch && inRange(o.createdAt);
   });
+
+  // 2026-09-24 (Hasan): "iptaller çok yer kaplıyor, özellikle seçmedikçe görünmesin".
+  // "Tümü" görünümü artık iptalleri GİZLİYOR; görmek için "İptal" filtresi seçilir.
+  // Gizlenenler yok sayılmıyor, başlıkta "N iptal gizli" olarak duruyor.
+  const filtered = aramaVeTarih.filter((o) =>
+    siparisListedeGorunur(toSlug(o.status), statusFilter),
+  );
+  const gizlenenIptal = statusFilter === "all" ? aramaVeTarih.filter(iptalMi).length : 0;
 
   const sorted = [...filtered].sort((a, b) => {
     switch (sortBy) {
@@ -147,7 +159,6 @@ export function OrdersClient({ orders }: Props) {
   });
 
   const totalAmount = filtered.reduce((acc, o) => acc + Number(o.total), 0);
-  const iptalMi = (o: OrderRow) => toSlug(o.status) === "iptal-edildi";
   const odenmis = filtered.filter((o) => !iptalMi(o) && o.paymentStatus === "basarili");
   const odenmisToplam = odenmis.reduce((acc, o) => acc + Number(o.total), 0);
   const iptalSayisi = filtered.filter(iptalMi).length;
@@ -194,9 +205,13 @@ export function OrdersClient({ orders }: Props) {
           <p className="text-ink-500 text-sm mt-1">
             {filtered.length} sipariş · Ödenmiş {odenmis.length}
             {showMoney && <> · <strong className="text-ink-900">₺ {odenmisToplam.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></>}
-            {(iptalSayisi > 0 || odemeBekleyen > 0) && (
+            {(iptalSayisi > 0 || odemeBekleyen > 0 || gizlenenIptal > 0) && (
               <span className="text-ink-400"> (
-                {[iptalSayisi > 0 ? `iptal ${iptalSayisi}` : null, odemeBekleyen > 0 ? `ödeme bekleyen ${odemeBekleyen}` : null].filter(Boolean).join(", ")}
+                {[
+                  gizlenenIptal > 0 ? `${gizlenenIptal} iptal gizli` : null,
+                  iptalSayisi > 0 ? `iptal ${iptalSayisi}` : null,
+                  odemeBekleyen > 0 ? `ödeme bekleyen ${odemeBekleyen}` : null,
+                ].filter(Boolean).join(", ")}
                 {showMoney && totalAmount !== odenmisToplam ? ` · listelenen tutar ₺ ${totalAmount.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}` : ""})
               </span>
             )}
@@ -281,8 +296,10 @@ export function OrdersClient({ orders }: Props) {
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
+        {/* "Tümü" artık iptalleri kapsamıyor — sayı da onu yansıtmalı, yoksa
+            listede görünenden fazla sipariş varmış gibi durur. */}
         <StatusChip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>
-          Tümü ({orders.length})
+          Tümü ({orders.filter((o) => !iptalMi(o)).length})
         </StatusChip>
         {Object.entries(STATUS_LABELS).map(([k, v]) => {
           const count = orders.filter((o) => toSlug(o.status) === k).length;
@@ -315,9 +332,11 @@ export function OrdersClient({ orders }: Props) {
                     <Package size={32} className="mx-auto mb-3 text-ink-300" />
                     <p className="text-sm font-medium">Henüz sipariş bulunmuyor</p>
                     <p className="text-xs mt-1 text-ink-400">
-                      {search || statusFilter !== "all"
-                        ? "Arama / filtre kriterlerine uyan sipariş yok."
-                        : "Web sitesinden ilk sipariş geldiğinde burada görünür."}
+                      {gizlenenIptal > 0
+                        ? `Bu kriterlere uyan ${gizlenenIptal} sipariş var ama hepsi iptal edilmiş. Görmek için "İptal" filtresini seçin.`
+                        : search || statusFilter !== "all"
+                          ? "Arama / filtre kriterlerine uyan sipariş yok."
+                          : "Web sitesinden ilk sipariş geldiğinde burada görünür."}
                     </p>
                   </td>
                 </tr>
