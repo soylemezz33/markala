@@ -1120,24 +1120,26 @@ export class OrdersService {
    * gerçekten kullandığı için varsayılan davranış değişmedi; hafif yanıt opt-in.
    * (Aynı kalıp ürünlerde `GET /products?list=true` olarak zaten var.)
    */
-  async listAll(opts: { status?: string; take?: number; skip?: number; role?: string; list?: boolean } = {}) {
+  async listAll(
+    opts: { status?: string; take?: number; skip?: number; role?: string; list?: boolean } = {},
+  ): Promise<Record<string, unknown>[]> {
     // Geçersiz/bilinmeyen status filtresi → filtre uygulanmaz (eskiden Prisma'da 500'e yol açıyordu).
     const status = slugToOrderStatus(opts.status);
     // designUploads (2026-09-03, "Kargodaki ürünler" ekranı): panel listesi kalem başına
     // tasarımcı önizlemesini göstersin diye satırlar listeye de eklendi — findById ile aynı
     // kural: müşteri rolünde ASLA (çalışma dosyaları vitrine sızmaz), panelde her rolde.
     const panelRolu = !!opts.role && opts.role !== "customer";
+    // Soft-delete edilmiş sipariş panel listesinde de görünmez (bkz. listMine notu).
+    const kosul = status ? { status, deletedAt: null } : { deletedAt: null };
+
+    if (opts.list) return this.listAllHafif(kosul, opts);
+
     const orders = await this.prisma.order.findMany({
-      // Soft-delete edilmiş sipariş panel listesinde de görünmez (bkz. listMine notu).
-      where: status ? { status, deletedAt: null } : { deletedAt: null },
+      where: kosul,
       include: {
-        ...(opts.list
-          ? {}
-          : {
-              items: panelRolu
-                ? { include: { designUploads: { orderBy: { createdAt: "asc" }, select: DESIGN_ROW_SELECT } } }
-                : true,
-            }),
+        items: panelRolu
+          ? { include: { designUploads: { orderBy: { createdAt: "asc" }, select: DESIGN_ROW_SELECT } } }
+          : true,
         user: { select: { email: true, fullName: true } },
         shippingAddress: true,
         billingAddress: true,
@@ -1150,8 +1152,7 @@ export class OrdersService {
     // Admin sipariş tablolarında e-posta yerine isim göstermek için.
     return orders.map((o) => {
       const nameOf = (a: unknown) => (a as { fullName?: string } | null)?.fullName || undefined;
-      const hamKalemler = (o as { items?: Array<Record<string, unknown> & { designUploads?: unknown[] }> }).items;
-      const items = (hamKalemler ?? []).map((it) => {
+      const items = (o.items as Array<Record<string, unknown> & { designUploads?: unknown[] }>).map((it) => {
         const { designUploads: ham, ...kalem } = it;
         const driveId = (kalem as { uploadedFileDriveId?: string | null }).uploadedFileDriveId;
         return panelRolu
@@ -1165,15 +1166,71 @@ export class OrdersService {
       return parasalAlanlariAyikla(
         {
           ...o,
-          // list modunda kalem hiç yüklenmedi → alanı UYDURMA, yanıttan tamamen çıksın.
-          // Boş dizi dönmek "bu siparişin kalemi yok" gibi okunur, yanıltıcı olur.
-          ...(hamKalemler ? { items } : {}),
+          items,
           customerName:
             o.user?.fullName ||
             nameOf(o.shippingAddress) ||
             nameOf(o.billingAddress) ||
             nameOf(o.shippingAddressSnapshot) ||
             nameOf(o.billingAddressSnapshot) ||
+            null,
+        },
+        opts.role,
+      );
+    });
+  }
+
+  /**
+   * Panel sipariş listesi için DAR projeksiyon — yalnız tabloda görünen alanlar.
+   *
+   * 2026-09-24 ölçümü: 100 siparişlik tam yanıt 493 KB'di ve listenin kullandığı alanlar
+   * bunun ~15 KB'ıydı. Kalanı adres snapshot'ları, clientUserAgent, clientIp, gclid/fbp,
+   * iyzicoCheckoutToken ve reviewToken gibi ekranda hiç gösterilmeyen verilerdi; hepsi
+   * API'den panele, panelden RSC yüküyle tarayıcıya taşınıyordu. Boyutun yanında bu
+   * alanların (özellikle jetonların ve IP'nin) listede dolaşmasının da gereği yok.
+   *
+   * Snapshot'lar SORGUDA var çünkü misafir/manuel siparişte müşteri adının tek kaynağı
+   * onlar; ad türetildikten sonra yanıttan çıkarılıyorlar.
+   */
+  private async listAllHafif(
+    where: Record<string, unknown>,
+    opts: { take?: number; skip?: number; role?: string },
+  ) {
+    const rows = await this.prisma.order.findMany({
+      where: where as never,
+      select: {
+        id: true,
+        orderNumber: true,
+        email: true,
+        createdAt: true,
+        total: true,
+        status: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        paymentErrorMessage: true,
+        user: { select: { fullName: true } },
+        shippingAddress: { select: { fullName: true } },
+        billingAddress: { select: { fullName: true } },
+        shippingAddressSnapshot: true,
+        billingAddressSnapshot: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: opts.take ?? 50,
+      skip: opts.skip ?? 0,
+    });
+
+    const nameOf = (a: unknown) => (a as { fullName?: string } | null)?.fullName || undefined;
+    return rows.map((r) => {
+      const { user, shippingAddress, billingAddress, shippingAddressSnapshot, billingAddressSnapshot, ...temel } = r;
+      return parasalAlanlariAyikla(
+        {
+          ...temel,
+          customerName:
+            user?.fullName ||
+            nameOf(shippingAddress) ||
+            nameOf(billingAddress) ||
+            nameOf(shippingAddressSnapshot) ||
+            nameOf(billingAddressSnapshot) ||
             null,
         },
         opts.role,
