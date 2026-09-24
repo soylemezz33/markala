@@ -68,6 +68,14 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
   /** Ciro tutarını seçili görünüme çevirir. Yalnız ciro için kullanılır. */
   const c = (n: number) => (kdvDahil ? round2(n * KDV_ORANI) : n);
   const ciroEtiketi = kdvDahil ? "Ciro (KDV dahil, kargo hariç)" : "Net ciro (KDV ve kargo hariç)";
+  /**
+   * 2026-09-24 (Hasan: "KDV çıkarılmamış sayıyı DA görmek istiyorum"): düğme iki tabandan
+   * birini gösteriyordu, ikisini yan yana görmek için her seferinde geçiş yapmak gerekiyordu.
+   * Artık ciro kartı seçili tabanı büyük, diğerini altında küçük yazıyor.
+   */
+  const ciroKarsit = kdvDahil
+    ? `KDV hariç ${TL(toplam.ciro)}`
+    : `KDV dahil ${TL(round2(toplam.ciro * KDV_ORANI))}`;
 
   const enIyi = urunler.filter((u) => u.kar !== null).slice(0, 8);
   const maliyetsiz = urunler.filter((u) => u.kar === null);
@@ -141,7 +149,13 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
 
       {/* KPI şeridi */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <Kpi label={ciroEtiketi} value={TL(c(toplam.ciro))} icon={<TrendUp size={18} />} tone="text-brand-700" />
+        <Kpi
+          label={ciroEtiketi}
+          value={TL(c(toplam.ciro))}
+          sub={ciroKarsit}
+          icon={<TrendUp size={18} />}
+          tone="text-brand-700"
+        />
         <Kpi label="Maliyet" value={TL(toplam.maliyet)} icon={<Coins size={18} />} tone="text-ink-700" />
         <Kpi label="Kâr" value={TL(toplam.kar)} icon={<ChartPieSlice size={18} />} tone="text-success" big />
         <Kpi
@@ -343,12 +357,15 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
 function Kpi({
   label,
   value,
+  sub,
   icon,
   tone,
   big,
 }: {
   label: string;
   value: string;
+  /** Ana rakamın altındaki ikinci satır — ör. ciro kartında diğer KDV tabanı. */
+  sub?: string;
   icon: React.ReactNode;
   tone: string;
   big?: boolean;
@@ -366,6 +383,7 @@ function Kpi({
       <p className={`mt-1.5 tabular-nums font-semibold text-ink-900 ${big ? "text-2xl" : "text-xl"}`}>
         {value}
       </p>
+      {sub && <p className="mt-0.5 tabular-nums text-xs text-ink-500">{sub}</p>}
     </div>
   );
 }
