@@ -120,6 +120,19 @@ services:
       # ve .env.production'daki degerleri geri koymak yeter.
       # n8n -> Markala geri-cagri paylasimli gizli anahtari (POST /internal/cart-reminder).
       INTERNAL_WEBHOOK_SECRET: ${INTERNAL_WEBHOOK_SECRET:-}
+      # Chatwoot Panel Uygulamasi (2026-09-26): ajan ekraninda musteri + son siparisler (SALT OKUNUR).
+      # CHATWOOT_PANEL_KEY bos ise lookup 401 doner -> ozellik kapali (fail-closed).
+      CHATWOOT_PANEL_KEY: ${CHATWOOT_PANEL_KEY:-}
+      CHATWOOT_ORIGIN: ${CHATWOOT_ORIGIN:-https://chat.324ajans.com}
+      CHATWOOT_MARKALA_INBOXES: ${CHATWOOT_MARKALA_INBOXES:-5}
+      # "Panelde ac" baglanti sablonlari. Degerler .env.production'da (bkz. .env.production.example):
+      #   .../siparisler/{id} · .../musteriler/{id} · .../musteriler?q={q}
+      # Compose interpolasyonunda ${VAR:-default} varsayilani ilk } ile biter — bu yuzden
+      # susleme parantezli URL'ler BURAYA varsayilan olarak YAZILAMAZ, .env'den gelir.
+      # Bos kalirsa panelde yalnizca "Panelde ac/ara" dugmeleri cikmaz; gerisi calisir.
+      CHATWOOT_PANEL_ORDER_URL: ${CHATWOOT_PANEL_ORDER_URL:-}
+      CHATWOOT_PANEL_CUSTOMER_URL: ${CHATWOOT_PANEL_CUSTOMER_URL:-}
+      CHATWOOT_PANEL_SEARCH_URL: ${CHATWOOT_PANEL_SEARCH_URL:-}
       TZ: Europe/Istanbul
     networks:
       - markala

@@ -171,6 +171,14 @@ export function OrdersClient({ orders }: Props) {
     setPage(1);
   }, [statusFilter, search, sortBy, dateRange, customFrom, customTo]);
 
+  // ?q=… ile gelen arama terimi (Chatwoot panel uygulamasındaki "Panelde ara" bağlantısı
+  // telefon/sipariş no'yu böyle taşır). Mount sonrası okunur: useState başlangıcında
+  // okunsaydı SSR "" ile üretip istemci dolu basar ve hydration uyuşmazlığı çıkardı.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setSearch(q);
+  }, []);
+
   const { pageItems, pageCount, safePage } = paginate(sorted, page, PAGE_SIZE);
 
   function downloadCsv() {

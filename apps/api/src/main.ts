@@ -121,6 +121,12 @@ async function bootstrap() {
   app.use(
     rateLimit({ windowMs: 60_000, max: 20, path: "/users/me/favorites/merge", method: "POST" }),
   );
+  // Chatwoot panel uygulaması (iframe + telefon→müşteri sorgusu). Paylaşılan anahtarla korunuyor;
+  // bu limit anahtar sızarsa telefon numarası taramasıyla müşteri listesi dökülmesini yavaşlatır.
+  // Ajan başına meşru kullanım konuşma başına 1-2 istek → 60/dk fazlasıyla geniş.
+  app.use(
+    rateLimit({ windowMs: 60_000, max: 60, path: "/chatwoot-panel", method: "GET", prefix: true }),
+  );
   // Admin mutation endpoint'leri — JWT+RolesGuard korumalı; per-IP ek savunma (ele geçirilmiş JWT senyaroya karşı).
   // Limitler gerçek admin kullanımına göre GENİŞ — sıkıştırılmış JWT istismarını sınırlar ama
   // meşru yoğun admin kullanımını (örn. ürün-ürün toplu fiyatlama) engellemez.

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>markala · müşteri</title>
+<style>
+:root{--bg:#fff;--fg:#1f2937;--muted:#6b7280;--line:#e5e7eb;--card:#f9fafb;--accent:#1f6feb;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--chip:#eef2ff;--chipfg:#3730a3}
+@media (prefers-color-scheme:dark){:root{--bg:#151718;--fg:#e5e7eb;--muted:#9ca3af;--line:#2d3135;--card:#1c1f21;--accent:#6ea8fe;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--chip:#26292d;--chipfg:#c7d2fe}}
+*{box-sizing:border-box}
+body{margin:0;padding:10px;font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.card{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:10px;margin-bottom:8px;word-break:break-word}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.muted{color:var(--muted)}.small{font-size:12px}
+h1{font-size:14px;margin:0}
+.chip{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;background:var(--chip);color:var(--chipfg);margin:0 4px 2px 0;white-space:nowrap}
+.chip.ok{background:rgba(21,128,61,.14);color:var(--ok)}.chip.warn{background:rgba(180,83,9,.14);color:var(--warn)}.chip.bad{background:rgba(185,28,28,.14);color:var(--bad)}
+.btn{font:inherit;font-size:11px;padding:2px 7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent);text-decoration:none}
+ul{margin:4px 0;padding-left:16px}li{margin:1px 0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;margin-top:6px}.kv b{font-weight:600}
+.next{margin-top:6px;padding:5px 8px;border-left:3px solid var(--accent);background:var(--bg);border-radius:4px}
+.state{padding:16px 8px;text-align:center;color:var(--muted)}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+code{font-size:11px}
+</style>
+</head>
+<body>
+<div class="topbar small muted"><span id="ts"></span><button class="btn" id="refresh">Yenile</button></div>
+<div id="app"><div class="state">Chatwoot bekleniyor…</div></div>
+<script>
+const CFG = __CONFIG__;
+const qs = new URLSearchParams(location.search);
+const KEY = qs.get('k') || '';
+const app = document.getElementById('app');
+let lastPhone = null;
+
+const STATUS = {
+  siparis_alindi: ['Sipariş alındı', ''],
+  tasarim_bekleniyor: ['Tasarım bekleniyor', 'warn'],
+  tasarim_onayindi: ['Tasarım onayında', 'warn'],
+  tasarim_onaylandi: ['Tasarım onaylandı', 'ok'],
+  uretimde: ['Üretimde', ''],
+  kargoya_verildi: ['Kargoda', ''],
+  teslim_edildi: ['Teslim edildi', 'ok'],
+  iptal_edildi: ['İptal', 'bad'],
+};
+const PAY = { beklemede: ['Ödeme bekleniyor', 'warn'], basarili: ['Ödendi', 'ok'], basarisiz: ['Ödeme başarısız', 'bad'], iade_edildi: ['İade edildi', 'bad'] };
+const METHOD = { iyzico: 'Kart', cari: 'Cari', havale: 'Havale' };
+const KIND = { onizleme: 'Prova', baski: 'Baskı dosyası', calisma: 'Çalışma', musteri: 'Müşteri dosyası' };
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = (n) => (n == null ? '' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(n));
+const day = (s) => (s ? new Date(s).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '');
+const dayY = (s) => (s ? new Date(s).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
+const tpl = (t, id, q) => (t ? t.replace('{id}', encodeURIComponent(id || '')).replace('{q}', encodeURIComponent(q || '')) : '');
+const chip = (map, key) => { const v = map[key] || [key, '']; return `<span class="chip ${v[1]}">${esc(v[0])}</span>`; };
+const link = (href, label) => (href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(label)}</a>` : esc(label));
+const copyBtn = (text) => (text ? `<button class="btn" data-copy="${esc(text)}">kopyala</button>` : '');
+const openBtn = (href) => (href ? `<a class="btn" href="${esc(href)}" target="_blank" rel="noopener">Panelde aç</a>` : '');
+
+function show(html) { app.innerHTML = html; }
+function state(msg) { show(`<div class="state">${msg}</div>`); }
+
+/** Ajanın bir bakışta yapması gerekeni söyler; sipariş + ödeme durumundan türetilir. */
+function nextStep(o) {
+  const items = o.items || [];
+  if (o.status === 'iptal_edildi') return null;
+  if (o.paymentStatus === 'basarisiz') return 'Ödeme başarısız' + (o.paymentError ? ': ' + esc(o.paymentError) : '') + ' — yeniden ödeme / havale önerin';
+  if (o.paymentStatus === 'beklemede' && o.paymentMethod === 'havale') return 'Havale bekleniyor — dekont isteyin';
+  if (o.paymentStatus === 'beklemede' && o.paymentMethod !== 'cari') return 'Ödeme tamamlanmamış — müşteri ödemeyi bitirmeli';
+  switch (o.status) {
+    case 'siparis_alindi': return 'Sipariş alındı — tasarım/dosya adımına geçecek';
+    case 'tasarim_bekleniyor':
+      if (items.some((i) => i.needsDesignSupport)) return 'Tasarımcı çalışıyor — prova çıkınca onaya gidecek';
+      if (items.some((i) => !i.uploadedFileUrl)) return 'Müşteriden baskı dosyası bekleniyor (a-dosya)';
+      return 'Dosya geldi — tasarımcı kontrolünde';
+    case 'tasarim_onayindi': return 'Prova müşteri onayında — onay/revize isteyin';
+    case 'tasarim_onaylandi': return 'Onaylandı — üretime alınacak';
+    case 'uretimde': return 'Üretimde — kargoya verilince takip no gelir';
+    case 'kargoya_verildi': return 'Kargoda — takip linkini paylaşın';
+    case 'teslim_edildi': return 'Teslim edildi';
+  }
+  return null;
+}
+
+function renderOrder(o) {
+  const s = o.ship || {}, inv = o.invoice || {};
+  const proofs = (o.proofs || []).map((p) =>
+    `<div class="small">${esc(KIND[p.kind] || p.kind)}: ${link(p.fileUrl, p.fileName)} <span class="muted">${day(p.createdAt)}</span> ${copyBtn(p.fileUrl)}</div>`).join('');
+  const files = (o.items || []).filter((i) => i.uploadedFileUrl).map((i) =>
+    `<div class="small">Müşteri dosyası: ${link(i.uploadedFileUrl, i.uploadedFileName || 'dosya')} <span class="muted">(${esc(i.productName)})</span></div>`).join('');
+  const notes = (o.internalNotes || []).map((n) =>
+    `<div class="small muted">İç not · ${esc(n.authorName)} ${day(n.createdAt)}: ${esc(n.body)}</div>`).join('');
+  const nx = nextStep(o);
+  const panelUrl = tpl(CFG.panel.order, o.id);
+  return `<div class="card">
+    <div class="row"><b>${esc(o.orderNumber)}</b><span class="muted small">${dayY(o.createdAt)}</span></div>
+    <div class="row"><div>${chip(STATUS, o.status)}${chip(PAY, o.paymentStatus)}${o.paymentMethod ? `<span class="chip">${esc(METHOD[o.paymentMethod] || o.paymentMethod)}</span>` : ''}${o.isGuest ? '<span class="chip">misafir</span>' : ''}</div><b>${money(o.total)}</b></div>
+    <ul>${(o.items || []).map((i) => `<li>${esc(i.productName)} ×${i.quantity}${i.configurationSummary ? ` <span class="muted">— ${esc(i.configurationSummary)}</span>` : ''}</li>`).join('')}</ul>
+    ${s.trackingNumber ? `<div class="small">Kargo: ${esc(s.carrier || '')} ${link(s.trackingUrl, s.trackingNumber)} ${copyBtn(s.trackingUrl || s.trackingNumber)} <span class="muted">${s.shippedAt ? 'çıkış ' + day(s.shippedAt) : ''}${s.deliveredAt ? ' · teslim ' + day(s.deliveredAt) : ''}</span></div>` : ''}
+    ${s.city ? `<div class="small muted">Teslimat: ${esc(s.district || '')}/${esc(s.city)}</div>` : ''}
+    ${proofs}${files}
+    ${inv.number ? `<div class="small">Fatura: ${esc(inv.number)} <span class="muted">${day(inv.issuedAt)}</span></div>` : ''}
+    ${o.customerNote ? `<div class="small">Müşteri notu: <i>${esc(o.customerNote)}</i></div>` : ''}
+    ${notes}
+    ${nx ? `<div class="next small">→ ${nx}</div>` : ''}
+    <div class="row" style="margin-top:6px"><span></span><span>${copyBtn(o.orderNumber)} ${openBtn(panelUrl)}</span></div>
+  </div>`;
+}
+
+function renderCustomer(c) {
+  const corp = c.corporateStatus === 'approved';
+  const type = corp ? `<span class="chip ok">Kurumsal</span>${esc(c.companyName || '')}`
+    : c.corporateStatus === 'pending' ? '<span class="chip warn">Kurumsal başvuru bekliyor</span>'
+    : '<span class="chip">Bireysel</span>';
+  return `<div class="card">
+    <div class="row"><h1>${esc(c.name)}</h1>${openBtn(tpl(CFG.panel.customer, c.id))}</div>
+    <div>${type}</div>
+    <div class="small muted">${esc(c.email || '')} · ${esc(c.phone || '')} · üye ${dayY(c.memberSince)}${c.loyaltyPoints ? ` · ${c.loyaltyPoints} puan` : ''}</div>
+  </div>`;
+}
+
+function renderCorporate(k) {
+  const inv = k.lastInvoice;
+  return `<div class="card"><b>Cari</b>
+    <div class="kv">
+      <b>Bakiye</b><span class="${k.balance > 0 ? '' : 'muted'}">${money(k.balance)}${k.balance > 0 ? ' borçlu' : ''}</span>
+      <b>Limit</b><span>${k.creditLimit != null ? money(k.creditLimit) : '—'}${k.paymentTermDays ? ` · vade ${k.paymentTermDays} gün` : ''}${k.discount ? ` · %${k.discount} iskonto` : ''}</span>
+      ${inv ? `<b>Son fatura</b><span>${esc(inv.period)} · ${money(inv.totalAmount)} · ${inv.orderCount} sipariş <span class="chip ${inv.status === 'paid' ? 'ok' : 'warn'}">${esc(inv.status)}</span></span>` : ''}
+    </div></div>`;
+}
+
+function render(d, phone) {
+  document.getElementById('ts').textContent = 'güncellendi ' + new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  if (!d.found) {
+    const search = tpl(CFG.panel.search, '', d.phoneKey || phone);
+    return state(`Bu numarayla markala'da kayıt/sipariş yok.<br><span class="small">${esc(phone)}</span><br><br>${search ? `<a class="btn" href="${esc(search)}" target="_blank" rel="noopener">Panelde ara</a>` : ''}`);
+  }
+  let html = (d.customers || []).map(renderCustomer).join('');
+  if (!(d.customers || []).length) html += `<div class="card small muted">Kayıtlı hesap yok — misafir siparişleri (${esc(phone)})</div>`;
+  if (d.corporate) html += renderCorporate(d.corporate);
+  const list = d.orders.items || [];
+  html += `<div class="row small muted" style="margin:6px 2px"><span>Siparişler</span><span>${d.orders.total} toplam${d.orders.total > list.length ? ` · son ${list.length}` : ''}</span></div>`;
+  html += list.length ? list.map(renderOrder).join('') : '<div class="state">Sipariş yok</div>';
+  show(html);
+}
+
+async function load(phone) {
+  if (!KEY) return state('Panel anahtarı yok — Chatwoot ayarındaki URL <code>?k=…</code> ile bitmeli.');
+  state('Aranıyor…');
+  try {
+    const base = location.pathname.replace(/\/$/, '');
+    const r = await fetch(`${base}/lookup?phone=${encodeURIComponent(phone)}&k=${encodeURIComponent(KEY)}`, { cache: 'no-store' });
+    if (r.status === 401) return state('Anahtar reddedildi (401) — CHATWOOT_PANEL_KEY ile URL\'deki k uyuşmuyor.');
+    if (!r.ok) return state('Sunucu hatası ' + r.status);
+    render(await r.json(), phone);
+  } catch (e) { state('Bağlantı hatası: ' + esc(e.message)); }
+}
+
+/** Chatwoot'tan gelen appContext: inbox filtresi + telefon → arama */
+function onContext(d) {
+  const conv = d.conversation || {}, contact = d.contact || {};
+  const inbox = conv.inbox_id;
+  if (CFG.markalaInboxes.length && inbox != null && !CFG.markalaInboxes.includes(Number(inbox))) return state('Bu konuşma markala hattında değil.');
+  const phone = contact.phone_number || (conv.meta && conv.meta.sender && conv.meta.sender.phone_number) || '';
+  if (!phone) return state('Kişide telefon numarası yok.');
+  if (phone === lastPhone) return;
+  lastPhone = phone;
+  load(phone);
+}
+
+window.addEventListener('message', (ev) => {
+  if (CFG.chatwootOrigin && ev.origin !== CFG.chatwootOrigin) return;
+  let msg = ev.data;
+  if (typeof msg === 'string') { try { msg = JSON.parse(msg); } catch { return; } }
+  if (!msg || msg.event !== 'appContext') return;
+  onContext(msg.data || {});
+});
+
+document.getElementById('refresh').onclick = () => {
+  if (lastPhone) load(lastPhone);
+  else window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+};
+
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-copy]');
+  if (b) copy(b.dataset.copy, b);
+});
+function copy(text, btn) {
+  const done = () => { const t = btn.textContent; btn.textContent = 'kopyalandı'; setTimeout(() => (btn.textContent = t), 1200); };
+  const fallback = () => {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch {}
+    ta.remove();
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+
+// Geliştirme: Chatwoot olmadan denemek için  /chatwoot-panel?k=…&test=905057417028
+const test = qs.get('test');
+if (test) { lastPhone = test; load(test); }
+else window.parent.postMessage('chatwoot-dashboard-app:fetch-info', '*');
+</script>
+</body>
+</html>

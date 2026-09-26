@@ -18,12 +18,16 @@ export function CustomersClient({ customers }: Props) {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
 
+  // Telefonla arama: kayıtlar "+90 505 741 70 28" / "0505 741 70 28" gibi karışık biçimlerde
+  // duruyor, yazılan terim ise düz rakam olabiliyor → iki tarafın rakamları karşılaştırılır.
+  const searchDigits = search.replace(/\D/g, "");
   const filtered = customers.filter((c) => {
     const matchSearch =
       !search ||
       c.fullName.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
-      (c.companyName ?? "").toLowerCase().includes(search.toLowerCase());
+      (c.companyName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (searchDigits.length >= 7 && (c.phone ?? "").replace(/\D/g, "").includes(searchDigits));
     const matchType = typeFilter === "all" || c.accountType === typeFilter;
     return matchSearch && matchType;
   });
@@ -32,6 +36,13 @@ export function CustomersClient({ customers }: Props) {
   useEffect(() => {
     setPage(1);
   }, [search, typeFilter]);
+
+  // ?q=… ile gelen arama terimi (Chatwoot panel uygulamasındaki "Panelde ara" bağlantısı
+  // telefonu böyle taşır). Mount sonrası okunur — SSR/istemci farkı hydration uyarısı vermesin.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setSearch(q);
+  }, []);
 
   const { pageItems, pageCount, safePage } = paginate(filtered, page, PAGE_SIZE);
 

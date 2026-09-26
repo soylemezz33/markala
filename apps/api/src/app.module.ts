@@ -39,6 +39,7 @@ import { InternalNotifyModule } from "./internal-notify/internal-notify.module";
 import { NewsletterModule } from "./newsletter/newsletter.module";
 import { LifecycleModule } from "./lifecycle/lifecycle.module";
 import { FavoritesModule } from "./favorites/favorites.module";
+import { ChatwootPanelModule } from "./chatwoot-panel/chatwoot-panel.module";
 
 @Module({
   imports: [
@@ -83,6 +84,8 @@ import { FavoritesModule } from "./favorites/favorites.module";
     NewsletterModule,
     LifecycleModule,
     FavoritesModule,
+    // Chatwoot Dashboard App (2026-09-26): ajan konusma ekraninda musteri + son siparisler. Salt okunur.
+    ChatwootPanelModule,
   ],
 })
 export class AppModule {}
