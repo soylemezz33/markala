@@ -127,6 +127,8 @@ async function bootstrap() {
   app.use(
     rateLimit({ windowMs: 60_000, max: 60, path: "/chatwoot-panel", method: "GET", prefix: true }),
   );
+  // Ajan girişi (POST /chatwoot-panel/oturum) — şifre denemesi; /auth/login ile aynı sıkılık.
+  app.use(rateLimit({ windowMs: 60_000, max: 5, path: "/chatwoot-panel/oturum", method: "POST" }));
   // Admin mutation endpoint'leri — JWT+RolesGuard korumalı; per-IP ek savunma (ele geçirilmiş JWT senyaroya karşı).
   // Limitler gerçek admin kullanımına göre GENİŞ — sıkıştırılmış JWT istismarını sınırlar ama
   // meşru yoğun admin kullanımını (örn. ürün-ürün toplu fiyatlama) engellemez.

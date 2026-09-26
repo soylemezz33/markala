@@ -1,7 +1,7 @@
 # Chatwoot Panel Uygulaması — markala müşteri/sipariş paneli
 
-**Durum:** kod ana ağaca uygulandı (26.09.2026) · canlıya alma için sunucu tarafı adımları bekliyor
-**Kapsam:** SALT OKUNUR. Ne Chatwoot'a ne markala'ya yazar. markala–ClickUp köprüsü kurulmadı (karar değişmedi).
+**Durum:** CANLI (26.09.2026) · Faz 1 salt okunur + **Faz 2 işlem yapabilen panel**
+**Kapsam:** Ajan Chatwoot'tan çıkmadan siparişin TAM detayını görür ve günlük işlemleri yapar. İPTAL ve İADE bilerek dışarıda — geri alınamaz işlemler admin panelinde kalır. markala–ClickUp köprüsü kurulmadı (karar değişmedi).
 
 ## Ne yapar
 
@@ -97,6 +97,51 @@ Canlıda yapılacak (DB gerektirir, yerelde Postgres yok):
 1. `https://api.markala.com.tr/api/chatwoot-panel?k=KEY&test=905057417028` — Chatwoot olmadan
    kendi telefonunla dene. Sayfa açılıyor + sipariş listeleniyorsa SQL eşleşmesi doğrulanmış olur.
 2. Gerçek bir konuşmada sağ panelde sekme açılıyor mu (iframe engellenmiyor mu).
+
+## Faz 2 — ajan girişi ve işlemler (26.09.2026)
+
+### Neden giriş gerekti
+
+URL'deki paylaşılan anahtar okuma için yeterli ama YAZMA için değil: o anahtarı gören herkes
+sipariş durumu değiştirebilirdi ve "kim yaptı" kaydı tutulamazdı. Ajan artık iframe içinde
+**kendi markala panel hesabıyla** giriş yapar; sonraki her istek normal JWT ile gider.
+
+- `POST /api/chatwoot-panel/oturum?k=<KEY>` · gövde `{email, password}` → `{token, kullanici{ad,rol,izinler}}`
+- Şifre doğrulaması `AuthService.login` (argon2 + kapatılmış hesap kapısı + zamanlama önlemi);
+  **role=customer reddedilir** (müşteri hesabı panel token'ı alamaz).
+- Token ömrü `CHATWOOT_PANEL_TOKEN_TTL` (varsayılan `8h`). Neden uzun: panel üçüncü taraf
+  iframe'de çalışıyor, refresh cookie'si (SameSite=Lax) tarayıcıya gönderilemiyor.
+- Token iframe'in `localStorage`'ında (`mk_cw_oturum`); 401 alınınca oturum düşer, giriş formu çıkar.
+- Rate limit: `POST /chatwoot-panel/oturum` 5/dk (login ile aynı sıkılık).
+
+### Panelden yapılabilenler (hepsi MEVCUT uçlar, yeni iş mantığı yok)
+
+| İşlem                                            | Uç                                       | İzin                                              |
+| ------------------------------------------------ | ---------------------------------------- | ------------------------------------------------- |
+| Durum değiştirme (7 durum)                       | `PATCH /orders/:id/status`               | `orders.tracking` + tam akış için `orders.status` |
+| Kargo firma / takip no                           | `PATCH /orders/:id/tracking`             | `orders.tracking`                                 |
+| İç not ekleme                                    | `POST /orders/:id/notlar`                | `orders.notes`                                    |
+| Tasarım dosyası yükleme (önizleme/çalışma/baskı) | `POST /orders/:id/items/:itemId/tasarim` | `orders.design`                                   |
+| Tasarımcı dosyası silme                          | `DELETE /orders/:id/tasarim/:uploadId`   | `orders.design`                                   |
+| Tasarımı WhatsApp'tan onaya gönderme             | `POST /orders/:id/tasarim-onay`          | `orders.design`                                   |
+
+Yetki sınırı **sunucuda**: RolesGuard + `@Perms`. Arayüz yalnız düğmeleri gizler
+(`izinler` listesi girişte döner). Kargo rolü yalnız "Üretimde" ve "Kargoya Verildi"
+işaretleyebilir (`status-yetki.ts` kuralının aynısı panelde de uygulanır) ve parasal alanları
+görmez (`parasalAlanlariAyikla` yanıttan ayıklar).
+
+### Gösterilen tam detay
+
+`GET /orders/:id` + `GET /orders/:id/zaman-cizelgesi` + `GET /orders/:id/notlar` ile:
+kalem konfigürasyon detayları (`optionDetails` — "350 gr Kuşe · mat selefon"), müşteri ve
+tasarımcı dosyaları (görsellerde küçük önizleme, Drive bağlantıları), teslimat/fatura adresi
+(+ VD/VKN), tutar dökümü, ödeme yöntemi/hatası, fatura no ve tipi, iç notlar ve hareket
+geçmişi (durum, ödeme, kargo, fatura, bildirimler).
+
+### Bilerek dışarıda
+
+- **Sipariş iptali** ve **iyzico iadesi**: Chatwoot'ta düğmesi yok; "Panelde aç" ile admin panelinde yapılır.
+- Fatura yeniden kesme / fatura-kesilmesin / manuel sipariş: admin panelinde.
 
 ## Açık işler
 

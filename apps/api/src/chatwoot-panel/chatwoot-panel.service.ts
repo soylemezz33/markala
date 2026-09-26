@@ -1,6 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuthService } from "../auth/auth.service";
+import { permsForRole } from "../auth/permissions";
 
 const ORDER_LIMIT = 5;
 
@@ -121,7 +124,66 @@ export interface PanelOrder {
 
 @Injectable()
 export class ChatwootPanelService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(ChatwootPanelService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auth: AuthService,
+    private readonly jwt: JwtService,
+  ) {}
+
+  /**
+   * Ajan oturumu (2026-09-26 Faz 2) — panelden işlem yapabilmek için.
+   *
+   * NEDEN AYRI BİR UÇ: URL'deki paylaşılan anahtar "okuma" için yeter ama YAZMA için
+   * yetmez; o anahtarı gören herkes sipariş durumu değiştirebilirdi ve "kim yaptı"
+   * kaydı tutulamazdı. Burada ajan KENDİ panel hesabıyla giriş yapar → bundan sonraki
+   * her istek normal JWT ile gider, RolesGuard/@Perms aynen işler (kargo rolü tutar
+   * görmez, tasarımcı iptal edemez) ve denetim kaydı/iç not doğru isme yazılır.
+   *
+   * Token ömrü bilerek uzun (varsayılan 8 saat = bir iş günü): panel ÜÇÜNCÜ TARAF
+   * iframe içinde çalıştığı için refresh cookie'si (SameSite=Lax) tarayıcıya
+   * gönderilemiyor — 15 dakikada bir şifre sormak ajanı panelden kaçırırdı.
+   */
+  async oturumAc(
+    email: string,
+    password: string,
+    context: { userAgent?: string; ipAddress?: string },
+  ) {
+    // Şifre doğrulaması, kapatılmış hesap kapısı ve zamanlama saldırısı önlemi AuthService'te.
+    const sonuc = await this.auth.login(email, password, context);
+    if (sonuc.user.role === "customer") {
+      this.logger.warn(`chatwoot-panel.oturum.musteri_hesabi email=${email}`);
+      throw new ForbiddenException("Bu hesap panel kullanıcısı değil.");
+    }
+    const kullanici = await this.prisma.user.findUnique({
+      where: { id: sonuc.user.id },
+      select: { fullName: true },
+    });
+    const ttl = process.env.CHATWOOT_PANEL_TOKEN_TTL ?? "8h";
+    const token = this.jwt.sign(
+      // Payload standart access token ile AYNI (jwt.strategy sub/email/role okur);
+      // kaynak yalnız log/teşhis için — guard'lar bu alana bakmaz.
+      {
+        sub: sonuc.user.id,
+        email: sonuc.user.email,
+        role: sonuc.user.role,
+        kaynak: "chatwoot-panel",
+      },
+      { expiresIn: ttl },
+    );
+    this.logger.log(`chatwoot-panel.oturum.acildi userId=${sonuc.user.id} role=${sonuc.user.role}`);
+    return {
+      token,
+      kullanici: {
+        id: sonuc.user.id,
+        ad: kullanici?.fullName ?? sonuc.user.email,
+        email: sonuc.user.email,
+        rol: sonuc.user.role,
+        izinler: permsForRole(sonuc.user.role),
+      },
+    };
+  }
 
   async lookup(phoneRaw: string): Promise<PanelLookup> {
     const key = phoneKey(phoneRaw);

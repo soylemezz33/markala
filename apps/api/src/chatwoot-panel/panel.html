@@ -6,36 +6,69 @@
 <meta name="robots" content="noindex">
 <title>markala · müşteri</title>
 <style>
-:root{--bg:#fff;--fg:#1f2937;--muted:#6b7280;--line:#e5e7eb;--card:#f9fafb;--accent:#1f6feb;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--chip:#eef2ff;--chipfg:#3730a3}
-@media (prefers-color-scheme:dark){:root{--bg:#151718;--fg:#e5e7eb;--muted:#9ca3af;--line:#2d3135;--card:#1c1f21;--accent:#6ea8fe;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--chip:#26292d;--chipfg:#c7d2fe}}
+:root{--bg:#fff;--fg:#1f2937;--muted:#6b7280;--line:#e5e7eb;--card:#f9fafb;--accent:#1f6feb;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--chip:#eef2ff;--chipfg:#3730a3;--input:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#151718;--fg:#e5e7eb;--muted:#9ca3af;--line:#2d3135;--card:#1c1f21;--accent:#6ea8fe;--ok:#4ade80;--warn:#fbbf24;--bad:#f87171;--chip:#26292d;--chipfg:#c7d2fe;--input:#101213}}
 *{box-sizing:border-box}
 body{margin:0;padding:10px;font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--fg);background:var(--bg)}
 a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .card{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:10px;margin-bottom:8px;word-break:break-word}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .muted{color:var(--muted)}.small{font-size:12px}
 h1{font-size:14px;margin:0}
+h2{font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 .chip{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;background:var(--chip);color:var(--chipfg);margin:0 4px 2px 0;white-space:nowrap}
 .chip.ok{background:rgba(21,128,61,.14);color:var(--ok)}.chip.warn{background:rgba(180,83,9,.14);color:var(--warn)}.chip.bad{background:rgba(185,28,28,.14);color:var(--bad)}
-.btn{font:inherit;font-size:11px;padding:2px 7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer;white-space:nowrap}
-.btn:hover{border-color:var(--accent);text-decoration:none}
+.btn{font:inherit;font-size:11px;padding:3px 8px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:6px;cursor:pointer;white-space:nowrap}
+.btn:hover:not(:disabled){border-color:var(--accent);text-decoration:none}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.aktif{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+input,textarea,select{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--input);color:var(--fg);max-width:100%}
+textarea{width:100%;resize:vertical;min-height:52px}
 ul{margin:4px 0;padding-left:16px}li{margin:1px 0}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;margin-top:6px}.kv b{font-weight:600}
 .next{margin-top:6px;padding:5px 8px;border-left:3px solid var(--accent);background:var(--bg);border-radius:4px}
 .state{padding:16px 8px;text-align:center;color:var(--muted)}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 code{font-size:11px}
+details.blok{border-top:1px solid var(--line);padding-top:6px;margin-top:6px}
+details.blok>summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);list-style:none}
+details.blok>summary::-webkit-details-marker{display:none}
+details.blok>summary::before{content:"▸ ";color:var(--accent)}
+details.blok[open]>summary::before{content:"▾ "}
+.grid2{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
+.dosya{display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.dosya:last-child{border-bottom:0}
+.tl{margin:4px 0 0;padding:0;list-style:none;border-left:2px solid var(--line);padding-left:10px}
+.tl li{margin:0 0 5px;font-size:12px}
+.tl .t{color:var(--muted);font-size:11px}
+.uyari{padding:6px 8px;border-radius:6px;background:rgba(185,28,28,.12);color:var(--bad);font-size:12px;margin:6px 0}
+.iyi{padding:6px 8px;border-radius:6px;background:rgba(21,128,61,.12);color:var(--ok);font-size:12px;margin:6px 0}
+.onizleme{max-width:120px;max-height:80px;border-radius:4px;border:1px solid var(--line);display:block}
+.giris{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.giris input{flex:1 1 150px;min-width:120px}
 </style>
 </head>
 <body>
-<div class="topbar small muted"><span id="ts"></span><button class="btn" id="refresh">Yenile</button></div>
+<div class="topbar small muted">
+  <span id="ts"></span>
+  <span class="wrap"><span id="oturum"></span><button class="btn" id="refresh">Yenile</button></span>
+</div>
 <div id="app"><div class="state">Chatwoot bekleniyor…</div></div>
 <script>
 const CFG = __CONFIG__;
 const qs = new URLSearchParams(location.search);
 const KEY = qs.get('k') || '';
 const app = document.getElementById('app');
+// /api/chatwoot-panel → /api ; sipariş uçları (/api/orders/...) aynı kökten çağrılır.
+const API = location.pathname.replace(/\/chatwoot-panel\/?$/, '') || '';
+const PANEL = API + '/chatwoot-panel';
 let lastPhone = null;
+let sonVeri = null;
+const acikDetaylar = new Set();
 
 const STATUS = {
   siparis_alindi: ['Sipariş alındı', ''],
@@ -47,24 +80,115 @@ const STATUS = {
   teslim_edildi: ['Teslim edildi', 'ok'],
   iptal_edildi: ['İptal', 'bad'],
 };
+// Panelden seçilebilen durumlar (iptal + iade bilerek YOK — geri alınamaz işlemler admin panelinde kalır).
+const DURUM_SIRASI = ['siparis-alindi','tasarim-bekleniyor','tasarim-onayindi','tasarim-onaylandi','uretimde','kargoya-verildi','teslim-edildi'];
+const DURUM_ADI = {
+  'siparis-alindi':'Sipariş Alındı','tasarim-bekleniyor':'Tasarım Bekleniyor','tasarim-onayindi':'Tasarım Onayında',
+  'tasarim-onaylandi':'Tasarım Onaylandı','uretimde':'Üretimde','kargoya-verildi':'Kargoya Verildi','teslim-edildi':'Teslim Edildi','iptal-edildi':'İptal Edildi',
+};
+// Kargo rolü (orders.status izni YOK) yalnız bu ikisini işaretleyebilir — sunucudaki kuralın aynısı.
+const KARGO_GECISLERI = ['uretimde','kargoya-verildi'];
 const PAY = { beklemede: ['Ödeme bekleniyor', 'warn'], basarili: ['Ödendi', 'ok'], basarisiz: ['Ödeme başarısız', 'bad'], iade_edildi: ['İade edildi', 'bad'] };
 const METHOD = { iyzico: 'Kart', cari: 'Cari', havale: 'Havale' };
 const KIND = { onizleme: 'Prova', baski: 'Baskı dosyası', calisma: 'Çalışma', musteri: 'Müşteri dosyası' };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const money = (n) => (n == null ? '' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(n));
+const money = (n) => (n == null || n === '' ? '' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(Number(n)));
 const day = (s) => (s ? new Date(s).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) : '');
 const dayY = (s) => (s ? new Date(s).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '');
+const dayT = (s) => (s ? new Date(s).toLocaleString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '');
+const kb = (n) => (n == null ? '' : n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB');
 const tpl = (t, id, q) => (t ? t.replace('{id}', encodeURIComponent(id || '')).replace('{q}', encodeURIComponent(q || '')) : '');
 const chip = (map, key) => { const v = map[key] || [key, '']; return `<span class="chip ${v[1]}">${esc(v[0])}</span>`; };
 const link = (href, label) => (href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(label)}</a>` : esc(label));
 const copyBtn = (text) => (text ? `<button class="btn" data-copy="${esc(text)}">kopyala</button>` : '');
 const openBtn = (href) => (href ? `<a class="btn" href="${esc(href)}" target="_blank" rel="noopener">Panelde aç</a>` : '');
+const slug = (s) => String(s || '').replace(/_/g, '-');
 
 function show(html) { app.innerHTML = html; }
 function state(msg) { show(`<div class="state">${msg}</div>`); }
 
-/** Ajanın bir bakışta yapması gerekeni söyler; sipariş + ödeme durumundan türetilir. */
+/* ───────────────── oturum (ajan girişi) ───────────────── */
+const DEPO = 'mk_cw_oturum';
+let AUTH = null;
+try { AUTH = JSON.parse(localStorage.getItem(DEPO) || 'null'); } catch { AUTH = null; }
+let ajanEposta = '';
+
+const yetki = (p) => !!(AUTH && AUTH.kullanici && (AUTH.kullanici.izinler || []).includes(p));
+const girisli = () => !!(AUTH && AUTH.token);
+
+function oturumCiz() {
+  const el = document.getElementById('oturum');
+  if (girisli()) {
+    const k = AUTH.kullanici;
+    el.innerHTML = `<span class="small muted">${esc(k.ad)} · ${esc(k.rol)}</span> <button class="btn" id="cikis">çıkış</button>`;
+    document.getElementById('cikis').onclick = () => cikis(false);
+  } else {
+    el.innerHTML = `<button class="btn" id="girisAc">Giriş yap</button>`;
+    document.getElementById('girisAc').onclick = () => { girisFormu(true); };
+  }
+}
+
+function cikis(dustu) {
+  AUTH = null;
+  try { localStorage.removeItem(DEPO); } catch {}
+  oturumCiz();
+  if (sonVeri) render(sonVeri, lastPhone, dustu ? 'Oturum süresi doldu — tekrar giriş yapın.' : '');
+}
+
+function girisFormu(odakla) {
+  const yer = document.getElementById('girisYeri');
+  if (!yer) return;
+  yer.innerHTML = `
+    <form class="giris" id="girisForm">
+      <input type="email" id="gEposta" placeholder="panel e-postan" autocomplete="username" value="${esc(ajanEposta)}">
+      <input type="password" id="gSifre" placeholder="şifre" autocomplete="current-password">
+      <button class="btn primary" type="submit">Giriş</button>
+    </form>
+    <div class="small muted" style="margin-top:4px">markala panel hesabın — yetkilerin panelde olduğu gibi geçerli.</div>
+    <div id="girisHata"></div>`;
+  const f = document.getElementById('girisForm');
+  if (odakla) (document.getElementById('gEposta').value ? document.getElementById('gSifre') : document.getElementById('gEposta')).focus();
+  f.onsubmit = async (ev) => {
+    ev.preventDefault();
+    const btn = f.querySelector('button');
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      const r = await fetch(`${PANEL}/oturum?k=${encodeURIComponent(KEY)}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+        body: JSON.stringify({ email: document.getElementById('gEposta').value.trim(), password: document.getElementById('gSifre').value }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(mesaj(j) || ('Giriş başarısız (' + r.status + ')'));
+      AUTH = j;
+      try { localStorage.setItem(DEPO, JSON.stringify(j)); } catch {}
+      oturumCiz();
+      if (sonVeri) render(sonVeri, lastPhone);
+    } catch (e) {
+      const h = document.getElementById('girisHata');
+      if (h) h.innerHTML = `<div class="uyari">${esc(e.message)}</div>`;
+      btn.disabled = false; btn.textContent = 'Giriş';
+    }
+  };
+}
+
+const mesaj = (j) => (Array.isArray(j?.message) ? j.message.join(' · ') : j?.message || '');
+
+/** Yetkili istek — 401'de oturumu düşürür (token süresi dolmuş olabilir). */
+async function api(path, opts = {}) {
+  const h = Object.assign({}, opts.headers || {});
+  if (AUTH?.token) h.Authorization = 'Bearer ' + AUTH.token;
+  let body = opts.form || null;
+  if (opts.json) { h['Content-Type'] = 'application/json'; body = JSON.stringify(opts.json); }
+  const r = await fetch(API + path, { method: opts.method || 'GET', headers: h, body, cache: 'no-store' });
+  if (r.status === 401) { cikis(true); throw new Error('Oturum düştü.'); }
+  const t = await r.text();
+  let j = null; try { j = t ? JSON.parse(t) : null; } catch {}
+  if (!r.ok) throw new Error(mesaj(j) || ('Hata ' + r.status));
+  return j;
+}
+
+/* ───────────────── özet görünüm ───────────────── */
 function nextStep(o) {
   const items = o.items || [];
   if (o.status === 'iptal_edildi') return null;
@@ -96,7 +220,8 @@ function renderOrder(o) {
     `<div class="small muted">İç not · ${esc(n.authorName)} ${day(n.createdAt)}: ${esc(n.body)}</div>`).join('');
   const nx = nextStep(o);
   const panelUrl = tpl(CFG.panel.order, o.id);
-  return `<div class="card">
+  const detayAcik = acikDetaylar.has(o.id);
+  return `<div class="card" data-order="${esc(o.id)}">
     <div class="row"><b>${esc(o.orderNumber)}</b><span class="muted small">${dayY(o.createdAt)}</span></div>
     <div class="row"><div>${chip(STATUS, o.status)}${chip(PAY, o.paymentStatus)}${o.paymentMethod ? `<span class="chip">${esc(METHOD[o.paymentMethod] || o.paymentMethod)}</span>` : ''}${o.isGuest ? '<span class="chip">misafir</span>' : ''}</div><b>${money(o.total)}</b></div>
     <ul>${(o.items || []).map((i) => `<li>${esc(i.productName)} ×${i.quantity}${i.configurationSummary ? ` <span class="muted">— ${esc(i.configurationSummary)}</span>` : ''}</li>`).join('')}</ul>
@@ -107,7 +232,11 @@ function renderOrder(o) {
     ${o.customerNote ? `<div class="small">Müşteri notu: <i>${esc(o.customerNote)}</i></div>` : ''}
     ${notes}
     ${nx ? `<div class="next small">→ ${nx}</div>` : ''}
-    <div class="row" style="margin-top:6px"><span></span><span>${copyBtn(o.orderNumber)} ${openBtn(panelUrl)}</span></div>
+    <div class="row" style="margin-top:6px">
+      <span>${girisli() ? `<button class="btn" data-detay="${esc(o.id)}">${detayAcik ? 'Detayı kapat' : 'Detay ve işlemler'}</button>` : ''}</span>
+      <span>${copyBtn(o.orderNumber)} ${openBtn(panelUrl)}</span>
+    </div>
+    <div class="detay" id="detay-${esc(o.id)}"></div>
   </div>`;
 }
 
@@ -133,27 +262,295 @@ function renderCorporate(k) {
     </div></div>`;
 }
 
-function render(d, phone) {
+function render(d, phone, uyari) {
+  sonVeri = d;
   document.getElementById('ts').textContent = 'güncellendi ' + new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  oturumCiz();
   if (!d.found) {
     const search = tpl(CFG.panel.search, '', d.phoneKey || phone);
     return state(`Bu numarayla markala'da kayıt/sipariş yok.<br><span class="small">${esc(phone)}</span><br><br>${search ? `<a class="btn" href="${esc(search)}" target="_blank" rel="noopener">Panelde ara</a>` : ''}`);
   }
-  let html = (d.customers || []).map(renderCustomer).join('');
+  let html = uyari ? `<div class="uyari">${esc(uyari)}</div>` : '';
+  html += (d.customers || []).map(renderCustomer).join('');
   if (!(d.customers || []).length) html += `<div class="card small muted">Kayıtlı hesap yok — misafir siparişleri (${esc(phone)})</div>`;
   if (d.corporate) html += renderCorporate(d.corporate);
+  if (!girisli()) html += `<div class="card small"><b>İşlem yapmak için giriş yap</b><div class="muted">Durum değiştirme, iç not, kargo takip no ve tasarım yükleme/onaya gönderme girişten sonra açılır.</div><div id="girisYeri"></div></div>`;
   const list = d.orders.items || [];
   html += `<div class="row small muted" style="margin:6px 2px"><span>Siparişler</span><span>${d.orders.total} toplam${d.orders.total > list.length ? ` · son ${list.length}` : ''}</span></div>`;
   html += list.length ? list.map(renderOrder).join('') : '<div class="state">Sipariş yok</div>';
   show(html);
+  if (!girisli()) girisFormu(false);
+  // Açık kalan detayları yeniden yükle (işlem sonrası tazelemede kapanmasın).
+  for (const id of Array.from(acikDetaylar)) if (list.some((o) => o.id === id)) detayYukle(id);
 }
 
-async function load(phone) {
-  if (!KEY) return state('Panel anahtarı yok — Chatwoot ayarındaki URL <code>?k=…</code> ile bitmeli.');
-  state('Aranıyor…');
+/* ───────────────── detay + işlemler ───────────────── */
+const detayKutusu = (id) => document.getElementById('detay-' + id);
+
+async function detayYukle(id) {
+  const kutu = detayKutusu(id);
+  if (!kutu) return;
+  kutu.innerHTML = '<div class="state small">Detay yükleniyor…</div>';
   try {
-    const base = location.pathname.replace(/\/$/, '');
-    const r = await fetch(`${base}/lookup?phone=${encodeURIComponent(phone)}&k=${encodeURIComponent(KEY)}`, { cache: 'no-store' });
+    const [o, zaman, notlar] = await Promise.all([
+      api('/orders/' + encodeURIComponent(id)),
+      api('/orders/' + encodeURIComponent(id) + '/zaman-cizelgesi').catch(() => null),
+      // İç notlar AYRI uçta (sipariş detayı bunları döndürmez); izin yoksa sessizce atla.
+      yetki('orders.notes') ? api('/orders/' + encodeURIComponent(id) + '/notlar').catch(() => null) : Promise.resolve(null),
+    ]);
+    kutu.innerHTML = detayHtml(o, zaman, notlar);
+    detayOlaylari(kutu, o);
+  } catch (e) {
+    kutu.innerHTML = `<div class="uyari">${esc(e.message)}</div>`;
+  }
+}
+
+function adresHtml(a, baslik) {
+  if (!a) return '';
+  return `<div><b>${baslik}</b><div class="small">${esc(a.fullName || a.companyName || '')}${a.phone ? ' · ' + esc(a.phone) : ''}</div>
+    <div class="small muted">${esc(a.fullAddress || '')}<br>${esc(a.district || '')} / ${esc(a.city || '')}${a.zipCode ? ' · ' + esc(a.zipCode) : ''}</div>
+    ${a.taxNumber ? `<div class="small muted">${esc(a.companyName || '')} · VD ${esc(a.taxOffice || '')} · VKN ${esc(a.taxNumber)}</div>` : ''}</div>`;
+}
+
+function kalemHtml(it) {
+  const det = (it.optionDetails || []).map((d) => `<li>${esc(d.group)}: <b>${esc(d.label)}</b>${d.detail ? ` <span class="muted">— ${esc(d.detail)}</span>` : ''}</li>`).join('');
+  const tutar = it.lineTotal != null ? `<span class="muted">${money(it.lineTotal)}</span>` : '';
+  return `<div class="card" style="margin:6px 0;background:var(--bg)">
+    <div class="row"><b>${esc(it.productName)} ×${it.quantity}</b>${tutar}</div>
+    ${it.configurationSummary ? `<div class="small muted">${esc(it.configurationSummary)}</div>` : ''}
+    ${det ? `<ul class="small">${det}</ul>` : ''}
+    ${it.needsDesignSupport ? '<div class="chip warn">Tasarım desteği istendi</div>' : ''}
+    ${dosyalarHtml(it)}
+    ${yetki('orders.design') ? yuklemeHtml(it) : ''}
+  </div>`;
+}
+
+function dosyalarHtml(it) {
+  let h = '';
+  if (it.uploadedFileUrl || it.uploadedFileDriveUrl) {
+    h += `<div class="dosya small"><span class="chip">Müşteri dosyası</span>${link(it.uploadedFileUrl || it.uploadedFileDriveUrl, it.uploadedFileName || 'dosya')}
+      ${it.uploadedFileDriveUrl ? link(it.uploadedFileDriveUrl, "Drive'da aç") : ''} ${copyBtn(it.uploadedFileUrl || it.uploadedFileDriveUrl)}</div>`;
+  }
+  for (const d of it.designUploads || []) {
+    const gorsel = /image\//.test(d.mimeType || '') && d.fileUrl ? `<img class="onizleme" src="${esc(d.fileUrl)}" alt="" loading="lazy">` : '';
+    h += `<div class="dosya small"><span class="chip">${esc(KIND[d.kind] || d.kind)}</span>${link(d.fileUrl || d.driveUrl, d.fileName)}
+      <span class="muted">${kb(d.fileSize)} · ${day(d.createdAt)}${d.uploadedBy ? ' · ' + esc(d.uploadedBy.fullName) : ''}</span>
+      ${d.driveUrl ? link(d.driveUrl, "Drive") : ''}
+      ${yetki('orders.design') && d.kind !== 'musteri' ? `<button class="btn danger" data-sil="${esc(d.id)}">sil</button>` : ''}
+      ${gorsel}</div>`;
+  }
+  return h;
+}
+
+function yuklemeHtml(it) {
+  return `<div class="wrap small" style="margin-top:6px">
+    <select data-kind="${esc(it.id)}">
+      <option value="onizleme">Önizleme (JPG/PNG ≤2 MB)</option>
+      <option value="calisma">Çalışma dosyası</option>
+      <option value="baski">Baskıya hazır dosya</option>
+    </select>
+    <input type="file" data-dosya="${esc(it.id)}">
+    <button class="btn" data-yukle="${esc(it.id)}">Yükle</button>
+    <span data-yukleDurum="${esc(it.id)}" class="muted"></span>
+  </div>`;
+}
+
+function durumHtml(o) {
+  const tam = yetki('orders.status');
+  const simdi = slug(o.status);
+  const btns = DURUM_SIRASI.map((s) => {
+    const izin = tam || KARGO_GECISLERI.includes(s);
+    const aktif = s === simdi;
+    return `<button class="btn ${aktif ? 'aktif' : ''}" data-durum="${s}" ${!izin || aktif ? 'disabled' : ''}>${esc(DURUM_ADI[s])}</button>`;
+  }).join(' ');
+  return `<h2>Sipariş durumu</h2><div class="wrap">${btns}</div>
+    ${simdi === 'iptal-edildi' ? '<div class="uyari">Bu sipariş iptal edilmiş.</div>' : ''}
+    <div class="small muted" style="margin-top:4px">İptal ve iade Chatwoot'ta yok — "Panelde aç" ile admin panelinden yapılır.</div>
+    <div data-durumSonuc></div>`;
+}
+
+function kargoHtml(o) {
+  return `<h2>Kargo</h2>
+    <div class="wrap">
+      <input data-kargoFirma placeholder="firma (Yurtiçi, Aras…)" value="${esc(o.trackingCarrier || '')}">
+      <input data-kargoNo placeholder="takip no" value="${esc(o.trackingNumber || '')}">
+      <button class="btn" data-kargoKaydet>Kaydet</button>
+      <span class="muted small">${o.shippedAt ? 'çıkış ' + dayT(o.shippedAt) : ''}${o.deliveredAt ? ' · teslim ' + dayT(o.deliveredAt) : ''}</span>
+    </div>
+    <div class="small muted">Takip no kaydetmek durumu DEĞİŞTİRMEZ, müşteriye mail gitmez.</div>
+    <div data-kargoSonuc></div>`;
+}
+
+function notlarHtml(o, notlar) {
+  const liste = (notlar || []).map((n) => `<div class="small"><b>${esc(n.authorName)}</b> <span class="muted">${dayT(n.createdAt)}</span><br>${esc(n.body)}</div>`).join('<hr style="border:0;border-top:1px dashed var(--line);margin:4px 0">') || '<div class="small muted">Not yok</div>';
+  const ekle = yetki('orders.notes') ? `<textarea data-notMetin placeholder="Ekibin görmesi gereken bir şey mi var? (müşteri görmez)"></textarea>
+    <div class="row"><span class="small muted">İmza: ${esc(AUTH?.kullanici?.ad || '')}</span><button class="btn primary" data-notEkle>Not ekle</button></div>
+    <div data-notSonuc></div>` : '';
+  return `<h2>İç notlar (müşteri görmez)</h2>${liste}${ekle}`;
+}
+
+function zamanHtml(z) {
+  if (!z || !(z.olaylar || []).length) return '';
+  const li = z.olaylar.map((e) => `<li><span class="t">${dayT(e.at)}</span> · ${esc(e.baslik)}${e.detay ? ` <span class="muted">— ${esc(e.detay)}</span>` : ''}${e.aktor ? ` <span class="muted">(${esc(e.aktor)})</span>` : ''}</li>`).join('');
+  return `<details class="blok"><summary>Zaman çizelgesi (${z.olaylar.length} hareket)</summary><ul class="tl">${li}</ul></details>`;
+}
+
+function detayHtml(o, zaman, notlar) {
+  const para = o.total != null; // kargo rolünde parasal alanlar sunucuda ayıklanır
+  return `<div class="blok" style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px">
+    <div class="grid2">
+      <div>
+        <h2>Kalemler</h2>
+        ${(o.items || []).map(kalemHtml).join('')}
+        ${yetki('orders.design') ? `<div class="wrap" style="margin-top:4px">
+            <input type="file" data-onayDosya accept="image/jpeg,image/png">
+            <button class="btn primary" data-onayGonder>Tasarımı WhatsApp'tan onaya gönder</button>
+            <span data-onaySonuc class="muted small"></span>
+          </div>
+          <div class="small muted">Dosya seçmezsen siparişteki EN SON önizleme gönderilir.</div>` : ''}
+      </div>
+      <div>
+        ${durumHtml(o)}
+        ${yetki('orders.tracking') || yetki('orders.status') ? kargoHtml(o) : ''}
+        <h2 style="margin-top:8px">Bilgiler</h2>
+        <div class="grid2">
+          ${adresHtml(o.shippingAddress, 'Teslimat')}
+          ${adresHtml(o.billingAddress, 'Fatura')}
+        </div>
+        <div class="kv small">
+          ${para ? `<b>Ara toplam</b><span>${money(o.subtotal)}</span>
+          <b>KDV</b><span>${money(o.vat)}</span>
+          <b>Kargo</b><span>${money(o.shippingFee)}</span>
+          ${Number(o.discount) ? `<b>İndirim</b><span>-${money(o.discount)}</span>` : ''}
+          <b>Toplam</b><span><b>${money(o.total)}</b></span>
+          <b>Ödeme</b><span>${esc(METHOD[o.paymentMethod] || o.paymentMethod || '—')} · ${esc((PAY[o.paymentStatus] || [o.paymentStatus])[0])}</span>` : ''}
+          ${o.paymentErrorMessage ? `<b>Ödeme hatası</b><span class="chip bad">${esc(o.paymentErrorMessage)}</span>` : ''}
+          ${o.invoiceNumber ? `<b>Fatura</b><span>${esc(o.invoiceNumber)} · ${esc(o.invoiceType === 'e_invoice' ? 'e-Fatura' : 'e-Arşiv')} · ${day(o.invoiceIssuedAt)}</span>` : ''}
+          <b>E-posta</b><span>${esc(o.email || '')} ${copyBtn(o.email)}</span>
+          <b>Telefon</b><span>${esc(o.phone || '')} ${copyBtn(o.phone)}</span>
+        </div>
+        <div style="margin-top:8px">${notlarHtml(o, notlar)}</div>
+      </div>
+    </div>
+    ${zamanHtml(zaman)}
+  </div>`;
+}
+
+/* ───────────────── detay içi eylemler ───────────────── */
+function detayOlaylari(kutu, o) {
+  const id = o.id;
+  const yaz = (sel, html) => { const el = kutu.querySelector(sel); if (el) el.innerHTML = html; };
+  const hata = (sel, e) => yaz(sel, `<div class="uyari">${esc(e.message)}</div>`);
+  const iyi = (sel, m) => yaz(sel, `<div class="iyi">${esc(m)}</div>`);
+
+  // durum değiştir — iki adımlı onay (iframe'de confirm() engellenebiliyor)
+  kutu.querySelectorAll('[data-durum]').forEach((b) => {
+    b.onclick = async () => {
+      const hedef = b.dataset.durum;
+      if (b.dataset.onay !== '1') {
+        kutu.querySelectorAll('[data-durum]').forEach((x) => { if (x !== b) { x.dataset.onay = ''; x.textContent = DURUM_ADI[x.dataset.durum]; } });
+        b.dataset.onay = '1';
+        b.textContent = DURUM_ADI[hedef] + ' · onayla?';
+        return;
+      }
+      b.disabled = true; b.textContent = '…';
+      try {
+        const govde = { status: hedef };
+        if (hedef === 'kargoya-verildi') {
+          const f = kutu.querySelector('[data-kargoFirma]'), n = kutu.querySelector('[data-kargoNo]');
+          if (f && f.value.trim()) govde.trackingCarrier = f.value.trim();
+          if (n && n.value.trim()) govde.trackingNumber = n.value.trim();
+        }
+        await api('/orders/' + encodeURIComponent(id) + '/status', { method: 'PATCH', json: govde });
+        iyi('[data-durumSonuc]', 'Durum güncellendi: ' + DURUM_ADI[hedef] + ' (müşteri bildirimi sistemin kuralına göre gider)');
+        await tazele();
+      } catch (e) { hata('[data-durumSonuc]', e); b.disabled = false; b.textContent = DURUM_ADI[hedef]; b.dataset.onay = ''; }
+    };
+  });
+
+  const kargoBtn = kutu.querySelector('[data-kargoKaydet]');
+  if (kargoBtn) kargoBtn.onclick = async () => {
+    kargoBtn.disabled = true;
+    try {
+      await api('/orders/' + encodeURIComponent(id) + '/tracking', {
+        method: 'PATCH',
+        json: { trackingCarrier: kutu.querySelector('[data-kargoFirma]').value.trim(), trackingNumber: kutu.querySelector('[data-kargoNo]').value.trim() },
+      });
+      iyi('[data-kargoSonuc]', 'Takip bilgisi kaydedildi.');
+      await tazele();
+    } catch (e) { hata('[data-kargoSonuc]', e); } finally { kargoBtn.disabled = false; }
+  };
+
+  const notBtn = kutu.querySelector('[data-notEkle]');
+  if (notBtn) notBtn.onclick = async () => {
+    const ta = kutu.querySelector('[data-notMetin]');
+    const body = (ta.value || '').trim();
+    if (!body) return;
+    notBtn.disabled = true;
+    try {
+      await api('/orders/' + encodeURIComponent(id) + '/notlar', { method: 'POST', json: { body } });
+      ta.value = '';
+      iyi('[data-notSonuc]', 'Not eklendi.');
+      await detayYukle(id);
+    } catch (e) { hata('[data-notSonuc]', e); } finally { notBtn.disabled = false; }
+  };
+
+  kutu.querySelectorAll('[data-yukle]').forEach((b) => {
+    b.onclick = async () => {
+      const itemId = b.dataset.yukle;
+      const inp = kutu.querySelector(`[data-dosya="${CSS.escape(itemId)}"]`);
+      const kind = kutu.querySelector(`[data-kind="${CSS.escape(itemId)}"]`).value;
+      const durum = kutu.querySelector(`[data-yukleDurum="${CSS.escape(itemId)}"]`);
+      if (!inp.files || !inp.files[0]) { durum.textContent = 'Dosya seç'; return; }
+      const fd = new FormData();
+      fd.append('file', inp.files[0]);
+      fd.append('kind', kind);
+      b.disabled = true; durum.textContent = 'yükleniyor…';
+      try {
+        await api('/orders/' + encodeURIComponent(id) + '/items/' + encodeURIComponent(itemId) + '/tasarim', { method: 'POST', form: fd });
+        durum.textContent = 'yüklendi';
+        await detayYukle(id);
+      } catch (e) { durum.innerHTML = `<span class="chip bad">${esc(e.message)}</span>`; b.disabled = false; }
+    };
+  });
+
+  kutu.querySelectorAll('[data-sil]').forEach((b) => {
+    b.onclick = async () => {
+      if (b.dataset.onay !== '1') { b.dataset.onay = '1'; b.textContent = 'emin misin?'; return; }
+      b.disabled = true;
+      try {
+        await api('/orders/' + encodeURIComponent(id) + '/tasarim/' + encodeURIComponent(b.dataset.sil), { method: 'DELETE' });
+        await detayYukle(id);
+      } catch (e) { b.outerHTML = `<span class="chip bad">${esc(e.message)}</span>`; }
+    };
+  });
+
+  const onayBtn = kutu.querySelector('[data-onayGonder]');
+  if (onayBtn) onayBtn.onclick = async () => {
+    const inp = kutu.querySelector('[data-onayDosya]');
+    const sonuc = kutu.querySelector('[data-onaySonuc]');
+    onayBtn.disabled = true; sonuc.textContent = 'gönderiliyor…';
+    try {
+      const fd = new FormData();
+      if (inp.files && inp.files[0]) fd.append('file', inp.files[0]);
+      const r = await api('/orders/' + encodeURIComponent(id) + '/tasarim-onay', { method: 'POST', form: fd });
+      sonuc.innerHTML = `<span class="chip ok">Gönderildi${r && r.alici ? ' → ' + esc(r.alici) : ''}</span>`;
+      await tazele();
+    } catch (e) { sonuc.innerHTML = `<span class="chip bad">${esc(e.message)}</span>`; onayBtn.disabled = false; }
+  };
+}
+
+/** Özet listeyi (rozetler, kargo, notlar) sunucudan tazeler; açık detaylar korunur. */
+async function tazele() {
+  if (lastPhone) await load(lastPhone, true);
+}
+
+/* ───────────────── veri yükleme ───────────────── */
+async function load(phone, sessiz) {
+  if (!KEY) return state('Panel anahtarı yok — Chatwoot ayarındaki URL <code>?k=…</code> ile bitmeli.');
+  if (!sessiz) state('Aranıyor…');
+  try {
+    const r = await fetch(`${PANEL}/lookup?phone=${encodeURIComponent(phone)}&k=${encodeURIComponent(KEY)}`, { cache: 'no-store' });
     if (r.status === 401) return state('Anahtar reddedildi (401) — CHATWOOT_PANEL_KEY ile URL\'deki k uyuşmuyor.');
     if (!r.ok) return state('Sunucu hatası ' + r.status);
     render(await r.json(), phone);
@@ -163,12 +560,15 @@ async function load(phone) {
 /** Chatwoot'tan gelen appContext: inbox filtresi + telefon → arama */
 function onContext(d) {
   const conv = d.conversation || {}, contact = d.contact || {};
+  const ajan = d.currentAgent || {};
+  if (ajan.email) ajanEposta = ajan.email; // giriş formunda hazır gelsin
   const inbox = conv.inbox_id;
   if (CFG.markalaInboxes.length && inbox != null && !CFG.markalaInboxes.includes(Number(inbox))) return state('Bu konuşma markala hattında değil.');
   const phone = contact.phone_number || (conv.meta && conv.meta.sender && conv.meta.sender.phone_number) || '';
   if (!phone) return state('Kişide telefon numarası yok.');
   if (phone === lastPhone) return;
   lastPhone = phone;
+  acikDetaylar.clear();
   load(phone);
 }
 
@@ -186,9 +586,23 @@ document.getElementById('refresh').onclick = () => {
 };
 
 document.addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-copy]');
-  if (b) copy(b.dataset.copy, b);
+  const kopya = ev.target.closest('[data-copy]');
+  if (kopya) { copy(kopya.dataset.copy, kopya); return; }
+  const detay = ev.target.closest('[data-detay]');
+  if (detay) {
+    const id = detay.dataset.detay;
+    if (acikDetaylar.has(id)) {
+      acikDetaylar.delete(id);
+      const k = detayKutusu(id); if (k) k.innerHTML = '';
+      detay.textContent = 'Detay ve işlemler';
+    } else {
+      acikDetaylar.add(id);
+      detay.textContent = 'Detayı kapat';
+      detayYukle(id);
+    }
+  }
 });
+
 function copy(text, btn) {
   const done = () => { const t = btn.textContent; btn.textContent = 'kopyalandı'; setTimeout(() => (btn.textContent = t), 1200); };
   const fallback = () => {
@@ -201,6 +615,7 @@ function copy(text, btn) {
   else fallback();
 }
 
+oturumCiz();
 // Geliştirme: Chatwoot olmadan denemek için  /chatwoot-panel?k=…&test=905057417028
 const test = qs.get('test');
 if (test) { lastPhone = test; load(test); }

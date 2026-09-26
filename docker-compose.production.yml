@@ -125,6 +125,8 @@ services:
       CHATWOOT_PANEL_KEY: ${CHATWOOT_PANEL_KEY:-}
       CHATWOOT_ORIGIN: ${CHATWOOT_ORIGIN:-https://chat.324ajans.com}
       CHATWOOT_MARKALA_INBOXES: ${CHATWOOT_MARKALA_INBOXES:-5}
+      # Ajan oturumu (Faz 2) — panel token omru; bos birakilirsa 8 saat.
+      CHATWOOT_PANEL_TOKEN_TTL: ${CHATWOOT_PANEL_TOKEN_TTL:-8h}
       # "Panelde ac" baglanti sablonlari. Degerler .env.production'da (bkz. .env.production.example):
       #   .../siparisler/{id} · .../musteriler/{id} · .../musteriler?q={q}
       # Compose interpolasyonunda ${VAR:-default} varsayilani ilk } ile biter — bu yuzden

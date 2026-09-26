@@ -93,6 +93,15 @@ function prismaMock(
   } as never;
 }
 
+/** Servis 3 bağımlılık alıyor; okuma testleri auth/jwt'ye hiç dokunmaz. */
+function servis(prisma: unknown, ek?: { auth?: unknown; jwt?: unknown }) {
+  return new ChatwootPanelService(
+    prisma as never,
+    (ek?.auth ?? { login: vi.fn() }) as never,
+    (ek?.jwt ?? { sign: vi.fn(() => "imzali.jwt.token") }) as never,
+  );
+}
+
 describe("phoneKey", () => {
   it("biçimden bağımsız son 10 haneye indirir", () => {
     expect(phoneKey("+90 505 741 70 28")).toBe("5057417028");
@@ -111,7 +120,7 @@ describe("phoneKey", () => {
 describe("ChatwootPanelService.lookup", () => {
   it("telefon çözülemezse DB'ye hiç gitmez", async () => {
     const prisma = prismaMock();
-    const out = await new ChatwootPanelService(prisma).lookup("yok");
+    const out = await servis(prisma).lookup("yok");
     expect(out.found).toBe(false);
     expect(out.phoneKey).toBeNull();
     expect(
@@ -120,7 +129,7 @@ describe("ChatwootPanelService.lookup", () => {
   });
 
   it("kayıt/sipariş yoksa found=false döner", async () => {
-    const out = await new ChatwootPanelService(prismaMock()).lookup("905057417028");
+    const out = await servis(prismaMock()).lookup("905057417028");
     expect(out.found).toBe(false);
     expect(out.orders.items).toEqual([]);
   });
@@ -132,7 +141,7 @@ describe("ChatwootPanelService.lookup", () => {
       total: 7,
       orders: [ORDER],
     });
-    const out = await new ChatwootPanelService(prisma).lookup("+90 (505) 741 70 28");
+    const out = await servis(prisma).lookup("+90 (505) 741 70 28");
 
     expect(out.found).toBe(true);
     expect(out.phoneKey).toBe("5057417028");
@@ -160,19 +169,19 @@ describe("ChatwootPanelService.lookup", () => {
       ids: [{ id: "o1" }],
       orders: [{ ...ORDER, trackingCarrier: "Kendi aracımız", trackingNumber: "55" }],
     });
-    const out = await new ChatwootPanelService(prisma).lookup("905057417028");
+    const out = await servis(prisma).lookup("905057417028");
     expect(out.orders.items[0].ship.trackingNumber).toBe("55");
     expect(out.orders.items[0].ship.trackingUrl).toBeNull();
   });
 
   it("başarısız ödemede hata mesajını taşır, başarılıda taşımaz", async () => {
     const hata = { ...ORDER, paymentStatus: "basarisiz", paymentErrorMessage: "Yetersiz bakiye" };
-    const out1 = await new ChatwootPanelService(
+    const out1 = await servis(
       prismaMock({ users: [USER], ids: [{ id: "o1" }], orders: [hata] }),
     ).lookup("905057417028");
     expect(out1.orders.items[0].paymentError).toBe("Yetersiz bakiye");
 
-    const out2 = await new ChatwootPanelService(
+    const out2 = await servis(
       prismaMock({
         users: [USER],
         ids: [{ id: "o1" }],
@@ -188,7 +197,7 @@ describe("ChatwootPanelService.lookup", () => {
       ids: [{ id: "o1" }],
       orders: [{ ...ORDER, userId: null }],
     });
-    const out = await new ChatwootPanelService(prisma).lookup("905057417028");
+    const out = await servis(prisma).lookup("905057417028");
     expect(out.found).toBe(true);
     expect(out.customers).toEqual([]);
     expect(out.orders.items[0].isGuest).toBe(true);
@@ -214,7 +223,7 @@ describe("ChatwootPanelService.lookup", () => {
       ],
       invoice: { period: "2026-08", totalAmount: 9800, orderCount: 4, status: "pending" },
     });
-    const out = await new ChatwootPanelService(prisma).lookup("905057417028");
+    const out = await servis(prisma).lookup("905057417028");
     expect(out.corporate).toMatchObject({
       companyName: "Örnek A.Ş.",
       balance: 10000.25,
@@ -230,7 +239,54 @@ describe("ChatwootPanelService.lookup", () => {
       users: [{ ...USER, account_type: "corporate", corporate_status: "pending" }],
       ids: [],
     });
-    const out = await new ChatwootPanelService(prisma).lookup("905057417028");
+    const out = await servis(prisma).lookup("905057417028");
     expect(out.corporate).toBeNull();
+  });
+});
+
+describe("ChatwootPanelService.oturumAc", () => {
+  const PANELCI = { id: "u9", email: "tasarimci@markala.com.tr", role: "tasarimci" };
+
+  it("panel kullanıcısına token verir ve izinlerini döner", async () => {
+    const auth = { login: vi.fn().mockResolvedValue({ user: PANELCI }) };
+    const jwt = { sign: vi.fn(() => "tok123") };
+    const prisma = {
+      user: { findUnique: vi.fn().mockResolvedValue({ fullName: "Oğuzhan Ateş" }) },
+    };
+    const out = await servis(prisma, { auth, jwt }).oturumAc(
+      "tasarimci@markala.com.tr",
+      "sifre",
+      {},
+    );
+
+    expect(out.token).toBe("tok123");
+    expect(out.kullanici).toMatchObject({ ad: "Oğuzhan Ateş", rol: "tasarimci" });
+    // Panel arayüzü düğmeleri buna göre çiziyor; gerçek sınır uçlardaki RolesGuard.
+    expect(out.kullanici.izinler).toContain("orders.read");
+    // Token payload'ı standart access token ile aynı olmalı, yoksa JwtStrategy reddeder.
+    expect(jwt.sign).toHaveBeenCalledWith(
+      expect.objectContaining({ sub: "u9", email: PANELCI.email, role: "tasarimci" }),
+      expect.objectContaining({ expiresIn: expect.any(String) }),
+    );
+  });
+
+  it("MÜŞTERİ hesabına panel token'ı vermez", async () => {
+    const auth = {
+      login: vi.fn().mockResolvedValue({ user: { id: "c1", email: "m@x.com", role: "customer" } }),
+    };
+    const jwt = { sign: vi.fn() };
+    await expect(
+      servis({ user: { findUnique: vi.fn() } }, { auth, jwt }).oturumAc("m@x.com", "sifre", {}),
+    ).rejects.toThrow(/panel kullanıcısı değil/i);
+    expect(jwt.sign).not.toHaveBeenCalled();
+  });
+
+  it("şifre yanlışsa AuthService'in hatası olduğu gibi yükselir (kendi kapımızı açmayız)", async () => {
+    const auth = { login: vi.fn().mockRejectedValue(new Error("Geçersiz e-posta veya şifre.")) };
+    const jwt = { sign: vi.fn() };
+    await expect(
+      servis({ user: { findUnique: vi.fn() } }, { auth, jwt }).oturumAc("a@b.c", "yanlis", {}),
+    ).rejects.toThrow("Geçersiz e-posta veya şifre.");
+    expect(jwt.sign).not.toHaveBeenCalled();
   });
 });

@@ -1,18 +1,22 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   InternalServerErrorException,
   Logger,
+  Post,
   Query,
+  Req,
   Res,
   UnauthorizedException,
 } from "@nestjs/common";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { timingSafeEqual } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ChatwootPanelService } from "./chatwoot-panel.service";
+import { PanelOturumDto } from "./chatwoot-panel.dto";
 
 /**
  * Chatwoot "Panel Uygulamaları" (Dashboard App) iframe'i — konuşma ekranının sağ panelinde
@@ -88,6 +92,20 @@ export class ChatwootPanelController {
     res.setHeader("X-Robots-Tag", "noindex");
     const cfg = JSON.stringify(pageConfig()).replace(/</g, "\\u003c");
     return html.replace("__CONFIG__", cfg);
+  }
+
+  /**
+   * Ajan girişi: paylaşılan anahtar + KENDİ panel hesabı → uzun ömürlü access token.
+   * Bundan sonraki işlem istekleri (durum, not, takip, tasarım) doğrudan /orders uçlarına
+   * bu token'la gider; yetki sınırı orada, mevcut RolesGuard/@Perms ile çizilir.
+   */
+  @Post("oturum")
+  async oturum(@Query("k") k: string, @Body() dto: PanelOturumDto, @Req() req: Request) {
+    if (!keyOk(k)) throw new UnauthorizedException();
+    return this.svc.oturumAc(dto.email, dto.password, {
+      userAgent: req.headers["user-agent"],
+      ipAddress: req.ip,
+    });
   }
 
   /** Telefon → müşteri + son siparişler. Yalnızca paylaşılan anahtarla; salt okunur. */
