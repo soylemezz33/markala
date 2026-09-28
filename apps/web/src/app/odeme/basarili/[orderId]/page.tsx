@@ -9,7 +9,7 @@ import { CheckCircle, Truck, EnvelopeSimple, House, Receipt, Buildings, Bank } f
 import { BANKA_HESABI } from "@/lib/company";
 import { useOrdersStore } from "@/lib/orders-store";
 import { useCartStore, unitCountFromSummary } from "@/lib/cart-store";
-import { formatDate, orderStatusLabel } from "@/lib/format";
+import { formatDate, orderStatusLabel, tasarimBaglamiCikar } from "@/lib/format";
 import { trackPurchase } from "@/lib/analytics";
 import { apiClient, withRefresh } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
@@ -286,7 +286,7 @@ function OrderSuccessContent({ params }: { params: { orderId: string } }) {
         <header className="flex items-center justify-between mb-4">
           <h2 className="font-medium text-ink-900">Sipariş Detayı</h2>
           <span className="text-xs px-2.5 py-1 rounded-full bg-brand-100 text-brand-900 font-medium">
-            {orderStatusLabel(order.status)}
+            {orderStatusLabel(order.status, tasarimBaglamiCikar(order.items))}
           </span>
         </header>
 

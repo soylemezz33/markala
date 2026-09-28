@@ -6,7 +6,7 @@ import { Button, Price, cn } from "@markala/ui";
 import { ArrowRight, Sparkle, ShoppingBagOpen } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
-import { formatDate, orderStatusLabel } from "@/lib/format";
+import { formatDate, orderStatusLabel, tasarimBaglamiCikar } from "@/lib/format";
 import { gorunurNav, type AccountNavContext } from "@/components/account/account-nav";
 import { MarkaPuanIcon } from "@/components/account/markapuan-icon";
 import type { Order, OrderStatus } from "@markala/types";
@@ -197,7 +197,7 @@ export default function AccountOverviewPage() {
                     <span className="block text-xs text-ink-500 mt-0.5 truncate">
                       {formatDate(o.createdAt)} · {o.items.length} ürün ·{" "}
                       <span className="text-brand-700 font-medium">
-                        {orderStatusLabel(normStatus(o.status as unknown as string))}
+                        {orderStatusLabel(normStatus(o.status as unknown as string), tasarimBaglamiCikar(o.items))}
                       </span>
                     </span>
                   </span>

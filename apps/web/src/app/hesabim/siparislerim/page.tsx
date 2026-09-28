@@ -8,7 +8,7 @@ import { Button, Price, cn } from "@markala/ui";
 import { Package, ArrowRight, ArrowsClockwise, WhatsappLogo } from "@phosphor-icons/react";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
-import { formatDate, orderStatusLabel } from "@/lib/format";
+import { formatDate, orderStatusLabel, tasarimBaglamiCikar } from "@/lib/format";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { unitCountFromSummary } from "@/lib/cart-store";
 import { ReorderButton } from "@/components/account/reorder-button";
@@ -110,7 +110,7 @@ export default function OrdersPage() {
               </div>
               <span className="flex flex-col items-end gap-1">
                 <span className={cn("px-2.5 py-1 rounded-full text-xs font-semibold", statusToneClass[st] ?? "bg-paper-100 text-ink-700")}>
-                  {orderStatusLabel(st)}
+                  {orderStatusLabel(st, tasarimBaglamiCikar(o.items))}
                 </span>
                 {/* İade ibaresi (2026-08-29 UX denetimi İş 5): ödemesi iade edilmiş sipariş
                     listede de belli olsun — durum rozeti tek başına bunu söylemiyor. */}

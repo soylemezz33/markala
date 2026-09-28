@@ -66,7 +66,12 @@ export function formatDateShort(iso: string | Date): string {
 
 const orderStatusLabels: Record<string, string> = {
   "siparis-alindi": "Sipariş Alındı",
-  "tasarim-bekleniyor": "Tasarım Bekleniyor",
+  // 2026-09-28: eski metin "Tasarım Bekleniyor"du. Müşteri geri bildirimi: "ilk gördüğümde
+  // bana sanki ben tasarımımı yükleyememişim hissiyatı oluşturdu". Haklıydı — o siparişte
+  // dosyasını çoktan yüklemişti. Ödenmiş 89 siparişin 62'sinde müşteri dosyayı göndermiş
+  // durumda, yani çoğunluğa yanlış şey söylüyorduk. Bağlam verilmediğinde de asla
+  // "sen eksik bıraktın" izlenimi vermeyen bu metin kullanılıyor.
+  "tasarim-bekleniyor": "Tasarım Hazırlanıyor",
   "tasarim-onayindi": "Tasarım Onayı Bekliyor",
   "tasarim-onaylandi": "Tasarım Onaylandı",
   "uretimde": "Üretimde",
@@ -75,9 +80,35 @@ const orderStatusLabels: Record<string, string> = {
   "iptal-edildi": "İptal Edildi",
 };
 
-export function orderStatusLabel(status: string): string {
+/** Siparişin tasarım yolu — etiketin kimi beklediğimizi doğru söylemesi için. */
+export interface TasarimBaglami {
+  /** Müşteri baskıya hazır dosyasını yüklemiş mi? */
+  musteriDosyasiVar: boolean;
+  /** Tasarımı bizden istemiş mi? */
+  tasarimDestegi: boolean;
+}
+
+/** Sipariş kalemlerinden tasarım bağlamını çıkarır. */
+export function tasarimBaglamiCikar(
+  items: ReadonlyArray<{ uploadedFileName?: string | null; needsDesignSupport?: boolean | null }>,
+): TasarimBaglami {
+  return {
+    musteriDosyasiVar: items.some((i) => !!i.uploadedFileName),
+    tasarimDestegi: items.some((i) => !!i.needsDesignSupport),
+  };
+}
+
+export function orderStatusLabel(status: string, baglam?: TasarimBaglami): string {
   // normStatus (underscore→hyphen) zaten çağrılmış olmalı; bunu burada da uygula (çift güvence).
   const normalized = status.replace(/_/g, "-");
+  // Tasarım aşamasında BEKLENEN TARAF siparişe göre değişir: müşteri dosyasını
+  // göndermişse ya da tasarımı bizden istemişse bekleyen BİZ oluruz; hiçbiri yoksa
+  // gerçekten müşterinin dosyasını bekliyoruz ve bunu açıkça söylemeliyiz.
+  if (normalized === "tasarim-bekleniyor" && baglam) {
+    return baglam.musteriDosyasiVar || baglam.tasarimDestegi
+      ? "Tasarım Hazırlanıyor"
+      : "Dosyanız Bekleniyor";
+  }
   return orderStatusLabels[normalized] ?? orderStatusLabels[status] ?? "Bilinmeyen Durum";
 }
 

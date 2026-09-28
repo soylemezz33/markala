@@ -9,7 +9,7 @@ import { ArrowLeft, Truck, Receipt, MapPin, Buildings, WhatsappLogo } from "@pho
 import { whatsappUrl } from "@/lib/whatsapp";
 import { useAuthStore } from "@/lib/auth-store";
 import { apiClient, withRefresh } from "@/lib/api";
-import { formatDate, orderStatusLabel } from "@/lib/format";
+import { formatDate, orderStatusLabel, tasarimBaglamiCikar } from "@/lib/format";
 import { unitCountFromSummary } from "@/lib/cart-store";
 import { buildTrackingEvents } from "@/lib/tracking-events";
 import { odemeHataMesaji } from "@/lib/odeme-hata-mesaji";
@@ -107,7 +107,7 @@ export default function OrderDetailPage({ params }: { params: { orderId: string 
           <p className="mt-1 text-sm text-ink-500">{formatDate(order.createdAt)}</p>
         </div>
         <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-brand-100 text-brand-900">
-          {orderStatusLabel(normStatus(order.status as unknown as string))}
+          {orderStatusLabel(normStatus(order.status as unknown as string), tasarimBaglamiCikar(order.items))}
         </span>
       </header>
 
