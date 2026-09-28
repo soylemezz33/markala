@@ -573,7 +573,10 @@ export class PaymentsService implements OnModuleInit {
     for (const o of pending) {
       try {
         const result = await this.iyzico.retrieveCheckoutForm(o.iyzicoCheckoutToken as string, o.id);
-        if (result.status !== "success") continue;
+        if (result.status !== "success") {
+          await this.kesinBasarisizligiKaydet(o, result);
+          continue;
+        }
         const basketOk = result.basketId === o.orderNumber;
         const priceKurus = Math.round(Number(result.price) * 100);
         const expectedKurus = Math.round(Number(o.total) * 100);
@@ -621,6 +624,49 @@ export class PaymentsService implements OnModuleInit {
     }
     if (recovered) this.logger.warn(`reconcile tamam: ${recovered}/${pending.length} sipariş kurtarıldı`);
     return { checked: pending.length, recovered };
+  }
+
+  /**
+   * Reconcile'da iyzico KESİN bir ödeme hatası döndüyse siparişe işle (2026-09-28).
+   *
+   * Eskiden `status !== "success"` olan her yanıt sessizce atlanıyordu; sonuç olarak
+   * müşterinin denediği ama BAŞARISIZ olan ödeme panelde sonsuza dek "beklemede"
+   * görünüyor, hata kodu hiçbir yere yazılmıyordu. Gerçek vaka: MK-MUKVO846-X3V3 —
+   * iyzico "10208 Üye işyeri kategori kodu hatalı" diyordu, panelde sebep yoktu,
+   * müşteri de siparişten vazgeçti. Kimse olup biteni göremedi.
+   *
+   * "Kesin hata" için İKİ koşul birden aranır, yoksa yanlış siparişi başarısız işaretleriz:
+   *  - errorCode var ve 5122 DEĞİL. 5122 = "tokena ait ödeme bilgisi bulunamadı", yani
+   *    müşteri ödeme formunu hiç göndermemiş (sepet terki); o sipariş beklemede kalmalı,
+   *    müşteri hâlâ ödeyebilir.
+   *  - basketId siparişle eşleşiyor. Ağ hatasında retrieve `{status:"failure",
+   *    errorMessage:"retrieve_error"}` döner — errorCode ve basketId YOKTUR, bu yüzden
+   *    geçici ağ sorunu buraya düşmez.
+   *
+   * Başarısız işaretlemek müşteriyi kilitlemez, tersine açar: başarısız ödemede tekrar
+   * ödeme yolu ve panelden IBAN ile tahsilat devreye girer.
+   */
+  private async kesinBasarisizligiKaydet(
+    order: { id: string; orderNumber: string },
+    result: { errorCode?: string; errorMessage?: string; basketId?: string },
+  ): Promise<void> {
+    const kod = result.errorCode;
+    if (!kod || kod === "5122") return;
+    if (result.basketId !== order.orderNumber) return;
+
+    const guncel = await this.prisma.order.updateMany({
+      where: { id: order.id, paymentStatus: "beklemede" },
+      data: {
+        paymentStatus: "basarisiz",
+        paymentErrorCode: kod,
+        paymentErrorMessage: result.errorMessage ?? null,
+      },
+    });
+    if (guncel.count > 0) {
+      this.logger.warn(
+        `reconcile: BAŞARISIZ işaretlendi order=${order.orderNumber} kod=${kod} mesaj=${result.errorMessage ?? "-"} (callback hiç gelmemişti)`,
+      );
+    }
   }
 
   /**
