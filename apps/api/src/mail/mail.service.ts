@@ -6,6 +6,7 @@ import type { Transporter } from "nodemailer";
 import { PrismaService } from "../prisma/prisma.service";
 import { renderEmail, emailButton, emailButtonColored, emailFallbackLink } from "./email-layout";
 import { BANKA_HESABI, ODEME_YONTEMI } from "../common/banka";
+import { odemeHataOzeti } from "../common/odeme-hata-ozeti";
 import { epostaYerTutucuMu } from "../orders/manuel-siparis-kural";
 
 /**
@@ -866,6 +867,10 @@ Markala`;
       user?: { fullName: string | null } | null;
       /** Havalede hesap bilgisi maile eklenir; lifecycle findMany tüm skaler alanları getirir. */
       paymentMethod?: string | null;
+      /** "beklemede" (hiç denenmedi) ya da "basarisiz" (banka reddetti) — metni ayırır. */
+      paymentStatus?: string | null;
+      /** iyzico hata kodu; başarısız ödemede sebebi müşteriye yazmak için. */
+      paymentErrorCode?: string | null;
     },
     stage: 1 | 2,
   ): Promise<boolean> {
@@ -882,7 +887,9 @@ Markala`;
     const webUrl = (this.config.get<string>("WEB_URL") ?? "https://markala.com.tr").replace(/\/$/, "");
     // Sipariş detayında "Ödeme Yap" akışı zaten var → müşteriyi doğrudan oraya götür.
     const payUrl = `${webUrl}/hesabim/siparislerim/${order.id}`;
-    const template = `payment-recovery-${stage}`;
+    /** Bildirim kaydında iki akış ayrılsın — "kaç kart reddi kurtarmaya çalıştık" sorulabilsin. */
+    const template =
+      order.paymentStatus === "basarisiz" ? `payment-failed-retry-${stage}` : `payment-recovery-${stage}`;
 
     /**
      * Havale hatırlatmasında HESAP BİLGİSİ tekrar verilir.
@@ -910,16 +917,59 @@ Markala`;
       </div>`
       : "";
 
+    /**
+     * BAŞARISIZ ödeme ayrı bir hikâye (2026-10-05): müşteri formu terk etmedi, kartı
+     * reddedildi. "Ödemeni tamamla" demek olup biteni bilmiyormuş gibi görünür ve müşteriyi
+     * aynı duvara tekrar koşturur. Sebebi söyleyip somut çıkış yolu vermek gerekir.
+     */
+    const basarisizOdeme = order.paymentStatus === "basarisiz";
+    const hata = basarisizOdeme ? odemeHataOzeti(order.paymentErrorCode) : null;
+
     // 2. mailde YANLIŞ VAAT YOK: iptal otomasyonu olmadığı için "yarın iptal edilir" denmez,
     // "stok/fiyat değişebilir" gibi baskı cümlesi de kurulmaz — nötr son hatırlatma.
-    const subject =
-      stage === 1
+    const subject = basarisizOdeme
+      ? stage === 1
+        ? `Ödemen onaylanmadı — tekrar deneyebilirsin (${order.orderNumber})`
+        : `Son hatırlatma: ${order.orderNumber} siparişinin ödemesi hâlâ alınamadı`
+      : stage === 1
         ? `Siparişin seni bekliyor, ödemeni tamamla (${order.orderNumber})`
         : `Son hatırlatma: ${order.orderNumber} siparişinin ödemesi açık`;
-    const introLine =
-      stage === 1
+    const introLine = basarisizOdeme
+      ? stage === 1
+        ? `siparişini aldık ama ödeme adımı tamamlanamadı. ${hata!.sebep} Kartından herhangi bir tahsilat yapılmadı.`
+        : `siparişinin ödemesi hâlâ alınamadı. ${hata!.sebep} Bu, konuyla ilgili son hatırlatmamız.`
+      : stage === 1
         ? "siparişini aldık ama ödemesi henüz tamamlanmadı. Ödemeni tamamla, üretime alalım."
         : "siparişinin ödemesi hâlâ açık görünüyor. Bu, konuyla ilgili son hatırlatmamız.";
+
+    /**
+     * Başarısız ödemede somut çıkış yolu + KART yerine havale alternatifi.
+     *
+     * %5 İNDİRİM BURADA VAAT EDİLMEZ: havale indirimi sipariş OLUŞURKEN uygulanıyor
+     * (orders.service.ts, HAVALE_INDIRIM_YUZDE). Kartla açılmış siparişin tutarı zaten
+     * indirimsiz; "havale ile öde %5 kazan" demek tutmayan bir vaat olur.
+     */
+    const cikisYoluHtml = hata
+      ? `<div style="margin:0 0 16px;padding:14px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px">
+          <p style="margin:0 0 6px;font-weight:600;color:#1A1410">Ne yapabilirsin?</p>
+          <p style="margin:0;font-size:14px;color:#44403c;line-height:1.7">${esc(hata.cikisYolu)}</p>
+        </div>`
+      : "";
+    const havaleAlternatifiHtml =
+      hata && !isHavale
+        ? `<div style="margin:16px 0 0;padding:14px;background:#F7F5F0;border:1px solid #E7E2D8;border-radius:10px">
+          <p style="margin:0 0 10px;font-weight:600;color:#1A1410">Kartla olmuyorsa havale/EFT ile de ödeyebilirsin</p>
+          <p style="margin:0;font-size:14px;color:#44403c;line-height:1.9">
+            <strong style="color:#1A1410">Alıcı:</strong> ${esc(BANKA_HESABI.unvan)}<br>
+            <strong style="color:#1A1410">Banka:</strong> ${esc(BANKA_HESABI.banka)}<br>
+            <strong style="color:#1A1410">IBAN:</strong> <span style="font-family:monospace;font-size:15px">${esc(BANKA_HESABI.iban)}</span><br>
+            <strong style="color:#1A1410">Tutar:</strong> ${fmt(order.total)} ₺<br>
+            <strong style="color:#1A1410">Açıklama:</strong> <span style="font-family:monospace">${esc(order.orderNumber)}</span>
+          </p>
+          <p style="margin:10px 0 0;font-size:13px;color:#8a6d3b">Açıklama alanına sipariş numaranı yazmayı unutma — ödemeni siparişinle bu numara üzerinden eşleştiriyoruz.</p>
+          <p style="margin:8px 0 0;font-size:12px;color:#78716c">Hesap bilgilerimiz değişmez. Farklı bir IBAN'a ödeme isteyen e-posta/mesaj alırsan dikkate alma, bizi 0324 433 33 51'den ara.</p>
+        </div>`
+        : "";
 
     const rowsHtml = (order.items ?? [])
       .map(
@@ -932,7 +982,9 @@ Markala`;
 
     const text =
       `${name ? `Merhaba ${name},` : "Merhaba,"}\n\n` +
-      `${order.orderNumber} numaralı siparişinin ödemesi henüz tamamlanmadı.\n\n` +
+      (hata
+        ? `${order.orderNumber} numaralı siparişinin ödeme adımı tamamlanamadı. ${hata.sebep}\nKartından herhangi bir tahsilat yapılmadı.\n\nNE YAPABİLİRSİN: ${hata.cikisYolu}\n\n`
+        : `${order.orderNumber} numaralı siparişinin ödemesi henüz tamamlanmadı.\n\n`) +
       (order.items ?? []).map((i) => `  • ${i.productName} × ${i.quantity} - ${fmt(i.lineTotal)} ₺`).join("\n") +
       `\n\nToplam (KDV dahil): ${fmt(order.total)} ₺\n\n` +
       (isHavale
@@ -947,17 +999,39 @@ Açıklama alanına sipariş numaranızı yazın — ödeme bu numarayla eşleş
 Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin (0324 433 33 51).
 
 `
-        : `Ödemeyi tamamla: ${payUrl}
+        : `${hata ? "Ödemeyi tekrar dene" : "Ödemeyi tamamla"}: ${payUrl}
 
 `) +
+      (hata && !isHavale
+        ? `KARTLA OLMUYORSA HAVALE/EFT İLE DE ÖDEYEBİLİRSİN
+Alıcı: ${BANKA_HESABI.unvan}
+Banka: ${BANKA_HESABI.banka}
+IBAN: ${BANKA_HESABI.iban}
+Tutar: ${fmt(order.total)} ₺
+Açıklama: ${order.orderNumber}
+
+Açıklama alanına sipariş numaranı yaz — ödeme bu numarayla eşleştirilir.
+Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etme (0324 433 33 51).
+
+`
+        : "") +
       `Sorun yaşıyorsan bu e-postayı yanıtlayabilirsin.\n\nMarkala, 324 Ajans BT tarafından gönderilmiştir (işlemsel ileti).`;
 
     const html = renderEmail({
-      title: stage === 1 ? "Siparişin Seni Bekliyor" : "Son Hatırlatma",
+      title: hata
+        ? stage === 1
+          ? "Ödemen Onaylanmadı"
+          : "Son Hatırlatma"
+        : stage === 1
+          ? "Siparişin Seni Bekliyor"
+          : "Son Hatırlatma",
       intro: `${greeting} ${introLine}`,
-      preheader: `${order.orderNumber}, ödeme bekleniyor, toplam ${fmt(order.total)} ₺`,
+      preheader: hata
+        ? `${order.orderNumber}, ödeme onaylanmadı, tekrar deneyebilirsin`
+        : `${order.orderNumber}, ödeme bekleniyor, toplam ${fmt(order.total)} ₺`,
       bodyHtml: `<p style="margin:0 0 4px">Sipariş No: <strong>${esc(order.orderNumber)}</strong></p>
         <p style="margin:0 0 14px;color:#78716c;font-size:13px">Ödemen tamamlanınca siparişini hemen üretime alıyoruz.</p>
+        ${cikisYoluHtml}
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;font-size:14px">
           <thead><tr>
             <th style="padding:8px;text-align:left;border-bottom:2px solid #1A1410;color:#1A1410">Ürün</th>
@@ -970,7 +1044,8 @@ Hesap bilgilerimiz değişmez; farklı bir IBAN isteyen mesajlara itibar etmeyin
             <td style="padding:8px;text-align:right;font-weight:700;border-top:2px solid #1A1410">${fmt(order.total)} ₺</td>
           </tr></tfoot>
         </table>
-        ${isHavale ? havaleHtml : emailButton("Ödemeyi Tamamla", payUrl) + emailFallbackLink(payUrl)}
+        ${isHavale ? havaleHtml : emailButton(hata ? "Ödemeyi Tekrar Dene" : "Ödemeyi Tamamla", payUrl) + emailFallbackLink(payUrl)}
+        ${havaleAlternatifiHtml}
         <p style="margin:14px 0 0;color:#78716c;font-size:13px">Bir sorunla karşılaştıysan ya da vazgeçtiysen bu e-postayı yanıtlaman yeterli, yardımcı olalım.</p>`,
     });
 

@@ -9,6 +9,7 @@ import { whatsappUrl } from "@/lib/whatsapp";
 import { useAuthStore } from "@/lib/auth-store";
 import { odemeHataMesaji } from "@/lib/odeme-hata-mesaji";
 import { useOdemeSaglayiciDurumu } from "@/lib/odeme-saglayici-durumu";
+import { BankaBilgileri } from "@/components/banka-bilgileri";
 
 /**
  * iyzico ödeme başarısız/iptal yönlendirmesi.
@@ -125,6 +126,25 @@ function PaymentFailedContent() {
           ? "Ödemeni hesabındaki sipariş sayfasından dilediğin zaman tamamlayabilirsin."
           : "Giriş yapmadan sipariş verdiğin için ödeme bağlantısını hesabından açamazsın, WhatsApp'tan yaz, sipariş referansınla ödeme bağlantısını hemen ilet edelim."}
       </p>
+
+      {/**
+       * HAVALE ÇIKIŞ YOLU (2026-10-05). Kartı reddedilen müşterinin elinde tek seçenek
+       * "aynı kartla tekrar dene" kalıyordu; canlı veride siteden çıkan müşterilerin hiçbiri
+       * geri dönmedi. IBAN'ı burada göstermek kartı çalışmayan müşteriye ikinci bir yol açar.
+       *
+       * %5 İNDİRİM YAZILMAZ: havale indirimi sipariş OLUŞURKEN uygulanıyor; kartla açılmış
+       * bu siparişin tutarı zaten indirimsiz, indirim sözü vermek tutmayan bir vaat olurdu.
+       *
+       * Tutar/sipariş no bu sayfada YOK (URL yalnız orderId taşır), o yüzden BankaBilgileri
+       * sipariş bağlamı olmadan basılır ve açıklama alanına referansın yazılması istenir.
+       */}
+      <div className="mt-10 text-left">
+        <p className="mb-3 text-center text-sm text-ink-700">
+          Kartla olmuyorsa <strong className="text-ink-900">havale/EFT</strong> ile de ödeyebilirsin.
+          {orderId && " Açıklama alanına yukarıdaki sipariş referansını yazman yeterli."}
+        </p>
+        <BankaBilgileri />
+      </div>
     </Container>
   );
 }

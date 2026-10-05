@@ -8,11 +8,18 @@ import {
   YORUM_SESSIZLIK_GUN,
   type YorumAdayi,
 } from "./yorum-daveti-kurali";
+import {
+  kurtarmaAsamasi,
+  KURTARMA_SURELERI,
+  KURTARILABILIR_DURUMLAR,
+} from "./odeme-kurtarma-kurali";
 
-/** Kurtarma penceresi sınırları (saat). 72 saatten eski siparişe DOKUNULMAZ. */
-const STAGE1_MIN_AGE_H = 2; // çok taze siparişi dürtme — müşteri hâlâ ödeme akışında olabilir
-const STAGE1_MAX_AGE_H = 24;
-const STAGE2_MAX_AGE_H = 72;
+/**
+ * Sorgu penceresi (saat). Aşama kararı kurtarmaAsamasi() içinde verilir; buradaki iki sınır
+ * yalnızca veritabanından çekilecek aday kümesini daraltır.
+ */
+const STAGE2_MAX_AGE_H = KURTARMA_SURELERI.sonAsamaMaxSaat; // 72 saatten eskiye dokunma
+const EN_ERKEN_AGE_H = KURTARMA_SURELERI.basarisizMinSaat; // en erken durum: başarısız, 15 dk
 
 /**
  * Müşteri yaşam döngüsü (retention) zamanlanmış işleri.
@@ -49,14 +56,15 @@ export class LifecycleService {
     const now = Date.now();
     const h = 60 * 60 * 1000;
     const oldest = new Date(now - STAGE2_MAX_AGE_H * h); // 72 saatten eskiye dokunma
-    const newest = new Date(now - STAGE1_MIN_AGE_H * h); // 2 saatten tazeye dokunma
+    const newest = new Date(now - EN_ERKEN_AGE_H * h); // 15 dakikadan tazeye hiç dokunma
 
-    // Aday siparişler: ödeme bekliyor + online ödeme yolu (cari HARİÇ) + iptal edilmemiş +
-    // soft-delete edilmemiş + pencere içinde + son aşamaya (2) ulaşmamış.
-    // paymentStatus enum'unda "beklemede" = ödeme bekliyor karşılığıdır (basarili/basarisiz/iade_edildi diğerleri).
+    // Aday siparişler: ödemesi tamamlanmamış (BEKLEMEDE ya da BAŞARISIZ) + online ödeme yolu
+    // (cari HARİÇ) + iptal edilmemiş + soft-delete edilmemiş + pencere içinde + son aşamaya
+    // ulaşmamış. Durum başına zamanlama farkı kurtarmaAsamasi() içinde uygulanır; burada
+    // pencerenin alt ucu en erken duruma (başarısız, 15 dk) göre açılır.
     const candidates = await this.prisma.order.findMany({
       where: {
-        paymentStatus: "beklemede",
+        paymentStatus: { in: [...KURTARILABILIR_DURUMLAR] },
         paymentMethod: { not: "cari" },
         status: { not: "iptal_edildi" },
         deletedAt: null,
@@ -76,16 +84,40 @@ export class LifecycleService {
     let stage1 = 0;
     let stage2 = 0;
 
+    /**
+     * Mükerrer sipariş koruması: kartı reddedilen müşteri çoğu zaman sepeti yeniden kurup
+     * YENİ bir sipariş açıp ödüyor (canlıda 6 müşteriden 3'ü böyle yaptı). Eski siparişe
+     * "ödemeni tamamla" demek, zaten ödediği bir iş için onu sıkıştırmak olur.
+     *
+     * Tek sorgu: adayların e-postalarına ait ödenmiş siparişlerin tarihleri alınır, kıyas
+     * bellekte yapılır — aday başına ayrı sorgu atılmaz.
+     */
+    const adayMailleri = [...new Set(candidates.map((o) => o.email).filter(Boolean))] as string[];
+    const odenmisler = adayMailleri.length
+      ? await this.prisma.order.findMany({
+          where: { email: { in: adayMailleri }, paymentStatus: "basarili", deletedAt: null },
+          select: { email: true, createdAt: true },
+        })
+      : [];
+    const sonOdemeZamani = new Map<string, number>();
+    for (const o of odenmisler) {
+      if (!o.email) continue;
+      const t = o.createdAt.getTime();
+      if (t > (sonOdemeZamani.get(o.email) ?? 0)) sonOdemeZamani.set(o.email, t);
+    }
+
     for (const order of candidates) {
       const ageH = (now - order.createdAt.getTime()) / h;
+      const sonrakiOdenmisSiparisVar =
+        !!order.email && (sonOdemeZamani.get(order.email) ?? 0) > order.createdAt.getTime();
 
-      // Uygun aşamayı belirle. 24 saati geçmiş ama hiç mail almamış sipariş (örn. API
-      // kapalıyken pencereyi kaçırdı) doğrudan stage 2 alır — müşteriye üst üste iki
-      // hatırlatma gitmez, aşama atlanır.
-      let target: 1 | 2 | null = null;
-      if (ageH >= STAGE1_MAX_AGE_H && order.recoveryMailStage < 2) target = 2;
-      else if (ageH >= STAGE1_MIN_AGE_H && order.recoveryMailStage < 1) target = 1;
-      if (target === null) continue; // 2-24 saat bandında stage 1 zaten gönderilmiş → bekle
+      const target = kurtarmaAsamasi({
+        odemeDurumu: order.paymentStatus,
+        yasSaat: ageH,
+        gonderilenAsama: order.recoveryMailStage,
+        sonrakiOdenmisSiparisVar,
+      });
+      if (target === null) continue;
 
       // Önce mail, başarılıysa aşama işaretle: mail düşerse aşama ilerlemez, sonraki saat
       // yeniden denenir (sendPaymentRecoveryEmail hata fırlatmaz, false döner).

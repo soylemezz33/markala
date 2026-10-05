@@ -24,10 +24,15 @@ export interface OdemeHatasi {
  * uydurma açıklama üretilmez.
  */
 const KOD_TABLOSU: Record<string, OdemeHatasi> = {
+  /**
+   * "havale ile %5 indirim" BURADA VAAT EDİLMEZ (2026-10-05 düzeltmesi): havale indirimi
+   * sipariş OLUŞURKEN uygulanıyor (orders.service.ts, HAVALE_INDIRIM_YUZDE). Kartla açılmış
+   * bu siparişin tutarı zaten indirimsiz — müşteriye indirim sözü vermek tutmayan bir vaat.
+   */
   "10051": {
     baslik: "Kartın limiti yetmedi",
     aciklama: "Bankan işlemi limit/bakiye yetersizliği nedeniyle onaylamadı.",
-    oneri: "Başka bir kartla deneyebilir ya da havale/EFT ile ödeyip %5 indirim kazanabilirsin.",
+    oneri: "Başka bir kartla deneyebilir ya da havale/EFT ile ödeyebilirsin.",
   },
   "10005": {
     baslik: "Banka işlemi onaylamadı",
@@ -58,6 +63,16 @@ const KOD_TABLOSU: Record<string, OdemeHatasi> = {
     baslik: "İşlem zaman aşımına uğradı",
     aciklama: "Ödeme adımı beklenenden uzun sürdüğü için iptal edildi.",
     oneri: "Tekrar denediğinde çoğunlukla sorunsuz tamamlanır.",
+  },
+  /**
+   * BİZİM üye işyeri tanımımızdaki kategori (MCC) kodu hatası — müşterinin kartıyla ilgisi
+   * YOK (canlıda 25 ve 28 Eylül 2026, iki müşteri). "Kartını kontrol et" demek yanlış
+   * yönlendirme olur; müşteriyi suçlamadan tekrar denemeye ve desteğe yönlendiriyoruz.
+   */
+  "10208": {
+    baslik: "Ödeme altyapımızda sorun oluştu",
+    aciklama: "Bu hata kartınla ilgili değil, bizim ödeme tanımımızdan kaynaklandı.",
+    oneri: "Tekrar denemen çoğunlukla yeterli oluyor. Yine olmazsa 0324 433 33 51'den bize ulaş, ödemeyi birlikte tamamlayalım.",
   },
   // 3D Secure doğrulaması tamamlanmadı (şifre girilmedi / pencere kapatıldı).
   "10052": {
