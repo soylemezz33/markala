@@ -176,6 +176,16 @@ export const PANEL_ROLES = ["super_admin", "admin", "tasarimci", "muhasebe", "ka
 export type PanelRole = (typeof PANEL_ROLES)[number];
 
 /**
+ * Rol yetki matrisinin tanıdığı bir panel rolü mü? RolesGuard bunu kullanır: izin araması
+ * YALNIZ panel rolleri içindir. "customer" matris dışıdır — @Roles("customer") uçlarında rol
+ * adı yeter. (17 Eyl–7 Eki 2026: müşteri GET /orders/:id'den 403 aldı; sipariş detayı,
+ * başarı sayfası doğrulaması ve site satın alma etiketi üç hafta kırık kaldı.)
+ */
+export function panelRoluMu(role: string | undefined): boolean {
+  return !!role && (PANEL_ROLES as readonly string[]).includes(role);
+}
+
+/**
  * İzin anahtarlarının panelde gösterilen adı/açıklaması (2026-09-17, rol yetki matrisi).
  * Sıra = ekrandaki sıra. Anahtar listesi PERM ile bire bir; biri eklenip burası unutulursa
  * aşağıdaki `PERM_LISTESI` derlemede değil testte yakalar (permissions.spec).

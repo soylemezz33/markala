@@ -6,7 +6,7 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { PERMS_KEY, roleHasPerm, rolJokerMi, type Perm } from "./permissions";
+import { PERMS_KEY, panelRoluMu, roleHasPerm, rolJokerMi, type Perm } from "./permissions";
 
 export const ROLES_KEY = "roles";
 export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
@@ -35,8 +35,11 @@ export class RolesGuard implements CanActivate {
     //    2026-09-17 istisnası: rol panelden KISITLANMIŞSA (rolJokerMi=false, bugün yalnız
     //    admin için mümkün) ve uç `@Perms` taşıyorsa, rol adı yetmez → izin aranır. `@Perms`
     //    taşımayan eski uçlar rol eşleşmesiyle açık kalır; o uçlar için izin anahtarı yok.
+    //    2026-10-07: izin araması YALNIZ panel rolleri için. "customer" matriste yok (izni yok,
+    //    kısıtlanamaz); @Roles("customer") uçlarında rol adı yeter — aksi hâlde müşteri kendi
+    //    siparişini okuyamaz (17 Eyl–7 Eki arası yaşanan 403 arızası, roles.guard.spec).
     if (required.includes(user.role)) {
-      if (rolJokerMi(user.role) || !perms?.length) return true;
+      if (!perms?.length || !panelRoluMu(user.role) || rolJokerMi(user.role)) return true;
       if (perms.every((p) => roleHasPerm(user.role, p))) return true;
       throw new ForbiddenException("Bu işlem için yetkiniz yok.");
     }

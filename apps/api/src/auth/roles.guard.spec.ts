@@ -94,3 +94,21 @@ describe("RolesGuard — panelden genişletilmiş dar rol", () => {
     expect(gecerMi("kargo", { roles: ["admin", "super_admin"], perms: [PERM.ORDERS_STATUS] })).toBe(true);
   });
 });
+
+describe("RolesGuard — matris dışı rol (customer)", () => {
+  // 2026-09-17 kısıt istisnası müşteriyi de kapsıyordu: customer ROLE_PERMISSIONS'ta yok →
+  // joker değil → @Perms(ORDERS_READ) taşıyan GET /orders/:id ucunda izin arandı → 403.
+  // Müşteri 3 hafta kendi sipariş detayını açamadı, başarı sayfası "doğrulanıyor"da kaldı.
+  it("customer, @Roles('customer') + @Perms(ORDERS_READ) uçtan geçer", () => {
+    expect(gecerMi("customer", { roles: ["customer", "admin", "super_admin"], perms: [PERM.ORDERS_READ] })).toBe(true);
+  });
+
+  it("customer, @Roles listesinde yoksa yine geçemez (izin tabanlı açılım ona kapalı)", () => {
+    expect(gecerMi("customer", { roles: ["admin", "super_admin"], perms: [PERM.ORDERS_READ] })).toBe(false);
+  });
+
+  it("panel rolleri için davranış değişmedi: kısıtlı admin izinsiz uçtan geçemez", () => {
+    setOzelRolIzinleri({ admin: [PERM.CATALOG] });
+    expect(gecerMi("admin", { roles: ["customer", "admin", "super_admin"], perms: [PERM.ORDERS_READ] })).toBe(false);
+  });
+});
