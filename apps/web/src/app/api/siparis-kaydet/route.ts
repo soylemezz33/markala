@@ -306,7 +306,13 @@ export async function POST(req: NextRequest) {
       console.error(`[siparis-kaydet] backend ${res.status}:`, detail);
       const m = (detail as { message?: unknown })?.message;
       const errMsg = Array.isArray(m) ? m.join(", ") : typeof m === "string" ? m : undefined;
-      return NextResponse.json({ ok: false, status: res.status, error: errMsg }, { status: 502 });
+      // Backend'in 4xx'i (kupon geçersiz, adres hatalı…) MÜŞTERİNİN hatasıdır → aynı statüyle ve
+      // mesajıyla geçir. 2026-10-07: her backend hatası 502 dönüyordu; Cloudflare 502'yi kendi
+      // HTML hata sayfasıyla değiştirdiğinden istemci JSON'u okuyamayıp "Sunucuya ulaşılamadı"
+      // gösterdi — müşteri "Bu kupon yalnızca ilk siparişinizde geçerlidir" mesajını hiç görmedi
+      // ve 4 kez denedi. 502 yalnız backend'in gerçek 5xx'i için.
+      const status = res.status >= 500 ? 502 : res.status;
+      return NextResponse.json({ ok: false, status: res.status, error: errMsg }, { status });
     }
 
     const order = (await res.json()) as { id?: string; orderNumber?: string; paymentNonce?: string };

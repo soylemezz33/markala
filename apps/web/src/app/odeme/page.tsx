@@ -160,7 +160,17 @@ export default function CheckoutPage() {
     })
       .then((r) => r.json())
       .then((d) => {
-        if (d && d.valid) setCouponInfo({ code: d.code, discount: Number(d.discount) || 0, freeShipping: Boolean(d.freeShipping) });
+        if (d && d.valid) {
+          setCouponInfo({ code: d.code, discount: Number(d.discount) || 0, freeShipping: Boolean(d.freeShipping) });
+        } else if (d && d.reason) {
+          // Backend kuponu GEREKÇELİ reddetti (ör. HOSGELDIN ama daha önce sipariş var) → store'dan
+          // düşür ve sebebi göster. 2026-10-07: reddedilen HOSGELDIN store'da kalıp KNOWN_COUPONS
+          // tahminiyle "uygulanmış" sayılıyor, siparişe gidiyor ve backend 400 veriyordu; müşteri
+          // 4 kez "Sipariş oluşturulamadı" gördü. Ağ hatasında (reason yok) dokunma.
+          setCouponInfo(null);
+          setCoupon(null);
+          setCouponError(d.reason);
+        }
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,6 +210,8 @@ export default function CheckoutPage() {
         setCouponInput("");
       } else if (data && data.reason) {
         setCouponInfo(null);
+        // Aynı kod store'da uygulanmış duruyorsa düşür — reddedilen kupon siparişe gitmesin.
+        if (couponCode === code) setCoupon(null);
         setCouponError(data.reason);
       } else {
         // Backend ulaşılamadı → bilinen kupon için zarif fallback (gerçek indirim siparişte kesinleşir).
@@ -650,6 +662,12 @@ export default function CheckoutPage() {
       // siparişi açılıyordu (21 Ağustos'taki ikili bekleyen siparişlerin sebebi). Artık tuz
       // yalnız ödeme GERÇEKTEN başladığında (iyzico'ya yönlenirken) ya da cari sipariş
       // tamamlandığında yenilenir → aynı payload'lı retry mevcut siparişi geri getirir.
+      // Backend siparişi KUPON yüzünden reddettiyse kuponu düşür: aksi hâlde "tekrar dene" aynı
+      // kuponla aynı 400'e çarpar (2026-10-07, HOSGELDIN + önceki sipariş). Mesaj yine gösterilir.
+      if (!parsed.ok && typeof parsed.error === "string" && /kupon/i.test(parsed.error)) {
+        setCoupon(null);
+        setCouponInfo(null);
+      }
       return parsed;
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
