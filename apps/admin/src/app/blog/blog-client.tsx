@@ -250,7 +250,14 @@ export function BlogClient({ posts, categories }: Props) {
                   <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kategori</th>
                   <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Yazar</th>
                   <th className="text-center px-4 py-3 font-semibold">Durum</th>
-                  <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Görüntülenme</th>
+                  {/* viewCount'u site artırmaz; her sabah Search Console'dan son 28 günün tık sayısı yazılır
+                      (markala-google/gsc-blog-sayac.mjs, 7 Eki 2026). Eski etiket "Görüntülenme" hep 0 gösteriyordu. */}
+                  <th
+                    className="text-center px-4 py-3 font-semibold hidden lg:table-cell"
+                    title="Google aramadan gelen tık, son 28 gün (Search Console, her sabah güncellenir)"
+                  >
+                    Google tıkı · 28 gün
+                  </th>
                   <th className="text-left px-4 py-3 font-semibold hidden xl:table-cell">Tarih</th>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
