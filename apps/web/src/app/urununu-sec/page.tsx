@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Container } from "@markala/ui";
-import { ArrowRight, CursorClick, PaintBrush, Truck, WhatsappLogo, ShieldCheck, PenNib, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { CursorClick, PaintBrush, Truck, WhatsappLogo, ShieldCheck, PenNib, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { getCategories } from "@/lib/catalog";
 import { formatPriceDisplay } from "@/lib/format";
+import { KategoriGruplari } from "@/components/kategori-gruplari";
 import { InisKategoriKutusu, type InisKutusu } from "./inis-kategori-kutusu";
+import { AramaKutusu } from "./arama-kutusu";
 
 // Katalog fetch'iyle aynı pencere (anasayfa gibi) — fiyat çıpaları bayatlamasın.
 export const revalidate = 300;
@@ -12,11 +13,15 @@ export const revalidate = 300;
 /**
  * Instagram/Meta reklam iniş sayfası — "Ürününü seç" (2026-10-08).
  *
- * Neden ayrı sayfa: /kategoriler SEO hub'ı mobilde 27.000 px, 111 kart ve ürün sayısına göre
- * sıralı (en üstte İSG levhaları). Reklam "ürününü seç → tasarımını yaparız → kapına gelsin"
- * diyor; iniş de aynı 3 adımı, en çok sipariş alan 8 kategoriyi ve WhatsApp yolunu tek ekranda
- * vermeli. Sıra = son 90 günün ödenmiş sipariş sayısı (DB, 8 Eki 2026). Sayfa noindex:
- * reklam inişi, arama sonucu değil; hub'ın kanonik rolü değişmez.
+ * Neden ayrı sayfa: /kategoriler SEO hub'ı reklam inişi için fazla uzundu ve ürün sayısına
+ * göre sıralıydı. Reklam "ürününü seç → tasarımını yaparız → kapına gelsin" diyor; iniş de
+ * aynı 3 adımı, en çok sipariş alan 8 kategoriyi ve WhatsApp yolunu veriyor.
+ *
+ * Hasan geri bildirimi (8 Eki): müşteri 8 kutuda aradığını bulamazsa sayfadan ÇIKMASIN —
+ * arama kutusu + gruplu tam kategori listesi (akordeon) aynı sayfada. Kupon şeridi bu rotada
+ * gizli (layout > RotaGizle). Sayfa noindex: reklam inişi, arama sonucu değil.
+ *
+ * Kutu sırası = son 90 günün ödenmiş sipariş sayısı (DB, 8 Eki 2026).
  */
 export const metadata: Metadata = {
   title: "Ürününü Seç — Tasarımını Biz Yapalım",
@@ -56,40 +61,34 @@ export default async function UrununuSecPage() {
       slug: c.slug,
       name: c.name,
       imageUrl: c.imageUrl || null,
-      fiyat: c.startingPrice && c.startingPrice > 0 ? formatPriceDisplay(c.startingPrice) : null,
+      fiyat: c.startingPrice > 0 ? formatPriceDisplay(c.startingPrice) : null,
       not,
     }];
   });
 
   return (
     <>
-      {/* Hero — kısa: başlık + vaat + güven satırı. İlk kutular ilk ekranda görünsün diye alçak. */}
+      {/* Hero — alçak: başlık + güven satırı + arama. Kutular ilk ekranda başlasın. */}
       <section className="bg-[#2E1A5E] text-white">
-        <Container className="py-8 md:py-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-500">Online matbaa · markala.com.tr</p>
-          <h1 className="mt-2 text-[2rem] font-semibold leading-[1.1] md:text-5xl">
-            Ürününü seç,<br />tasarımını biz yapalım.
+        <Container className="pb-5 pt-6 md:pb-8 md:pt-10">
+          <h1 className="text-[1.75rem] font-semibold leading-[1.1] md:text-4xl">
+            Ürününü seç, tasarımını biz yapalım.
           </h1>
-          <p className="mt-3 max-w-md text-base text-white/80 md:text-lg">
-            Dosyan olsun ya da olmasın: seç, onayla, kapına gelsin.
-          </p>
-          <ul className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-sm text-white/90">
-            <li className="inline-flex items-center gap-1.5"><PenNib size={16} weight="bold" className="text-brand-500" /> Ücretsiz tasarım desteği</li>
-            <li className="inline-flex items-center gap-1.5"><MapPin size={16} weight="bold" className="text-brand-500" /> 81 ile kargo</li>
-            <li className="inline-flex items-center gap-1.5"><ShieldCheck size={16} weight="bold" className="text-brand-500" /> 3D Secure ödeme</li>
+          <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-white/90 md:text-sm">
+            <li className="inline-flex items-center gap-1.5"><PenNib size={15} weight="bold" className="text-brand-500" /> Ücretsiz tasarım</li>
+            <li className="inline-flex items-center gap-1.5"><MapPin size={15} weight="bold" className="text-brand-500" /> 81 ile kargo</li>
+            <li className="inline-flex items-center gap-1.5"><ShieldCheck size={15} weight="bold" className="text-brand-500" /> 3D Secure</li>
           </ul>
+          <div className="mt-4">
+            <AramaKutusu />
+          </div>
         </Container>
       </section>
 
-      {/* Kategori kutuları — mobilde 2 sütun, büyük dokunma alanı */}
+      {/* En çok sipariş edilen 8 kategori — mobilde 2 sütun */}
       <section className="bg-paper-100">
-        <Container className="py-6 md:py-10">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-lg font-semibold text-ink-900 md:text-2xl">En çok sipariş edilenler</h2>
-            <Link href="/kategoriler" className="text-sm font-medium text-brand-700 hover:underline">
-              Tüm kategoriler
-            </Link>
-          </div>
+        <Container className="py-5 md:py-10">
+          <h2 className="mb-3 text-lg font-semibold text-ink-900 md:text-2xl">En çok sipariş edilenler</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
             {kutular.map((k, i) => (
               <InisKategoriKutusu key={k.slug} kutu={k} sira={i} />
@@ -98,8 +97,17 @@ export default async function UrununuSecPage() {
         </Container>
       </section>
 
+      {/* Tüm kategoriler — gruplu akordeon; müşteri sayfadan çıkmadan bulur */}
+      <section className="bg-paper-100">
+        <Container className="pb-6 md:pb-10">
+          <h2 className="mb-1 text-lg font-semibold text-ink-900 md:text-2xl">Aradığın yukarıda yok mu?</h2>
+          <p className="mb-3 text-sm text-ink-500">Tüm ürün grupları — dokun, kategorileri gör.</p>
+          <KategoriGruplari categories={categories} mod="akordeon" />
+        </Container>
+      </section>
+
       {/* 3 adım — reklamdaki akışın birebir karşılığı */}
-      <section className="bg-paper-50 border-y border-paper-200">
+      <section className="border-y border-paper-200 bg-paper-50">
         <Container className="py-8 md:py-12">
           <h2 className="text-lg font-semibold text-ink-900 md:text-2xl">Nasıl çalışır?</h2>
           <ol className="mt-4 grid gap-3 md:grid-cols-3 md:gap-6">
@@ -138,12 +146,6 @@ export default async function UrununuSecPage() {
               <WhatsappLogo size={22} weight="fill" /> WhatsApp&apos;tan yaz
             </a>
           </div>
-          <p className="mt-6 text-center text-sm text-ink-500">
-            Aradığın ürün burada yok mu?{" "}
-            <Link href="/kategoriler" className="inline-flex items-center gap-1 font-medium text-brand-700 hover:underline">
-              750+ ürünün tamamına bak <ArrowRight size={14} weight="bold" />
-            </Link>
-          </p>
         </Container>
       </section>
     </>

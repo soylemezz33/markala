@@ -1,11 +1,7 @@
-import Link from "next/link";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
-import { getProducts, getCategories } from "@/lib/catalog";
-import { formatPriceDisplay } from "@/lib/format";
-import { PRODUCT_GROUPS } from "@/lib/product-groups";
+import { getCategories } from "@/lib/catalog";
+import { KategoriGruplari, kategorileriGrupla } from "@/components/kategori-gruplari";
 
 export const metadata: Metadata = {
   title: "Tüm Kategoriler | Matbaa & Reklam Ürünleri",
@@ -27,107 +23,52 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function CategoriesPage() {
-  const [products, categories] = await Promise.all([getProducts(), getCategories()]);
+// Katalogla aynı pencere; kategori adı/görseli/fiyatı DB'den geliyor.
+export const revalidate = 300;
 
-  // Kategoriyi popülerliğe göre sırala (ürün sayısı)
-  const sorted = [...categories].sort((a, b) => {
-    const aCount = products.filter((p) => p.categorySlug === a.slug).length;
-    const bCount = products.filter((p) => p.categorySlug === b.slug).length;
-    return bCount - aCount;
-  });
+/**
+ * Kategori hub'ı — yeniden düzen (2026-10-08, Hasan: "dağınık, filtreleme zor, kullanışsız").
+ *
+ * Eskisi: 111 kartlık düz ızgara, ürün SAYISINA göre sıralı (en üstte 10 İSG levha kategorisi),
+ * mobilde 27.000 px. Yenisi: kompakt hero + gruba atlayan çipler + ürün gruplarına göre
+ * bölümler; her kategori tek bir grupta, satırlar kompakt (görsel + ad + açıklama + fiyat).
+ * Grup bölümleri /kategoriler/[grup] hub'larına bağlanmaya devam eder (SEO yapısı korunur).
+ */
+export default async function CategoriesPage() {
+  const categories = await getCategories();
+  const gruplar = kategorileriGrupla(categories);
 
   return (
     <>
-      <div className="bg-paper-100 border-b border-paper-200">
-        <Container className="py-12 md:py-16 max-w-3xl">
-          <p className="text-sm text-brand-700 font-semibold uppercase tracking-wider">
-            Kategoriler
-          </p>
-          <h1 className="mt-2 text-3xl md:text-5xl font-semibold text-ink-900 leading-tight">
+      <div className="border-b border-paper-200 bg-paper-100">
+        <Container className="py-8 md:py-12">
+          <p className="text-sm font-semibold uppercase tracking-wider text-brand-700">Kategoriler</p>
+          <h1 className="mt-1 text-[1.75rem] font-semibold leading-tight text-ink-900 md:text-4xl">
             Tüm matbaa & reklam ürün kategorileri
           </h1>
-          <p className="mt-4 text-lg text-ink-700">
-            Kartvizitten branda afişe, kupadan etiket çıkartmaya: 20'den fazla
-            kategori. Her birinde paket, ebat ve adet seçenekleri.
+          <p className="mt-2 max-w-2xl text-base text-ink-700 md:text-lg">
+            {categories.length} kategori, ürün gruplarına göre. Her birinde ebat, adet ve paket seçenekleri; fiyat anında görünür.
           </p>
+          {/* Grup çipleri: sayfa içi atlama — mobilde yatay kaydırılabilir */}
+          <nav aria-label="Ürün grupları" className="-mx-4 mt-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+            <ul className="flex w-max gap-2 md:flex-wrap">
+              {gruplar.map((g) => (
+                <li key={g.id}>
+                  <a
+                    href={`#grup-${g.id}`}
+                    className="inline-block whitespace-nowrap rounded-full border border-paper-200 bg-paper-50 px-3.5 py-2 text-sm font-medium text-ink-700 transition-colors hover:border-ink-300 hover:text-ink-900"
+                  >
+                    {g.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </Container>
       </div>
 
-      <Container className="py-12 md:py-16">
-        {/* Ürün grupları (2026-09-01 SEO denetimi): bu hub 28 günde 0 gösterim alıyordu —
-            45 kategorilik düz bir liste, hiçbir arama terimine karşılık gelmiyordu.
-            Grup bağlantıları hem sayfaya yapı kazandırıyor hem de yeni hub'ları besliyor. */}
-        <nav aria-label="Ürün grupları" className="mb-10">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-500">
-            Ürün grupları
-          </h2>
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {PRODUCT_GROUPS.map((g) => (
-              <li key={g.slug}>
-                <Link
-                  href={`/kategoriler/${g.slug}`}
-                  className="inline-block px-3.5 py-2 rounded-full border border-paper-200 bg-paper-50 text-sm font-medium text-ink-700 hover:border-ink-300 hover:text-ink-900 transition-colors"
-                >
-                  {g.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <h2 className="sr-only">Tüm kategoriler</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-          {sorted.map((cat) => {
-            const productCount = products.filter(
-              (p) => p.categorySlug === cat.slug,
-            ).length;
-            return (
-              <Link
-                key={cat.slug}
-                href={`/kategori/${cat.slug}`}
-                className="group flex flex-col rounded-xl overflow-hidden bg-paper-50 border border-paper-200 hover:border-ink-300 hover:shadow-md transition-all"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden bg-paper-100">
-                  <Image
-                    src={cat.imageUrl}
-                    alt={cat.name}
-                    fill
-                    sizes="(min-width:1280px) 25vw, (min-width:640px) 33vw, 50vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-ink-900/50 via-transparent to-transparent" />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2 py-0.5 rounded bg-paper-50/90 text-ink-900 text-[11px] font-semibold">
-                      {productCount} ürün
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-semibold text-ink-900 group-hover:text-brand-700 transition-colors">
-                    {cat.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-ink-500 line-clamp-2">
-                    {cat.shortDescription}
-                  </p>
-                  <div className="mt-3 pt-3 border-t border-paper-200 flex items-baseline justify-between text-sm">
-                    <span className="text-ink-700">
-                      <span className="font-semibold text-ink-900 tabular-nums">
-                        {formatPriceDisplay(cat.startingPrice)}
-                      </span>
-                      {cat.startingPrice > 0 && (
-                        <span className="text-xs text-ink-500 ml-1">'den</span>
-                      )}
-                    </span>
-                    <span className="text-xs text-brand-700 font-medium opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-1">
-                      İncele <ArrowRight size={11} weight="bold" />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+      <Container className="py-8 md:py-12">
+        <KategoriGruplari categories={categories} mod="acik" />
       </Container>
     </>
   );

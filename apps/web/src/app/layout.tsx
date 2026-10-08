@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { getHeaderNav, getCategories } from "@/lib/catalog";
 import { SiteFooter } from "@/components/site-footer";
 import { CtaBanner } from "@/components/home/cta-banner";
+import { RotaGizle } from "@/components/rota-gizle";
 import { ThemeBody } from "@/components/theme-body";
 import { CartDrawerLazy } from "@/components/cart/cart-drawer-lazy";
 import { OrganizationJsonLd } from "@/components/seo/json-ld";
@@ -153,8 +154,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SiteHeader nav={headerNav ?? undefined} />
         <main id="main" className="flex-1">{children}</main>
 
-        {/* CTA Banner — FULL WIDTH (footer öncesi conversion booster) */}
-        <CtaBanner />
+        {/* CTA Banner — FULL WIDTH (footer öncesi conversion booster).
+            Reklam iniş sayfasında gizli: orada tek iş ürün seçtirmek, kupon şeridi dikkat dağıtıyordu (2026-10-08). */}
+        <RotaGizle yollar={["/urununu-sec"]}>
+          <CtaBanner />
+        </RotaGizle>
 
         {/* Footer — FULL WIDTH */}
         <SiteFooter categories={footerKategoriler} />
