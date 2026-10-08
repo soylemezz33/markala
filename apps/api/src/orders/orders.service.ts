@@ -1393,6 +1393,14 @@ export class OrdersService {
      */
     void this.metaCapi.sendPurchase(id).catch(() => undefined);
 
+    /**
+     * EKİP BİLDİRİMİ DÜZELTMESİ (2026-10-08, MK-MUV3VQFB-198T): sipariş düştüğünde WhatsApp'a
+     * "⏳ BEKLİYOR — ödeme alınmadı" gitmişti; para sonradan gelince onu düzelten bildirim
+     * YOKTU. Panelde "Ödendi" yazarken ekibin telefonunda hâlâ "alınmadı" duruyordu ve iş
+     * bekletiliyordu. Fire-and-forget: bildirim hatası tahsilat onayını bozmaz.
+     */
+    void this.whatsapp?.bildirOdemeAlindi(id).catch(() => undefined);
+
     return updated;
   }
 

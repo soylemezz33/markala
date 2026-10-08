@@ -7,6 +7,7 @@ import {
   numarayiNormalize,
   tekSatir,
   yeniSiparisParametreleri,
+  odemeAlindiParametreleri,
 } from "./yeni-siparis-mesaji";
 import {
   ONAY_GORSEL_MAX_BAYT,
@@ -44,6 +45,12 @@ const GRAPH_SURUMU = "v21.0";
 const ZAMAN_ASIMI_MS = 10_000;
 /** notification_logs.template — mükerrer kontrolü ve panel filtresi bu ada bakar. */
 export const WA_SABLON_KAYDI = "whatsapp-new-order";
+/**
+ * Ödeme sonradan alındığında giden DÜZELTME bildirimi (2026-10-08). Ayrı kayıt adı şart:
+ * mükerrer koruması sipariş+kayıt adına bakıyor, aynı ada yazılsaydı düzeltme "zaten
+ * gönderilmiş" sayılıp hiç gitmezdi.
+ */
+export const WA_ODEME_KAYDI = "whatsapp-odeme-alindi";
 
 @Injectable()
 export class WhatsappService {
@@ -129,7 +136,90 @@ export class WhatsappService {
       return hepsiGitti;
     } catch (e) {
       // Buraya düşmek beklenmez; yine de bildirim ASLA çağıranı bozmasın.
-      this.logger.error(`whatsapp.yeniSiparis beklenmedik hata order=${orderId}: ${(e as Error)?.message}`);
+      this.logger.error(
+        `whatsapp.yeniSiparis beklenmedik hata order=${orderId}: ${(e as Error)?.message}`,
+      );
+      return false;
+    }
+  }
+
+  /**
+   * ÖDEME DÜZELTME BİLDİRİMİ (2026-10-08, gerçek olay: MK-MUV3VQFB-198T).
+   *
+   * Havale/EFT siparişi düştüğü anda ekibe "⏳ BEKLİYOR — ödeme alınmadı" mesajı gider.
+   * Para birkaç dakika sonra onaylandığında o mesajı DÜZELTEN hiçbir bildirim yoktu:
+   * panelde "Ödendi" yazarken kargo/üretim ekibinin telefonunda hâlâ "ödeme alınmadı"
+   * duruyordu. Ekip, ödenmiş işi ödenmemiş sanıp bekletiyordu.
+   *
+   * Fire-and-forget: ödeme onayını ASLA bozmaz, her koşulda çözümlenir.
+   */
+  async bildirOdemeAlindi(orderId: string): Promise<boolean> {
+    try {
+      if (!this.gonderebilir()) return false;
+
+      const order = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        select: {
+          orderNumber: true,
+          total: true,
+          paymentStatus: true,
+          paymentMethod: true,
+          email: true,
+          shippingAddressSnapshot: true,
+          user: { select: { fullName: true } },
+          items: { select: { productName: true, quantity: true } },
+        },
+      });
+      if (!order) {
+        this.logger.warn(`whatsapp.odemeAlindi: sipariş bulunamadı order=${orderId}`);
+        return false;
+      }
+
+      // Yanlış bir "alındı" mesajı, geç fark edilen tahsilattan pahalıdır (yeni-siparis-mesaji.ts
+      // ile aynı ilke): durum gerçekten "basarili" değilse mesaj ÜRETİLMEZ.
+      if (order.paymentStatus !== "basarili") {
+        this.logger.log(
+          `whatsapp.odemeAlindi: ödeme 'basarili' değil (${order.paymentStatus}) → atlandı ${order.orderNumber}`,
+        );
+        return false;
+      }
+      // Ekibe ilk bildirim hiç gitmediyse düzeltilecek bir yanlış da yok (bildirim kapalıyken
+      // oluşmuş sipariş, geçmiş kayıt vb.) — gereksiz ikinci mesaj üretmeyelim.
+      if (!(await this.dahaOnceBildirildiMi(order.orderNumber, WA_SABLON_KAYDI))) {
+        this.logger.log(`whatsapp.odemeAlindi: ilk bildirim yok → atlandı ${order.orderNumber}`);
+        return false;
+      }
+      if (await this.dahaOnceBildirildiMi(order.orderNumber, WA_ODEME_KAYDI)) {
+        this.logger.log(`whatsapp.odemeAlindi: zaten bildirilmiş → atlandı ${order.orderNumber}`);
+        return false;
+      }
+
+      const musteriAdi =
+        order.user?.fullName?.trim() ||
+        (order.shippingAddressSnapshot as { fullName?: string } | null)?.fullName?.trim() ||
+        null;
+
+      const parametreler = odemeAlindiParametreleri({
+        orderNumber: order.orderNumber,
+        totalAmount: order.total,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        items: order.items,
+        musteriAdi,
+        email: order.email,
+      });
+
+      let hepsiGitti = true;
+      for (const alici of this.aliciNumaralari()) {
+        const sonuc = await this.sablonGonder(alici, parametreler);
+        if (!sonuc.ok) hepsiGitti = false;
+        await this.kaydet(alici, order.orderNumber, sonuc, WA_ODEME_KAYDI, "Ödeme alındı");
+      }
+      return hepsiGitti;
+    } catch (e) {
+      this.logger.error(
+        `whatsapp.odemeAlindi beklenmedik hata order=${orderId}: ${(e as Error)?.message}`,
+      );
       return false;
     }
   }
@@ -188,18 +278,23 @@ export class WhatsappService {
    * Yalnız BAŞARILI gönderimler engeller — başarısız bildirim yeniden denenebilmeli.
    * Sorgu düşerse false: sessizce bildirimi yutmaktansa ikinci mesaj yeğdir.
    */
-  private async dahaOnceBildirildiMi(orderNumber: string): Promise<boolean> {
+  private async dahaOnceBildirildiMi(
+    orderNumber: string,
+    kayitAdi: string = WA_SABLON_KAYDI,
+  ): Promise<boolean> {
     try {
       const adet = await this.prisma.notificationLog.count({
         where: {
-          template: WA_SABLON_KAYDI,
+          template: kayitAdi,
           status: "sent",
           metadata: { path: ["orderNumber"], equals: orderNumber },
         },
       });
       return adet > 0;
     } catch (e) {
-      this.logger.warn(`whatsapp mükerrer kontrolü yapılamadı (${orderNumber}): ${(e as Error).message}`);
+      this.logger.warn(
+        `whatsapp mükerrer kontrolü yapılamadı (${orderNumber}): ${(e as Error).message}`,
+      );
       return false;
     }
   }
@@ -208,25 +303,29 @@ export class WhatsappService {
     alici: string,
     orderNumber: string,
     sonuc: { ok: boolean; messageId?: string; hata?: string },
+    kayitAdi: string = WA_SABLON_KAYDI,
+    konuOneki = "Yeni sipariş",
   ): Promise<void> {
     await this.prisma.notificationLog
       .create({
         data: {
           channel: "whatsapp",
-          template: WA_SABLON_KAYDI,
+          template: kayitAdi,
           recipient: alici,
-          subject: `Yeni sipariş - ${orderNumber}`,
+          subject: `${konuOneki} - ${orderNumber}`,
           body: "",
           status: sonuc.ok ? "sent" : "failed",
           metadata: {
-            template: WA_SABLON_KAYDI,
+            template: kayitAdi,
             orderNumber,
             ...(sonuc.messageId ? { messageId: sonuc.messageId } : {}),
             ...(sonuc.hata ? { error: sonuc.hata } : {}),
           },
         },
       })
-      .catch((e) => this.logger.error(`whatsapp notificationLog yazılamadı: ${(e as Error).message}`));
+      .catch((e) =>
+        this.logger.error(`whatsapp notificationLog yazılamadı: ${(e as Error).message}`),
+      );
   }
 
   // ───────────────────────────────────────────────────────────────────────────────────
@@ -254,7 +353,10 @@ export class WhatsappService {
       return { ok: false, hata: "WhatsApp entegrasyonu yapılandırılmamış (token/hat id eksik)." };
     }
     if (!gorselUygunMu(gorsel.mimetype)) {
-      return { ok: false, hata: `WhatsApp yalnız JPG/PNG görsel kabul eder (gelen: ${gorsel.mimetype}).` };
+      return {
+        ok: false,
+        hata: `WhatsApp yalnız JPG/PNG görsel kabul eder (gelen: ${gorsel.mimetype}).`,
+      };
     }
     if (gorsel.buffer.byteLength > ONAY_GORSEL_MAX_BAYT) {
       return { ok: false, hata: "Önizleme görseli 5 MB'tan büyük; küçültüp tekrar yükleyin." };
@@ -386,7 +488,9 @@ export class WhatsappService {
       };
       if (!res.ok || veri.error) {
         const hata = `${veri.error?.code ?? res.status}: ${veri.error?.message ?? "bilinmeyen hata"}`;
-        this.logger.warn(`whatsapp tasarım onayı gönderilemedi to=${alici} sablon=${sablon}: ${hata}`);
+        this.logger.warn(
+          `whatsapp tasarım onayı gönderilemedi to=${alici} sablon=${sablon}: ${hata}`,
+        );
         return { ok: false, hata };
       }
       return { ok: true, messageId: veri.messages?.[0]?.id };
@@ -423,6 +527,8 @@ export class WhatsappService {
           },
         },
       })
-      .catch((e) => this.logger.error(`whatsapp notificationLog yazılamadı: ${(e as Error).message}`));
+      .catch((e) =>
+        this.logger.error(`whatsapp notificationLog yazılamadı: ${(e as Error).message}`),
+      );
   }
 }

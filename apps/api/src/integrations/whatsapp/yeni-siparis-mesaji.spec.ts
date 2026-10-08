@@ -6,6 +6,7 @@ import {
   tekSatir,
   numarayiNormalize,
   yeniSiparisParametreleri,
+  odemeAlindiParametreleri,
 } from "./yeni-siparis-mesaji";
 
 /**
@@ -145,5 +146,46 @@ describe("yeniSiparisParametreleri", () => {
   it("müşteri adı yoksa e-postaya düşer, o da yoksa tire", () => {
     expect(yeniSiparisParametreleri({ ...siparis, musteriAdi: null })[3]).toBe("a@x.com");
     expect(yeniSiparisParametreleri({ ...siparis, musteriAdi: null, email: null })[3]).toBe("—");
+  });
+});
+
+/**
+ * ÖDEME DÜZELTME BİLDİRİMİ (2026-10-08). Gerçek olay: havale siparişi "ödeme alınmadı" diye
+ * duyuruldu, 5 dakika sonra para onaylandı, ekip bunu ÖĞRENEMEDİ (MK-MUV3VQFB-198T).
+ */
+describe("odemeAlindiParametreleri", () => {
+  const SIPARIS = {
+    orderNumber: "MK-MUV3VQFB-198T",
+    totalAmount: 2199.49,
+    paymentStatus: "basarili",
+    paymentMethod: "havale",
+    items: [{ productName: "Vinil Branda", quantity: 2 }],
+    musteriAdi: "Mustafa Kayra",
+    email: "m@x.com",
+  };
+
+  it("ödeme satırını DÜZELTME olarak yazar, sipariş numarasına dokunmaz", () => {
+    const p = odemeAlindiParametreleri(SIPARIS);
+    expect(p).toHaveLength(5);
+    // Numara olduğu gibi kalmalı: ekip mesajdan kopyalayıp panelde arıyor.
+    expect(p[0]).toBe("MK-MUV3VQFB-198T");
+    expect(p[1]).toContain("ÖDEME ALINDI");
+    expect(p[1]).toContain("güncelleme");
+    expect(p[1]).toContain("havale/EFT");
+    // Eski mesajdaki ifade KALMAMALI, yoksa düzeltme yine "alınmadı" der.
+    expect(p[1]).not.toContain("alınmadı");
+  });
+
+  it("şablon parametre kısıtlarına uyar (tek satır, sınır içinde)", () => {
+    for (const par of odemeAlindiParametreleri(SIPARIS)) {
+      expect(par).not.toMatch(/[\r\n\t]/);
+      expect(par.length).toBeLessThanOrEqual(160);
+    }
+  });
+
+  it("kartla ödenmiş siparişte yöntem adı doğru yazılır", () => {
+    expect(odemeAlindiParametreleri({ ...SIPARIS, paymentMethod: "iyzico" })[1]).toContain(
+      "kredi kartı",
+    );
   });
 });

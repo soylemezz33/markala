@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { WhatsappService, WA_SABLON_KAYDI } from "./whatsapp.service";
+import { WhatsappService, WA_SABLON_KAYDI, WA_ODEME_KAYDI } from "./whatsapp.service";
 
 /**
  * Bu testlerin koruduğu asıl şey: bildirim ASLA sipariş akışını bozmasın ve aynı sipariş
@@ -27,7 +27,9 @@ const SIPARIS = {
   items: [{ productName: "Klasik Kartvizit", quantity: 1000 }],
 };
 
-function prismaMock(opts: { siparis?: unknown; gonderilmis?: number } = {}) {
+function prismaMock(
+  opts: { siparis?: unknown; gonderilmis?: number; duzeltmeGonderilmis?: number } = {},
+) {
   return {
     // "siparis" in opts kontrolü şart: `?? SIPARIS` yazılsaydı bilerek verilen null da
     // varsayılana düşerdi ve "sipariş bulunamadı" yolu hiç test edilmemiş olurdu.
@@ -35,7 +37,17 @@ function prismaMock(opts: { siparis?: unknown; gonderilmis?: number } = {}) {
       findUnique: vi.fn().mockResolvedValue("siparis" in opts ? opts.siparis : SIPARIS),
     },
     notificationLog: {
-      count: vi.fn().mockResolvedValue(opts.gonderilmis ?? 0),
+      // Sayım KAYIT ADINA göre ayrışmalı: "ilk bildirim gitti mi" ile "düzeltme gitti mi"
+      // aynı sayaçtan okunursa düzeltme hiç gönderilemez (ya da iki kez gider).
+      count: vi
+        .fn()
+        .mockImplementation(({ where }: { where: { template: string } }) =>
+          Promise.resolve(
+            where.template === WA_ODEME_KAYDI
+              ? (opts.duzeltmeGonderilmis ?? 0)
+              : (opts.gonderilmis ?? 0),
+          ),
+        ),
       create: vi.fn().mockResolvedValue({}),
     },
   } as never;
@@ -92,12 +104,14 @@ describe("WhatsappService", () => {
     const prisma = prismaMock();
     const svc = new WhatsappService(cfg(TAM_ENV), prisma);
     await svc.bildirYeniSiparis("o1");
-    expect((prisma as never as { notificationLog: { count: ReturnType<typeof vi.fn> } }).notificationLog.count)
-      .toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({ status: "sent", template: WA_SABLON_KAYDI }),
-        }),
-      );
+    expect(
+      (prisma as never as { notificationLog: { count: ReturnType<typeof vi.fn> } }).notificationLog
+        .count,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: "sent", template: WA_SABLON_KAYDI }),
+      }),
+    );
   });
 
   it("Meta hata dönerse FIRLATMAZ, failed olarak loglar", async () => {
@@ -177,7 +191,10 @@ describe("WhatsappService — tasarım onayı", () => {
   function onayPrisma(siparis: unknown = MUSTERI_SIPARIS) {
     return {
       order: { findUnique: vi.fn().mockResolvedValue(siparis) },
-      notificationLog: { count: vi.fn().mockResolvedValue(0), create: vi.fn().mockResolvedValue({}) },
+      notificationLog: {
+        count: vi.fn().mockResolvedValue(0),
+        create: vi.fn().mockResolvedValue({}),
+      },
     } as never;
   }
 
@@ -209,7 +226,10 @@ describe("WhatsappService — tasarım onayı", () => {
     const header = govde.template.components.find((c: { type: string }) => c.type === "header");
     expect(header.parameters[0]).toEqual({ type: "image", image: { id: "MEDIA-1" } });
     const body = govde.template.components.find((c: { type: string }) => c.type === "body");
-    expect(body.parameters.map((p: { text: string }) => p.text)).toEqual(["Ayşe Yılmaz", "MK-TEST-9001"]);
+    expect(body.parameters.map((p: { text: string }) => p.text)).toEqual([
+      "Ayşe Yılmaz",
+      "MK-TEST-9001",
+    ]);
   });
 
   it("JPG/PNG dışı dosya GÖNDERİLMEZ — müşteri WhatsApp'ta göremez", async () => {
@@ -237,7 +257,11 @@ describe("WhatsappService — tasarım onayı", () => {
     vi.stubGlobal("fetch", f);
     const svc = new WhatsappService(
       cfg(ONAY_ENV),
-      onayPrisma({ ...MUSTERI_SIPARIS, phone: "", shippingAddressSnapshot: { phone: "5319004102" } }),
+      onayPrisma({
+        ...MUSTERI_SIPARIS,
+        phone: "",
+        shippingAddressSnapshot: { phone: "5319004102" },
+      }),
     );
     const r = await svc.tasarimOnayiGonder("o1", gorsel());
     expect(r.ok).toBe(true);
@@ -288,5 +312,67 @@ describe("WhatsappService — tasarım onayı", () => {
     expect(svc.gonderebilir()).toBe(false); // yönetici bildirimi kapalı
     const r = await svc.tasarimOnayiGonder("o1", gorsel()); // ama onay yine de gider
     expect(r.ok).toBe(true);
+  });
+});
+
+/**
+ * ÖDEME DÜZELTME BİLDİRİMİ (2026-10-08) — korunan şey: ekip "ödeme alınmadı" mesajıyla
+ * kalmasın, ama ortada gerçek bir tahsilat yokken de "alındı" denmesin.
+ */
+describe("WhatsappService.bildirOdemeAlindi", () => {
+  const ILK_BILDIRIM_GITTI = { gonderilmis: 1 };
+
+  it("ödeme gerçekten alındıysa düzeltmeyi gönderir ve AYRI kayıt adıyla loglar", async () => {
+    const prisma = prismaMock({
+      ...ILK_BILDIRIM_GITTI,
+      siparis: { ...SIPARIS, paymentMethod: "havale" },
+    });
+    const svc = new WhatsappService(cfg(TAM_ENV), prisma);
+    expect(await svc.bildirOdemeAlindi("o1")).toBe(true);
+
+    const govde = JSON.parse((fetchMock.mock.calls[0]![1] as { body: string }).body);
+    expect(govde.template.name).toBe("yeni_siparis_bildirimi"); // onaylı şablon yeniden kullanılır
+    expect(govde.template.components[0].parameters[1].text).toContain("ÖDEME ALINDI");
+    const create = (prisma as never as { notificationLog: { create: ReturnType<typeof vi.fn> } })
+      .notificationLog.create;
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ template: WA_ODEME_KAYDI }) }),
+    );
+  });
+
+  it("ödeme hâlâ beklemedeyse mesaj ÜRETMEZ (yanlış 'alındı' en pahalı hata)", async () => {
+    const prisma = prismaMock({
+      ...ILK_BILDIRIM_GITTI,
+      siparis: { ...SIPARIS, paymentStatus: "beklemede" },
+    });
+    const svc = new WhatsappService(cfg(TAM_ENV), prisma);
+    expect(await svc.bildirOdemeAlindi("o1")).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("ekibe ilk bildirim hiç gitmediyse düzeltme de göndermez", async () => {
+    const prisma = prismaMock({ gonderilmis: 0 });
+    const svc = new WhatsappService(cfg(TAM_ENV), prisma);
+    expect(await svc.bildirOdemeAlindi("o1")).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("düzeltme zaten gönderilmişse ikinci kez gitmez", async () => {
+    const prisma = prismaMock({ ...ILK_BILDIRIM_GITTI, duzeltmeGonderilmis: 1 });
+    const svc = new WhatsappService(cfg(TAM_ENV), prisma);
+    expect(await svc.bildirOdemeAlindi("o1")).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("Meta/ağ hatası FIRLATMAZ — tahsilat onayı bozulmasın", async () => {
+    fetchMock.mockRejectedValue(new Error("ECONNRESET"));
+    const svc = new WhatsappService(cfg(TAM_ENV), prismaMock(ILK_BILDIRIM_GITTI));
+    await expect(svc.bildirOdemeAlindi("o1")).resolves.toBe(false);
+  });
+
+  it("env eksikse sessiz kalır", async () => {
+    const svc = new WhatsappService(cfg({}), prismaMock(ILK_BILDIRIM_GITTI));
+    expect(await svc.bildirOdemeAlindi("o1")).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

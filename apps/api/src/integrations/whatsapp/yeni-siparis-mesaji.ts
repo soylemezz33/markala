@@ -51,16 +51,20 @@ export function tekSatir(deger: unknown, tavan = PARAM_TAVANI): string {
  * yerine bilinmeyen durumlar açıkça "bilinmiyor" der: yanlış bir "Ödendi" görüp ürünü baskıya
  * vermek, geç fark edilen bir tahsilattan çok daha pahalı.
  */
+export function yontemAdiniYaz(paymentMethod: string | null): string {
+  const yontem = (paymentMethod ?? "").toLowerCase();
+  return yontem === "havale" || yontem === "eft"
+    ? "havale/EFT"
+    : yontem === "cari" || yontem === "acik-hesap"
+      ? "cari (açık hesap)"
+      : yontem === "kart" || yontem === "kredi-karti" || yontem === "iyzico"
+        ? "kredi kartı"
+        : yontem || "belirtilmemiş";
+}
+
 export function odemeDurumu(paymentStatus: string | null, paymentMethod: string | null): string {
   const yontem = (paymentMethod ?? "").toLowerCase();
-  const yontemAdi =
-    yontem === "havale" || yontem === "eft"
-      ? "havale/EFT"
-      : yontem === "cari" || yontem === "acik-hesap"
-        ? "cari (açık hesap)"
-        : yontem === "kart" || yontem === "kredi-karti" || yontem === "iyzico"
-          ? "kredi kartı"
-          : yontem || "belirtilmemiş";
+  const yontemAdi = yontemAdiniYaz(paymentMethod);
 
   switch ((paymentStatus ?? "").toLowerCase()) {
     case "basarili":
@@ -125,6 +129,21 @@ export function yeniSiparisParametreleri(o: YeniSiparisGirdisi): string[] {
     musteri || "—",
     urunOzeti(o.items ?? []),
   ];
+}
+
+/**
+ * ÖDEME DÜZELTME BİLDİRİMİ (2026-10-08) — sipariş "ödeme alınmadı" diye duyurulduktan SONRA
+ * para geldiğinde ekibe giden ikinci mesajın parametreleri.
+ *
+ * NEDEN AYNI ŞABLON: Meta'da serbest metin yalnız 24 saatlik pencerede gönderilebilir ve yeni
+ * bir şablon onayı günler sürer. Onaylı `yeni_siparis_bildirimi` şablonu yeniden kullanılır;
+ * mesajın DÜZELTME olduğu ödeme satırında açıkça yazar. Sipariş numarası parametresine
+ * dokunulmaz — ekip numarayı olduğu gibi kopyalayabilsin.
+ */
+export function odemeAlindiParametreleri(o: YeniSiparisGirdisi): string[] {
+  const p = yeniSiparisParametreleri(o);
+  p[1] = tekSatir(`✅ ÖDEME ALINDI (güncelleme) — ${yontemAdiniYaz(o.paymentMethod)}`, 80);
+  return p;
 }
 
 /**
