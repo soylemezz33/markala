@@ -31,6 +31,12 @@ export interface Attribution {
   /** iOS/uygulama kampanyalarında gclid YERİNE gelir — atlanırsa o trafik ölçülemez. */
   gbraid?: string;
   wbraid?: string;
+  /**
+   * Meta (Instagram/Facebook) tıklama kimliği (2026-10-08, Instagram reklamı). Pixel'in yazdığı
+   * `_fbc` çerezi yalnız pazarlama onayıyla oluşur; onaysız müşteride reklamdan gelen sipariş
+   * "kaynak yok" görünürdü. gclid ile aynı mantık: birinci taraf, üçüncü tarafa gitmez.
+   */
+  fbclid?: string;
   utm?: AttributionUtm;
   /** Yakalama zamanı (ms) — TTL kontrolü için. */
   ts: number;
@@ -67,6 +73,7 @@ export function captureFromUrl(): void {
     const gclid = clamp(p.get("gclid"));
     const gbraid = clamp(p.get("gbraid"));
     const wbraid = clamp(p.get("wbraid"));
+    const fbclid = clamp(p.get("fbclid"), 300);
     const utm = compactUtm({
       source: clamp(p.get("utm_source"), 100),
       medium: clamp(p.get("utm_medium"), 100),
@@ -75,12 +82,13 @@ export function captureFromUrl(): void {
       content: clamp(p.get("utm_content"), 150),
     });
 
-    if (!gclid && !gbraid && !wbraid && !utm) return; // yeni sinyal yok → mevcut kaydı koru
+    if (!gclid && !gbraid && !wbraid && !fbclid && !utm) return; // yeni sinyal yok → mevcut kaydı koru
 
     const next: Attribution = { ts: Date.now() };
     if (gclid) next.gclid = gclid;
     if (gbraid) next.gbraid = gbraid;
     if (wbraid) next.wbraid = wbraid;
+    if (fbclid) next.fbclid = fbclid;
     if (utm) next.utm = utm;
 
     localStorage.setItem(KEY, JSON.stringify(next));
@@ -103,7 +111,7 @@ export function readAttribution(): Attribution | null {
       return null;
     }
     // En az bir anlamlı sinyal içermeli
-    if (!parsed.gclid && !parsed.gbraid && !parsed.wbraid && !parsed.utm) return null;
+    if (!parsed.gclid && !parsed.gbraid && !parsed.wbraid && !parsed.fbclid && !parsed.utm) return null;
     return parsed;
   } catch {
     return null;

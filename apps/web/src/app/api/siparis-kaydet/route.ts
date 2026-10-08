@@ -84,6 +84,10 @@ interface IncomingPayload {
     gclid?: string;
     gbraid?: string;
     wbraid?: string;
+    /** Meta tıklama kimliği — onaysız müşteride `_fbc` çerezinin yerini tutar (2026-10-08). */
+    fbclid?: string;
+    /** Yakalama zamanı (ms); fbclid'den _fbc biçimi üretirken kullanılır. */
+    ts?: number;
     utm?: {
       source?: string;
       medium?: string;
@@ -162,7 +166,14 @@ export async function POST(req: NextRequest) {
     }
   }
   const fbp = clamp(req.cookies.get("_fbp")?.value, 200);
-  const fbc = clamp(req.cookies.get("_fbc")?.value, 400);
+  let fbc = clamp(req.cookies.get("_fbc")?.value, 400);
+  // 2026-10-08 (Instagram reklamı): pixel onaysız yüklenmediği için _fbc çoğu müşteride boş.
+  // İniş anında localStorage'a yakalanan fbclid'den Meta'nın beklediği biçim üretilir
+  // (fb.1.<ms>.<fbclid>) — CAPI eşleşmesi ve kendi raporumuz için aynı kolon.
+  if (!fbc && body.attribution?.fbclid) {
+    const ts = Number(body.attribution.ts) || Date.now();
+    fbc = clamp(`fb.1.${ts}.${body.attribution.fbclid}`, 400);
+  }
 
   // Google Ads tıklama kimliği (gclid) — Ads offline dönüşüm/atıf eşleşmesi için siparişe
   // snapshot'lanır (fbp/fbc ile aynı yol). Öncelik: gtag'in yazdığı _gcl_aw first-party çerezi
