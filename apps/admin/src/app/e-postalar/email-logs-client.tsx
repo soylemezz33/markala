@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { MagnifyingGlass, EnvelopeSimple, CheckCircle, XCircle, MinusCircle } from "@phosphor-icons/react";
+import { EnvelopeSimple, CheckCircle, XCircle, MinusCircle } from "@phosphor-icons/react";
 import { Pagination, paginate } from "@/components/pagination";
 import type { AdminNotificationLogRowDto } from "@markala/api-client";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  FilterSelect,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 const PAGE_SIZE = 25;
 
@@ -45,6 +55,15 @@ function formatDateTime(iso: string): string {
   }
 }
 
+type MailSort = "date" | "recipient" | "subject" | "template" | "status";
+const MAIL_ACCESSORS: SortAccessors<AdminNotificationLogRowDto, MailSort> = {
+  date: (r) => new Date(r.createdAt),
+  recipient: (r) => r.recipient,
+  subject: (r) => (r.subject && r.subject !== r.template ? r.subject : (TEMPLATE_LABELS[r.template] ?? r.template)),
+  template: (r) => TEMPLATE_LABELS[r.template] ?? r.template,
+  status: (r) => STATUS_META[r.status]?.label ?? r.status,
+};
+
 interface Props {
   total: number;
   rows: AdminNotificationLogRowDto[];
@@ -59,22 +78,32 @@ export function EmailLogsClient({ total, rows, loadError }: Props) {
 
   const templates = [...new Set(rows.map((r) => r.template))].sort();
 
-  const filtered = rows.filter((r) => {
-    const matchSearch =
-      !search ||
-      r.recipient.toLowerCase().includes(search.toLowerCase()) ||
-      (r.subject ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (r.orderNumber ?? "").toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || r.status === statusFilter;
-    const matchTemplate = templateFilter === "all" || r.template === templateFilter;
-    return matchSearch && matchStatus && matchTemplate;
-  });
+  const filtered = useMemo(
+    () =>
+      rows.filter((r) => {
+        const matchStatus = statusFilter === "all" || r.status === statusFilter;
+        const matchTemplate = templateFilter === "all" || r.template === templateFilter;
+        return (
+          matchStatus &&
+          matchTemplate &&
+          aramaEslesir(search, r.recipient, r.subject, r.orderNumber, TEMPLATE_LABELS[r.template])
+        );
+      }),
+    [rows, search, statusFilter, templateFilter],
+  );
+  const { rows: siraliKayitlar, thProps } = useTableSort(filtered, MAIL_ACCESSORS, { key: "date" });
+  const filtreAktif = search !== "" || statusFilter !== "all" || templateFilter !== "all";
+  const temizle = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setTemplateFilter("all");
+  };
 
   useEffect(() => {
     setPage(1);
   }, [search, statusFilter, templateFilter]);
 
-  const { pageItems, pageCount, safePage } = paginate(filtered, page, PAGE_SIZE);
+  const { pageItems, pageCount, safePage } = paginate(siraliKayitlar, page, PAGE_SIZE);
 
   return (
     <AdminShell>
@@ -87,60 +116,59 @@ export function EmailLogsClient({ total, rows, loadError }: Props) {
         </p>
       </header>
 
-      <div className="mb-4 flex flex-col md:flex-row gap-3">
-        <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg">
-          <MagnifyingGlass size={16} className="text-ink-500" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            type="search"
-            placeholder="Alıcı, konu veya sipariş no ara..."
-            className="flex-1 bg-transparent outline-none text-sm text-ink-900"
-          />
-        </div>
-        <select
-          value={templateFilter}
-          onChange={(e) => setTemplateFilter(e.target.value)}
-          className="px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm min-w-[180px]"
-        >
-          <option value="all">Tüm şablonlar</option>
-          {templates.map((t) => (
-            <option key={t} value={t}>
-              {TEMPLATE_LABELS[t] ?? t}
-            </option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm min-w-[150px]"
-        >
-          <option value="all">Tüm durumlar</option>
-          <option value="sent">Gönderildi</option>
-          <option value="failed">Başarısız</option>
-          <option value="skipped">Atlandı</option>
-        </select>
-      </div>
-
       <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+        <TableToolbar
+          search={{
+            id: "mail-ara",
+            value: search,
+            onChange: setSearch,
+            placeholder: "Alıcı, konu veya sipariş no ara…",
+            className: "w-72",
+          }}
+          count={{ gosterilen: filtered.length, toplam: rows.length, birim: "kayıt" }}
+          onClear={filtreAktif ? temizle : null}
+        >
+          <FilterChips
+            label="Durum"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "all", label: "Tümü" },
+              { value: "sent", label: "Gönderildi", count: rows.filter((r) => r.status === "sent").length },
+              { value: "failed", label: "Başarısız", count: rows.filter((r) => r.status === "failed").length },
+              { value: "skipped", label: "Atlandı", count: rows.filter((r) => r.status === "skipped").length },
+            ]}
+          />
+          <FilterSelect
+            id="mail-sablon"
+            label="Şablon"
+            value={templateFilter}
+            onChange={setTemplateFilter}
+            options={[
+              { value: "all", label: "Tüm şablonlar" },
+              ...templates.map((t) => ({ value: t, label: TEMPLATE_LABELS[t] ?? t })),
+            ]}
+          />
+        </TableToolbar>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold whitespace-nowrap">Tarih</th>
-                <th className="text-left px-4 py-3 font-semibold">Alıcı</th>
-                <th className="text-left px-4 py-3 font-semibold">Konu</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Şablon</th>
-                <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                <SortTh sortKey="date" {...thProps} className="text-left px-4 py-3 font-semibold whitespace-nowrap">Tarih</SortTh>
+                <SortTh sortKey="recipient" {...thProps} className="text-left px-4 py-3 font-semibold">Alıcı</SortTh>
+                <SortTh sortKey="subject" {...thProps} className="text-left px-4 py-3 font-semibold">Konu</SortTh>
+                <SortTh sortKey="template" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Şablon</SortTh>
+                <SortTh sortKey="status" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
               </tr>
             </thead>
             <tbody className="divide-y divide-paper-200">
               {pageItems.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-ink-500">
-                    {rows.length === 0 ? "Henüz e-posta kaydı yok." : "Filtreye uyan kayıt yok."}
-                  </td>
-                </tr>
+                <TableEmpty
+                  colSpan={5}
+                  filtreli={filtreAktif}
+                  onClear={temizle}
+                  bosMesaj="Henüz e-posta kaydı yok."
+                />
               )}
               {pageItems.map((r) => {
                 const st = STATUS_META[r.status] ?? {

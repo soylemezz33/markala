@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import type { CorporateApplicationDto } from "@markala/api-client";
 import { setApplicationStatus } from "./actions";
+import { useTableSort, SortTh, aramaEslesir, type SortAccessors } from "@/components/data-table";
 
 type Status = "pending" | "approved" | "rejected";
 
@@ -51,23 +52,29 @@ interface Props {
   applications: CorporateApplicationDto[];
 }
 
+type AppSort = "company" | "tax" | "date" | "status";
+const APP_ACCESSORS: SortAccessors<CorporateApplicationDto, AppSort> = {
+  company: (a) => a.companyName,
+  tax: (a) => a.taxNumber ?? null,
+  date: (a) => new Date(a.createdAt),
+  status: (a) => a.status,
+};
+
 export function ApplicationsClient({ applications }: Props) {
   const [filter, setFilter] = useState<Status | "all">("pending");
   const [search, setSearch] = useState("");
   const [pending, startTransition] = useTransition();
   const [detail, setDetail] = useState<CorporateApplicationDto | null>(null);
 
-  const filtered = applications.filter((a) => {
-    if (filter !== "all" && a.status !== filter) return false;
-    if (
-      search &&
-      !`${a.companyName} ${a.contactName} ${a.email} ${a.id}`
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    )
-      return false;
-    return true;
-  });
+  const filtered = useMemo(
+    () =>
+      applications.filter((a) => {
+        if (filter !== "all" && a.status !== filter) return false;
+        return aramaEslesir(search, a.companyName, a.contactName, a.email, a.id, a.taxNumber);
+      }),
+    [applications, filter, search],
+  );
+  const { rows: siraliBasvurular, thProps } = useTableSort(filtered, APP_ACCESSORS, { key: "date" });
 
   const counts = {
     pending: applications.filter((a) => a.status === "pending").length,
@@ -130,15 +137,15 @@ export function ApplicationsClient({ applications }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-paper-100 border-b border-paper-200">
             <tr className="text-left text-xs font-medium text-ink-500">
-              <th className="px-4 py-3">Başvuru</th>
-              <th className="px-4 py-3 hidden md:table-cell">Vergi</th>
-              <th className="px-4 py-3 hidden md:table-cell">Tarih</th>
-              <th className="px-4 py-3">Durum</th>
+              <SortTh sortKey="company" {...thProps} className="px-4 py-3">Başvuru</SortTh>
+              <SortTh sortKey="tax" {...thProps} className="px-4 py-3 hidden md:table-cell">Vergi</SortTh>
+              <SortTh sortKey="date" {...thProps} className="px-4 py-3 hidden md:table-cell">Tarih</SortTh>
+              <SortTh sortKey="status" {...thProps} className="px-4 py-3">Durum</SortTh>
               <th className="px-4 py-3 text-right">İşlem</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-paper-200">
-            {filtered.map((a) => (
+            {siraliBasvurular.map((a) => (
               <tr key={a.id} className="hover:bg-paper-100/50">
                 <td className="px-4 py-3">
                   <div className="font-semibold text-ink-900">{a.companyName}</div>
@@ -213,7 +220,7 @@ export function ApplicationsClient({ applications }: Props) {
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
+            {siraliBasvurular.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center text-ink-500">
                   <FileText size={32} className="mx-auto mb-2 opacity-40" />

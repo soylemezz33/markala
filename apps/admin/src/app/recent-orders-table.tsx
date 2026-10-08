@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useServerPerms } from "@/components/perms-provider";
 import Link from "next/link";
 import { CurrencyCircleDollar, Phone, X, WhatsappLogo, EnvelopeSimple } from "@phosphor-icons/react";
+import { useTableSort, SortTh, type SortAccessors } from "@/components/data-table";
 
 /**
  * Ana sayfa "Son Siparişler" tablosu.
@@ -105,6 +106,17 @@ function waNumber(phone: string): string {
   return d;
 }
 
+type RecentSort = "order" | "customer" | "date" | "amount" | "payment" | "status";
+const RECENT_ACCESSORS: SortAccessors<OrderRow, RecentSort> = {
+  order: (o) => o.orderNumber ?? null,
+  customer: (o) => o.customerName ?? o.user?.fullName ?? o.email ?? null,
+  date: (o) => (o.createdAt ? new Date(o.createdAt) : null),
+  amount: (o) => Number(o.total) || 0,
+  // Ödenmemiş siparişler önce gelsin: "ödeme bekleyen" takip edilmesi gereken satır.
+  payment: (o) => (isUnpaid(o) ? 0 : 1),
+  status: (o) => statusBadge(String(o.status ?? "")).label,
+};
+
 export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
   // 2026-08-21 (Hasan bildirdi): finans izni olmayan rolde tutar/odeme alanlari API'den
   // GELMIYOR; arayuz bunu "yok" degil "beklemede" sanip ODENMIS siparislere
@@ -114,6 +126,7 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
   const showMoney = !perms || perms.includes("finance.manage");
 
   const [contact, setContact] = useState<OrderRow | null>(null);
+  const { rows: siraliSiparisler, thProps } = useTableSort(orders, RECENT_ACCESSORS, { key: "date" });
 
   if (orders.length === 0) {
     return <p className="px-5 py-6 text-sm text-ink-400">Henüz sipariş yok.</p>;
@@ -124,16 +137,20 @@ export function RecentOrdersTable({ orders }: { orders: OrderRow[] }) {
       <table className="w-full text-sm">
         <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
           <tr>
-            <th className="text-left px-5 py-3 font-semibold">Sipariş No</th>
-            <th className="text-left px-5 py-3 font-semibold">Müşteri</th>
-            <th className="text-left px-5 py-3 font-semibold whitespace-nowrap">Tarih</th>
-            {showMoney && <th className="text-right px-5 py-3 font-semibold">Tutar</th>}
-            {showMoney && <th className="text-right px-5 py-3 font-semibold">Ödeme</th>}
-            <th className="text-right px-5 py-3 font-semibold">Durum</th>
+            <SortTh sortKey="order" {...thProps} className="text-left px-5 py-3 font-semibold">Sipariş No</SortTh>
+            <SortTh sortKey="customer" {...thProps} className="text-left px-5 py-3 font-semibold">Müşteri</SortTh>
+            <SortTh sortKey="date" {...thProps} className="text-left px-5 py-3 font-semibold whitespace-nowrap">Tarih</SortTh>
+            {showMoney && (
+              <SortTh sortKey="amount" {...thProps} align="right" className="text-right px-5 py-3 font-semibold">Tutar</SortTh>
+            )}
+            {showMoney && (
+              <SortTh sortKey="payment" {...thProps} align="right" className="text-right px-5 py-3 font-semibold" title="Ödeme durumuna göre sırala; ödenmeyenler önce">Ödeme</SortTh>
+            )}
+            <SortTh sortKey="status" {...thProps} align="right" className="text-right px-5 py-3 font-semibold">Durum</SortTh>
           </tr>
         </thead>
         <tbody className="divide-y divide-paper-200">
-          {orders.map((o) => {
+          {siraliSiparisler.map((o) => {
             const unpaid = isUnpaid(o);
             const badge = statusBadge(String(o.status ?? ""));
             const customerName = o.customerName ?? o.user?.fullName ?? o.email ?? "-";

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { TableToolbar, aramaEslesir } from "@/components/data-table";
 import { toast } from "@/components/toast";
 import type { QuoteRequestDto } from "@markala/api-client";
 import { setQuoteStatus } from "./actions";
@@ -55,7 +56,16 @@ export function QuotesClient({ quotes }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [isPending, startTransition] = useTransition();
 
-  const filtered = quotes.filter((q) => (filter === "all" ? true : q.status === filter));
+  const [q, setQ] = useState("");
+  const filtered = useMemo(
+    () =>
+      quotes.filter(
+        (item) =>
+          (filter === "all" || item.status === filter) &&
+          aramaEslesir(q, item.name, item.email, item.phone, item.companyName, item.ticketId, item.message),
+      ),
+    [quotes, filter, q],
+  );
   const newCount = quotes.filter((q) => q.status === "new").length;
 
   function update(q: QuoteRequestDto, status: Filter, label: string) {
@@ -104,10 +114,28 @@ export function QuotesClient({ quotes }: Props) {
         ))}
       </div>
 
+      <div className="mb-4 bg-paper-50 border border-paper-200 rounded-lg">
+        <TableToolbar
+          search={{
+            id: "teklif-ara",
+            value: q,
+            onChange: setQ,
+            placeholder: "İsim, firma, e-posta veya telefon ara…",
+            className: "w-72",
+          }}
+          count={{ gosterilen: filtered.length, toplam: quotes.length, birim: "talep" }}
+          onClear={q ? () => setQ("") : null}
+        />
+      </div>
+
       {filtered.length === 0 ? (
         <div className="bg-paper-50 border border-paper-200 rounded-lg p-12 text-center">
           <p className="text-ink-500 text-sm">
-            {filter === "all" ? "Henüz teklif talebi yok." : "Bu filtrede talep yok."}
+            {q
+              ? "Aramayla eşleşen talep yok."
+              : filter === "all"
+                ? "Henüz teklif talebi yok."
+                : "Bu filtrede talep yok."}
           </p>
         </div>
       ) : (

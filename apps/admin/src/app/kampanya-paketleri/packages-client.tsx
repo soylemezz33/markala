@@ -1,11 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
 import type { CampaignPackageDto } from "@markala/api-client";
 import { createPackage, updatePackage, removePackage } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  FilterSelect,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   packages: CampaignPackageDto[];
@@ -84,10 +94,39 @@ function buildPayload(form: FormState): Record<string, unknown> {
   return payload;
 }
 
+type PkgSort = "name" | "category" | "list" | "price" | "active";
+const PKG_ACCESSORS: SortAccessors<CampaignPackageDto, PkgSort> = {
+  name: (p) => p.name,
+  category: (p) => CATEGORY_LABELS[p.category] ?? p.category,
+  list: (p) => Number(p.listPrice) || 0,
+  price: (p) => Number(p.packagePrice) || 0,
+  active: (p) => p.isActive,
+};
+
 export function PackagesClient({ packages }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif">("all");
+  const [kategori, setKategori] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const filtrelenmis = useMemo(
+    () =>
+      packages.filter(
+        (p) =>
+          (durum === "all" || (durum === "aktif" ? p.isActive : !p.isActive)) &&
+          (kategori === "all" || p.category === kategori) &&
+          aramaEslesir(q, p.name, p.contents, CATEGORY_LABELS[p.category]),
+      ),
+    [packages, q, durum, kategori],
+  );
+  const { rows: siraliPaketler, thProps } = useTableSort(filtrelenmis, PKG_ACCESSORS, { key: "name" });
+  const filtreAktif = q !== "" || durum !== "all" || kategori !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+    setKategori("all");
+  };
   const [isPending, startTransition] = useTransition();
 
   function openCreate() {
@@ -186,21 +225,50 @@ export function PackagesClient({ packages }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "paket-ara", value: q, onChange: setQ, placeholder: "Paket adı veya içerik ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: packages.length, birim: "paket" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "aktif", label: "Aktif", count: packages.filter((p) => p.isActive).length },
+                { value: "pasif", label: "Pasif", count: packages.filter((p) => !p.isActive).length },
+              ]}
+            />
+            <FilterSelect
+              id="paket-kategori"
+              label="Kategori"
+              value={kategori}
+              onChange={setKategori}
+              options={[
+                { value: "all", label: "Tüm kategoriler" },
+                ...Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label })),
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Paket</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kategori</th>
+                  <SortTh sortKey="name" {...thProps} className="text-left px-4 py-3 font-semibold">Paket</SortTh>
+                  <SortTh sortKey="category" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kategori</SortTh>
                   <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">İçerik</th>
-                  <th className="text-right px-4 py-3 font-semibold hidden md:table-cell">Liste Fiyat</th>
-                  <th className="text-right px-4 py-3 font-semibold">Paket Fiyat</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="list" {...thProps} align="right" className="text-right px-4 py-3 font-semibold hidden md:table-cell">Liste Fiyat</SortTh>
+                  <SortTh sortKey="price" {...thProps} align="right" className="text-right px-4 py-3 font-semibold">Paket Fiyat</SortTh>
+                  <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {packages.map((p) => {
+                {siraliPaketler.length === 0 && (
+                  <TableEmpty colSpan={7} filtreli onClear={temizle} bosMesaj="Paket yok." />
+                )}
+                {siraliPaketler.map((p) => {
                   const discount = discountPercent(p.listPrice, p.packagePrice);
                   return (
                     <tr key={p.id} className="hover:bg-paper-100/40">

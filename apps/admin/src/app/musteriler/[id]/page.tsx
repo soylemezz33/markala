@@ -5,6 +5,7 @@ import { getAdminApi, getAdminSession } from "@/lib/api";
 import type { LedgerStatementDto } from "@markala/api-client";
 import { CorporateSettingsForm } from "./corporate-settings-form";
 import { CariPaymentForm } from "./cari-payment-form";
+import { OrderHistoryTable, type OrderHistoryRow } from "./order-history-table";
 import {
   ArrowLeft, EnvelopeSimple, Phone, ClockCounterClockwise, MapPin,
 } from "@phosphor-icons/react/dist/ssr";
@@ -55,6 +56,20 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
   const oturum = await getAdminSession();
   const showMoney = !oturum?.perms || oturum.perms.includes("orders.amounts");
   const orders = user.orders ?? [];
+  // Tablo istemci bileşeni; etiket haritaları burada kaldığı için metinler hazır geçilir.
+  const siparisSatirlari: OrderHistoryRow[] = orders.map((o: (typeof orders)[number]) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    createdAt: o.createdAt,
+    dateText: fmtDate(o.createdAt),
+    statusText: `${STATUS_LABEL[toSlug(o.status)] ?? o.status} · ${
+      o.paymentMethod === "cari"
+        ? "Açık Hesap (Cari)"
+        : (PAYMENT_LABEL[toSlug(o.paymentStatus)] ?? o.paymentStatus)
+    }`,
+    total: Number(o.total) || 0,
+    amountText: TRY(o.total),
+  }));
   const addresses = user.addresses ?? [];
   // Harcama: kartla ödenmiş (basarili) + açık hesaba yazılmış (cari) siparişler. Cari siparişler
   // ödeme "beklemede" görünse de gerçekleşmiş harcamadır (cari hesaba borç olarak işlenir).
@@ -164,37 +179,7 @@ export default async function CustomerDetailPage({ params }: { params: { id: str
             {orders.length === 0 ? (
               <div className="p-10 text-center text-ink-500 text-sm">Bu müşterinin siparişi yok.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-paper-100/40 text-ink-500 text-xs uppercase tracking-wide">
-                    <tr>
-                      <th className="text-left px-5 py-2.5 font-semibold">Sipariş No</th>
-                      <th className="text-left px-5 py-2.5 font-semibold hidden md:table-cell">Tarih</th>
-                      <th className="text-left px-5 py-2.5 font-semibold">Durum</th>
-                      {showMoney && <th className="text-right px-5 py-2.5 font-semibold">Tutar</th>}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-paper-200">
-                    {orders.map((o) => (
-                      <tr key={o.id} className="hover:bg-paper-100/40">
-                        <td className="px-5 py-3">
-                          <Link href={`/siparisler/${o.id}`} className="font-mono text-xs font-semibold text-brand-700 hover:underline">
-                            {o.orderNumber}
-                          </Link>
-                        </td>
-                        <td className="px-5 py-3 text-ink-500 text-xs hidden md:table-cell">{fmtDate(o.createdAt)}</td>
-                        <td className="px-5 py-3 text-ink-700 text-xs">
-                          {STATUS_LABEL[toSlug(o.status)] ?? o.status} ·{" "}
-                          {o.paymentMethod === "cari"
-                            ? "Açık Hesap (Cari)"
-                            : (PAYMENT_LABEL[toSlug(o.paymentStatus)] ?? o.paymentStatus)}
-                        </td>
-                        {showMoney && <td className="px-5 py-3 text-right font-semibold text-ink-900 tabular-nums">{TRY(o.total)}</td>}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <OrderHistoryTable orders={siparisSatirlari} showMoney={showMoney} />
             )}
           </section>
 

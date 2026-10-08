@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
+import { useTableSort, SortTh, type SortAccessors } from "@/components/data-table";
 import { toast } from "@/components/toast";
 import {
   Users, Eye, ShoppingCart, Package, CursorClick, TrendUp, Timer,
@@ -343,21 +344,31 @@ function formatDayLabel(iso: string): string {
 
 /* ---------- en çok incelenen ürünler ---------- */
 
+type TopProductRow = AnalyticsOverviewDto["topProducts"][number];
+type TopProductSort = "name" | "views" | "dwell" | "carts" | "conv";
+const TOP_PRODUCT_ACCESSORS: SortAccessors<TopProductRow, TopProductSort> = {
+  name: (p) => p.name,
+  views: (p) => p.views,
+  dwell: (p) => p.avgDwellMs,
+  carts: (p) => p.addToCarts,
+  conv: (p) => p.conversionRate,
+};
+
 function TopProductsTable({ products }: { products: AnalyticsOverviewDto["topProducts"] }) {
+  const { rows: sorted, thProps } = useTableSort(products, TOP_PRODUCT_ACCESSORS, { key: "views" });
   if (products.length === 0) {
     return <p className="px-5 py-6 text-sm text-ink-400">Henüz ürün görüntüleme verisi yok.</p>;
   }
-  const sorted = [...products].sort((a, b) => b.views - a.views);
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
           <tr>
-            <th className="text-left px-5 py-3 font-semibold">Ürün</th>
-            <th className="text-right px-5 py-3 font-semibold">Görüntülenme</th>
-            <th className="text-right px-5 py-3 font-semibold hidden md:table-cell">Ort. Süre</th>
-            <th className="text-right px-5 py-3 font-semibold hidden md:table-cell">Sepete Ekleme</th>
-            <th className="text-right px-5 py-3 font-semibold">Dönüşüm</th>
+            <SortTh sortKey="name" {...thProps} className="text-left px-5 py-3 font-semibold">Ürün</SortTh>
+            <SortTh sortKey="views" {...thProps} align="right" className="text-right px-5 py-3 font-semibold">Görüntülenme</SortTh>
+            <SortTh sortKey="dwell" {...thProps} align="right" className="text-right px-5 py-3 font-semibold hidden md:table-cell">Ort. Süre</SortTh>
+            <SortTh sortKey="carts" {...thProps} align="right" className="text-right px-5 py-3 font-semibold hidden md:table-cell">Sepete Ekleme</SortTh>
+            <SortTh sortKey="conv" {...thProps} align="right" className="text-right px-5 py-3 font-semibold">Dönüşüm</SortTh>
           </tr>
         </thead>
         <tbody className="divide-y divide-paper-200">
@@ -586,22 +597,33 @@ function SegmentDrawer({ segment, onClose }: { segment: AnalyticsSegment; onClos
   );
 }
 
+type SegmentSort = "name" | "phone" | "orders" | "spent" | "activity";
+const SEGMENT_ACCESSORS: SortAccessors<AnalyticsSegmentCustomer, SegmentSort> = {
+  name: (c) => c.fullName || c.email || null,
+  phone: (c) => c.phone ?? null,
+  orders: (c) => c.orderCount,
+  spent: (c) => Number(c.totalSpent) || 0,
+  // "Son aktivite" kolonu "N gün önce" yazar; küçük gün = daha yeni aktivite.
+  activity: (c) => c.daysSinceLastActivity ?? null,
+};
+
 function SegmentCustomersTable({ customers }: { customers: AnalyticsSegmentCustomer[] }) {
+  const { rows: sirali, thProps } = useTableSort(customers, SEGMENT_ACCESSORS, { key: "spent" });
   return (
     <div className="border border-paper-200 rounded-lg overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
             <tr>
-              <th className="text-left px-3 py-2.5 font-semibold">Müşteri</th>
-              <th className="text-left px-3 py-2.5 font-semibold hidden sm:table-cell">Telefon</th>
-              <th className="text-right px-3 py-2.5 font-semibold">Sipariş</th>
-              <th className="text-right px-3 py-2.5 font-semibold">Harcama</th>
-              <th className="text-right px-3 py-2.5 font-semibold">Son Aktivite</th>
+              <SortTh sortKey="name" {...thProps} className="text-left px-3 py-2.5 font-semibold">Müşteri</SortTh>
+              <SortTh sortKey="phone" {...thProps} className="text-left px-3 py-2.5 font-semibold hidden sm:table-cell">Telefon</SortTh>
+              <SortTh sortKey="orders" {...thProps} align="right" className="text-right px-3 py-2.5 font-semibold">Sipariş</SortTh>
+              <SortTh sortKey="spent" {...thProps} align="right" className="text-right px-3 py-2.5 font-semibold">Harcama</SortTh>
+              <SortTh sortKey="activity" {...thProps} align="right" className="text-right px-3 py-2.5 font-semibold" title="Son aktiviteye göre sırala (gün cinsinden)">Son Aktivite</SortTh>
             </tr>
           </thead>
           <tbody className="divide-y divide-paper-200">
-            {customers.map((c) => (
+            {sirali.map((c) => (
               <tr key={c.id} className="hover:bg-paper-100/40">
                 <td className="px-3 py-2.5">
                   <div className="font-medium text-ink-900">{c.fullName || "-"}</div>

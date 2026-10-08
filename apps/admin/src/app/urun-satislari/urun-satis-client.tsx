@@ -4,8 +4,15 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { useServerPerms } from "@/components/perms-provider";
-import { Package, ShoppingCart, Coins, CaretDown, CaretRight, MagnifyingGlass } from "@phosphor-icons/react";
+import { Package, ShoppingCart, Coins, CaretDown, CaretRight } from "@phosphor-icons/react";
 import type { AdminUrunSatisDto } from "@markala/api-client";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 const TL = (v: number) =>
   "₺ " + Number(v ?? 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -19,46 +26,34 @@ const RANGES = [
   { label: "Tümü", days: null as number | null },
 ];
 
-type Sira = "adet" | "siparis" | "ciro" | "son";
+type UrunRow = AdminUrunSatisDto["urunler"][number];
+type SatisSort = "urun" | "siparis" | "adet" | "ciro" | "ilk" | "son";
+const SATIS_ACCESSORS: SortAccessors<UrunRow, SatisSort> = {
+  urun: (u) => u.productName,
+  siparis: (u) => u.siparis,
+  adet: (u) => u.adet,
+  ciro: (u) => u.ciro,
+  ilk: (u) => new Date(u.ilkSatis),
+  son: (u) => new Date(u.sonSatis),
+};
 
 export function UrunSatisClient({ data, days }: { data: AdminUrunSatisDto; days: number | null }) {
   const perms = useServerPerms();
   // null = izinler gelmedi → gizleme; API zaten FINANCE olmayana ciroyu 0 döner.
   const ciroGoster = perms === null || perms.includes("finance.manage");
   const [q, setQ] = useState("");
-  const [sira, setSira] = useState<Sira>("adet");
   const [acik, setAcik] = useState<Record<string, boolean>>({});
 
-  const liste = useMemo(() => {
-    const t = q.trim().toLocaleLowerCase("tr-TR");
-    const f = t
-      ? data.urunler.filter(
-          (u) =>
-            u.productName.toLocaleLowerCase("tr-TR").includes(t) ||
-            u.productSlug.includes(t) ||
-            u.varyantlar.some((v) => v.ozet.toLocaleLowerCase("tr-TR").includes(t)),
-        )
-      : data.urunler.slice();
-    f.sort((a, b) => {
-      if (sira === "son") return b.sonSatis.localeCompare(a.sonSatis);
-      return (b[sira] as number) - (a[sira] as number) || b.adet - a.adet;
-    });
-    return f;
-  }, [data.urunler, q, sira]);
-
-  const baslik = (k: Sira, label: string, hizala = "text-right") => (
-    <th className={`${hizala} font-medium px-3 py-2`}>
-      <button
-        type="button"
-        onClick={() => setSira(k)}
-        aria-pressed={sira === k}
-        className={`inline-flex items-center gap-1 ${sira === k ? "text-ink-900" : "hover:text-ink-900"}`}
-      >
-        {label}
-        {sira === k && <CaretDown size={12} weight="bold" />}
-      </button>
-    </th>
+  const filtrelenmis = useMemo(
+    () =>
+      data.urunler.filter(
+        (u) =>
+          aramaEslesir(q, u.productName, u.productSlug) ||
+          u.varyantlar.some((v) => aramaEslesir(q, v.ozet)),
+      ),
+    [data.urunler, q],
   );
+  const { rows: liste, thProps } = useTableSort(filtrelenmis, SATIS_ACCESSORS, { key: "adet" });
 
   return (
     <AdminShell>
@@ -102,23 +97,17 @@ export function UrunSatisClient({ data, days }: { data: AdminUrunSatisDto; days:
       </div>
 
       <section className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
-        <header className="px-4 py-3 border-b border-paper-200 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-ink-900">
-            Ürünler ({liste.length}
-            {q && ` / ${data.urunler.length}`})
-          </h2>
-          <label className="relative block">
-            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-400" />
-            <input
-              id="urun-satis-ara"
-              type="search"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Ürün veya varyant ara…"
-              className="w-64 max-w-full rounded-md border border-paper-200 bg-paper-50 py-1.5 pl-8 pr-3 text-sm text-ink-900 placeholder:text-ink-400 focus:border-ink-400 focus:outline-none"
-            />
-          </label>
-        </header>
+        <TableToolbar
+          search={{
+            id: "urun-satis-ara",
+            value: q,
+            onChange: setQ,
+            placeholder: "Ürün veya varyant ara…",
+            className: "w-64",
+          }}
+          count={{ gosterilen: liste.length, toplam: data.urunler.length, birim: "ürün" }}
+          onClear={q ? () => setQ("") : null}
+        />
         {liste.length === 0 ? (
           <p className="px-4 py-10 text-center text-sm text-ink-500">
             {data.urunler.length === 0 ? "Bu aralıkta gerçekleşen satış yok." : "Aramayla eşleşen ürün yok."}
@@ -129,12 +118,14 @@ export function UrunSatisClient({ data, days }: { data: AdminUrunSatisDto; days:
               <thead>
                 <tr className="bg-paper-100 text-ink-500 text-xs">
                   <th className="w-8 px-2 py-2" aria-label="Varyantlar" />
-                  <th className="text-left font-medium px-3 py-2">Ürün</th>
-                  {baslik("siparis", "Sipariş")}
-                  {baslik("adet", "Adet")}
-                  {ciroGoster && baslik("ciro", "Ciro")}
-                  <th className="text-right font-medium px-3 py-2">İlk satış</th>
-                  {baslik("son", "Son satış")}
+                  <SortTh sortKey="urun" {...thProps} className="text-left font-medium px-3 py-2">Ürün</SortTh>
+                  <SortTh sortKey="siparis" {...thProps} align="right" className="text-right font-medium px-3 py-2">Sipariş</SortTh>
+                  <SortTh sortKey="adet" {...thProps} align="right" className="text-right font-medium px-3 py-2">Adet</SortTh>
+                  {ciroGoster && (
+                    <SortTh sortKey="ciro" {...thProps} align="right" className="text-right font-medium px-3 py-2">Ciro</SortTh>
+                  )}
+                  <SortTh sortKey="ilk" {...thProps} align="right" className="text-right font-medium px-3 py-2">İlk satış</SortTh>
+                  <SortTh sortKey="son" {...thProps} align="right" className="text-right font-medium px-3 py-2">Son satış</SortTh>
                 </tr>
               </thead>
               <tbody>

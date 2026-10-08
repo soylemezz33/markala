@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
@@ -8,6 +8,16 @@ import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Trash, CheckCircle, X } from "@phosphor-icons/react";
 import type { BlogPostDto, BlogCategoryDto } from "@markala/api-client";
 import { createPost, updatePost, removePost, publishPost } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  FilterSelect,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   posts: BlogPostDto[];
@@ -110,11 +120,41 @@ function buildPayload(form: FormState): Record<string, unknown> {
   return payload;
 }
 
+type PostSort = "title" | "category" | "author" | "status" | "views" | "date";
+const POST_ACCESSORS: SortAccessors<BlogPostDto, PostSort> = {
+  title: (p) => p.title,
+  category: (p) => p.category?.name ?? null,
+  author: (p) => p.authorName,
+  status: (p) => p.status,
+  views: (p) => p.viewCount ?? 0,
+  date: (p) => new Date(p.createdAt),
+};
+
 export function BlogClient({ posts, categories }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<string>("all");
+  const [kategoriFiltre, setKategoriFiltre] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [isPending, startTransition] = useTransition();
+  const filtrelenmis = useMemo(
+    () =>
+      posts.filter(
+        (p) =>
+          (durum === "all" || p.status === durum) &&
+          (kategoriFiltre === "all" || p.category?.slug === kategoriFiltre) &&
+          aramaEslesir(q, p.title, p.slug, p.authorName, p.category?.name),
+      ),
+    [posts, q, durum, kategoriFiltre],
+  );
+  const { rows: siraliYazilar, thProps } = useTableSort(filtrelenmis, POST_ACCESSORS, { key: "date" });
+  const filtreAktif = q !== "" || durum !== "all" || kategoriFiltre !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+    setKategoriFiltre("all");
+  };
 
   function openCreate() {
     setEditingId(null);
@@ -242,14 +282,40 @@ export function BlogClient({ posts, categories }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "blog-ara", value: q, onChange: setQ, placeholder: "Başlık, slug veya yazar ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: posts.length, birim: "yazı" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "published", label: "Yayında", count: posts.filter((p) => p.status === "published").length },
+                { value: "draft", label: "Taslak", count: posts.filter((p) => p.status === "draft").length },
+              ]}
+            />
+            <FilterSelect
+              id="blog-kategori"
+              label="Kategori"
+              value={kategoriFiltre}
+              onChange={setKategoriFiltre}
+              options={[
+                { value: "all", label: "Tüm kategoriler" },
+                ...categories.map((c) => ({ value: c.slug, label: c.name })),
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Başlık</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kategori</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Yazar</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="title" {...thProps} className="text-left px-4 py-3 font-semibold">Başlık</SortTh>
+                  <SortTh sortKey="category" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kategori</SortTh>
+                  <SortTh sortKey="author" {...thProps} className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Yazar</SortTh>
+                  <SortTh sortKey="status" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   {/* viewCount'u site artırmaz; her sabah Search Console'dan son 28 günün tık sayısı yazılır
                       (markala-google/gsc-blog-sayac.mjs, 7 Eki 2026). Eski etiket "Görüntülenme" hep 0 gösteriyordu. */}
                   <th
@@ -258,12 +324,15 @@ export function BlogClient({ posts, categories }: Props) {
                   >
                     Google tıkı · 28 gün
                   </th>
-                  <th className="text-left px-4 py-3 font-semibold hidden xl:table-cell">Tarih</th>
+                  <SortTh sortKey="date" {...thProps} className="text-left px-4 py-3 font-semibold hidden xl:table-cell">Tarih</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {posts.map((p) => (
+                {siraliYazilar.length === 0 && (
+                  <TableEmpty colSpan={7} filtreli onClear={temizle} bosMesaj="Yazı yok." />
+                )}
+                {siraliYazilar.map((p) => (
                   <tr key={p.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
                       <span className="font-medium text-ink-900 line-clamp-1">{p.title}</span>

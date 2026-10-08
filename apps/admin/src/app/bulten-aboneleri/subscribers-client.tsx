@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import type { NewsletterSubscriberDto } from "@markala/api-client";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   subscribers: NewsletterSubscriberDto[];
@@ -17,9 +26,33 @@ function formatDate(iso: string): string {
   });
 }
 
+type SubSort = "email" | "source" | "status" | "date";
+const SUB_ACCESSORS: SortAccessors<NewsletterSubscriberDto, SubSort> = {
+  email: (s) => s.email,
+  source: (s) => s.source,
+  status: (s) => s.status,
+  date: (s) => new Date(s.createdAt),
+};
+
 export function SubscribersClient({ subscribers }: Props) {
   const [copied, setCopied] = useState(false);
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "active" | "unsubscribed">("all");
   const active = subscribers.filter((s) => s.status === "active");
+
+  const filtrelenmis = useMemo(
+    () =>
+      subscribers.filter(
+        (s) => (durum === "all" || s.status === durum) && aramaEslesir(q, s.email, s.source),
+      ),
+    [subscribers, q, durum],
+  );
+  const { rows: siraliAboneler, thProps } = useTableSort(filtrelenmis, SUB_ACCESSORS, { key: "date" });
+  const filtreAktif = q !== "" || durum !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+  };
 
   async function copyEmails() {
     const emails = active.map((s) => s.email).join(", ");
@@ -61,18 +94,37 @@ export function SubscribersClient({ subscribers }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "abone-ara", value: q, onChange: setQ, placeholder: "E-posta veya kaynak ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: subscribers.length, birim: "abone" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "active", label: "Aktif", count: active.length },
+                { value: "unsubscribed", label: "Çıktı", count: subscribers.length - active.length },
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">E-posta</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kaynak</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
-                  <th className="text-right px-4 py-3 font-semibold">Tarih</th>
+                  <SortTh sortKey="email" {...thProps} className="text-left px-4 py-3 font-semibold">E-posta</SortTh>
+                  <SortTh sortKey="source" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kaynak</SortTh>
+                  <SortTh sortKey="status" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
+                  <SortTh sortKey="date" {...thProps} align="right" className="text-right px-4 py-3 font-semibold">Tarih</SortTh>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {subscribers.map((s) => (
+                {siraliAboneler.length === 0 && (
+                  <TableEmpty colSpan={4} filtreli onClear={temizle} bosMesaj="Abone yok." />
+                )}
+                {siraliAboneler.map((s) => (
                   <tr key={s.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3 text-ink-900 font-medium">{s.email}</td>
                     <td className="px-4 py-3 text-ink-500 text-xs hidden md:table-cell">{s.source}</td>

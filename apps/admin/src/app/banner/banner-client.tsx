@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
 import type { BannerDto } from "@markala/api-client";
 import { createBanner, updateBanner, removeBanner } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  FilterSelect,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   banners: BannerDto[];
@@ -87,10 +97,42 @@ function buildPayload(form: FormState): Record<string, unknown> {
   return payload;
 }
 
+type BannerSort = "title" | "location" | "cta" | "start" | "active";
+const BANNER_ACCESSORS: SortAccessors<BannerDto, BannerSort> = {
+  title: (b) => b.title,
+  location: (b) => LOCATION_LABELS[b.location as BannerLocation] ?? b.location,
+  cta: (b) => b.ctaLabel ?? null,
+  // Tarih kolonu aralık gösteriyor; sıralama BAŞLANGIÇ tarihine göre (yoksa sona).
+  start: (b) => (b.startDate ? new Date(b.startDate) : null),
+  active: (b) => b.isActive,
+};
+
 export function BannerClient({ banners }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif">("all");
+  const [konum, setKonum] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const filtrelenmis = useMemo(
+    () =>
+      banners.filter(
+        (b) =>
+          (durum === "all" || (durum === "aktif" ? b.isActive : !b.isActive)) &&
+          (konum === "all" || b.location === konum) &&
+          aramaEslesir(q, b.title, b.ctaLabel, b.location),
+      ),
+    [banners, q, durum, konum],
+  );
+  const { rows: siraliBannerlar, thProps } = useTableSort(filtrelenmis, BANNER_ACCESSORS, {
+    key: "title",
+  });
+  const filtreAktif = q !== "" || durum !== "all" || konum !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+    setKonum("all");
+  };
   const [isPending, startTransition] = useTransition();
 
   function openCreate() {
@@ -199,21 +241,50 @@ export function BannerClient({ banners }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "banner-ara", value: q, onChange: setQ, placeholder: "Başlık veya CTA ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: banners.length, birim: "banner" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "aktif", label: "Aktif", count: banners.filter((b) => b.isActive).length },
+                { value: "pasif", label: "Pasif", count: banners.filter((b) => !b.isActive).length },
+              ]}
+            />
+            <FilterSelect
+              id="banner-konum"
+              label="Konum"
+              value={konum}
+              onChange={setKonum}
+              options={[
+                { value: "all", label: "Tüm konumlar" },
+                ...Object.entries(LOCATION_LABELS).map(([value, label]) => ({ value, label })),
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Banner</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Konum</th>
+                  <SortTh sortKey="title" {...thProps} className="text-left px-4 py-3 font-semibold">Banner</SortTh>
+                  <SortTh sortKey="location" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Konum</SortTh>
                   <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Görsel</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">CTA</th>
-                  <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Tarih</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="cta" {...thProps} className="text-left px-4 py-3 font-semibold hidden lg:table-cell">CTA</SortTh>
+                  <SortTh sortKey="start" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Tarih</SortTh>
+                  <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {banners.map((b) => (
+                {siraliBannerlar.length === 0 && (
+                  <TableEmpty colSpan={7} filtreli onClear={temizle} bosMesaj="Banner yok." />
+                )}
+                {siraliBannerlar.map((b) => (
                   <tr key={b.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
                       <span className="font-medium text-ink-900">{b.title}</span>

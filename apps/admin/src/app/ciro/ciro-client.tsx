@@ -12,6 +12,7 @@ import {
   Package,
 } from "@phosphor-icons/react";
 import type { AdminProfitDto } from "@markala/api-client";
+import { useTableSort, SortTh, type SortAccessors } from "@/components/data-table";
 
 const TL = (v: number) =>
   "₺ " + Number(v ?? 0).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -24,6 +25,17 @@ const RANGES = [
 ];
 
 const round2 = (n: number) => Math.round((Number(n) || 0) * 100) / 100;
+
+type UrunRow = AdminProfitDto["urunler"][number];
+type KarSort = "name" | "adet" | "ciro" | "maliyet" | "kar" | "marj";
+const KAR_ACCESSORS: SortAccessors<UrunRow, KarSort> = {
+  name: (u) => u.productName,
+  adet: (u) => u.adet,
+  ciro: (u) => u.ciro,
+  maliyet: (u) => u.maliyet,
+  kar: (u) => u.kar,
+  marj: (u) => u.marjYuzde,
+};
 
 function Satir({ label, value, eksi }: { label: string; value: string; eksi?: boolean }) {
   return (
@@ -77,7 +89,9 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
     ? `KDV hariç ${TL(toplam.ciro)}`
     : `KDV dahil ${TL(round2(toplam.ciro * KDV_ORANI))}`;
 
-  const enIyi = urunler.filter((u) => u.kar !== null).slice(0, 8);
+  // Önce kârı hesaplanabilenler; sıralama tablo başlığından değişir (varsayılan: kâr).
+  const karliUrunler = urunler.filter((u) => u.kar !== null);
+  const { rows: enIyi, thProps } = useTableSort(karliUrunler, KAR_ACCESSORS, { key: "kar" });
   const maliyetsiz = urunler.filter((u) => u.kar === null);
   // Aylık grafik için ölçek — en yüksek ciro 100% kabul edilir.
   const maxAy = Math.max(1, ...aylik.map((a) => c(a.ciro)));
@@ -237,9 +251,12 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
         {/* En çok kazandıranlar */}
         <section className="lg:col-span-2 bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
           <header className="px-4 py-3 border-b border-paper-200">
-            <h2 className="text-sm font-semibold text-ink-900">En çok kazandıran ürünler</h2>
+            <h2 className="text-sm font-semibold text-ink-900">
+              En çok kazandıran ürünler{" "}
+              <span className="font-normal text-ink-500">({enIyi.length})</span>
+            </h2>
           </header>
-          {enIyi.length === 0 ? (
+          {karliUrunler.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-ink-500">
               Bu aralıkta kârı hesaplanabilen satış yok.
             </p>
@@ -248,12 +265,12 @@ export function ProfitClient({ data, days }: { data: AdminProfitDto; days: numbe
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-paper-100 text-ink-500 text-xs">
-                    <th className="text-left font-medium px-4 py-2">Ürün</th>
-                    <th className="text-right font-medium px-3 py-2">Adet</th>
-                    <th className="text-right font-medium px-3 py-2">Ciro</th>
-                    <th className="text-right font-medium px-3 py-2">Maliyet</th>
-                    <th className="text-right font-medium px-3 py-2">Kâr</th>
-                    <th className="text-right font-medium px-4 py-2">Marj</th>
+                    <SortTh sortKey="name" {...thProps} className="text-left font-medium px-4 py-2">Ürün</SortTh>
+                    <SortTh sortKey="adet" {...thProps} align="right" className="text-right font-medium px-3 py-2">Adet</SortTh>
+                    <SortTh sortKey="ciro" {...thProps} align="right" className="text-right font-medium px-3 py-2">Ciro</SortTh>
+                    <SortTh sortKey="maliyet" {...thProps} align="right" className="text-right font-medium px-3 py-2">Maliyet</SortTh>
+                    <SortTh sortKey="kar" {...thProps} align="right" className="text-right font-medium px-3 py-2">Kâr</SortTh>
+                    <SortTh sortKey="marj" {...thProps} align="right" className="text-right font-medium px-4 py-2">Marj</SortTh>
                   </tr>
                 </thead>
                 <tbody>

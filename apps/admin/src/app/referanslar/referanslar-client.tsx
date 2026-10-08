@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import type { BrandDto } from "@markala/api-client";
 import { createBrand, updateBrand, removeBrand } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   brands: BrandDto[];
@@ -39,10 +48,39 @@ function buildPayload(form: FormState): Record<string, unknown> {
   return payload;
 }
 
+/** Sıralama yalnız panel görünümünü değiştirir; sitedeki sıra `sortOrder` ile yönetilir. */
+type BrandSort = "name" | "website" | "order" | "active";
+const BRAND_ACCESSORS: SortAccessors<BrandDto, BrandSort> = {
+  name: (b) => b.name,
+  website: (b) => b.websiteUrl ?? null,
+  order: (b) => b.sortOrder ?? null,
+  active: (b) => b.isActive,
+};
+
 export function ReferanslarClient({ brands }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif">("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const filtrelenmis = useMemo(
+    () =>
+      brands.filter(
+        (b) =>
+          (durum === "all" || (durum === "aktif" ? b.isActive : !b.isActive)) &&
+          aramaEslesir(q, b.name, b.websiteUrl),
+      ),
+    [brands, q, durum],
+  );
+  const { rows: siraliMarkalar, thProps } = useTableSort(filtrelenmis, BRAND_ACCESSORS, {
+    key: "order",
+    dir: "asc",
+  });
+  const filtreAktif = q !== "" || durum !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+  };
   const [isPending, startTransition] = useTransition();
 
   function openCreate() {
@@ -137,20 +175,39 @@ export function ReferanslarClient({ brands }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "marka-ara", value: q, onChange: setQ, placeholder: "Marka veya site ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: brands.length, birim: "marka" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "aktif", label: "Aktif", count: brands.filter((b) => b.isActive).length },
+                { value: "pasif", label: "Pasif", count: brands.filter((b) => !b.isActive).length },
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
                   <th className="text-left px-4 py-3 font-semibold">Logo</th>
-                  <th className="text-left px-4 py-3 font-semibold">Marka</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Web Sitesi</th>
-                  <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Sıra</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="name" {...thProps} className="text-left px-4 py-3 font-semibold">Marka</SortTh>
+                  <SortTh sortKey="website" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Web Sitesi</SortTh>
+                  <SortTh sortKey="order" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Sıra</SortTh>
+                  <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {brands.map((b) => (
+                {siraliMarkalar.length === 0 && (
+                  <TableEmpty colSpan={6} filtreli onClear={temizle} bosMesaj="Marka yok." />
+                )}
+                {siraliMarkalar.map((b) => (
                   <tr key={b.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
                       {b.logoUrl ? (

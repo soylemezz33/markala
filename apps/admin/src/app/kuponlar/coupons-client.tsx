@@ -1,9 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterSelect,
+  FilterChips,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 import type { CouponDto } from "@markala/api-client";
 import { createCoupon, updateCoupon, removeCoupon } from "./actions";
 
@@ -87,11 +97,48 @@ function buildPayload(form: FormState): Record<string, unknown> {
   return payload;
 }
 
+/** Kupon tablosunda sıralanabilir kolonlar. */
+type CouponSort = "code" | "type" | "value" | "used" | "valid" | "active";
+const COUPON_ACCESSORS: SortAccessors<CouponDto, CouponSort> = {
+  code: (c) => c.code,
+  type: (c) => typeLabel(c.type as CouponType),
+  // Ücretsiz kargoda `value` 0'dır; yüzde ve sabit tutar aynı sütunda farklı birim
+  // taşıdığı için sıralama ham sayıya göre yapılır (tür kolonu ayrımı zaten gösteriyor).
+  value: (c) => Number(c.value) || 0,
+  used: (c) => c.usedCount,
+  // Bitiş tarihi yoksa "sürekli" → boş değer olarak sona gider.
+  valid: (c) => (c.validUntil ? new Date(c.validUntil) : null),
+  active: (c) => c.isActive,
+};
+
 export function CouponsClient({ coupons }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif">("all");
+  const [tur, setTur] = useState<string>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [isPending, startTransition] = useTransition();
+
+  const filtrelenmis = useMemo(
+    () =>
+      coupons.filter(
+        (c) =>
+          (durum === "all" || (durum === "aktif" ? c.isActive : !c.isActive)) &&
+          (tur === "all" || c.type === tur) &&
+          aramaEslesir(q, c.code, typeLabel(c.type as CouponType)),
+      ),
+    [coupons, q, durum, tur],
+  );
+  const { rows: siraliKuponlar, thProps } = useTableSort(filtrelenmis, COUPON_ACCESSORS, {
+    key: "code",
+  });
+  const filtreAktif = q !== "" || durum !== "all" || tur !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+    setTur("all");
+  };
 
   function openCreate() {
     setEditingId(null);
@@ -203,21 +250,52 @@ export function CouponsClient({ coupons }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "kupon-ara", value: q, onChange: setQ, placeholder: "Kod veya tür ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: coupons.length, birim: "kupon" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "aktif", label: "Aktif", count: coupons.filter((c) => c.isActive).length },
+                { value: "pasif", label: "Pasif", count: coupons.filter((c) => !c.isActive).length },
+              ]}
+            />
+            <FilterSelect
+              id="kupon-tur"
+              label="Tür"
+              value={tur}
+              onChange={setTur}
+              options={[
+                { value: "all", label: "Tüm türler" },
+                { value: "percentage", label: "Yüzde" },
+                { value: "fixed_amount", label: "Sabit Tutar" },
+                { value: "free_shipping", label: "Ücretsiz Kargo" },
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Kod</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Tür</th>
-                  <th className="text-left px-4 py-3 font-semibold">İndirim</th>
-                  <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Kullanım</th>
-                  <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Geçerlilik</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="code" {...thProps} className="text-left px-4 py-3 font-semibold">Kod</SortTh>
+                  <SortTh sortKey="type" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Tür</SortTh>
+                  <SortTh sortKey="value" {...thProps} className="text-left px-4 py-3 font-semibold">İndirim</SortTh>
+                  <SortTh sortKey="used" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Kullanım</SortTh>
+                  <SortTh sortKey="valid" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Geçerlilik</SortTh>
+                  <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {coupons.map((c) => (
+                {siraliKuponlar.length === 0 && (
+                  <TableEmpty colSpan={7} filtreli onClear={temizle} bosMesaj="Kupon yok." />
+                )}
+                {siraliKuponlar.map((c) => (
                   <tr key={c.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 flex-wrap">

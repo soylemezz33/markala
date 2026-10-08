@@ -1,17 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { MagnifyingGlass, EnvelopeSimple, Phone, Buildings, User as UserIcon, Eye } from "@phosphor-icons/react";
+import { EnvelopeSimple, Phone, Buildings, User as UserIcon, Eye } from "@phosphor-icons/react";
 import { Pagination, paginate } from "@/components/pagination";
 import type { AdminUserDto } from "@markala/api-client";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   customers: AdminUserDto[];
 }
 
 const PAGE_SIZE = 20;
+
+type CustSort = "name" | "email" | "type" | "orders" | "date";
+const CUST_ACCESSORS: SortAccessors<AdminUserDto, CustSort> = {
+  name: (c) => c.fullName,
+  email: (c) => c.email,
+  type: (c) => (c.accountType === "corporate" ? "Kurumsal" : "Bireysel"),
+  orders: (c) => c.orderCount ?? 0,
+  date: (c) => (c.createdAt ? new Date(c.createdAt) : null),
+};
 
 export function CustomersClient({ customers }: Props) {
   const [search, setSearch] = useState("");
@@ -21,16 +39,23 @@ export function CustomersClient({ customers }: Props) {
   // Telefonla arama: kayıtlar "+90 505 741 70 28" / "0505 741 70 28" gibi karışık biçimlerde
   // duruyor, yazılan terim ise düz rakam olabiliyor → iki tarafın rakamları karşılaştırılır.
   const searchDigits = search.replace(/\D/g, "");
-  const filtered = customers.filter((c) => {
-    const matchSearch =
-      !search ||
-      c.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      c.email.toLowerCase().includes(search.toLowerCase()) ||
-      (c.companyName ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (searchDigits.length >= 7 && (c.phone ?? "").replace(/\D/g, "").includes(searchDigits));
-    const matchType = typeFilter === "all" || c.accountType === typeFilter;
-    return matchSearch && matchType;
-  });
+  const filtered = useMemo(
+    () =>
+      customers.filter((c) => {
+        const matchSearch =
+          aramaEslesir(search, c.fullName, c.email, c.companyName) ||
+          (searchDigits.length >= 7 && (c.phone ?? "").replace(/\D/g, "").includes(searchDigits));
+        const matchType = typeFilter === "all" || c.accountType === typeFilter;
+        return matchSearch && matchType;
+      }),
+    [customers, search, searchDigits, typeFilter],
+  );
+  const { rows: siraliMusteriler, thProps } = useTableSort(filtered, CUST_ACCESSORS, { key: "date" });
+  const filtreAktif = search !== "" || typeFilter !== "all";
+  const temizle = () => {
+    setSearch("");
+    setTypeFilter("all");
+  };
 
   // Filtre/arama değişince ilk sayfaya dön.
   useEffect(() => {
@@ -44,7 +69,7 @@ export function CustomersClient({ customers }: Props) {
     if (q) setSearch(q);
   }, []);
 
-  const { pageItems, pageCount, safePage } = paginate(filtered, page, PAGE_SIZE);
+  const { pageItems, pageCount, safePage } = paginate(siraliMusteriler, page, PAGE_SIZE);
 
   return (
     <AdminShell>
@@ -53,42 +78,53 @@ export function CustomersClient({ customers }: Props) {
         <p className="text-ink-500 text-sm mt-1">{filtered.length} kullanıcı</p>
       </header>
 
-      <div className="mb-4 flex flex-col md:flex-row gap-3">
-        <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg">
-          <MagnifyingGlass size={16} className="text-ink-500" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            type="search"
-            placeholder="İsim, e-posta, firma ara..."
-            className="flex-1 bg-transparent outline-none text-sm text-ink-900"
-          />
-        </div>
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm min-w-[180px]"
-        >
-          <option value="all">Tüm tipler</option>
-          <option value="individual">Bireysel</option>
-          <option value="corporate">Kurumsal</option>
-        </select>
-      </div>
-
       <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+        <TableToolbar
+          search={{
+            id: "musteri-ara",
+            value: search,
+            onChange: setSearch,
+            placeholder: "İsim, e-posta, firma veya telefon ara…",
+            className: "w-72",
+          }}
+          count={{ gosterilen: filtered.length, toplam: customers.length, birim: "kullanıcı" }}
+          onClear={filtreAktif ? temizle : null}
+        >
+          <FilterChips
+            label="Hesap tipi"
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={[
+              { value: "all", label: "Tümü" },
+              {
+                value: "individual",
+                label: "Bireysel",
+                count: customers.filter((c) => c.accountType === "individual").length,
+              },
+              {
+                value: "corporate",
+                label: "Kurumsal",
+                count: customers.filter((c) => c.accountType === "corporate").length,
+              },
+            ]}
+          />
+        </TableToolbar>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">İletişim</th>
-                <th className="text-center px-4 py-3 font-semibold">Tip</th>
-                <th className="text-center px-4 py-3 font-semibold hidden md:table-cell">Sipariş</th>
-                <th className="text-center px-4 py-3 font-semibold hidden md:table-cell">Üyelik Tarihi</th>
+                <SortTh sortKey="name" {...thProps} className="text-left px-4 py-3 font-semibold">Müşteri</SortTh>
+                <SortTh sortKey="email" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">İletişim</SortTh>
+                <SortTh sortKey="type" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Tip</SortTh>
+                <SortTh sortKey="orders" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden md:table-cell">Sipariş</SortTh>
+                <SortTh sortKey="date" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden md:table-cell">Üyelik Tarihi</SortTh>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-paper-200">
+              {pageItems.length === 0 && (
+                <TableEmpty colSpan={6} filtreli={filtreAktif} onClear={temizle} bosMesaj="Kayıtlı müşteri yok." />
+              )}
               {pageItems.map((c) => (
                 <tr key={c.id} className="hover:bg-paper-100/40">
                   <td className="px-4 py-3">

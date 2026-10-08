@@ -7,6 +7,7 @@ import { confirm } from "@/components/confirm-dialog";
 import { Percent, FloppyDisk, Eye, CheckCircle, WarningCircle, Info } from "@phosphor-icons/react";
 import { marjBilgisi, marjKaydet, marjUygula } from "./actions";
 import type { MarginInfoDto, ApplyMarginResultDto } from "@markala/api-client";
+import { useTableSort, SortTh, type SortAccessors } from "@/components/data-table";
 
 interface Urun { id: string; slug: string; name: string; categoryId?: string; categorySlug?: string; profitMargin?: string | number | null }
 interface Kategori { id: string; slug: string; name: string; profitMargin?: string | number | null }
@@ -14,6 +15,18 @@ interface Kategori { id: string; slug: string; name: string; profitMargin?: stri
 const TL = (n: number) => n.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ₺";
 /** 1.8 → "%80 kâr" */
 const yuzde = (m: number) => `%${Math.round((m - 1) * 100)} kâr`;
+
+type DegisecekRow = ApplyMarginResultDto["degisecek"][number];
+type MarginSort = "product" | "option" | "cost" | "old" | "new" | "diff";
+const MARGIN_ACCESSORS: SortAccessors<DegisecekRow, MarginSort> = {
+  product: (d) => d.productSlug,
+  option: (d) => `${d.option} ${d.dim}`.trim(),
+  cost: (d) => d.cost,
+  old: (d) => d.eskiFiyat,
+  new: (d) => d.yeniFiyat,
+  // Fark kolonu yok ama "en çok değişen satır" en sık sorulan şey: yeni − eski.
+  diff: (d) => d.yeniFiyat - d.eskiFiyat,
+};
 
 export function MarginClient({
   products, categories, globalMarj,
@@ -25,6 +38,11 @@ export function MarginClient({
   const [onizleme, setOnizleme] = useState<ApplyMarginResultDto | null>(null);
   const [mesaj, setMesaj] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
+  const { rows: siraliDegisecek, thProps } = useTableSort(
+    onizleme?.degisecek ?? [],
+    MARGIN_ACCESSORS,
+    { key: "diff" },
+  );
   const router = useRouter();
 
   const secilenKategori = categories.find((c) => c.id === targetId);
@@ -242,15 +260,15 @@ export function MarginClient({
                     <table className="w-full text-xs">
                       <thead className="bg-paper-100 text-ink-500 sticky top-0">
                         <tr>
-                          <th className="text-left px-2 py-1.5">Ürün</th>
-                          <th className="text-left px-2 py-1.5">Seçenek</th>
-                          <th className="text-right px-2 py-1.5">Maliyet</th>
-                          <th className="text-right px-2 py-1.5">Eski</th>
-                          <th className="text-right px-2 py-1.5">Yeni</th>
+                          <SortTh sortKey="product" {...thProps} className="text-left px-2 py-1.5">Ürün</SortTh>
+                          <SortTh sortKey="option" {...thProps} className="text-left px-2 py-1.5">Seçenek</SortTh>
+                          <SortTh sortKey="cost" {...thProps} align="right" className="text-right px-2 py-1.5">Maliyet</SortTh>
+                          <SortTh sortKey="old" {...thProps} align="right" className="text-right px-2 py-1.5">Eski</SortTh>
+                          <SortTh sortKey="new" {...thProps} align="right" className="text-right px-2 py-1.5" title="Yeni fiyata göre sırala; en çok değişen satırlar için Eski/Yeni farkı">Yeni</SortTh>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-paper-200">
-                        {onizleme.degisecek.map((d, i) => (
+                        {siraliDegisecek.map((d, i) => (
                           <tr key={i}>
                             <td className="px-2 py-1.5 text-ink-700">{d.productSlug}</td>
                             <td className="px-2 py-1.5 text-ink-500">{d.option} {d.dim}</td>

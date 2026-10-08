@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
 import type { ReviewDto } from "@markala/api-client";
 import { setReviewApproval, removeReview } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterSelect,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   reviews: ReviewDto[];
@@ -32,15 +41,38 @@ const FILTER_LABELS: Record<Filter, string> = {
   approved: "Onaylı",
 };
 
+type ReviewSort = "user" | "product" | "rating" | "date" | "approved";
+const REVIEW_ACCESSORS: SortAccessors<ReviewDto, ReviewSort> = {
+  user: (r) => r.userName,
+  product: (r) => r.product?.name ?? null,
+  rating: (r) => r.rating,
+  date: (r) => new Date(r.createdAt),
+  approved: (r) => r.isApproved,
+};
+
 export function ReviewsClient({ reviews }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
+  const [q, setQ] = useState("");
+  const [puan, setPuan] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
 
-  const filtered = reviews.filter((r) => {
-    if (filter === "pending") return !r.isApproved;
-    if (filter === "approved") return r.isApproved;
-    return true;
-  });
+  const filtered = useMemo(
+    () =>
+      reviews.filter((r) => {
+        if (filter === "pending" && r.isApproved) return false;
+        if (filter === "approved" && !r.isApproved) return false;
+        if (puan !== "all" && Math.round(r.rating) !== Number(puan)) return false;
+        return aramaEslesir(q, r.userName, r.userCompany, r.product?.name, r.comment);
+      }),
+    [reviews, filter, puan, q],
+  );
+  const { rows: siraliYorumlar, thProps } = useTableSort(filtered, REVIEW_ACCESSORS, { key: "date" });
+  const filtreAktif = q !== "" || puan !== "all" || filter !== "all";
+  const temizle = () => {
+    setQ("");
+    setPuan("all");
+    setFilter("all");
+  };
 
   function handleApproval(r: ReviewDto, approve: boolean) {
     startTransition(async () => {
@@ -125,21 +157,44 @@ export function ReviewsClient({ reviews }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "yorum-ara", value: q, onChange: setQ, placeholder: "Müşteri, ürün veya yorum ara…" }}
+            count={{ gosterilen: filtered.length, toplam: reviews.length, birim: "yorum" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterSelect
+              id="yorum-puan"
+              label="Puan"
+              value={puan}
+              onChange={setPuan}
+              options={[
+                { value: "all", label: "Tüm puanlar" },
+                { value: "5", label: "5 yıldız" },
+                { value: "4", label: "4 yıldız" },
+                { value: "3", label: "3 yıldız" },
+                { value: "2", label: "2 yıldız" },
+                { value: "1", label: "1 yıldız" },
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Ürün</th>
-                  <th className="text-center px-4 py-3 font-semibold">Puan</th>
+                  <SortTh sortKey="user" {...thProps} className="text-left px-4 py-3 font-semibold">Müşteri</SortTh>
+                  <SortTh sortKey="product" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Ürün</SortTh>
+                  <SortTh sortKey="rating" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Puan</SortTh>
                   <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Yorum</th>
-                  <th className="text-center px-4 py-3 font-semibold hidden md:table-cell">Tarih</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="date" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden md:table-cell">Tarih</SortTh>
+                  <SortTh sortKey="approved" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {filtered.map((r) => (
+                {siraliYorumlar.length === 0 && (
+                  <TableEmpty colSpan={7} filtreli onClear={temizle} bosMesaj="Yorum yok." />
+                )}
+                {siraliYorumlar.map((r) => (
                   <tr key={r.id} className="hover:bg-paper-100/40">
                     {/* Müşteri */}
                     <td className="px-4 py-3">

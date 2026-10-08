@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { ImageUploader } from "@/components/image-uploader";
 import { Plus, PencilSimple, Eye, Storefront, Trash, X } from "@phosphor-icons/react";
 import { createCategory, updateCategory, removeCategory } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 export interface CategoryRow {
   id: string;
@@ -67,11 +76,45 @@ function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/**
+ * Sıralanabilir kolonlar. DİKKAT: buradaki sıralama yalnız PANEL GÖRÜNÜMÜNÜ değiştirir;
+ * sitedeki kategori sırası `sortOrder` alanıyla yönetilir ve bu tıklamayla kaydedilmez.
+ */
+type CategorySort = "name" | "slug" | "products" | "active" | "price" | "order";
+const CATEGORY_ACCESSORS: SortAccessors<CategoryRow, CategorySort> = {
+  name: (c) => c.name,
+  slug: (c) => c.slug,
+  products: (c) => c._count?.products ?? 0,
+  active: (c) => c.isActive !== false,
+  price: (c) => Number(c.startingPrice) || 0,
+  order: (c) => c.sortOrder ?? null,
+};
+
 export function CategoriesClient({ categories }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif">("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [slugTouched, setSlugTouched] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const filtrelenmis = useMemo(
+    () =>
+      categories.filter(
+        (c) =>
+          (durum === "all" || (durum === "aktif" ? c.isActive !== false : c.isActive === false)) &&
+          aramaEslesir(q, c.name, c.slug, c.shortDescription),
+      ),
+    [categories, q, durum],
+  );
+  const { rows: siraliKategoriler, thProps } = useTableSort(filtrelenmis, CATEGORY_ACCESSORS, {
+    key: "order",
+    dir: "asc",
+  });
+  const filtreAktif = q !== "" || durum !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+  };
   const [isPending, startTransition] = useTransition();
 
   const setField = <K extends keyof FormState>(key: K, val: FormState[K]) =>
@@ -184,20 +227,36 @@ export function CategoriesClient({ categories }: Props) {
       </header>
 
       <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+        <TableToolbar
+          search={{ id: "kategori-ara", value: q, onChange: setQ, placeholder: "Kategori veya slug ara…" }}
+          count={{ gosterilen: filtrelenmis.length, toplam: categories.length, birim: "kategori" }}
+          onClear={filtreAktif ? temizle : null}
+        >
+          <FilterChips
+            label="Durum"
+            value={durum}
+            onChange={setDurum}
+            options={[
+              { value: "all", label: "Tümü" },
+              { value: "aktif", label: "Aktif", count: categories.filter((c) => c.isActive !== false).length },
+              { value: "pasif", label: "Pasif", count: categories.filter((c) => c.isActive === false).length },
+            ]}
+          />
+        </TableToolbar>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold">Kategori</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Slug</th>
-                <th className="text-center px-4 py-3 font-semibold">Ürün</th>
-                <th className="text-center px-4 py-3 font-semibold">Durum</th>
-                <th className="text-right px-4 py-3 font-semibold">Başlangıç ₺</th>
+                <SortTh sortKey="name" {...thProps} className="text-left px-4 py-3 font-semibold">Kategori</SortTh>
+                <SortTh sortKey="slug" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Slug</SortTh>
+                <SortTh sortKey="products" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Ürün</SortTh>
+                <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
+                <SortTh sortKey="price" {...thProps} align="right" className="text-right px-4 py-3 font-semibold">Başlangıç ₺</SortTh>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-paper-200">
-              {categories.map((c) => (
+              {siraliKategoriler.map((c) => (
                 <tr key={c.slug} className="hover:bg-paper-100/40">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -242,12 +301,8 @@ export function CategoriesClient({ categories }: Props) {
                   </td>
                 </tr>
               ))}
-              {categories.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-ink-500 text-sm">
-                    Henüz kategori yok.
-                  </td>
-                </tr>
+              {siraliKategoriler.length === 0 && (
+                <TableEmpty colSpan={6} filtreli={filtreAktif} onClear={temizle} bosMesaj="Henüz kategori yok." />
               )}
             </tbody>
           </table>

@@ -4,8 +4,18 @@ import Link from "next/link";
 import { useState, useMemo, useEffect, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
-import { Plus, MagnifyingGlass, Eye, PencilSimple, Trash, Package, ArrowsDownUp, CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { Plus, Eye, PencilSimple, Trash, Package, ArrowsDownUp, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { removeProduct } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  FilterSelect,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 /** Tek sayfada gösterilecek ürün sayısı (client-side sayfalama). */
 const PAGE_SIZE = 25;
@@ -35,9 +45,22 @@ interface Props {
   categories: CategoryRow[];
 }
 
+type ProdSort = "name" | "sku" | "category" | "price" | "production" | "active";
+const PROD_ACCESSORS: SortAccessors<ProductRow, ProdSort> = {
+  name: (p) => p.name,
+  sku: (p) => p.sku ?? null,
+  category: (p) => p.category?.name ?? null,
+  // Fiyatsız ürünler (displayPrice null/0) boş sayılır → her iki yönde de sona gider,
+  // böylece "en pahalı" ve "en ucuz" sıralamalarının ikisi de anlamlı kalır.
+  price: (p) => (p.displayPrice && p.displayPrice > 0 ? p.displayPrice : null),
+  production: (p) => p.productionTime,
+  active: (p) => p.isActive !== false,
+};
+
 export function ProductsClient({ products, categories }: Props) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif" | "fiyatsiz">("all");
   const [page, setPage] = useState(1);
   const [isPending, startTransition] = useTransition();
 
@@ -55,31 +78,42 @@ export function ProductsClient({ products, categories }: Props) {
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
-      const matchSearch =
-        !search ||
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.slug.toLowerCase().includes(search.toLowerCase()) ||
-        (p.sku ?? "").toLowerCase().includes(search.toLowerCase());
       const matchCat =
         categoryFilter === "all" ||
         p.category?.slug === categoryFilter ||
         p.categoryId === categoryFilter;
-      return matchSearch && matchCat;
+      const fiyatsiz = !p.displayPrice || p.displayPrice <= 0;
+      const matchDurum =
+        durum === "all" ||
+        (durum === "aktif" && p.isActive !== false) ||
+        (durum === "pasif" && p.isActive === false) ||
+        (durum === "fiyatsiz" && fiyatsiz);
+      return matchCat && matchDurum && aramaEslesir(search, p.name, p.slug, p.sku);
     });
-  }, [search, categoryFilter, products]);
+  }, [search, categoryFilter, durum, products]);
+  const { rows: siraliUrunler, thProps } = useTableSort(filtered, PROD_ACCESSORS, {
+    key: "name",
+    dir: "asc",
+  });
+  const filtreAktif = search !== "" || categoryFilter !== "all" || durum !== "all";
+  const temizle = () => {
+    setSearch("");
+    setCategoryFilter("all");
+    setDurum("all");
+  };
 
   // Sayfalama: filtre/arama değişince başa dön — aksi halde "sayfa 5'te boş ekran" tuzağı.
   useEffect(() => {
     setPage(1);
-  }, [search, categoryFilter]);
+  }, [search, categoryFilter, durum]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   // Filtre sonucu küçüldüyse mevcut sayfa aralık dışı kalabilir → güvenli sınıra çek.
   const currentPage = Math.min(page, pageCount);
   const paged = useMemo(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, currentPage]);
+    return siraliUrunler.slice(start, start + PAGE_SIZE);
+  }, [siraliUrunler, currentPage]);
 
   const rangeStart = filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(currentPage * PAGE_SIZE, filtered.length);
@@ -112,48 +146,62 @@ export function ProductsClient({ products, categories }: Props) {
         </div>
       </header>
 
-      {/* Filters */}
-      <div className="mb-4 flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg">
-          <MagnifyingGlass size={16} className="text-ink-500" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            type="search"
-            placeholder="Ürün adı, slug veya SKU ara..."
-            className="flex-1 bg-transparent outline-none text-sm text-ink-900"
-          />
-        </div>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm text-ink-900 min-w-[200px]"
-        >
-          <option value="all">Tüm kategoriler</option>
-          {categories.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
       {/* Table */}
       <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+        <TableToolbar
+          search={{
+            id: "urun-ara",
+            value: search,
+            onChange: setSearch,
+            placeholder: "Ürün adı, slug veya SKU ara…",
+            className: "w-72",
+          }}
+          count={{ gosterilen: filtered.length, toplam: products.length, birim: "ürün" }}
+          onClear={filtreAktif ? temizle : null}
+        >
+          <FilterChips
+            label="Durum"
+            value={durum}
+            onChange={setDurum}
+            options={[
+              { value: "all", label: "Tümü" },
+              { value: "aktif", label: "Aktif", count: products.filter((p) => p.isActive !== false).length },
+              { value: "pasif", label: "Pasif", count: products.filter((p) => p.isActive === false).length },
+              {
+                value: "fiyatsiz",
+                label: "Fiyatsız",
+                count: products.filter((p) => !p.displayPrice || p.displayPrice <= 0).length,
+              },
+            ]}
+          />
+          <FilterSelect
+            id="urun-kategori"
+            label="Kategori"
+            value={categoryFilter}
+            onChange={setCategoryFilter}
+            options={[
+              { value: "all", label: "Tüm kategoriler" },
+              ...categories.map((c) => ({ value: c.slug, label: c.name })),
+            ]}
+          />
+        </TableToolbar>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold">Ürün</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">SKU</th>
-                <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Kategori</th>
-                <th className="text-right px-4 py-3 font-semibold">Fiyat (min) ₺</th>
-                <th className="text-center px-4 py-3 font-semibold hidden md:table-cell">Üretim</th>
-                <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                <SortTh sortKey="name" {...thProps} className="text-left px-4 py-3 font-semibold">Ürün</SortTh>
+                <SortTh sortKey="sku" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">SKU</SortTh>
+                <SortTh sortKey="category" {...thProps} className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Kategori</SortTh>
+                <SortTh sortKey="price" {...thProps} align="right" className="text-right px-4 py-3 font-semibold" title="Fiyata göre sırala; fiyatsız ürünler sona gider">Fiyat (min) ₺</SortTh>
+                <SortTh sortKey="production" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden md:table-cell">Üretim</SortTh>
+                <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-paper-200">
+              {paged.length === 0 && (
+                <TableEmpty colSpan={7} filtreli={filtreAktif} onClear={temizle} bosMesaj="Ürün yok." />
+              )}
               {paged.map((p) => {
                 const categoryName = p.category?.name ?? "-";
                 // GERÇEK fiyat = displayPrice (min product_prices). null/0 → henüz fiyatlanmadı.

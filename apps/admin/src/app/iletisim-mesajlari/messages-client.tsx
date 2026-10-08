@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
+import { TableToolbar, aramaEslesir } from "@/components/data-table";
 import { toast } from "@/components/toast";
 import type { ContactMessageDto } from "@markala/api-client";
 import { setContactStatus } from "./actions";
@@ -44,7 +45,16 @@ export function MessagesClient({ messages }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [isPending, startTransition] = useTransition();
 
-  const filtered = messages.filter((m) => (filter === "all" ? true : m.status === filter));
+  const [q, setQ] = useState("");
+  const filtered = useMemo(
+    () =>
+      messages.filter(
+        (m) =>
+          (filter === "all" || m.status === filter) &&
+          aramaEslesir(q, m.name, m.email, m.phone, m.subject, m.message),
+      ),
+    [messages, filter, q],
+  );
   const newCount = messages.filter((m) => m.status === "new").length;
 
   function update(m: ContactMessageDto, status: "new" | "read" | "archived", label: string) {
@@ -93,10 +103,24 @@ export function MessagesClient({ messages }: Props) {
         ))}
       </div>
 
+      <div className="mb-4 bg-paper-50 border border-paper-200 rounded-lg">
+        <TableToolbar
+          search={{
+            id: "mesaj-ara",
+            value: q,
+            onChange: setQ,
+            placeholder: "İsim, e-posta, konu veya mesaj ara…",
+            className: "w-72",
+          }}
+          count={{ gosterilen: filtered.length, toplam: messages.length, birim: "mesaj" }}
+          onClear={q ? () => setQ("") : null}
+        />
+      </div>
+
       {filtered.length === 0 ? (
         <div className="bg-paper-50 border border-paper-200 rounded-lg p-12 text-center">
           <p className="text-ink-500 text-sm">
-            {filter === "all" ? "Henüz mesaj yok." : `Bu filtrede mesaj yok.`}
+            {q ? "Aramayla eşleşen mesaj yok." : filter === "all" ? "Henüz mesaj yok." : "Bu filtrede mesaj yok."}
           </p>
         </div>
       ) : (

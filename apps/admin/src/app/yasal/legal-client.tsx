@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { toast } from "@/components/toast";
 import { Plus, PencilSimple, Prohibit, X } from "@phosphor-icons/react";
 import type { LegalPageDto } from "@markala/api-client";
 import { createLegal, updateLegal, removeLegal } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   pages: LegalPageDto[];
@@ -36,11 +45,39 @@ function formatDate(iso: string | null | undefined): string {
   });
 }
 
+type LegalSort = "title" | "slug" | "version" | "updated" | "active";
+const LEGAL_ACCESSORS: SortAccessors<LegalPageDto, LegalSort> = {
+  title: (p) => p.title,
+  slug: (p) => p.slug,
+  version: (p) => p.version ?? null,
+  updated: (p) => (p.updatedAt ? new Date(p.updatedAt) : null),
+  active: (p) => p.isActive,
+};
+
 export function LegalClient({ pages }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif">("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [isPending, startTransition] = useTransition();
+  const filtrelenmis = useMemo(
+    () =>
+      pages.filter(
+        (p) =>
+          (durum === "all" || (durum === "aktif" ? p.isActive : !p.isActive)) &&
+          aramaEslesir(q, p.title, p.slug),
+      ),
+    [pages, q, durum],
+  );
+  const { rows: siraliSayfalar, thProps } = useTableSort(filtrelenmis, LEGAL_ACCESSORS, {
+    key: "title",
+  });
+  const filtreAktif = q !== "" || durum !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+  };
 
   function openCreate() {
     setEditingId(null);
@@ -137,20 +174,39 @@ export function LegalClient({ pages }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "yasal-ara", value: q, onChange: setQ, placeholder: "Sayfa veya slug ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: pages.length, birim: "sayfa" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "aktif", label: "Aktif", count: pages.filter((p) => p.isActive).length },
+                { value: "pasif", label: "Pasif", count: pages.filter((p) => !p.isActive).length },
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Sayfa</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Slug</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Versiyon</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Son Güncelleme</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="title" {...thProps} className="text-left px-4 py-3 font-semibold">Sayfa</SortTh>
+                  <SortTh sortKey="slug" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Slug</SortTh>
+                  <SortTh sortKey="version" {...thProps} className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Versiyon</SortTh>
+                  <SortTh sortKey="updated" {...thProps} className="text-left px-4 py-3 font-semibold hidden lg:table-cell">Son Güncelleme</SortTh>
+                  <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {pages.map((p) => (
+                {siraliSayfalar.length === 0 && (
+                  <TableEmpty colSpan={6} filtreli onClear={temizle} bosMesaj="Sayfa yok." />
+                )}
+                {siraliSayfalar.map((p) => (
                   <tr key={p.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
                       <span className="font-medium text-ink-900">{p.title}</span>

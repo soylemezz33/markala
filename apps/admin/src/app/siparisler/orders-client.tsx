@@ -7,6 +7,7 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { MagnifyingGlass, Eye, Download, Package, WarningCircle, Plus } from "@phosphor-icons/react";
 import { Pagination, paginate } from "@/components/pagination";
+import { useTableSort, SortTh, aramaEslesir, type SortAccessors } from "@/components/data-table";
 
 export interface OrderRow {
   id: string;
@@ -70,15 +71,19 @@ function formatDateTime(iso: string): string {
   }
 }
 
-type SortKey = "date-desc" | "date-asc" | "amount-desc" | "amount-asc" | "order-asc" | "status";
-const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
-  { value: "date-desc", label: "Tarih (yeni → eski)" },
-  { value: "date-asc", label: "Tarih (eski → yeni)" },
-  { value: "amount-desc", label: "Tutar (yüksek → düşük)" },
-  { value: "amount-asc", label: "Tutar (düşük → yüksek)" },
-  { value: "order-asc", label: "Sipariş No (A → Z)" },
-  { value: "status", label: "Duruma göre" },
-];
+/**
+ * Sıralanabilir kolonlar (2026-10-08). Önceden "Sırala:" açılır menüsü vardı; panelin
+ * tüm tabloları tıklanabilir başlığa geçtiği için burada da aynı davranış kullanılıyor.
+ */
+type OrderSort = "order" | "customer" | "date" | "amount" | "type" | "status";
+const ORDER_ACCESSORS: SortAccessors<OrderRow, OrderSort> = {
+  order: (o) => o.orderNumber,
+  customer: (o) => o.customerName ?? o.email ?? null,
+  date: (o) => new Date(o.createdAt),
+  amount: (o) => Number(o.total) || 0,
+  type: (o) => (o.paymentMethod === "cari" ? "Kurumsal" : "Bireysel"),
+  status: (o) => STATUS_LABELS[toSlug(o.status)]?.label ?? o.status,
+};
 
 type DateRange = "all" | "today" | "7d" | "30d" | "month" | "custom";
 const DATE_OPTIONS: Array<{ value: DateRange; label: string }> = [
@@ -101,7 +106,6 @@ export function OrdersClient({ orders }: Props) {
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortKey>("date-desc");
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -132,12 +136,7 @@ export function OrdersClient({ orders }: Props) {
   // üzerinden hesaplıyoruz, yoksa arama/tarih daraltması sayıyı yanlış gösterirdi.
   const aramaVeTarih = orders.filter((o) => {
     const customer = o.customerName ?? o.email ?? "";
-    const matchSearch =
-      !search ||
-      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
-      customer.toLowerCase().includes(search.toLowerCase()) ||
-      (o.email ?? "").toLowerCase().includes(search.toLowerCase());
-    return matchSearch && inRange(o.createdAt);
+    return aramaEslesir(search, o.orderNumber, customer, o.email) && inRange(o.createdAt);
   });
 
   // 2026-09-24 (Hasan): "iptaller çok yer kaplıyor, özellikle seçmedikçe görünmesin".
@@ -148,17 +147,7 @@ export function OrdersClient({ orders }: Props) {
   );
   const gizlenenIptal = statusFilter === "all" ? aramaVeTarih.filter(iptalMi).length : 0;
 
-  const sorted = [...filtered].sort((a, b) => {
-    switch (sortBy) {
-      case "date-asc": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case "date-desc": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case "amount-asc": return Number(a.total) - Number(b.total);
-      case "amount-desc": return Number(b.total) - Number(a.total);
-      case "order-asc": return a.orderNumber.localeCompare(b.orderNumber);
-      case "status": return toSlug(a.status).localeCompare(toSlug(b.status));
-      default: return 0;
-    }
-  });
+  const { rows: sorted, sort, thProps } = useTableSort(filtered, ORDER_ACCESSORS, { key: "date" });
 
   const totalAmount = filtered.reduce((acc, o) => acc + Number(o.total), 0);
   const odenmis = filtered.filter((o) => !iptalMi(o) && o.paymentStatus === "basarili");
@@ -169,7 +158,7 @@ export function OrdersClient({ orders }: Props) {
   // Filtre/arama/sıralama değişince ilk sayfaya dön.
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, search, sortBy, dateRange, customFrom, customTo]);
+  }, [statusFilter, search, sort.key, sort.dir, dateRange, customFrom, customTo]);
 
   // ?q=… ile gelen arama terimi (Chatwoot panel uygulamasındaki "Panelde ara" bağlantısı
   // telefon/sipariş no'yu böyle taşır). Mount sonrası okunur: useState başlangıcında
@@ -291,18 +280,6 @@ export function OrdersClient({ orders }: Props) {
             />
           </div>
         )}
-        <label className="flex items-center gap-2 px-3 py-2 bg-paper-50 border border-paper-200 rounded-lg text-sm">
-          <span className="text-ink-500 whitespace-nowrap">Sırala:</span>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortKey)}
-            className="bg-transparent outline-none text-ink-900 cursor-pointer pr-1"
-          >
-            {SORT_OPTIONS.map((s) => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
@@ -326,12 +303,14 @@ export function OrdersClient({ orders }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
               <tr>
-                <th className="text-left px-4 py-3 font-semibold">Sipariş</th>
-                <th className="text-left px-4 py-3 font-semibold">Müşteri</th>
-                <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Tarih</th>
-                {showMoney && <th className="text-right px-4 py-3 font-semibold">Tutar</th>}
-                <th className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Tür</th>
-                <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                <SortTh sortKey="order" {...thProps} className="text-left px-4 py-3 font-semibold">Sipariş</SortTh>
+                <SortTh sortKey="customer" {...thProps} className="text-left px-4 py-3 font-semibold">Müşteri</SortTh>
+                <SortTh sortKey="date" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Tarih</SortTh>
+                {showMoney && (
+                  <SortTh sortKey="amount" {...thProps} align="right" className="text-right px-4 py-3 font-semibold">Tutar</SortTh>
+                )}
+                <SortTh sortKey="type" {...thProps} align="center" className="text-center px-4 py-3 font-semibold hidden lg:table-cell">Tür</SortTh>
+                <SortTh sortKey="status" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                 <th className="text-right px-4 py-3 font-semibold">İşlem</th>
               </tr>
             </thead>

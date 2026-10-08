@@ -1,12 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { AdminShell } from "@/components/admin-shell";
 import { confirm } from "@/components/confirm-dialog";
 import { toast } from "@/components/toast";
 import { Plus, PencilSimple, Trash, X } from "@phosphor-icons/react";
 import type { FaqDto } from "@markala/api-client";
 import { createFaq, updateFaq, removeFaq } from "./actions";
+import {
+  useTableSort,
+  SortTh,
+  TableToolbar,
+  FilterChips,
+  TableEmpty,
+  aramaEslesir,
+  type SortAccessors,
+} from "@/components/data-table";
 
 interface Props {
   faqs: FaqDto[];
@@ -57,18 +66,49 @@ function buildPayload(form: FormState): Record<string, unknown> {
   return payload;
 }
 
+/** Sıralama yalnız panel görünümünü değiştirir; sitedeki SSS sırası `sortOrder` ile yönetilir. */
+type FaqSort = "question" | "category" | "product" | "active" | "order";
+const FAQ_ACCESSORS: SortAccessors<FaqDto, FaqSort> = {
+  question: (f) => f.question,
+  category: (f) => CATEGORY_LABELS[f.category as FaqCategory] ?? f.category,
+  product: (f) => f.productSlug ?? null,
+  active: (f) => f.isActive,
+  order: (f) => f.sortOrder ?? null,
+};
+
 export function FaqsClient({ faqs: initialFaqs }: Props) {
+  const [q, setQ] = useState("");
+  const [durum, setDurum] = useState<"all" | "aktif" | "pasif">("all");
   const [faqs] = useState<FaqDto[]>(initialFaqs);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [categoryFilter, setCategoryFilter] = useState<string>("__all__");
   const [isPending, startTransition] = useTransition();
-
   const visibleFaqs =
     categoryFilter === "__all__"
       ? faqs
       : faqs.filter((f) => f.category === categoryFilter);
+
+  const filtrelenmis = useMemo(
+    () =>
+      visibleFaqs.filter(
+        (f) =>
+          (durum === "all" || (durum === "aktif" ? f.isActive : !f.isActive)) &&
+          aramaEslesir(q, f.question, f.answer, f.productSlug),
+      ),
+    [visibleFaqs, q, durum],
+  );
+  const { rows: siraliFaqlar, thProps } = useTableSort(filtrelenmis, FAQ_ACCESSORS, {
+    key: "order",
+    dir: "asc",
+  });
+  const filtreAktif = q !== "" || durum !== "all";
+  const temizle = () => {
+    setQ("");
+    setDurum("all");
+  };
+
 
   function openCreate() {
     setEditingId(null);
@@ -186,19 +226,38 @@ export function FaqsClient({ faqs: initialFaqs }: Props) {
         </div>
       ) : (
         <div className="bg-paper-50 border border-paper-200 rounded-lg overflow-hidden">
+          <TableToolbar
+            search={{ id: "sss-ara", value: q, onChange: setQ, placeholder: "Soru, cevap veya ürün ara…" }}
+            count={{ gosterilen: filtrelenmis.length, toplam: visibleFaqs.length, birim: "soru" }}
+            onClear={filtreAktif ? temizle : null}
+          >
+            <FilterChips
+              label="Durum"
+              value={durum}
+              onChange={setDurum}
+              options={[
+                { value: "all", label: "Tümü" },
+                { value: "aktif", label: "Aktif", count: visibleFaqs.filter((f) => f.isActive).length },
+                { value: "pasif", label: "Pasif", count: visibleFaqs.filter((f) => !f.isActive).length },
+              ]}
+            />
+          </TableToolbar>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-paper-100/60 text-ink-500 text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Soru</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kategori</th>
-                  <th className="text-left px-4 py-3 font-semibold hidden md:table-cell">Bağlı Ürün</th>
-                  <th className="text-center px-4 py-3 font-semibold">Durum</th>
+                  <SortTh sortKey="question" {...thProps} className="text-left px-4 py-3 font-semibold">Soru</SortTh>
+                  <SortTh sortKey="category" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Kategori</SortTh>
+                  <SortTh sortKey="product" {...thProps} className="text-left px-4 py-3 font-semibold hidden md:table-cell">Bağlı Ürün</SortTh>
+                  <SortTh sortKey="active" {...thProps} align="center" className="text-center px-4 py-3 font-semibold">Durum</SortTh>
                   <th className="text-right px-4 py-3 font-semibold">İşlem</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-200">
-                {visibleFaqs.map((f) => (
+                {siraliFaqlar.length === 0 && (
+                  <TableEmpty colSpan={5} filtreli onClear={temizle} bosMesaj="Soru yok." />
+                )}
+                {siraliFaqlar.map((f) => (
                   <tr key={f.id} className="hover:bg-paper-100/40">
                     <td className="px-4 py-3">
                       <span className="font-medium text-ink-900 line-clamp-1 max-w-xs block">{f.question}</span>
