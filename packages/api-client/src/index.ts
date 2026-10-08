@@ -864,6 +864,13 @@ export class MarkalaApiClient {
     });
 
   adminStats = () => this.request<AdminStatsDto>("GET", "/admin/stats", undefined, { auth: true });
+
+  /** Ürün satış toplamları (2026-10-08) — hangi üründen kaç adet / kaç siparişte satıldı. */
+  adminUrunSatis = (days?: number) =>
+    this.request<AdminUrunSatisDto>("GET", "/admin/stats/urun-satis", undefined, {
+      auth: true,
+      query: days ? { days } : undefined,
+    });
 }
 
 /** Panel yetkilisi satırı (GET /admin/panel-users). */
@@ -1345,6 +1352,27 @@ export function createMarkalaClient(opts?: Partial<ApiClientConfig>): MarkalaApi
     getToken: opts?.getToken,
     onError: opts?.onError,
   });
+}
+
+/** GET /admin/stats/urun-satis — ürün başına satış toplamları. Ciro KDV dahil kalem tutarı
+ *  (sipariş indirimi düşülmemiş); FINANCE izni olmayan rolde ciro alanları 0 gelir. */
+export interface AdminUrunSatisDto {
+  gunSayisi: number | null;
+  siparis: number;
+  adet: number;
+  ciro: number;
+  urunSayisi: number;
+  urunler: Array<{
+    productId: string | null;
+    productSlug: string;
+    productName: string;
+    siparis: number;
+    adet: number;
+    ciro: number;
+    ilkSatis: string;
+    sonSatis: string;
+    varyantlar: Array<{ ozet: string; siparis: number; adet: number; ciro: number }>;
+  }>;
 }
 
 export interface AdminProfitDto {

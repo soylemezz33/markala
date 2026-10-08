@@ -22,6 +22,8 @@ export const ROUTE_PERMS: ReadonlyArray<readonly [prefix: string, perm: string]>
   ["/analitik", "finance.manage"],
   ["/ciro", "finance.manage"],
   ["/siparisler", "orders.read"],
+  // Ürün satış toplamları (2026-10-08): adetler orders.read ile; ciro sütunu API'de FINANCE'e göre kesilir.
+  ["/urun-satislari", "orders.read"],
 
   ["/kargoda", "orders.read"],
   ["/musteriler", "customers.read"],

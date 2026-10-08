@@ -46,6 +46,8 @@ const navGroups: Array<{
       { href: "/", label: "Dashboard", icon: ChartLineUp },
       { href: "/analitik", label: "Ziyaretçi Analizi", icon: Pulse },
       { href: "/ciro", label: "Ciro & Kâr", icon: CurrencyCircleDollar },
+      // Ürün satış toplamları (2026-10-08): hangi üründen kaç adet satıldı; orders.read ile açılır.
+      { href: "/urun-satislari", label: "Ürün Satışları", icon: Package },
       { href: "/siparisler", label: "Siparişler", icon: ShoppingCart },
 
       // Kargodaki ürünler (2026-09-03): kargoya verilenler görselleriyle tek ekranda; orders.read ile açılır (kargo rolü dâhil).
