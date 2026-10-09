@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Giriş Yap",
@@ -8,10 +7,18 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-// Suspense: giriş sayfası `next` parametresini useSearchParams ile İLK render'da okuyor
-// (2026-08-20 CLS düzeltmesi). Next.js, useSearchParams kullanan client bileşenin bir
-// Suspense sınırı içinde olmasını şart koşar; yoksa build uyarı verir / sayfa tamamen
-// client'a düşer.
+/**
+ * ELLE SUSPENSE KALDIRILDI (2026-10-09).
+ *
+ * Burada `<Suspense fallback={null}>` vardı: 2026-08-20'de sayfa `useSearchParams()`
+ * kullandığı için zorunluydu. 31 Ağustos'ta `next` parametresi SUNUCUYA taşındı
+ * (page.tsx), yani hook kalmadı — ama boş fallback kaldı. Sonucu: sayfa dinamik olduğu
+ * için her yumuşak navigasyonda RSC yükü beklenirken orta alan BOMBOŞ kalıyordu; geçiş
+ * takıldığında müşteri "beyaz sayfa" görüp yenilemek zorunda kalıyordu.
+ *
+ * Artık sınırı Next'in kendi `loading.tsx` dosyası kuruyor ve fallback olarak görünür bir
+ * form iskeleti gösteriyor.
+ */
 export default function GirisLayout({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={null}>{children}</Suspense>;
+  return children;
 }
