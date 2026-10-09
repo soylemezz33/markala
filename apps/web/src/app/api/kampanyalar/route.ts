@@ -19,6 +19,10 @@ const BUNDLE_IMAGES: Record<string, string> = {
   "restoran-acilis": "/images/kampanyalar/restoran-acilis.webp",
   "esnaf-baslangic": "/images/kampanyalar/esnaf-baslangic.webp",
   "yeni-isletme": "/images/kampanyalar/yeni-isletme.webp",
+  // Seçim paketleri (2026-10-09) — kaynak: scripts/kampanya-gorsel/sablon.html
+  "secim-paketi-az": "/images/kampanyalar/secim-paketi-az.webp",
+  "secim-paketi-orta": "/images/kampanyalar/secim-paketi-orta.webp",
+  "secim-paketi-fazla": "/images/kampanyalar/secim-paketi-fazla.webp",
 };
 
 /**
