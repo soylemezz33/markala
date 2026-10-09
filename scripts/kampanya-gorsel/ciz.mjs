@@ -8,7 +8,7 @@ const url = pathToFileURL(path.resolve("sablon.html")).href;
 await p.goto(url, { waitUntil: "networkidle" });
 await p.evaluate(() => document.fonts.ready);
 await p.waitForTimeout(1500);
-for (const id of ["secim-paketi-az", "secim-paketi-orta", "secim-paketi-fazla"]) {
+for (const id of ["secim-paketi-az", "secim-paketi-orta", "secim-paketi-fazla", "esnaf-baslangic", "yeni-isletme", "restoran-acilis"]) {
   await p.locator("#" + id).screenshot({ path: `${id}.png` });
   console.log("cizildi:", id);
 }

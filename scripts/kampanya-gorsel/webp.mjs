@@ -3,7 +3,7 @@ import sharpMod from "file:///C:/Users/Administrator/Desktop/markala/node_module
 
 const sharp = sharpMod.default ?? sharpMod;
 
-for (const s of ["secim-paketi-az", "secim-paketi-orta", "secim-paketi-fazla"]) {
+for (const s of ["secim-paketi-az", "secim-paketi-orta", "secim-paketi-fazla", "esnaf-baslangic", "yeni-isletme", "restoran-acilis"]) {
   await sharp(`${s}.png`).resize(1200, 900, { fit: "fill" }).webp({ quality: 86, effort: 6 }).toFile(`${s}.webp`);
   const m = await sharp(`${s}.webp`).metadata();
   console.log(`${s}.webp  ${m.width}x${m.height}  ${Math.round(fs.statSync(`${s}.webp`).size / 1024)} KB`);
