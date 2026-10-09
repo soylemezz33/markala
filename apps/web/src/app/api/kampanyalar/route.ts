@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { paketIcerigiAyristir } from "@/lib/paket-icerik";
 
 export const runtime = "nodejs";
 
@@ -7,7 +8,7 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   "http://api:4000";
 
-const CATS = ["esnaf", "kurumsal", "etkinlik", "acilis", "promosyon"];
+const CATS = ["esnaf", "kurumsal", "etkinlik", "acilis", "promosyon", "secim"];
 
 /**
  * Pakete özel tasarlanmış görseller (Hasan, 2026-08-25) — public/images/kampanyalar/<slug>.webp.
@@ -36,18 +37,14 @@ export async function GET() {
       const original = Number(p.listPrice ?? p.packagePrice) || 0;
       const bundle = Number(p.packagePrice) || 0;
       const contentsText = String(p.contents ?? "");
-      const contents = contentsText
-        .split(/\s*[+,]\s*/)
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .map((part) => ({ quantity: 1, productName: part }));
+      const contents = paketIcerigiAyristir(contentsText);
       const category = CATS.includes(String(p.category)) ? String(p.category) : "promosyon";
       const savings = original > bundle ? Math.round((1 - bundle / original) * 100) : 0;
       return {
         slug: String(p.slug),
         name: String(p.name),
         tagline: savings > 0 ? `%${savings} indirim` : "Hazır paket",
-        description: contentsText,
+        description: contents.map((c) => c.productName).join(" · ") || contentsText,
         contents: contents.length ? contents : [{ quantity: 1, productName: contentsText || p.name }],
         originalPrice: original,
         bundlePrice: bundle,

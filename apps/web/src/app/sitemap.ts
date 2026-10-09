@@ -15,6 +15,8 @@ const STATIC_ROUTES = [
   { path: "/urunler", priority: 0.9, freq: "daily" as const },
   { path: "/kategoriler", priority: 0.9, freq: "weekly" as const },
   { path: "/kampanyalar", priority: 0.9, freq: "weekly" as const },
+  { path: "/kampanyalar/esnaf-paketi", priority: 0.8, freq: "weekly" as const },
+  { path: "/kampanyalar/secim-paketi", priority: 0.8, freq: "weekly" as const },
   { path: "/blog", priority: 0.85, freq: "weekly" as const },
   { path: "/matbaa", priority: 0.95, freq: "weekly" as const },
   { path: "/hizmetler", priority: 0.9, freq: "monthly" as const },

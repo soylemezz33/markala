@@ -18,8 +18,8 @@ export class CreateCampaignPackageDto {
   @IsString() @MinLength(2)
   name!: string;
 
-  @IsIn(["esnaf", "kurumsal", "etkinlik", "acilis", "promosyon"])
-  category!: "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon";
+  @IsIn(["esnaf", "kurumsal", "etkinlik", "acilis", "promosyon", "secim"])
+  category!: "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon" | "secim";
 
   @IsString()
   contents!: string;
@@ -53,8 +53,8 @@ export class UpdateCampaignPackageDto {
   @IsString() @MinLength(2) @IsOptional()
   name?: string;
 
-  @IsIn(["esnaf", "kurumsal", "etkinlik", "acilis", "promosyon"]) @IsOptional()
-  category?: "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon";
+  @IsIn(["esnaf", "kurumsal", "etkinlik", "acilis", "promosyon", "secim"]) @IsOptional()
+  category?: "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon" | "secim";
 
   @IsString() @IsOptional()
   contents?: string;

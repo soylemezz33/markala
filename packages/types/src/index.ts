@@ -275,7 +275,14 @@ export interface CampaignBundleItem {
   note?: string;
 }
 
-export type CampaignBundleCategory = "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon";
+export type CampaignBundleCategory =
+  | "esnaf"
+  | "kurumsal"
+  | "etkinlik"
+  | "acilis"
+  | "promosyon"
+  /** Aday tanıtım paketleri (oda/dernek/kooperatif seçimleri) — 2026-10-09 */
+  | "secim";
 
 export interface CampaignBundle {
   slug: string;

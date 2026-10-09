@@ -21,7 +21,7 @@ interface Props {
   packages: CampaignPackageDto[];
 }
 
-type Category = "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon";
+type Category = "esnaf" | "kurumsal" | "etkinlik" | "acilis" | "promosyon" | "secim";
 
 interface FormState {
   slug: string;
@@ -57,6 +57,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
   etkinlik: "Etkinlik",
   acilis: "Açılış",
   promosyon: "Promosyon",
+  secim: "Seçim",
 };
 
 function formatDate(iso: string | null | undefined): string {
@@ -405,6 +406,7 @@ export function PackagesClient({ packages }: Props) {
                   <option value="etkinlik">Etkinlik</option>
                   <option value="acilis">Açılış</option>
                   <option value="promosyon">Promosyon</option>
+                  <option value="secim">Seçim (aday tanıtım)</option>
                 </select>
               </div>
 

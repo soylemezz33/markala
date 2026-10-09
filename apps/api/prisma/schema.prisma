@@ -1048,7 +1048,7 @@ model CampaignPackage {
   id            String    @id @default(cuid())
   slug          String    @unique
   name          String
-  category      String // esnaf | kurumsal | etkinlik | acilis | promosyon
+  category      String // esnaf | kurumsal | etkinlik | acilis | promosyon | secim
   contents      String    @db.Text
   listPrice     Decimal   @map("list_price") @db.Decimal(10, 2)
   packagePrice  Decimal   @map("package_price") @db.Decimal(10, 2)
