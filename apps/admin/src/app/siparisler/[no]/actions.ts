@@ -77,6 +77,28 @@ export async function confirmManualPayment(
 }
 
 /**
+ * Ödemesi tamamlanmamış siparişin müşterisine WhatsApp hatırlatması gönderir (2026-10-09).
+ *
+ * MÜŞTERİYE GİDEN MESAJ: metni panel BELİRLEMEZ, sunucuda üretilir (havale → "hesabımıza
+ * ulaşmadı", kart → "tamamlamadığınızı görüyoruz"). Sunucu ayrıca ödeme durumu, sipariş yaşı
+ * ve 12 saatlik tekrar aralığını denetler; reddederse sebebi burada gösterilir.
+ */
+export async function sendPaymentReminder(
+  id: string,
+): Promise<{ ok: true; message: string } | { ok: false; error: string }> {
+  try {
+    const api = await getAdminApi();
+    const res = await api.orders.odemeHatirlat(id);
+    revalidatePath(`/siparisler/${id}`);
+    if (!res.ok) return { ok: false, error: res.hata ?? "Hatırlatma gönderilemedi." };
+    return { ok: true, message: `Hatırlatma WhatsApp'tan gönderildi${res.alici ? ` (+${res.alici})` : ""}.` };
+  } catch (e) {
+    const msg = (e as { message?: string })?.message ?? "Hatırlatma gönderilemedi";
+    return { ok: false, error: msg };
+  }
+}
+
+/**
  * Sipariş durumunu günceller. "kargoya-verildi"ye geçerken takip bilgisi de gönderilir —
  * müşteriye giden kargo e-postası takip numarasını İÇİNDE taşısın diye (2026-08-29).
  * Takip alanları opsiyonel: diğer durum geçişlerinde boş geçilir.

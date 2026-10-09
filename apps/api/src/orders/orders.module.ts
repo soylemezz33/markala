@@ -12,12 +12,13 @@ import { StorageModule } from "../storage/storage.module";
 import { OrderDesignService } from "./order-design.service";
 import { OrderNoteService } from "./order-note.service";
 import { KargoTakipService } from "./kargo-takip.service";
+import { OdemeHatirlatmaService } from "./odeme-hatirlatma.service";
 
 @Module({
   // StorageModule (2026-09-02): satıra tasarım dosyası yükleme/silme StorageService'i kullanır.
   imports: [SettingsModule, MailModule, LoyaltyModule, StorageModule],
   controllers: [OrdersController, ChatwootWebhookController],
-  providers: [ManuelSiparisService, ZamanCizelgesiService, OrdersService, OrderDesignService, OrderNoteService, KargoTakipService, InvoiceService],
+  providers: [ManuelSiparisService, ZamanCizelgesiService, OrdersService, OrderDesignService, OrderNoteService, KargoTakipService, InvoiceService, OdemeHatirlatmaService],
   exports: [OrdersService, InvoiceService],
 })
 export class OrdersModule {}

@@ -385,6 +385,19 @@ export class MarkalaApiClient {
       this.request<Order>("PATCH", `/orders/${id}/odeme-onayla`, undefined, { auth: true }),
 
     /**
+     * Ödemesi tamamlanmamış siparişin müşterisine WhatsApp hatırlatması (2026-10-09).
+     * Metin SUNUCUDA üretilir (panelden serbest metin gönderilemez); sunucu kuralları
+     * reddederse { ok:false, hata } döner — panel bunu kullanıcıya gösterir.
+     */
+    odemeHatirlat: (id: string) =>
+      this.request<{ ok: boolean; mesaj?: string; alici?: string; hata?: string }>(
+        "POST",
+        `/orders/${id}/odeme-hatirlat`,
+        undefined,
+        { auth: true },
+      ),
+
+    /**
      * Sipariş iç notları (2026-09-03) — panel personeli arası, müşteriye ASLA dönmez.
      * Order.notes'tan ayrı tablodur (o kolon müşteri notu + idempotency etiketi taşır).
      */

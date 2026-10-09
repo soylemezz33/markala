@@ -42,6 +42,7 @@ import { ManuelSiparisService } from "./manuel-siparis.service";
 import { ZamanCizelgesiService } from "./zaman-cizelgesi.service";
 import { ManuelFiyatDto, ManuelSiparisDto } from "./manuel-siparis.dto";
 import { KargoTakipService } from "./kargo-takip.service";
+import { OdemeHatirlatmaService } from "./odeme-hatirlatma.service";
 import type { Request } from "express";
 import type { Response } from "express";
 
@@ -79,6 +80,8 @@ export class OrdersController {
     // Kargo teslim taraması — cron'un çalıştırdığı kodun elle tetiklenebilir kopyası değil,
     // AYNISI (bkz. kargo-takip.service.ts başlığı).
     private kargoTakip: KargoTakipService,
+    // Ödeme hatırlatması (2026-10-09) — WhatsApp + panel notu + Chatwoot, aynı ayrı-servis gerekçesi.
+    private odemeHatirlatma: OdemeHatirlatmaService,
   ) {}
 
   /**
@@ -278,6 +281,32 @@ export class OrdersController {
    * IBAN'a gönderen sipariş için (2026-09-08). Para hesaba geçtiğinde admin işaretler.
    * ORDERS_STATUS izni şart: tutar/ödeme kararı kargo rolünün işi değil.
    */
+  /**
+   * Ödemesi tamamlanmamış siparişin müşterisine WhatsApp hatırlatması gönderir (2026-10-09).
+   *
+   * MÜŞTERİYE GİDEN MESAJ: panelde onay kutusuyla korunur, sunucuda da kurallıdır —
+   * ödeme beklemiyorsa, sipariş 30 dk'dan yeniyse ya da son 12 saatte bir hatırlatma
+   * gittiyse reddeder (odeme-hatirlatma-mesaji.ts). Metni istemci GÖNDEREMEZ; sunucuda
+   * üretilir, böylece panelden serbest metin yollanamaz.
+   *
+   * Yetki ORDERS_STATUS: müşteriyle temas kuran bir işlem, kargo/tasarım rolünün işi değil.
+   */
+  @Post(":id/odeme-hatirlat")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("admin", "super_admin")
+  @Perms(PERM.ORDERS_STATUS)
+  @ApiBearerAuth()
+  async odemeHatirlat(
+    @Param("id") id: string,
+    @Req() req: Request & { user?: { sub?: string; role?: string; email?: string } },
+  ) {
+    return this.odemeHatirlatma.gonder(id, {
+      id: req.user?.sub ?? null,
+      email: req.user?.email ?? null,
+      role: req.user?.role ?? null,
+    });
+  }
+
   @Patch(":id/odeme-onayla")
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles("admin", "super_admin")

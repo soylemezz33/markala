@@ -202,6 +202,69 @@ export class ChatwootService {
     }
   }
 
+  /**
+   * Müşteriye giden bir mesajı konuşmaya ÖZEL NOT olarak düşer (2026-10-09, ödeme hatırlatma
+   * düğmesi). Konuşma yoksa WhatsApp kutusunda açar — hatırlatma ödenmemiş siparişe gider,
+   * yani `siparisKonusmasiAc`'ın beklediği "ödeme alındı" anı henüz gelmemiştir.
+   *
+   * NEDEN ÖZEL NOT: mesaj Meta'ya zaten gönderildi. Chatwoot'a "giden mesaj" olarak yazmak
+   * müşteriye İKİNCİ kez gönderirdi (9 Eki'de elle gönderimde bu tuzağa düşülmedi, not olarak
+   * düşüldü). Müşteri yanıtlayınca yanıt bu konuşmaya gelir, ekip bağlamı burada görür.
+   *
+   * Hata fırlatmaz: WhatsApp mesajı gitmişken Chatwoot kaydı tutmadı diye panel hata göstermez.
+   */
+  async gidenMesajiNotEt(orderId: string, baslik: string, mesaj: string): Promise<number | null> {
+    if (!this.isConfigured()) return null;
+    try {
+      let convId = await this.konusmaIdBul(orderId);
+      if (!convId) {
+        const order = await this.prisma.order.findUnique({
+          where: { id: orderId },
+          select: {
+            orderNumber: true, email: true, phone: true, shippingAddressSnapshot: true,
+            user: { select: { fullName: true } },
+          },
+        });
+        if (!order) return null;
+        const snap = (order.shippingAddressSnapshot ?? {}) as { fullName?: string; phone?: string };
+        const kimlik = whatsappKimligi(order.phone ?? snap.phone);
+        if (!kimlik) return null;
+        const musteriAdi = (snap.fullName || order.user?.fullName || order.email || "Müşteri").trim();
+        const contactId = await this.contactBul(kimlik, musteriAdi, order.email);
+        const inboxId = Number(this.cfg("CHATWOOT_INBOX_ID"));
+        const mevcut = await this.acikKonusma(contactId, inboxId);
+        if (mevcut) {
+          convId = mevcut;
+        } else {
+          const yeni = await this.api<{ id: number }>("POST", "/conversations", {
+            source_id: kimlik,
+            inbox_id: inboxId,
+            contact_id: contactId,
+            status: "open",
+            custom_attributes: { siparis_no: order.orderNumber },
+          });
+          convId = yeni.id;
+        }
+        // İz: ikinci çağrıda aynı konuşma bulunsun, panelde bağlantı görünsün.
+        await this.prisma.orderNote.create({
+          data: {
+            orderId, authorId: null, authorName: "Sistem", authorRole: "chatwoot",
+            body: icNotMetni(convId, this.konusmaUrl(convId), !mevcut),
+          },
+        });
+      }
+      await this.api("POST", `/conversations/${convId}/messages`, {
+        content: `${baslik}\n\n"${mesaj}"`,
+        message_type: "outgoing",
+        private: true,
+      });
+      return convId;
+    } catch (e) {
+      this.logger.warn(`chatwoot giden mesaj notu düşülemedi order=${orderId}: ${(e as Error).message}`);
+      return null;
+    }
+  }
+
   async konusmaGetir(convId: number): Promise<{ id: number; status?: string; labels?: string[]; custom_attributes?: Record<string, unknown> }> {
     return this.api("GET", `/conversations/${convId}`);
   }

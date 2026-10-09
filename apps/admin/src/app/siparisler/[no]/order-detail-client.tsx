@@ -36,6 +36,7 @@ import {
   refundOrder,
   confirmHavalePayment,
   confirmManualPayment,
+  sendPaymentReminder,
   deleteOrderDesign,
   setFaturaKesilmesin,
   addOrderNote,
@@ -339,6 +340,7 @@ export function OrderDetailClient({
   const [refunding, setRefunding] = useState(false);
   const [havaleOnayliyor, setHavaleOnayliyor] = useState(false);
   const [ibanKaydediliyor, setIbanKaydediliyor] = useState(false);
+  const [hatirlatmaGonderiliyor, setHatirlatmaGonderiliyor] = useState(false);
 
   // Kargo takip bilgisi (2026-08-29). İki giriş noktası var:
   //  · "kargoya-verildi"ye geçerken açılan pencere → numara müşteriye giden maile girer
@@ -522,6 +524,44 @@ export function OrderDetailClient({
     startTransition(async () => {
       const res = await confirmManualPayment(order.id);
       setIbanKaydediliyor(false);
+      setRefundMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
+    });
+  };
+
+  /**
+   * Ödeme hatırlatması — müşteriye WhatsApp'tan tek mesaj (2026-10-09, Hasan).
+   * Ödemesi bekleyen/başarısız her siparişte görünür (havale dahil); metni sunucu üretir,
+   * onay penceresinde birebir gösterilir. canFullStatus: müşteriyle temas eden işlem.
+   */
+  const hatirlatilabilir =
+    (payStatus === "beklemede" || payStatus === "basarisiz") &&
+    !String(order.status ?? "").startsWith("iptal") &&
+    order.paymentMethod !== "cari";
+  const canRemind = canFullStatus && hatirlatilabilir;
+  const hatirlatmaOnizleme =
+    order.paymentMethod === "havale"
+      ? `${order.orderNumber} numaralı siparişinizin havale ödemesi henüz hesabımıza ulaşmadı`
+      : `${order.orderNumber} numaralı siparişinizin ödemesini tamamlamadığınızı görüyoruz`;
+
+  const handleReminder = async () => {
+    if (hatirlatmaGonderiliyor) return;
+    const ok = await confirm({
+      title: "Müşteriye ödeme hatırlatması gönderilsin mi?",
+      description: `WhatsApp'tan şu mesaj gidecek: "Merhaba …, Markala.com.tr olarak hatırlatmak istedik: ${hatirlatmaOnizleme}. Yardımcı olmamızı ister misiniz?"`,
+      bullets: [
+        `Sipariş: ${order.orderNumber}`,
+        `Alıcı: ${order.shippingAddress?.phone ?? "siparişteki telefon"}`,
+        "Yanıt Chatwoot'taki WhatsApp kutusuna düşer; gönderim panel notuna işlenir.",
+        "Aynı siparişe 12 saat içinde ikinci hatırlatma gönderilemez.",
+      ],
+      confirmLabel: "Hatırlatmayı gönder",
+    });
+    if (!ok) return;
+    setRefundMsg(null);
+    setHatirlatmaGonderiliyor(true);
+    startTransition(async () => {
+      const res = await sendPaymentReminder(order.id);
+      setHatirlatmaGonderiliyor(false);
       setRefundMsg(res.ok ? { ok: true, text: res.message } : { ok: false, text: res.error });
     });
   };
@@ -1343,6 +1383,32 @@ export function OrderDetailClient({
                   </button>
                 ) : (
                   <p className="mt-1.5 text-[11px] text-ink-500">Kaydetme yetkiniz yok.</p>
+                )}
+              </div>
+            )}
+
+            {/* ÖDEME HATIRLATMASI (2026-10-09) — havale düşmeyen ve ödemeden çıkan müşteri.
+                8-9 Ekim'de elle gönderilen dört mesajın (31.471 ₺'lik sipariş) panel karşılığı:
+                tek tık, onay penceresi, sunucu üretimi metin. */}
+            {hatirlatilabilir && (
+              <div className="mb-4 rounded-md border border-paper-200 bg-paper-100 px-3 py-2.5">
+                <p className="text-xs font-semibold text-ink-900">Ödeme hatırlatması</p>
+                <p className="mt-0.5 text-[11px] text-ink-600">
+                  {order.paymentMethod === "havale"
+                    ? "Havale hesabımıza düşmediyse müşteriye WhatsApp'tan nazik bir hatırlatma gönderin."
+                    : "Müşteri ödemeyi tamamlamadan çıktıysa WhatsApp'tan hatırlatma gönderin."}
+                </p>
+                {canRemind ? (
+                  <button
+                    onClick={() => void handleReminder()}
+                    disabled={hatirlatmaGonderiliyor || isPending}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-paper-300 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-paper-200 disabled:opacity-60"
+                  >
+                    <WhatsappLogo size={14} weight="fill" className="text-[#25D366]" />
+                    {hatirlatmaGonderiliyor ? "Gönderiliyor…" : "WhatsApp'tan hatırlat"}
+                  </button>
+                ) : (
+                  <p className="mt-1.5 text-[11px] text-ink-500">Gönderme yetkiniz yok.</p>
                 )}
               </div>
             )}

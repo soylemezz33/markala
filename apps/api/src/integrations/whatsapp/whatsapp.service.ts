@@ -17,6 +17,13 @@ import {
   gorselUygunMu,
   tasarimOnayParametreleri,
 } from "./tasarim-onay-mesaji";
+import {
+  HATIRLATMA_SABLON_ADI,
+  HATIRLATMA_SABLON_DILI,
+  WA_HATIRLATMA_KAYDI,
+  hatirlatmaParametreleri,
+  hatirlatmaUygunMu,
+} from "./odeme-hatirlatma-mesaji";
 
 /**
  * WHATSAPP BİLDİRİMİ (Meta Cloud API) — 2026-09-06, Hasan.
@@ -505,6 +512,137 @@ export class WhatsappService {
    * Onay gönderimini notification_logs'a yazar. Mükerrer ENGELLENMEZ: revize sonrası
    * ikinci/üçüncü tasarım da onaya gider — burada "bir kez gitsin" kuralı yanlış olurdu.
    */
+  // ───────────────────────────────────────────────────────────────────────────────────
+  // ÖDEME HATIRLATMASI (2026-10-09) — panelden elle tetiklenir
+  // ───────────────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Ödemesi tamamlanmamış siparişin müşterisine WhatsApp hatırlatması gönderir.
+   *
+   * 8-9 Ekim'de dört müşteriye elle gönderdiğimiz mesajın (31.471 ₺'lik sipariş) panel
+   * düğmesine bağlanmış hâli. Tasarım onayı gibi, BU METOT ÇAĞIRANA SONUÇ BİLDİRİR:
+   * operatör "gitti mi?" cevabını görmek zorunda (fire-and-forget değil).
+   *
+   * Kurallar saf modülde (odeme-hatirlatma-mesaji.ts): ödeme bekliyor mu, sipariş yeterince
+   * eski mi, son 12 saatte gönderilmiş mi. Mesaj metni de orada üretilir ki panelde
+   * gösterilen önizleme ile giden metin aynı kaynaktan çıksın.
+   */
+  async odemeHatirlatmasiGonder(
+    orderId: string,
+  ): Promise<{ ok: boolean; alici?: string; messageId?: string; hata?: string; mesaj?: string }> {
+    if (!this.yapilandirildiOnay()) {
+      return { ok: false, hata: "WhatsApp entegrasyonu yapılandırılmamış (token/hat id eksik)." };
+    }
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        orderNumber: true,
+        email: true,
+        phone: true,
+        status: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        createdAt: true,
+        shippingAddressSnapshot: true,
+        user: { select: { fullName: true } },
+      },
+    });
+    if (!order) return { ok: false, hata: "Sipariş bulunamadı." };
+
+    const sonKayit = await this.prisma.notificationLog
+      .findFirst({
+        where: {
+          template: WA_HATIRLATMA_KAYDI,
+          status: "sent",
+          metadata: { path: ["orderNumber"], equals: order.orderNumber },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      })
+      .catch(() => null);
+
+    const karar = hatirlatmaUygunMu({
+      paymentStatus: String(order.paymentStatus),
+      status: String(order.status),
+      createdAt: order.createdAt,
+      sonHatirlatma: sonKayit?.createdAt ?? null,
+      simdi: new Date(),
+    });
+    if (!karar.uygun) return { ok: false, hata: karar.sebep };
+
+    const snapshot = order.shippingAddressSnapshot as { fullName?: string; phone?: string } | null;
+    const alici = numarayiNormalize(order.phone) ?? numarayiNormalize(snapshot?.phone);
+    if (!alici) return { ok: false, hata: "Siparişte geçerli bir telefon numarası yok." };
+
+    const musteriAdi = snapshot?.fullName?.trim() || order.user?.fullName?.trim() || null;
+    const { parametreler, onizleme } = hatirlatmaParametreleri(
+      musteriAdi,
+      order.orderNumber,
+      order.paymentMethod,
+    );
+    const sablon =
+      (this.config.get<string>("WHATSAPP_HATIRLATMA_TEMPLATE") ?? "").trim() ||
+      HATIRLATMA_SABLON_ADI;
+    const sonuc = await this.metinSablonuGonder(
+      alici,
+      sablon,
+      HATIRLATMA_SABLON_DILI,
+      parametreler,
+    );
+    await this.kaydet(alici, order.orderNumber, sonuc, WA_HATIRLATMA_KAYDI, "Ödeme hatırlatması");
+    return { ...sonuc, alici, mesaj: onizleme };
+  }
+
+  /**
+   * Metin şablonu gönderir (şablon adı + dil çağırandan gelir).
+   *
+   * `sablonGonder` yeni-sipariş şablonunu sabitliyor (env WHATSAPP_TEMPLATE); hatırlatma
+   * farklı bir şablon kullandığı için ortak gövde buraya ayrıldı. Davranış birebir aynı:
+   * zaman aşımı, Meta hata kodunu olduğu gibi loglama, asla fırlatmama.
+   */
+  private async metinSablonuGonder(
+    alici: string,
+    sablon: string,
+    dil: string,
+    parametreler: string[],
+  ): Promise<{ ok: boolean; messageId?: string; hata?: string }> {
+    const url = `https://graph.facebook.com/${GRAPH_SURUMU}/${this.phoneNumberId()}/messages`;
+    const govde = {
+      messaging_product: "whatsapp",
+      to: alici,
+      type: "template",
+      template: {
+        name: sablon,
+        language: { code: dil },
+        components: [
+          { type: "body", parameters: parametreler.map((text) => ({ type: "text", text })) },
+        ],
+      },
+    };
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${this.token()}`, "Content-Type": "application/json" },
+        body: JSON.stringify(govde),
+        signal: AbortSignal.timeout(ZAMAN_ASIMI_MS),
+      });
+      const veri = (await res.json().catch(() => ({}))) as {
+        messages?: { id: string }[];
+        error?: { message?: string; code?: number };
+      };
+      if (!res.ok || veri.error) {
+        const hata = `${veri.error?.code ?? res.status}: ${veri.error?.message ?? "bilinmeyen hata"}`;
+        this.logger.warn(`whatsapp ${sablon} gönderilemedi to=${alici}: ${hata}`);
+        return { ok: false, hata };
+      }
+      return { ok: true, messageId: veri.messages?.[0]?.id };
+    } catch (e) {
+      const hata = (e as Error)?.message ?? "ağ hatası";
+      this.logger.warn(`whatsapp ${sablon} gönderilemedi to=${alici}: ${hata}`);
+      return { ok: false, hata };
+    }
+  }
+
   private async kaydetOnay(
     alici: string,
     orderNumber: string,
