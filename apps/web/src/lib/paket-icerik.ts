@@ -21,13 +21,36 @@ export interface PaketKalemi {
 }
 
 const SLUG_DESENI = /\s+#([a-z0-9]+(?:-[a-z0-9]+)*)$/;
+/** "@uretim:6-12 iş günü" — paketin TAMAMI için üretim süresi; kaleme dönüşmez. */
+const URETIM_DESENI = /^@uretim:\s*(.+)$/i;
 const ADET_DESENI = /^([0-9][0-9.]*)\s*[×x]\s*(.+)$/;
+
+/**
+ * Paketin üretim süresini içerik metnindeki "@uretim:" belirtecinden okur.
+ *
+ * NEDEN GEREKLİ: sepet, teslim aralığını kalemlerin productionTime'ından hesaplıyor.
+ * Paket bir Product olmadığı için süresi yok ve varsayılana (3-5 iş günü) düşüyordu —
+ * oysa seçim paketlerinde 6-12 iş günlük kartvizit var. Müşteriye sepette gerçekte
+ * tutulamayacak bir teslim sözü veriliyordu (9 Eki, canlıda görüldü).
+ *
+ * Paket içeriğine " + @uretim:6-12 iş günü" eklemek yeterli; admin tek metin alanından
+ * yönetebiliyor ve yeni bir veritabanı kolonu/migration gerekmiyor.
+ */
+export function paketUretimSuresi(text: string): string | undefined {
+  for (const parca of String(text ?? "").split(/\s*[+,]\s*/)) {
+    const e = parca.trim().match(URETIM_DESENI);
+    if (e?.[1]) return e[1].trim();
+  }
+  return undefined;
+}
 
 export function paketIcerigiAyristir(text: string): PaketKalemi[] {
   const parcalar = String(text ?? "")
     .split(/\s*[+,]\s*/)
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    // "@uretim:" kalem değil, paket meta verisi — listede gösterilmez.
+    .filter((s) => !URETIM_DESENI.test(s));
 
   const kalemler = parcalar.map((parca) => {
     let kalan = parca;

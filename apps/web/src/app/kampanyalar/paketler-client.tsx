@@ -20,6 +20,9 @@ import {
   Clock,
 } from "@phosphor-icons/react";
 import type { CampaignBundle, CampaignBundleCategory } from "@markala/types";
+
+/** API paket nesnesi + paket üretim süresi (CampaignBundle tipinde yok, rotadan geliyor). */
+type PaketKarti = CampaignBundle & { productionTime?: string };
 import { useCartStore } from "@/lib/cart-store";
 import { PAKET_GRUPLARI, grubuBul, type PaketGrupId } from "./paket-gruplari";
 
@@ -57,12 +60,12 @@ export default function PaketlerClient({ grup }: { grup: PaketGrupId }) {
   const aktifGrup = grubuBul(grup);
   const [filter, setFilter] = useState<string>("all");
   // CANLI paketler (admin yönetir, DB'den). API boş → zengin boş durum gösterilir.
-  const [bundles, setBundles] = useState<CampaignBundle[]>([]);
+  const [bundles, setBundles] = useState<PaketKarti[]>([]);
   useEffect(() => {
     fetch("/api/kampanyalar")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (d?.ok && Array.isArray(d.bundles) && d.bundles.length) setBundles(d.bundles as CampaignBundle[]);
+        if (d?.ok && Array.isArray(d.bundles) && d.bundles.length) setBundles(d.bundles as PaketKarti[]);
       })
       .catch(() => {});
   }, []);
@@ -324,7 +327,7 @@ function EmptyState({ grup }: { grup: PaketGrupId }) {
   );
 }
 
-function BundleCard({ bundle }: { bundle: CampaignBundle }) {
+function BundleCard({ bundle }: { bundle: PaketKarti }) {
   const addItem = useCartStore((s) => s.addItem);
   const openCart = useCartStore((s) => s.open);
   const [added, setAdded] = useState(false);
@@ -356,6 +359,8 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
         summary: `Hazır paket · ${summary}${bundle.designSupport ? " · Tasarım dahil" : ""}`,
         totalPrice: bundle.bundlePrice,
         needsDesign: bundle.designSupport,
+        // Paketin en yavaş kalemine göre üretim süresi; sepet teslim aralığını bundan kurar.
+        ...(bundle.productionTime ? { productionTime: bundle.productionTime } : {}),
         // Paket fiyatı zaten indirimli → kupon/havale/kurumsal/puan tabanına girmez.
         // Sunucu bunu kendisi de uyguluyor; buradaki bayrak sepet/ödeme ÖNİZLEMESİNİN
         // sunucuyla birebir aynı tutarı göstermesi için (yoksa müşteri önizlemede

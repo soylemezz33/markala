@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { paketIcerigiAyristir } from "./paket-icerik";
+import { paketIcerigiAyristir, paketUretimSuresi } from "./paket-icerik";
 
 describe("paketIcerigiAyristir", () => {
   it("adet + ad + slug'ı ayırır", () => {
@@ -41,9 +41,29 @@ describe("paketIcerigiAyristir", () => {
     expect(paketIcerigiAyristir("")).toEqual([{ quantity: 1, productName: "" }]);
   });
 
+  it("@uretim belirtecini kalem olarak göstermez", () => {
+    const k = paketIcerigiAyristir("1.000 × Kartvizit #klasik-kartvizit + @uretim:6-12 iş günü");
+    expect(k).toHaveLength(1);
+    expect(k[0]?.productName).toBe("Kartvizit");
+  });
+
   it("slug biçimine uymayan # metnini olduğu gibi bırakır", () => {
     const k = paketIcerigiAyristir("1 × Roll-Up #Gecersiz Slug");
     expect(k[0]?.productSlug).toBeUndefined();
     expect(k[0]?.productName).toBe("Roll-Up #Gecersiz Slug");
+  });
+});
+
+describe("paketUretimSuresi", () => {
+  it("@uretim belirtecini okur", () => {
+    expect(paketUretimSuresi("1.000 × Kartvizit #klasik-kartvizit + @uretim:6-12 iş günü")).toBe("6-12 iş günü");
+  });
+
+  it("belirteç yoksa undefined döner (varsayılana düşülür)", () => {
+    expect(paketUretimSuresi("1.000 × Kartvizit #klasik-kartvizit")).toBeUndefined();
+  });
+
+  it("boş metinde çökmez", () => {
+    expect(paketUretimSuresi("")).toBeUndefined();
   });
 });

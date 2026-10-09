@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { paketIcerigiAyristir } from "@/lib/paket-icerik";
+import { paketIcerigiAyristir, paketUretimSuresi } from "@/lib/paket-icerik";
 
 export const runtime = "nodejs";
 
@@ -62,6 +62,8 @@ export async function GET() {
         category,
         isActive: true,
         designSupport: Boolean(p.designSupport),
+        // Sepetteki teslim aralığı bunu kullanır; yoksa varsayılana düşer (bkz. paketUretimSuresi).
+        productionTime: paketUretimSuresi(contentsText),
       };
     });
 
