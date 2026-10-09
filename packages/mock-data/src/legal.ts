@@ -286,7 +286,7 @@ export const legalPages: Record<string, LegalPage> = {
 
       <h2>MADDE 6 – TESLİMAT MASRAFLARI</h2>
       <p>
-        Kargo ücreti sipariş özetinde gösterilir. ${BRAND} 1.500 TL ve üzeri siparişlerde
+        Kargo ücreti sipariş özetinde gösterilir. ${BRAND} 2.000 TL ve üzeri siparişlerde
         kargo ücretsizdir. İade durumunda kargo ücreti, üretim hatası SATICI'dan
         kaynaklı ise SATICI tarafından, ALICI'nın talebiyle iadelerde ALICI tarafından
         karşılanır.
@@ -708,8 +708,8 @@ export const legalPages: Record<string, LegalPage> = {
         <li>Türkiye'nin 81 iline DHL kargo ile teslimat</li>
         <li>Üretim süresi 1-7 iş günü (ürün bazında değişir)</li>
         <li>Kargo süresi 1-3 iş günü</li>
-        <li>1.500 TL üzeri siparişlerde kargo ücretsiz</li>
-        <li>1.500 TL altı siparişlerde kargo ücreti sipariş özetinde gösterilir</li>
+        <li>2.000 TL üzeri siparişlerde kargo ücretsiz</li>
+        <li>2.000 TL altı siparişlerde kargo ücreti sipariş özetinde gösterilir</li>
       </ul>
 
       <h2>5. Cayma Hakkı</h2>
@@ -933,8 +933,8 @@ export const legalPages: Record<string, LegalPage> = {
 
       <h2>2. Kargo Ücreti</h2>
       <ul>
-        <li><strong>1.500 TL ve üzeri siparişler:</strong> Kargo ücretsiz</li>
-        <li><strong>1.500 TL altı siparişler:</strong> 115 TL standart kargo ücreti</li>
+        <li><strong>2.000 TL ve üzeri siparişler:</strong> Kargo ücretsiz</li>
+        <li><strong>2.000 TL altı siparişler:</strong> 115 TL standart kargo ücreti</li>
         <li>Kargo ücreti sepet ve ödeme adımında şeffaf şekilde gösterilir</li>
       </ul>
 

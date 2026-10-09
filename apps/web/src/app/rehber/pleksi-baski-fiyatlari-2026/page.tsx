@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ESIK_METNI } from "@/lib/kargo";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
@@ -335,7 +336,7 @@ export default async function PleksiBaskiFiyatlariPage() {
             </Link>
           </div>
           <p className="mt-4 flex items-center gap-1.5 text-xs text-ink-500">
-            <Truck size={13} weight="fill" /> Türkiye geneli kargo · 1.500 ₺ üzeri ücretsiz
+            <Truck size={13} weight="fill" /> Türkiye geneli kargo · {ESIK_METNI} ₺ üzeri ücretsiz
           </p>
         </section>
       </Container>

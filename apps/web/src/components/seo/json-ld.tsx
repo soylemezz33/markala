@@ -166,7 +166,7 @@ export function ProductJsonLd({
       },
       shippingDetails: {
         "@type": "OfferShippingDetails",
-        // Taban kargo ücreti (KDV dahil sepet 1500₺ altı). 1500₺ üzeri ücretsiz bir
+        // Taban kargo ücreti (KDV dahil sepet 2000₺ altı). 2000₺ üzeri ücretsiz bir
         // promosyon; yapılandırılmış veride taban ücreti bildirmek dürüst ve güvenlidir —
         // koşulsuz "0" Merchant Center'da "ücretsiz kargo" vaadi sayılıp ürün reddine yol açar.
         shippingRate: { "@type": "MonetaryAmount", value: 79, currency: "TRY" },

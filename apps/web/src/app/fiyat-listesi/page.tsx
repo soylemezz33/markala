@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ESIK_METNI, UCRET_METNI } from "@/lib/kargo";
 import type { Metadata } from "next";
 import { Container } from "@markala/ui";
 import {
@@ -416,8 +417,8 @@ export default async function PriceListPage() {
             <li className="flex gap-2">
               <CheckCircle size={16} weight="fill" className="text-success shrink-0 mt-0.5" />
               <span>
-                <strong className="text-ink-900">Kargo:</strong> 1.500 ₺ üzeri sipariş Türkiye geneli
-                ücretsiz. Altında 115 ₺ kargo ücreti eklenir.
+                <strong className="text-ink-900">Kargo:</strong> {ESIK_METNI} ₺ üzeri sipariş Türkiye
+                geneli ücretsiz. Altında {UCRET_METNI} ₺ kargo ücreti eklenir.
               </span>
             </li>
             <li className="flex gap-2">

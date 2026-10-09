@@ -1,4 +1,5 @@
 import { KARGO_SURESI, URETIM_SURESI, TOPLAM_SURE } from "./delivery";
+import { ESIK_METNI, UCRET_METNI } from "./kargo";
 /**
  * Yardım Merkezi veri katmanı — kategori → makale iki seviyeli yapı.
  *
@@ -62,7 +63,7 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         keywords: ["sipariş verme", "nasıl sipariş veririm", "konfigüratör"],
         sections: [
           { heading: "1. Ürün ve Konfigürasyon Seçin", body: "Ürün sayfasından paket, ebat ve adet seçin. Sağdaki konfigüratörde fiyat anlık olarak güncellenir: KDV dahil, sürpriz maliyet yoktur." },
-          { heading: "2. Sepete Ekleyin", body: "Farklı ürünleri aynı sepette birleştirebilirsiniz. Sepet sağda panel olarak açılır; 1.500 TL üzeri siparişlerde kargo ücretsizdir." },
+          { heading: "2. Sepete Ekleyin", body: `Farklı ürünleri aynı sepette birleştirebilirsiniz. Sepet sağda panel olarak açılır; ${ESIK_METNI} TL üzeri siparişlerde kargo ücretsizdir.` },
           { heading: "3. Tasarım Yükleyin veya Destek İsteyin", body: "Hazır tasarımınız varsa CMYK PDF olarak yükleyin. Yoksa 'Tasarım desteği' seçeneğiyle ücretsiz şablon uyarlaması veya 89 TL'den başlayan özel tasarım hizmeti alabilirsiniz." },
           { heading: "4. Adres ve Ödeme", body: "Teslimat adresinizi seçin veya ekleyin, iyzico altyapısıyla 3D Secure ödeme yapın. Kart bilgileriniz Markala'ya ulaşmaz." },
           { heading: "5. Üretim ve Kargo", body: "Tasarım onayı (varsa) sonrası üretim başlar; ürüne göre 1-7 iş günü sürer. Üretim biter bitmez aynı gün DHL kargoya verilir, takip kodu e-postanıza gelir." },
@@ -367,13 +368,13 @@ export const HELP_CATEGORIES: HelpCategory[] = [
       {
         slug: "kargo-ucreti-ne-kadar",
         question: "Kargo ücreti ne kadar?",
-        description: "Kargo ücretleri: 1.500 TL üzeri ücretsiz, standart 115 TL, hızlı kargo seçeneği.",
+        description: `Kargo ücretleri: ${ESIK_METNI} TL üzeri ücretsiz, standart ${UCRET_METNI} TL, hızlı kargo seçeneği.`,
         shortAnswer:
-          "1.500 TL ve üzeri siparişlerde kargo ücretsizdir. Altındaki siparişlerde 115 TL standart kargo ücreti uygulanır. Acil işleriniz için +89 TL ile hızlı kargo (1 iş günü) talep edebilirsiniz.",
+          `${ESIK_METNI} TL ve üzeri siparişlerde kargo ücretsizdir. Altındaki siparişlerde ${UCRET_METNI} TL standart kargo ücreti uygulanır. Acil işleriniz için +89 TL ile hızlı kargo (1 iş günü) talep edebilirsiniz.`,
         keywords: ["kargo ücreti", "ücretsiz kargo", "kargo bedava"],
         sections: [
-          { heading: "Ücretsiz Kargo Eşiği", body: "Sepet tutarınız 1.500 TL ve üzerindeyse kargo ücretsizdir; eşiğe ne kadar kaldığı sepette gösterilir." },
-          { heading: "Standart ve Hızlı Kargo", body: "1.500 TL altı siparişlerde 115 TL standart kargo ücreti alınır. Hızlı kargo (1 iş günü teslim) +89 TL'dir; sipariş notunda belirtmeniz yeterli." },
+          { heading: "Ücretsiz Kargo Eşiği", body: `Sepet tutarınız ${ESIK_METNI} TL ve üzerindeyse kargo ücretsizdir; eşiğe ne kadar kaldığı sepette gösterilir.` },
+          { heading: "Standart ve Hızlı Kargo", body: `${ESIK_METNI} TL altı siparişlerde ${UCRET_METNI} TL standart kargo ücreti alınır. Hızlı kargo (1 iş günü teslim) +89 TL'dir; sipariş notunda belirtmeniz yeterli.` },
         ],
       },
       {
