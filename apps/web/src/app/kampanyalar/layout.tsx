@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "İndirimli Paketler | Esnaf ve Seçim Paketleri",
+  // Nesne biçimi ŞART: bu layout düz bir metin `title` verdiğinde kök layout'un
+  // `template: "%s · Markala"` şablonu ALT ROTALAR için düşüyor ve /kampanyalar/esnaf-paketi
+  // ile /kampanyalar/secim-paketi başlıkları marka ekini kaybediyordu (9 Eki, canlıda görüldü).
+  title: {
+    default: "İndirimli Paketler | Esnaf ve Seçim Paketleri",
+    template: "%s · Markala",
+  },
   description:
     "Markala indirimli hazır paketleri: esnaf başlangıç seti, aday tanıtım (seçim) paketi, kurumsal kimlik, açılış ve etkinlik. Tek tek almaktan ucuz.",
   alternates: { canonical: "/kampanyalar" },
