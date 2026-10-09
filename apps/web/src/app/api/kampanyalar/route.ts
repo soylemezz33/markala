@@ -20,9 +20,12 @@ const BUNDLE_IMAGES: Record<string, string> = {
   "esnaf-baslangic": "/images/kampanyalar/esnaf-baslangic.webp",
   "yeni-isletme": "/images/kampanyalar/yeni-isletme.webp",
   // Seçim paketleri (2026-10-09) — kaynak: scripts/kampanya-gorsel/sablon.html
-  "secim-paketi-az": "/images/kampanyalar/secim-paketi-az.webp",
-  "secim-paketi-orta": "/images/kampanyalar/secim-paketi-orta.webp",
-  "secim-paketi-fazla": "/images/kampanyalar/secim-paketi-fazla.webp",
+  // ?v= ZORUNLU: aynı dosya adıyla görsel değiştirince hem /_next/image hem Cloudflare
+  // eski kopyayı sunuyor (9 Eki, vektör → fotoğraf geçişinde birebir yaşandı). Görseli
+  // yenileyen sürümü de artırsın. Ürün görsellerinde de aynı desen kullanılıyor.
+  "secim-paketi-az": "/images/kampanyalar/secim-paketi-az.webp?v=2",
+  "secim-paketi-orta": "/images/kampanyalar/secim-paketi-orta.webp?v=2",
+  "secim-paketi-fazla": "/images/kampanyalar/secim-paketi-fazla.webp?v=2",
 };
 
 /**

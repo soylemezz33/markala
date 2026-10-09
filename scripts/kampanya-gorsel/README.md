@@ -17,6 +17,11 @@ cp secim-paketi-*.webp ../../apps/web/public/images/kampanyalar/
 Sonra yeni slug'ı `apps/web/src/app/api/kampanyalar/route.ts` içindeki `BUNDLE_IMAGES`
 haritasına ekle, yoksa dosya durur ama kart yedeğe düşer.
 
+**Var olan bir görseli yenilediyseniz `?v=` sürümünü de artırın.** Dosya adı aynı kalınca
+hem Next'in `/_next/image` optimizasyon önbelleği hem Cloudflare eski kopyayı sunmaya
+devam ediyor; 9 Ekim'de vektör çizimlerden fotoğrafa geçerken birebir bu yaşandı ve
+kartlarda eski görseller kaldı.
+
 ## Görseller
 
 Kartlardaki ürün fotoğrafları UYDURMA ÇİZİM DEĞİL, sitedeki gerçek ürün görselleri
