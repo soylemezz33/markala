@@ -29,25 +29,27 @@ export interface KategoriGrubu {
 
 export function kategorileriGrupla(categories: Category[]): KategoriGrubu[] {
   const bySlug = new Map(categories.map((c) => [c.slug, c]));
-  const kullanildi = new Set<string>();
   const gruplar: KategoriGrubu[] = [];
 
   const kartvizit = bySlug.get("kartvizit");
-  if (kartvizit) {
-    kullanildi.add("kartvizit");
-    gruplar.push({ id: "kartvizit", label: "Kartvizit", categories: [kartvizit] });
-  }
+  if (kartvizit) gruplar.push({ id: "kartvizit", label: "Kartvizit", categories: [kartvizit] });
+
+  // Her grup KENDİ tam listesini gösterir; bir kategori birden fazla grupta görünebilir
+  // (2026-10-09 düzeltmesi, Hasan: "Dijital Baskı'da sadece folyo/dekota/fosforlu var").
+  // Önceki sürüm her kategoriyi YALNIZ ilk eşleşen gruba koyuyordu; sonuç bozuktu:
+  // vinil branda afiş "Bayrak & Stand"a düşüyor, "Dijital Baskı" brandasız kalıyor,
+  // "Reklam Tabela" folyo ve dekotasız görünüyordu. Müşteri ürünü beklediği başlığın
+  // altında arar — tekrar, eksik listeden iyidir. Menü/grup hub'ları da böyle davranır.
   for (const g of PRODUCT_GROUPS) {
-    const list: Category[] = [];
-    for (const slug of g.categorySlugs) {
-      const c = bySlug.get(slug);
-      if (!c || kullanildi.has(slug)) continue;
-      kullanildi.add(slug);
-      list.push(c);
-    }
+    const list = g.categorySlugs.map((slug) => bySlug.get(slug)).filter((c): c is Category => Boolean(c));
     if (list.length) gruplar.push({ id: g.slug, label: g.label, href: `/kategoriler/${g.slug}`, categories: list });
   }
-  const kalan = categories.filter((c) => !kullanildi.has(c.slug)).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+
+  // Hiçbir grupta geçmeyen kategoriler kaybolmasın.
+  const grupludur = new Set(PRODUCT_GROUPS.flatMap((g) => g.categorySlugs).concat("kartvizit"));
+  const kalan = categories
+    .filter((c) => !grupludur.has(c.slug))
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
   if (kalan.length) gruplar.push({ id: "diger", label: "Diğer", categories: kalan });
   return gruplar;
 }

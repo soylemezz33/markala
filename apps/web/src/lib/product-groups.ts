@@ -80,6 +80,9 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
       "makam-bayragi",
       "rollup",
       "vinil-branda-afis",
+      // 2026-10-09: gönder (direk) bayrağı da bu grubun ürünü; listede olmadığı için
+      // kategori sayfasında "Diğer"e düşüyordu.
+      "gonder-bayragi",
     ],
   },
   {
@@ -104,7 +107,28 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
       "Baskılı kupa, promosyon magnet, kristal plaket, madalya, bloknot ve kaşe. Kurumsal hediyelik ve etkinlik promosyonu için tek adres.",
     intro:
       "Kurumsal hediyelik ve etkinlik promosyonu için üretilen ürünler: sublimasyon baskılı porselen kupa, buzdolabı ve araç magneti, lazer kazımalı kristal plaket, madalya, logolu bloknot ve otomatik kaşe. Kupa ve kaşe gibi ürünler tek adetten üretilebilir; magnet ve bloknot gibi matbaa işlerinde adet kademeleri konfigüratörde listelenir.",
-    categorySlugs: ["kupa", "magnet", "plaket", "madalya", "kase", "bloknot"],
+    // 2026-10-09: Turkuaz toptancı kataloğuyla gelen 11 promosyon kategorisi eklendi.
+    // Önce hiçbir grupta değillerdi; kategori listesinde "Diğer" başlığı altına düşüyorlardı
+    // (Hasan: müşteri promosyon kalemi "Promosyon & Hediye"nin altında arar).
+    categorySlugs: [
+      "kupa",
+      "magnet",
+      "plaket",
+      "madalya",
+      "kase",
+      "bloknot",
+      "promosyon-kalem",
+      "promosyon-defter-ajanda",
+      "promosyon-bardak-termos",
+      "promosyon-canta",
+      "promosyon-tekstil",
+      "promosyon-teknoloji",
+      "promosyon-anahtarlik",
+      "promosyon-saat",
+      "promosyon-cakmak",
+      "promosyon-vip-set",
+      "promosyon-cesitli",
+    ],
   },
   {
     slug: "reklam-tabela",
@@ -145,6 +169,8 @@ export const PRODUCT_GROUPS: ProductGroup[] = [
       "vinil-branda-afis",
       "folyo",
       "arac-magneti",
+      // Emlakçıya özel ürün (2026-10-09); hiçbir grupta değildi, "Diğer"e düşüyordu.
+      "emlak-afisi",
     ],
   },
   {
