@@ -603,7 +603,10 @@ export class OrdersService {
           unitPrice,
           lineTotal: round2(unitPrice * quantity),
           costTotal: null as number | null, // paket maliyeti sistemde yok — bilinmiyor
-          indirimHaric: false,
+          // Paket fiyatı ZATEN indirimli (liste toplamı − %15). Kupon/kurumsal/havale/puan
+          // indirimleri bunun ÜSTÜNE binmesin (Hasan, 2026-10-09: "kuponlar pakette
+          // geçersiz olsun"). Kampanyalı ürünlerdeki kuralın aynısı; bkz. kampanyaUrunuMu.
+          indirimHaric: true,
         };
       }
 

@@ -322,6 +322,60 @@ describe("OrdersService.create — kupon", () => {
     expect(Number(createCall.discount)).toBeCloseTo(0, 2);
   });
 
+  // --- Kampanya PAKETLERİ (CampaignPackage) — 2026-10-09, Hasan: "kuponlar pakette geçersiz olsun".
+  // Paket fiyatı zaten liste toplamının %15 eksiği; kupon/havale üstüne binmemeli.
+  const PAKET = { id: "cp1", slug: "secim-paketi-az", name: "Seçim Paketi — Az Miktar", packagePrice: "1000", isActive: true };
+  const PAKET_INPUT = { ...BASE_INPUT, items: [{ productSlug: "secim-paketi-az", configuration: { selections: { __bundle: "secim-paketi-az" } }, quantity: 1 }] };
+
+  it("kampanya paketine kupon uygulanmaz (indirim 0)", async () => {
+    const prisma = makePrisma();
+    prisma.product.findMany.mockResolvedValue([]);
+    prisma.campaignPackage.findMany.mockResolvedValue([PAKET]);
+    prisma.coupon.findUnique.mockResolvedValue({ ...COUPON_BASE, type: "percentage", value: "10" });
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendNewOrderAdminEmail: vi.fn().mockResolvedValue(true), sendOrderInProductionEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never, { isEnabled: () => false } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never);
+
+    await svc.create({ ...PAKET_INPUT, couponCode: "SAVE10" });
+
+    const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
+    expect(Number(createCall.subtotal)).toBeCloseTo(1000, 2);
+    expect(Number(createCall.discount)).toBeCloseTo(0, 2);
+  });
+
+  it("kampanya paketinde havale indirimi de uygulanmaz", async () => {
+    const prisma = makePrisma();
+    prisma.product.findMany.mockResolvedValue([]);
+    prisma.campaignPackage.findMany.mockResolvedValue([PAKET]);
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendNewOrderAdminEmail: vi.fn().mockResolvedValue(true), sendOrderInProductionEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never, { isEnabled: () => false } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never);
+
+    await svc.create({ ...PAKET_INPUT, paymentMethod: "havale" } as never);
+
+    const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
+    expect(Number(createCall.discount)).toBeCloseTo(0, 2);
+  });
+
+  it("paket + normal ürün karışık sepette kupon yalnız normal kaleme uygulanır", async () => {
+    const prisma = makePrisma();
+    prisma.product.findMany.mockResolvedValue([
+      { ...BASE_PRODUCT, id: "p2", slug: "brosur", name: "Broşür", basePrice: 100, prices: [{ groupKey: null, optionKey: null, dimKey: null, price: "100" }] },
+    ]);
+    prisma.campaignPackage.findMany.mockResolvedValue([PAKET]);
+    prisma.coupon.findUnique.mockResolvedValue({ ...COUPON_BASE, type: "percentage", value: "10" });
+    const svc = new OrdersService(prisma as never, makeParasut() as never, makeSettings() as never, { sendOrderConfirmationEmail: vi.fn().mockResolvedValue(true), sendNewOrderAdminEmail: vi.fn().mockResolvedValue(true), sendOrderInProductionEmail: vi.fn().mockResolvedValue(true), sendOrderShippedEmail: vi.fn().mockResolvedValue(true), sendOrderDeliveredEmail: vi.fn().mockResolvedValue(true) } as never, { isEnabled: () => false } as never, { sendPurchase: vi.fn().mockResolvedValue(undefined) } as never);
+
+    await svc.create({
+      ...BASE_INPUT,
+      items: [
+        { productSlug: "secim-paketi-az", configuration: { selections: { __bundle: "secim-paketi-az" } }, quantity: 1 },
+        { productId: "p2", configuration: {}, quantity: 1 },
+      ],
+      couponCode: "SAVE10",
+    });
+
+    const createCall = (prisma as any)._tx.order.create.mock.calls[0][0].data;
+    expect(Number(createCall.subtotal)).toBeCloseTo(1100, 2);
+    expect(Number(createCall.discount)).toBeCloseTo(10, 2); // %10 × 100 — paketin 1000'i hariç
+  });
+
   it("free_shipping kupon kargo ücretini sıfırlar", async () => {
     const prisma = makePrisma();
     prisma.coupon.findUnique.mockResolvedValue({ ...COUPON_BASE, type: "free_shipping", value: "0" });

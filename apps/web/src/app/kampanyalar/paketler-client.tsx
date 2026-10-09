@@ -356,6 +356,11 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
         summary: `Hazır paket · ${summary}${bundle.designSupport ? " · Tasarım dahil" : ""}`,
         totalPrice: bundle.bundlePrice,
         needsDesign: bundle.designSupport,
+        // Paket fiyatı zaten indirimli → kupon/havale/kurumsal/puan tabanına girmez.
+        // Sunucu bunu kendisi de uyguluyor; buradaki bayrak sepet/ödeme ÖNİZLEMESİNİN
+        // sunucuyla birebir aynı tutarı göstermesi için (yoksa müşteri önizlemede
+        // gördüğü indirimi siparişte bulamıyor).
+        indirimHaric: true,
       },
     });
     setAdded(true);
@@ -475,6 +480,11 @@ function BundleCard({ bundle }: { bundle: CampaignBundle }) {
         <p className="text-xs text-ink-500 text-center mt-2">
           Hazır paket, anında sepete, çıkışta ödemeye geç
         </p>
+        {savings > 0 && (
+          <p className="text-[11px] text-ink-500 text-center mt-1">
+            Paket fiyatı indirimlidir, ayrıca kupon uygulanmaz.
+          </p>
+        )}
       </div>
     </article>
   );
