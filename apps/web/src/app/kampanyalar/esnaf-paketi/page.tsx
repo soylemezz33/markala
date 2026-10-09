@@ -4,7 +4,7 @@ import PaketlerClient from "../paketler-client";
 export const metadata: Metadata = {
   title: "Esnaf Paketleri | Dükkan ve İşletme Baskı Setleri",
   description:
-    "Dükkan, ofis ve yeni açılan işletmeler için kartvizit, afiş, tabela ve tanıtım ürünlerini tek pakette topluyoruz. Tasarım desteği dahil.",
+    "Dükkan, ofis ve yeni açılan işletmeler için kartvizit, afiş, tabela ve tanıtım ürünleri tek pakette. Tasarım desteği dahil.",
   alternates: { canonical: "/kampanyalar/esnaf-paketi" },
   openGraph: {
     type: "website",

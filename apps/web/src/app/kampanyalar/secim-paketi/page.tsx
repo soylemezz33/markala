@@ -4,7 +4,7 @@ import PaketlerClient from "../paketler-client";
 export const metadata: Metadata = {
   title: "Seçim Paketleri | Aday Tanıtım Malzemesi",
   description:
-    "Oda, dernek, kooperatif ve sendika seçimlerine giren adaylar için kartvizit, el ilanı, branda afiş, dekota pano ve bayrak tek pakette. Az, orta ve fazla miktar olarak üç boy.",
+    "Oda, dernek ve kooperatif seçimine giren adaylar için kartvizit, el ilanı, branda afiş, pano ve bayrak tek pakette. Az, orta ve fazla miktar.",
   alternates: { canonical: "/kampanyalar/secim-paketi" },
   openGraph: {
     type: "website",

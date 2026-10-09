@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "İndirimli Paketler | Esnaf ve Seçim Paketleri",
   description:
-    "Markala'nın indirimli hazır paketleri: esnaf başlangıç seti, aday tanıtım (seçim) paketi, kurumsal kimlik, açılış ve etkinlik paketleri. Tek tek almaktan daha ucuz.",
+    "Markala indirimli hazır paketleri: esnaf başlangıç seti, aday tanıtım (seçim) paketi, kurumsal kimlik, açılış ve etkinlik. Tek tek almaktan ucuz.",
   alternates: { canonical: "/kampanyalar" },
   openGraph: {
     type: "website",
